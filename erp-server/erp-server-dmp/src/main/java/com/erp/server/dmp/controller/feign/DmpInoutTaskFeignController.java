@@ -81,6 +81,18 @@ public class DmpInoutTaskFeignController{
 		return dmpOutputTaskRecordService.getErrorData(oneDTO);
 	}
 
+	/**
+	 * 获取最后一条拉取记录
+	 * @author will
+	 * @date 2025/8/27 18:24
+	 * @param paramDTO
+	 * @return LastPullDTO
+	 */
+	@PostMapping("/getLastPullRecord")
+	public DmpPushTaskDTO.LastPullDTO getLastPullRecord(@RequestBody DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+		return dmpOutputTaskRecordService.getLastPullRecord(paramDTO);
+	}
+
 
 	/**
 	 * 公共-创建快速输入任务

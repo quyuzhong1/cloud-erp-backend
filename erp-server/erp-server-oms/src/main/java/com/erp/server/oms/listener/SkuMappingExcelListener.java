@@ -224,7 +224,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(platform.getValue());
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
         paramDTO.setPlatformSpuNoList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
 //        paramDTO.setIsExpire(false);
@@ -278,7 +278,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
         //平台标识
         String dictPlatform = platform.getValue();
-        RuleTypeEnum platformType = RuleTypeEnum.PLATFORM;
+        RuleTypeEnum platformType = RuleTypeEnum.B2C_PLATFORM;
 
         //平台sku no
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
@@ -312,7 +312,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
                 addSkuMapping.setShopId(skuMappingEntity.getShopId());
-                addSkuMapping.setType(RuleTypeEnum.PLATFORM);
+                addSkuMapping.setType(RuleTypeEnum.B2C_PLATFORM);
                 addSkuMapping.setProductSkuId(sku.getSkuId());
                 addSkuMapping.setProductSkuNo(sku.getSkuNo());
                 addSkuMapping.setListingId(listingId);
@@ -369,7 +369,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             listingId = IdWorker.getIdStr();
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
             addListingInfoEntity.setId(listingId);
-            addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
+            addListingInfoEntity.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformSpuNo(platformProductId);
             addListingInfoEntity.setPlatformSkuName(platformProductName);

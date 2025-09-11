@@ -332,4 +332,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return Map<String, SoDeliveryNoticeEntity>
      */
     Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
+    /**
+     * 更新发货通知单状态
+     * @author will
+     * @date 2025/8/29 17:43
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto);
 }

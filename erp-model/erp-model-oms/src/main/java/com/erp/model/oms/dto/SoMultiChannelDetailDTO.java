@@ -198,4 +198,24 @@ public class SoMultiChannelDetailDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class OutstockQtyDTO {
+        /**
+         * 订单明细id
+         */
+        private String soDetailId;
+        /**
+         * 发货单编号
+         */
+        private String deliveryCode;
+        /**
+         * 平台订单明细id
+         */
+        private String platformDetailId;
+        /**
+         * 出库数量
+         */
+        private Integer outstockQty;
+    }
 }

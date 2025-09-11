@@ -1317,7 +1317,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             // 创建查询参数对象
             ListingInfoParamDTO dto = new ListingInfoParamDTO();
             dto.setPlatform(platform);
-            dto.setType(RuleTypeEnum.PLATFORM.getCode());
+            dto.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             dto.setPlatformSkuIdList(platformSkuIdList);
             dto.setShopIdList(Collections.singletonList(shopId));
 

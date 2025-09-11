@@ -55,6 +55,8 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.DhtService;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -103,6 +105,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private CommonService commonService;
 
     @Resource
+    private SyncDhtService syncDhtService;
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Resource
@@ -123,6 +127,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Resource
+    private DhtService dhtService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -259,7 +265,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -361,7 +367,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -771,7 +777,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //修改附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
 
             //批量修改联系人信息
             List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());
@@ -866,6 +872,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerSellerService.batchSellerHistory(list, LocalDate.now());
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_APPROVE.getCode());
             List<String> countryIdList = list.stream().map(CustomerInfoEntity::getCountryId).collect(Collectors.toList());
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
             list.forEach(customer->{
@@ -883,6 +891,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         return Boolean.TRUE;
+    }
+
+    private void sendDhtPushTask(List<CustomerInfoEntity> list, String code) {
+        //查询地址
+        List<String> ids = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = customerAddressService.listAllByMainIds(ids);
+        for (CustomerInfoEntity customerInfo : list) {
+            syncDhtService.createSyncCustomerTaskToDht(customerInfo,code);
+        }
+        for (CustomerAddressEntity customerAddressEntity : customerAddressEntities) {
+            code = customerAddressEntity.getIsDeleted() ? SyncOperateEnum.OPERATE_DELETE.getCode() : code;
+            syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity,code);
+        }
     }
 
 
@@ -924,6 +945,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1072,7 +1095,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (dto.getDisabled()) {
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
+        // 发送金蝶
         sendPushTask(customerList,operate);
+        // 发送订货通
+        sendDhtPushTask(customerList, operate);
         return  update;
     }
 
@@ -2437,5 +2463,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public void updateApproveStatus(CustomerInfoEntity entity) {
         this.updateById(entity);
+    }
+
+    @Override
+    public CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto) {
+        CustomerInfoEntity entity = this.getById(dto.getId());
+        return dhtService.queryCustomerAccountByCustomerCode(entity);
     }
 }

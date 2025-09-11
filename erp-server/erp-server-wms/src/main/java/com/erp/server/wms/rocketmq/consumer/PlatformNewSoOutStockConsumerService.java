@@ -94,10 +94,8 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
                 SourceTypeEnum.SO_B2C.getCode()
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
-            log.warn("[新中台销售出库单消费]:B2C销售单不存在：单号={}", dto.getPlatformCode());
-            // 恢复待清洗
-            // 发送预警
-            return;
+            log.warn("【新中台销售出库单消费】:B2C销售单不存在：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+            ServiceException.runError("【新中台销售出库单消费】B2C销售单不存在：{}, 店铺ID={}", dto.getPlatformCode(), dto.getShopId());
         }
         SoB2cEntity soB2cEntity = soB2cEntityList.stream()
                 .filter(e -> e.getShopId().equalsIgnoreCase(dto.getShopId()))
@@ -114,9 +112,8 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         }
 
         if (null == soB2cEntity) {
-            log.warn("[新中台销售出库单消费]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
-            // 发送预警
-            return;
+            log.warn("【新中台销售出库单消费】:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
+            ServiceException.runError("【新中台销售出库单消费】B2C销售单不存在：{}, 店铺ID={}", dto.getPlatformCode(), dto.getShopId());
         }
 
         // 记录订单数据（独立事务）
@@ -238,8 +235,10 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
             return;
         }
         generateB2cDTO.setDetailList(detailList1);
-        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-        //更新多渠道订单生成出库单标识
-        soMultiChannelFeign.updateSoOutstock(dto);
+        Boolean result = soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+        if (result){
+            //更新多渠道订单生成出库单标识
+            soMultiChannelFeign.updateSoOutstock(dto);
+        }
     }
 }

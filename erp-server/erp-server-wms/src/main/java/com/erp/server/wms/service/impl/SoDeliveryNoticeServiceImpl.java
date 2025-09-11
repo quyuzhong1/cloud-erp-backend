@@ -65,6 +65,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -241,6 +242,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
+                obj.setIsAllowOutstockName(IsAllowOutstockEnum.getNameByCode(obj.getIsAllowOutstock()));
                 //如果装箱数量大于发货数量，拆分处理
                 String key = obj.getId() + obj.getSkuId();
                 if(qtyMap.containsKey(key)){
@@ -302,8 +304,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
+            if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
+                pagingParam.setDeliveryStatus(Boolean.FALSE);
+                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
             if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
+                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
@@ -510,6 +519,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<String> split = StrUtil.split(soDeliveryNoticeEntity.getTransferWarehouseIds(), ",");
             viewDTO.setTransferWarehouseIdList(split);
         }
+
+        //查询箱唛附件
+        List<WmsAttachmentDTO.UpdateDTO> boxMarkList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(soDeliveryNoticeEntity.getId()),WmsConstant.SO_DELIVERY_NOTICE_BOX_MARK);
+        if (CollUtil.isNotEmpty(boxMarkList)) {
+            viewDTO.setAttachmentUrl(boxMarkList.get(0).getAttachUrl());
+            viewDTO.setAttachmentName(boxMarkList.get(0).getAttachName());
+        }
+
         List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
         CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
         viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
@@ -2262,6 +2279,31 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         List<SoDeliveryNoticeEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto) {
+        if (!IsAllowOutstockEnum.WAIT_NOTICE.getCode().equals(entity.getIsAllowOutstock())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_UPDATE_IS_ALLOW_OUTSTOCK.msg);
+        }
+        entity.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
+        entity.setRemark(dto.getRemark());
+        boolean update = super.updateById(entity);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1002);
+        }
+        //添加附件
+        WmsAttachmentEntity attachmentEntity = new WmsAttachmentEntity();
+        attachmentEntity.setBusinessId(entity.getId());
+        attachmentEntity.setAttachUrl(dto.getAttachmentUrl());
+        attachmentEntity.setAttachName(dto.getAttachmentName());
+        attachmentEntity.setType(WmsConstant.SO_DELIVERY_NOTICE_BOX_MARK);
+        wmsAttachmentService.save(attachmentEntity);
+
+        //添加日志
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("允许出库，箱唛:{},备注：{}",dto.getAttachmentName(),dto.getRemark()), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "允许出库");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(),"允许出库成功");
     }
 
     @Override

@@ -118,5 +118,5 @@ public class SampleScrapImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误数据", index =9)
     @ColumnWidth(50)
-    private String  errorMsg;
+    private String  errorMsg = "";
 }

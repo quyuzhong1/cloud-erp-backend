@@ -614,7 +614,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         // 删除日志数据
         log.info("删除 开始删除样品报废单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品报废单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getCode(), "删除样品报废单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getId(), "删除样品报废单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -639,7 +639,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品报废单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getCode(), "作废样品报废单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getId(),  OperationTypeEnum.INVALID.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -865,7 +865,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     */
     private void validateSubmit(SampleScrapInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
@@ -1022,9 +1022,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             Boolean isAdd = Boolean.TRUE;
             List<SampleScrapDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleScrapImportExcelDTO importDTO : value) {
+                int indexTemp = 1;
                 String errorMsg = importDTO.getErrorMsg();
-                String[] split = errorMsg.split("；");
-                int indexTemp = split.length + 1;
+                if(StringUtils.isNotBlank(errorMsg)){
+                    String[] split = errorMsg.split("；");
+                    indexTemp = split.length + 1;
+                }
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
                     errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
@@ -1063,9 +1066,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setDetailList(detailList);
 
-                if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                    bean.add(addDTO);
-                }
+                bean.add(addDTO);
             }
         }
     }

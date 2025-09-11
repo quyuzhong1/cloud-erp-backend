@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.validator.ValidList;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -58,6 +60,7 @@ import com.erp.server.wms.service.SampleReturnDetailService;
 import com.erp.server.wms.service.SampleReturnInfoService;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -551,7 +554,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getCode(), "删除样品归还单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "删除样品归还单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -575,7 +578,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .update();
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getCode(), "作废样品归还单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(),  OperationTypeEnum.INVALID.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -812,7 +815,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     */
     private void validateSubmit(SampleReturnInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
@@ -863,8 +866,62 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         sampleReturnInfoEntity.setReceiverUserName(receiverUser.getUserName());
         sampleReturnInfoEntity.setReturnDeptName(returnDept.getName());
         sampleReturnInfoEntity.setReceiverDeptName(receiverDept.getName());
+    }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<BatchResultDTO> generateSampleReturn(ValidList<SampleBorrowInfoDTO.SampleReturnView> list) {
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        SampleReturnInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleReturnInfoServiceImpl.class);
 
+        // 按 sourceId 分组
+        Map<String, List<SampleBorrowInfoDTO.SampleReturnView>> sourceGroupMap = list.stream()
+                .collect(Collectors.groupingBy(SampleBorrowInfoDTO.SampleReturnView::getSourceId));
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+
+        for (Map.Entry<String, List<SampleBorrowInfoDTO.SampleReturnView>> sourceEntry : sourceGroupMap.entrySet()) {
+            List<SampleBorrowInfoDTO.SampleReturnView> bySourceIdList = sourceEntry.getValue();
+
+            // 在同一 sourceId 下，再按 returnDate 分组
+            Map<LocalDate, List<SampleBorrowInfoDTO.SampleReturnView>> dateGroupMap = bySourceIdList.stream()
+                    .collect(Collectors.groupingBy(SampleBorrowInfoDTO.SampleReturnView::getReturnDate));
+
+            for (Map.Entry<LocalDate, List<SampleBorrowInfoDTO.SampleReturnView>> dateEntry : dateGroupMap.entrySet()) {
+                List<SampleBorrowInfoDTO.SampleReturnView> byReturnDateList = dateEntry.getValue();
+
+                if (CollUtil.isEmpty(byReturnDateList)) {
+                    continue;
+                }
+
+                // 构造归还单主表数据
+                SampleBorrowInfoDTO.SampleReturnView firstItem = byReturnDateList.get(0);
+                SampleReturnInfoDTO.AddDTO addDTO = new SampleReturnInfoDTO.AddDTO();
+                BeanMapperUtils.copy(firstItem, addDTO);
+
+                // 构造归还单明细数据
+                List<SampleReturnDetailDTO.AddDTO> detailList = BeanMapperUtils.copyList(SampleReturnDetailDTO.AddDTO.class, byReturnDateList);
+                addDTO.setDetailList(detailList);
+
+                BatchResultDTO result;
+                try {
+                    // 调用服务保存归还单
+                    BaseResultDTO.AddDTO add = bean.add(addDTO);
+                    result = BatchResultDTO.success(add.getId(), add.getCode(), OperationTypeEnum.ADD);
+
+                    // 记录下推日志
+                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据下推样品归还单【{}】 ", UserContext.getDefaultLoginUser().getUserName(), addDTO.getSourceCode(), "样品借用单",add.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addDTO.getSourceId(), "下推操作");
+                } catch (Exception e) {
+                    log.error("系统异常：sourceId={}, sourceCode={}", firstItem.getSourceId(), firstItem.getSourceCode(), e);
+                    result = BatchResultDTO.fail(firstItem.getSourceId(), firstItem.getSourceCode(), e.getMessage());
+                }
+                resultDTOS.add(result);
+            }
+        }
+        return resultDTOS;
     }
 
     // ==================== 台账流水构建器实现 ====================

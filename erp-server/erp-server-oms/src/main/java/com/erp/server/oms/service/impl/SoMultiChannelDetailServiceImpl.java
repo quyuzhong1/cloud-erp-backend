@@ -144,26 +144,6 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         baseMapper.delete(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().eq(SoMultiChannelDetailEntity::getMainId, id));
     }
 
-    private void checkData(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities) {
-        // 查询该店铺所有平台sku
-        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(soMultiChannelEntity.getDeliveryPlatform());
-        paramDTO.setShopIdList(Collections.singletonList(soMultiChannelEntity.getShopId()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setPlatformSkuNoList(soMultiChannelDetailEntities.stream().map(SoMultiChannelDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
-        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
-        //平台sku映射检查
-        if (CollUtil.isEmpty(listDto)){
-            throw new ServiceException("平台sku映射不存在");
-        }
-        soMultiChannelDetailEntities.forEach(detail -> {
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listDto.stream().filter(e -> e.getPlatformSkuNo().equals(detail.getPlatformSkuNo()) && e.getProductSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNull(listingInfoWithSkuMappingDTO)){
-                throw new ServiceException("产品sku【{}】平台sku【{}】映射不存在", detail.getSkuNo(), detail.getPlatformSkuNo());
-            }
-        });
-    }
-
     /**
     * 新增修改处理数据
     */

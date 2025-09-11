@@ -544,18 +544,18 @@ public class NfeInvoiceService {
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        //平台产品id
-        List<String> platformSpuNoList = detailList.stream().map(SoB2cDetailEntity::getPlatformSpuNo).distinct().collect(Collectors.toList());
+        //平台sku
+        List<String> platformSkuNoList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
 
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
         paramDTO.setPlatformList(Collections.singletonList(soB2cEntity.getDictPlatform()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setPlatformSpuNoList(platformSpuNoList);
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSpuNo(),obj.getShopId())));
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));
 
         //listingId集合
         List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoWithSkuMappingDTO::getListingId).distinct().collect(Collectors.toList());
@@ -573,7 +573,7 @@ public class NfeInvoiceService {
         for (SoB2cDetailEntity detailEntity :detailList) {
             NfeInvoiceDTO.NfeItensDTO nfeItensDTO = new NfeInvoiceDTO.NfeItensDTO();
             //listing信息
-            List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), detailEntity.getPlatformSpuNo(),soB2cEntity.getShopId()));
+            List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), detailEntity.getPlatformSkuNo(),soB2cEntity.getShopId()));
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? null : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(null);
             if (Objects.isNull(invoiceTaxEntity)) {

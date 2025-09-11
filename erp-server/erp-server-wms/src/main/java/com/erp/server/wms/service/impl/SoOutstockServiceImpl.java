@@ -44,8 +44,8 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -90,6 +90,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -101,6 +102,7 @@ import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
+import com.erp.server.wms.dht.SyncDhtOutstockService;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.rocketmq.consumer.PlatformOutboundConsumerService;
@@ -271,6 +273,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
+
+    @Resource
+    private SyncDhtOutstockService syncDhtOutstockService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -783,12 +790,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else {
                 handleSoB2cData(entity);
             }
-
-//            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
-//            statusDTO.setSoIds(Collections.singletonList(entity.getSoId()));
-//            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
-//            //修改中转报关单订单出库状态
-//            transferDeclareFeign.updateOutstockStatus(statusDTO);
+            // 销售出库单推送数帝云
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
             //走TMS自动生成报关单逻辑
             autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
@@ -797,13 +800,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云
-            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-
+            this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送到订货通
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-//        if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
-//            //订单推送dmp
-//            syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-//        }
         return Boolean.TRUE;
     }
 
@@ -841,7 +841,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
-    private void syncToSdy(SoOutstockEntity entity, String operate) {
+    private void syncToSdy(SoOutstockEntity entity,List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
         // 配货单推送数帝云
         if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             // B2B
@@ -855,8 +855,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
 
-        // 销售出库单推送数帝云
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
         syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
 
     }
@@ -1303,17 +1302,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //B2B发送金蝶
                 sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
-            //订单推送dmp
-//            if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
-//                //订单推送dmp
-//                syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-//            }
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
             //推送数帝云
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
             syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+            //推送到订货通
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_INVALID.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -4112,6 +4109,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(removeIdList);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+        //更新多渠道订单出库数量
+        updateSoMultiOutstockQty(removeList,soOutstockDetailEntityList);
 
         Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
@@ -4150,6 +4149,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         // 返回成功结果
         return resultDTOList;
+    }
+
+    private void updateSoMultiOutstockQty(List<SoOutstockEntity> removeList, List<SoOutstockDetailEntity> soOutstockDetailAllList) {
+        List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList = new ArrayList<>();
+        soOutstockDetailAllList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getPlatformDetailId())).forEach(e -> {
+            SoMultiChannelDetailDTO.OutstockQtyDTO outstockQtyDTO = new SoMultiChannelDetailDTO.OutstockQtyDTO();
+            outstockQtyDTO.setPlatformDetailId(e.getPlatformDetailId());
+            outstockQtyDTO.setSoDetailId(e.getSoDetailId());
+            outstockQtyDTO.setOutstockQty(e.getActualQty());
+            removeList.stream().filter(f -> f.getId().equals(e.getMainId())).findFirst().ifPresent(f -> {
+                outstockQtyDTO.setDeliveryCode(f.getSourceCode());
+            });
+            outstockQtyDTOList.add(outstockQtyDTO);
+        });
+        if (CollUtil.isEmpty(outstockQtyDTOList)){
+            return;
+        }
+        soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 
     @Override

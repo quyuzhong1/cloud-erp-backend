@@ -790,4 +790,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
                 .update();
     }
+
+    @Override
+    public DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+        return baseMapper.getLastPullRecord(paramDTO);
+    }
 }

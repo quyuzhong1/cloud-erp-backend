@@ -71,6 +71,8 @@ public class ExportOmsFeignController {
     @Resource
     private ExhibitionOrderService exhibitionOrderService;
 
+    @Resource
+    private SoReceiptService soReceiptService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -164,6 +166,19 @@ public class ExportOmsFeignController {
         return skuMappingService.exportPlatformSku(dto);
     }
 
+    /**
+     * b2b平台sku对照表信息导出
+     * @author will
+     * @date 2025/8/27 16:37
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    @PostMapping("/b2bPlatformSku")
+    @WebAdvanceQuery
+    public PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        return skuMappingService.b2bPlatformPaging(dto);
+    }
+
     @PostMapping("/warehouseSku")
     @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
@@ -238,6 +253,16 @@ public class ExportOmsFeignController {
         return invoiceInfoService.paging(dto, true);
     }
 
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
+    }
+    @PostMapping("/exportSoReceipt")
+    @WebAdvanceQuery
+    public PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto) {
+        return soReceiptService.paging(dto);
+    }
     /**
      * 销售价目表导出
      * @param dto
@@ -268,18 +293,14 @@ public class ExportOmsFeignController {
         return soPriceChangeService.exportSoPriceChange(dto);
     }
 
-    @PostMapping("/exportInvoiceInvalid")
-    @WebAdvanceQuery
-    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
-        return cfgInvoiceInvalidService.paging(dto);
-    }
-
 
     @PostMapping("/soMultiChannel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
+            tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
-            tableAlias = "smc")
+            tableAlias = "smc"
+    )
     @WebAdvanceQuery
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);

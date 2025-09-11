@@ -75,6 +75,18 @@ public class DictSampleUseUserServiceImpl extends SuperServiceImpl<DictSampleUse
         return BeanMapper.copyList(list, SampleUseUserDTO.ViewDTO.class);
     }
 
+    @Override
+    public List<SampleUseUserDTO.ViewDTO> getListByNameList(List<String> nameList) {
+        if (CollectionUtils.isEmpty(nameList)) {
+            return BeanMapper.copyList(this.list(), SampleUseUserDTO.ViewDTO.class);
+        }
+        LambdaQueryWrapper<DictSampleUseUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DictSampleUseUserEntity::getName, nameList);
+        queryWrapper.select(DictSampleUseUserEntity::getId, DictSampleUseUserEntity::getName, DictSampleUseUserEntity::getDisabled);
+        List<DictSampleUseUserEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, SampleUseUserDTO.ViewDTO.class);
+    }
+
     /**
      * 构建查询条件
      * @param queryDTO 查询参数

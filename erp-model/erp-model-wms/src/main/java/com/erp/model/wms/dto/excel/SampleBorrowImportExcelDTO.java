@@ -146,5 +146,5 @@ public class SampleBorrowImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误数据", index =12)
     @ColumnWidth(50)
-    private String  errorMsg;
+    private String  errorMsg = "";
 }

@@ -168,6 +168,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private SoReceiptService soReceiptService;
 
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
@@ -368,10 +370,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //添加明细
             soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            //更新收款单信息
+            soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             //添加日志
             String content = String.format("新增了一个{%s}-销售单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
@@ -473,6 +477,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
+            //同步收款单审核
+            soReceiptService.autoSubmitBySo(entity);
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), entity.getId(), "状态变更");
@@ -745,6 +751,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
         }
         view.setDetailList(detailList);
+        //查询收款单信息
+        List<SoReceiptDTO.SoViewDTO> soViewDTOS = soReceiptService.getSoViewDTO(soInfo);
+        view.setSoReceiptDTOList(soViewDTOS);
         return view;
     }
 
@@ -792,8 +801,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //是否虚拟仓缺货
         List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
-        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isVirtualScarce")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualScarce".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
         if(Objects.nonNull(isVirtualOutStock) || Objects.nonNull(isOutStock)){
             //查询全部数据，过滤出有缺货
             Page query = new Page(1,Integer.MAX_VALUE,false);
@@ -886,7 +895,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
-
         //虚拟仓库存
         List<String> virtualWarehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
@@ -1125,6 +1133,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
+            //剩余收款金额,不能小于0
+            item.setRemainReceiveAmount(
+                    item.getOrderAmount()
+                            .subtract(item.getReceiveAmount())
+                            .max(BigDecimal.ZERO)
+            );
         }
 
 
@@ -1333,7 +1347,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             if (isFirst) {
                 //添加日志
@@ -1466,7 +1480,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             /**
              * 添加修改日志
@@ -1478,6 +1492,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //修改 订单详情
             soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),old);
+            //更新收款单信息
+            soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
             return id;
         }
         return "";
@@ -1592,6 +1608,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.ViewDTO view = this.view(entity.getId());
             List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
             syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //自动审核收款单
+            soReceiptService.autoApproveBySo(entity);
         }
         return result;
     }
@@ -3568,6 +3586,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         this.updateApproveStatus(Collections.singletonList(updateApprovalStatusDTO.getSoInfoEntity()),  updateApprovalStatusDTO.getBillApproveStatusEnum(), updateApprovalStatusDTO.getSoInfoEntity().getApproveUserName());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap) {
+        List<String> ids = new ArrayList<>(updateSoReceiptAmountMap.keySet());
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soInfoEntityList)) {
+            return;
+        }
+        for (SoInfoEntity soInfoEntity : soInfoEntityList) {
+            BigDecimal receiptAmount = updateSoReceiptAmountMap.get(soInfoEntity.getId());
+            if (Objects.isNull(receiptAmount)) {
+                continue;
+            }
+            soInfoEntity.setReceiveAmount(soInfoEntity.getReceiveAmount().add(receiptAmount));
+        }
+        this.updateBatchById(soInfoEntityList);
+
     }
 
     /**

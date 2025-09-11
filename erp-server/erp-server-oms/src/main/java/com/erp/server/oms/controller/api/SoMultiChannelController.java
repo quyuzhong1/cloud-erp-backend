@@ -1,12 +1,14 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.vo.PagingVO;
@@ -18,10 +20,12 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -37,15 +41,13 @@ import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoMultiChannelService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -110,6 +112,7 @@ public class SoMultiChannelController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
@@ -128,6 +131,7 @@ public class SoMultiChannelController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
@@ -429,11 +433,6 @@ public class SoMultiChannelController extends BaseController {
      * @date: 2025-08-20
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soMultiChannel:export",
-            tableAlias = ""
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "多渠道订单主表导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response) {
         soMultiChannelService.exportList(dto, response);
@@ -477,6 +476,17 @@ public class SoMultiChannelController extends BaseController {
                 soB2cEntity.setShopName(shopInfoEntity1.getName());
             }
             try {
+                SoB2cDTO.SaveSoB2cDistributionDTO saveSoB2cDistributionDTO = soMultiChannelService.buildDistributionDTO(dto);
+                BatchResultDTO resultDTO = soB2cService.saveSoB2cDistribution(id, saveSoB2cDistributionDTO);
+                //申报信息匹配
+                if (resultDTO.getSuccess()){
+                    SoB2cEntity entity = soB2cService.getById(id);
+                    if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                            && CharSequenceUtil.isNotBlank(dto.getLogisticsChannelId())){
+                        soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, false);
+                    }
+                }
                 SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity, soB2cEntity, channelEntity);
                 BaseResultDTO.AddDTO add = soMultiChannelService.add(addDTO);
                 //自动提审

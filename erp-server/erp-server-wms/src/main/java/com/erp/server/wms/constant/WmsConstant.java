@@ -1,7 +1,5 @@
 package com.erp.server.wms.constant;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -78,4 +76,10 @@ public interface WmsConstant {
 
     List<String> WDT_NULL_LOCATION = Arrays.asList("直发暂存","发货暂存待放回", "下架暂存", "销退质检", "补货暂存", "其它未上架", "销退暂存", "盘亏暂存", "发货暂存", "采购未上架");
 
+
+
+    /**
+     * 发货通知单箱唛
+     */
+    String SO_DELIVERY_NOTICE_BOX_MARK="soDeliveryNoticeBoxMark";
 }

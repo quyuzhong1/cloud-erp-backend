@@ -186,6 +186,12 @@ public class SampleInitialLedgerDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 明细ID
+         */
+        private String detailId;
+
     }
 
     /**

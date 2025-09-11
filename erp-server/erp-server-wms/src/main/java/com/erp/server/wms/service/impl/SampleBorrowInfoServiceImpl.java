@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
+import com.erp.model.wms.entity.SampleReturnInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -469,7 +470,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         log.info("提交 开始修改样品借用单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动样品借用单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
@@ -604,6 +604,16 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+
+        Integer count = sampleReturnInfoService.lambdaQuery()
+                .eq(SampleReturnInfoEntity::getSourceId, entity.getId())
+                .eq(SampleReturnInfoEntity::getSourceType, SampleLedgerTypeEnum.BORROW.getCode())
+                .eq(SampleReturnInfoEntity::getIsDeleted, Boolean.FALSE)
+                .eq(SampleReturnInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_EXIST);
+        }
         return true;
     }
 
@@ -632,7 +642,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 删除日志数据
         log.info("删除 开始删除样品借用单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), entity.getCode(), "删除样品借用单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), entity.getId(), "删除样品借用单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -657,7 +667,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 .update();
         // 日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), entity.getCode(), "作废样品借用单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), entity.getId(), OperationTypeEnum.INVALID.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -811,8 +821,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             List<SampleBorrowDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleBorrowImportExcelDTO importDTO : value) {
                 String errorMsg = importDTO.getErrorMsg();
-                String[] split = errorMsg.split("；");
-                int indexTemp = split.length + 1;
+                int indexTemp = 1;
+                if(StringUtils.isNotBlank(errorMsg)){
+                    String[] split = errorMsg.split("；");
+                    indexTemp = split.length + 1;
+                }
+
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
                     errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
@@ -851,9 +865,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setDetailList(detailList);
 
-                if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                    bean.add(addDTO);
-                }
+                bean.add(addDTO);
             }
         }
     }
@@ -1024,7 +1036,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     */
     private void validateSubmit(SampleBorrowInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
@@ -1146,6 +1158,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         queryWrapper.eq(SampleBorrowInfoEntity::getInvalidStatus, false);
         queryWrapper.eq(SampleBorrowInfoEntity::getIsDeleted, false);
         queryWrapper.eq(SampleBorrowInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+        queryWrapper.orderByDesc(SampleBorrowInfoEntity::getCreateTime);
         List<SampleBorrowInfoEntity> list = this.list(queryWrapper);
         return BeanMapperUtils.copyList(SampleBorrowInfoDTO.DropDownDTO.class, list);
     }

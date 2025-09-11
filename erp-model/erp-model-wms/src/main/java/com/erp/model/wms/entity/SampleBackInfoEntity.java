@@ -104,10 +104,20 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     @TableField("dept_id")
     private String deptId;
     /**
+     * 退回部门名称
+     */
+    @TableField(exist = false)
+    private String deptName;
+    /**
     * 收货仓库ID
     */
     @TableField("warehouse_id")
     private String warehouseId;
+    /**
+     * 收货仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
     /**
     * 退回组织ID
     */

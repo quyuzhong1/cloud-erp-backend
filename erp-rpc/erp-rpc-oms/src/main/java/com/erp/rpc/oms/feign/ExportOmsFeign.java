@@ -61,7 +61,11 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/exportInvoice")
     PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
-    //销售调价导出
+
+    //收款单导出
+    @PostMapping("/feign/export/exportSoReceipt")
+    PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soPriceChange")
     PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
     //销售价目导出
@@ -78,4 +82,13 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/soMultiChannel")
     PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
 
+    /**
+     * b2b平台sku对照表信息导出
+     * @author will
+     * @date 2025/8/27 16:35
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    @PostMapping("/feign/export/b2bPlatformSku")
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 }
