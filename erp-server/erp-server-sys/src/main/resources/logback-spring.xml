@@ -159,7 +159,7 @@
 		</root>
 	</springProfile>
 	<springProfile name="prod">
-		<root level="WARN">
+		<root level="DEBUG">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_WARN" />
 		</root>
