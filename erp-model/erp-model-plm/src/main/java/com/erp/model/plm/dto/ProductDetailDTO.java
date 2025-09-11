@@ -148,6 +148,23 @@ public class ProductDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SearchSkuDTO {
+
+        /**
+         * 搜索关键字
+         */
+        @NotBlank(message = "搜索关键字不能为空")
+        private String searchKeyword;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+    }
+
     /**
      * 采购员、供应商信息
      */
@@ -379,6 +396,10 @@ public class ProductDetailDTO implements Serializable {
          */
         private String spuNo;
         /**
+         * ean码
+         */
+        private String eanNo;
+        /**
          * 产品名称
          */
         private String productName;
@@ -391,7 +412,27 @@ public class ProductDetailDTO implements Serializable {
          */
         private  Integer status;
     }
-
+    @Data
+    @NoArgsConstructor
+    public static class SkuSearchDTO {
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * ean码
+         */
+        private String ean;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
+         * sku类型
+         */
+        private String skuType;
+    }
     @Data
     public static class ServiceToWavePickingDTO {
         /**

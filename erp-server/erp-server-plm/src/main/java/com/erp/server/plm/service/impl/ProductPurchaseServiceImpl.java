@@ -11,13 +11,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.ProductPurchaseDTO;
-import com.erp.model.plm.dto.ProductPurchaseShowDTO;
-import com.erp.model.plm.dto.SkuPurchaseDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.SkuTypeEnum;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +57,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     private SupplierFeign supplierFeign;
 
     @Resource
-    private ScmTaskFeign scmTaskFeign;
+    private SkuMappingFeign skuMappingFeign;
 
     /**
      * @Description 产品采购信息查询列表
@@ -278,6 +283,51 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             throw new ServiceException("扫码SKU【{}】未审核", skuNOs);
         }
         return skuDTOS.stream().filter( e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode())).collect(Collectors.toList());
+    }
+
+    @Override
+    public ProductDetailDTO.SkuSearchDTO scanFieldType(ProductDetailDTO.SearchSkuDTO dto) {
+        ProductDetailDTO.SkuSearchDTO skuSearchDTO = new ProductDetailDTO.SkuSearchDTO();
+        if (CharSequenceUtil.isNotBlank(dto.getCustomerId())){
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setType(RuleTypeEnum.CUSTOMER.code);
+            paramDTO.setAuthId(dto.getCustomerId());
+            paramDTO.setIsExpire(Boolean.FALSE);
+            paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+            paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getSearchKeyword()));
+            List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO);
+            if (CollUtil.isNotEmpty(mappingSkuViewDTOS)){
+                skuSearchDTO.setSkuType(SkuTypeEnum.PLATFORM_SKU_NO.getCode());
+                skuSearchDTO.setPlatformSkuNo(dto.getSearchKeyword());
+                return skuSearchDTO;
+            }
+        }
+        ProductDetailDTO.SearchDTO searchDTO = new ProductDetailDTO.SearchDTO();
+        searchDTO.setSearchKeyword(dto.getSearchKeyword());
+        List<ProductDetailDTO.SkuDTO> skuDTOS = baseMapper.listSkuInfoByEanOrSkuNo(searchDTO);
+        if (CollectionUtils.isEmpty(skuDTOS)) {
+            throw new ServiceException("扫码SKU【{}】不存在", dto.getSearchKeyword());
+        }
+        //存在的已审核sku
+        List<String> skuNoList = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        String skuNOs = skuDTOS.stream().filter(e -> !Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && !skuNoList.contains(e.getSkuNo())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(skuNOs)){
+            throw new ServiceException("扫码SKU【{}】未审核", dto.getSearchKeyword());
+        }
+        ProductDetailDTO.SkuDTO skuDTO = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && dto.getSearchKeyword().equals(e.getSkuNo())).findFirst().orElse(null);
+        if (Objects.nonNull(skuDTO)){
+            skuSearchDTO.setSkuType(SkuTypeEnum.SKU.getCode());
+            skuSearchDTO.setSkuNo(skuDTO.getSkuNo());
+            return skuSearchDTO;
+        }
+        ProductDetailDTO.SkuDTO skuDTO1 = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && dto.getSearchKeyword().equals(e.getEanNo())).findFirst().orElse(null);
+        if (Objects.nonNull(skuDTO1)){
+            skuSearchDTO.setSkuType(SkuTypeEnum.EAN.getCode());
+            skuSearchDTO.setSkuNo(skuDTO1.getSkuNo());
+            skuSearchDTO.setEan(skuDTO1.getEanNo());
+            return skuSearchDTO;
+        }
+        throw new ServiceException("扫码SKU【{}】不存在", dto.getSearchKeyword());
     }
 }
 

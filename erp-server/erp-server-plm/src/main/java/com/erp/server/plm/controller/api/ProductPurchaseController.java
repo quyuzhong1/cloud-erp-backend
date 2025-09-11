@@ -31,14 +31,15 @@ public class ProductPurchaseController extends BaseController {
     private ProductPurchaseService productPurchaseService;
 
     /**
-     * 根据ean或skuNo查询sku信息
+     * 定位扫描字段类型
      * @param dto
      * @return
      */
-    @PostMapping("/listSkuInfoByEanOrSkuNo")
-    public ApiResult<List<ProductDetailDTO.SkuDTO>> listSkuInfoByEanOrSkuNo(@RequestBody ProductDetailDTO.SearchDTO dto) {
-        List<ProductDetailDTO.SkuDTO> list = productPurchaseService.listSkuInfoByEanOrSkuNo(dto);
-        return success(list);
+    @PostMapping("/scanFieldType")
+    public ApiResult<ProductDetailDTO.SkuSearchDTO> scanFieldType(@RequestBody ProductDetailDTO.SearchSkuDTO dto) {
+        ProductDetailDTO.SkuSearchDTO skuSearchDTO = productPurchaseService.scanFieldType(dto);
+        return success(skuSearchDTO);
     }
+
 
 }
