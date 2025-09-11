@@ -432,29 +432,50 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         }
         BeanMapperUtils.copy(entity, viewDTO);
         // 设置明细列表到ViewDTO中
-        List<SampleBackDetailDTO.ViewDTO> detailList = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id)).stream()
+        List<SampleBackDetailEntity> detailEntities = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id));
+        
+        // 批量查询可退回数量
+        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> availableQtyMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            // 收集所有需要查询的条件
+            Set<String> skuIds = detailEntities.stream()
+                .map(SampleBackDetailEntity::getSkuId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toSet());
+            
+            if (CollUtil.isNotEmpty(skuIds)) {
+                // 一次性查询所有SKU的可退回数量
+                SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+                searchDTO.setUserId(entity.getUserId());
+                searchDTO.setSkuIds(new ArrayList<>(skuIds));
+                searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
+                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
+                
+                // 构建SKU可用数量映射，key为userId+useUserId+skuId的组合
+                if (CollUtil.isNotEmpty(skuAvailableQtyDTOS)) {
+                    for (SampleLedgerDTO.SkuAvailableQtyDTO dto : skuAvailableQtyDTOS) {
+                        String key = dto.getUserId() + "_" + dto.getUseUserId() + "_" + dto.getSkuId();
+                        availableQtyMap.put(key, dto);
+                    }
+                }
+            }
+        }
+        
+        // 构建最终结果
+        List<SampleBackDetailDTO.ViewDTO> detailList = detailEntities.stream()
             .map(detail -> {
                 SampleBackDetailDTO.ViewDTO detailDTO = new SampleBackDetailDTO.ViewDTO();
                 BeanMapperUtils.copy(detail, detailDTO);
                 
-                // 查询可退回数量
-                SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-                searchDTO.setUserId(entity.getUserId());
-                searchDTO.setUseUserId(detail.getUseUserId());
-                searchDTO.setSkuIds(Collections.singletonList(detail.getSkuId()));
-                searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
-                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
-                
-                // 设置可退回数量
-                if (CollUtil.isNotEmpty(skuAvailableQtyDTOS)) {
-                    Integer availableQty = skuAvailableQtyDTOS.stream()
-                        .mapToInt(SampleLedgerDTO.SkuAvailableQtyDTO::getAvailableQty)
-                        .sum();
-                    detailDTO.setAvailableQty(availableQty);
-                } else {
+                // 从映射中获取可退回数量
+                String key = entity.getUserId() + "_" + detail.getUseUserId() + "_" + detail.getSkuId();
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = availableQtyMap.get(key);
+                if (!Objects.isNull(skuAvailableQtyDTO)){
+                    detailDTO.setAvailableQty(skuAvailableQtyDTO.getAvailableQty());
+                    detailDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
+                }else {
                     detailDTO.setAvailableQty(0);
                 }
-                
                 return detailDTO;
             })
             .collect(Collectors.toList());
@@ -466,7 +487,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             viewDTO.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
-        
+
+
         return viewDTO;
     }
 
