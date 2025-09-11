@@ -2548,6 +2548,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .set(SoDeliveryNoticeEntity::getSellerId, soInfoEntity.getSellerId())
                     .set(SoDeliveryNoticeEntity::getSellerName, soInfoEntity.getSellerName())
                     .eq(SoDeliveryNoticeEntity::getSourceId, soInfoEntity.getId())
+                    .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
                     .update();
         }
     }
