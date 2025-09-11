@@ -662,6 +662,15 @@ public class DmpInoutController extends BaseController {
 				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
 				dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
 				dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+			}else {
+				queryParams = new ArrayList<>();
+				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+				queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
+				queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
+				queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
+				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
+				dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+				dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
 			}
 		} catch (Exception e) {
 			log.error("失败重推数帝云没有时间的线上订单，系统：" + sourceSystem , e);
