@@ -168,7 +168,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     */
     private void handleData(ThirdProcessDefinitionEntity entity) {
         ThirdProcessDefinitionEntity old = getByApprovalCode(entity.getApprovalCode());
-        if (ObjectUtil.isNotEmpty(old.getId()) && !CharSequenceUtil.equals(entity.getId(), old.getId())) {
+        if (ObjectUtil.isNotEmpty(old) && !CharSequenceUtil.equals(entity.getId(), old.getId())) {
             throw new ServiceException("审批定义编码【{}】已存在",entity.getApprovalCode());
         }
     }
