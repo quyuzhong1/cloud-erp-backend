@@ -187,4 +187,8 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
      * @date:  2025-08-29
      */
     List<SampleReturnInfoDTO.ListDTO> listReturnById(String id);
+
+    List<SampleBorrowInfoDTO.TabListDTO> tabListApp(PermissionsDTO param);
+
+    PagingVO<SampleBorrowInfoDTO.ListDTO> pagingApp(PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
 }
