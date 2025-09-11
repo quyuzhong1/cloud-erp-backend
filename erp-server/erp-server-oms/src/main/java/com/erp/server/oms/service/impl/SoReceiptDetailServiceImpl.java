@@ -93,7 +93,6 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
     @Override
     public List<SoReceiptDetailEntity> listByMainIds(List<String> mainIds) {
-
         if(CollectionUtils.isNotEmpty(mainIds)){
             return super.lambdaQuery().in(SoReceiptDetailEntity::getMainId, mainIds).list();
         }
@@ -114,8 +113,12 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         //付款流水号不能重复
         Set<String> paymentNoSet = new HashSet<>();
         for (SoReceiptDetailDTO.UpdateDTO dto : detailList) {
-            if(!paymentNoSet.add(dto.getPaymentNo())){
-                throw new ServiceException("付款流水号不能重复");
+            String paymentNo = dto.getPaymentNo();
+            // 如果是空字符串，跳过重复检查
+            if (paymentNo != null && !paymentNo.isEmpty()) {
+                if(!paymentNoSet.add(paymentNo)){
+                    throw new ServiceException("付款流水号不能重复");
+                }
             }
         }
         //销售单号不能重复

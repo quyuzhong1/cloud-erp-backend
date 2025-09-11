@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -553,7 +554,10 @@ public class SoReceiptDTO implements Serializable {
         @NotBlank(message = "收款方式不能为空")
         @Size(max = 255,message = "收款方式最大长度不能超过255位")
         private String dictReceiptMethod;
-
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiptAmount;
         /**
          * 收款账号
          */
@@ -588,6 +592,10 @@ public class SoReceiptDTO implements Serializable {
         private String salesOrgId;
 
         /**
+         * 平台订单Id
+         */
+        private String platformOrderId;
+        /**
         * 来源类型
         */
         private String sourceType;
@@ -607,6 +615,10 @@ public class SoReceiptDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 来源自第三方更新
+         */
+        private Boolean isFromPlatform = false;
         /**
          * 附件列表
          */

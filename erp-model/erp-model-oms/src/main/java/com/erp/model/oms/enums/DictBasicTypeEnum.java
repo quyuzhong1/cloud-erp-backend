@@ -19,6 +19,7 @@ public enum DictBasicTypeEnum {
     SALES_PLATFORM_OTHER("otherSalesPlatform" , "其他"),
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式"),
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
+    DHT_ACCOUNT_TYPE("dhtAccountType",  "订货通账户类型"),
     LOGISTICS_METHOD("logisticsMethod",  "b2c销售订单物流方式"),
     COMPARE("compare",  "订单规则的匹配"),
     FIELD("field","字段选项"),

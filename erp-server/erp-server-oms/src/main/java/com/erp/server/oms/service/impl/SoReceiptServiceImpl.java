@@ -6,12 +6,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.PlatformReceiptDTO;
+import com.common.business.dto.PlatformReceiptDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -34,6 +37,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.mapper.SoReceiptMapper;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -82,6 +86,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     private DictBasicService dictBasicService;
 
     @Resource
+    private SyncDhtService syncDhtService;
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
@@ -100,16 +106,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         SoReceiptEntity soReceiptEntity = new SoReceiptEntity();
         BeanMapperUtils.copy(addDTO, soReceiptEntity);
 
-        // 数据处理
-        handleData(soReceiptEntity);
-
         List<SoReceiptDetailDTO.AddDTO> detailList = addDTO.getDetailList();
-        //求和总收款金额
-        if(CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException("收款单明细不能为空");
+
+        if(Objects.nonNull(addDTO.getReceiptAmount())){
+            BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+            soReceiptEntity.setReceiptAmount(totalAmount);
         }
-        BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        soReceiptEntity.setReceiptAmount(totalAmount);
         log.info("开始新增收款单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SKD);
@@ -147,17 +149,17 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        //第三方平台的不允许在ERP修改
+        if(old.getSourceType().equals(SoReceiptSourceTypeEnum.THIRD.getCode()) && !addOrUpdateDTO.getIsFromPlatform()){
+            throw new ServiceException("第三方平台的收款单不允许在ERP修改");
+        }
         SoReceiptEntity soReceiptEntity =  BeanMapperUtils.map(SoReceiptEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(soReceiptEntity);
         List<SoReceiptDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
 
         //求和总收款金额
-        if(CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException("收款单明细不能为空");
-        }
-        BigDecimal totalAmount; detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAmount;
 
         //更新明细
         soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList(),addOrUpdateDTO.isFromSoUpdate());
@@ -167,7 +169,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }else{
             totalAmount = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         }
-        soReceiptEntity.setReceiptAmount(totalAmount);
+        if(Objects.nonNull(addOrUpdateDTO.getReceiptAmount())){
+            soReceiptEntity.setReceiptAmount(totalAmount);
+        }
         boolean save = super.updateById(soReceiptEntity);
         if(!save) {
             throw new ServiceException("收款单保存失败");
@@ -347,6 +351,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        //第三方平台的不允许在ERP修改
+        if(entity.getSourceType().equals(SoReceiptSourceTypeEnum.THIRD.getCode())){
+            throw new ServiceException("第三方平台的收款单不允许反审核");
+        }
         List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<String> soIds = detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
@@ -392,7 +400,6 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "收款单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -416,6 +423,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             //更新销售订单的收款金额
             Map<String,BigDecimal> updateSoReceiptAmountMap = detailEntityList.stream().collect(Collectors.groupingBy(SoReceiptDetailEntity::getSoId,Collectors.mapping(SoReceiptDetailEntity::getReceiptAmount,Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
             soInfoService.updateSoReceiptAmount(updateSoReceiptAmountMap);
+            //创建推送订货通任务
+            syncDhtService.createSyncReceiptTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
         return Boolean.TRUE;
@@ -507,7 +516,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         //查询原有
         List<SoReceiptDTO.SoViewDTO> oldList = this.getSoViewDTO(soInfo);
         List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> newDetailIds = soReceiptDTOList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StrUtils::isNotEmpty).collect(Collectors.toList());
         List<SoReceiptDetailEntity> soReceiptDetailEntityList = CollectionUtil.isNotEmpty(oldDetailIds)? soReceiptDetailService.listByIds(oldDetailIds):new ArrayList<>();
         List<SoReceiptEntity> soReceiptEntityList = CollectionUtil.isNotEmpty(oldIds)?this.listByIds(oldIds):new ArrayList<>();
@@ -523,6 +532,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setDictReceiptMethod(add.getDictReceiptMethod());
             addDTO.setReceiptAccount(add.getReceiptAccount());
             addDTO.setReceiptDate(add.getReceiptDate());
+            addDTO.setSourceType(SoReceiptSourceTypeEnum.SO_INFO.getCode());
             SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
             detailAddDTO.setSoId(soInfo.getId());
             detailAddDTO.setSoCode(soInfo.getCode());
@@ -549,6 +559,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             updateDTO.setReceiptDate(update.getReceiptDate());
             updateDTO.setDictReceiptMethod(update.getDictReceiptMethod());
             updateDTO.setReceiptAccount(update.getReceiptAccount());
+            updateDTO.setSourceType(SoReceiptSourceTypeEnum.SO_INFO.getCode());
+            updateDTO.setSalesOrgId(soInfo.getSalesOrgId());
             SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
             detailUpdateDTO.setId(update.getDetailId());
             detailUpdateDTO.setReceiptAmount(update.getReceiptAmount());
@@ -774,6 +786,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     * @param approveStatus
     */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void updateForDisApprove(String id, String approveStatus) {
         this.lambdaUpdate().eq(SoReceiptEntity::getId, id)
             .set(SoReceiptEntity::getApproveUserId, "")
@@ -837,9 +850,173 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         return;
     }
 
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(SoReceiptEntity soReceiptEntity) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handlePlatformConsumer(PlatformReceiptDTO dto) {
+        //查询是否存在
+        SoReceiptEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        List<SoReceiptDetailEntity> existList;
+        if(exist != null) {
+            existList = soReceiptDetailService.listByMainIds(Arrays.asList((exist.getId())));
+            //如果是作废，erp单据也要作废
+            if(dto.getIsInvalid()){
+                if(exist.getInvalidStatus()){
+                    log.warn("PlatformReceiptConsumerService.handle 收款单已作废，参数：{}", JSONUtil.toJsonStr(dto));
+                    return;
+                }
+                exist.setInvalidStatus(true);
+                exist.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+                this.updateById(exist);
+                return;
+            }
+            //存在判断是否有字段变更
+            boolean hasChange = judgeHasChange(exist,existList, dto);
+            if(!hasChange){
+                log.warn("PlatformReceiptConsumerService.handle 收款单无变化，参数：{}",JSONUtil.toJsonStr(dto));
+                return;
+            }
+            //如果是审核中，撤销审核
+            if(ApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
+                this.cancelProcess(exist.getId());
+            }
+            //如果是已审核，反审核
+            if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                this.updateForDisApprove(exist.getId(),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            }
+            //其他状态，直接更新
+            SoReceiptDTO.UpdateDTO addOrUpdateDTO = new SoReceiptDTO.UpdateDTO();
+            addOrUpdateDTO.setId(exist.getId());
+            addOrUpdateDTO.setCurrency(dto.getCurrency());
+            addOrUpdateDTO.setIsPosted(dto.getIsPosted());
+            addOrUpdateDTO.setPostedAccount(dto.getErpPostedAccount());
+            addOrUpdateDTO.setSourceType(SoReceiptSourceTypeEnum.THIRD.getCode());
+            addOrUpdateDTO.setPlatformOrderId(dto.getPlatformId());
+            addOrUpdateDTO.setAttachmentList(dto.getAttachmentList());
+            addOrUpdateDTO.setReceiptDate(dto.getReceiptDate());
+            addOrUpdateDTO.setDictReceiptMethod(dto.getErpReceiptMethod());
+            addOrUpdateDTO.setReceiptAccount(dto.getErpReceiptAccountId());
+            addOrUpdateDTO.setSalesOrgId(dto.getErpSaleOrgId());
+            addOrUpdateDTO.setRemark(dto.getRemark());
+            addOrUpdateDTO.setThirdCode(dto.getCode());
+            addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
+            addOrUpdateDTO.setIsFromPlatform(true);
+            List<SoReceiptDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
+            List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
+            for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
+                SoReceiptDetailEntity existDetail = existList.stream().filter(v -> v.getPlatformDetailId().equals(platformReceiptDetailDTO.getPlatformDetailId())).findFirst().orElse(null);
+                if(Objects.isNull(existDetail)){
+                    continue;
+                }
+                SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
+                detailUpdateDTO.setId(existDetail.getId());
+                detailUpdateDTO.setReceiptAmount(platformReceiptDetailDTO.getAmount());
+                detailUpdateDTO.setRemark(platformReceiptDetailDTO.getRemark());
+                detailUpdateDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
+                detailUpdateDTO.setSoCode(platformReceiptDetailDTO.getSoCode());
+                detailUpdateDTO.setPlatformDetailCode(platformReceiptDetailDTO.getCode());
+                detailUpdateDTO.setSoId(platformReceiptDetailDTO.getErpSoId());
+                detailUpdateDTO.setMainId(exist.getId());
+                detailUpdateDTO.setPlatformDetailId(platformReceiptDetailDTO.getPlatformDetailId());
+                updateDTOList.add(detailUpdateDTO);
+            }
+            addOrUpdateDTO.setDetailList(updateDTOList);
+            this.update(addOrUpdateDTO);
+            //处理删除的明细
+            List<String> platformDetailIds = detailList.stream().map(PlatformReceiptDetailDTO::getPlatformDetailId).collect(Collectors.toList());
+            List<SoReceiptDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(deleteDetailList)){
+                soReceiptDetailService.removeByIds(deleteDetailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList()));
+            }
+        }else{
+            //如果是作废，直接跳过
+            if(dto.getIsInvalid()){
+                return;
+            }
+            //新增单据
+            SoReceiptDTO.AddDTO addDTO = new SoReceiptDTO.AddDTO();
+            addDTO.setCurrency(dto.getCurrency());
+            addDTO.setIsPosted(dto.getIsPosted());
+            addDTO.setPostedAccount(dto.getErpPostedAccount());
+            addDTO.setSourceType(SoReceiptSourceTypeEnum.THIRD.getCode());
+            addDTO.setPlatformOrderId(dto.getPlatformId());
+            addDTO.setAttachmentList(dto.getAttachmentList());
+            addDTO.setReceiptDate(dto.getReceiptDate());
+            addDTO.setDictReceiptMethod(dto.getErpReceiptMethod());
+            addDTO.setReceiptAccount(dto.getErpReceiptAccountId());
+            addDTO.setSalesOrgId(dto.getErpSaleOrgId());
+            addDTO.setRemark(dto.getRemark());
+            addDTO.setThirdCode(dto.getCode());
+            addDTO.setThirdSystem(dto.getThirdSystem());
+            List<SoReceiptDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(dto.getDetail())){
+                for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetail()) {
+                    SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
+                    detailAddDTO.setReceiptAmount(platformReceiptDetailDTO.getAmount());
+                    detailAddDTO.setRemark(platformReceiptDetailDTO.getRemark());
+                    detailAddDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
+                    detailAddDTO.setSoCode(platformReceiptDetailDTO.getSoCode());
+                    detailAddDTO.setPlatformDetailCode(platformReceiptDetailDTO.getCode());
+                    detailAddDTO.setSoId(platformReceiptDetailDTO.getErpSoId());
+                    detailAddDTO.setPlatformDetailId(platformReceiptDetailDTO.getPlatformDetailId());
+                    detailAddDTOList.add(detailAddDTO);
+                }
+            }
+            addDTO.setDetailList(detailAddDTOList);
+            this.add(addDTO);
+        }
     }
+
+    private boolean judgeHasChange(SoReceiptEntity exist, List<SoReceiptDetailEntity> existList, PlatformReceiptDTO dto) {
+        //校验主表字段
+        if(!exist.getCustomerId().equals(dto.getErpCustomerId())
+                || !exist.getCurrency().equals(dto.getCurrency())
+                || !exist.getIsPosted().equals(dto.getIsPosted())
+                || !exist.getPostedAccount().equals(dto.getErpPostedAccount())
+                || !exist.getRemark().equals(dto.getRemark())
+                || !exist.getReceiptAmount().equals(dto.getAmount())
+                || !exist.getDictReceiptMethod().equals(dto.getErpReceiptMethod())
+                || !exist.getReceiptAccount().equals(dto.getErpReceiptAccountId())
+                || !exist.getReceiptDate().equals(dto.getReceiptDate())
+                || !exist.getSalesOrgId().equals(dto.getErpSaleOrgId())
+        ){
+            return true;
+        }
+        //校验明细
+        List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetail();
+        if(existList.size() != platformReceiptDetailDTOList.size()){
+            return true;
+        }
+        //根据明细ID进行匹配
+        Map<String, SoReceiptDetailEntity> existDetailMap = existList.stream().collect(Collectors.toMap(SoReceiptDetailEntity::getPlatformDetailId, e->e));
+        Map<String, PlatformReceiptDetailDTO> platformDetailMap = platformReceiptDetailDTOList.stream().collect(Collectors.toMap(PlatformReceiptDetailDTO::getPlatformDetailId, e->e));
+
+        //校验ERP存在的明细，平台不存在或者有变化
+        for(Map.Entry<String, SoReceiptDetailEntity> entry : existDetailMap.entrySet()){
+            String key = entry.getKey();
+            SoReceiptDetailEntity existDetail = entry.getValue();
+            PlatformReceiptDetailDTO platformDetail = platformDetailMap.get(key);
+            if(platformDetail == null){
+                return true;
+            }
+            if(!existDetail.getReceiptAmount().equals(platformDetail.getAmount())
+                    || !existDetail.getRemark().equals(platformDetail.getRemark())
+                    || !existDetail.getSoCode().equals(platformDetail.getSoCode())
+                    || !existDetail.getPlatformDetailCode().equals(platformDetail.getCode())
+            ){
+                return true;
+            }
+        }
+        //校验平台存在的明细，erp不存在
+        for(Map.Entry<String, PlatformReceiptDetailDTO> entry : platformDetailMap.entrySet()){
+            String key = entry.getKey();
+            PlatformReceiptDetailDTO platformDetail = entry.getValue();
+            SoReceiptDetailEntity existDetail = existDetailMap.get(key);
+            if(existDetail == null){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }
