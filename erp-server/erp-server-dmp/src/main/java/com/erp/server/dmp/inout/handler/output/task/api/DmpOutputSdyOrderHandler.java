@@ -787,6 +787,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     			}
             }
             
+            shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());
+            shudiyunB2cOrderDTO.setSuite_name(dmpSoDetailEntity.getSuiteName());
+            
             if(shudiyunB2cOrderDTO.getGoods_transaction_quantity() == null || shudiyunB2cOrderDTO.getGoods_transaction_quantity() == 0) {
             	shudiyunB2cOrderDTO.setGoods_status("已取消");
             }
