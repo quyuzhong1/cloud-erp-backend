@@ -150,6 +150,10 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoDeliveryEntity, cfgOutputId)) {
     			return result;
     		}
+    		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
+    		if(isB2B) {
+    			return result;
+    		}
     		Tools.nullToBlank(dmpSoDeliveryEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdDeliveryId = dmpSoDeliveryEntity.getThirdDeliveryId();
@@ -184,7 +188,6 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	        	platformCode = thirdDeliveryCode;
 	        }
 
-    		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
     		if(payTime != null) {
     			payTimeFormat = localDateTime.format(payTime);

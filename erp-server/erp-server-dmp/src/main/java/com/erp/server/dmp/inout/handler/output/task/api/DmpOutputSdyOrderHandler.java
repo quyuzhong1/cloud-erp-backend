@@ -132,6 +132,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         //如果是亚马逊的优惠额在明细里
         if (PlatformDictEnum.AMAZON.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
             totalDiscount = dmpSoDetailEntities.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if(StringUtils.isNotBlank(dmpSoInfoEntity.getThirdCode()) && dmpSoInfoEntity.getThirdCode().startsWith("S")) {
+            	return result;
+            }
         }
 
 
@@ -783,6 +786,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     				}
     			}
             }
+            
+            if(shudiyunB2cOrderDTO.getGoods_transaction_quantity() == null || shudiyunB2cOrderDTO.getGoods_transaction_quantity() == 0) {
+            	shudiyunB2cOrderDTO.setGoods_status("已取消");
+            }
+            
             shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
