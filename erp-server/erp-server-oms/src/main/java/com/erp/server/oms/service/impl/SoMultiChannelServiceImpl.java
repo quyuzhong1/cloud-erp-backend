@@ -591,13 +591,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
+        String logisticsChannelId = entity.getLogisticsChannelId();
+        String logisticsChannelName = entity.getLogisticsChannelName();
+        String trackNo = entity.getTrackNo();
+        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
         //重新查询订单信息
         entity = this.getById(entity.getId());
         if (Objects.isNull(entity)){
+            addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
             return BatchResultDTO.success("", "", "发货拦截作废成功");
-        }
-        if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isBlank(entity.getSoId())) {
-            return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "订单状态已作废，不能发货拦截");
@@ -631,7 +633,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .eq(SoMultiChannelEntity::getId, entity.getId()).update();
         }
 
-        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+
         if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
             //销售订单取消多渠道标识
             soB2cService.lambdaUpdate()
@@ -649,8 +651,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
+        addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
+    }
+
+    private void addDeliveryIntercept(String logisticsChannelId,String logisticsChannelName,String trackNo, String remark, SoB2cEntity soB2cEntity) {
         //检查拦截单是否存在，不存在就新增
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soB2cEntity.getId()));
         if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)) {
             SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
             addDTO.setBillType(OrderTypeEnum.B2C.getCode());
@@ -658,9 +665,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
             List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
             addDTO.setDetailList(detailList);
-            addDTO.setLogisticsChannelId(entity.getLogisticsChannelId());
-            addDTO.setLogisticsChannelName(entity.getLogisticsChannelName());
-            addDTO.setTransportNo(entity.getTrackNo());
+            addDTO.setLogisticsChannelId(logisticsChannelId);
+            addDTO.setLogisticsChannelName(logisticsChannelName);
+            addDTO.setTransportNo(trackNo);
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
             addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
@@ -668,7 +675,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             addDTO.setHandleTime(LocalDateTime.now());
             soB2cDeliveryInterceptFeign.add(addDTO);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
     }
 
     @Override
