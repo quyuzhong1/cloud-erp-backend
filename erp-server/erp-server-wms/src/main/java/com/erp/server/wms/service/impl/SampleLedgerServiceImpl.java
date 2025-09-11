@@ -157,7 +157,8 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
         //处理展会冻结库存数量
         handleExhibitionFreezeQty(params, records);
-        pageData.setRecords(records);
+        //过滤可用库存大于0的记录
+        pageData.setRecords(records.stream().filter(e -> e.getAvailableQty() > 0).collect(Collectors.toList()));
         return new PagingVO<>(pageData);
     }
 
