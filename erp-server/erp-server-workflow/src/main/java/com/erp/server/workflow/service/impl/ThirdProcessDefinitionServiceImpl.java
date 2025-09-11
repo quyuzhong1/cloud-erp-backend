@@ -59,9 +59,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Autowired
     private DictBasicService dictBasicService;
 
-    @Autowired
-    private FsService fsService;
-
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -168,11 +165,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Override
     public void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
-    }
-
-    @Override
-    public String getFsAppId() {
-        return fsService.getFsClientId();
     }
 
     /**

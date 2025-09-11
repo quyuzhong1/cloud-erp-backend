@@ -49,12 +49,4 @@ public interface ThirdProcessDefinitionService extends SuperService<ThirdProcess
     BatchResultDTO enable(String id, @NotNull(message = "启用状态不能为空") Boolean enableStatus);
 
     void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response);
-
-    /**
-     * 获取飞书应用ID
-     * @author will
-     * @date 2025/9/5 10:57
-     * @return String
-     */
-    String getFsAppId();
 }
