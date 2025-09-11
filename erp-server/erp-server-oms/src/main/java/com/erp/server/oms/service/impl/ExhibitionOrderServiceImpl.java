@@ -1459,23 +1459,32 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             return Collections.emptyList();
         }
 
-        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = baseMapper.listFreezeQtyBySku(dto);
-        if(CollUtil.isNotEmpty(freezeQtyBySkus)){
-            //sku的历史价格
-            List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = soDetailService.listSkuPriceHistory(dto.getSkuIds());
+        //sku的历史价格
+        List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = soDetailService.listSkuPriceHistory(dto.getSkuIds());
 
-            for (ExhibitionOrderDTO.FreezeQtyBySku item : freezeQtyBySkus) {
-                String skuId = item.getSkuId();
-                SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
-                        filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
-                if (skuHistoryPrice != null) {
-                    item.setMaxPrice(skuHistoryPrice.getMaxPrice());
-                    item.setMinPrice(skuHistoryPrice.getMinPrice());
-                    item.setAvgPrice(skuHistoryPrice.getAvgPrice());
-                }
+        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = baseMapper.listFreezeQtyBySku(dto);
+
+        List<ExhibitionOrderDTO.FreezeQtyBySku> resulst =new ArrayList<>();
+
+        for (String skuId : dto.getSkuIds()) {
+            ExhibitionOrderDTO.FreezeQtyBySku item = freezeQtyBySkus.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(Objects.isNull(item)){
+                item = new ExhibitionOrderDTO.FreezeQtyBySku();
+                item.setSkuId(skuId);
+                item.setFreezeQty(0);
             }
+            SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuHistoryPrice != null) {
+                item.setMaxPrice(skuHistoryPrice.getMaxPrice());
+                item.setMinPrice(skuHistoryPrice.getMinPrice());
+                item.setAvgPrice(skuHistoryPrice.getAvgPrice());
+            }
+
+
+            resulst.add(item);
         }
-        return freezeQtyBySkus;
+        return resulst;
     }
 
     @Override
