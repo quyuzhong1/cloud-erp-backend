@@ -419,6 +419,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
+            throw new ServiceException("已作废订单不允许删除");
+        }
         //进行发货拦截
         deliveryIntercept(entity, true, false, "多渠道订单删除");
         // 删除主单数据
