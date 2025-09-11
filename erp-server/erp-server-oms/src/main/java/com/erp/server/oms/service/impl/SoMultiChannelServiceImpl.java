@@ -655,7 +655,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
         if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
             //销售订单取消多渠道标识
             soB2cService.lambdaUpdate()
