@@ -230,7 +230,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                     continue;
                 }
                 OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
-                if(!overseasProviderEntity.getIsProductSync()){
+                if(!overseasProviderEntity.getIsProductSync() && overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
                     dto.setErrorMsg("服务商账号未开启产品同步");
                     errorList.add(dto);
                     continue;
