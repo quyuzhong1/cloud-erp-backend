@@ -84,7 +84,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
         }
 
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), TaskConstant.LX_PULL_DATA_TASK));
+//        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), TaskConstant.LX_PULL_DATA_TASK));
 
     }
 
