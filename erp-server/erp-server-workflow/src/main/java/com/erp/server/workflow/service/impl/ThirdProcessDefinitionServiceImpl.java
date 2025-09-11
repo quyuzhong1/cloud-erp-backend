@@ -1,6 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,7 +23,6 @@ import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
@@ -64,12 +65,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdProcessDefinitionDTO.AddDTO addDTO) {
-        Optional.ofNullable(this.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>()
-                        .eq(ThirdProcessDefinitionEntity::getApprovalCode, addDTO.getApprovalCode())
-                        .eq(ThirdProcessDefinitionEntity::getIsDeleted, false)))
-                .ifPresent(exists -> {
-                    throw new ServiceException("审批定义code {} 已存在",addDTO.getApprovalCode());
-                });
+      
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessDefinitionEntity);
         thirdProcessDefinitionEntity.setSourcePlatform(ProcessSourcePlatformEnum.FS.getCode());
@@ -170,7 +166,22 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     /**
     * 新增修改处理数据
     */
-    private void handleData(ThirdProcessDefinitionEntity thirdProcessDefinitionEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(ThirdProcessDefinitionEntity entity) {
+        ThirdProcessDefinitionEntity old = getByApprovalCode(entity.getApprovalCode());
+        if (ObjectUtil.isNotEmpty(old.getId()) && !CharSequenceUtil.equals(entity.getId(), old.getId())) {
+            throw new ServiceException("审批定义编码【{}】已存在",entity.getApprovalCode());
+        }
+    }
+    
+    
+    /**
+     * 根据审批定义编码查询
+     * @author will 
+     * @date 2025/9/10 18:17
+     * @param approvalCode 
+     * @return ThirdProcessDefinitionEntity
+     */
+    private ThirdProcessDefinitionEntity getByApprovalCode(String approvalCode) {
+        return lambdaQuery().eq(ThirdProcessDefinitionEntity::getApprovalCode,approvalCode).last("limit 1").one();
     }
 }
