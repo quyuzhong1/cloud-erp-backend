@@ -596,6 +596,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         String logisticsChannelId = entity.getLogisticsChannelId();
         String logisticsChannelName = entity.getLogisticsChannelName();
+        String deliveryCode = entity.getDeliveryCode();
         String trackNo = entity.getTrackNo();
         SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
         if (Objects.isNull(soB2cEntity)){
@@ -604,7 +605,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         //重新查询订单信息
         entity = this.getById(entity.getId());
         if (Objects.isNull(entity)){
-            addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
+            addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, deliveryCode);
             return BatchResultDTO.success("", "", "发货拦截作废成功");
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
@@ -638,18 +639,23 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
                     .eq(SoMultiChannelEntity::getId, entity.getId()).update();
         }
-        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(entity.getDeliveryCode(), entity.getSoId());
+        addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode());
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
+    }
+
+    private void addDeliveryIntercept(String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity, String deliveryCode) {
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = null;
+        if (CharSequenceUtil.isNotBlank(deliveryCode)){
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(deliveryCode, soB2cEntity.getId());
+        }else {
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(soB2cEntity.getId());
+        }
         //发货单标记取消发货
         if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
             thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
-        addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
-        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
-    }
-
-    private void addDeliveryIntercept(String logisticsChannelId,String logisticsChannelName,String trackNo, String remark, SoB2cEntity soB2cEntity) {
         if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
             //销售订单取消多渠道标识
             soB2cService.lambdaUpdate()
