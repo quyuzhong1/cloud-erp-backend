@@ -598,6 +598,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         String logisticsChannelName = entity.getLogisticsChannelName();
         String trackNo = entity.getTrackNo();
         SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            return BatchResultDTO.fail("", "",  "销售订单不存在不进行拦截");
+        }
         //重新查询订单信息
         entity = this.getById(entity.getId());
         if (Objects.isNull(entity)){
@@ -635,18 +638,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
                     .eq(SoMultiChannelEntity::getId, entity.getId()).update();
         }
-
-
-        if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
-            //销售订单取消多渠道标识
-            soB2cService.lambdaUpdate()
-                    .set(SoB2cEntity::getMultiChannelType, "")
-                    .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode())
-                    .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
-                    .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
-                    .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
-                    .eq(SoB2cEntity::getId, entity.getSoId()).update();
-        }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(entity.getDeliveryCode(), entity.getSoId());
         //发货单标记取消发货
         if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
@@ -659,6 +650,16 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     private void addDeliveryIntercept(String logisticsChannelId,String logisticsChannelName,String trackNo, String remark, SoB2cEntity soB2cEntity) {
+        if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
+            //销售订单取消多渠道标识
+            soB2cService.lambdaUpdate()
+                    .set(SoB2cEntity::getMultiChannelType, "")
+                    .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode())
+                    .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
+                    .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
+                    .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
+                    .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
+        }
         //检查拦截单是否存在，不存在就新增
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soB2cEntity.getId()));
         if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)) {
