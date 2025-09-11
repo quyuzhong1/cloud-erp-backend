@@ -591,6 +591,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSoId())) {
+            return BatchResultDTO.fail("", "", "销售订单不存在不进行拦截");
+        }
         String logisticsChannelId = entity.getLogisticsChannelId();
         String logisticsChannelName = entity.getLogisticsChannelName();
         String trackNo = entity.getTrackNo();
