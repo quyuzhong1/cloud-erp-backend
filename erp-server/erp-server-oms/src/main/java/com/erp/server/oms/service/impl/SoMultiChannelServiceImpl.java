@@ -593,6 +593,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
         //重新查询订单信息
         entity = this.getById(entity.getId());
+        if (Objects.isNull(entity)){
+            return BatchResultDTO.success("", "", "发货拦截作废成功");
+        }
         if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isBlank(entity.getSoId())) {
             return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
         }
