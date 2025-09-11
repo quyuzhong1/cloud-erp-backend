@@ -102,4 +102,11 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
     ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId);
 
     List<ProductDetailDTO.SkuDTO> listSkuInfoByEanOrSkuNo(ProductDetailDTO.SearchDTO dto);
+
+    /**
+     * 扫描字段类型
+     * @param dto
+     * @return
+     */
+    ProductDetailDTO.SkuSearchDTO scanFieldType(ProductDetailDTO.SearchSkuDTO dto);
 }
