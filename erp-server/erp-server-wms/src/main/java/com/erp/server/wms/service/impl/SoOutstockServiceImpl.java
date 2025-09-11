@@ -1421,7 +1421,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送数帝云
             List<SoOutstockDetailEntity> detailEntityList = detailMap.get(entity.getId());
             syncKingdeeSoOutstockService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
-
+            //删除三方仓发货单
+            if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(entity.getSourceId()));
+            }
             //清空销售订单的出库时间
             this.handleSoOutDate(Collections.singletonList(entity));
 
@@ -4043,6 +4046,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
+            //删除三方仓发货单
+            List<String> sourceIds = list.stream()
+                    .filter(obj -> SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(obj.getSourceType()))
+                    .map(SoOutstockEntity::getSourceId)
+                    .collect(Collectors.toList());
+            thirdWarehouseDeliveryService.deleteByIds(sourceIds);
 
             //清空销售订单的出库时间
             this.handleSoOutDate(removeList);
