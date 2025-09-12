@@ -780,7 +780,6 @@
         sm.product_name AS skuName,
         li.platform_sku_no,
         li.platform_sku_name
-        from
         FROM sku_mapping sm
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE
