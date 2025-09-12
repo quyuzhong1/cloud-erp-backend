@@ -1,6 +1,7 @@
 package com.sdk.oms.dht.service;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.dht.config.DhtConfig;
@@ -55,6 +56,19 @@ public class DhtReceiptService {
         String api = DhtConstants.CRM_QUERY_URL;
         Map<String, String> headerMap = new HashMap<>();
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
+        return DhtUtils.parseToJiFengResp(bodyStr, new TypeReference<DhtBaseResp<String>>() {});
+    }
+
+    /**
+     */
+    public DhtBaseResp<String> updateReceipt(Map<String, Object> bodyMap) {
+        DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
+        bodyMap.put("corpAccessToken", authDTO.getCorpAccessToken());
+        bodyMap.put("currentOpenUserId", authDTO.getOpenUserId());
+        bodyMap.put("corpId", authDTO.getCorpId());
+        String api = DhtConstants.CRM_UPDATE_URL;
+        Map<String, String> headerMap = new HashMap<>();
+        String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(bodyMap), headerMap);
         return DhtUtils.parseToJiFengResp(bodyStr, new TypeReference<DhtBaseResp<String>>() {});
     }
 }
