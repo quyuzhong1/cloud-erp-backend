@@ -65,8 +65,6 @@ public class ExhibitionOrderExcelListener extends AnalysisEventListener<Exhibiti
         this.importCount = importCount;
     }
 
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
     /**
      * 每解析一行数据回调一遍
      *

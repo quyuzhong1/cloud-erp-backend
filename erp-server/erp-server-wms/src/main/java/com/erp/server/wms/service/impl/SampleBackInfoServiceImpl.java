@@ -431,6 +431,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单");
         }
         BeanMapperUtils.copy(entity, viewDTO);
+
+        viewDTO.setApproveStatus(entity.getApproveStatus().getCode());
         // 设置明细列表到ViewDTO中
         List<SampleBackDetailEntity> detailEntities = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id));
         

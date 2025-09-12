@@ -166,6 +166,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Resource
     private SoInfoService soInfoService;
 
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
+    private final DateTimeFormatter dateTimeFormatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1624,11 +1628,23 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 //单据日期
                 String billDateStr = mainInfo.getBillDateStr();
                 if(StringUtils.isNotBlank(billDateStr)){
-                    LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
-                    if (Objects.isNull(billDate)) {
-                        errorMsgList.add("单据日期不能为空");
+                    LocalDate billDate = null;
+                    try {
+                        billDate = LocalDate.parse(billDateStr, dateTimeFormatter);
+                    } catch (Exception e1) {
+                        try {
+                            billDate = LocalDate.parse(billDateStr, dateTimeFormatter2);
+                        } catch (Exception e2) {
+                            try {
+                                billDate = LocalDate.parse(billDateStr, dateTimeFormatter3);
+                            } catch (Exception e3) {
+                                errorMsgList.add("单据日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                            }
+                        }
                     }
                     addSo.setBillDate(billDate);
+                }else {
+                    errorMsgList.add("单据日期不能为空");
                 }
 
                 //销售组织
@@ -1726,7 +1742,23 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 //收款日期
                 String receiveDateStr = mainInfo.getReceiveDate();
                 if (StringUtils.isNotBlank(receiveDateStr)) {
-                    addSo.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
+                    LocalDate receiveDate = null;
+                    try {
+                        receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter);
+                    } catch (Exception e1) {
+                        try {
+                            receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter2);
+                        } catch (Exception e2) {
+                            try {
+                                receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter3);
+                            } catch (Exception e3) {
+                                errorMsgList.add("收款日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                            }
+                        }
+                    }
+                    addSo.setReceiveDate(receiveDate);
+                }else {
+                    errorMsgList.add("收款日期不能为空");
                 }
 
                 //贸易条款
