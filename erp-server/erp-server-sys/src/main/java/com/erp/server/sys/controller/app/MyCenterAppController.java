@@ -30,7 +30,7 @@ import javax.validation.Valid;
  */
 @RestController
 @LogSystemModule("个人中心app端")
-@RequestMapping("personalCenter")
+@RequestMapping("/app/personalCenter")
 public class MyCenterAppController extends BaseController {
 
     @Autowired
