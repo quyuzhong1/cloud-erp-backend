@@ -42,25 +42,25 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
         SELECT
-            sil.id,
-            sil.approve_status,
-            sil.approve_user_id,
-            sil.approve_user_name,
-            sil.approve_time,
-            sil.invalid_status,
-            sil.invalid_remark,
-            sil.invalid_time,
-            sil.code,
-            sil.user_id,
-            sil.user_name,
-            sil.dept_id,
-            sil.bill_date,
-            sil.create_time,
-            sil.create_user_name,
-            sild.sku_no,
-            sild.sku_id,
-            sild.product_name,
-            sild.qty
+            sil.id AS id,
+            sil.approve_status AS approveStatus,
+            sil.approve_user_id AS approveUserId,
+            sil.approve_user_name AS approveUserName,
+            sil.approve_time AS approveTime,
+            sil.invalid_status AS invalidStatus,
+            sil.invalid_remark AS invalidRemark,
+            sil.invalid_time AS invalidTime,
+            sil.code AS code,
+            sil.user_id AS userId,
+            sil.user_name AS userName,
+            sil.dept_id AS deptId,
+            sil.bill_date AS billDate,
+            sil.create_time AS createTime,
+            sil.create_user_name AS createUserName,
+            sild.sku_no AS skuNo,
+            sild.sku_id AS skuId,
+            sild.product_name AS productName,
+            sild.qty AS qty
         FROM sample_initial_ledger sil
         LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
         WHERE
@@ -85,25 +85,25 @@
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
         SELECT
-            sil.id,
-            sil.approve_status,
-            sil.approve_user_id,
-            sil.approve_user_name,
-            sil.approve_time,
-            sil.invalid_status,
-            sil.invalid_remark,
-            sil.invalid_time,
-            sil.code,
-            sil.user_id,
-            sil.user_name,
-            sil.dept_id,
-            sil.bill_date,
-            sil.create_time,
-            sil.create_user_name,
-            sild.sku_no,
-            sild.sku_id,
-            sild.product_name,
-            sild.qty
+            sil.id AS id,
+            sil.approve_status AS approveStatus,
+            sil.approve_user_id AS approveUserId,
+            sil.approve_user_name AS approveUserName,
+            sil.approve_time AS approveTime,
+            sil.invalid_status AS invalidStatus,
+            sil.invalid_remark AS invalidRemark,
+            sil.invalid_time AS invalidTime,
+            sil.code AS code,
+            sil.user_id AS userId,
+            sil.user_name AS userName,
+            sil.dept_id AS deptId,
+            sil.bill_date AS billDate,
+            sil.create_time AS createTime,
+            sil.create_user_name AS createUserName,
+            sild.sku_no AS skuNo,
+            sild.sku_id AS skuId,
+            sild.product_name AS productName,
+            sild.qty AS qty
         FROM sample_initial_ledger sil
         LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
         WHERE
@@ -124,7 +124,7 @@
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
-        count(*)  AS count
+        count(*) AS count
         FROM  sample_initial_ledger
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
