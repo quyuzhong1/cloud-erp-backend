@@ -30,7 +30,6 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
@@ -280,7 +279,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         }
 
         //账户信息
-        List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
+      /*  List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
         if (CollUtil.isNotEmpty(bankAccountList)) {
             // 创建新列表存储处理后的凭证
             List<Map<String, Object>> bankAccountMapList = new ArrayList<>();
@@ -302,7 +301,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
             // 将处理后的列表更新回原始 map
             map.put("bankAccountList", bankAccountMapList);
-        }
+        }*/
 
         //资质信息
         List<Object> credentialList = (List<Object>) map.get("credentialList");
@@ -338,7 +337,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
                     log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
+                    //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
                 credentialMap.put("code", credentialCode);
                 //dmp新增特殊处理
