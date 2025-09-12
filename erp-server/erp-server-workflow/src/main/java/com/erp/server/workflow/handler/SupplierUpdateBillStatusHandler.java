@@ -309,22 +309,36 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (CollUtil.isNotEmpty(credentialList)) {
             // 创建新列表存储处理后的凭证
             List<Map<String, Object>> credentialMapList = new ArrayList<>();
+            Object object =  credentialList.get(0);
+            // 将原始对象转为可修改的 Map
+            Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
 
-            for (Object object : credentialList) {
-                // 将原始对象转为可修改的 Map
-                Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+            Object attachmentObject = credentialMap.get("attachment");
+            if (ObjectUtil.isEmpty(attachmentObject)) {
+                log.error("资质附件不能为空");
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND, "资质附件");
+            }
+            //供应商按附件生成资质信息
+            List<Map> attachList = new ArrayList<>();
+            if (attachmentObject instanceof Map) {
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                attachList.add(attachment);
+            } else {
+                attachList = JSONUtil.parseArray(attachmentObject).toList(Map.class);
+            }
+            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
 
-                //名称
-                Object name = credentialMap.get("name");
-                List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+            for (Map<String,Object> attachMap : attachList) {
+                String key = attachMap.keySet().stream().findFirst().orElse("");
+                String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
-                        filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
+                        filter(req -> CharSequenceUtil.equals(String.valueOf(fieldName),req.getName()))
                         .map(DictBasicEntity::getValue)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
-                    log.error("凭证类型未找到，当前凭证类型：{}", name);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
+                    log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
                 credentialMap.put("code", credentialCode);
                 //dmp新增特殊处理
@@ -340,19 +354,14 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                         credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                     }
                 }
-                Object attachmentObject = credentialMap.get("attachment");
-                if (ObjectUtil.isEmpty(attachmentObject)) {
-                    credentialMapList.add(credentialMap);
-                    continue;
-                }
                 // 处理附件
-                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
                 List<String> attachmentUrlList = new ArrayList<>();
                 List<String> attachmentNameList = new ArrayList<>();
 
-                attachment.forEach((key, value) -> {
-                    attachmentNameList.add(key);
-                    attachmentUrlList.add(String.valueOf(value));
+                attachMap.forEach((key1, value) -> {
+                    String uraName = Arrays.stream(key1.split(",")).collect(Collectors.toList()).get(1);
+                    attachmentNameList.add(uraName);
+                    attachmentUrlList.add(value.toString());
                 });
 
                 // 更新凭证对象
