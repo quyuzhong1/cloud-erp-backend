@@ -100,7 +100,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             List<QueryParam> queryParams = new ArrayList<>();
             queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", platformCodeList));
             request.setQueryParams(queryParams);
-            dmpOutputCreateFactory.doHotfixOutputTask(request);
+//            dmpOutputCreateFactory.doHotfixOutputTask(request);
         }
     }
 
