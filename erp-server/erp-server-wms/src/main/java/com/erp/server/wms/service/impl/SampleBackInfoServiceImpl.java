@@ -427,6 +427,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public SampleBackInfoDTO.ViewDTO view(String id) {
         SampleBackInfoDTO.ViewDTO viewDTO = new SampleBackInfoDTO.ViewDTO();
         SampleBackInfoEntity entity = super.getById(id);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单");
         }
@@ -435,6 +436,14 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         viewDTO.setApproveStatus(entity.getApproveStatus().getCode());
         // 设置明细列表到ViewDTO中
         List<SampleBackDetailEntity> detailEntities = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id));
+        
+        // 构建用户ID到用户名的映射
+        Map<String, String> userIdToNameMap = userList.stream()
+            .collect(Collectors.toMap(
+                FindUserDTO::getUserId, 
+                FindUserDTO::getUserName, 
+                (existing, replacement) -> existing
+            ));
         
         // 批量查询可退回数量
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> availableQtyMap = new HashMap<>();
@@ -468,6 +477,14 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             .map(detail -> {
                 SampleBackDetailDTO.ViewDTO detailDTO = new SampleBackDetailDTO.ViewDTO();
                 BeanMapperUtils.copy(detail, detailDTO);
+                
+                // 填充使用方名称
+                if (StrUtil.isNotBlank(detail.getUseUserId())) {
+                    String useUserName = userIdToNameMap.get(detail.getUseUserId());
+                    if (StrUtil.isNotBlank(useUserName)) {
+                        detailDTO.setUseUserName(useUserName);
+                    }
+                }
                 
                 // 从映射中获取可退回数量
                 String key = entity.getUserId() + "_" + detail.getUseUserId() + "_" + detail.getSkuId();
