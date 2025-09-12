@@ -66,6 +66,7 @@
             sbi.user_name AS userName,
             sbi.dept_id AS deptId,
             sbi.warehouse_id AS warehouseId,
+            w.name AS warehouseName,
             sbi.org_id AS orgId,
             sbi.org_name AS orgName,
             sbi.remark,
@@ -81,6 +82,8 @@
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
         ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        LEFT JOIN warehouse w
+        ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
@@ -125,6 +128,7 @@
             sbi.user_name AS userName,
             sbi.dept_id AS deptId,
             sbi.warehouse_id AS warehouseId,
+            w.name AS warehouseName,
             sbi.org_id AS orgId,
             sbi.org_name AS orgName,
             sbi.remark,
@@ -140,6 +144,8 @@
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
         ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        LEFT JOIN warehouse w
+        ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}

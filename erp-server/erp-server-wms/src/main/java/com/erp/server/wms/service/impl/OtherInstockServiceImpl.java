@@ -1645,10 +1645,40 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
+        
+        // 获取所有SKU ID
+        List<String> skuIds = records.stream()
+                .map(OtherInstockDTO.ListDTO::getSkuNo)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 批量查询SKU信息
+        Map<String, String> productNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(skuIds)) {
+            try {
+                List<ProductDetailEntity> skuList = plmTaskFeign.listBySkuNos(skuIds);
+                if (CollectionUtils.isNotEmpty(skuList)) {
+                    productNameMap = skuList.stream()
+                            .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getName));
+                }
+            } catch (Exception e) {
+                log.warn("获取SKU信息失败，错误：{}", e.getMessage());
+            }
+        }
+        
         // 查询流程id判断是否存在流程
+        Map<String, String> finalProductNameMap = productNameMap;
         records.forEach(obj -> {
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
+            
+            // 设置产品名称
+            if (Objects.nonNull(obj.getSkuId())) {
+                String productName =
+                        finalProductNameMap.get(obj.getSkuNo());
+                obj.setProductName(productName != null ? productName : "");
+            }
         });
     }
 

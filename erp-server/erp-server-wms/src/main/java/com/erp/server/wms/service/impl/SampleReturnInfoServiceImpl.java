@@ -714,6 +714,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 viewDTO.setWaitReturnQty(sampleReturnView.getWaitReturnQty());
                 viewDTO.setReturnedQty(sampleReturnView.getReturnedQty());
                 viewDTO.setCanReturnQty(sampleReturnView.getCanReturnQty());
+                viewDTO.setUseUserId(sampleReturnView.getUseUserId());
+                viewDTO.setUseUserName(sampleReturnView.getUseUserName());
             }
         }
         data.setDetailList(viewDTOS);

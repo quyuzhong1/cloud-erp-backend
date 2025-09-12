@@ -61,6 +61,10 @@ public class SampleBackDetailDTO implements Serializable {
         * 使用方ID
         */
         private String useUserId;
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
 
         /**
         * 可退回数量 wms/sampleLedger/listSku  参数type=back
@@ -105,7 +109,6 @@ public class SampleBackDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
