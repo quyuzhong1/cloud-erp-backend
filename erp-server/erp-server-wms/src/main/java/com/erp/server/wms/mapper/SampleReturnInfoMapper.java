@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -54,4 +56,6 @@ public interface SampleReturnInfoMapper extends BaseMapper<SampleReturnInfoEntit
     List<SampleReturnInfoDTO.TabListDTO> tabList(@Param("params") SampleReturnInfoDTO.PagingParamDTO searchParam);
 
     List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(@Param("sourceId") String sourceId);
+
+    IPage<SampleReturnInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleReturnInfoDTO.PagingParamDTO params);
 }

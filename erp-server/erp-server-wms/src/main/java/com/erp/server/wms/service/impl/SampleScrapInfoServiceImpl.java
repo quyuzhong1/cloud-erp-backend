@@ -446,6 +446,31 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         }));
         return list;
     }
+    @Override
+    public List<SampleScrapInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        List<SampleScrapInfoDTO.TabListDTO> tabListDTOS = tabList(param);
+
+        Map<String, Integer> map = tabListDTOS.stream().collect(Collectors.toMap(SampleScrapInfoDTO.TabListDTO::getTabFlag, SampleScrapInfoDTO.TabListDTO::getCount));
+
+        List<SampleScrapInfoDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
+        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
+        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
+        return list;
+    }
+
+    @Override
+    public PagingVO<SampleScrapInfoDTO.ListDTO> pagingApp(PagingDTO<SampleScrapInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleScrapInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
 
     @Override
     public void exportList(SampleScrapInfoDTO.PagingParamDTO param, HttpServletResponse response) {

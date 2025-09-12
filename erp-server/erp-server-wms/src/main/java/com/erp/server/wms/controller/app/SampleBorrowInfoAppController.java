@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@LogSystemModule("样品借用单")
+@LogSystemModule("样品借用单app端")
 @RequestMapping("/app/sampleBorrowInfo")
 public class SampleBorrowInfoAppController extends BaseController {
 

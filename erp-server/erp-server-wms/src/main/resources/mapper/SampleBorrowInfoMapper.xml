@@ -345,11 +345,6 @@ sbi.remark as remark
             ${params.permissionSql}
         </if>
         ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
         sbi.ID desc,
         sbi.create_time desc,
         sbd.id

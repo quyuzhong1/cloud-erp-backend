@@ -26,10 +26,13 @@ public class SampleBorrowInfoQueryHandler extends AbstractQueryHandler {
             return getQueryAllSql();
         }
 
-        super.buildDefaultDTO("sbi.approve_status", value);
-
-        if(Objects.equals(value, ApproveStatusEnum.APPROVE.getCode())){
+        if(Objects.equals(value, ApproveStatusEnum.APPROVE.getCode())){ //待归还
             super.buildSplicingSQLDTO("sbd.wait_return_qty", QueryConditionEnum.GT,0, QueryDataTypeEnum.NUMBER);
+            super.buildDefaultDTO("sbi.approve_status", value);
+        }else if(Objects.equals(value, ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode())){ //待提交/审核不通过
+            return "sbi.approve_status in ('"+ApproveStatusEnum.WAIT_SUBMIT.getCode()+"','"+ApproveStatusEnum.REJECT.getCode()+"')";
+        }else {
+            super.buildDefaultDTO("sbi.approve_status", value);
         }
         return super.getSplicingSQL();
     }
