@@ -143,7 +143,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                 BeanMapperUtils.copy(detailDTO, detailEntity);
                 detailEntity.setMainId(sampleBackInfoEntity.getId());
-                
+                if (detailEntity.getSourceDetailId()==null){
+                    detailEntity.setSourceDetailId("");
+                }
+
                 boolean detailSave = sampleBackDetailService.save(detailEntity);
                 if (!detailSave) {
                     throw new ServiceException("样品退回单明细保存失败");
