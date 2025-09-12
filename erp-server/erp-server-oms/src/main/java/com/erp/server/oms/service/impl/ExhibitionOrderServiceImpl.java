@@ -1107,6 +1107,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     public ExhibitionOrderDTO.ViewDTO view(String id) {
         ExhibitionOrderEntity exhibitionOrderEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         ExhibitionOrderDTO.ViewDTO view = BeanMapperUtils.map(ExhibitionOrderDTO.ViewDTO.class, exhibitionOrderEntity);
+        view.setApproveStatus(exhibitionOrderEntity.getApproveStatus().getStatus());
+        view.setApproveStatusName(exhibitionOrderEntity.getApproveStatus().getName());
         // 数据填充处理
         fillOne(view);
         //明细
