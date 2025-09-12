@@ -487,6 +487,15 @@ public class SampleBorrowInfoDTO implements Serializable {
          * 来源明细ID
          */
         private String sourceDetailId;
+        /**
+         * 使用方id
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
 
         /**
          * SKU ID
@@ -611,6 +620,15 @@ public class SampleBorrowInfoDTO implements Serializable {
          * 来源明细ID
          */
         private String sourceDetailId;
+        /**
+         * 使用方id
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
 
         /**
          * SKU ID
