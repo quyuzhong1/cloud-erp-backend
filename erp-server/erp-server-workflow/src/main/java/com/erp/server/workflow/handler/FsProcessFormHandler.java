@@ -851,6 +851,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             case "image":
                 LinkedHashMap<String, String> nameToUrl = new LinkedHashMap<>();
                 JSONArray fileArray = field.getJSONArray("value");
+                String fieldName = field.getStr("name");
                 String[] names = field.getStr("ext").split(",");
                 for (int i = 0; i < names.length; i++) {
                     String fileUrl = fileArray.get(i).toString();
@@ -864,7 +865,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                         // 2.将文件上传到文件服务器
                         String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
                         // 3.更新url
-                        nameToUrl.put(fileName, uploadUrl);
+                        nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , uploadUrl);
                     } catch (Exception e) {
                         throw new RuntimeException("文件下载处理失败"+e);
                     }
@@ -946,8 +947,22 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
             // 映射值
             Object mappedValue = mapValue(feishuOriginalValue, fieldMap, valueMapsByFieldMapId);
-            //TODO department和 contact进行一次值转换，从系统id转为飞书id
-            currentResultMap.put(sysField, mappedValue);
+
+            //如果已存在目标系统字段则将值取出来设置为list
+            if (currentResultMap.containsKey(sysField)) {
+                Object existingValue = currentResultMap.get(sysField);
+                List<Object> valueList;
+                if (existingValue instanceof List) {
+                    valueList = (List<Object>) existingValue;
+                } else {
+                    valueList = new ArrayList<>();
+                    valueList.add(existingValue);
+                }
+                valueList.add(mappedValue);
+                currentResultMap.put(sysField, valueList);
+            } else {
+                currentResultMap.put(sysField, mappedValue);
+            }
         }
     }
 

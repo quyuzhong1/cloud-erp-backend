@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.mq;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -166,6 +167,9 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         // 从 jsonObject 中获取 instanceCode
         CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).eq(CfgThirdProcessEntity::getIsDeleted, false));
 
+        if (ObjectUtil.isEmpty(thirdProcessEntity)) {
+            throw new ServiceException("未找到对应的三方审批生成配置");
+        }
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
 
         List<String> fieldIdList = fieldMapList.stream().map(BaseEntity::getId).collect(Collectors.toList());
