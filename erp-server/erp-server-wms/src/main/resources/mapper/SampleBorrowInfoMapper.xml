@@ -190,6 +190,8 @@ sbi.remark as remark
         sbi.lend_dept_id AS receiverDeptId,
         sbi.lend_dept_name AS receiverDeptName,
         sbd.ID AS sourceDetailId,
+        sl.use_user_id as useUserId,
+        sl.use_user_name as useUserName,
         sbd.sku_id AS skuId,
         sbd.sku_no AS skuNo,
         sbd.product_name AS productName,
@@ -198,9 +200,9 @@ sbi.remark as remark
         COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty
         FROM
         sample_borrow_info AS sbi
-        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id
-        AND sbd.is_deleted =
-        FALSE LEFT JOIN (
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted = FALSE
+        LEFT JOIN sample_ledger as sl on sbd.sample_ledger_id = sl.id and sl.is_deleted = FALSE
+        LEFT JOIN (
         SELECT
         srd.source_detail_id,
         SUM ( srd.return_qty ) AS returnedQty
@@ -267,6 +269,8 @@ sbi.remark as remark
         sbi.ID AS sourceId,
         sbi.code AS sourceCode,
         sbd.ID AS sourceDetailId,
+        sl.use_user_id as useUserId,
+        sl.use_user_name as useUserName,
         sbd.sku_id AS skuId,
         sbd.sku_no AS skuNo,
         sbd.product_name AS productName,
@@ -277,9 +281,9 @@ sbi.remark as remark
         sbd.remark
         FROM
         sample_borrow_info AS sbi
-        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id
-        AND sbd.is_deleted =
-        FALSE LEFT JOIN (
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted =FALSE
+        LEFT JOIN sample_ledger as sl on sbd.sample_ledger_id = sl.id and sl.is_deleted = FALSE
+        LEFT JOIN (
         SELECT
         srd.source_detail_id,
         SUM ( srd.return_qty ) AS returnedQty
