@@ -791,6 +791,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             shudiyunB2cOrderDTO.setSuite_name(dmpSoDetailEntity.getSuiteName());
             shudiyunB2cOrderDTO.setSigning_quantity(dmpSoDetailEntity.getSuiteQty());
             shudiyunB2cOrderDTO.setBatch_no(dmpSoDetailEntity.getPlatformDetailId());
+            shudiyunB2cOrderDTO.setChild_node_no(dmpSoInfoEntity.getWarehouseId());
             
             if(shudiyunB2cOrderDTO.getGoods_transaction_quantity() == null || shudiyunB2cOrderDTO.getGoods_transaction_quantity() == 0) {
             	shudiyunB2cOrderDTO.setGoods_status("已取消");
@@ -897,6 +898,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
         Set<String> jdSuitShopList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitShop").list()
         		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
+        Set<String> jdSuitWarehouseList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitWarehouse").list()
+        		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
         for(String changId : changeIds) {
             Map<String, ShudiyunB2cOrderDTO> result = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId) , dmpSoReceiverEntityMap.get(changId) , cacheMap);
             if(!result.isEmpty()) {
@@ -904,12 +907,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
                     ShudiyunB2cOrderDTO value = r.getValue();
                     String shopNo = value.getShop_no();
-                    if(jdSuitShopList.contains(shopNo) && "配货单".equals(value.getTransaction_type()) && StringUtils.isNotBlank(value.getSuite_no())) {
+                    String warehouseId = value.getChild_node_no();
+                    if(jdSuitShopList.contains(shopNo) && jdSuitWarehouseList.contains(warehouseId) && "配货单".equals(value.getTransaction_type()) && StringUtils.isNotBlank(value.getSuite_no())) {
                     	value.setParent_node_no(r.getKey());
                     	jdShopDataList.add(value);
                     }else {
                     	value.setBatch_no(null);
                     	value.setSigning_quantity(null);
+                    	value.setChild_node_no(null);
                         map.put(r.getKey(), JSON.toJSONString(value));
                     }
                 }
@@ -951,6 +956,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 		
                 		shudiyunB2cOrderDTO.setBatch_no(null);
                 		shudiyunB2cOrderDTO.setSigning_quantity(null);
+                		shudiyunB2cOrderDTO.setChild_node_no(null);
                 		shudiyunB2cOrderDTO.setParent_node_no(null);
 						map.put(key, JSON.toJSONString(shudiyunB2cOrderDTO));
                 	}
