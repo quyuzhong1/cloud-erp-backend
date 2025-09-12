@@ -319,6 +319,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
 
+    void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList);
+
     /**
      * 获取销售出库单需要的数据
      * @description

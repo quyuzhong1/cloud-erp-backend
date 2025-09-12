@@ -100,11 +100,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
-            if (dmpSoInfoEntity.getPayTime() != null) {
-                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
-            } else {
-            	return result;
-            }
 
             //线上原始订单
             shudiyunB2cOrderDTO.setTransaction_type("线上订单");
@@ -113,8 +108,10 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getTradeStatus()));
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
             }
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(allAmount);
