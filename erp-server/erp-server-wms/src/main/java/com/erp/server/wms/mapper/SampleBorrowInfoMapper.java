@@ -11,6 +11,8 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -56,4 +58,6 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
     List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(@Param("notId")String notId, @Param("detailIdList") List<String> detailIdList);
 
     IPage<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(Page query,@Param("params") SampleBorrowInfoDTO.SearchDTO dto);
+
+    IPage<SampleBorrowInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleBorrowInfoDTO.PagingParamDTO params);
 }

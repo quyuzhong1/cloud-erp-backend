@@ -169,4 +169,8 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     void handleImportSuccessList(List<SampleScrapImportExcelDTO> successList,List<String> errorNoList, List<SampleScrapImportExcelDTO> errorList2, String importType);
 
     Boolean importAsynExcel(BaseDTO.ImportDTO dto);
+
+    List<SampleScrapInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    PagingVO<SampleScrapInfoDTO.ListDTO> pagingApp(PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
 }

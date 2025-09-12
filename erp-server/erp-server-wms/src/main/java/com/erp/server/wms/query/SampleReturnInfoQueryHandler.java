@@ -23,6 +23,9 @@ public class SampleReturnInfoQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
+        if(Objects.equals(value, ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode())){ //待提交/审核不通过
+            return "sri.approve_status in ('"+ApproveStatusEnum.WAIT_SUBMIT.getCode()+"','"+ApproveStatusEnum.REJECT.getCode()+"')";
+        }
         super.buildDefaultDTO("sri.approve_status", value);
         return super.getSplicingSQL();
     }

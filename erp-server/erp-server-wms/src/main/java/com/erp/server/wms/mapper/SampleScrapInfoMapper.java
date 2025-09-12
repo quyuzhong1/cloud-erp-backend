@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -52,4 +54,6 @@ public interface SampleScrapInfoMapper extends BaseMapper<SampleScrapInfoEntity>
     * @return
     */
     List<SampleScrapInfoDTO.TabListDTO> tabList(@Param("params") SampleScrapInfoDTO.PagingParamDTO searchParam);
+
+    IPage<SampleScrapInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleScrapInfoDTO.PagingParamDTO params);
 }
