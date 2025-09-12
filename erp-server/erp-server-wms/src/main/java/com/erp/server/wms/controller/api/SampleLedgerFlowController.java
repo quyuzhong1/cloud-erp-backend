@@ -69,6 +69,7 @@ public class SampleLedgerFlowController extends BaseController {
             menuCode = "wms:sampleLedgerFlow:export",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品台账流水导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated SampleLedgerFlowDTO.ExportDTO dto, HttpServletResponse response) {
         sampleLedgerFlowService.exportList(dto, response);

@@ -77,6 +77,7 @@ public class SampleLedgerController extends BaseController {
             menuCode = "wms:sampleLedger:export",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品台账统计导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated SampleLedgerDTO.ExportDTO dto, HttpServletResponse response) {
         sampleLedgerService.exportList(dto, response);

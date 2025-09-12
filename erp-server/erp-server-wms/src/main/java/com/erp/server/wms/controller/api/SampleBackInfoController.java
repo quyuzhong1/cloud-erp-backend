@@ -405,6 +405,7 @@ public class SampleBackInfoController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品退回单导出Excel数据")
+    @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated SampleBackInfoDTO.ExportDTO dto, HttpServletResponse response) {
         sampleBackInfoService.exportList(dto, response);
         return success();
