@@ -86,6 +86,8 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
+    private final DateTimeFormatter dateTimeFormatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     /**
      * 每解析一行数据回调一遍
@@ -128,12 +130,21 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
         //报废日期
         String scrapDateStr = excelDTO.getScrapDateStr();
         if(StringUtils.isNotBlank(scrapDateStr)){
+            LocalDate scrapDate = null;
             try {
-                LocalDate scrapDate = StringUtils.isBlank(scrapDateStr) ? null : LocalDate.parse(scrapDateStr, dateTimeFormatter);
-                excelDTO.setScrapDate(scrapDate);
-            }catch (Exception e){
-                errorMsgList.add("报废时间格式错误、请使用yyyy-MM-dd格式");
+                scrapDate = LocalDate.parse(scrapDateStr, dateTimeFormatter);
+            } catch (Exception e1) {
+                try {
+                    scrapDate = LocalDate.parse(scrapDateStr, dateTimeFormatter2);
+                } catch (Exception e2) {
+                    try {
+                        scrapDate = LocalDate.parse(scrapDateStr, dateTimeFormatter3);
+                    } catch (Exception e3) {
+                        errorMsgList.add("报废日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                    }
+                }
             }
+            excelDTO.setScrapDate(scrapDate);
         }
 
         String scrapDeptName = excelDTO.getScrapDeptName();

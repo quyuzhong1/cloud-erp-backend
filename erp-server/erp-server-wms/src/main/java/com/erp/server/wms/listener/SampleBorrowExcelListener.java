@@ -86,7 +86,8 @@ public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorro
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
+    private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
+    private final DateTimeFormatter dateTimeFormatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     /**
      * 每解析一行数据回调一遍
      *
@@ -138,22 +139,40 @@ public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorro
         //借入日期
         String borrowDateStr = excelDTO.getBorrowDateStr();
         if(StringUtils.isNotBlank(borrowDateStr)){
+            LocalDate borrowDate = null;
             try {
-                LocalDate borrowDate = StringUtils.isBlank(borrowDateStr) ? null : LocalDate.parse(borrowDateStr, dateTimeFormatter);
-                excelDTO.setBorrowDate(borrowDate);
-            }catch (Exception e){
-                errorMsgList.add("借入时间格式错误、请使用yyyy-MM-dd格式");
+                borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter);
+            } catch (Exception e1) {
+                try {
+                    borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter2);
+                } catch (Exception e2) {
+                    try {
+                        borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter3);
+                    } catch (Exception e3) {
+                        errorMsgList.add("借入时间格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                    }
+                }
             }
+            excelDTO.setBorrowDate(borrowDate);
         }
         //预计退回日期
         String estimatedReturnDateStr = excelDTO.getEstimatedReturnDateStr();
         if(StringUtils.isNotBlank(estimatedReturnDateStr)){
+            LocalDate estimatedReturnDate = null;
             try {
-                LocalDate estimatedReturnDate = StringUtils.isBlank(estimatedReturnDateStr) ? null : LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter);
-                excelDTO.setEstimatedReturnDate(estimatedReturnDate);
-            }catch (Exception e){
-                errorMsgList.add("预计退回日期时间格式错误、请使用yyyy-MM-dd格式");
+                estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter);
+            } catch (Exception e1) {
+                try {
+                    estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter2);
+                } catch (Exception e2) {
+                    try {
+                        estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter3);
+                    } catch (Exception e3) {
+                        errorMsgList.add("预计退回日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                    }
+                }
             }
+            excelDTO.setEstimatedReturnDate(estimatedReturnDate);
         }
 
         //借入部门
