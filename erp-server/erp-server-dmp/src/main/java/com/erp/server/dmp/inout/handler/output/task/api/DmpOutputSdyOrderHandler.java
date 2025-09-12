@@ -922,6 +922,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 		shudiyunB2cOrderDTOList.sort((s1 , s2) -> s1.getParent_node_no().compareTo(s2.getParent_node_no()));
                 		ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = shudiyunB2cOrderDTOList.get(0);
                 		shudiyunB2cOrderDTO.setTotal_goods_quantity(total_goods_quantity);
+                		shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(total_goods_quantity);
                 		Integer signing_quantity = shudiyunB2cOrderDTO.getSigning_quantity();
 						shudiyunB2cOrderDTO.setGoods_transaction_quantity(signing_quantity);
                 		
@@ -951,7 +952,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 		shudiyunB2cOrderDTO.setBatch_no(null);
                 		shudiyunB2cOrderDTO.setSigning_quantity(null);
                 		shudiyunB2cOrderDTO.setParent_node_no(null);
-                		map.put(key, JSON.toJSONString(shudiyunB2cOrderDTO));
+						map.put(key, JSON.toJSONString(shudiyunB2cOrderDTO));
+						for(int i = 1; i < shudiyunB2cOrderDTOList.size(); i++) {
+							ShudiyunB2cOrderDTO nowShudiyunB2cOrderDTO = shudiyunB2cOrderDTOList.get(i);
+							shudiyunB2cOrderDTO.setStatus("已删除");
+							shudiyunB2cOrderDTO.setBiz_uni_key(nowShudiyunB2cOrderDTO.getBiz_uni_key());
+							map.put(nowShudiyunB2cOrderDTO.getParent_node_no(), JSON.toJSONString(shudiyunB2cOrderDTO));
+						}
                 	}
                 }
             }
