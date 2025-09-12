@@ -50,12 +50,14 @@
         sl.product_name AS productName,
         sl.use_user_id AS useUserId,
         sl.use_user_name AS useUserName,
-        <if test="params.type != null and params.type != ''">
-            COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
-        </if>
-        <if test="params.type == null || params.type == ''">
-            COALESCE(sl.qty, 0)  AS availableQty
-        </if>
+        <choose>
+            <when test="params.type != null and params.type != '' and params.type != 'exhibition'">
+                COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
+            </when>
+            <otherwise>
+                COALESCE(sl.qty, 0) AS availableQty
+            </otherwise>
+        </choose>
         FROM
         sample_ledger sl
         <if test="params.type != null and params.type == 'scrap'">

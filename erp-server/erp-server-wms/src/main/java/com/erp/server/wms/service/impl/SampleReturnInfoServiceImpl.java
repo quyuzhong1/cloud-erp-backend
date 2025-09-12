@@ -395,6 +395,32 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     }
 
     @Override
+    public List<SampleReturnInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        List<SampleReturnInfoDTO.TabListDTO> tabListDTOS = tabList(param);
+
+        Map<String, Integer> map = tabListDTOS.stream().collect(Collectors.toMap(SampleReturnInfoDTO.TabListDTO::getTabFlag, SampleReturnInfoDTO.TabListDTO::getCount));
+
+        List<SampleReturnInfoDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
+        list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
+        list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
+        return list;
+    }
+
+    @Override
+    public PagingVO<SampleReturnInfoDTO.ListDTO> pagingApp(PagingDTO<SampleReturnInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleReturnInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public void exportList(SampleReturnInfoDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("样品归还单导出", EXPORT_WMS_SAMPLE_RETURN_INFO.getCode(), param);
     }

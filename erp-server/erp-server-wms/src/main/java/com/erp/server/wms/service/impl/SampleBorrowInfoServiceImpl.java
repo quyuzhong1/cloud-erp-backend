@@ -1109,16 +1109,17 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView("",detailIdList);
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
+            return Collections.emptyList();
         }
         // 查找第一个不符合审批通过状态的记录
         Optional<SampleBorrowInfoDTO.SampleReturnView> firstNotApproved = list.stream()
-                .filter(e -> !isApprovedStatus(e.getApproveStatus()) || e.getWaitReturnQty() <= 0 )
+                .filter(e -> !isApprovedStatus(e.getApproveStatus()))
                 .findFirst();
         if(firstNotApproved.isPresent()){
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
         }
-        return list;
+        //筛选出可归还数量大于0的数据
+        return list.stream().filter(e -> Objects.nonNull(e.getCanReturnQty()) && e.getCanReturnQty() > 0).collect(Collectors.toList());
     }
 
     @Override
@@ -1176,6 +1177,39 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private boolean isApprovedStatus(String status) {
         return ApproveStatusEnum.APPROVE.getStatus().equals(status);
     }
+
+    /**
+     * 获取APP端标签页列表信息
+     * @param param 权限参数对象，用于控制数据访问权限
+     * @return 标签页列表，包含待提交/不通过、审核中、待归还三个标签页的统计信息
+     */
+    @Override
+    public List<SampleBorrowInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        List<SampleBorrowInfoDTO.TabListDTO> tabListDTOS = tabList(param);
+
+        Map<String, Integer> map = tabListDTOS.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.TabListDTO::getTabFlag, SampleBorrowInfoDTO.TabListDTO::getCount));
+
+        List<SampleBorrowInfoDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
+        list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
+        list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
+        return list;
+    }
+
+    @Override
+    public PagingVO<SampleBorrowInfoDTO.ListDTO> pagingApp(PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleBorrowInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+
 
     // ==================== 台账流水构建器实现 ====================
 

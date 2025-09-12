@@ -196,7 +196,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
                     ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
                     if(Objects.nonNull(freezeQtyBySku)){
                         Integer freezeQty = freezeQtyBySku.getFreezeQty();
-                        if(freezeQty > 0){
+                        if(Objects.nonNull(freezeQty) && freezeQty > 0){
                             Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
                             record.setAvailableQty(availableQty - freezeQty);
                         }

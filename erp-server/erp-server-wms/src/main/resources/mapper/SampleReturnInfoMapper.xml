@@ -65,51 +65,55 @@ sri.return_date as returnDate,
 sri.remark as remark
     </sql>
 
-    <sql id="paging_sql">
+    <sql id="Query_Column_List">
+        sri.ID AS ID,
+        sri.create_user_id AS createUserId,
+        sri.create_user_name AS createUserName,
+        sri.create_time AS createTime,
+        sri.update_user_id AS updateUserId,
+        sri.update_user_name AS updateUserName,
+        sri.update_time AS updateTime,
+        sri.VERSION AS VERSION,
+        sri.is_deleted AS isDeleted,
+        sri.code AS code,
+        sri.source_id AS sourceId,
+        sri.source_code AS sourceCode,
+        sri.source_type AS sourceType,
+        sri.approve_status AS approveStatus,
+        sri.approve_time AS approveTime,
+        sri.approve_user_id AS approveUserId,
+        sri.approve_user_name AS approveUserName,
+        sri.invalid_status AS invalidStatus,
+        sri.return_user_id AS returnUserId,
+        sri.return_user_name AS returnUserName,
+        sri.return_dept_id AS returnDeptId,
+        sri.return_dept_name AS returnDeptName,
+        sri.receiver_user_id AS receiverUserId,
+        sri.receiver_user_name AS receiverUserName,
+        sri.receiver_dept_id AS receiverDeptId,
+        sri.receiver_dept_name AS receiverDeptName,
+        sri.return_date AS returnDate,
+        sri.remark AS remark,
+        srd.ID AS detailId,
+        srd.main_id AS mainId,
+        srd.source_detail_id AS sourceDetailId,
+        srd.sku_id AS skuId,
+        srd.sku_no AS skuNo,
+        srd.product_name AS productName,
+        srd.return_qty AS returnQty,
+        srd.remark AS detailRemark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
         SELECT
-            sri.ID AS ID,
-            sri.create_user_id AS createUserId,
-            sri.create_user_name AS createUserName,
-            sri.create_time AS createTime,
-            sri.update_user_id AS updateUserId,
-            sri.update_user_name AS updateUserName,
-            sri.update_time AS updateTime,
-            sri.VERSION AS VERSION,
-            sri.is_deleted AS isDeleted,
-            sri.code AS code,
-            sri.source_id AS sourceId,
-            sri.source_code AS sourceCode,
-            sri.source_type AS sourceType,
-            sri.approve_status AS approveStatus,
-            sri.approve_time AS approveTime,
-            sri.approve_user_id AS approveUserId,
-            sri.approve_user_name AS approveUserName,
-            sri.invalid_status AS invalidStatus,
-            sri.return_user_id AS returnUserId,
-            sri.return_user_name AS returnUserName,
-            sri.return_dept_id AS returnDeptId,
-            sri.return_dept_name AS returnDeptName,
-            sri.receiver_user_id AS receiverUserId,
-            sri.receiver_user_name AS receiverUserName,
-            sri.receiver_dept_id AS receiverDeptId,
-            sri.receiver_dept_name AS receiverDeptName,
-            sri.return_date AS returnDate,
-            sri.remark AS remark,
-            srd.ID AS detailId,
-            srd.main_id AS mainId,
-            srd.source_detail_id AS sourceDetailId,
-            srd.sku_id AS skuId,
-            srd.sku_no AS skuNo,
-            srd.product_name AS productName,
-            srd.return_qty AS returnQty,
-            srd.remark AS detailRemark
+        <include refid="Query_Column_List"></include>
         FROM
-            sample_return_info AS sri
-                LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
-                AND srd.is_deleted = FALSE
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
         WHERE
-            ${params.sqlMap.default}
-            and sri.is_deleted = FALSE
+        ${params.sqlMap.default}
+        and sri.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -120,10 +124,6 @@ sri.remark as remark
             </foreach>
         </if>
         sri.create_time desc
-    </sql>
-
-    <select id="paging" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
-        <include refid="paging_sql"></include>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -131,7 +131,25 @@ sri.remark as remark
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
-        <include refid="paging_sql"></include>
+        SELECT
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and sri.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sri.create_time desc
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$TabListDTO">
         SELECT
@@ -192,5 +210,26 @@ sri.remark as remark
         and sri.source_id = #{sourceId}
         ORDER BY
         sri.create_time desc
+    </select>
+
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
+        SELECT
+        DISTINCT ON (sri.ID)
+        COUNT ( srd.ID ) OVER ( PARTITION BY sri.ID ) AS skuCount ,
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and sri.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sri.ID desc,
+        sri.create_time desc,
+        srd.id
     </select>
 </mapper>

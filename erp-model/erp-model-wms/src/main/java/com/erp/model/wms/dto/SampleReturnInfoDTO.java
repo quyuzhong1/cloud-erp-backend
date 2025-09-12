@@ -246,6 +246,10 @@ public class SampleReturnInfoDTO implements Serializable {
          * 备注
          */
         private String detailRemark;
+        /**
+         * 商品种类
+         */
+        private Integer skuCount;
     }
 
 

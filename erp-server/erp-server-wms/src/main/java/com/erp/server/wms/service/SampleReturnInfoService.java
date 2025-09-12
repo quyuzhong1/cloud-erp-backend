@@ -157,4 +157,8 @@ public interface SampleReturnInfoService extends SuperService<SampleReturnInfoEn
     List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(String sourceId);
 
     List<BatchResultDTO> generateSampleReturn(ValidList<SampleBorrowInfoDTO.SampleReturnView> list);
+
+    List<SampleReturnInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    PagingVO<SampleReturnInfoDTO.ListDTO> pagingApp(PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto);
 }
