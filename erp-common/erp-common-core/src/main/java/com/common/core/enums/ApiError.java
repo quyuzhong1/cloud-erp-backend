@@ -1129,6 +1129,7 @@ public enum ApiError implements Serializable {
     ERROR_SAMPLE_BORROW_USER_SAME(99161,"借入人和借出人不能相同"),
     ERROR_SAMPLE_RETURN_USER_SAME(99162,"归还人和接收人不能相同"),
     ERROR_SAMPLE_RETURN_EXIST(99163,"已下推的归还单不支持反审核"),
+    ERROR_GENERATE_CAN_RETURN_QTY_NOT(99164,"可归还数量为0，没有可下推的数据"),
 
 
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),

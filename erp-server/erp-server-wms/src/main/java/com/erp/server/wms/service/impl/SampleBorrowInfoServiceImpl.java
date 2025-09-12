@@ -1109,7 +1109,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView("",detailIdList);
         if(CollUtil.isEmpty(list)){
-            return Collections.emptyList();
+            throw new ServiceException(ApiError.ERROR_GENERATE_CAN_RETURN_QTY_NOT);
         }
         // 查找第一个不符合审批通过状态的记录
         Optional<SampleBorrowInfoDTO.SampleReturnView> firstNotApproved = list.stream()
@@ -1119,7 +1119,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
         }
         //筛选出可归还数量大于0的数据
-        return list.stream().filter(e -> Objects.nonNull(e.getCanReturnQty()) && e.getCanReturnQty() > 0).collect(Collectors.toList());
+        List<SampleBorrowInfoDTO.SampleReturnView> result = list.stream().filter(e -> Objects.nonNull(e.getCanReturnQty()) && e.getCanReturnQty() > 0).collect(Collectors.toList());
+        if(CollUtil.isEmpty(result)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_CAN_RETURN_QTY_NOT);
+        }
+        return result;
     }
 
     @Override
