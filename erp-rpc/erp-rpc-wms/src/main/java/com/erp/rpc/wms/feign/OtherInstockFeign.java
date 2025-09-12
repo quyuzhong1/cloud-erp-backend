@@ -46,7 +46,7 @@ public interface OtherInstockFeign {
     void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO);
 
     @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
-    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId);
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);
 
 
 }
