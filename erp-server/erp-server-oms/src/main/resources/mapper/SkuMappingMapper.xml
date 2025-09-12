@@ -771,7 +771,7 @@
         SELECT
         sm.ID,
         sm.shop_id,
-        si.auth_id as customerId,
+        li.auth_id as customerId,
         sm.listing_id,
         sm.dict_platform,
         sm.platform_name,
