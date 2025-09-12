@@ -5453,16 +5453,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
                 }
             }
-            // 前端显示的异常类型
-            String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-            //修改状态为手动标发
-            soB2cDeliveryFeign.updateShipmentMark(deliveryIds, ShipmentMarkTypeEnum.MANUAL.getCode());
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setType(type);
-            deleteDTO.setMainId(entity.getSourceId());
-            soB2cErrorService.delete(deleteDTO);
         } catch (Exception e) {
             log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+            // 独立异常
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(entity.getId(), SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(), "", e.getMessage(), ExceptionUtil.stacktraceToString(e), "");
+            soB2cErrorService.add(addError);
+
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动标发");
     }
