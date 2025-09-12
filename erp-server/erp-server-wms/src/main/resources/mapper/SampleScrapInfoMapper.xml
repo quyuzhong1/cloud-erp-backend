@@ -141,6 +141,7 @@
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleScrapInfoDTO$ListDTO">
         SELECT
         DISTINCT ON (ssi.ID)
+        COUNT ( ssid.ID ) OVER ( PARTITION BY ssi.ID ) AS skuCount ,
         <include refid="Query_Column_List"></include>
         FROM
         sample_scrap_info AS ssi

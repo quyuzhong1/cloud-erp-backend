@@ -215,6 +215,7 @@ sri.remark as remark
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
         SELECT
         DISTINCT ON (sri.ID)
+        COUNT ( srd.ID ) OVER ( PARTITION BY sri.ID ) AS skuCount ,
         <include refid="Query_Column_List"></include>
         FROM
         sample_return_info AS sri

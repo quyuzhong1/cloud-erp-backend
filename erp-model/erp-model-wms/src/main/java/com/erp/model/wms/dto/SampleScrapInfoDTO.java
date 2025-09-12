@@ -211,6 +211,10 @@ public class SampleScrapInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+        /**
+         * 商品种类
+         */
+        private Integer skuCount;
 
     }
 

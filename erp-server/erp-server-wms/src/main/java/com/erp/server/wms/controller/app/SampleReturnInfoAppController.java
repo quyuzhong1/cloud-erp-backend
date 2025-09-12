@@ -105,7 +105,7 @@ public class SampleReturnInfoAppController extends BaseController {
             tableAlias = "sri"
     )
     @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class )
-    public ApiResult<PagingVO<SampleReturnInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<SampleReturnInfoDTO.ListDTO>> pagingApp(@RequestBody @Validated PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
         return success(sampleReturnInfoService.pagingApp(dto));
     }
 
