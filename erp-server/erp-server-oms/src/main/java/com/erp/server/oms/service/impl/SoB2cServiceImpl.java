@@ -123,7 +123,6 @@ import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
@@ -135,7 +134,6 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -155,7 +153,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -6756,7 +6753,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return flag;
     }
 
-    private void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
+    @Override
+    public void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
         // 校验sku是否存在领星
         List<String> skuNoList = detailEntityList.stream().map(e->LingxingApiUtils.convertLxSku(e.getSkuNo())).collect(Collectors.toList());
         LingxingApiUtils.checkSkuSyncLx(skuNoList);

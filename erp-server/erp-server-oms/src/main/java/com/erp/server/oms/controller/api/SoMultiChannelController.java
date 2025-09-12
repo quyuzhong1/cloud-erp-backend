@@ -10,6 +10,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -38,6 +39,7 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.query.SoMultiChannelQueryHandler;
 import com.erp.server.oms.service.ShopInfoService;
+import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoMultiChannelService;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +68,8 @@ public class SoMultiChannelController extends BaseController {
     private SoMultiChannelService soMultiChannelService;
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
     @Resource
     private ShopInfoService shopInfoService;
     @Resource
@@ -486,6 +490,10 @@ public class SoMultiChannelController extends BaseController {
                             && CharSequenceUtil.isNotBlank(dto.getLogisticsChannelId())){
                         soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, false);
                     }
+                }
+                //如果是领星订单，更新领星订单信息
+                if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())){
+                    soB2cService.updateLingXingOrder(soB2cEntity,soB2cDetailService.listByMainId(id));
                 }
                 SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity, soB2cEntity, channelEntity);
                 BaseResultDTO.AddDTO add = soMultiChannelService.add(addDTO);
