@@ -621,6 +621,14 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
+        // 统计领用总数
+        Integer totalQty = list.stream()
+                .mapToInt(SampleRecipientDetailEntity::getRecipientQty)
+                .sum();
+        approveDTO.getVariablesMap().put("totalQty", totalQty);
+        approveDTO.getVariablesMap().put("usageCn", SampleUsageEnum.getName(entity.getUsage()));
+        approveDTO.getVariablesMap().put("usageScopeCn", SampleUsageScopeEnum.getName(entity.getUsageScope()));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
