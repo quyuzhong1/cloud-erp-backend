@@ -183,7 +183,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //数大臣单据字段信息
             List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             if (CollUtil.isEmpty(fieldList)) {
-                throw new ServiceException("数大臣单据字段配置不存在");
+                log.error("未查询到数大臣单据字段信息，业务类型：{}，字段归属类型：{}，字段：{}", entity.getBussinessKey(), CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode(), detailDTO.getSysField());
+                continue;
             }
             detailDTO.setCfgQueryOptionEntity(fieldList.get(0));
         }
