@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Map;
 
 
 @RunWith(SpringRunner.class)
@@ -37,12 +38,12 @@ public class DhtReceiptServiceTest {
         DhtCommonQueryReq req = new DhtCommonQueryReq();
         DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
-        String timeStr = "2025-07-01 14:30:00";
+        String timeStr = "2025-09-10 14:30:00";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(timeStr, formatter);
         long startTimestamp = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        String endTimeStr = "2025-11-15 14:30:00";
+        String endTimeStr = "2025-10-15 14:30:00";
         LocalDateTime endDateTime = LocalDateTime.parse(endTimeStr, formatter);
         long endTimestamp = endDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
@@ -56,9 +57,9 @@ public class DhtReceiptServiceTest {
                         .orders(null)
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
-                                        .fieldName("last_modified_time")
-                                        .fieldValues(Arrays.asList(startTimestamp,endTimestamp))
-                                        .operator("BETWEEN")
+                                        .fieldName("name")
+                                        .fieldValues(Arrays.asList("20250911-000012"))
+                                        .operator("IN")
                                         .build()
                         ))
                         .build())
@@ -96,4 +97,19 @@ public class DhtReceiptServiceTest {
         System.out.println(JSONUtil.toJsonStr(resp).replace("\\\"", "\"").replace("\"{","{").replace("}\"","}"));
     }
 
+
+    @Test
+    public void updateReceipt() {
+        Map<String, Object> req = new java.util.HashMap<>();
+        Map<String, Object> dataMap = new java.util.HashMap<>();;
+
+        Map<String, Object> objMap = new java.util.HashMap<>();
+        objMap.put("dataObjectApiName","PaymentObj");
+        objMap.put("_id","68c22764039a5500071d218d");
+        objMap.put("life_status","under_review");
+        dataMap.put("object_data",objMap);
+        req.put("data",dataMap);
+        DhtBaseResp<String> resp = dhtReceiptService.updateReceipt(req);
+        System.out.println(JSONUtil.toJsonStr(resp).replace("\\\"", "\"").replace("\"{","{").replace("}\"","}"));
+    }
 }
