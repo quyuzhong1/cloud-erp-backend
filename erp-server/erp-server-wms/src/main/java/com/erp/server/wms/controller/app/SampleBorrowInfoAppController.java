@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 样品借用单
+ * 样品借用单app端
  *
  * @author jack
  * @since 2025-09-11

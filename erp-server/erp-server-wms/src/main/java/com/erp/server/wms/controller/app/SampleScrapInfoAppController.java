@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 样品报废单
+ * 样品报废单app端
  *
  * @author jack
  * @since 2025-08-20
