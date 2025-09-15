@@ -87,7 +87,11 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
         //借出数量
         String borrowQty = excelDTO.getBorrowQty();
         if(StringUtils.isNotBlank(borrowQty)){
-            addDTO.setBorrowQty(Integer.parseInt(borrowQty));
+            try {
+                addDTO.setBorrowQty(Integer.parseInt(borrowQty));
+            } catch (NumberFormatException e) {
+                errorMsgList.add("借出数量格式错误：" + borrowQty + "，必须为正整数");
+            }
         }
 
         //使用方

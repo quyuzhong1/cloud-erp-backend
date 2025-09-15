@@ -268,7 +268,17 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
                 }
             }
         }
-        data.setRecipientQty( Objects.isNull(data.getRecipientQtyStr()) ? 0 : Integer.parseInt(data.getRecipientQtyStr()));
+        // 解析领用数量
+        if (StringUtils.isNotBlank(data.getRecipientQtyStr())) {
+            try {
+                Integer recipientQty = Integer.parseInt(data.getRecipientQtyStr());
+                data.setRecipientQty(recipientQty);
+            } catch (NumberFormatException e) {
+                errorMsgList.add("领用数量格式错误：" + data.getRecipientQtyStr() + "，必须为正整数");
+            }
+        } else {
+            data.setRecipientQty(0);
+        }
         
     }
 

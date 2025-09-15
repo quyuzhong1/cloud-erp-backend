@@ -101,7 +101,11 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
         //报废数量
         String scrapQty = excelDTO.getScrapQty();
         if(StringUtils.isNotBlank(scrapQty)){
-            addDTO.setScrapQty(Integer.parseInt(scrapQty));
+            try {
+                addDTO.setScrapQty(Integer.parseInt(scrapQty));
+            } catch (NumberFormatException e) {
+                errorMsgList.add("报废数量格式错误：" + scrapQty + "，必须为正整数");
+            }
         }
 
         //使用方
