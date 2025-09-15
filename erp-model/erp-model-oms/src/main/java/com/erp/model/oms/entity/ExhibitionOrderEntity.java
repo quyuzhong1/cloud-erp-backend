@@ -163,6 +163,11 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
     @TableField("receive_address_id")
     private String receiveAddressId;
     /**
+     * 审核人
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+    /**
     * 审核人
     */
     @TableField("approve_user_name")

@@ -1221,6 +1221,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(ExhibitionOrderEntity::getId, id)
+                .set(ExhibitionOrderEntity::getApproveUserId, userInfo.getUid())
                 .set(ExhibitionOrderEntity::getApproveUserName, userInfo.getUserName())
                 .set(ExhibitionOrderEntity::getApproveStatus, approveStatus)
                 .set(ExhibitionOrderEntity::getApproveTime, LocalDateTime.now())
@@ -1236,6 +1237,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
         this.lambdaUpdate().eq(ExhibitionOrderEntity::getId, id)
+                .set(ExhibitionOrderEntity::getApproveUserId, "")
                 .set(ExhibitionOrderEntity::getApproveUserName, "")
                 .set(ExhibitionOrderEntity::getApproveStatus, approveStatus)
                 .set(ExhibitionOrderEntity::getApproveTime, null)
