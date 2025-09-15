@@ -86,7 +86,7 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
                 return;
             }
             // 不存在多渠道订单跳过
-            List<SoMultiChannelEntity> entityList = FeignQuery.create(ShopAuthEntity.class)
+            List<SoMultiChannelEntity> entityList = FeignQuery.create(SoMultiChannelEntity.class)
                     .eq(SoMultiChannelEntity::getDeliveryCode, dto.getMerchantOrderId())
                     .list();
             if (CollectionUtils.isEmpty(entityList)){
