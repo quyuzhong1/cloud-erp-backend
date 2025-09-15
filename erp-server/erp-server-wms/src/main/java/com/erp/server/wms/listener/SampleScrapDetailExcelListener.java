@@ -32,8 +32,10 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
 
     //sku信息
     private Map<String,SkuVO> skuMap ;
+
+    private String id ;
     //用户
-    private List<FindUserDTO> userList ;
+    private String scrapUserId ;
 
     private SampleLedgerService sampleLedgerService;
     /**
@@ -45,14 +47,13 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
 
     public SampleScrapDetailExcelListener(SampleLedgerService sampleLedgerService,
                                           Map<String,SkuVO> skuMap,
-                                          List<FindUserDTO> userList) {
+                                          String scrapUserId,
+                                          String id) {
         this.sampleLedgerService = sampleLedgerService;
         this.skuMap = skuMap;
-        this.userList = userList;
+        this.scrapUserId = scrapUserId;
+        this.id = id;
     }
-
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
     /**
      * 每解析一行数据回调一遍
      *
@@ -72,16 +73,6 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
             errorMsgList.addAll(msgList);
         }
         SampleScrapDetailDTO.AddDTO addDTO = new SampleScrapDetailDTO.AddDTO();
-        //报废人
-        String scrapUserName = excelDTO.getScrapUserName();
-        FindUserDTO findUserDTO = null;
-        if(StringUtils.isNotBlank(scrapUserName)){
-            findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
-            if(Objects.isNull(findUserDTO)){
-                errorMsgList.add("报废人不存在");
-            }
-        }
-
         //备注
         addDTO.setRemark(excelDTO.getDetailRemark());
 
@@ -107,11 +98,12 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
         //使用方
         String useUserName = excelDTO.getUseUserName();
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        if(StringUtils.isNotBlank(addDTO.getSkuId()) && Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(useUserName)){
+        if(StringUtils.isNotBlank(addDTO.getSkuId()) && StringUtils.isNotBlank(scrapUserId) && StringUtils.isNotBlank(useUserName)){
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-            dto.setUserId(findUserDTO.getUserId());
+            dto.setUserId(scrapUserId);
             dto.setSkuIds(Arrays.asList(addDTO.getSkuId()));
             dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
+            dto.setChildId(id);
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);

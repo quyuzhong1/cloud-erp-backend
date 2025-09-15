@@ -72,12 +72,12 @@ public class SampleBorrowDetailServiceImpl extends SuperServiceImpl<SampleBorrow
     }
 
     @Override
-    public SampleBorrowDetailDTO.ImportDTO importFile(MultipartFile excelFile,String lendUserId ,  HttpServletResponse response) {
+    public SampleBorrowDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, String lendUserId ,  HttpServletResponse response) {
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
 
-        SampleBorrowDetailExcelListener excelListenerUtil = new SampleBorrowDetailExcelListener(sampleLedgerService, map,lendUserId);
+        SampleBorrowDetailExcelListener excelListenerUtil = new SampleBorrowDetailExcelListener(sampleLedgerService, map,lendUserId,id);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), SampleBorrowDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

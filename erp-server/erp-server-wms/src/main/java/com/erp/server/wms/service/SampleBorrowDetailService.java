@@ -22,5 +22,5 @@ public interface SampleBorrowDetailService extends SuperService<SampleBorrowDeta
 
     List<SampleBorrowDetailEntity> listByMainId(String id);
 
-    SampleBorrowDetailDTO.ImportDTO importFile(MultipartFile excelFile,String lendUserId ,  HttpServletResponse response);
+    SampleBorrowDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, String lendUserId ,  HttpServletResponse response);
 }
