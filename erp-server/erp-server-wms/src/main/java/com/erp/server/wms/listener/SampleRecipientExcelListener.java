@@ -219,10 +219,6 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         } else {
             data.setPickOrgId(orgId);
         }
-        
-        if (data.getUsageScopeStr() == null || data.getUsageScopeStr().trim().isEmpty()) {
-            errorMsgList.add("使用范围不能为空");
-        }
         String usageScopeByName = SampleUsageScopeEnum.getUsageScopeByName(data.getUsageScopeStr());
         if (StringUtils.isBlank(usageScopeByName)){
             errorMsgList.add(CharSequenceUtil.format("未知使用范围:{}",data.getUsageScopeStr()));
@@ -251,21 +247,17 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             }
         }
 
-        
-        if (data.getSkuNo() == null || data.getSkuNo().trim().isEmpty()) {
-            errorMsgList.add("SKU不能为空");
+
+        // 验证SKU是否存在并解析SKU ID和产品名称
+        String skuId = getSkuIdBySkuNo(data.getSkuNo());
+        if (StrUtil.isBlank(skuId)) {
+            errorMsgList.add("SKU【" + data.getSkuNo() + "】不存在");
         } else {
-            // 验证SKU是否存在并解析SKU ID和产品名称
-            String skuId = getSkuIdBySkuNo(data.getSkuNo());
-            if (StrUtil.isBlank(skuId)) {
-                errorMsgList.add("SKU【" + data.getSkuNo() + "】不存在");
-            } else {
-                data.setSkuId(skuId);
-                // 获取产品名称
-                String productName = getProductNameBySkuId(skuId);
-                if (StrUtil.isNotBlank(productName)) {
-                    data.setProductName(productName);
-                }
+            data.setSkuId(skuId);
+            // 获取产品名称
+            String productName = getProductNameBySkuId(skuId);
+            if (StrUtil.isNotBlank(productName)) {
+                data.setProductName(productName);
             }
         }
         // 解析领用数量
