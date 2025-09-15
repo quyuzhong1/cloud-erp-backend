@@ -55,9 +55,9 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "*退回人", index = 3)
     @FieldValid(fieldName = "*退回人", isNotBlank = true)
-    private String backUserName;
+    private String userName;
     @ExcelIgnore
-    private String backUserId;
+    private String userId;
 
     /**
      * 退回部门
@@ -65,9 +65,9 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     @ColumnWidth(30)
     @ExcelProperty(value = "*退回部门", index = 4)
     @FieldValid(fieldName = "*退回部门", isNotBlank = true)
-    private String backDeptName;
+    private String deptName;
     @ExcelIgnore
-    private String backDeptId;
+    private String deptId;
 
     /**
      * 退回组织
