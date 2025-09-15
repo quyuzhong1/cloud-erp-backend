@@ -117,6 +117,18 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     private String detailRemark;
 
     /**
+     * 使用方名称
+     */
+    @ExcelIgnore
+    private String useUserName;
+
+    /**
+     * 使用方ID
+     */
+    @ExcelIgnore
+    private String useUserId;
+
+    /**
      * 错误数据
      */
     @ExcelProperty(value = "错误数据", index = 10)
