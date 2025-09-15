@@ -440,7 +440,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         log.info("提交 开始启动样品归还单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -482,7 +482,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -542,7 +542,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -579,7 +579,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             attachmentService.deleteByUrlList(urlList);
         }
         // 删除日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "删除样品归还单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -603,7 +603,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .eq(SampleReturnInfoEntity::getId, id)
                 .update();
         // 日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(),  OperationTypeEnum.INVALID.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
@@ -628,7 +628,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -940,7 +940,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                     result = BatchResultDTO.success(add.getId(), add.getCode(), OperationTypeEnum.ADD);
 
                     // 记录下推日志
-                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据下推样品归还单【{}】 ", UserContext.getDefaultLoginUser().getUserName(), addDTO.getSourceCode(), "样品借用单",add.getCode());
+                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据下推样品归还单【{}】", UserContext.getDefaultLoginUser().getUserName(), addDTO.getSourceCode(), "样品借用单",add.getCode());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addDTO.getSourceId(), "下推操作");
                 } catch (Exception e) {
                     log.error("系统异常：sourceId={}, sourceCode={}", firstItem.getSourceId(), firstItem.getSourceCode(), e);

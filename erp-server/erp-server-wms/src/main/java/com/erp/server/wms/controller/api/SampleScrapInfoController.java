@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -161,7 +162,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleScrapInfoService.submit(id);
+                submit = sampleScrapInfoService.submit(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单 提交审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -199,7 +200,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -237,7 +238,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleScrapInfoService.disApprove(id);
+                disApproveResult = sampleScrapInfoService.disApprove(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单反审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -276,7 +277,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleScrapInfoService.delete(id);
+                deleteResult = sampleScrapInfoService.delete(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单删除失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -314,7 +315,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleScrapInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleScrapInfoService.invalid(id,dto.getRemark(), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单作废失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -352,7 +353,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleScrapInfoService.cancelProcess(id);
+                cancelResult = sampleScrapInfoService.cancelProcess(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品报废单撤回流程失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);

@@ -6,6 +6,7 @@ import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.exception.ServiceException;
@@ -33,13 +34,13 @@ public class SampleScrapApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleScrapInfoService.cancelProcess(dto.getId());
+        BatchResultDTO result = sampleScrapInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 
     @Override
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
-        BatchResultDTO result = sampleScrapInfoService.disApprove(dto.getId());
+        BatchResultDTO result = sampleScrapInfoService.disApprove(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 

@@ -23,6 +23,7 @@
        <result column="user_id" property="userId" />
        <result column="user_name" property="userName" />
        <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
        <result column="bill_date" property="billDate" />
     </resultMap>
 
@@ -37,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-                 approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, user_id, user_name, dept_id, bill_date
+                 approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, user_id, user_name, dept_id, dept_name, bill_date
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
@@ -54,6 +55,7 @@
             sil.user_id AS userId,
             sil.user_name AS userName,
             sil.dept_id AS deptId,
+            sil.dept_name AS deptName,
             sil.bill_date AS billDate,
             sil.create_time AS createTime,
             sil.create_user_name AS createUserName,
@@ -97,6 +99,7 @@
             sil.user_id AS userId,
             sil.user_name AS userName,
             sil.dept_id AS deptId,
+            sil.dept_name AS deptName,
             sil.bill_date AS billDate,
             sil.create_time AS createTime,
             sil.create_user_name AS createUserName,

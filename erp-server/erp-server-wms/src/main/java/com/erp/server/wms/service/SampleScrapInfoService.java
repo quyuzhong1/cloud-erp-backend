@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
@@ -91,7 +92,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id, ClientTypeEnum clientType);
 
     /**
     * 审核
@@ -100,7 +101,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     * @param dto
     * @return
     */
-    BatchResultDTO approve(ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType);
 
     /**
     * 反审核
@@ -109,7 +110,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     * @param id
     * @return
     */
-    BatchResultDTO disApprove(String id);
+    BatchResultDTO disApprove(String id, ClientTypeEnum clientType);
 
     /**
     * 删除
@@ -118,7 +119,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     * @param id
     * @return
     */
-    BatchResultDTO delete(String id);
+    BatchResultDTO delete(String id, ClientTypeEnum clientType);
 
     /**
     * 撤销
@@ -127,7 +128,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     * @param id
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
 
     /**
     * 导出Excel
@@ -162,7 +163,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
      * @param id
      * @return
      */
-    BatchResultDTO invalid(String id,String remark);
+    BatchResultDTO invalid(String id,String remark, ClientTypeEnum clientType);
 
     void importSampleScrap(BaseDTO.ImportDTO dto);
 

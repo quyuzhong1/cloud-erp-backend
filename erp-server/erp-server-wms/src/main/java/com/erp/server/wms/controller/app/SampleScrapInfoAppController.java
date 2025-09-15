@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -55,6 +56,7 @@ public class SampleScrapInfoAppController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "样品报废单app端新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleScrapInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         return success(sampleScrapInfoService.add(dto));
     }
 
@@ -73,6 +75,7 @@ public class SampleScrapInfoAppController extends BaseController {
         serviceClass = SampleScrapInfoService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleScrapInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleScrapInfoService.update(dto);
         return success();
     }
@@ -118,6 +121,7 @@ public class SampleScrapInfoAppController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleScrapInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         BaseResultDTO.AddDTO result = sampleScrapInfoService.addAndSubmit(dto);
         return success(result);
     }
@@ -136,6 +140,7 @@ public class SampleScrapInfoAppController extends BaseController {
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleScrapInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleScrapInfoService.updateAndSubmit(dto);
         return success();
     }
@@ -162,7 +167,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleScrapInfoService.submit(id);
+                submit = sampleScrapInfoService.submit(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端 提交审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -200,7 +205,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -238,7 +243,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleScrapInfoService.disApprove(id);
+                disApproveResult = sampleScrapInfoService.disApprove(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端反审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -277,7 +282,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleScrapInfoService.delete(id);
+                deleteResult = sampleScrapInfoService.delete(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端删除失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -315,7 +320,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleScrapInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleScrapInfoService.invalid(id,dto.getRemark(),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端作废失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
@@ -353,7 +358,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleScrapInfoService.cancelProcess(id);
+                cancelResult = sampleScrapInfoService.cancelProcess(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端撤回流程失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
