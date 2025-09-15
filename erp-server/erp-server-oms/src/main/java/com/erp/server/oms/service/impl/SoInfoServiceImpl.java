@@ -607,7 +607,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
         //客户sku
-        String platformSkuNo = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
+        String platformSkuNo = detailList.stream().map(SoDetailEntity::getCustomerSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
         variablesMap.put("platformSkuNo", platformSkuNo);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(SoDetailEntity::getIsGift);
@@ -2732,7 +2732,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<SoInfoDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
             for (SoDetailEntity soDetailEntity : soDetailEntityList) {
                 SoInfoDTO.PrintDetailDTO printDetailDTO = new SoInfoDTO.PrintDetailDTO();
-                printDetailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+                printDetailDTO.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
                 printDetailDTO.setProductSkuNo(soDetailEntity.getSkuNo());
                 SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 printDetailDTO.setProductName(skuVO.getSkuName());
@@ -3954,7 +3954,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
-                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -3964,7 +3964,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
                         SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
-                        addDetail.setPlatformSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
+                        addDetail.setCustomerSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
                     }
                 }else if (CharSequenceUtil.isNotBlank(customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
@@ -3973,7 +3973,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
-                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
                 //币种

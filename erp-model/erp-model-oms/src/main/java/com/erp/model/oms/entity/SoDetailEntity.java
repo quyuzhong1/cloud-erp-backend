@@ -44,10 +44,10 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private String skuNo;
 
     /**
-     * 平台sku no
+     * 客户sku
      */
-    @TableField("platform_sku_no")
-    private String platformSkuNo;
+    @TableField("customer_sku_no")
+    private String customerSkuNo;
 
     /**
      * 销售数量
@@ -280,6 +280,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("platform_detail_id")
     private String platform_detail_id;
+
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
 
     public static final String MAIN_ID = "main_id";
