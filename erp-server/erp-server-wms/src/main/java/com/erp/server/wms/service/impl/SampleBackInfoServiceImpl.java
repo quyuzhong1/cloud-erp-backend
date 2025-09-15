@@ -147,6 +147,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                     detailEntity.setSourceDetailId("");
                 }
 
+
                 boolean detailSave = sampleBackDetailService.save(detailEntity);
                 if (!detailSave) {
                     throw new ServiceException("样品退回单明细保存失败");

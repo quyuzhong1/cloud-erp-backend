@@ -26,6 +26,7 @@ import java.util.*;
  */
 public class SampleBorrowDetailExcelListener extends AnalysisEventListener<SampleBorrowDetailImportExcelDTO> {
 
+    private String id;
     private String lendUserId;
     //sku信息
     private Map<String,SkuVO> skuMap ;
@@ -40,13 +41,13 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
 
     public SampleBorrowDetailExcelListener(SampleLedgerService sampleLedgerService,
                                            Map<String,SkuVO> skuMap,
-                                           String lendUserId) {
+                                           String lendUserId,
+                                           String id) {
         this.sampleLedgerService = sampleLedgerService;
         this.skuMap = skuMap;
         this.lendUserId = lendUserId;
+        this.id = id;
     }
-
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
      * 每解析一行数据回调一遍
@@ -87,17 +88,22 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
         //借出数量
         String borrowQty = excelDTO.getBorrowQty();
         if(StringUtils.isNotBlank(borrowQty)){
-            addDTO.setBorrowQty(Integer.parseInt(borrowQty));
+            try {
+                addDTO.setBorrowQty(Integer.parseInt(borrowQty));
+            } catch (NumberFormatException e) {
+                errorMsgList.add("借出数量格式错误：" + borrowQty + "，必须为正整数");
+            }
         }
 
         //使用方
         String useUserName = excelDTO.getUseUserName();
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        if(StringUtils.isNotBlank(addDTO.getSkuId()) && StringUtils.isNotBlank(useUserName)){
+        if(StringUtils.isNotBlank(addDTO.getSkuId())  && StringUtils.isNotBlank(lendUserId) && StringUtils.isNotBlank(useUserName)){
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
             dto.setUserId(lendUserId);
             dto.setSkuIds(Arrays.asList(addDTO.getSkuId()));
             dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
+            dto.setChildId(id);
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);

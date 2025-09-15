@@ -60,13 +60,12 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
     private SampleLedgerService sampleLedgerService;
 
     @Override
-    public SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id,String scrapUserId, HttpServletResponse response) {
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
-        //用户
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        SampleScrapDetailExcelListener excelListenerUtil = new SampleScrapDetailExcelListener(sampleLedgerService, map, userList);
+
+        SampleScrapDetailExcelListener excelListenerUtil = new SampleScrapDetailExcelListener(sampleLedgerService, map, scrapUserId,id);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), SampleScrapDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

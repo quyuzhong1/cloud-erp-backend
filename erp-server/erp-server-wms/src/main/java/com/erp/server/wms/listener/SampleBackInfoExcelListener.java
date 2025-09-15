@@ -12,10 +12,13 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SampleBackInfoService;
+import com.erp.server.wms.service.SampleLedgerService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +58,7 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
     private final WarehouseService warehouseService = SpringUtil.getBean(WarehouseService.class);
     private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+    private final SampleLedgerService sampleLedgerService = SpringUtil.getBean(SampleLedgerService.class);
 
     /**
      * 错误信息
@@ -160,6 +165,41 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
                 excelDTO.setSkuId(skuVO.getSkuId());
                 excelDTO.setSkuNo(skuVO.getSkuNo());
                 excelDTO.setProductName(skuVO.getSkuName());
+            }
+        }
+
+        // 查询台账信息并验证数量
+        if (StringUtils.isNotBlank(excelDTO.getBackUserId()) && StringUtils.isNotBlank(excelDTO.getSkuId())) {
+            try {
+                SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+                searchDTO.setUserId(excelDTO.getBackUserId());
+                searchDTO.setSkuIds(new ArrayList<>(Arrays.asList(excelDTO.getSkuId())));
+                searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
+                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
+                
+                if (CollectionUtils.isNotEmpty(skuAvailableQtyDTOS)) {
+                    SampleLedgerDTO.SkuAvailableQtyDTO ledgerDTO = skuAvailableQtyDTOS.get(0);
+                    excelDTO.setUseUserId(ledgerDTO.getUseUserId());
+                    excelDTO.setUseUserName(ledgerDTO.getUseUserName());
+                    
+                    // 验证退回数量是否小于等于可退数量
+                    if (StringUtils.isNotBlank(excelDTO.getQty())) {
+                        try {
+                            Integer backQty = Integer.parseInt(excelDTO.getQty());
+                            Integer availableQty = ledgerDTO.getAvailableQty();
+                            
+                            if (backQty > availableQty) {
+                                errorMsgList.add("退回数量(" + backQty + ")不能大于可退数量(" + availableQty + ")");
+                            }
+                        } catch (NumberFormatException e) {
+                            errorMsgList.add("退回数量格式错误：" + excelDTO.getQty());
+                        }
+                    }
+                } else {
+                    errorMsgList.add("台账中未找到该SKU的可退数量信息");
+                }
+            } catch (Exception e) {
+                errorMsgList.add("查询台账失败：" + e.getMessage());
             }
         }
 

@@ -53,11 +53,11 @@ public class SampleBorrowDetailController extends BaseController {
      */
     @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品借用单明细导入")
-    public ApiResult<SampleBorrowDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "lendUserId", required = true) String lendUserId , HttpServletResponse response) {
+    public ApiResult<SampleBorrowDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "id",required = false) String id,@RequestParam(value = "lendUserId", required = true) String lendUserId , HttpServletResponse response) {
         if (lendUserId == null || lendUserId.trim().isEmpty()) {
             return failure("借出人不能为空");
         }
-        return success(sampleBorrowDetailService.importFile(excelFile, lendUserId ,  response));
+        return success(sampleBorrowDetailService.importFile(excelFile,id, lendUserId ,  response));
     }
 
 

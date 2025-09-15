@@ -88,7 +88,11 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
         //退回数量
         String qty = excelDTO.getQty();
         if(StringUtils.isNotBlank(qty)){
-            addDTO.setQty(Integer.parseInt(qty));
+            try {
+                addDTO.setQty(Integer.parseInt(qty));
+            } catch (NumberFormatException e) {
+                errorMsgList.add("退回数量格式错误：" + qty + "，必须为正整数");
+            }
         }
 
         //使用方

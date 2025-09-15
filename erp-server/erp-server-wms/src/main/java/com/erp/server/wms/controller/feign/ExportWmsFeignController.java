@@ -340,7 +340,7 @@ public class ExportWmsFeignController {
             tableField = "create_user_id",
             menuCode = "wms:sampleRecipient:export"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
     public PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto) {
         return sampleRecipientService.getSampleRecipientPageData(dto);
     }
@@ -350,7 +350,7 @@ public class ExportWmsFeignController {
             tableField = "create_user_id",
             menuCode = "wms:sampleBackInfo:export"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
     public PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {
         return sampleBackInfoService.getSampleBackInfoPageData(dto);
     }
