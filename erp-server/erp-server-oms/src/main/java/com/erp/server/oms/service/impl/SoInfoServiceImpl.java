@@ -88,6 +88,7 @@ import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.convert.SoInfoConverter;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
@@ -256,6 +257,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private CfgSettingFeign fgSettingFeign;
     @Resource
     private SaleDemandFeign saleDemandFeign;
+
+    @Resource
+    private SyncDhtService syncDhtService;
 
     /**
      * 添加销售订单
@@ -1583,6 +1587,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //自动审核收款单
             soReceiptService.autoApproveBySo(entity);
+
+            //订货通同步
+            syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return result;
     }
@@ -1664,6 +1671,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
                 syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
+
+            //订货通同步
+            syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }

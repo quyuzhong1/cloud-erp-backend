@@ -68,4 +68,16 @@ public class SyncDhtServiceImpl implements SyncDhtService {
         omsPushMsgEntity.setSyncOperate(operate);
         omsPushMsgService.save(omsPushMsgEntity);
     }
+
+    @Override
+    public void createSyncSoInfoTaskToDht(SoInfoEntity soInfoEntity, String operate) {
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(soInfoEntity.getId());
+        omsPushMsgEntity.setSourceCode(soInfoEntity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(soInfoEntity));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.DHT.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+    }
 }

@@ -1,9 +1,6 @@
 package com.erp.server.oms.dht;
 
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerCreditApplyEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.model.oms.entity.*;
 
 public interface SyncDhtService {
     /**
@@ -28,4 +25,12 @@ public interface SyncDhtService {
      * 创建推送收款单任务
      */
     void createSyncReceiptTaskToDht(SoReceiptEntity soReceiptEntity, String operate);
+    /**
+     * 销售订单
+     * @author will
+     * @date 2025/9/12 15:27
+     * @param soInfoEntity
+     * @return void
+     */
+    void createSyncSoInfoTaskToDht(SoInfoEntity soInfoEntity, String operate);
 }
