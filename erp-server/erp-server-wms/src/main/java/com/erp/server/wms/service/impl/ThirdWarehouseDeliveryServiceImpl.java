@@ -241,7 +241,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        List<WarehouseEntity> warehouseEntityList = warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
         List<String> errorSoIds = list.stream()
                 .filter(v -> Objects.equals(v.getSignOrderError(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode()))
                 .map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId)
