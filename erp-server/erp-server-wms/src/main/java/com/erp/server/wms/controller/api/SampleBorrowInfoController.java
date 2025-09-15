@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
@@ -163,7 +164,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleBorrowInfoService.submit(id);
+                submit = sampleBorrowInfoService.submit(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单 提交审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -201,7 +202,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -239,7 +240,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleBorrowInfoService.disApprove(id);
+                disApproveResult = sampleBorrowInfoService.disApprove(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单反审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -278,7 +279,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.delete(id);
+                deleteResult = sampleBorrowInfoService.delete(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单删除失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -316,7 +317,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark(), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单作废失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -354,7 +355,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleBorrowInfoService.cancelProcess(id);
+                cancelResult = sampleBorrowInfoService.cancelProcess(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品借用单撤回流程失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
