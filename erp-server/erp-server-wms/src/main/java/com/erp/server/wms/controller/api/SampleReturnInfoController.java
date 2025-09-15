@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -169,7 +170,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleReturnInfoService.submit(id);
+                submit = sampleReturnInfoService.submit(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单 提交审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -207,7 +208,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -245,7 +246,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleReturnInfoService.disApprove(id);
+                disApproveResult = sampleReturnInfoService.disApprove(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单反审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -284,7 +285,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleReturnInfoService.delete(id);
+                deleteResult = sampleReturnInfoService.delete(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单删除失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -321,7 +322,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleReturnInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleReturnInfoService.invalid(id,dto.getRemark(), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单作废失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -359,7 +360,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleReturnInfoService.cancelProcess(id);
+                cancelResult = sampleReturnInfoService.cancelProcess(id, ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单撤回流程失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);

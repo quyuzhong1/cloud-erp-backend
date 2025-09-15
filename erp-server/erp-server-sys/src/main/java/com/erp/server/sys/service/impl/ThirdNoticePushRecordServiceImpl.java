@@ -863,13 +863,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
-                    //审核状态变化
-                    if(ThirdNoticePushRecordNoticeNodeEnum.WAIT_SUBMITTO_APPROVEING.getCode().equals(feildValue) && diffFields.contains("approve_status")){
-
-
-                    }
-
-
                     //新增
                     if(ThirdNoticePushRecordNoticeNodeEnum.ADD_RECORD.getCode().equals(feildValue)){
                         //不等于新增则返回false
@@ -891,7 +884,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         list = ThirdNoticePushRecordNoticeNodeEnum.NOT_SUBSEQUENT_BATCH.getCode().equals(feildValue)
                                 ? map.get(Boolean.TRUE)
                                 : map.get(Boolean.FALSE);
-
                         if (CollUtil.isEmpty(list)) {
                             return Boolean.FALSE;
                         }
