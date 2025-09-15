@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -55,6 +56,7 @@ public class SampleReturnInfoAppController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "样品归还单app端新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleReturnInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         return success(sampleReturnInfoService.add(dto));
     }
 
@@ -73,6 +75,7 @@ public class SampleReturnInfoAppController extends BaseController {
         serviceClass = SampleReturnInfoService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleReturnInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleReturnInfoService.update(dto);
         return success();
     }
@@ -118,6 +121,7 @@ public class SampleReturnInfoAppController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleReturnInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         BaseResultDTO.AddDTO result = sampleReturnInfoService.addAndSubmit(dto);
         return success(result);
     }
@@ -136,6 +140,7 @@ public class SampleReturnInfoAppController extends BaseController {
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleReturnInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleReturnInfoService.updateAndSubmit(dto);
         return success();
     }
@@ -162,7 +167,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleReturnInfoService.submit(id);
+                submit = sampleReturnInfoService.submit(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端 提交审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -200,7 +205,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -238,7 +243,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleReturnInfoService.disApprove(id);
+                disApproveResult = sampleReturnInfoService.disApprove(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端反审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -277,7 +282,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleReturnInfoService.delete(id);
+                deleteResult = sampleReturnInfoService.delete(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端删除失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -314,7 +319,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleReturnInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleReturnInfoService.invalid(id,dto.getRemark(),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端作废失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
@@ -352,7 +357,7 @@ public class SampleReturnInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleReturnInfoService.cancelProcess(id);
+                cancelResult = sampleReturnInfoService.cancelProcess(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品归还单app端撤回流程失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);

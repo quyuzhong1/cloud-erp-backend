@@ -7,6 +7,7 @@ import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
@@ -39,13 +40,13 @@ public class SampleBorrowApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleBorrowInfoService.cancelProcess(dto.getId());
+        BatchResultDTO result = sampleBorrowInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 
     @Override
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
-        BatchResultDTO result = sampleBorrowInfoService.disApprove(dto.getId());
+        BatchResultDTO result = sampleBorrowInfoService.disApprove(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 

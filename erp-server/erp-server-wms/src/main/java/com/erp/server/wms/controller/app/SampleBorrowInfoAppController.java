@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -52,6 +53,7 @@ public class SampleBorrowInfoAppController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "样品借用单app端新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleBorrowInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         return success(sampleBorrowInfoService.add(dto));
     }
 
@@ -70,6 +72,7 @@ public class SampleBorrowInfoAppController extends BaseController {
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleBorrowInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleBorrowInfoService.update(dto);
         return success();
     }
@@ -118,6 +121,7 @@ public class SampleBorrowInfoAppController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleBorrowInfoDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         BaseResultDTO.AddDTO result = sampleBorrowInfoService.addAndSubmit(dto);
         return success(result);
     }
@@ -136,6 +140,7 @@ public class SampleBorrowInfoAppController extends BaseController {
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleBorrowInfoDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.APP);
         sampleBorrowInfoService.updateAndSubmit(dto);
         return success();
     }
@@ -163,7 +168,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleBorrowInfoService.submit(id);
+                submit = sampleBorrowInfoService.submit(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端 提交审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -201,7 +206,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -239,7 +244,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleBorrowInfoService.disApprove(id);
+                disApproveResult = sampleBorrowInfoService.disApprove(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端反审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -278,7 +283,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.delete(id);
+                deleteResult = sampleBorrowInfoService.delete(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端删除失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -316,7 +321,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark());
+                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark(),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端作废失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
@@ -354,7 +359,7 @@ public class SampleBorrowInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleBorrowInfoService.cancelProcess(id);
+                cancelResult = sampleBorrowInfoService.cancelProcess(id,ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品借用单app端撤回流程失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
