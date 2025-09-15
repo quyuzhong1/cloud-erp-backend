@@ -13,6 +13,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
@@ -225,6 +227,12 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @Override
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        dto.getParams().setDynamicDataSource(dynamicDataSource);
         IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> pageData = baseMapper.paging(query, dto.getParams());
         List<ThirdWarehouseDeliveryDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -233,7 +241,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        List<WarehouseEntity> warehouseEntityList = warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
         List<String> errorSoIds = list.stream()
                 .filter(v -> Objects.equals(v.getSignOrderError(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode()))
                 .map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId)
