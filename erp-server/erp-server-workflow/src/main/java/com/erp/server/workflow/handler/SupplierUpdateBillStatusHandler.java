@@ -235,7 +235,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         map.put("paymentCondition", paymentConditionCode);
 
         //scm字典数据
-        List<DictBasicEntity> basicList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, Arrays.asList(com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType(), com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType(), com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).list();
+        List<DictBasicEntity> basicList = FeignQuery.create(DictBasicEntity.class).in(DictBasicEntity::getType, Arrays.asList(com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType(), com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType(), com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).list();
 
         //产品分类
         List<BasicCategoryEntity> categoryList = FeignQuery.create(BasicCategoryEntity.class).list();
@@ -247,7 +247,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object propertyJson = map.get("propertyJson");
         if (ObjectUtil.isNotEmpty(propertyJson)) {
             List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("propertyJson", propertyJsonCode);
         }
@@ -256,7 +256,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object productCategoryJson = map.get("productCategoryJson");
         if (ObjectUtil.isNotEmpty(productCategoryJson)) {
             List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
-                    .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
+                    .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("productCategoryJson", productCategoryJsonId);
         }
@@ -265,7 +265,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object applicationCategoryJson = map.get("applicationCategoryJson");
         if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
             List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(","))
-                    .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
+                    .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("applicationCategoryJson", applicationCategoryJsonId);
         }
@@ -274,7 +274,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object certificateJson = map.get("certificateJson");
         if (ObjectUtil.isNotEmpty(certificateJson)) {
             List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(DictBasicEntity::getValue).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("certificateJson", certificateJsonCode);
         }
@@ -296,16 +296,14 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 // 将原始对象转为可修改的 Map
                 Map<String, Object> bankAccountMap = JSONUtil.parseObj(object).toBean(Map.class);
                 Object bankName = bankAccountMap.get("bankName");
-                if (ObjectUtil.isEmpty(bankName)) {
-                    log.error("银行名称不能为空");
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, "银行名称");
+                if (ObjectUtil.isNotEmpty(bankName)) {
+                    List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
+                    if (CollUtil.isEmpty(bankList)) {
+                        log.error("银行名称未找到，当前银行名称：{}", bankName);
+                        throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
+                    }
+                    bankAccountMap.put("bankId", bankList.get(0).getId());
                 }
-                List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
-                if (CollUtil.isEmpty(bankList)) {
-                    log.error("银行名称未找到，当前银行名称：{}", bankName);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
-                }
-                bankAccountMap.put("bankId", bankList.get(0).getId());
                 bankAccountMapList.add(bankAccountMap);
             }
             // 将处理后的列表更新回原始 map
