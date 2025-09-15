@@ -39,6 +39,7 @@
        <result column="sales_org_name" property="salesOrgName" />
        <result column="warehouse_org_name" property="warehouseOrgName" />
        <result column="receive_address_id" property="receiveAddressId" />
+       <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
        <result column="receive_condition" property="receiveCondition" />
        <result column="receive_account" property="receiveAccount" />
@@ -94,6 +95,7 @@ eo.address_type as addressType,
 eo.sales_org_name as salesOrgName,
 eo.warehouse_org_name as warehouseOrgName,
 eo.receive_address_id as receiveAddressId,
+eo.approve_user_id as approveUserId,
 eo.approve_user_name as approveUserName,
 eo.receive_condition as receiveCondition,
 eo.receive_account as receiveAccount,
@@ -149,6 +151,7 @@ eo.partition_id as partitionId
         eo.sales_org_name AS salesOrgName,
         eo.warehouse_org_name AS warehouseOrgName,
         eo.receive_address_id AS receiveAddressId,
+        eo.approve_user_id AS approveUserId,
         eo.approve_user_name AS approveUserName,
         eo.receive_condition AS receiveCondition,
         eo.receive_account AS receiveAccount,
