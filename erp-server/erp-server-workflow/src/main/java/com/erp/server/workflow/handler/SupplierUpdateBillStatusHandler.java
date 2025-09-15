@@ -30,6 +30,7 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
@@ -229,7 +230,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         // 如果付款条件不存在，抛出异常
         if (CharSequenceUtil.isBlank(paymentConditionCode)) {
             log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
-            //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
         map.put("paymentCondition", paymentConditionCode);
 
@@ -245,28 +246,36 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         //供应商属性
         Object propertyJson = map.get("propertyJson");
         if (ObjectUtil.isNotEmpty(propertyJson)) {
-            String propertyJsonCode = Arrays.stream(propertyJson.toString().split(",")).map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse("")).collect(Collectors.joining(","));
+            List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("propertyJson", propertyJsonCode);
         }
 
         //供应商产品分类
         Object productCategoryJson = map.get("productCategoryJson");
         if (ObjectUtil.isNotEmpty(productCategoryJson)) {
-            String productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(",")).map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(BasicCategoryEntity::getId).findFirst().orElse("")).collect(Collectors.joining(","));
+            List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
+                    .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("productCategoryJson", productCategoryJsonId);
         }
 
         //供应商应用分类
         Object applicationCategoryJson = map.get("applicationCategoryJson");
         if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
-            String applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(",")).map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(ApplicationCategoryEntity::getId).findFirst().orElse("")).collect(Collectors.joining(","));
+            List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(","))
+                    .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("applicationCategoryJson", applicationCategoryJsonId);
         }
 
         //体系认证
         Object certificateJson = map.get("certificateJson");
         if (ObjectUtil.isNotEmpty(certificateJson)) {
-            String certificateJsonCode = Arrays.stream(certificateJson.toString().split(",")).map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse("")).collect(Collectors.joining(","));
+            List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             map.put("certificateJson", certificateJsonCode);
         }
 
@@ -279,7 +288,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         }
 
         //账户信息
-      /*  List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
+        List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
         if (CollUtil.isNotEmpty(bankAccountList)) {
             // 创建新列表存储处理后的凭证
             List<Map<String, Object>> bankAccountMapList = new ArrayList<>();
@@ -301,7 +310,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
             // 将处理后的列表更新回原始 map
             map.put("bankAccountList", bankAccountMapList);
-        }*/
+        }
 
         //资质信息
         List<Object> credentialList = (List<Object>) map.get("credentialList");
@@ -337,7 +346,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
                     log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
-                    //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
                 credentialMap.put("code", credentialCode);
                 //dmp新增特殊处理
