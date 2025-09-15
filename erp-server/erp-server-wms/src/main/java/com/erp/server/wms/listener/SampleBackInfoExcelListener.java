@@ -5,7 +5,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -105,13 +104,13 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
         }
 
         // 退回人
-        String backUserName = excelDTO.getBackUserName();
+        String backUserName = excelDTO.getUserName();
         FindUserDTO findUserDTO = userList.stream().filter(e -> backUserName.equals(e.getUserName())).findFirst().orElse(null);
         if (Objects.isNull(findUserDTO)) {
             errorMsgList.add("退回人不存在");
         } else {
-            excelDTO.setBackUserId(findUserDTO.getUserId());
-            excelDTO.setBackUserName(findUserDTO.getUserName());
+            excelDTO.setUserId(findUserDTO.getUserId());
+            excelDTO.setUserName(findUserDTO.getUserName());
         }
 
         // 退回日期
@@ -126,13 +125,13 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
         }
 
         // 退回部门
-        String backDeptName = excelDTO.getBackDeptName();
+        String backDeptName = excelDTO.getDeptName();
         SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> backDeptName.equals(e.getName())).findFirst().orElse(null);
         if (Objects.isNull(sysDepartmentDTO)) {
             errorMsgList.add("退回部门不存在");
         } else {
-            excelDTO.setBackDeptId(sysDepartmentDTO.getId());
-            excelDTO.setBackDeptName(sysDepartmentDTO.getName());
+            excelDTO.setDeptId(sysDepartmentDTO.getId());
+            excelDTO.setDeptName(sysDepartmentDTO.getName());
         }
 
         // 收货仓库
@@ -169,10 +168,10 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
         }
 
         // 查询台账信息并验证数量
-        if (StringUtils.isNotBlank(excelDTO.getBackUserId()) && StringUtils.isNotBlank(excelDTO.getSkuId())) {
+        if (StringUtils.isNotBlank(excelDTO.getUserId()) && StringUtils.isNotBlank(excelDTO.getSkuId())) {
             try {
                 SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-                searchDTO.setUserId(excelDTO.getBackUserId());
+                searchDTO.setUserId(excelDTO.getUserId());
                 searchDTO.setSkuIds(new ArrayList<>(Arrays.asList(excelDTO.getSkuId())));
                 searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
                 List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
