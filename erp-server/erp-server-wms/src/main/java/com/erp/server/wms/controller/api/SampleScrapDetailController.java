@@ -62,8 +62,11 @@ public class SampleScrapDetailController extends BaseController {
      */
     @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单明细导入")
-    public ApiResult<SampleScrapDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success(sampleScrapDetailService.importFile(excelFile, response));
+    public ApiResult<SampleScrapDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "id",required = false) String id, @RequestParam(value = "scrapUserId", required = true) String scrapUserId, HttpServletResponse response) {
+        if (scrapUserId == null || scrapUserId.trim().isEmpty()) {
+            return failure("报废人不能为空");
+        }
+        return success(sampleScrapDetailService.importFile(excelFile,id,scrapUserId, response));
     }
 
 

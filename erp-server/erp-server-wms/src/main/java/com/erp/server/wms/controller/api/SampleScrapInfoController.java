@@ -402,20 +402,20 @@ public class SampleScrapInfoController extends BaseController {
         return success();
     }
 
-    /**
-     * 导入Excel数据
-     * @author jack
-     * @date:  2025-08-20
-     * @param excelFile
-     * @param response
-     * @return
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品报废单")
-    @PostMapping("/importFile")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = sampleScrapInfoService.importFile(excelFile, response);
-        return result ? success() : failure();
-    }
+//    /**
+//     * 导入Excel数据
+//     * @author jack
+//     * @date:  2025-08-20
+//     * @param excelFile
+//     * @param response
+//     * @return
+//     */
+//    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品报废单")
+//    @PostMapping("/importFile")
+//    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+//        Boolean result = sampleScrapInfoService.importFile(excelFile, response);
+//        return result ? success() : failure();
+//    }
 
     /**
      *  异步导入

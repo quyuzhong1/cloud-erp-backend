@@ -28,7 +28,7 @@ public interface SampleScrapDetailService extends SuperService<SampleScrapDetail
      * @param response
      * @return
      */
-    SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id,String scrapUserId, HttpServletResponse response);
 
     List<SampleScrapDetailEntity> listByMainId(String id);
 
