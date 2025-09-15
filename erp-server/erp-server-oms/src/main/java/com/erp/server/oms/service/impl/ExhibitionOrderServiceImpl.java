@@ -991,16 +991,17 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             if (CollUtil.isEmpty(detailList)) {
                 throw new ServiceException("未找到展会订单明细信息数据");
             }
+//            ExhibitionOrderServiceImpl bean = ApplicationContextUtils.getBean(ExhibitionOrderServiceImpl.class);
+//            bean..generateDownstreamByExhibitionOrder(entity, detailList);
 
             // 异步执行，不等待完成
             CompletableFuture.runAsync(() -> {
                 try {
-                    generateDownstreamByExhibitionOrder(entity, detailList);
+                     this.generateDownstreamByExhibitionOrder(entity, detailList);
                 } catch (Exception e) {
                     log.error("异步执行generateDownstreamByExhibitionOrder失败，展会订单ID: {}", entity.getId(), e);
                 }
             });
-
         }
         return Boolean.TRUE;
     }
@@ -1079,7 +1080,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
         for (ExhibitionOrderDetailEntity detail : detailList) {
             SoDetailDTO.AddDTO addDTO = new SoDetailDTO.AddDTO();
-            BeanMapperUtils.copy(detail,dto);
+            BeanMapperUtils.copy(detail,addDTO);
             addDTO.setId("");
             addDTO.setSourceDetailId(detail.getId());
             addDTOS.add(addDTO);

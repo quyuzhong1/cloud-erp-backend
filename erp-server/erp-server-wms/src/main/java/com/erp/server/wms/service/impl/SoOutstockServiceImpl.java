@@ -2000,6 +2000,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-23 14:30
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean addB2bPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
