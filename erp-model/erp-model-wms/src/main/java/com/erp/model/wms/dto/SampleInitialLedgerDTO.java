@@ -274,6 +274,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         private String deptId;
 
         /**
+        * 归属部门名称
+        */
+        private String deptName;
+
+        /**
         * 业务日期
         */
         private LocalDate billDate;

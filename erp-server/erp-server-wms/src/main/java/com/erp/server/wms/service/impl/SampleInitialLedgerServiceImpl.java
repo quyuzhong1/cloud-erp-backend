@@ -522,6 +522,22 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        
+        // 设置部门名称
+        if (StrUtil.isNotBlank(data.getDeptId())) {
+            Map<String, String> deptIdNameMap = getDeptNameByIds(Arrays.asList(data.getDeptId()));
+            String deptName = deptIdNameMap.get(data.getDeptId());
+            data.setDeptName(deptName);
+        }
+        
+        // 设置用户名称
+        if (StrUtil.isNotBlank(data.getUserId())) {
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(data.getUserId()));
+            if (CollUtil.isNotEmpty(userList)) {
+                FindUserDTO user = userList.get(0);
+                data.setUserName(user.getUserName());
+            }
+        }
     }
 
     /**
@@ -623,6 +639,22 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     */
     private void handleData(SampleInitialLedgerEntity sampleInitialLedgerEntity) {
         // 主表不再处理SKU相关字段，这些字段已移至明细表
+        
+        // 设置部门名称
+        if (StrUtil.isNotBlank(sampleInitialLedgerEntity.getDeptId())) {
+            Map<String, String> deptIdNameMap = getDeptNameByIds(Arrays.asList(sampleInitialLedgerEntity.getDeptId()));
+            String deptName = deptIdNameMap.get(sampleInitialLedgerEntity.getDeptId());
+            sampleInitialLedgerEntity.setDeptName(deptName);
+        }
+        
+        // 设置用户名称
+        if (StrUtil.isNotBlank(sampleInitialLedgerEntity.getUserId())) {
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(sampleInitialLedgerEntity.getUserId()));
+            if (CollUtil.isNotEmpty(userList)) {
+                FindUserDTO user = userList.get(0);
+                sampleInitialLedgerEntity.setUserName(user.getUserName());
+            }
+        }
     }
 
     // ==================== 台账流水构建器实现 ====================

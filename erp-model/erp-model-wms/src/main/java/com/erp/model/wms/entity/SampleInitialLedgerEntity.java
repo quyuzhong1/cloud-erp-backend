@@ -82,6 +82,11 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     @TableField("dept_id")
     private String deptId;
     /**
+    * 归属部门名称
+    */
+    @TableField("dept_name")
+    private String deptName;
+    /**
     * 业务日期
     */
     @TableField("bill_date")
@@ -109,6 +114,8 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     public static final String USER_NAME = "user_name";
 
     public static final String DEPT_ID = "dept_id";
+
+    public static final String DEPT_NAME = "dept_name";
 
     public static final String BILL_DATE = "bill_date";
 
