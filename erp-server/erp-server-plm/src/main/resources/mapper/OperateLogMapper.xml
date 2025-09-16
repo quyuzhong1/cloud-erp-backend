@@ -60,5 +60,23 @@
         group by sl.class_path,sl.business_id,sl.create_time,sl.module_type
         order by sl.create_time desc
     </select>
+    <select id="getProductChangeHistory" resultType="com.erp.model.plm.dto.OperateLogShowDTO$HistoryDTO">
+        SELECT
+            id,
+            business_id,
+            pid,
+            field_name AS skuNo,
+            old_value,
+            new_value,
+            create_time,
+            create_user_name
+        FROM
+            operate_log
+        WHERE
+            "operation" = '产品经理变更'
+          AND business_id = #{params.id}
+        ORDER BY
+            create_time DESC
+    </select>
 
 </mapper>
