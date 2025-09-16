@@ -312,4 +312,10 @@ public interface DmpTaskFeign {
     @PostMapping("feign/pagingOutLatest")
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 
+    /**
+     * 创建推送任务
+     * @param msgList
+     */
+    @PostMapping("feign/batchCreateDmpPushMsg")
+    void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList);
 }

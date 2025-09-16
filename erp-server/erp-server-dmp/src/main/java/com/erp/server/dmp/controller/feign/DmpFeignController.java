@@ -50,6 +50,8 @@ public class DmpFeignController extends BaseController {
     @Resource
     private DmpPullTaskService dmpPullTaskService;
 
+    @Resource
+    private DmpPushMsgService dmpPushMsgService;
 
     @Resource
     private BiOrderInfoService biOrderInfoService;
@@ -349,5 +351,16 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/pagingOutLatest")
     public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
        return dmpOutputTaskRecordService.pagingOutLatest(dto);
+    }
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("/batchCreateDmpPushMsg")
+    public void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList){
+        if (CollectionUtils.isEmpty(msgList)){
+            return;
+        }
+        dmpPushMsgService.saveBatch(msgList);
     }
 }
