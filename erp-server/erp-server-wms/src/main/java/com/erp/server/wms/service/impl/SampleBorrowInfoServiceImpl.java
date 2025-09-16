@@ -975,7 +975,10 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleBorrowInfoEntity::getId, id)
-        .set(SampleBorrowInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleBorrowInfoEntity::getApproveUserId, "")
+                .set(SampleBorrowInfoEntity::getApproveUserName, "")
+                .set(SampleBorrowInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleBorrowInfoEntity::getApproveTime, null)
         .update(new SampleBorrowInfoEntity());
     }
 
