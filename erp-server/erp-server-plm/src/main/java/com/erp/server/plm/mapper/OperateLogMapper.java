@@ -3,9 +3,9 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.plm.dto.SysLogSelectDTO;
-import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.dto.OperateLogSelectDTO;
+import com.erp.model.plm.dto.OperateLogShowDTO;
+import com.erp.model.plm.entity.OperateLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2022/12/5 18:19
  */
 @Mapper
-public interface SysLogMapper extends BaseMapper<SysLogEntity> {
+public interface OperateLogMapper extends BaseMapper<OperateLogEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -28,14 +28,14 @@ public interface SysLogMapper extends BaseMapper<SysLogEntity> {
      * @param yes
      * @return IPage
      */
-    IPage<SysLogShowDTO> paging(Page query,@Param("params") SysLogSelectDTO params, Integer yes);
+    IPage<OperateLogShowDTO> paging(Page query, @Param("params") OperateLogSelectDTO params, Integer yes);
 
     /**
      * @description:列表查询
      * @author Will
      * @date: 2023/1/6 17:08
      * @param params
-     * @return List<SysLogShowDTO>
+     * @return List<OperateLogShowDTO>
      */
-    List<SysLogShowDTO> listSysLog(@Param("params") SysLogSelectDTO params);
+    List<OperateLogShowDTO> listSysLog(@Param("params") OperateLogSelectDTO params);
 }
