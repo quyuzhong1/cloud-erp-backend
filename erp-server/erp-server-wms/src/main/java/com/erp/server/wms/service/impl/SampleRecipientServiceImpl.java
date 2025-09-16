@@ -18,6 +18,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.enums.ImportTypeEnum;
@@ -533,7 +534,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
+    public BatchResultDTO submit(String id, ClientTypeEnum clientType) {
         SampleRecipientEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到样品领用单数据");
@@ -553,9 +554,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录样品领用单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id) {
+        return this.submit(id,ClientTypeEnum.WEB);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -565,7 +572,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId());
+        this.submit(result.getId(), dto.getClientType());
         return result;
     }
 
@@ -576,13 +583,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        this.submit(dto.getId(), dto.getClientType());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
@@ -601,10 +608,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return this.approve(dto,ClientTypeEnum.WEB);
     }
 
     /**
@@ -644,7 +658,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO disApprove(String id) {
+    public BatchResultDTO disApprove(String id, ClientTypeEnum clientType) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单单数据"));
 
         // 检查单据是否已作废
@@ -671,9 +685,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO disApprove(String id) {
+        return this.disApprove(id,ClientTypeEnum.WEB);
     }
 
     private Boolean validateDisApprove(SampleRecipientEntity entity) {
@@ -696,7 +717,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO delete(String id) {
+    public BatchResultDTO delete(String id, ClientTypeEnum clientType) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
@@ -726,16 +747,23 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除样品领用单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除样品领用单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        return this.delete(id,ClientTypeEnum.WEB);
+    }
+
     /**
     * 作废
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(String id, String remark) {
+    public BatchResultDTO invalid(String id, String remark, ClientTypeEnum clientType) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
@@ -748,10 +776,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单", remark);
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String remark) {
+        return this.invalid(id,remark,ClientTypeEnum.WEB);
+    }
 
     /**
     * 撤销
@@ -759,7 +793,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
 
         // 检查单据是否已作废
@@ -779,7 +813,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -787,6 +821,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id) {
+        return this.cancelProcess(id,ClientTypeEnum.WEB);
     }
 
     /**
@@ -2339,6 +2380,46 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 log.warn("查询仓库名称失败，仓库ID：{}，错误：{}", entity.getWarehouseId(), e.getMessage());
             }
         }
+    }
+
+    // ========== APP端专用方法实现 ==========
+
+    @Override
+    public List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
+        // 复用现有的tabList方法
+        return tabList(dto);
+    }
+
+    @Override
+    public PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO) {
+        // 复用现有的paging方法
+        return paging(pagingParamDTO);
+    }
+
+    @Override
+    public List<SampleRecipientDTO.ProductDetailDTO> getProductDetail(String id) {
+        List<SampleRecipientDTO.ProductDetailDTO> result = new ArrayList<>();
+        
+        // 查询样品领用单明细
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .eq(SampleRecipientDetailEntity::getMainId, id)
+                .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            return result;
+        }
+        
+        for (SampleRecipientDetailEntity detail : detailList) {
+            SampleRecipientDTO.ProductDetailDTO productDetail = new SampleRecipientDTO.ProductDetailDTO();
+            productDetail.setSkuNo(detail.getSkuNo());
+            productDetail.setProductName(detail.getProductName());
+            productDetail.setQuantity(detail.getRecipientQty() + "/" + (detail.getRecipientQty()- detail.getDeliveryQty()) + "/" + detail.getDeliveryQty());
+            productDetail.setExecutionStatus(detail.getExecStatus());
+            productDetail.setRemark(detail.getRemark());
+            result.add(productDetail);
+        }
+        
+        return result;
     }
 
 

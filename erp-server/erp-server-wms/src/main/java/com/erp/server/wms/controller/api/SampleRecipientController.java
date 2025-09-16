@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.ClientTypeEnum;
 import com.erp.server.wms.query.SampleBackInfoQueryHandler;
 import com.erp.server.wms.query.SampleRecipientQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "样品领用单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleRecipientDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         return success(sampleRecipientService.add(dto));
     }
 
@@ -69,10 +71,11 @@ public class SampleRecipientController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "wms:sampleRecipient:update",
+        menuCode = "wms:sampleReceipt:update",
         serviceClass = SampleRecipientService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         sampleRecipientService.update(dto);
         return success();
     }
@@ -84,7 +87,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:paging",
+            menuCode = "wms:sampleReceipt:paging",
             tableAlias = ""
     )
     public ApiResult<List<SampleRecipientDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -101,7 +104,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:paging",
+            menuCode = "wms:sampleReceipt:paging",
             tableAlias = ""
     )
     @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
@@ -118,6 +121,7 @@ public class SampleRecipientController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleRecipientDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         BaseResultDTO.AddDTO result = sampleRecipientService.addAndSubmit(dto);
         return success(result);
     }
@@ -132,10 +136,11 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:updateAndSubmit",
+            menuCode = "wms:sampleReceipt:updateAndSubmit",
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
         public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         sampleRecipientService.updateAndSubmit(dto);
         return success();
     }
@@ -150,7 +155,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:submit",
+            menuCode = "wms:sampleReceipt:submit",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "样品领用单提交审核")
@@ -188,7 +193,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:approve",
+            menuCode = "wms:sampleReceipt:approve",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "样品领用单审核")
@@ -226,7 +231,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:disApprove",
+            menuCode = "wms:sampleReceipt:disApprove",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品领用单反审核")
@@ -265,7 +270,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:delete",
+            menuCode = "wms:sampleReceipt:delete",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "样品领用单删除")
@@ -302,7 +307,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:invalid",
+            menuCode = "wms:sampleReceipt:invalid",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "样品领用单作废")
@@ -340,7 +345,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:cancelProcess",
+            menuCode = "wms:sampleReceipt:cancelProcess",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "样品领用单撤销")
@@ -378,7 +383,7 @@ public class SampleRecipientController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:view",
+            menuCode = "wms:sampleReceipt:view",
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
     @LogViewService
@@ -397,7 +402,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:export",
+            menuCode = "wms:sampleReceipt:export",
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品领用单导出Excel数据")
@@ -417,7 +422,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/finishRecipient")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:finishRecipient",
+            menuCode = "wms:sampleReceipt:finishRecipient",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单结束领用")
@@ -475,7 +480,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/viewGenerateOutboundOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:generateOutboundOrder",
+            menuCode = "wms:sampleReceipt:generateOutboundOrder",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     public ApiResult<List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO>> viewGenerateOutboundOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
