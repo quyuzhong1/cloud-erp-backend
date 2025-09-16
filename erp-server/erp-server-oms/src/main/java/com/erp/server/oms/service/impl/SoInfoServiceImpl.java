@@ -7,6 +7,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -20,8 +21,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -615,7 +615,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
         //客户sku
-        String platformSkuNo = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
+        String platformSkuNo = detailList.stream().map(SoDetailEntity::getCustomerSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
         variablesMap.put("platformSkuNo", platformSkuNo);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(SoDetailEntity::getIsGift);
@@ -1700,7 +1700,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             //订货通同步
-            syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            if(!entity.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+                syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -2759,7 +2761,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<SoInfoDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
             for (SoDetailEntity soDetailEntity : soDetailEntityList) {
                 SoInfoDTO.PrintDetailDTO printDetailDTO = new SoInfoDTO.PrintDetailDTO();
-                printDetailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+                printDetailDTO.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
                 printDetailDTO.setProductSkuNo(soDetailEntity.getSkuNo());
                 SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 printDetailDTO.setProductName(skuVO.getSkuName());
@@ -3617,6 +3619,210 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handlePlatformConsumer(PlatformB2bOrderDTO dto) {
+        //查询是否存在
+        SoInfoEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        List<SoDetailEntity> existList;
+        if(exist != null) {
+            existList = soDetailService.listBaseByMainIdList(Arrays.asList((exist.getId())));
+            //如果是作废，erp单据也要作废
+            if(dto.getIsInvalid()){
+                if(exist.getInvalidStatus()){
+                    return;
+                }
+                this.invalid(Collections.singletonList(exist.getId()),"平台单据作废");
+                return;
+            }
+            //判断平台更新时间有更新
+            if(!dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
+                log.warn("平台更新时间没有更新，{}",exist.getCode());
+                return;
+            }
+            //存在判断是否有字段变更
+            boolean hasChange = judgeHasChange(exist,existList, dto);
+            if(!hasChange){
+                log.warn("b2b订单无变化，参数：{}",JSONUtil.toJsonStr(dto));
+                return;
+            }
+            //如果是审核中，撤销审核
+            if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
+                this.cancelProcess(Arrays.asList(exist.getId()));
+            }
+            //如果是已审核，反审核
+            if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                this.disApprove(exist,new ArrayList<>());
+            }
+            //其他状态，直接更新
+            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
+            SoInfoDTO.UpdateDTO updateDTO = new SoInfoDTO.UpdateDTO();
+            updateDTO.setId(exist.getId());
+            updateDTO.setPlatformOrderCode(dto.getCode());
+            updateDTO.setPlatformOrderId(dto.getPlatformId());
+            updateDTO.setOrderAmount(dto.getOrderAmount());
+            updateDTO.setOrderType(OrderTypeEnum.B2B.getCode());
+            updateDTO.setRequireDate(dto.getBillDate());
+            updateDTO.setBillDate(dto.getBillDate());
+            updateDTO.setSalesOrgId(erpInfoDTO.getSalesOrgId());
+            updateDTO.setSellerId(erpInfoDTO.getSellerId());
+            updateDTO.setWarehouseId(erpInfoDTO.getWarehouseId());
+            updateDTO.setDictPlatform(dto.getThirdSystem());
+            updateDTO.setCustomerId(erpInfoDTO.getCustomerId());
+            updateDTO.setReceiverName(erpInfoDTO.getReceiverName());
+            updateDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
+            updateDTO.setCurrency(erpInfoDTO.getCurrency());
+            updateDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
+            updateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
+            updateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
+            updateDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
+            updateDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
+            updateDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
+            updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
+            updateDTO.setRemark(dto.getRemark());
+            updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            List<SoDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
+            List<PlatformB2bOrderDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
+            for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : detailList) {
+                SoDetailEntity existDetail = existList.stream().filter(v -> v.getPlatformDetailId().equals(platformB2bOrderDetailDTO.getPlatformDetailId())).findFirst().orElse(null);
+                if(Objects.isNull(existDetail)){
+                    continue;
+                }
+                SoDetailDTO.UpdateDTO detailDTO = new SoDetailDTO.UpdateDTO();
+                detailDTO.setId(existDetail.getId());
+                detailDTO.setRemark(platformB2bOrderDetailDTO.getRemark());
+                detailDTO.setQty(platformB2bOrderDetailDTO.getQty());
+                detailDTO.setSkuId(platformB2bOrderDetailDTO.getSkuId());
+                detailDTO.setPlatformSkuNo(platformB2bOrderDetailDTO.getPlatformSkuNo());
+                detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
+                detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
+                detailDTO.setCurrency(erpInfoDTO.getCurrency());
+                detailDTO.setIsReissue(false);
+                updateDTOList.add(detailDTO);
+            }
+            updateDTO.setDetailList(updateDTOList);
+            this.updateSo(updateDTO);
+            //处理删除的明细
+            List<String> platformDetailIds = detailList.stream().map(PlatformB2bOrderDetailDTO::getPlatformDetailId).collect(Collectors.toList());
+            List<SoDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(deleteDetailList)){
+                soDetailService.removeByIds(deleteDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
+            }
+        }else{
+            //如果是作废，直接跳过
+            if(dto.getIsInvalid()){
+                return;
+            }
+            //新增单据
+            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
+            SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
+            addDTO.setPlatformOrderCode(dto.getCode());
+            addDTO.setPlatformOrderId(dto.getPlatformId());
+            addDTO.setOrderAmount(dto.getOrderAmount());
+            addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
+            addDTO.setRequireDate(dto.getBillDate());
+            addDTO.setBillDate(dto.getBillDate());
+            addDTO.setSalesOrgId(erpInfoDTO.getSalesOrgId());
+            addDTO.setSellerId(erpInfoDTO.getSellerId());
+            addDTO.setWarehouseId(erpInfoDTO.getWarehouseId());
+            addDTO.setDictPlatform(dto.getThirdSystem());
+            addDTO.setCustomerId(erpInfoDTO.getCustomerId());
+            addDTO.setReceiverName(erpInfoDTO.getReceiverName());
+            addDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
+            addDTO.setCurrency(erpInfoDTO.getCurrency());
+            addDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
+            addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
+            addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
+            addDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
+            addDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
+            addDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
+            addDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
+            addDTO.setRemark(dto.getRemark());
+            addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            List<SoDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : dto.getDetail()) {
+                SoDetailDTO.AddDTO detailDTO = new SoDetailDTO.AddDTO();
+                detailDTO.setRemark(platformB2bOrderDetailDTO.getRemark());
+                detailDTO.setQty(platformB2bOrderDetailDTO.getQty());
+                detailDTO.setSkuId(platformB2bOrderDetailDTO.getSkuId());
+                detailDTO.setPlatformSkuNo(platformB2bOrderDetailDTO.getPlatformSkuNo());
+                detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
+                detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
+                detailDTO.setCurrency(erpInfoDTO.getCurrency());
+                detailDTO.setIsReissue(false);
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+            this.add(addDTO);
+        }
+    }
+
+    private boolean judgeHasChange(SoInfoEntity exist, List<SoDetailEntity> existList, PlatformB2bOrderDTO dto) {
+        PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
+        //校验主表字段
+        if(!exist.getCustomerId().equals(erpInfoDTO.getCustomerId())
+                || !exist.getCurrency().equals(erpInfoDTO.getCurrency())
+                || !exist.getOrderAmount().equals(dto.getOrderAmount())
+                || !exist.getBillDate().equals(dto.getBillDate())
+                || !exist.getRemark().equals(dto.getRemark())
+                || !exist.getWarehouseId().equals(erpInfoDTO.getWarehouseId())
+                || !exist.getAccountDeductAmount().equals(dto.getAccountDeductAmount())
+                || !exist.getRebateDeductAmount().equals(dto.getRebateDeductAmount())
+                || !exist.getCreditDeductAmount().equals(dto.getCreditDeductAmount())
+        ){
+            return true;
+        }
+        //校验明细
+        List<PlatformB2bOrderDetailDTO> platformOrderDetailDTOList = dto.getDetail();
+        if(existList.size() != platformOrderDetailDTOList.size()){
+            return true;
+        }
+        //根据明细ID进行匹配
+        Map<String, SoDetailEntity> existDetailMap = existList.stream().collect(Collectors.toMap(SoDetailEntity::getPlatformDetailId, e->e));
+        Map<String, PlatformB2bOrderDetailDTO> platformDetailMap = platformOrderDetailDTOList.stream().collect(Collectors.toMap(PlatformB2bOrderDetailDTO::getPlatformDetailId, e->e));
+
+        //校验ERP存在的明细，平台不存在或者有变化
+        for(Map.Entry<String, SoDetailEntity> entry : existDetailMap.entrySet()){
+            String key = entry.getKey();
+            SoDetailEntity existDetail = entry.getValue();
+            PlatformB2bOrderDetailDTO platformDetail = platformDetailMap.get(key);
+            if(platformDetail == null){
+                return true;
+            }
+            if(!existDetail.getQty().equals(platformDetail.getQty())
+                    || !existDetail.getRemark().equals(platformDetail.getRemark())
+                    || !existDetail.getSkuId().equals(platformDetail.getSkuId())
+                    || !existDetail.getPlatformSkuNo().equals(platformDetail.getPlatformSkuNo())
+                    || !existDetail.getIsGift().equals(platformDetail.getIsGift())
+            ){
+                return true;
+            }
+        }
+        //校验平台存在的明细，erp不存在
+        for(Map.Entry<String, PlatformB2bOrderDetailDTO> entry : platformDetailMap.entrySet()){
+            String key = entry.getKey();
+            PlatformB2bOrderDetailDTO platformDetail = entry.getValue();
+            SoDetailEntity existDetail = existDetailMap.get(key);
+            if(existDetail == null){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public SoInfoEntity getByThirdSystemAndCode(String thirdSystem, String code) {
+        if (StringUtils.isAnyBlank(thirdSystem, code)) {
+            return null;
+        }
+        SoInfoEntity entity = this.lambdaQuery().eq(SoInfoEntity::getDictPlatform, thirdSystem)
+                .eq(SoInfoEntity::getCode, code)
+                .last("limit 1")
+                .one();
+        return entity;
+    }
+
     /**
      * 处理推送采购申请
      * @param list
@@ -4024,7 +4230,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
-                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -4034,7 +4240,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
                         SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
-                        addDetail.setPlatformSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
+                        addDetail.setCustomerSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
                     }
                 }else if (CharSequenceUtil.isNotBlank(customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
@@ -4043,7 +4249,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
-                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
                 //币种

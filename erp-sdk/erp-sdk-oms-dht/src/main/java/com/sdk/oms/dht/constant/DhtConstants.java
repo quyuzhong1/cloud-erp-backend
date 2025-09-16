@@ -14,6 +14,10 @@ public class DhtConstants {
 
     public static final String CUSTOMER_ACCOUNT_API_NAME = "FundAccountObj";
 
+    public static final String ORDER_API_NAME = "SalesOrderObj";
+
+    public static final String ORDER_PRODUCT_API_NAME = "SalesOrderProductObj";
+
     public static final String CRM_CREATE_URL = "/cgi/crm/v2/data/create";
 
     public static final String CRM_UPDATE_URL = "/cgi/crm/v2/data/update";

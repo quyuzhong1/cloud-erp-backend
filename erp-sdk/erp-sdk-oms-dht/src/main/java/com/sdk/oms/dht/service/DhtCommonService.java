@@ -55,7 +55,7 @@ public class DhtCommonService {
         req.setCorpId(authDTO.getCorpId());
         String api = "/media/download";
         Map<String, String> headerMap = new HashMap<>();
-        String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
+        String bodyStr = OkHttpUtils.doPostJsonBase64(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
         return bodyStr;
     }
 

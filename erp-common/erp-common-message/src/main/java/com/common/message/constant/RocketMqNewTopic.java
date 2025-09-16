@@ -44,6 +44,10 @@ public class RocketMqNewTopic {
      * 新中台收款单
      */
     public static final String DMP_PLATFORM_RECEIPT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_receipt_to_oms_topic";
+    /**
+     * 新中台b2b订单
+     */
+    public static final String DMP_PLATFORM_B2B_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_order_to_oms_topic";
 
     /**
      * 新中台平台订单

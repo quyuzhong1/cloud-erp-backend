@@ -113,7 +113,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
-            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
             soDeliveryNoticeDetailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
             soDeliveryNoticeDetailEntity.setToCountry(soDetailEntity.getToCountry());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
@@ -199,7 +199,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
-            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());

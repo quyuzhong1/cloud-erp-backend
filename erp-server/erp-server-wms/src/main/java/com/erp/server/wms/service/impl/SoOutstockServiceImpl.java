@@ -2471,7 +2471,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 SoOutstockDTO.PrintDetailDTO printDetailDTO = new SoOutstockDTO.PrintDetailDTO();
-                printDetailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+                printDetailDTO.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
                 printDetailDTO.setProductSkuNo(soOutstockDetailEntity.getSkuNo());
                 SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 printDetailDTO.setProductName(skuVO.getSkuName());
