@@ -58,8 +58,14 @@
             sb.sign_order_error as signOrderError
         from third_warehouse_delivery twd
         inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
-        inner join so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
-        inner join so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
+        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+            inner join erp_oms.so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
+            inner join erp_oms.so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
+        </if>
+        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+            inner join so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
+            inner join so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
+        </if>
         where  ${params.sqlMap.default}
             and twd.is_deleted = false
         order by twd.create_time desc

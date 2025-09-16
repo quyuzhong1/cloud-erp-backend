@@ -186,6 +186,11 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         private List<String> ids;
+
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
 
