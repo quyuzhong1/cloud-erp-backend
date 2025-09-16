@@ -77,6 +77,7 @@ import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
+import org.apache.commons.math3.util.Pair;
 /**
  * <p>
  * 样品期初台账 服务实现类
@@ -920,16 +921,37 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         
         // 执行删除操作
         if (!toDeleteSkuNos.isEmpty()) {
+            // 获取要删除的明细实体用于日志记录
+            List<SampleInitialLedgerDetailEntity> toDeleteDetails = existingDetails.stream()
+                .filter(detail -> toDeleteSkuNos.contains(detail.getSkuNo()))
+                .collect(Collectors.toList());
+            
             sampleInitialLedgerDetailService.lambdaUpdate()
                 .eq(SampleInitialLedgerDetailEntity::getMainId, mainId)
                 .in(SampleInitialLedgerDetailEntity::getSkuNo, toDeleteSkuNos)
                 .remove();
+            
+            // 记录删除操作日志
+            if (CollUtil.isNotEmpty(toDeleteDetails)) {
+                List<Pair<String, String>> deletePairList = toDeleteDetails.stream()
+                    .map(obj -> new Pair<>(mainId, obj.getSkuNo()))
+                    .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), deletePairList, "编辑操作");
+            }
+            
             log.info("删除明细数据，mainId：{}，删除的SKU编码：{}", mainId, toDeleteSkuNos);
         }
         
         // 执行新增操作
         if (!toAddDetails.isEmpty()) {
             handleDetailData(mainId, toAddDetails);
+            
+            // 记录新增操作日志
+            List<Pair<String, String>> addPairList = toAddDetails.stream()
+                .map(obj -> new Pair<>(mainId, obj.getSkuNo()))
+                .collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), addPairList, "编辑操作");
+            
             log.info("新增明细数据，mainId：{}，新增数量：{}", mainId, toAddDetails.size());
         }
         
@@ -946,6 +968,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             for (int i = 0; i < toUpdateDetails.size(); i++) {
                 SampleInitialLedgerDetailEntity existingDetail = toUpdateDetails.get(i);
                 SampleInitialLedgerDTO.DetailDTO detailDTO = toUpdateDetailDTOs.get(i);
+                
+                // 记录更新操作日志
+                SampleInitialLedgerDetailEntity oldDetail = existingDetailMap.get(detailDTO.getSkuNo());
+                if (Objects.nonNull(oldDetail)) {
+                    operateLogService.addModuleOperateLogByObj(oldDetail, existingDetail, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), mainId, String.format("编辑SKU【%s】", oldDetail.getSkuNo()));
+                }
                 
                 existingDetail.setSkuId(detailDTO.getSkuId());
                 existingDetail.setQty(detailDTO.getQty());
