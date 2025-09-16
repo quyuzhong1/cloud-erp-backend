@@ -240,9 +240,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return Boolean.TRUE;
     }
 
-    private void createSyncDhtMsg(List<BiSettlementExchangeRateEntity> list) {
+    public void createSyncDhtMsg(List<BiSettlementExchangeRateEntity> list) {
         //过滤掉目标币别不是cny的数据
-        list = list.stream().filter(v->!v.getTargetCurrencyCode().equals(CurrencyEnum.CNY.getCurrencyCode())).collect(Collectors.toList());
+        list = list.stream().filter(v->v.getTargetCurrencyCode().equals(CurrencyEnum.CNY.getCurrencyCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) {
             return;
         }

@@ -1146,6 +1146,10 @@ public class SoInfoDTO implements Serializable {
         private String code;
 
         /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
          * 平台订单编号
          */
         private String platformOrderCode;
