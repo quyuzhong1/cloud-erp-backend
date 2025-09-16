@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class SysLogSelectDTO extends BaseSearchDTO {
+public class OperateLogSelectDTO extends BaseSearchDTO {
 
     /**
      * 业务id(对应模块id)

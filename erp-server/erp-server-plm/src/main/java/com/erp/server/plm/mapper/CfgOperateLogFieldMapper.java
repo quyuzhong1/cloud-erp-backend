@@ -1,8 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.plm.entity.SysLogEntity;
-import com.erp.model.plm.entity.SysLogFieldEntity;
+import com.erp.model.plm.entity.CfgOperateLogFieldEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -12,6 +11,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2022/12/5 18:19
  */
 @Mapper
-public interface SysLogFieldMapper extends BaseMapper<SysLogFieldEntity> {
+public interface CfgOperateLogFieldMapper extends BaseMapper<CfgOperateLogFieldEntity> {
 
 }

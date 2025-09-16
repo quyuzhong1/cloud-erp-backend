@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.plm.mapper.SysLogMapper">
+<mapper namespace="com.erp.server.plm.mapper.OperateLogMapper">
 
 
-    <select id="paging" resultType="com.erp.model.plm.dto.SysLogShowDTO">
+    <select id="paging" resultType="com.erp.model.plm.dto.OperateLogShowDTO">
         select
             sl.class_path,
             sl.business_id,
@@ -11,7 +11,7 @@
             max(sl.create_user_name) as create_user_name,
             array_to_string(array_agg(DISTINCT sl.operation),',') as operation,
             array_to_string(array_agg(DISTINCT sl.content),',') as content
-        from sys_log sl
+        from operate_log sl
         <where>
             sl.is_deleted = FALSE
             <if test="params.businessId !=null and params.businessId!=''">
@@ -32,7 +32,7 @@
         order by sl.create_time desc
     </select>
 
-    <select id="listSysLog" resultType="com.erp.model.plm.dto.SysLogShowDTO">
+    <select id="listSysLog" resultType="com.erp.model.plm.dto.OperateLogShowDTO">
         select
         sl.class_path,
         sl.business_id,
@@ -40,7 +40,7 @@
         max(sl.create_user_name) as create_user_name,
         array_to_string(array_agg(DISTINCT sl.operation),',') as operation,
         array_to_string(array_agg(DISTINCT sl.content),',') as content
-        from sys_log sl
+        from operate_log sl
         <where>
             sl.is_deleted = FALSE
             <if test="params.businessId !=null and params.businessId!=''">
