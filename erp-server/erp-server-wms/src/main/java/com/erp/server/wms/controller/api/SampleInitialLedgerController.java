@@ -366,8 +366,9 @@ public class SampleInitialLedgerController extends BaseController {
             menuCode = "wms:sampleInitialLedger:export"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品期初台账导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleInitialLedgerDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SampleInitialLedgerDTO.ExportDTO dto, HttpServletResponse response) {
         sampleInitialLedgerService.exportList(dto, response);
+        return success(true);
     }
 
 
