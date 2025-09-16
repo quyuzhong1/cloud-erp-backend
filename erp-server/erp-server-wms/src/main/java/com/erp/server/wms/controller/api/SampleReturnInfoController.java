@@ -140,7 +140,7 @@ public class SampleReturnInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReturnInfo:updateAndSubmit",
+            menuCode = "wms:sampleReturnInfo:update",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleReturnInfoDTO.UpdateDTO dto) {
