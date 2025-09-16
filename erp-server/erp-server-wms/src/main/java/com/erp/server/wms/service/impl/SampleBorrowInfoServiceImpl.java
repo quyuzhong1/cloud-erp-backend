@@ -575,16 +575,28 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        // 记录台账流水（反审核）
+        // 记录台账流水（反审核）- 借入人
         try {
-            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
-            if (flowDTO != null) {
-                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                log.info("样品借用单反审核台账流水记录成功，单据编号：{}", entity.getCode());
+            SampleLedgerFlowDTO.AddFlowDTO borrowFlowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (borrowFlowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(borrowFlowDTO);
+                log.info("样品借用单反审核借入人台账流水记录成功，单据编号：{}", entity.getCode());
             }
         } catch (Exception e) {
-            log.error("样品借用单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            throw new ServiceException("样品借用单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            log.error("样品借用单反审核借入人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品借用单反审核借入人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+        
+        // 记录台账流水（反审核）- 借出人
+        try {
+            SampleLedgerFlowDTO.AddFlowDTO lendFlowDTO = buildLendFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (lendFlowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(lendFlowDTO);
+                log.info("样品借用单反审核借出人台账流水记录成功，单据编号：{}", entity.getCode());
+            }
+        } catch (Exception e) {
+            log.error("样品借用单反审核借出人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品借用单反审核借出人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
         }
 
         // 操作日志
@@ -707,16 +719,28 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
-            // 记录台账流水
+            // 记录台账流水 - 借入人
             try {
-                SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
-                if (flowDTO != null) {
-                    sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                    log.info("样品借用单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                SampleLedgerFlowDTO.AddFlowDTO borrowFlowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+                if (borrowFlowDTO != null) {
+                    sampleLedgerFlowService.addSampleLedgerFlow(borrowFlowDTO);
+                    log.info("样品借用单借入人台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
                 }
             } catch (Exception e) {
-                log.error("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-                throw new ServiceException("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+                log.error("样品借用单借入人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品借用单借入人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            }
+            
+            // 记录台账流水 - 借出人
+            try {
+                SampleLedgerFlowDTO.AddFlowDTO lendFlowDTO = buildLendFlow(entity.getId(), entity.getCode(), approveType);
+                if (lendFlowDTO != null) {
+                    sampleLedgerFlowService.addSampleLedgerFlow(lendFlowDTO);
+                    log.info("样品借用单借出人台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                }
+            } catch (Exception e) {
+                log.error("样品借用单借出人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品借用单借出人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
             }
         }
 
@@ -1297,7 +1321,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 flowDetails.add(flowDetail);
             }
 
-            // 构建流水主表数据
+            // 构建流水主表数据 - 借入人台账
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
             flowDTO.setSourceType(getSupportedSourceType());
             flowDTO.setApproveType(approveType.getStatus());
@@ -1320,6 +1344,85 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             log.error("构建样品借用单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 构建借出人的台账流水
+     */
+    private SampleLedgerFlowDTO.AddFlowDTO buildLendFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品借用单主表信息
+            SampleBorrowInfoEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品借用单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品借用单明细
+            List<SampleBorrowDetailEntity> detailList = sampleBorrowDetailService.listByMainId(sourceId);
+
+            if (detailList.isEmpty()) {
+                log.warn("样品借用单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleBorrowDetailEntity detail : detailList) {
+                // 计算数量：审核为-X，反审核为+X（借出人视角，借出是减少库存）
+                Integer qty = calculateLendQty(detail.getBorrowQty(), approveType);
+                
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据 - 借出人台账
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(getSupportedSourceType());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getBorrowDate());
+            flowDTO.setSourceName("样品借用单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getLendUserId());
+            flowDTO.setUseUserName(entity.getLendUserName());
+            flowDTO.setUserId(entity.getLendUserId());
+            flowDTO.setUserName(entity.getLendUserName());
+            flowDTO.setDeptId(entity.getLendDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getLendDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品借用单借出人台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算借出人数量：审核为-X，反审核为+X（借出人视角，借出是减少库存）
+     */
+    private Integer calculateLendQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return -originalQty; // 审核：-X（借出人减少库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return originalQty; // 反审核：+X（借出人增加库存）
+        }
+        
+        return 0;
     }
 
     /**
