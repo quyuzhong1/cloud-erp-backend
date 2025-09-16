@@ -831,11 +831,30 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
 
         // 属性赋值
         for(SampleReturnInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
+            }
         }
     }
     /**
