@@ -32,8 +32,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -1396,23 +1398,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     skuDTO.setSkuId(sku.getSkuId());
                 }
 
-                // 找到对应的成本信息（人民币）
-                InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
-                        .filter(cost -> cost.getSkuId().equals(sku != null ? sku.getSkuId() : null)
-                                && cost.getWarehouseId().equals(detail.getWarehouseId()))
-                        .findFirst()
-                        .orElse(null);
-
-                if (skuCost != null) {
-                    // 使用人民币材料成本作为SKU成本
-                    skuDTO.setSkuCost(skuCost.getProductCostCNY() != null ? skuCost.getProductCostCNY() : BigDecimal.ZERO);
-                    skuDTO.setCurrency("￥"); // 统一使用人民币
-                } else {
-                    skuDTO.setSkuCost(BigDecimal.ZERO);
-                }
+                // 计算SKU成本
+                BigDecimal skuCost = calculateSkuCost(sku, detail, skuCostList);
+                skuDTO.setSkuCost(skuCost);
+                skuDTO.setCurrency("￥"); // 统一使用人民币
 
                 result.add(skuDTO);
-                }
+            }
             
             log.info("SKU成本查询完成，共查询到{}条记录", result.size());
             return result;
@@ -1421,6 +1413,73 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             log.error("查询SKU成本失败，参数：{}，错误：{}", JSONUtil.toJsonStr(dto), e.getMessage(), e);
             throw new ServiceException("查询SKU成本失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 计算SKU成本
+     * 对于组合品，需要计算子件成本*用量的和
+     * 对于普通SKU，直接使用材料成本
+     */
+    private BigDecimal calculateSkuCost(SkuVO sku, SampleRecipientDTO.SkuCostQueryDetailDTO detail, 
+                                       List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+        if (sku == null) {
+            return BigDecimal.ZERO;
+        }
+
+        // 1. 先检查是否是组合品
+        List<String> skuIds = Collections.singletonList(sku.getSkuId());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        
+        // 过滤出组合品类型的BOM
+        String combination = BomTypeEnum.COMBINATION.getType();
+        List<BomChildrenSkuDTO> combinationBomList = bomChildrenList.stream()
+                .filter(b -> combination.equals(b.getType()))
+                .collect(Collectors.toList());
+
+        if (CollUtil.isNotEmpty(combinationBomList)) {
+            // 是组合品，需要计算子件成本*用量的和
+            return calculateCombinationSkuCost(combinationBomList, detail, skuCostList);
+        } else {
+            // 普通SKU，直接使用材料成本
+            InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
+                    .filter(cost -> cost.getSkuId().equals(sku.getSkuId())
+                            && cost.getWarehouseId().equals(detail.getWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (skuCost != null) {
+                return skuCost.getProductCostCNY() != null ? skuCost.getProductCostCNY() : BigDecimal.ZERO;
+            } else {
+                return BigDecimal.ZERO;
+            }
+        }
+    }
+
+    /**
+     * 计算组合品SKU成本
+     * 组合品成本 = 子件1成本*用量1 + 子件2成本*用量2 + ...
+     */
+    private BigDecimal calculateCombinationSkuCost(List<BomChildrenSkuDTO> bomChildrenList, 
+                                                  SampleRecipientDTO.SkuCostQueryDetailDTO detail,
+                                                  List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+        BigDecimal totalCost = BigDecimal.ZERO;
+        
+        for (BomChildrenSkuDTO bomChild : bomChildrenList) {
+            // 查找子件的成本信息
+            InventorySkuCostDTO.SkuCostCNYDTO childCost = skuCostList.stream()
+                    .filter(cost -> cost.getSkuId().equals(bomChild.getSkuId())
+                            && cost.getWarehouseId().equals(detail.getWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (childCost != null && childCost.getProductCostCNY() != null) {
+                // 子件成本 * 用量
+                BigDecimal childTotalCost = childCost.getProductCostCNY().multiply(BigDecimal.valueOf(bomChild.getQuantity()));
+                totalCost = totalCost.add(childTotalCost);
+            }
+        }
+        
+        return totalCost;
     }
 
     /**

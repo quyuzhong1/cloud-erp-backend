@@ -534,13 +534,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
-        //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        this.lambdaUpdate().eq(SampleScrapInfoEntity::getId, dto.getId())
-                .set(SampleScrapInfoEntity::getApproveUserId, userInfo.getUid())
-                .set(SampleScrapInfoEntity::getApproveUserName, userInfo.getUserName())
-                .update(new SampleScrapInfoEntity());
-
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -869,7 +862,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleScrapInfoEntity::getId, id)
-        .set(SampleScrapInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleScrapInfoEntity::getApproveUserId, "")
+                .set(SampleScrapInfoEntity::getApproveUserName, "")
+                .set(SampleScrapInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleScrapInfoEntity::getApproveTime, null)
         .update(new SampleScrapInfoEntity());
     }
 
