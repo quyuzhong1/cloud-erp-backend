@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.ClientTypeEnum;
 import com.erp.server.wms.query.SampleBackInfoQueryHandler;
 import com.erp.server.wms.query.SampleRecipientQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "样品领用单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleRecipientDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         return success(sampleRecipientService.add(dto));
     }
 
@@ -73,6 +75,7 @@ public class SampleRecipientController extends BaseController {
         serviceClass = SampleRecipientService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         sampleRecipientService.update(dto);
         return success();
     }
@@ -118,6 +121,7 @@ public class SampleRecipientController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleRecipientDTO.AddDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         BaseResultDTO.AddDTO result = sampleRecipientService.addAndSubmit(dto);
         return success(result);
     }
@@ -136,6 +140,7 @@ public class SampleRecipientController extends BaseController {
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
         public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
+        dto.setClientType(ClientTypeEnum.WEB);
         sampleRecipientService.updateAndSubmit(dto);
         return success();
     }

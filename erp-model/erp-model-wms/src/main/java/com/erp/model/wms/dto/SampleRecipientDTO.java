@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ClientTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -534,6 +536,10 @@ public class SampleRecipientDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * com.common.business.enums.ClientTypeEnum
+         */
+        private ClientTypeEnum clientType = ClientTypeEnum.WEB;
+        /**
          * 作废时间
          */
         private LocalDateTime invalidTime;
@@ -1005,6 +1011,63 @@ public class SampleRecipientDTO implements Serializable {
          */
         @Size(max = 200, message = "结束领用原因不能超过200字符")
         private String reason;
+    }
+
+    // ========== APP端专用DTO ==========
+
+    /**
+     * 商品详情DTO（APP端专用）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDetailDTO {
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * 数量（格式：领用/待出库/已出库）
+         */
+        private String quantity;
+        
+        /**
+         * 执行状态
+         */
+        private String executionStatus;
+        
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
+     * 下拉选项DTO（APP端专用）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DropDownDTO {
+        /**
+         * 值
+         */
+        private String value;
+        
+        /**
+         * 标签
+         */
+        private String label;
+        
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled = false;
     }
 
 }

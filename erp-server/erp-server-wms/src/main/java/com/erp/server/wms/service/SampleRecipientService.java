@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.common.business.service.SuperService;
@@ -81,58 +82,70 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     */
     void updateAndSubmit(SampleRecipientDTO.UpdateDTO dto);
 
-     /**
+    /**
      * 提交审核
      * @author wuhaotian
      * @date: 2025-08-21
      * @param id
+     * @param clientType
      * @return
      */
+    BatchResultDTO submit(String id, ClientTypeEnum clientType);
     BatchResultDTO submit(String id);
 
     /**
-    * 审核
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param dto
-    * @return
-    */
+     * 审核
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @param clientType
+     * @return
+     */
+    BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType);
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-    * 反审核
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param id
-    * @return
-    */
+     * 反审核
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param id
+     * @param clientType
+     * @return
+     */
+    BatchResultDTO disApprove(String id, ClientTypeEnum clientType);
     BatchResultDTO disApprove(String id);
 
     /**
-    * 删除
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param id
-    * @return
-    */
+     * 删除
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param id
+     * @param clientType
+     * @return
+     */
+    BatchResultDTO delete(String id, ClientTypeEnum clientType);
     BatchResultDTO delete(String id);
     /**
-    * 作废
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param id
-    * @param remark
-    * @return
-    */
+     * 作废
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param id
+     * @param remark
+     * @param clientType
+     * @return
+     */
+    BatchResultDTO invalid(String id, String remark, ClientTypeEnum clientType);
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param id
-    * @return
-    */
+     * 撤销
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param id
+     * @param clientType
+     * @return
+     */
+    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
     BatchResultDTO cancelProcess(String id);
 
     /**
@@ -284,5 +297,35 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
 
 
     BatchResultDTO createOtherOutboundOrderBySourceId(String sourceId, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items);
+
+    // ========== APP端专用方法 ==========
+
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param dto
+     * @return List<SampleRecipientDTO.TabListDTO>
+     */
+    List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页列表查询
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param pagingParamDTO
+     * @return PagingVO<SampleRecipientDTO.ListDTO>
+     */
+    PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 获取商品详情
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id
+     * @return List<SampleRecipientDTO.ProductDetailDTO>
+     */
+    List<SampleRecipientDTO.ProductDetailDTO> getProductDetail(String id);
+
 
 }
