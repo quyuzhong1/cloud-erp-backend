@@ -16,6 +16,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -2403,12 +2404,33 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             flowDTO.setUserName(entity.getUserName());
             flowDTO.setDeptId(entity.getDeptId());
             // 根据部门ID查询部门名称
-//            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
+            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
             flowDTO.setDetailList(flowDetails);
 
             return flowDTO;
         } catch (Exception e) {
             log.error("构建样品领用单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
     }
