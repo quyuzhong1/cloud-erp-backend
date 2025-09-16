@@ -653,7 +653,6 @@ public class ExhibitionOrderDTO implements Serializable {
         /**
         * 展会主题
         */
-        @NotBlank(message = "展会主题不能为空")
         @Size(max = 200,message = "展会主题最大长度不能超过200位")
         private String exhibitionTitle;
 

@@ -312,7 +312,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setSellerName(userInfo.getUserName());
         }
         //报关费
-        if (!addEntity.getIsDeclare()) {
+        if (Objects.isNull(addEntity.getIsDeclare()) || !addEntity.getIsDeclare()) {
             addEntity.setCustomsFee(BigDecimal.ZERO);
         }
 
