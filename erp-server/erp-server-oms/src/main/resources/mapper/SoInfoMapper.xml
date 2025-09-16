@@ -15,6 +15,11 @@
         SELECT
         si.code,
         si.platform_order_code as platformOrderCode,
+        si.dict_platform as dictPlatform,
+        si.account_deduct_amount as accountDeductAmount,
+        si.rebate_deduct_amount as rebateDeductAmount,
+        si.credit_deduct_amount as creditDeductAmount,
+        si.platform_order_code as platformOrderCode,
         si.order_amount as orderAmount,
         si.order_type AS orderType,
         si.approve_status AS approveStatus,

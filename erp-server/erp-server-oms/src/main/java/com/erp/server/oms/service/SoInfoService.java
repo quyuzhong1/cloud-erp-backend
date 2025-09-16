@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -527,4 +528,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap);
+
+    void handlePlatformConsumer(PlatformB2bOrderDTO dto);
+
+    SoInfoEntity getByThirdSystemAndCode(String thirdSystem, String code);
 }

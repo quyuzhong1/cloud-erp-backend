@@ -21,6 +21,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -96,14 +97,42 @@ public class SoInfoDTO implements Serializable {
         private String code;
 
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
+
+        /**
          * 订单金额
          */
         private BigDecimal orderAmount;
 
-        /**
-         * 平台订单编号
-         */
-        private String platformOrderCode;
         /**
          * 军区id
          */
@@ -819,6 +848,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String id;
 
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
         /**
          * 订单金额
          */
@@ -1026,9 +1060,36 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
         /**
+         * 平台订单Id
+         */
+        private String platformOrderId;
+        /**
          * 单据子类型
          */
         private String transactionSubType;
+
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
 
         /**
          * 收款单信息
@@ -1356,6 +1417,34 @@ public class SoInfoDTO implements Serializable {
         private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
 
         /**
+         * 平台订单Id
+         */
+        private String platformOrderId;
+
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
@@ -1518,6 +1607,12 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        private String platformOrderId;
+        /**
          * 类型 来源
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=BillType
@@ -1621,6 +1716,28 @@ public class SoInfoDTO implements Serializable {
         @Size(max = 50, message = "联系电话最大50字符")
         private String telNumber;
 
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
 
         /**
          * 收货人id地址
@@ -1730,7 +1847,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款单信息
          */
-        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList = new ArrayList<>();
     }
 
     @Data

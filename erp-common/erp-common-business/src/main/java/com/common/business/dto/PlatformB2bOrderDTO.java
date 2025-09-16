@@ -1,10 +1,12 @@
 package com.common.business.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,6 +51,11 @@ public class PlatformB2bOrderDTO {
     private String status;
 
     /**
+     * 是否已作废
+     */
+    private Boolean isInvalid;
+
+    /**
      * 客户编号
      */
     private String customerCode;
@@ -61,7 +68,7 @@ public class PlatformB2bOrderDTO {
     /**
      * 平台更新时间
      */
-    private BigDecimal platformUpdateTime;
+    private LocalDateTime platformUpdateTime;
 
     /**
      * 平台创建时间
@@ -100,5 +107,72 @@ public class PlatformB2bOrderDTO {
      */
     private List<AttachDTO> attachmentList;
 
+    /**
+     * erp信息
+     */
+    private ErpInfoDTO erpInfoDTO;
+
+
     private List<PlatformB2bOrderDetailDTO> detail;
+
+    /**
+     * erp信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpInfoDTO {
+        /**
+         * erp客户地址id
+         */
+        private String customerAddressId;
+        /**
+         * erp仓库Id
+         */
+        private String warehouseId;
+        /**
+         * erp客户id
+         */
+        private String customerId;
+        /**
+         * 组织id
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 收货国家id
+         */
+        private String countryId;
+        /**
+         * 收货国家
+         */
+        private String countryName;
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+    }
 }

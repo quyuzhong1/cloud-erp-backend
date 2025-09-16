@@ -279,7 +279,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      * 平台明细Id
      */
     @TableField("platform_detail_id")
-    private String platform_detail_id;
+    private String platformDetailId;
 
     /**
      * 平台sku

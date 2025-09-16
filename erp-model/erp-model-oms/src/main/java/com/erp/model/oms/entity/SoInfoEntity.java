@@ -346,7 +346,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 平台订单Id
      */
     @TableField("platform_order_id")
-    private String platform_order_id;
+    private String platformOrderId;
     /**
      * 平台订单编号
      */
@@ -380,6 +380,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("credit_deduct_amount")
     private BigDecimal creditDeductAmount;
+
+    /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
 
     public static final String CODE = "code";
 

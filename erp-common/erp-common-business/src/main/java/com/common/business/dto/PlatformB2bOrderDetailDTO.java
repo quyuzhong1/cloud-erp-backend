@@ -1,13 +1,9 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 /**
  *收款单消费DTO
@@ -17,6 +13,11 @@ import java.util.List;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class PlatformB2bOrderDetailDTO extends UniqueDto {
+
+    /**
+     * 平台明细Id
+     */
+    private String platformDetailId;
 
     /**
      * 平台sku
@@ -44,6 +45,10 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
     private Integer price;
 
     /**
+     * 平台是否已删除
+     */
+    private Boolean platformIsDeleted;
+    /**
      * 是否赠品
      */
     private Boolean isGift;
@@ -53,13 +58,7 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
      */
     private Boolean isInvalid;
 
-    /**
-     * 平台明细Id
-     */
-    private String platformDetailId;
+    private String skuId;
 
-    /**
-     * 附件列表
-     */
-    private List<AttachDTO> attachmentList;
+    private String skuNo;
 }

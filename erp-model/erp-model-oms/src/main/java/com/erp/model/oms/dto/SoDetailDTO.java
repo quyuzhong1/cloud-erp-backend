@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -84,9 +85,15 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 平台sku no
+         * 客户sku
+         */
+        private String customerSkuNo;
+        /**
+         * 平台sku
          */
         private String platformSkuNo;
+
+        private String platformDetailId;
 
         /**
          * 备注
@@ -187,10 +194,13 @@ public class SoDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 平台sku no
+         * 客户sku
+         */
+        private String customerSkuNo;
+        /**
+         * 平台sku
          */
         private String platformSkuNo;
-
         /**
          * 产品名称
          */
@@ -531,6 +541,7 @@ public class SoDetailDTO implements Serializable {
         private String id;
 
 
+        private String platformDetailId;
         /**
          * sku id
          */
@@ -582,7 +593,15 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 平台sku
+         */
         private String platformSkuNo;
+
+        /**
+         * 客户sku
+         */
+        private String customerSkuNo;
         /**
          * 采购单价
          */
@@ -875,8 +894,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 客户sku
          */
-        private String platformSkuNo;
+        private String customerSkuNo;
 
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -1081,7 +1104,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 平台sku
          */
+        private String customerSkuNo;
+        /**
+         * 平台sku
+         */
         private String platformSkuNo;
+
         /**
          * 平台sku名称
          */
