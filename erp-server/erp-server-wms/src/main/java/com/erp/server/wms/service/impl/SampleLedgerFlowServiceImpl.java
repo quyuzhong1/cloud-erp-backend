@@ -320,12 +320,14 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             try {
                 for (SampleLedgerFlowDTO.ListDTO record : records) {
                     record.setDeptName(collect.get(record.getDeptId()));
-                    record.setDictBizType(ApproveTypeEnum.getName(record.getDictBizType()));
-                    record.setSourceType(SourceTypeEnum.getName(record.getSourceType()));
                 }
             } catch (Exception e) {
                 log.warn("批量获取部门名称失败，错误：{}", e.getMessage());
             }
+        }
+        for (SampleLedgerFlowDTO.ListDTO record : records) {
+            record.setDictBizType(ApproveTypeEnum.getName(record.getDictBizType()));
+            record.setSourceType(SourceTypeEnum.getName(record.getSourceType()));
         }
     }
 
