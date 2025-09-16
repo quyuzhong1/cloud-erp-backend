@@ -388,9 +388,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
-        if (!b) {
-            throw new ServiceException("反审核取消亚马逊订单同步失败");
+        if (!CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())){
+            dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
         }
 
         // 操作日志
@@ -420,8 +419,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
+            throw new ServiceException("已作废订单不允许删除");
+        }
         //进行发货拦截
-        deliveryIntercept(entity, true, false, "多渠道订单删除");
+//        deliveryIntercept(entity, true, false, "多渠道订单删除");
         // 删除主单数据
         log.info("删除 开始删除多渠道订单主单主单数据，id：【{}】", id);
         super.removeById(id);
@@ -560,10 +562,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoMultiChannelEntity::getSignOrderError, CharSequenceUtil.isNotBlank(createResultDTO.getMsg()) ? createResultDTO.getMsg() : "")
                 .eq(SoMultiChannelEntity::getId, createResultDTO.getId()).update();
         if (CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus())) {
-            Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(soMultiChannelEntity.getCode()), "亚马逊订单创建失败，取消同步"));
-            if (!b) {
-                throw new ServiceException("创建订单失败，取消亚马逊订单同步失败");
-            }
+            dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(soMultiChannelEntity.getCode()), "亚马逊订单创建失败，取消同步"));
         }
 
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单创建状态:【{}】", CreateStatusEnum.getName(createResultDTO.getCreateStatus())), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), createResultDTO.getId(), "多渠道订单状态");
@@ -592,10 +591,22 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSoId())) {
+            return BatchResultDTO.fail("", "", "销售订单不存在不进行拦截");
+        }
+        String logisticsChannelId = entity.getLogisticsChannelId();
+        String logisticsChannelName = entity.getLogisticsChannelName();
+        String deliveryCode = entity.getDeliveryCode();
+        String trackNo = entity.getTrackNo();
+        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            return BatchResultDTO.fail("", "",  "销售订单不存在不进行拦截");
+        }
         //重新查询订单信息
         entity = this.getById(entity.getId());
-        if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isBlank(entity.getSoId())) {
-            return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
+        if (Objects.isNull(entity)){
+            addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, deliveryCode);
+            return BatchResultDTO.success("", "", "发货拦截作废成功");
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "订单状态已作废，不能发货拦截");
@@ -615,9 +626,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
-        Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
-        if (!b) {
-            throw new ServiceException("反审核取消亚马逊订单同步失败");
+        if (!CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())) {
+            dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
         }
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             this.cancelProcess(entity.getId());
@@ -629,8 +639,23 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
                     .eq(SoMultiChannelEntity::getId, entity.getId()).update();
         }
+        addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode());
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
+    }
 
-        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+    private void addDeliveryIntercept(String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity, String deliveryCode) {
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = null;
+        if (CharSequenceUtil.isNotBlank(deliveryCode)){
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(deliveryCode, soB2cEntity.getId());
+        }else {
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(soB2cEntity.getId());
+        }
+        //发货单标记取消发货
+        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
+            thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+            thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
+        }
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
         if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
             //销售订单取消多渠道标识
             soB2cService.lambdaUpdate()
@@ -639,17 +664,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
                     .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
                     .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
-                    .eq(SoB2cEntity::getId, entity.getSoId()).update();
+                    .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
         }
-        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(entity.getDeliveryCode(), entity.getSoId());
-        //发货单标记取消发货
-        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
-            thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
-            thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
-        }
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
         //检查拦截单是否存在，不存在就新增
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soB2cEntity.getId()));
         if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)) {
             SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
             addDTO.setBillType(OrderTypeEnum.B2C.getCode());
@@ -657,9 +675,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
             List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
             addDTO.setDetailList(detailList);
-            addDTO.setLogisticsChannelId(entity.getLogisticsChannelId());
-            addDTO.setLogisticsChannelName(entity.getLogisticsChannelName());
-            addDTO.setTransportNo(entity.getTrackNo());
+            addDTO.setLogisticsChannelId(logisticsChannelId);
+            addDTO.setLogisticsChannelName(logisticsChannelName);
+            addDTO.setTransportNo(trackNo);
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
             addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
@@ -667,7 +685,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             addDTO.setHandleTime(LocalDateTime.now());
             soB2cDeliveryInterceptFeign.add(addDTO);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
     }
 
     @Override

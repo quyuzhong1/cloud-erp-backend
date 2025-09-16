@@ -62,8 +62,8 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
                 new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null)
         );
         if (CollectionUtil.isEmpty(shopInfoEntityList)){
-            log.warn("处理领星店铺信息消费失败:当前数据库无授权数据");
-            return;
+            log.warn("处理领星店铺信息消费失败:ERP无授权数据");
+            ServiceException.runError("[处理领星店铺信息消费失败:ERP无授权数据]");
         }
         ShopInfoEntity shopInfo = shopInfoEntityList.stream()
                 .filter(e -> e.getPlatformShopCode().equalsIgnoreCase(sourceEntity.getSellerId())
@@ -71,7 +71,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
                 .findFirst().orElse(null);
         if (null == shopInfo){
             log.error("数据处理异常：未找到对应店铺, msg={}", JSONUtil.toJsonStr(sourceEntity));
-            return;
+            ServiceException.runError("数据处理异常：未找到对应店铺,msg={}", JSONUtil.toJsonStr(sourceEntity));
         }
         // 记录映射关系
         ShopInfoMappingEntity entity = new ShopInfoMappingEntity();
@@ -84,7 +84,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
         }
 
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), TaskConstant.LX_PULL_DATA_TASK));
+//        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), TaskConstant.LX_PULL_DATA_TASK));
 
     }
 

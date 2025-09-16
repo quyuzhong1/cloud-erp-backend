@@ -532,7 +532,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         detailViewDto.setUnit(skuVO.getUnitName());
         detailViewDto.setListPrice(skuVO.getRetailPrice());
 
-        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(viewDTO)) {
         	detailViewDto.setCurrencyName(viewDTO.getName());
             detailViewDto.setCurrencyCode(viewDTO.getId());
