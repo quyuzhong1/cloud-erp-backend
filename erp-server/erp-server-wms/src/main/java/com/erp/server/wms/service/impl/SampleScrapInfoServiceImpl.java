@@ -862,7 +862,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleScrapInfoEntity::getId, id)
-        .set(SampleScrapInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleScrapInfoEntity::getApproveUserId, "")
+                .set(SampleScrapInfoEntity::getApproveUserName, "")
+                .set(SampleScrapInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleScrapInfoEntity::getApproveTime, null)
         .update(new SampleScrapInfoEntity());
     }
 
