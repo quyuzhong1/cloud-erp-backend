@@ -1252,7 +1252,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(ExhibitionOrderEntity::getId, id)
+                .set(ExhibitionOrderEntity::getApproveUserId, "")
+                .set(ExhibitionOrderEntity::getApproveUserName, "")
                 .set(ExhibitionOrderEntity::getApproveStatus, approveStatus)
+                .set(ExhibitionOrderEntity::getApproveTime, null)
                 .update(new ExhibitionOrderEntity());
     }
 

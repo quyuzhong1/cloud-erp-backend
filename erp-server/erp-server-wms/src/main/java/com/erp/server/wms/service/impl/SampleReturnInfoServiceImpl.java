@@ -820,7 +820,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleReturnInfoEntity::getId, id)
-        .set(SampleReturnInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleReturnInfoEntity::getApproveUserId, "")
+                .set(SampleReturnInfoEntity::getApproveUserName, "")
+                .set(SampleReturnInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleReturnInfoEntity::getApproveTime, null)
         .update(new SampleReturnInfoEntity());
     }
 
