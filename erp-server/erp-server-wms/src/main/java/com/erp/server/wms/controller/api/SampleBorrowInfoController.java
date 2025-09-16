@@ -134,7 +134,7 @@ public class SampleBorrowInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:updateAndSubmit",
+            menuCode = "wms:sampleBorrowInfo:update",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleBorrowInfoDTO.UpdateDTO dto) {
@@ -380,6 +380,11 @@ public class SampleBorrowInfoController extends BaseController {
     */
     @GetMapping("/view")
     @LogViewService
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBorrowInfo:update",
+            serviceClass = SampleBorrowInfoService.class,
+            keyIdName = "id")
     public ApiResult<SampleBorrowInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(sampleBorrowInfoService.view(id));
     }

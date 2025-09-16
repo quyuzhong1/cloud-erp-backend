@@ -147,11 +147,15 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     @Override
     public PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO){
-        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (pagingDTO == null || pagingDTO.getParams() == null) {
+            throw new IllegalArgumentException("pagingDTO and its params must not be null");
+        }
+        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize(), false);
         SampleLedgerDTO.SearchDTO params = pagingDTO.getParams();
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
             params.setSkuNo(params.getSkuNos().get(0));
         }
+
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
 
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
@@ -163,7 +167,24 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
                 e.setAvailableQty(0);
             }
         });
-        pageData.setRecords(records);
+
+        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> map = records.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
+
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() > 1){
+            for (String skuNo :  params.getSkuNos()) {
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.getOrDefault(skuNo, null);
+                if(Objects.isNull(skuAvailableQtyDTO)){
+                    skuAvailableQtyDTO = new SampleLedgerDTO.SkuAvailableQtyDTO();
+                }
+                result.add(skuAvailableQtyDTO);
+            }
+        }else {
+            result.addAll(records);
+        }
+
+        pageData.setRecords(result);
         return new PagingVO<>(pageData);
     }
 

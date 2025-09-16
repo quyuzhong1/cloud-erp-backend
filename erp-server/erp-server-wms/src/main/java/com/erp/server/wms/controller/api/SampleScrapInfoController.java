@@ -132,7 +132,7 @@ public class SampleScrapInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleScrapInfo:updateAndSubmit",
+            menuCode = "wms:sampleScrapInfo:update",
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleScrapInfoDTO.UpdateDTO dto) {
@@ -378,6 +378,11 @@ public class SampleScrapInfoController extends BaseController {
     */
     @GetMapping("/view")
     @LogViewService
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleScrapInfo:update",
+            serviceClass = SampleScrapInfoService.class,
+            keyIdName = "id")
     public ApiResult<SampleScrapInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(sampleScrapInfoService.view(id));
     }

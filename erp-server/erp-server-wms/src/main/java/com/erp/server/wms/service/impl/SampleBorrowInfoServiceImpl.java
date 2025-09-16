@@ -18,6 +18,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -991,6 +992,21 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(CollUtil.isEmpty(list)) {
            return;
         }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         LocalDate now = LocalDate.now();
         // 属性赋值
         for(SampleBorrowInfoDTO.ListDTO data : list) {
@@ -1029,6 +1045,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 }
             }
             data.setReturnPeriod(returnPeriod);
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
+            }
         }
     }
     /**
@@ -1136,12 +1158,33 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Override
     public PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleBorrowInfoDTO.SearchDTO> pagingDTO) {
-        Page<SampleBorrowInfoDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (pagingDTO == null || pagingDTO.getParams() == null) {
+            throw new IllegalArgumentException("pagingDTO and its params must not be null");
+        }
+        Page<SampleBorrowInfoDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize(),false);
         SampleBorrowInfoDTO.SearchDTO params = pagingDTO.getParams();
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
             params.setSkuNo(params.getSkuNos().get(0));
         }
         IPage<SampleBorrowInfoDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+
+        List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
+
+        Map<String, SampleBorrowInfoDTO.SkuAvailableQtyDTO> map = records.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+
+        List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() > 1){
+            for (String skuNo :  params.getSkuNos()) {
+                SampleBorrowInfoDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.getOrDefault(skuNo, null);
+                if(Objects.isNull(skuAvailableQtyDTO)){
+                    skuAvailableQtyDTO = new SampleBorrowInfoDTO.SkuAvailableQtyDTO();
+                }
+                result.add(skuAvailableQtyDTO);
+            }
+        }else {
+            result.addAll(records);
+        }
+        pageData.setRecords(result);
         return new PagingVO<>(pageData);
     }
     /**
