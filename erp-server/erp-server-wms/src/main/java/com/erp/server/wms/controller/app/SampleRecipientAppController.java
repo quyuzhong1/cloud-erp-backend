@@ -66,7 +66,7 @@ public class SampleRecipientAppController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单app端修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:update",
+            menuCode = "wms:sampleRecipient:update",
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
@@ -85,7 +85,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:paging",
+            menuCode = "wms:sampleRecipient:paging",
             tableAlias = "sr"
     )
     public ApiResult<List<SampleRecipientDTO.TabListDTO>> tabListApp(@RequestBody PermissionsDTO param) {
@@ -102,7 +102,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:paging",
+            menuCode = "wms:sampleRecipient:paging",
             tableAlias = "sr"
     )
     @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
@@ -134,7 +134,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:updateAndSubmit",
+            menuCode = "wms:sampleRecipient:updateAndSubmit",
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {
@@ -153,7 +153,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:submit",
+            menuCode = "wms:sampleRecipient:submit",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "样品领用单app端提交审核")
@@ -191,7 +191,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:approve",
+            menuCode = "wms:sampleRecipient:approve",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "样品领用单app端审核")
@@ -229,7 +229,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:disApprove",
+            menuCode = "wms:sampleRecipient:disApprove",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品领用单app端反审核")
@@ -267,7 +267,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:delete",
+            menuCode = "wms:sampleRecipient:delete",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "样品领用单app端删除")
@@ -305,7 +305,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:invalid",
+            menuCode = "wms:sampleRecipient:invalid",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "样品领用单app端作废")
@@ -343,7 +343,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:cancelProcess",
+            menuCode = "wms:sampleRecipient:cancelProcess",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "样品领用单app端撤销")
@@ -381,7 +381,7 @@ public class SampleRecipientAppController extends BaseController {
     @PostMapping("/finishRecipient")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReceipt:finishRecipient",
+            menuCode = "wms:sampleRecipient:finishRecipient",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单app端结束领用")
