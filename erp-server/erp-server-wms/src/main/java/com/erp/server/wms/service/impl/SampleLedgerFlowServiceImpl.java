@@ -182,7 +182,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setUserId(addDTO.getUserId());
                 flowEntity.setUserName(addDTO.getUserName());
                 flowEntity.setDeptId(addDTO.getDeptId());
-//                flowEntity.setDeptName(addDTO.getDeptName());
+                flowEntity.setDeptName(addDTO.getDeptName());
                 flowEntity.setUseUserId(addDTO.getUseUserId());
                 flowEntity.setUseUserName(addDTO.getUseUserName());
                 
