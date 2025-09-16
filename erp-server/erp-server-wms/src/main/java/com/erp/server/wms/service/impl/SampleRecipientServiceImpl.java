@@ -1454,10 +1454,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<String> skuIds = Collections.singletonList(sku.getSkuId());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         
-        // 过滤出组合品类型的BOM
-        String combination = BomTypeEnum.COMBINATION.getType();
+        // 过滤出组合品类型的BOM - 修复：使用parentSkuId匹配
         List<BomChildrenSkuDTO> combinationBomList = bomChildrenList.stream()
-                .filter(b -> combination.equals(b.getType()))
+                .filter(b -> b.getParentSkuId().equals(sku.getSkuId())
+                        && BomTypeEnum.COMBINATION.getType().equals(b.getType()))
                 .collect(Collectors.toList());
 
         if (CollUtil.isNotEmpty(combinationBomList)) {
