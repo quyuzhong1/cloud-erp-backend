@@ -2697,19 +2697,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-        params.setPermissionSql(getPermissionSql(params.getPermissionSql()));
-        Page query = new Page(0, -1);
-        IPage pageData = baseMapper.paging(query, params);
-        List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new SoOutstockDTO.PagingTotalDTO(0,0,"0");
-        }
-        //处理分页数据
-        fillPaging(list,false);
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = new SoOutstockDTO.PagingTotalDTO();
-        pagingTotalDTO.setActualTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getActualQty).reduce(Integer::sum).orElse(0));
-        pagingTotalDTO.setPlanTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getPlanQty).reduce(Integer::sum).orElse(0));
-        pagingTotalDTO.setTotalTaxAmount(list.stream().map(SoOutstockDTO.PagingViewDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add).stripTrailingZeros().toPlainString());
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
 
