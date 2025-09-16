@@ -1136,12 +1136,33 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Override
     public PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleBorrowInfoDTO.SearchDTO> pagingDTO) {
-        Page<SampleBorrowInfoDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (pagingDTO == null || pagingDTO.getParams() == null) {
+            throw new IllegalArgumentException("pagingDTO and its params must not be null");
+        }
+        Page<SampleBorrowInfoDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize(),false);
         SampleBorrowInfoDTO.SearchDTO params = pagingDTO.getParams();
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
             params.setSkuNo(params.getSkuNos().get(0));
         }
         IPage<SampleBorrowInfoDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+
+        List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
+
+        Map<String, SampleBorrowInfoDTO.SkuAvailableQtyDTO> map = records.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+
+        List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() > 1){
+            for (String skuNo :  params.getSkuNos()) {
+                SampleBorrowInfoDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.getOrDefault(skuNo, null);
+                if(Objects.isNull(skuAvailableQtyDTO)){
+                    skuAvailableQtyDTO = new SampleBorrowInfoDTO.SkuAvailableQtyDTO();
+                }
+                result.add(skuAvailableQtyDTO);
+            }
+        }else {
+            result.addAll(records);
+        }
+        pageData.setRecords(result);
         return new PagingVO<>(pageData);
     }
     /**
