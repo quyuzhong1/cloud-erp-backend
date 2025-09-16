@@ -4,10 +4,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.SysLogSelectDTO;
-import com.erp.model.plm.dto.SysLogShowDTO;
+import com.erp.model.plm.dto.OperateLogSelectDTO;
+import com.erp.model.plm.dto.OperateLogShowDTO;
 import com.erp.model.plm.enums.SysLogClassPathEnum;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -23,21 +23,21 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("sys/log")
-public class SysLogController extends BaseController {
+public class OperateLogController extends BaseController {
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     /**
      * 操作日志-列表查询
      * @author Will
      * @date: 2022/12/5 21:29
      * @param dto
-     * @return ApiResult<PagingVO<SysLogShowDTO>>
+     * @return ApiResult<PagingVO<OperateLogShowDTO>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SysLogShowDTO>> paging(@RequestBody @Validated PagingDTO<SysLogSelectDTO> dto){
-        PagingVO<SysLogShowDTO> pagingVO = sysLogService.paging(dto);
+    public ApiResult<PagingVO<OperateLogShowDTO>> paging(@RequestBody @Validated PagingDTO<OperateLogSelectDTO> dto){
+        PagingVO<OperateLogShowDTO> pagingVO = operateLogService.paging(dto);
         return success(pagingVO);
     }
 
@@ -46,11 +46,11 @@ public class SysLogController extends BaseController {
      * @author Will
      * @date: 2023/1/6 16:57
      * @param dto
-     * @return ApiResult<List<SysLogShowDTO>>
+     * @return ApiResult<List<OperateLogShowDTO>>
      */
     @PostMapping("/list")
-    public ApiResult<List<SysLogShowDTO>> list(@RequestBody @Validated SysLogSelectDTO dto){
-        List<SysLogShowDTO> list = sysLogService.listSysLog(dto);
+    public ApiResult<List<OperateLogShowDTO>> list(@RequestBody @Validated OperateLogSelectDTO dto){
+        List<OperateLogShowDTO> list = operateLogService.listSysLog(dto);
         return success(list);
     }
 

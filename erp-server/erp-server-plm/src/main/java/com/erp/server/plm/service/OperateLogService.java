@@ -3,9 +3,9 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.SysLogSelectDTO;
-import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.dto.OperateLogShowDTO;
+import com.erp.model.plm.dto.OperateLogSelectDTO;
+import com.erp.model.plm.entity.OperateLogEntity;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 
  * @date 2022/12/5 18:19
  */
-public interface SysLogService  extends IService<SysLogEntity> {
+public interface OperateLogService extends IService<OperateLogEntity> {
 
 
     /**
@@ -54,13 +54,26 @@ public interface SysLogService  extends IService<SysLogEntity> {
     Boolean addSysLogBySave(String content,String classPath,String businessId,String pid);
 
     /**
+     * @description: 新增时保存日志
+     * @author Will
+     * @date: 2022/12/6 14:08
+     * @param content
+     * @param classPath
+     * @param moduleType
+     * @param businessId
+     * @param pid
+     * @return Boolean
+     */
+    Boolean addOperateLogBySave(String content,String classPath,String moduleType,String businessId,String pid);
+
+    /**
      * @description: 新增时批量保存日志
      * @author Will
      * @date: 2022/12/6 14:08
      * @param list
      * @return Boolean
      */
-    Boolean addSysLogByBatchSave(List<SysLogEntity> list);
+    Boolean addSysLogByBatchSave(List<OperateLogEntity> list);
     /**
      * @description: 保存日志
      * @author Will
@@ -68,22 +81,22 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @param entity
      * @return Boolean
      */
-    Boolean addSysLogByOther(SysLogEntity entity);
+    Boolean addSysLogByOther(OperateLogEntity entity);
     /**
      * @description: 分页查询
      * @author Will
      * @date: 2022/12/5 20:42
      * @param dto
-     * @return PagingVO<SysLogShowDTO>
+     * @return PagingVO<OperateLogShowDTO>
      */
-    PagingVO<SysLogShowDTO> paging(PagingDTO<SysLogSelectDTO> dto);
+    PagingVO<OperateLogShowDTO> paging(PagingDTO<OperateLogSelectDTO> dto);
 
     /**
      * @description: 列表不分页查询
      * @author Will
      * @date: 2023/1/6 16:48
      * @param dto
-     * @return List<SysLogShowDTO>
+     * @return List<OperateLogShowDTO>
      */
-    List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto);
+    List<OperateLogShowDTO> listSysLog(OperateLogSelectDTO dto);
 }
