@@ -129,15 +129,16 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
-
             log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
 
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
             SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
+
             //第一条账户设置成默认
             if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
                 addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
@@ -247,8 +248,13 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object propertyJson = map.get("propertyJson");
         if (ObjectUtil.isNotEmpty(propertyJson)) {
             List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (!isDmpAdd) {
+                propertyJsonCode = Arrays.stream(JSONUtil.parseArray(propertyJson).toArray())
+                        .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                        .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
             map.put("propertyJson", propertyJsonCode);
         }
 
@@ -258,6 +264,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
                     .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (!isDmpAdd) {
+                productCategoryJsonId = Arrays.stream(JSONUtil.parseArray(productCategoryJson).toArray())
+                        .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getId())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
+                        .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
             map.put("productCategoryJson", productCategoryJsonId);
         }
 
@@ -267,6 +278,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(","))
                     .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (!isDmpAdd) {
+                applicationCategoryJsonId = Arrays.stream(JSONUtil.parseArray(applicationCategoryJson).toArray())
+                        .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getId())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
+                        .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
             map.put("applicationCategoryJson", applicationCategoryJsonId);
         }
 
@@ -274,8 +290,13 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object certificateJson = map.get("certificateJson");
         if (ObjectUtil.isNotEmpty(certificateJson)) {
             List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue())&& CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (!isDmpAdd) {
+                certificateJsonCode = Arrays.stream(JSONUtil.parseArray(certificateJson).toArray())
+                        .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue())&& CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                        .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
             map.put("certificateJson", certificateJsonCode);
         }
 
@@ -329,7 +350,10 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (attachmentObject instanceof Map) {
                 Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
                 attachList.add(attachment);
-            } else {
+            } else if (attachmentObject instanceof String) {
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                attachList.add(attachment);
+            }  else {
                 attachList = JSONUtil.parseArray(attachmentObject).toList(Map.class);
             }
             List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
