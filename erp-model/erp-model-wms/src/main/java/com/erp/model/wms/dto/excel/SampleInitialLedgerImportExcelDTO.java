@@ -57,19 +57,13 @@ public class SampleInitialLedgerImportExcelDTO implements Serializable {
     @ExcelIgnore
     private String deptId;
 
-    /**
-     * 备注
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 4)
-    @FieldValid(fieldName = "备注", maxLength = 200)
-    private String remark;
+
 
     /**
      * SKU
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 5)
+    @ExcelProperty(value = "*SKU", index = 4)
     @FieldValid(fieldName = "*SKU", isNotBlank = true)
     private String skuNo;
     @ExcelIgnore
@@ -81,10 +75,17 @@ public class SampleInitialLedgerImportExcelDTO implements Serializable {
      * 数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*数量", index = 6)
+    @ExcelProperty(value = "*数量", index = 5)
     @FieldValid(fieldName = "*数量", isNotBlank = true)
     private String qty;
 
+    /**
+     * 备注
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "备注", index = 6)
+    @FieldValid(fieldName = "备注", maxLength = 200)
+    private String remark;
     /**
      * 错误数据
      */
