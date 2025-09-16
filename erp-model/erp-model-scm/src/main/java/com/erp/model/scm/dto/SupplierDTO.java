@@ -119,6 +119,7 @@ public class SupplierDTO implements Serializable {
          * 供应商资质信息
          */
         @Valid
+        @NotEmpty(message = "资质信息至少有一条")
         private List<SupplierCredentialDTO.AddDTO> credentialList;
 
     }
