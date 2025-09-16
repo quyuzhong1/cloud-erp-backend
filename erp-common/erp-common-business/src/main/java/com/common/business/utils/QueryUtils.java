@@ -86,6 +86,8 @@ public class QueryUtils {
         //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
         if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum) || QueryConditionEnum.CONTAINS.equals(condEnum)){
             sql.append("like").append(" ");
+        }else if (QueryConditionEnum.NOT_CONTAINS.equals(condEnum)) {
+        	sql.append("not like").append(" ");
         } else if (!QueryConditionEnum.IS_NULL.equals(condEnum) && !QueryConditionEnum.NOT_NULL.equals(condEnum) &&  !QueryConditionEnum.BETWEEN.equals(condEnum)){
             //日期格式的年月日小于等于 需要修改为小于，因为需要加一天
             String interval = QueryUtils.getDateStr(dto.getValue().toString());
@@ -129,6 +131,8 @@ public class QueryUtils {
             }else if(QueryConditionEnum.ENDS_WITH.equals(condEnum)){
                 val = "LOWER('%" + dto.getValue() + "')";
             }else if(QueryConditionEnum.CONTAINS.equals(condEnum)){
+                val = "LOWER('%" + dto.getValue() + "%')";
+            }else if(QueryConditionEnum.NOT_CONTAINS.equals(condEnum)){
                 val = "LOWER('%" + dto.getValue() + "%')";
             }else{
                 val = "'%" + dto.getValue() + "%'";
