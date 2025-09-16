@@ -205,6 +205,8 @@ public class ExportWmsFeignController {
 
     @Resource
     private SampleBackInfoService sampleBackInfoService;
+    @Resource
+    private SampleInitialLedgerService sampleInitialLedgerService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1171,6 +1173,24 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class)
     public PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(@RequestBody PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
         return sampleReturnInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品期初台账Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-25
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSampleInitialLedgerPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleInitialLedger:export",
+            tableAlias = "sil"
+    )
+    @WebAdvanceQuery(handler = SampleInitialLedgerQueryHandler.class)
+    public PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.PagingParamDTO> dto) {
+        return sampleInitialLedgerService.paging(dto);
     }
 
 }

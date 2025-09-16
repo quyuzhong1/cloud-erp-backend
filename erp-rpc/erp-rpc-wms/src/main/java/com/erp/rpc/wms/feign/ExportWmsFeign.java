@@ -359,4 +359,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/getSampleBackInfoPageData")
     PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品期初台账
+     */
+    @PostMapping("/feign/export/getSampleInitialLedgerPageData")
+    PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.ExportDTO> dto);
 }
