@@ -330,9 +330,14 @@ sbi.remark as remark
         </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             and sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ORDER BY
+            case
+            when sbd.sku_no = #{params.skuNo} THEN 1
+            when sbd.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
+            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
+            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
+            end, sbd.sku_no
         </if>
-        ORDER BY
-        sbi.code
     </select>
 
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$ListDTO">
