@@ -514,13 +514,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        this.lambdaUpdate().eq(SampleBorrowInfoEntity::getId, dto.getId())
-                .set(SampleBorrowInfoEntity::getApproveUserId, userInfo.getUid())
-                .set(SampleBorrowInfoEntity::getApproveUserName, userInfo.getUserName())
-                .update(new SampleBorrowInfoEntity());
-
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -703,13 +696,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, SampleBorrowInfoEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
