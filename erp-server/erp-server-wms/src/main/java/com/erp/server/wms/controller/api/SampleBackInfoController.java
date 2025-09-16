@@ -83,7 +83,7 @@ public class SampleBackInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleBackInfo:paging",
-            tableAlias = ""
+            tableAlias = "sbi"
     )
     public ApiResult<List<SampleBackInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleBackInfoService.tabList(dto));
@@ -100,7 +100,7 @@ public class SampleBackInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleBackInfo:paging",
-            tableAlias = ""
+            tableAlias = "sbi"
     )
     @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
     public ApiResult<PagingVO<SampleBackInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleBackInfoDTO.PagingParamDTO> dto) {
@@ -401,8 +401,7 @@ public class SampleBackInfoController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "sampleBackInfo:export",
-            tableAlias = ""
+            menuCode = "sampleBackInfo:export"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品退回单导出Excel数据")
     @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)

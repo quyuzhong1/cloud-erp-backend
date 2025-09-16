@@ -88,7 +88,7 @@ public class SampleRecipientController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleReceipt:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     public ApiResult<List<SampleRecipientDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleRecipientService.tabList(dto));
@@ -105,7 +105,7 @@ public class SampleRecipientController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleReceipt:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
     public ApiResult<PagingVO<SampleRecipientDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleRecipientDTO.PagingParamDTO> dto) {
@@ -403,7 +403,7 @@ public class SampleRecipientController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleReceipt:export",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品领用单导出Excel数据")
     @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
