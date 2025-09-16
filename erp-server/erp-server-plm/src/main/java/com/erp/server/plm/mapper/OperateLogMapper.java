@@ -38,4 +38,14 @@ public interface OperateLogMapper extends BaseMapper<OperateLogEntity> {
      * @return List<OperateLogShowDTO>
      */
     List<OperateLogShowDTO> listSysLog(@Param("params") OperateLogSelectDTO params);
+
+    /**
+     * 操作日志-产品变更历史分页查询
+     * @author zdy
+     * @date: 2025/9/16 16:57
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(@Param("query") Page<OperateLogShowDTO.HistoryDTO> query, @Param("params") OperateLogShowDTO.PagingParamDTO params);
 }

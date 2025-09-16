@@ -73,4 +73,17 @@ public class OperateLogController extends BaseController {
                 return failure();
         }
     }
+
+    /**
+     * 操作日志-产品变更历史分页查询
+     * @author zdy
+     * @date: 2025/9/16 16:57
+     * @param dto
+     * @return ApiResult<PagingVO<OperateLogShowDTO.HistoryDTO>>
+     */
+    @PostMapping("/productChange/paging")
+    public ApiResult<PagingVO<OperateLogShowDTO.HistoryDTO>> getProductChangePaging(@RequestBody @Validated PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+        PagingVO<OperateLogShowDTO.HistoryDTO> pagingVO = operateLogService.getProductChangeHistory(dto);
+        return success(pagingVO);
+    }
 }

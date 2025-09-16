@@ -52,8 +52,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
@@ -125,6 +127,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
 import static cn.hutool.core.text.CharSequenceUtil.*;
@@ -3804,7 +3807,60 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
+        if (!oldEntity.getChargeId().equals(productSkuBaseInfoDTO.getChargeId())){
+            addChargeLog(oldEntity.getChargeId(), productSkuBaseInfoDTO.getChargeId(), businessId, pid,oldEntity.getSkuNo());
+        }
         operateLogService.addSysLogByUpdate(oldDto, productSkuBaseInfoDTO, SKUCLASSPATH, businessId, pid, String.format("SKU[%s]", oldEntity.getSkuNo()));
+    }
+
+    /**
+     * 添加产品经理变更记录
+     * @param oldChargeId
+     * @param newChargeId
+     * @param businessId
+     * @param pid
+     * @param skuNo
+     */
+    private void addChargeLog(String oldChargeId, String newChargeId, String businessId, String pid, String skuNo) {
+        List<String> oldChargeIds = CharSequenceUtil.isNotBlank(oldChargeId) ? Arrays.asList(oldChargeId.split(",")) : new ArrayList<>();
+        List<String> newChargeIds = CharSequenceUtil.isNotBlank(newChargeId) ? Arrays.asList(newChargeId.split(",")) : new ArrayList<>();
+        List<String> chargeIds = Stream.concat(oldChargeIds.stream(), newChargeIds.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FindUserDTO> findUserDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.getUserListByUserIds(chargeIds) : new ArrayList<>();
+        List<UserSuperiorDTO> userSuperiorDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.listSuperiorByUserIds(chargeIds) : new ArrayList<>();
+        String oldChargeLog = getChargeNameLog(oldChargeId,findUserDTOS,userSuperiorDTOS);
+        String newChargeLog = getChargeNameLog(newChargeId,findUserDTOS, userSuperiorDTOS);
+        OperateLogEntity operateLogEntity = new OperateLogEntity();
+        operateLogEntity.setBusinessId(businessId);
+        operateLogEntity.setPid(pid);
+        operateLogEntity.setClassPath(SKUCLASSPATH);
+        operateLogEntity.setFieldName(skuNo);
+        operateLogEntity.setModuleType(ModuleTypeEnum.PRODUCT_DETAIL.getCode());
+        operateLogEntity.setOperation("产品经理变更");
+        operateLogEntity.setOldValue(oldChargeLog);
+        operateLogEntity.setNewValue(newChargeLog);
+        operateLogEntity.setContent(String.format("产品经理变更，由[%s]变更为[%s]", oldChargeLog, newChargeLog));
+        operateLogService.save(operateLogEntity);
+    }
+
+    private String getChargeNameLog(String chargeIdStr, List<FindUserDTO> findUserDTOS, List<UserSuperiorDTO> userSuperiorDTOS) {
+        //姓名[];姓名[]
+        if (CharSequenceUtil.isBlank(chargeIdStr) || CollUtil.isEmpty(findUserDTOS)){
+            return "";
+        }
+        String[] chargeIds = chargeIdStr.split(",");
+        StringBuilder sb = new StringBuilder();
+        for (String chargeId : chargeIds) {
+            if (CharSequenceUtil.isNotBlank(sb.toString())){
+                sb.append(";");
+            }
+            FindUserDTO findUserDTO = findUserDTOS.stream().filter(e -> chargeId.equals(e.getUserId())).findFirst().orElse(null);
+            String userName = findUserDTO != null ? findUserDTO.getUserName() : "";
+            //根据level组装部门名称中间使用>
+            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
+            deptName = CharSequenceUtil.isNotBlank(deptName) ? deptName : "无部门";
+            sb.append(String.format("%s[%s]", userName, deptName));
+        }
+        return sb.toString();
     }
 
     /**
@@ -3815,7 +3871,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-
+        if (!oldEntity.getChargeId().equals(productDetailDTO.getChargeId())){
+            addChargeLog(oldEntity.getChargeId(), productDetailDTO.getChargeId(), businessId, pid,oldEntity.getSkuNo());
+        }
         operateLogService.addSysLogByUpdate(oldDto, productDetailDTO, SKUCLASSPATH, businessId, pid, String.format("SKU[%s]", oldEntity.getSkuNo()));
     }
 
