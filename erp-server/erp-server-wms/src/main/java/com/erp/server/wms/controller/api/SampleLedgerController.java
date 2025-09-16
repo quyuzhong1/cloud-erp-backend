@@ -56,7 +56,7 @@ public class SampleLedgerController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedger:paging",
-            tableAlias = ""
+            tableAlias = "sl"
     )
     @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
     public ApiResult<PagingVO<SampleLedgerDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleLedgerDTO.PagingParamDTO> dto) {
@@ -75,7 +75,7 @@ public class SampleLedgerController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedger:export",
-            tableAlias = ""
+            tableAlias = "sl"
     )
     @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品台账统计导出Excel数据")
