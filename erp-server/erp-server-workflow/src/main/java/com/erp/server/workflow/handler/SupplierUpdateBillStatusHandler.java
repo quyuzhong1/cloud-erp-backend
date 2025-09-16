@@ -129,15 +129,20 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
-
             log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
 
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
+
+            //批量处理多选数据
+            handleSupplierMultipleData(map);
+
             //值映射
             SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
+
             //第一条账户设置成默认
             if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
                 addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
@@ -182,6 +187,34 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
                 thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
             }
+        }
+    }
+    private void handleSupplierMultipleData(Map<String, Object> map) {
+        //供应商属性
+        Object propertyJson = map.get("propertyJson");
+        if (ObjectUtil.isNotEmpty(propertyJson)) {
+            List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(",")).collect(Collectors.toList());
+            map.put("propertyJson", propertyJsonCode);
+        }
+        //供应商产品分类
+        Object productCategoryJson = map.get("productCategoryJson");
+        if (ObjectUtil.isNotEmpty(productCategoryJson)) {
+            List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(",")).collect(Collectors.toList());
+            map.put("productCategoryJson", productCategoryJsonId);
+        }
+
+        //供应商应用分类
+        Object applicationCategoryJson = map.get("applicationCategoryJson");
+        if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
+            List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(",")).collect(Collectors.toList());
+            map.put("applicationCategoryJson", applicationCategoryJsonId);
+        }
+
+        //体系认证
+        Object certificateJson = map.get("certificateJson");
+        if (ObjectUtil.isNotEmpty(certificateJson)) {
+            List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(",")).collect(Collectors.toList());
+            map.put("certificateJson", certificateJsonCode);
         }
     }
 
@@ -246,36 +279,36 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         //供应商属性
         Object propertyJson = map.get("propertyJson");
         if (ObjectUtil.isNotEmpty(propertyJson)) {
-            List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
-                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            String propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
             map.put("propertyJson", propertyJsonCode);
         }
 
         //供应商产品分类
         Object productCategoryJson = map.get("productCategoryJson");
         if (ObjectUtil.isNotEmpty(productCategoryJson)) {
-            List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
-                    .map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(BasicCategoryEntity::getId).findFirst().orElse(""))
-                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            String productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
+                    .map(obj -> categoryList.stream().map(BasicCategoryEntity::getId).filter(id -> CharSequenceUtil.equals(obj, id)).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
             map.put("productCategoryJson", productCategoryJsonId);
         }
 
         //供应商应用分类
         Object applicationCategoryJson = map.get("applicationCategoryJson");
         if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
-            List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(","))
-                    .map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(ApplicationCategoryEntity::getId).findFirst().orElse(""))
-                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            map.put("applicationCategoryJson", applicationCategoryJsonId);
+            String applicationCategoryJsonCode = Arrays.stream(applicationCategoryJson.toString().split(","))
+                    .map(obj -> applicationCategoryList.stream().map(ApplicationCategoryEntity::getCode).filter(code -> CharSequenceUtil.equals(obj, code)).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
+            map.put("applicationCategoryJson", applicationCategoryJsonCode);
         }
 
         //体系认证
         Object certificateJson = map.get("certificateJson");
         if (ObjectUtil.isNotEmpty(certificateJson)) {
-            List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
-                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getId())).map(DictBasicEntity::getValue).findFirst().orElse(""))
-                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            String certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue())&& CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
             map.put("certificateJson", certificateJsonCode);
         }
 
@@ -329,7 +362,10 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (attachmentObject instanceof Map) {
                 Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
                 attachList.add(attachment);
-            } else {
+            } else if (attachmentObject instanceof String) {
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                attachList.add(attachment);
+            }  else {
                 attachList = JSONUtil.parseArray(attachmentObject).toList(Map.class);
             }
             List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
@@ -412,7 +448,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
             //处理附件信息
             handleSupplierData(map,Boolean.FALSE);
-
+            //批量处理多选数据
+            handleSupplierMultipleData(map);
             log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
 
             //值映射
