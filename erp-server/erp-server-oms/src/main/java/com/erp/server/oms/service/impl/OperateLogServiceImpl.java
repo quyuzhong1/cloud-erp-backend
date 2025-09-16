@@ -1,10 +1,12 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -14,6 +16,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
+import com.erp.model.oms.dto.CustomerCreditApplyDTO;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -139,6 +142,9 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
                 valuePair = setCurrencyValue(valuePair);
             }
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ORG.getCode().equals(type)) {
+                valuePair = setOrg(valuePair);
+            }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
 
@@ -229,6 +235,9 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             //币别
             if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
                 valuePair = setCurrencyValue(valuePair);
+            }
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ORG.getCode().equals(type)) {
+                valuePair = setOrg(valuePair);
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
@@ -530,7 +539,20 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return new Pair<>(oldValue,newValue);
     }
-
+    /**
+     * 组织
+     */
+    private Pair<String,String> setOrg (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<String> orgIds = Arrays.asList(valuePair.getKey(), valuePair.getValue());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            oldValue = accountingCompanyList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = accountingCompanyList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
 
     /**
      * 设置枚举值

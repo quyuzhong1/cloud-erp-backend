@@ -49,6 +49,7 @@
                cca.code,
                cca.customer_id as customerId,
                 ci.name as customerName,
+                ci.code as customerCode,
                 cca.approve_status as approveStatus,
                 cca.credit_type as creditType,
                 cca.credit_status as creditStatus,
@@ -59,7 +60,8 @@
                 cca.sale_org_id as saleOrgId,
                 cca.create_time as createTime,
                 cca.approve_time as approveTime,
-                ci.code as customerCode
+                ci.code as customerCode,
+                ci.seller_id as saleUserId
         from
                      customer_credit_apply cca
         inner join customer_info ci on cca.customer_id = ci.id
@@ -71,6 +73,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        order by cca.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

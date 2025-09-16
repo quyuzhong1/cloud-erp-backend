@@ -168,9 +168,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         }
 
         // 记录主单操作日志
-        log.info("编辑 开始记录客户授信日志数据，单号：【{}】", customerCreditApplyEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerCreditApplyEntity.getCode(), "客户授信");
-
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "客户授信");
         operateLogService.addModuleOperateLogByObj(old, customerCreditApplyEntity, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), customerCreditApplyEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -198,7 +196,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<CustomerCreditApplyDTO.TabListDTO> result = new ArrayList<>();
-        statusList.parallelStream().forEach(status -> {
+        statusList.forEach(status -> {
             CustomerCreditApplyDTO.TabListDTO tabListDTO = list.stream().filter(v -> Objects.equals(v.getTabFlag(), status)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(tabListDTO)) {
                 tabListDTO = new CustomerCreditApplyDTO.TabListDTO();
@@ -587,11 +585,11 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
             FindUserDTO user = findUserDTOS.stream().filter(v -> Objects.equals(v.getUserId(), data.getSaleUserId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(user)) {
-                data.setSaleUserName(user.getRealName());
+                data.setSaleUserName(user.getUserName());
             }
             BaseIdDTO.CodeDTO org = accountingCompanyList.stream().filter(v -> Objects.equals(v.getId(), data.getSaleOrgId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(org)) {
-                data.setSaleOrgName(org.getCode());
+                data.setSaleOrgName(org.getName());
             }
         }
     }
