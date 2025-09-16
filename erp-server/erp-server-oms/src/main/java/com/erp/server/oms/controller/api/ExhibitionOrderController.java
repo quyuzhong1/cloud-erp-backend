@@ -377,6 +377,11 @@ public class ExhibitionOrderController extends BaseController {
     */
     @GetMapping("/view")
     @LogViewService
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:exhibitionOrder:update",
+            serviceClass = ExhibitionOrderService.class,
+            keyIdName = "id")
     public ApiResult<ExhibitionOrderDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(exhibitionOrderService.view(id));
     }
