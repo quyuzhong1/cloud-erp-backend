@@ -39,6 +39,12 @@ public class OperateLogShowDTO implements Serializable {
      */
     private String createUserName;
 
+
+    /**
+     * 类型
+     */
+    private String moduleType;
+
     @Data
     @NoArgsConstructor
     public static class HistoryDTO {
