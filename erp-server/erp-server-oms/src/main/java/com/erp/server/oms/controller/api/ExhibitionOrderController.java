@@ -131,7 +131,7 @@ public class ExhibitionOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:exhibitionOrder:updateAndSubmit",
+            menuCode = "oms:exhibitionOrder:update",
             serviceClass = ExhibitionOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated ExhibitionOrderDTO.UpdateDTO dto) {
