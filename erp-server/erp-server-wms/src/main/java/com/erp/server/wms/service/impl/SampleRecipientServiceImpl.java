@@ -1454,15 +1454,24 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<String> skuIds = Collections.singletonList(sku.getSkuId());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         
-        // 过滤出组合品类型的BOM
-        String combination = BomTypeEnum.COMBINATION.getType();
+        // 过滤出组合品类型的BOM - 修复：使用parentSkuId匹配
         List<BomChildrenSkuDTO> combinationBomList = bomChildrenList.stream()
-                .filter(b -> combination.equals(b.getType()))
+                .filter(b -> b.getParentSkuId().equals(sku.getSkuId())
+                        && BomTypeEnum.COMBINATION.getType().equals(b.getType()))
                 .collect(Collectors.toList());
 
         if (CollUtil.isNotEmpty(combinationBomList)) {
             // 是组合品，需要计算子件成本*用量的和
-            return calculateCombinationSkuCost(combinationBomList, detail, skuCostList);
+            // 先获取所有子件的SKU ID
+            List<String> childSkuIds = combinationBomList.stream()
+                    .map(BomChildrenSkuDTO::getSkuId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 查询子件的成本信息
+            List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList = getChildSkuCostList(childSkuIds, detail);
+            
+            return calculateCombinationSkuCost(combinationBomList, detail, childSkuCostList);
         } else {
             // 普通SKU，直接使用材料成本
             InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
@@ -1480,17 +1489,44 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
+     * 获取子件SKU的成本信息
+     */
+    private List<InventorySkuCostDTO.SkuCostCNYDTO> getChildSkuCostList(List<String> childSkuIds, 
+                                                                        SampleRecipientDTO.SkuCostQueryDetailDTO detail) {
+        try {
+            // 构建子件成本查询参数
+            InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
+                    .skuIds(childSkuIds)
+                    .warehouseIds(Collections.singletonList(detail.getWarehouseId()))
+                    .orgId(detail.getOrgId())
+                    .build();
+
+            // 查询子件成本信息
+            List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
+            
+            log.info("查询子件SKU成本完成，子件SKU数量：{}，查询到成本记录数：{}", 
+                    childSkuIds.size(), childSkuCostList != null ? childSkuCostList.size() : 0);
+            
+            return childSkuCostList != null ? childSkuCostList : Collections.emptyList();
+            
+        } catch (Exception e) {
+            log.error("查询子件SKU成本失败，子件SKU ID：{}，错误：{}", childSkuIds, e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * 计算组合品SKU成本
      * 组合品成本 = 子件1成本*用量1 + 子件2成本*用量2 + ...
      */
     private BigDecimal calculateCombinationSkuCost(List<BomChildrenSkuDTO> bomChildrenList, 
                                                   SampleRecipientDTO.SkuCostQueryDetailDTO detail,
-                                                  List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+                                                  List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList) {
         BigDecimal totalCost = BigDecimal.ZERO;
         
         for (BomChildrenSkuDTO bomChild : bomChildrenList) {
             // 查找子件的成本信息
-            InventorySkuCostDTO.SkuCostCNYDTO childCost = skuCostList.stream()
+            InventorySkuCostDTO.SkuCostCNYDTO childCost = childSkuCostList.stream()
                     .filter(cost -> cost.getSkuId().equals(bomChild.getSkuId())
                             && cost.getWarehouseId().equals(detail.getWarehouseId()))
                     .findFirst()
@@ -1500,9 +1536,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 子件成本 * 用量
                 BigDecimal childTotalCost = childCost.getProductCostCNY().multiply(BigDecimal.valueOf(bomChild.getQuantity()));
                 totalCost = totalCost.add(childTotalCost);
+                
+                log.debug("子件SKU【{}】成本计算：成本={}，用量={}，小计={}", 
+                        bomChild.getSkuId(), childCost.getProductCostCNY(), 
+                        bomChild.getQuantity(), childTotalCost);
+            } else {
+                log.warn("未找到子件SKU【{}】在仓库【{}】的成本信息", 
+                        bomChild.getSkuId(), detail.getWarehouseId());
             }
         }
         
+        log.info("组合品成本计算完成，子件数量：{}，总成本：{}", bomChildrenList.size(), totalCost);
         return totalCost;
     }
 

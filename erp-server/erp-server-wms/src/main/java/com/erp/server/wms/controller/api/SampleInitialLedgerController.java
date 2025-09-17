@@ -85,7 +85,8 @@ public class SampleInitialLedgerController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleInitialLedger:paging"
+            menuCode = "wms:sampleInitialLedger:paging",
+            tableAlias = "sil"
     )
     public ApiResult<List<SampleInitialLedgerDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleInitialLedgerService.tabList(dto));
@@ -366,8 +367,9 @@ public class SampleInitialLedgerController extends BaseController {
             menuCode = "wms:sampleInitialLedger:export"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品期初台账导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleInitialLedgerDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SampleInitialLedgerDTO.ExportDTO dto, HttpServletResponse response) {
         sampleInitialLedgerService.exportList(dto, response);
+        return success(true);
     }
 
 
