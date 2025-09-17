@@ -97,4 +97,33 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     SampleLedgerDTO.SampleScrapView generateSampleScrapView( List<String> ids);
 
     SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView( List<String> ids);
+
+    // ========== APP端专用方法 ==========
+
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param dto 权限参数
+     * @return 标签页列表
+     */
+    List<SampleLedgerDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页查询
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param pagingParamDTO 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleLedgerDTO.ListDTO> pagingApp(PagingDTO<SampleLedgerDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 详情
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品台账ID
+     * @return 详情信息
+     */
+    SampleLedgerDTO.ViewDTO view(String id);
 }

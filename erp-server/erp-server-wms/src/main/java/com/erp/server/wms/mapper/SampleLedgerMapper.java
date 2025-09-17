@@ -68,4 +68,12 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
     IPage<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(Page query, @Param("params") SampleLedgerDTO.SearchDTO params);
 
     List<SampleScrapDetailDTO.ViewDTO> generateSampleScrapView(@Param("params") SampleLedgerDTO.SearchDTO params);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleLedgerDTO.ListDTO> pagingApp(Page query, @Param("params") SampleLedgerDTO.PagingParamDTO params);
 }

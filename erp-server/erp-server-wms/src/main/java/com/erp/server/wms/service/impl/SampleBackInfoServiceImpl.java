@@ -1317,20 +1317,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
         SampleBackInfoDTO.PagingParamDTO searchParam = new SampleBackInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(dto.getPermissionSql());
-
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 使用一个SQL查询获取所有状态的统计数量
         List<SampleBackInfoDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
-
-        // 设置tabFlagName
-        list.stream().forEach(e ->{
-            if(Objects.equals("waitInstock", e.getTabFlag())){
-                e.setTabFlagName("待入库");
-            }else if(Objects.equals("completeInstock", e.getTabFlag())){
-                e.setTabFlagName("已入库");
-            }else {
-                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
-            }
-        });
 
         // 移动端特殊处理：合并待提交和不通过
         List<SampleBackInfoDTO.TabListDTO> appList = new ArrayList<>();
@@ -1360,15 +1349,23 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             appList.add(mergedItem);
         }
         
-        // 添加其他标签（审核中、待入库、已入库）
+        // 添加其他标签（审核中、已审核）
         for (SampleBackInfoDTO.TabListDTO item : list) {
             if (!"waitSubmit".equals(item.getTabFlag()) && !"reject".equals(item.getTabFlag())) {
+                // 设置正确的标签名称
+                if ("approveIng".equals(item.getTabFlag())) {
+                    item.setTabFlagName("审核中");
+                } else if ("approve".equals(item.getTabFlag())) {
+                    item.setTabFlagName("已审核");
+                } else {
+                    item.setTabFlagName(ApproveStatusEnum.getName(item.getTabFlag()));
+                }
                 appList.add(item);
             }
         }
 
-        // 按照移动端指定顺序排序：待提交/不通过、审核中、待入库、已入库
-        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "waitInstock", "completeInstock");
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、已审核
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "approve");
         appList.sort((a, b) -> {
             int indexA = orderList.indexOf(a.getTabFlag());
             int indexB = orderList.indexOf(b.getTabFlag());

@@ -48,4 +48,24 @@ public interface SampleLedgerFlowService extends SuperService<SampleLedgerFlowEn
      * @return 是否成功
      */
     Boolean addSampleLedgerFlow(SampleLedgerFlowDTO.AddFlowDTO addDTO);
+
+    // ========== APP端专用方法 ==========
+
+    /**
+     * APP端分页查询
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param pagingParamDTO 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleLedgerFlowDTO.ListDTO> pagingApp(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 详情
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 流水ID
+     * @return 详情信息
+     */
+    SampleLedgerFlowDTO.ViewDTO view(String id);
 }
