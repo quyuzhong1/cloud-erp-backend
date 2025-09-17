@@ -86,7 +86,7 @@ public class DhtReceiptServiceTest {
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
                                         .fieldName("payment_id")
-                                        .fieldValues(Arrays.asList("689e9fe245d5340001d09137","68a696263e3cbc0001584412","6894659c2c37fd000686c9d9"))
+                                        .fieldValues(Arrays.asList("689468b472b92f000612a54c"))
                                         .operator("IN")
                                         .build()
                         ))
