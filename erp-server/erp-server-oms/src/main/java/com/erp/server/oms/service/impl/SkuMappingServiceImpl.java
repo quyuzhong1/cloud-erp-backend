@@ -2295,6 +2295,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public Boolean b2bPlatformSyncSku(SkuMappingDTO.SyncSkuDTO syncSkuDTO) {
+        //时间校验
+        if (syncSkuDTO.getEndTime().isAfter(syncSkuDTO.getStartTime()) || syncSkuDTO.getEndTime().isEqual(syncSkuDTO.getStartTime())) {
+            throw new ServiceException("结束时间必须大于开始时间");
+        }
         //添加快速任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(PlatformDictEnum.DHT.getCode());
