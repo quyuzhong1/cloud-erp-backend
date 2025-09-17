@@ -43,7 +43,7 @@ public enum DictBasicTypeEnum {
     SDY_PARTITION_LEVEL1_DEPT("sdyPartitionLevel1Dept" , "数帝云军区一级部门映射"),
     SDY_PLATFORM_LEVEL2_DEPT("sdyPlatformLevel2Dept" , "数帝云平台二级部门映射"),
 
-    EXHIBITION_WORKFLOW_TASK_NODE("exhibitionWorkflowTaskNode" , "展会订单任务节点"),
+    WORKFLOW_TASK_NODE("workflowTaskNode" , "展会订单任务节点"),
 
     ;
 

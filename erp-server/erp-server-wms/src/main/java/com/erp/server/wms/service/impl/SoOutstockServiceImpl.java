@@ -793,8 +793,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 销售出库单推送数帝云
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
-            //走TMS自动生成报关单逻辑
-            autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
+            Boolean isExhibition = Boolean.TRUE;
+            if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
+                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getId, entity.getSoId()).list();
+                if(CollUtil.isNotEmpty(list)){
+                    String sourceType = list.get(0).getSourceType();
+                    if(Objects.equals(SourceTypeEnum.EXHIBITION_ORDER.getCode(),sourceType)){
+                        isExhibition = Boolean.FALSE;
+                    }
+                }
+            }
+
+            if(isExhibition){
+                //走TMS自动生成报关单逻辑
+                autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
+            }
+
             //B2B发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通

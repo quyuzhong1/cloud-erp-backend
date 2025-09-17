@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -72,6 +71,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
@@ -169,11 +169,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Resource
     private SoInfoService soInfoService;
     @Resource
+    private SoChangeService soChangeService;
+    @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
     private MQProducerService mqProducerService;
-    @Resource
-    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
@@ -881,10 +881,41 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //反审核删除以下单据
+        List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
+        if(CollUtil.isNotEmpty(list)){
+            //销售出库单
+            //其他入库单
+            //发货通知单
+            ExhibitionOrderDTO.DownstreamDisapproveDTO dto = new ExhibitionOrderDTO.DownstreamDisapproveDTO();
+            dto.setExhibitionOrderId(id);
+            dto.setSoId(list.get(0).getId());
+            ExhibitionOrderDTO.DownstreamDisapproveDTO downstreamDisapproveDTO = otherInstockFeign.disApproveByExhibition(dto);
+            if(StringUtils.isNotBlank(downstreamDisapproveDTO.getErrorMsg())){
+                throw new ServiceException(downstreamDisapproveDTO.getErrorMsg());
+            }
+
+            //B2B销售订单
+            List<String> soIds = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+            List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(soIds);
+            BatchResultDTO result = soInfoService.disApprove(list.get(0), soChangeList);
+            if(!result.getSuccess()){
+                throw new ServiceException("B2B销售订单反审核失败");
+            }
+
+            List<BatchResultDTO> resultDTOList = soInfoService.deleteByIds(SourceTypeEnum.EXHIBITION_ORDER.getCode(), soIds);
+            boolean b = resultDTOList.stream().allMatch(BatchResultDTO::getSuccess);
+            if(!b){
+                throw new ServiceException("B2B销售订单删除失败");
+            }
+        }
+
+
+        //任务节点记录表
+        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true).eq(WorkflowTaskRecordEntity::getSourceId,id).update();
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
@@ -997,11 +1028,13 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
             WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
             addTaskDTO.setSourceId(entity.getId());
-            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.EXHIBITION_WORKFLOW_TASK_NODE);
-            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);
+            addTaskDTO.setSourceCode(entity.getCode());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);//subType
+            addTaskDTO.setTraceId(MDC.get("traceId"));
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-                throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.EXHIBITION_WORKFLOW_TASK_NODE.getDesc());
+                throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
             }
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
@@ -37,5 +38,10 @@ public class OtherInstockFeignController extends BaseController{
     @GetMapping("/listOtherInstockByExhibitionId")
     public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
         return otherInstockService.listOtherInstockByExhibitionId(exhibitionId);
+    }
+
+    @PostMapping("/disApproveByExhibition")
+    public ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(@RequestBody ExhibitionOrderDTO.DownstreamDisapproveDTO dto){
+        return otherInstockService.disApproveByExhibition(dto);
     }
 }
