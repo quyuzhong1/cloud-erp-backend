@@ -43,8 +43,8 @@ public class DhtCurrencyServiceTest {
         DhtCreateCurrencyReq dhtCreateCurrencyReq = new DhtCreateCurrencyReq();
         dhtCreateCurrencyReq.setCurrentOpenUserId(dhtUserResp.getEmpList().get(0).getOpenUserId());
         dhtCreateCurrencyReq.setData(DhtCreateCurrencyReq.DataDTO.builder()
-                .currencyCode("CAD")
-                        .exchangeRate("4.8")
+                .currencyCode("EUR")
+                        .exchangeRate("7")
                 .build());
         DhtBaseResp<String> resp = dhtCurrencyService.createCurrency(dhtCreateCurrencyReq);
         System.out.println(JSONUtil.toJsonStr(resp));
@@ -58,7 +58,7 @@ public class DhtCurrencyServiceTest {
         DhtUpdateCurrencyReq.DataDTO dataDTO = new DhtUpdateCurrencyReq.DataDTO();
         dataDTO.setExchangeRateList(Arrays.asList(DhtUpdateCurrencyReq.DataDTO.ExchangeRateListDTO.builder()
                 .currencyCode("CAD")
-                .exchangeRate("5.0")
+                .exchangeRate("5.1")
                 .build()));
         dhtCreateCurrencyReq.setData(dataDTO);
         DhtBaseResp<String> resp = dhtCurrencyService.updateCurrency(dhtCreateCurrencyReq);

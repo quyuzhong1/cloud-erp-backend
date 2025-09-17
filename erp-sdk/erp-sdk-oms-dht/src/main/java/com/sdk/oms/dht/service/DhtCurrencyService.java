@@ -34,12 +34,11 @@ public class DhtCurrencyService {
     private DhtCommonService dhtCommonService;
 
     public DhtBaseResp<DhtQueryCurrencyResp> queryCurrency() {
-        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         BaseReq req = new BaseReq();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
-        req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
+        req.setCurrentOpenUserId(authDTO.getOpenUserId());
         String api = "/cgi/crm/v2/currency/list";
         Map<String, String> headerMap = new HashMap<>();
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);

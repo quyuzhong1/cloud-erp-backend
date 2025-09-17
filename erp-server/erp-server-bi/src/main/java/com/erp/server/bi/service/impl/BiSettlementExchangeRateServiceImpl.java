@@ -335,6 +335,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         dmpPushMsgEntity.setTargetPlatform(PlatformDictEnum.DHT.getCode());
         dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
         dmpPushMsgEntity.setSourceType(SourceTypeEnum.BD_RATE.getCode());
+        dmpPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
         dmpPushMsgEntity.setSourceId(biSettlementExchangeRateEntity.getId());
         dmpPushMsgEntity.setSourceCode(biSettlementExchangeRateEntity.getSourceCurrencyCode());
         dmpPushMsgEntity.setPushData(JSONUtil.toJsonStr(biSettlementExchangeRateEntity));
