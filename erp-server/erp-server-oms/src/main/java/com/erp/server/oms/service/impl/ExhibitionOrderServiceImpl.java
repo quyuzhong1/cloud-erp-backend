@@ -2,6 +2,8 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -16,7 +18,9 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -50,10 +54,7 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.wms.feign.OtherInstockFeign;
-import com.erp.rpc.wms.feign.SampleLedgerFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.oms.convert.SoInfoConverter;
 import com.erp.server.oms.listener.ExhibitionOrderExcelListener;
@@ -69,6 +70,8 @@ import com.erp.server.oms.utils.SoUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
@@ -94,7 +97,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -166,6 +168,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private SoOutstockFeign soOutstockFeign;
     @Resource
     private SoInfoService soInfoService;
+    @Resource
+    private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private MQProducerService mqProducerService;
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
@@ -985,35 +993,134 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        //自动生成并审核完成其他入库单、B2B销售订单、销售出库单
+        //自动生成并审核完成发货通知单、B2B销售订单、（其他入库单+销售出库单）
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
-            // 查询明细
-            List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
-            if (CollUtil.isEmpty(detailList)) {
-                throw new ServiceException("未找到展会订单明细信息数据");
+            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+            addTaskDTO.setSourceId(entity.getId());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.EXHIBITION_WORKFLOW_TASK_NODE);
+            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+                throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.EXHIBITION_WORKFLOW_TASK_NODE.getDesc());
             }
-//            ExhibitionOrderServiceImpl bean = ApplicationContextUtils.getBean(ExhibitionOrderServiceImpl.class);
-//            bean..generateDownstreamByExhibitionOrder(entity, detailList);
-
-            // 异步执行，不等待完成
-            CompletableFuture.runAsync(() -> {
-                try {
-                     this.generateDownstreamByExhibitionOrder(entity, detailList);
-                } catch (Exception e) {
-                    log.error("异步执行generateDownstreamByExhibitionOrder失败，展会订单ID: {}", entity.getId(), e);
-                }
-            });
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId());
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
         }
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据展会订单ID生成销售订单（SO）信息并自动审核通过
+     * <p>
+     * 该方法会根据传入的展会订单主表ID，查询对应的明细数据，并将其转换为销售订单主表和明细表数据，
+     * 调用销售订单服务完成新增、提交和自动审核操作。
+     * </p>
+     * @param dto 用于查询主表及明细数据
+     * @return 生成的销售订单ID
+     * @throws ServiceException 当未找到展会订单明细信息时抛出异常
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO generateSoInfoApprove(WorkflowTaskRecordDTO.MqRequestDTO dto){
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        // 校验exhibitionOrderId是否存在且非空
+        if (!data.containsKey("id") || !(data.get("id") instanceof String)) {
+            mqResponseDTO.setErrorMsg("exhibitionOrderId为空或类型不正确");
+            return mqResponseDTO;
+        }
+        String exhibitionOrderId;
+        try {
+            exhibitionOrderId = String.valueOf(data.get("id"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("exhibitionOrderId 类型转换失败");
+            log.warn("exhibitionOrderId 类型转换失败: {}", data.get("exhibitionOrderId"));
+            return mqResponseDTO;
+        }
+        ExhibitionOrderEntity entity = getById(exhibitionOrderId);
+        if (entity == null) {
+            mqResponseDTO.setErrorMsg("未找到展会订单主表信息");
+            return mqResponseDTO;
+        }
+        // 查询明细
+        List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, exhibitionOrderId).list();
+        if (CollUtil.isEmpty(detailList)) {
+            mqResponseDTO.setErrorMsg("未找到展会订单明细信息数据");
+            return mqResponseDTO;
+        }
+
+        SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
+        BeanMapperUtils.copy(entity,addDTO);
+        addDTO.setId("");
+        addDTO.setOrderType(BillTypeEnum.B2B.getCode());
+        addDTO.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+
+        List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
+        for (ExhibitionOrderDetailEntity detail : detailList) {
+            SoDetailDTO.AddDTO addDetailDTO = new SoDetailDTO.AddDTO();
+            BeanMapperUtils.copy(detail,addDetailDTO);
+            addDetailDTO.setId("");
+            addDetailDTO.setSourceDetailId(detail.getId());
+            addDTOS.add(addDetailDTO);
+        }
+
+        addDTO.setDetailList(addDTOS);
+
+        String soId;
+        try {
+            soId = soInfoService.add(addDTO);
+        }catch (Exception e) {
+            log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("soId", soId);
+        mqResponseDTO.setData(map);
+
+        SoInfoEntity soInfoEntity = soInfoService.getById(soId);
+        try {
+            soInfoService.submit(soInfoEntity,Boolean.FALSE);
+        }catch (Exception e) {
+            log.error("B2B订单提交异常，soId: {}", soId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        try {
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(Collections.singletonList(soId));
+            baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            baseApproveParamDTO.setComment("展会订单自动审核通过");
+            soInfoEntity = soInfoService.getById(soId);
+            soInfoService.approve(baseApproveParamDTO,soInfoEntity);
+        }catch (Exception e) {
+            log.error("B2B订单审批通过异常，soId: {}", soId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        return mqResponseDTO;
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void generateDownstreamByExhibitionOrder(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList){
-        String soId = generateSoInfo(entity, detailList);
-
+    public ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(String exhibitionOrderId){
+        ExhibitionOrderEntity entity = getById(exhibitionOrderId);
+        List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, exhibitionOrderId).list();
+        List<SoInfoEntity> soInfoEntities = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, exhibitionOrderId).eq(SoInfoEntity::getSourceType, SourceTypeEnum.EXHIBITION_ORDER.getCode()).list();
+        String soId =soInfoEntities.get(0).getId();
         // 构建销售出库单
         List<SoDetailEntity> list = soDetailService.lambdaQuery().eq(SoDetailEntity::getMainId, soId).list();
         List<String> soDetailIds = list.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
@@ -1029,8 +1136,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
             generateSoOutstockViewDTOList.add(generateB2cDTO);
         }
-
-
         //构建其他入库单
         List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (ExhibitionOrderDetailEntity detail : detailList) {
@@ -1060,49 +1165,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         downstreamDTO.setGenerateSoOutstockViewDTOList(generateSoOutstockViewDTOList);
         downstreamDTO.setOtherInstockAddDTO(addDTO);
         downstreamDTO.setSoId(soId);
-
-        otherInstockFeign.generateDownstreamByExhibitionOrder(downstreamDTO);
-    }
-
-
-    /**
-     * 根据展会订单生成B2B订单并下推销售出库单
-     * @param entity
-     */
-    private String generateSoInfo(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList) {
-        SoInfoDTO.AddDTO dto = new SoInfoDTO.AddDTO();
-        BeanMapperUtils.copy(entity,dto);
-        dto.setId("");
-        dto.setOrderType(BillTypeEnum.B2B.getCode());
-        dto.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
-        dto.setSourceId(entity.getId());
-        dto.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
-
-        List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
-        for (ExhibitionOrderDetailEntity detail : detailList) {
-            SoDetailDTO.AddDTO addDTO = new SoDetailDTO.AddDTO();
-            BeanMapperUtils.copy(detail,addDTO);
-            addDTO.setId("");
-            addDTO.setSourceDetailId(detail.getId());
-            addDTOS.add(addDTO);
-        }
-
-        dto.setDetailList(addDTOS);
-
-        String soId = soInfoService.add(dto);
-        SoInfoEntity soInfoEntity = soInfoService.getById(soId);
-
-        soInfoService.submit(soInfoEntity,Boolean.FALSE);
-
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(Collections.singletonList(soId));
-        baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        baseApproveParamDTO.setComment("展会订单自动审核通过");
-        soInfoEntity = soInfoService.getById(soId);
-
-        soInfoService.approve(baseApproveParamDTO,soInfoEntity);
-        return soId;
-
+        return downstreamDTO;
     }
 
     @Override

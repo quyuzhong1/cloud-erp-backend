@@ -1,11 +1,13 @@
 package com.erp.server.oms.service;
 import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.ExhibitionOrderDetailEntity;
 import com.erp.model.oms.entity.ExhibitionOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.common.business.vo.PagingVO;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -161,11 +163,14 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
 
     void handleImportSuccessList(List<ExhibitionOrderImportExcelDTO> successList, List<String> errorNoList, List<ExhibitionOrderImportExcelDTO> errorList2, String importType);
 
-    void generateDownstreamByExhibitionOrder(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList);
+    ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(String exhibitionOrderId);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String id);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String id);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoByExhibitionId(String id);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateSoInfoApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
 }

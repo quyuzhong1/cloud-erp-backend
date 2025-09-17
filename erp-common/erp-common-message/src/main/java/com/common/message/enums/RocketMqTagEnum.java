@@ -620,6 +620,13 @@ public enum RocketMqTagEnum {
 
     SYS_RECEIVE_DDL_TO_MQ_TAG(13002, RocketMqTagEnum.SYNC_SYS, "sys_receive_ddl_to_mq_tag"),
 
+    //-----------------------------oms 从14001开始------------------------------------------------------------------
+    /**
+     *oms
+     */
+    OMS_WORKFLOW_TASK_RECORD_TAG(14001, RocketMqTagEnum.SYNC_OMS, "oms_workflow_task_record_tag"),
+
+
 
     ;
     public static final String SALES_ORDER = "sales";
