@@ -529,16 +529,28 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         //回写借用单sku明细的待归还数量
         writeBackSampleBorrowInfo(entity.getId(),ApproveStatusEnum.WAIT_SUBMIT);
 
-        // 记录台账流水（反审核）
+        // 记录台账流水（反审核）- 归还人
         try {
-            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
-            if (flowDTO != null) {
-                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                log.info("样品归还单反审核台账流水记录成功，单据编号：{}", entity.getCode());
+            SampleLedgerFlowDTO.AddFlowDTO returnFlowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (returnFlowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(returnFlowDTO);
+                log.info("样品归还单反审核归还人台账流水记录成功，单据编号：{}", entity.getCode());
             }
         } catch (Exception e) {
-            log.error("样品归还单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            throw new ServiceException("样品归还单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            log.error("样品归还单反审核归还人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品归还单反审核归还人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+        
+        // 记录台账流水（反审核）- 接收人
+        try {
+            SampleLedgerFlowDTO.AddFlowDTO receiverFlowDTO = buildReceiverFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (receiverFlowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(receiverFlowDTO);
+                log.info("样品归还单反审核接收人台账流水记录成功，单据编号：{}", entity.getCode());
+            }
+        } catch (Exception e) {
+            log.error("样品归还单反审核接收人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品归还单反审核接收人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
         }
 
         // 操作日志
@@ -655,16 +667,28 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
-            // 记录台账流水
+            // 记录台账流水 - 归还人
             try {
-                SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
-                if (flowDTO != null) {
-                    sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                    log.info("样品归还单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                SampleLedgerFlowDTO.AddFlowDTO returnFlowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+                if (returnFlowDTO != null) {
+                    sampleLedgerFlowService.addSampleLedgerFlow(returnFlowDTO);
+                    log.info("样品归还单归还人台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
                 }
             } catch (Exception e) {
-                log.error("样品归还单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-                throw new ServiceException("样品归还单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+                log.error("样品归还单归还人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品归还单归还人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            }
+            
+            // 记录台账流水 - 接收人
+            try {
+                SampleLedgerFlowDTO.AddFlowDTO receiverFlowDTO = buildReceiverFlow(entity.getId(), entity.getCode(), approveType);
+                if (receiverFlowDTO != null) {
+                    sampleLedgerFlowService.addSampleLedgerFlow(receiverFlowDTO);
+                    log.info("样品归还单接收人台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                }
+            } catch (Exception e) {
+                log.error("样品归还单接收人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品归还单接收人台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
             }
         }
         return Boolean.TRUE;
@@ -1039,6 +1063,85 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             log.error("构建样品归还单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 构建接收人的台账流水
+     */
+    private SampleLedgerFlowDTO.AddFlowDTO buildReceiverFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品归还单主表信息
+            SampleReturnInfoEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品归还单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品归还单明细
+            List<SampleReturnDetailEntity> detailList = sampleReturnDetailService.list(new LambdaQueryWrapper<SampleReturnDetailEntity>().eq(SampleReturnDetailEntity::getMainId,sourceId));
+
+            if (detailList.isEmpty()) {
+                log.warn("样品归还单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleReturnDetailEntity detail : detailList) {
+                // 计算数量：审核为+X，反审核为-X（接收人视角，接收是增加库存）
+                Integer qty = calculateReceiverQty(detail.getReturnQty(), approveType);
+
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID（如果有的话）
+                // flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据 - 接收人台账
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(getSupportedSourceType());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getReturnDate());
+            flowDTO.setSourceName("样品归还单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getReceiverUserId());
+            flowDTO.setUseUserName(entity.getReceiverUserName());
+            flowDTO.setUserId(entity.getReceiverUserId());
+            flowDTO.setUserName(entity.getReceiverUserName());
+            flowDTO.setDeptId(entity.getReceiverDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getReceiverDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品归还单接收人台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算接收人数量：审核为+X，反审核为-X（接收人视角，接收是增加库存）
+     */
+    private Integer calculateReceiverQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return originalQty; // 审核：+X（接收人增加库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return -originalQty; // 反审核：-X（接收人减少库存）
+        }
+
+        return 0;
     }
 
     /**

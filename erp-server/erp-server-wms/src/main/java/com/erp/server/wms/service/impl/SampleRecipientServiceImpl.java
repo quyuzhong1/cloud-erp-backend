@@ -16,13 +16,16 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.enums.ImportTypeEnum;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -1135,6 +1138,21 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if(CollUtil.isEmpty(list)) {
            return;
         }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RECIPIENT.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
 //        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
 //        Map<String, String> warehouseNameMap = warehouseList.stream()
 //            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
@@ -1154,6 +1172,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
+            }
         }
     }
     /**
@@ -1430,15 +1454,24 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<String> skuIds = Collections.singletonList(sku.getSkuId());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         
-        // 过滤出组合品类型的BOM
-        String combination = BomTypeEnum.COMBINATION.getType();
+        // 过滤出组合品类型的BOM - 修复：使用parentSkuId匹配
         List<BomChildrenSkuDTO> combinationBomList = bomChildrenList.stream()
-                .filter(b -> combination.equals(b.getType()))
+                .filter(b -> b.getParentSkuId().equals(sku.getSkuId())
+                        && BomTypeEnum.COMBINATION.getType().equals(b.getType()))
                 .collect(Collectors.toList());
 
         if (CollUtil.isNotEmpty(combinationBomList)) {
             // 是组合品，需要计算子件成本*用量的和
-            return calculateCombinationSkuCost(combinationBomList, detail, skuCostList);
+            // 先获取所有子件的SKU ID
+            List<String> childSkuIds = combinationBomList.stream()
+                    .map(BomChildrenSkuDTO::getSkuId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 查询子件的成本信息
+            List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList = getChildSkuCostList(childSkuIds, detail);
+            
+            return calculateCombinationSkuCost(combinationBomList, detail, childSkuCostList);
         } else {
             // 普通SKU，直接使用材料成本
             InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
@@ -1456,17 +1489,44 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
+     * 获取子件SKU的成本信息
+     */
+    private List<InventorySkuCostDTO.SkuCostCNYDTO> getChildSkuCostList(List<String> childSkuIds, 
+                                                                        SampleRecipientDTO.SkuCostQueryDetailDTO detail) {
+        try {
+            // 构建子件成本查询参数
+            InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
+                    .skuIds(childSkuIds)
+                    .warehouseIds(Collections.singletonList(detail.getWarehouseId()))
+                    .orgId(detail.getOrgId())
+                    .build();
+
+            // 查询子件成本信息
+            List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
+            
+            log.info("查询子件SKU成本完成，子件SKU数量：{}，查询到成本记录数：{}", 
+                    childSkuIds.size(), childSkuCostList != null ? childSkuCostList.size() : 0);
+            
+            return childSkuCostList != null ? childSkuCostList : Collections.emptyList();
+            
+        } catch (Exception e) {
+            log.error("查询子件SKU成本失败，子件SKU ID：{}，错误：{}", childSkuIds, e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * 计算组合品SKU成本
      * 组合品成本 = 子件1成本*用量1 + 子件2成本*用量2 + ...
      */
     private BigDecimal calculateCombinationSkuCost(List<BomChildrenSkuDTO> bomChildrenList, 
                                                   SampleRecipientDTO.SkuCostQueryDetailDTO detail,
-                                                  List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+                                                  List<InventorySkuCostDTO.SkuCostCNYDTO> childSkuCostList) {
         BigDecimal totalCost = BigDecimal.ZERO;
         
         for (BomChildrenSkuDTO bomChild : bomChildrenList) {
             // 查找子件的成本信息
-            InventorySkuCostDTO.SkuCostCNYDTO childCost = skuCostList.stream()
+            InventorySkuCostDTO.SkuCostCNYDTO childCost = childSkuCostList.stream()
                     .filter(cost -> cost.getSkuId().equals(bomChild.getSkuId())
                             && cost.getWarehouseId().equals(detail.getWarehouseId()))
                     .findFirst()
@@ -1476,9 +1536,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 子件成本 * 用量
                 BigDecimal childTotalCost = childCost.getProductCostCNY().multiply(BigDecimal.valueOf(bomChild.getQuantity()));
                 totalCost = totalCost.add(childTotalCost);
+                
+                log.debug("子件SKU【{}】成本计算：成本={}，用量={}，小计={}", 
+                        bomChild.getSkuId(), childCost.getProductCostCNY(), 
+                        bomChild.getQuantity(), childTotalCost);
+            } else {
+                log.warn("未找到子件SKU【{}】在仓库【{}】的成本信息", 
+                        bomChild.getSkuId(), detail.getWarehouseId());
             }
         }
         
+        log.info("组合品成本计算完成，子件数量：{}，总成本：{}", bomChildrenList.size(), totalCost);
         return totalCost;
     }
 
@@ -2380,12 +2448,33 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             flowDTO.setUserName(entity.getUserName());
             flowDTO.setDeptId(entity.getDeptId());
             // 根据部门ID查询部门名称
-//            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
+            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
             flowDTO.setDetailList(flowDetails);
 
             return flowDTO;
         } catch (Exception e) {
             log.error("构建样品领用单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
     }
