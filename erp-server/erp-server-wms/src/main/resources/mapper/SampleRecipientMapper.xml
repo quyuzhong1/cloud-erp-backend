@@ -261,6 +261,72 @@
         </if>
         sr.create_time DESC, srd.id ASC
     </select>
+
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
+        SELECT
+            DISTINCT ON (sr.id)
+            COUNT(srd.id) OVER (PARTITION BY sr.id) AS skuCount,
+            sr.id,
+            sr.code,
+            sr.approve_status AS approveStatus,
+            sr.approve_user_id AS approveUserId,
+            sr.approve_user_name AS approveUserName,
+            sr.approve_time AS approveTime,
+            sr.invalid_status AS invalidStatus,
+            sr.invalid_remark AS invalidRemark,
+            sr.invalid_time AS invalidTime,
+            sr.recipient_date AS recipientDate,
+            sr.usage,
+            sr.warehouse_id AS warehouseId,
+            wi.name AS warehouseName,
+            sr.user_id AS userId,
+            sr.user_name AS userName,
+            sr.dept_id AS deptId,
+            sr.pick_org_id AS pickOrgId,
+            sr.pick_org_name AS pickOrgName,
+            sr.usage_scope AS usageScope,
+            sr.use_user_id AS useUserId,
+            sr.use_user_name AS useUserName,
+            sr.remark,
+            sr.is_delivery AS isDelivery,
+            sr.receive_address AS receiveAddress,
+            sr.receiver_name AS receiverName,
+            sr.receive_phone AS receivePhone,
+            sr.source_id AS sourceId,
+            sr.source_code AS sourceCode,
+            sr.source_type AS sourceType,
+            sr.create_time AS createTime,
+            sr.create_user_name AS createUserName,
+            srd.id AS detailId,
+            srd.sku_no AS skuNo,
+            srd.sku_id AS skuId,
+            srd.product_name AS productName,
+            srd.recipient_qty AS recipientQty,
+            srd.delivery_qty AS deliveryQty,
+            CASE 
+                WHEN srd.exec_status = 'completeOutstock' THEN 0
+                ELSE (srd.recipient_qty - srd.delivery_qty)
+            END AS reservedQty,
+            srd.exec_status AS execStatus,
+            srd.remark AS detailRemark
+        FROM sample_recipient sr
+        LEFT JOIN sample_recipient_detail srd
+        ON srd.main_id = sr.id AND sr.is_deleted = false
+        LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND srd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sr.id DESC,
+        sr.create_time DESC,
+        srd.id
+    </select>
+
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleRecipientDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,

@@ -1048,6 +1048,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setQuantity(detail.getRecipientQty());
                 productDTO.setRemark(detail.getRemark());
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
+                
+                // 移动端商品详情字段填充
+                productDTO.setReservedQty(detail.getRecipientQty() - detail.getDeliveryQty());
+                productDTO.setDeliveryQty(detail.getDeliveryQty());
+                productDTO.setExecStatus(detail.getExecStatus());
+                
                 productList.add(productDTO);
             }
         }
@@ -2534,41 +2540,84 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Override
     public List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
-        // 复用现有的tabList方法
-        return tabList(dto);
+        SampleRecipientDTO.PagingParamDTO searchParam = new SampleRecipientDTO.PagingParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        // 使用一个SQL查询获取所有状态的统计数量
+        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+
+        // 设置tabFlagName
+        list.stream().forEach(e ->{
+            if(Objects.equals("waitOutstock", e.getTabFlag())){
+                e.setTabFlagName("待出库");
+            }else if(Objects.equals("completeOutstock", e.getTabFlag())){
+                e.setTabFlagName("已出库");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
+        });
+
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleRecipientDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleRecipientDTO.TabListDTO waitSubmitItem = null;
+        SampleRecipientDTO.TabListDTO rejectItem = null;
+        
+        for (SampleRecipientDTO.TabListDTO item : list) {
+            if ("waitSubmit".equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if ("reject".equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleRecipientDTO.TabListDTO mergedItem = new SampleRecipientDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（审核中、待出库、已出库）
+        for (SampleRecipientDTO.TabListDTO item : list) {
+            if (!"waitSubmit".equals(item.getTabFlag()) && !"reject".equals(item.getTabFlag())) {
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、待出库、已出库
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "waitOutstock", "completeOutstock");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
     }
 
     @Override
     public PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO) {
-        // 复用现有的paging方法
-        return paging(pagingParamDTO);
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleRecipientDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
-    @Override
-    public List<SampleRecipientDTO.ProductDetailDTO> getProductDetail(String id) {
-        List<SampleRecipientDTO.ProductDetailDTO> result = new ArrayList<>();
-        
-        // 查询样品领用单明细
-        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
-                .eq(SampleRecipientDetailEntity::getMainId, id)
-                .list();
-        
-        if (CollUtil.isEmpty(detailList)) {
-            return result;
-        }
-        
-        for (SampleRecipientDetailEntity detail : detailList) {
-            SampleRecipientDTO.ProductDetailDTO productDetail = new SampleRecipientDTO.ProductDetailDTO();
-            productDetail.setSkuNo(detail.getSkuNo());
-            productDetail.setProductName(detail.getProductName());
-            productDetail.setQuantity(detail.getRecipientQty() + "/" + (detail.getRecipientQty()- detail.getDeliveryQty()) + "/" + detail.getDeliveryQty());
-            productDetail.setExecutionStatus(detail.getExecStatus());
-            productDetail.setRemark(detail.getRemark());
-            result.add(productDetail);
-        }
-        
-        return result;
-    }
 
 
 }

@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
@@ -274,7 +275,7 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      */
     List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto);
 
-    void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO);
-
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

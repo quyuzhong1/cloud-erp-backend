@@ -318,14 +318,6 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      */
     PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO);
 
-    /**
-     * 获取商品详情
-     * @author wuhaotian
-     * @date: 2025-09-15
-     * @param id
-     * @return List<SampleRecipientDTO.ProductDetailDTO>
-     */
-    List<SampleRecipientDTO.ProductDetailDTO> getProductDetail(String id);
 
 
 }

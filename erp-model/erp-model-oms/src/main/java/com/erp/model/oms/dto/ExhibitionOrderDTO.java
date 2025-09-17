@@ -1011,8 +1011,6 @@ public class ExhibitionOrderDTO implements Serializable {
          */
         private String detailRemark;
 
-
-
     }
 
 

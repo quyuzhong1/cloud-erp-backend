@@ -165,4 +165,9 @@ public class RocketMqTopic {
      *   workflow 同步飞书审批定义
      */
     public static final String DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_approvals_to_workflow_topic";
+
+    /**
+     * OMS 任务编排
+     */
+    public static final String OMS_WORKFLOW_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record_topic";
 }
