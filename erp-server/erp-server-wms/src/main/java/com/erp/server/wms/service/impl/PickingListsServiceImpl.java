@@ -1578,7 +1578,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         for (PickingListsDTO.ExportInfoDTO infoDTO : page.getRecords()) {
             infoDTO.setWarehouseAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getWarehouseLocation())));
             infoDTO.setStagingAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getStagingLocation())));
-            infoDTO.setPrintStatus(PackagePrintStatusEnum.getName(infoDTO.getPrintStatus()));
+            infoDTO.setPrintStatusName(PackagePrintStatusEnum.getName(infoDTO.getPrintStatus()));
         }
         return new PagingVO<>(page);
     }
