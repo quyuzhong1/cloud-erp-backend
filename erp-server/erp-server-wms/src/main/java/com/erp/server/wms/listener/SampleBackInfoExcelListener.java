@@ -109,7 +109,10 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
 
         // 退回人
         String backUserName = excelDTO.getUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> backUserName.equals(e.getUserName())).findFirst().orElse(null);
+        FindUserDTO findUserDTO = null;
+        if (StringUtils.isNotBlank(backUserName)) {
+            findUserDTO = userList.stream().filter(e -> backUserName.equals(e.getUserName())).findFirst().orElse(null);
+        }
         if (Objects.isNull(findUserDTO)) {
             errorMsgList.add("退回人不存在");
         } else {

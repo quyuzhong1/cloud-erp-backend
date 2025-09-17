@@ -102,7 +102,10 @@ public class SampleInitialLedgerExcelListener extends AnalysisEventListener<Samp
 
         // 使用人
         String userName = excelDTO.getUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> userName.equals(e.getUserName())).findFirst().orElse(null);
+        FindUserDTO findUserDTO = null;
+        if (StringUtils.isNotBlank(userName)) {
+            findUserDTO = userList.stream().filter(e -> userName.equals(e.getUserName())).findFirst().orElse(null);
+        }
         if (Objects.isNull(findUserDTO)) {
             errorMsgList.add("使用人不存在");
         } else {
@@ -133,7 +136,10 @@ public class SampleInitialLedgerExcelListener extends AnalysisEventListener<Samp
 
         // 使用部门
         String deptName = excelDTO.getDeptName();
-        SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> deptName.equals(e.getName())).findFirst().orElse(null);
+        SysDepartmentDTO sysDepartmentDTO = null;
+        if (StringUtils.isNotBlank(deptName)) {
+            sysDepartmentDTO = deptList.stream().filter(e -> deptName.equals(e.getName())).findFirst().orElse(null);
+        }
         if (Objects.isNull(sysDepartmentDTO)) {
             errorMsgList.add("使用部门不存在");
         } else {
