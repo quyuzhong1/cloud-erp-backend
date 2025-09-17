@@ -2,6 +2,7 @@ package com.erp.server.oms.dht.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -72,7 +73,7 @@ public class DhtServiceImpl implements DhtService {
         customerReq.setData(customerDataDTO);
         DhtBaseResp<DhtQueryCustomerResp> resp = dhtCustomerService.queryCustomer(customerReq);
         if(!resp.getErrorCode().equals(0)){
-            throw new RuntimeException("调用订货通查询客户接口失败，错误信息："+ JSON.toJSONString(resp));
+            throw new ServiceException("调用订货通查询客户接口失败，错误信息："+ JSON.toJSONString(resp));
         }
         //通过客户id查询客户账户
         DhtCommonQueryReq customerAccountResp = new DhtCommonQueryReq();
@@ -99,13 +100,13 @@ public class DhtServiceImpl implements DhtService {
 
         DhtBaseResp<DhtQueryCustomerAccountResp> accountRespDhtBaseResp = dhtCustomerAccountService.queryCustomerAccount(customerAccountResp);
         if(!accountRespDhtBaseResp.getErrorCode().equals(0)){
-            throw new RuntimeException("调用订货通查询客户账户接口失败，错误信息："+ JSON.toJSONString(accountRespDhtBaseResp));
+            throw new ServiceException("调用订货通查询客户账户接口失败，错误信息："+ JSON.toJSONString(accountRespDhtBaseResp));
         }
         List<DhtQueryCustomerAccountResp.DataListDTO> dataListDTOList = accountRespDhtBaseResp.getData().getDataList();
         dataListDTOList = dataListDTOList.stream().filter(v->v.getLifeStatus().equals("normal")).collect(Collectors.toList());
 
         if(CollectionUtils.isEmpty(dataListDTOList)){
-            throw new RuntimeException("订货通客户账户信息为空，客户编码："+customerInfoEntity.getCode());
+            throw new ServiceException("订货通客户账户信息为空，客户编码："+customerInfoEntity.getCode());
         }
         //查询账户Id配置
         List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtAccountType");
