@@ -39,4 +39,9 @@ public class ExhibitionOrderFeignController extends BaseController {
     public List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(@RequestBody ExhibitionOrderDTO.SearchDTO dto) {
         return exhibitionOrderService.listFreezeQtyBySku(dto);
     }
+
+    @PostMapping("/generateDownstreamByExhibitionOrder")
+    public ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(@RequestBody String exhibitionOrderId){
+        return exhibitionOrderService.generateDownstreamByExhibitionOrder(exhibitionOrderId);
+    }
 }

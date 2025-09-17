@@ -18,7 +18,10 @@ public interface ExhibitionOrderFeign {
      * @param dto
      * @return List<ExhibitionOrderDTO.FreezeQtyBySku>
      */
-    @PostMapping("feign/exhibitionOrder/listFreezeQtyBySku")
+    @PostMapping("/feign/exhibitionOrder/listFreezeQtyBySku")
     List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(@RequestBody @Validated ExhibitionOrderDTO.SearchDTO dto);
+
+    @PostMapping("/feign/exhibitionOrder/generateDownstreamByExhibitionOrder")
+    ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(@RequestBody String exhibitionOrderId);
 
 }

@@ -34,12 +34,6 @@ public class OtherInstockFeignController extends BaseController{
     public void updateApproveStatus(@RequestBody @Validated OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         otherInstockService.updateApproveStatus(updateApprovalStatusDTO);
     }
-
-    @PostMapping("/generateDownstreamByExhibitionOrder")
-    public void generateDownstreamByExhibitionOrder(@RequestBody ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
-        otherInstockService.generateDownstreamByExhibitionOrder(downstreamDTO);
-    }
-
     @GetMapping("/listOtherInstockByExhibitionId")
     public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
         return otherInstockService.listOtherInstockByExhibitionId(exhibitionId);

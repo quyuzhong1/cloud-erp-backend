@@ -47,6 +47,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -74,6 +75,7 @@ import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -194,6 +196,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Lazy
     @Resource
     private OtherInstockService service;
+
+    @Resource
+    private ExhibitionOrderFeign exhibitionOrderFeign;
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
@@ -1693,11 +1698,76 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
 
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId) {
+        List<ExhibitionOrderDTO.DownstreamListDTO> resultList = baseMapper.listOtherInstockInByExhibitionId(exhibitionId);
+        if(CollUtil.isEmpty(resultList)){
+            return Collections.emptyList();
+        }
+
+        List<String> skuIds = resultList.stream().map(ExhibitionOrderDTO.DownstreamListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+
+        for (ExhibitionOrderDTO.DownstreamListDTO listDTO : resultList) {
+            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            listDTO.setInvalidStatusName(InvalidStatusEnum.getName(listDTO.getInvalidStatus()));
+            listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
+        }
+        return resultList;
+    }
+
+    /**
+     * 生成其他入库单和销售出库单并审批流程
+     *
+     * @param dto MQ请求数据传输对象，包含流程审批所需的数据
+     * @return MQ响应数据传输对象，包含处理结果和错误信息
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("exhibitionOrderId") || Objects.isNull(data.get("exhibitionOrderId"))){
+            mqResponseDTO.setErrorMsg("exhibitionOrderId为空");
+            return mqResponseDTO;
+        }
+        String exhibitionOrderId;
+        try {
+            exhibitionOrderId = String.valueOf(data.get("exhibitionOrderId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("exhibitionOrderId 类型转换失败");
+            log.warn("exhibitionOrderId 类型转换失败: {}", data.get("exhibitionOrderId"));
+            return mqResponseDTO;
+        }
+
+        ExhibitionOrderDTO.DownstreamDTO downstreamDTO = null;
+        try{
+            downstreamDTO = exhibitionOrderFeign.generateDownstreamByExhibitionOrder(exhibitionOrderId);
+        }catch (Exception e){
+            log.error("构建其他入库单和销售出库单入参失败，exhibitionOrderId: {}", exhibitionOrderId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        try{
+            generateDownstreamByExhibitionOrder(downstreamDTO);
+        }catch (Exception e){
+            log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+        return mqResponseDTO;
+    }
+
+
+    private void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
         // 生成其他入库单
         OtherInstockDTO.AddDTO otherInstockAddDTO = downstreamDTO.getOtherInstockAddDTO();
         OtherInstockService bean = SpringUtil.getBean(OtherInstockService.class);
@@ -1734,26 +1804,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (!approve.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }
-    }
-
-
-    @Override
-    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId) {
-        List<ExhibitionOrderDTO.DownstreamListDTO> resultList = baseMapper.listOtherInstockInByExhibitionId(exhibitionId);
-        if(CollUtil.isEmpty(resultList)){
-            return Collections.emptyList();
-        }
-
-        List<String> skuIds = resultList.stream().map(ExhibitionOrderDTO.DownstreamListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
-        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-
-        for (ExhibitionOrderDTO.DownstreamListDTO listDTO : resultList) {
-            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
-            listDTO.setInvalidStatusName(InvalidStatusEnum.getName(listDTO.getInvalidStatus()));
-            listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
-        }
-        return resultList;
     }
 
 }

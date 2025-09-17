@@ -37,14 +37,6 @@ public interface OtherInstockFeign {
      @PostMapping("/feign/otherInstock/updateApproveStatus")
     void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
-
-    /**
-     * 审核
-     * @author hcg
-     */
-    @PostMapping("/feign/otherInstock/generateDownstreamByExhibitionOrder")
-    void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO);
-
     @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);
 

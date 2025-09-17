@@ -2,7 +2,9 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.server.oms.query.ExhibitionOrderQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -465,6 +467,22 @@ public class ExhibitionOrderController extends BaseController {
         return success(exhibitionOrderService.listSoByExhibitionId(id));
     }
 
+    /**
+     * @author jack
+     * @date:  2025-9-16
+     * 根据展会订单ID生成销售订单（SO）信息并自动审核通过
+     * <p>
+     * 该方法会根据传入的展会订单主表ID，查询对应的明细数据，并将其转换为销售订单主表和明细表数据，
+     * 调用销售订单服务完成新增、提交和自动审核操作。
+     * </p>
+     * @param dto 用于查询主表及明细数据
+     * @return 生成的销售订单ID
+     * @throws ServiceException 当未找到展会订单明细信息时抛出异常
+     */
+    @PostMapping("/generateSoInfoApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateSoInfoApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return exhibitionOrderService.generateSoInfoApprove(dto);
+    }
 
 
 }
