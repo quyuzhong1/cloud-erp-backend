@@ -3649,7 +3649,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
                 baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                this.approveEnd(baseApproveParamDTO,exist,false)
+                this.approveEnd(baseApproveParamDTO,exist,false);
             }
         }else{
             //如果是作废，直接跳过
