@@ -70,7 +70,7 @@ public class SoInfoApproveHandler extends AbstractApproveHandler {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         baseApproveParamDTO.setComment(dto.getComment());
-        Boolean approve = soInfoService.approveEnd(baseApproveParamDTO, entity);
+        Boolean approve = soInfoService.approveEnd(baseApproveParamDTO, entity, true);
         if (Boolean.FALSE.equals(approve)) {
             throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
         }

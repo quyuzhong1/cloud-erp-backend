@@ -416,6 +416,27 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancel(String id) {
+        CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));
+        //只有审核通过并且授信状态是正常的单据允许取消
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                || !Objects.equals(entity.getCreditStatus(), CustomerCreditStatusEnum.NORMAL.getCode())) {
+            throw new ServiceException("只能取消审核通过且授信状态为正常的客户授信单据");
+        }
+        //成功更新状态为取消
+        entity.setCreditStatus(CustomerCreditStatusEnum.CANCEL.getCode());
+        this.updateById(entity);
+        //记录日志
+        String msg = StrUtil.format("用户取消【{}】单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "取消操作");
+
+        //调用订货通接口取消
+        syncDhtService.createSyncCustomerCreditApplyTaskToDht(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+
+    @Override
     public CustomerCreditApplyDTO.ViewDTO view(String id) {
         CustomerCreditApplyEntity customerCreditApplyEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到客户授信数据"));
         CustomerCreditApplyDTO.ViewDTO data = BeanMapperUtils.map(CustomerCreditApplyDTO.ViewDTO.class, customerCreditApplyEntity);

@@ -257,6 +257,27 @@ public class CustomerCreditApplyController extends BaseController {
     @PostMapping("/cancel")
     @LogAction(value = LogActionEnum.CANCEL, desc = "客户授信取消")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
+        Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancel;
+            try {
+                cancel = customerCreditApplyService.cancel(id);
+            }catch (Exception e){
+                log.error("客户授信 取消失败",e);
+                CustomerCreditApplyEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancel = BatchResultDTO.fail(id, id, "客户授信不存在, 取消失败");
+                    resultDTOS.add(cancel);
+                    continue;
+                }
+                cancel = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancel);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 }

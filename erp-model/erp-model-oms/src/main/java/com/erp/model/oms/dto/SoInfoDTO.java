@@ -1306,6 +1306,11 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 是否含税
          * true 是
          */

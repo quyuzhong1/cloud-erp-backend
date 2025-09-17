@@ -45,7 +45,7 @@ public class DhtCommonServiceTest {
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
         req.setData(DhtQueryObjReq.DataDTO.builder()
                 .includeDetail(true)
-                .apiName("SalesOrderProductObj")
+                .apiName("SalesOrderObj")
                 .build());
         String resp = dhtCommonService.queryObj(req);
         System.out.println(JSONUtil.toJsonStr(resp));

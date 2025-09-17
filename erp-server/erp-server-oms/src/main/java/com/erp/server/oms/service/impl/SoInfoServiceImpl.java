@@ -36,6 +36,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -740,6 +741,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 view.setReceiveAccountName(bankAccountList.get(0).getAccountName());
             }
         }
+        view.setCurrencySymbol(StringUtils.isNotBlank(soInfo.getCurrencySymbol())? soInfo.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(view.getCurrency()));
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
@@ -1577,7 +1579,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
+            approveEnd(dto, entity, true);
         }
     }
 
@@ -1586,6 +1588,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      *
      * @param dto
      * @param entity
+     * @param isSyncDht
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/7/4 10:55
@@ -1593,7 +1596,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    public Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity) {
+    public Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity, boolean isSyncDht) {
         //意见
         String userName = UserContext.getDefaultLoginUser().getUserName();
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
@@ -1616,7 +1619,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             soReceiptService.autoApproveBySo(entity);
 
             //订货通同步
-            syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            if(isSyncDht){
+                syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         }
         return result;
     }
@@ -3708,6 +3713,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soDetailService.removeByIds(deleteDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
             }
+            if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
+                this.submit(exist);
+            }
+            if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                this.approveEnd(baseApproveParamDTO,exist,false);
+            }
         }else{
             //如果是作废，直接跳过
             if(dto.getIsInvalid()){
@@ -3753,7 +3766,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
-            this.add(addDTO);
+            String id = this.add(addDTO);
+            SoInfoEntity soInfoEntity = this.getById(id);
+            if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
+                this.submit(soInfoEntity);
+            }
+            if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                this.approveEnd(baseApproveParamDTO,soInfoEntity,false);
+            }
         }
     }
 

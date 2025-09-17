@@ -137,13 +137,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     /**
      * 结束审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 10:55
+     *
      * @param dto
      * @param entity
+     * @param isSyncDht
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:55
      **/
-    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity);
+    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity, boolean isSyncDht);
 
     /**
      * 反审核

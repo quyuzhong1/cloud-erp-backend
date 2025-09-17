@@ -901,8 +901,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             syncDhtService.createSyncCustomerTaskToDht(customerInfo,code);
         }
         for (CustomerAddressEntity customerAddressEntity : customerAddressEntities) {
-            code = customerAddressEntity.getIsDeleted() ? SyncOperateEnum.OPERATE_DELETE.getCode() : code;
-            syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity,code);
+            String newOperate = customerAddressEntity.getIsDeleted() ? SyncOperateEnum.OPERATE_DELETE.getCode() : code;
+            syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity, newOperate);
         }
     }
 
