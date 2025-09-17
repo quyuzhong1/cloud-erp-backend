@@ -54,6 +54,6 @@ public class SoInfoApproveHandler extends AbstractApproveHandler {
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return soInfoService.approveEnd(baseApproveParamDTO,entity);
+        return soInfoService.approveEnd(baseApproveParamDTO,entity, true);
     }
 }
