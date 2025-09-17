@@ -1730,6 +1730,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      * @return MQ响应数据传输对象，包含处理结果和错误信息
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
