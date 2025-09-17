@@ -525,29 +525,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
-        SampleBackInfoEntity entity = getById(id);
-        if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到样品退回单数据");
-        }
-        
-        // 检查单据是否已作废
-        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException("已作废的样品退回单不支持提交操作");
-        }
-        
-        validateSubmit(entity);
-        // 更新单据审核状态
-        log.info("提交 开始修改样品退回单状态数据，id：【{}】", id);
-        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
-
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动样品退回单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
-        // 记录操作日志
-        log.info("提交 开始记录样品退回单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+        return this.submit(id,ClientTypeEnum.WEB);
     }
     /**
      * 启动流程
@@ -596,28 +574,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
-        }
-        SampleBackInfoEntity entity = getById(dto.getId());
-        
-        // 检查单据是否已作废
-        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException("已作废的样品退回单不支持审核操作");
-        }
-        
-        // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
-        }
-        // 调用流程审核
-        approveProcess(entity, dto);
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "审核操作");
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return approve(dto,ClientTypeEnum.WEB);
     }
 
     /**
@@ -651,45 +608,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
-        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单单数据"));
-        
-        // 检查单据是否已作废
-        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException("已作废的样品退回单不支持反审核操作");
-        }
-        
-        // 反审核条件判断
-        validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
-        // 同步反审核并删除关联的其他入库单
-        try {
-            handleAssociatedOtherInboundOrder(entity);
-            log.info("样品退回单反审核，同步处理关联其他入库单成功，单据编号：{}", entity.getCode());
-        } catch (Exception e) {
-            log.error("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            throw new ServiceException("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
-        }
-
-        // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        // 记录台账流水（反审核）
-        try {
-            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
-            if (flowDTO != null) {
-                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                log.info("样品退回单反审核台账流水记录成功，单据编号：{}", entity.getCode());
-            }
-        } catch (Exception e) {
-            log.error("样品退回单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            throw new ServiceException("样品退回单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        return disApprove(id,ClientTypeEnum.WEB);
     }
 
     private Boolean validateDisApprove(SampleBackInfoEntity entity) {
@@ -704,32 +623,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
-        
-        // 检查单据是否已作废
-        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException("已作废的样品退回单不支持删除操作");
-        }
-        
-        // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
-        }
-        // TODO 删除明细数据（如果有明细数据的话）
-//删除附件
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
-        if(CollUtil.isNotEmpty(attachmentList)){
-            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            attachmentService.deleteByUrlList(urlList);
-        }
-        // 删除主单数据
-        log.info("删除 开始删除样品退回单主单数据，id：【{}】", id);
-        super.removeById(id);
-        // 删除日志数据
-        log.info("删除 开始删除样品退回单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getCode(), "删除样品退回单数据");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        return delete(id,ClientTypeEnum.WEB);
     }
     /**
     * 作废
@@ -737,21 +631,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
-        // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
-        }
-        log.info("作废 开始修改样品退回单状态数据，id：【{}】", id);
-        lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
-            .set(SampleBackInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-            .set(SampleBackInfoEntity::getInvalidRemark, remark)
-            .update();
-
-        log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", remark);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "作废操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
+        return this.invalid(id,remark,ClientTypeEnum.WEB);
      }
 
     /**
@@ -761,33 +641,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
-        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
-        
-        // 检查单据是否已作废
-        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException("已作废的样品退回单不支持撤销操作");
-        }
-        
-        // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
-        }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改样品退回单状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return this.cancelProcess(id,ClientTypeEnum.WEB);
     }
 
     @Override
@@ -1455,6 +1309,274 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
+    }
+
+    // ========== APP端专用方法实现 ==========
+
+    @Override
+    public List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
+        SampleBackInfoDTO.PagingParamDTO searchParam = new SampleBackInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        // 使用一个SQL查询获取所有状态的统计数量
+        List<SampleBackInfoDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+
+        // 设置tabFlagName
+        list.stream().forEach(e ->{
+            if(Objects.equals("waitInstock", e.getTabFlag())){
+                e.setTabFlagName("待入库");
+            }else if(Objects.equals("completeInstock", e.getTabFlag())){
+                e.setTabFlagName("已入库");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
+        });
+
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleBackInfoDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleBackInfoDTO.TabListDTO waitSubmitItem = null;
+        SampleBackInfoDTO.TabListDTO rejectItem = null;
+        
+        for (SampleBackInfoDTO.TabListDTO item : list) {
+            if ("waitSubmit".equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if ("reject".equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleBackInfoDTO.TabListDTO mergedItem = new SampleBackInfoDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（审核中、待入库、已入库）
+        for (SampleBackInfoDTO.TabListDTO item : list) {
+            if (!"waitSubmit".equals(item.getTabFlag()) && !"reject".equals(item.getTabFlag())) {
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、待入库、已入库
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "waitInstock", "completeInstock");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
+    }
+
+    @Override
+    public PagingVO<SampleBackInfoDTO.ListDTO> pagingApp(PagingDTO<SampleBackInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleBackInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id, ClientTypeEnum clientType) {
+        SampleBackInfoEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到样品退回单数据");
+        }
+
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持提交操作");
+        }
+
+        validateSubmit(entity);
+        // 更新单据审核状态
+        log.info("提交 开始修改样品退回单状态数据，id：【{}】", id);
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+
+        // TODO 启动流程（如果需要的话）
+        log.info("提交 开始启动样品退回单流程，id=：【{}】", entity.getId());
+        startProcess(entity);
+        // 记录操作日志
+        log.info("提交 开始记录样品退回单日志数据，id：【{}】", id);
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+        }
+        SampleBackInfoEntity entity = getById(dto.getId());
+
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持审核操作");
+        }
+
+        // 审核中的数据允许审核
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        // 调用流程审核
+        approveProcess(entity, dto);
+        // 操作日志
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO disApprove(String id, ClientTypeEnum clientType) {
+        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单单数据"));
+
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持反审核操作");
+        }
+
+        // 反审核条件判断
+        validateDisApprove(entity);
+        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+
+        // 同步反审核并删除关联的其他入库单
+        try {
+            handleAssociatedOtherInboundOrder(entity);
+            log.info("样品退回单反审核，同步处理关联其他入库单成功，单据编号：{}", entity.getCode());
+        } catch (Exception e) {
+            log.error("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
+        // 更新审核信息
+        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        // 记录台账流水（反审核）
+        try {
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品退回单反审核台账流水记录成功，单据编号：{}", entity.getCode());
+            }
+        } catch (Exception e) {
+            log.error("样品退回单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品退回单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
+        // 操作日志
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id, ClientTypeEnum clientType) {
+        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持删除操作");
+        }
+
+        // 只有待提交数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        // TODO 删除明细数据（如果有明细数据的话）
+//删除附件
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            attachmentService.deleteByUrlList(urlList);
+        }
+        // 删除主单数据
+        log.info("删除 开始删除样品退回单主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除样品退回单日志数据，id：【{}】", id);
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getCode(), "删除样品退回单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String remark, ClientTypeEnum clientType) {
+        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+        // 待提交或审核不通过并且未作废允许作废
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        log.info("作废 开始修改样品退回单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
+                .set(SampleBackInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(SampleBackInfoEntity::getInvalidRemark, remark)
+                .update();
+
+        log.info("作废 开始记录操作日志，id：【{}】", id);
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "作废操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType) {
+        SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持撤销操作");
+        }
+
+        // 只有审核中的单据允许撤销
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        // TODO 撤销流程
+        log.info("撤销 开始撤销流程，id：【{}】",id);
+
+        log.info("撤销 开始修改样品退回单状态，id：【{}】", id);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //操作日志
+        log.info("撤销 开始记录操作日志，id：【{}】", id);
+        String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "取消流程操作");
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
 }
