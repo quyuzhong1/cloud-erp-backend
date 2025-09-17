@@ -646,8 +646,25 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .mapToInt(SampleRecipientDetailEntity::getRecipientQty)
                 .sum();
         approveDTO.getVariablesMap().put("totalQty", totalQty);
-        approveDTO.getVariablesMap().put("usageCn", SampleUsageEnum.getName(entity.getUsage()));
-        approveDTO.getVariablesMap().put("usageScopeCn", SampleUsageScopeEnum.getName(entity.getUsageScope()));
+        
+        // 确保usageCn变量不为null
+        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        if (StringUtils.isBlank(usageCn)) {
+            log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
+            usageCn = ""; // 设置默认值
+        }
+        approveDTO.getVariablesMap().put("usageCn", usageCn);
+        
+        // 确保usageScopeCn变量不为null
+        String usageScopeCn = SampleUsageScopeEnum.getName(entity.getUsageScope());
+        if (StringUtils.isBlank(usageScopeCn)) {
+            log.warn("usageScopeCn is blank for entity usageScope: {}", entity.getUsageScope());
+            usageScopeCn = ""; // 设置默认值
+        }
+        approveDTO.getVariablesMap().put("usageScopeCn", usageScopeCn);
+        
+        // 添加调试日志
+        log.info("Setting variables for approval - usageCn: {}, usageScopeCn: {}", usageCn, usageScopeCn);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1085,6 +1102,31 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
+        // 统计领用总数
+        Integer totalQty = list.stream()
+                .mapToInt(SampleRecipientDetailEntity::getRecipientQty)
+                .sum();
+        startDTO.getVariablesMap().put("totalQty", totalQty);
+
+        // 确保usageCn变量不为null
+        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        if (StringUtils.isBlank(usageCn)) {
+            log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
+            usageCn = ""; // 设置默认值
+        }
+        startDTO.getVariablesMap().put("usageCn", usageCn);
+
+        // 确保usageScopeCn变量不为null
+        String usageScopeCn = SampleUsageScopeEnum.getName(entity.getUsageScope());
+        if (StringUtils.isBlank(usageScopeCn)) {
+            log.warn("usageScopeCn is blank for entity usageScope: {}", entity.getUsageScope());
+            usageScopeCn = ""; // 设置默认值
+        }
+        startDTO.getVariablesMap().put("usageScopeCn", usageScopeCn);
+
+        // 添加调试日志
+        log.info("Setting variables for approval - usageCn: {}, usageScopeCn: {}", usageCn, usageScopeCn);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
