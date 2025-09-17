@@ -35,6 +35,11 @@ public class WorkflowTaskRecordEntity extends BaseEntity<WorkflowTaskRecordEntit
     @TableField("source_id")
     private String sourceId;
     /**
+    * 来源单号
+    */
+    @TableField("source_code")
+    private String sourceCode;
+    /**
     * 下一个处理节点id
     */
     @TableField("index")
@@ -74,6 +79,16 @@ public class WorkflowTaskRecordEntity extends BaseEntity<WorkflowTaskRecordEntit
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 节点id
+    */
+    @TableField("dict_basic_id")
+    private String dictBasicId;
+    /**
+     * trace_id
+     */
+    @TableField("trace_id")
+    private String traceId;
 
 
     public static final String SOURCE_ID = "source_id";

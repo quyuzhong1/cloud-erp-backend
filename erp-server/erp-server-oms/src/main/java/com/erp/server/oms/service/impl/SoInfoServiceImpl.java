@@ -1671,7 +1671,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         //检查关联单据
-        checkRefBill(ids);
+        checkRefBill(entity.getSourceType(),ids);
         //有销售变更的也不能反审核
         List<SoChangeEntity> soChangeList = soChangeEntityList.stream().filter(v->v.getSoId().equals(entity.getId())).collect(Collectors.toList());
         long soChangeCount = soChangeList.stream().filter(s -> !s.getInvalidStatus()).count();
@@ -1721,16 +1721,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @author yl
      * @date 2023-05-29 16:08
      */
-    private void checkRefBill(List<String> soIds) {
+    private void checkRefBill(String sourceType,List<String> soIds) {
         //采购申请
         List<PurchaseApplicationEntity> purchaseApplicationList = scmTaskFeign.listPurchaseApplicationBySourceIds(soIds);
         if (CollUtil.isNotEmpty(purchaseApplicationList)) {
             String codes = purchaseApplicationList.stream().map(PurchaseApplicationEntity::getCode).distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_SO_INFO_EXIST_REF_BILL,codes);
         }
-        Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
-        if (wmsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92040);
+        if(!Objects.equals(sourceType, SourceTypeEnum.EXHIBITION_ORDER.getCode())){
+            Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
+            if (wmsCount > 0) {
+                throw new ServiceException(ApiError.ERROR_92040);
+            }
         }
         Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
         if (omsCount > 0) {
@@ -1746,11 +1748,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
     }
 
-    private void checkRemove(List<String> soIds) {
-
-        Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
-        if (wmsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
+    private void checkRemove(String sourceType,List<String> soIds) {
+        if(!Objects.equals(sourceType, SourceTypeEnum.EXHIBITION_ORDER.getCode())) {
+            Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
+            if (wmsCount > 0) {
+                throw new ServiceException(ApiError.ERROR_92018);
+            }
         }
         Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
         if (omsCount > 0) {
@@ -1808,8 +1811,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<BatchResultDTO>  deleteByIds(List<String> ids) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO>  deleteByIds(String sourceType,List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
@@ -1834,8 +1837,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(removeIdList)){
             return resultDTOList;
         }
+
         //检查能否删除
-        checkRemove(removeIdList);
+        checkRemove(sourceType,removeIdList);
         //需要同步的数据
         List<SoInfoEntity> syncList = removeList.stream().filter(obj -> !BillApproveStatusEnum.DRAFT.equals(obj.getApproveStatus())).collect(Collectors.toList());
 

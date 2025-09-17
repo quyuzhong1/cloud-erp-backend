@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import lombok.Data;
@@ -1013,6 +1014,23 @@ public class ExhibitionOrderDTO implements Serializable {
 
     }
 
+
+    /**
+     *
+     * 反审核下游单据
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DownstreamDisapproveDTO {
+
+        private String exhibitionOrderId;
+
+        private String soId;
+
+        private String errorMsg;
+
+    }
 
 
 

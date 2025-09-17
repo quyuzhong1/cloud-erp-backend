@@ -668,6 +668,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
         //已审核支持反审核
@@ -2400,9 +2401,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         String id = soDeliveryNoticeEntity.getId();
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
-        if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-
-        }
         List<SoDeliveryNoticeDetailEntity> detailList = new ArrayList<>();
         for (SoDetailEntity soDetailEntity : soDetailEntitieList) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
