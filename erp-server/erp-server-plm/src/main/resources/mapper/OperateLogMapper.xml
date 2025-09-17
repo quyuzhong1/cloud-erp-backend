@@ -67,9 +67,12 @@
             operate_log
         WHERE
             "operation" = '产品经理变更'
-          AND business_id = #{params.id}
+          AND pid IN
+          <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+              #{id}
+          </foreach>
         ORDER BY
-            create_time DESC
+        business_id,create_time DESC
     </select>
 
 </mapper>
