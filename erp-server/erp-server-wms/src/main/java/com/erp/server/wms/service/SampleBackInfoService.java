@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
 import com.common.business.service.SuperService;
@@ -198,5 +199,87 @@ public interface SampleBackInfoService extends SuperService<SampleBackInfoEntity
      * @param importType 导入类型
      */
     void handleImportSuccessList(List<SampleBackInfoImportExcelDTO> successList, List<String> errorNoList, List<SampleBackInfoImportExcelDTO> errorList2, String importType);
+
+    // ========== APP端专用方法 ==========
+
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param dto 权限参数
+     * @return 标签页列表
+     */
+    List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页查询
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param pagingParamDTO 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleBackInfoDTO.ListDTO> pagingApp(PagingDTO<SampleBackInfoDTO.PagingParamDTO> pagingParamDTO);
+
+
+    /**
+     * 提交审核（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品退回单ID
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO submit(String id, ClientTypeEnum clientType);
+
+    /**
+     * 审核（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param dto 审核参数
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType);
+
+    /**
+     * 反审核（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品退回单ID
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO disApprove(String id, ClientTypeEnum clientType);
+
+    /**
+     * 删除（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品退回单ID
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO delete(String id, ClientTypeEnum clientType);
+
+    /**
+     * 作废（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品退回单ID
+     * @param remark 作废原因
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO invalid(String id, String remark, ClientTypeEnum clientType);
+
+    /**
+     * 撤销（带客户端类型）
+     * @author wuhaotian
+     * @date: 2025-09-15
+     * @param id 样品退回单ID
+     * @param clientType 客户端类型
+     * @return 操作结果
+     */
+    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
 
 }

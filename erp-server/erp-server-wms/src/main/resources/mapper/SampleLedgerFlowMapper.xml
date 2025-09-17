@@ -163,4 +163,56 @@
         LIMIT 1
     </select>
 
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
+        SELECT
+            slf.id,
+            slf.create_user_id,
+            slf.create_user_name,
+            slf.create_time,
+            slf.update_user_id,
+            slf.update_user_name,
+            slf.update_time,
+            slf.version,
+            slf.is_deleted,
+            slf.sample_ledger_id,
+            slf.operate_time,
+            slf.bill_date,
+            slf.user_id,
+            slf.user_name,
+            slf.dept_id,
+            slf.dept_name,
+            slf.source_code,
+            slf.source_type,
+            slf.source_id,
+            slf.source_detail_id,
+            slf.dict_biz_type,
+            slf.sku_no,
+            slf.sku_id,
+            slf.product_name,
+            slf.use_user_id,
+            slf.use_user_name,
+            slf.qty
+        FROM sample_ledger_flow slf
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND slf.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        slf.create_time DESC
+    </select>
+
 </mapper>

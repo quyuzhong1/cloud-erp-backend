@@ -48,7 +48,7 @@ public class SampleLedgerFlowController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedgerFlow:paging",
-            tableAlias = ""
+            tableAlias = "slf"
     )
     @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     public ApiResult<PagingVO<SampleLedgerFlowDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> dto) {
@@ -67,7 +67,7 @@ public class SampleLedgerFlowController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedgerFlow:export",
-            tableAlias = ""
+            tableAlias = "slf"
     )
     @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品台账流水导出Excel数据")

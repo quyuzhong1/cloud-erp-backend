@@ -157,4 +157,16 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 行号
      */
     private Integer rowNum;
+    
+    /**
+     * 创建人ID
+     */
+    @ExcelIgnore
+    private String createUserId;
+    
+    /**
+     * 创建人姓名
+     */
+    @ExcelIgnore
+    private String createUserName;
 }

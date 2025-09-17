@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ClientTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -407,7 +409,10 @@ public class SampleBackInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
+        /**
+         * com.common.business.enums.ClientTypeEnum
+         */
+        private ClientTypeEnum clientType = ClientTypeEnum.WEB;
         /**
         * 退回日期
         */

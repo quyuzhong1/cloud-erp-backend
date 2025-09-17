@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -362,6 +363,34 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     public Boolean exportList(SampleLedgerFlowDTO.ExportDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("样品台账流水导出", EXPORT_WMS_SAMPLE_LEDGER_FLOW_REPORT.getCode(), dto);
         return true;
+    }
+
+    // ========== APP端专用方法实现 ==========
+
+    @Override
+    public PagingVO<SampleLedgerFlowDTO.ListDTO> pagingApp(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleLedgerFlowDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.ViewDTO view(String id) {
+        SampleLedgerFlowEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到样品台账流水数据");
+        }
+        
+        SampleLedgerFlowDTO.ViewDTO viewDTO = new SampleLedgerFlowDTO.ViewDTO();
+        BeanMapperUtils.copy(entity, viewDTO);
+        
+        return viewDTO;
     }
 
 }

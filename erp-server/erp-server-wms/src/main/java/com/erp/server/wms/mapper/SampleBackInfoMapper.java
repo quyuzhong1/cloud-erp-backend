@@ -53,4 +53,19 @@ public interface SampleBackInfoMapper extends BaseMapper<SampleBackInfoEntity> {
     * @return
     */
     List<SampleBackInfoDTO.TabListDTO> tabList(@Param("params") SampleBackInfoDTO.PagingParamDTO searchParam);
+
+    /**
+     * 获取所有状态的统计数量（一个SQL查询完成）
+     * @param permissionSql 权限SQL
+     * @return 状态统计列表
+     */
+    List<SampleBackInfoDTO.TabListDTO> getAllStatusCounts(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleBackInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleBackInfoDTO.PagingParamDTO params);
 }

@@ -63,4 +63,12 @@ public interface SampleLedgerFlowMapper extends BaseMapper<SampleLedgerFlowEntit
                                                     @Param("useUserId") String useUserId,
                                                     @Param("skuNo") String skuNo, 
                                                     @Param("skuId") String skuId);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleLedgerFlowDTO.ListDTO> pagingApp(Page query, @Param("params") SampleLedgerFlowDTO.PagingParamDTO params);
 }

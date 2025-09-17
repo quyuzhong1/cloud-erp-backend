@@ -2,42 +2,43 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
-import com.erp.model.wms.dto.SampleScrapDetailDTO;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
-import com.erp.server.wms.service.SampleLedgerService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.SampleLedgerService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.common.business.dto.base.PermissionsDTO;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_REPORT;
 
@@ -428,6 +429,92 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
+    }
+
+    // ========== APP端专用方法实现 ==========
+
+    @Override
+    public List<SampleLedgerDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
+        SampleLedgerDTO.PagingParamDTO searchParam = new SampleLedgerDTO.PagingParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        // 获取所有台账记录
+        List<SampleLedgerEntity> allLedgers = baseMapper.selectList(
+            new LambdaQueryWrapper<SampleLedgerEntity>()
+                .eq(SampleLedgerEntity::getIsDeleted, false)
+        );
+
+        // 获取用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, FindUserDTO> userMap = userList.stream()
+            .collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
+
+        // 统计启用和禁用的台账数量
+        int enabledCount = 0;
+        int disabledCount = 0;
+        
+        for (SampleLedgerEntity ledger : allLedgers) {
+            FindUserDTO user = userMap.get(ledger.getUserId());
+            if (user != null) {
+                if (!user.getDisabled()) {
+                    enabledCount++;
+                } else {
+                    disabledCount++;
+                }
+            } else {
+                // 用户不存在，按禁用处理
+                disabledCount++;
+            }
+        }
+
+        // 构建移动端标签列表
+        List<SampleLedgerDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 全部标签
+        SampleLedgerDTO.TabListDTO allItem = new SampleLedgerDTO.TabListDTO();
+        allItem.setStatus("all");
+        allItem.setCount(allLedgers.size());
+        appList.add(allItem);
+        
+        // 启用标签
+        SampleLedgerDTO.TabListDTO enabledItem = new SampleLedgerDTO.TabListDTO();
+        enabledItem.setStatus("enabled");
+        enabledItem.setCount(enabledCount);
+        appList.add(enabledItem);
+        
+        // 禁用标签
+        SampleLedgerDTO.TabListDTO disabledItem = new SampleLedgerDTO.TabListDTO();
+        disabledItem.setStatus("disabled");
+        disabledItem.setCount(disabledCount);
+        appList.add(disabledItem);
+
+        return appList;
+    }
+
+    @Override
+    public PagingVO<SampleLedgerDTO.ListDTO> pagingApp(PagingDTO<SampleLedgerDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleLedgerDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public SampleLedgerDTO.ViewDTO view(String id) {
+        SampleLedgerEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到样品台账数据");
+        }
+        
+        SampleLedgerDTO.ViewDTO viewDTO = new SampleLedgerDTO.ViewDTO();
+        BeanMapperUtils.copy(entity, viewDTO);
+        
+        return viewDTO;
     }
 
 }

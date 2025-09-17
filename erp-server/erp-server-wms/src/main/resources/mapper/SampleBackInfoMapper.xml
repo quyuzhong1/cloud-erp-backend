@@ -185,4 +185,85 @@
         GROUP BY approve_status
     </select>
 
+    <!-- 获取所有状态的统计数量（一个SQL查询完成） -->
+    <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleBackInfoDTO$TabListDTO">
+        SELECT
+            CASE 
+                WHEN sbi.approve_status = 'approve' AND sbd.exec_status = 'waitInstock' THEN 'waitInstock'
+                WHEN sbi.approve_status = 'approve' AND sbd.exec_status = 'completeInstock' THEN 'completeInstock'
+                ELSE sbi.approve_status
+            END AS tabFlag,
+            COUNT(DISTINCT sbi.id) AS count
+        FROM sample_back_info sbi
+        LEFT JOIN sample_back_detail sbd ON sbd.main_id = sbi.id AND sbd.is_deleted = false
+        WHERE sbi.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            AND ${permissionSql}
+        </if>
+        GROUP BY 
+            CASE 
+                WHEN sbi.approve_status = 'approve' AND sbd.exec_status = 'waitInstock' THEN 'waitInstock'
+                WHEN sbi.approve_status = 'approve' AND sbd.exec_status = 'completeInstock' THEN 'completeInstock'
+                ELSE sbi.approve_status
+            END
+    </select>
+
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleBackInfoDTO$ListDTO">
+        SELECT
+            DISTINCT ON (sbi.id)
+            COUNT(sbd.id) OVER (PARTITION BY sbi.id) AS skuCount,
+            sbi.id,
+            sbi.code,
+            sbi.approve_status AS approveStatus,
+            sbi.approve_user_id AS approveUserId,
+            sbi.approve_user_name AS approveUserName,
+            sbi.approve_time AS approveTime,
+            sbi.invalid_status AS invalidStatus,
+            sbi.invalid_remark AS invalidRemark,
+            sbi.invalid_time AS invalidTime,
+            sbi.back_date AS backDate,
+            sbi.source_id AS sourceId,
+            sbi.source_code AS sourceCode,
+            sbi.source_type AS sourceType,
+            sbi.user_id AS userId,
+            sbi.user_name AS userName,
+            sbi.dept_id AS deptId,
+            sbi.warehouse_id AS warehouseId,
+            w.name AS warehouseName,
+            sbi.org_id AS orgId,
+            sbi.org_name AS orgName,
+            sbi.remark,
+            sbi.exec_status AS execStatus,
+            sbi.create_time AS createTime,
+            sbi.create_user_name AS createUserName,
+            sbd.id AS detailId,
+            sbd.sku_no AS skuNo,
+            sbd.sku_id AS skuId,
+            sbd.product_name AS productName,
+            sbd.qty,
+            sbd.remark AS detailRemark
+        FROM sample_back_info sbi
+        LEFT JOIN sample_back_detail sbd
+        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        LEFT JOIN warehouse w
+        ON w.id = sbi.warehouse_id AND w.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND sbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sbi.id DESC,
+        sbi.create_time DESC,
+        sbd.id
+    </select>
+
 </mapper>
