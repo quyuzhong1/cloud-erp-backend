@@ -9,6 +9,7 @@ import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -24,6 +25,7 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -36,6 +38,7 @@ import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -72,7 +75,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -134,6 +138,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
             }
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
+
+            //上传图片到文件服务器
+            if (OmsPlatformEnum.OMS_DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
+                MultipartFile multipartFile = FileUtil.toMultipartFile(entity.getProductImageUrl());
+                String fileUrl = fileFeign.uploadFile(multipartFile);
+                entity.setProductImageUrl(fileUrl);
+            }
 
             if (null == oldEntity) {
                 if (!listingInfoService.save(entity)) {
