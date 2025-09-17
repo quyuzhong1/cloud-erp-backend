@@ -10,6 +10,8 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.UserTypeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.ProductVO;
@@ -117,6 +119,9 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         // 数据校验和ID解析
         validateAndResolveIds(data, errorMsgList);
         
+        // 设置创建人信息
+        setCreateUserInfo(data);
+        
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             data.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -168,10 +173,20 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         String recipientDateStr = data.getRecipientDateStr();
         if (StringUtils.isNotBlank(recipientDateStr)) {
             try {
-                LocalDate recipientDate = LocalDate.parse(recipientDateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                // 支持两种日期格式：yyyy-MM-dd 和 yyyy/M/d
+                LocalDate recipientDate = null;
+                try {
+                    recipientDate = LocalDate.parse(recipientDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                } catch (Exception e1) {
+                    try {
+                        recipientDate = LocalDate.parse(recipientDateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                    } catch (Exception e2) {
+                        throw new IllegalArgumentException("日期格式错误");
+                    }
+                }
                 data.setRecipientDate(recipientDate);
             } catch (Exception e) {
-                errorMsgList.add("领用日期格式错误，请使用yyyy/M/d格式");
+                errorMsgList.add("领用日期格式错误，请使用yyyy-MM-dd或yyyy/M/d格式");
             }
         }
     }
@@ -272,6 +287,27 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             data.setRecipientQty(0);
         }
         
+    }
+
+    /**
+     * 设置创建人信息
+     */
+    private void setCreateUserInfo(SampleRecipientExcelDTO data) {
+        try {
+            LoginUser loginUser = UserContext.getLoginUser();
+            if (loginUser != null) {
+                data.setCreateUserId(loginUser.getUid());
+                data.setCreateUserName(loginUser.getUserName());
+            } else {
+                // 如果获取不到当前用户，使用系统用户
+                data.setCreateUserId("0");
+                data.setCreateUserName("system");
+            }
+        } catch (Exception e) {
+            log.warn("获取当前登录用户信息失败，使用系统用户：{}", e.getMessage());
+            data.setCreateUserId("0");
+            data.setCreateUserName("system");
+        }
     }
 
     /**
