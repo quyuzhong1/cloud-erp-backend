@@ -252,8 +252,10 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
 
             //采购订单号
             jsonObject.set("poCode", detail.getPoCode());
-
+            //来源编码
             jsonObject.set("sourceCode", detail.getSourceCode());
+            //来源类型
+            jsonObject.set("sourceType", detail.getSourceType());
             //明细id
             jsonObject.set("detailId", detail.getId());
 
