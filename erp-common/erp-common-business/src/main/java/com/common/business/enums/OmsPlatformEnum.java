@@ -24,6 +24,7 @@ public enum OmsPlatformEnum {
     CAI_NIAO("cainiao","菜鸟仓"),
     WEI_SHI("weishi","纬狮"),
     DA_MAI("damai","大卖仓"),
+    OMS_DHT("dht","订货通"),
     ;
 
     @EnumValue
