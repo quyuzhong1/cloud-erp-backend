@@ -419,6 +419,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));
+        //TODO 调用订货通接口取消
         //成功更新状态为取消
         entity.setCreditStatus(CustomerCreditStatusEnum.CANCEL.getCode());
         this.updateById(entity);
