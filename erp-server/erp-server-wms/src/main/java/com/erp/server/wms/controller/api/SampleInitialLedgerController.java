@@ -85,7 +85,8 @@ public class SampleInitialLedgerController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleInitialLedger:paging"
+            menuCode = "wms:sampleInitialLedger:paging",
+            tableAlias = "sil"
     )
     public ApiResult<List<SampleInitialLedgerDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleInitialLedgerService.tabList(dto));
