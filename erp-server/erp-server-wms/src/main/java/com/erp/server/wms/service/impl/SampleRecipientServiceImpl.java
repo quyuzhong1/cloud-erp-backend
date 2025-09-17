@@ -2534,8 +2534,69 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Override
     public List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
-        // 复用现有的tabList方法
-        return tabList(dto);
+        SampleRecipientDTO.PagingParamDTO searchParam = new SampleRecipientDTO.PagingParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        // 使用一个SQL查询获取所有状态的统计数量
+        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+
+        // 设置tabFlagName
+        list.stream().forEach(e ->{
+            if(Objects.equals("waitOutstock", e.getTabFlag())){
+                e.setTabFlagName("待出库");
+            }else if(Objects.equals("completeOutstock", e.getTabFlag())){
+                e.setTabFlagName("已出库");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
+        });
+
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleRecipientDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleRecipientDTO.TabListDTO waitSubmitItem = null;
+        SampleRecipientDTO.TabListDTO rejectItem = null;
+        
+        for (SampleRecipientDTO.TabListDTO item : list) {
+            if ("waitSubmit".equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if ("reject".equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleRecipientDTO.TabListDTO mergedItem = new SampleRecipientDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（审核中、待出库、已出库）
+        for (SampleRecipientDTO.TabListDTO item : list) {
+            if (!"waitSubmit".equals(item.getTabFlag()) && !"reject".equals(item.getTabFlag())) {
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、待出库、已出库
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "waitOutstock", "completeOutstock");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
     }
 
     @Override

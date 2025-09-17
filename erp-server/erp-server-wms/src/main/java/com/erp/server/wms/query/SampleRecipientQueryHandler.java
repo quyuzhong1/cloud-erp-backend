@@ -47,6 +47,11 @@ public class SampleRecipientQueryHandler extends AbstractQueryHandler {
                 // 不通过
                 super.buildDefaultDTO("sr.approve_status", "reject");
                 break;
+            case "waitSubmitOrReject":
+                // 待提交/不通过：移动端合并标签，查询待提交和不通过状态
+                super.buildSplicingSQLDTO("sr.approve_status", QueryConditionEnum.IN_LIST, 
+                    java.util.Arrays.asList("waitSubmit", "reject"), QueryDataTypeEnum.STRING);
+                break;
             default:
                 // 其他情况按审核状态处理
                 super.buildDefaultDTO("sr.approve_status", value);
