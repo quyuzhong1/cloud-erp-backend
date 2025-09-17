@@ -2601,8 +2601,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Override
     public PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO) {
-        // 复用现有的paging方法
-        return paging(pagingParamDTO);
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleRecipientDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
     @Override

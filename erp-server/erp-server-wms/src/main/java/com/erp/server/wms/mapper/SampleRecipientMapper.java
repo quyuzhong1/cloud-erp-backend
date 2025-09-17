@@ -67,4 +67,12 @@ public interface SampleRecipientMapper extends BaseMapper<SampleRecipientEntity>
      * @return 状态统计列表
      */
     List<SampleRecipientDTO.TabListDTO> getAllStatusCounts(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleRecipientDTO.ListDTO> pagingApp(Page query, @Param("params") SampleRecipientDTO.PagingParamDTO params);
 }
