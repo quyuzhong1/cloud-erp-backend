@@ -766,10 +766,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //            transferDeclareFeign.updateOutstockStatus(statusDTO);
 
             //走TMS自动生成报关单逻辑
-            String sourceType = entity.getSourceType();
-            if(!SourceTypeEnum.EXHIBITION_ORDER.getCode().equals(sourceType)){
-                autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
-            }
+            autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
             //B2B发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
