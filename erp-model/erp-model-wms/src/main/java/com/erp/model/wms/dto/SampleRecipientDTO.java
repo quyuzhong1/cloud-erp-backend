@@ -504,6 +504,21 @@ public class SampleRecipientDTO implements Serializable {
         private Integer usableQty;
         
         /**
+         * 待出库数量（移动端商品详情用）
+         */
+        private Integer reservedQty;
+        
+        /**
+         * 已出库数量（移动端商品详情用）
+         */
+        private Integer deliveryQty;
+        
+        /**
+         * 执行状态（移动端商品详情用）
+         */
+        private String execStatus;
+        
+        /**
          * 备注
          */
         @Size(max = 200, message = "备注最大长度不能超过200位")

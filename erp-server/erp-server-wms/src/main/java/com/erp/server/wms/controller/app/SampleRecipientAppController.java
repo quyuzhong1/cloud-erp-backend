@@ -404,19 +404,6 @@ public class SampleRecipientAppController extends BaseController {
     }
 
     /**
-     * 商品详情
-     * @author wuhaotian
-     * @date: 2025-09-15
-     * @param id
-     * @return ApiResult<List<SampleRecipientDTO.ProductDetailDTO>>
-     */
-    @GetMapping("/productDetail")
-    @LogViewService
-    public ApiResult<List<SampleRecipientDTO.ProductDetailDTO>> productDetail(@RequestParam("id") String id) {
-        return success(sampleRecipientService.getProductDetail(id));
-    }
-
-    /**
      * 获取SKU列表（用于选择商品）
      * @author wuhaotian
      * @date: 2025-09-15

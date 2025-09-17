@@ -1048,6 +1048,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setQuantity(detail.getRecipientQty());
                 productDTO.setRemark(detail.getRemark());
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
+                
+                // 移动端商品详情字段填充
+                productDTO.setReservedQty(detail.getRecipientQty() - detail.getDeliveryQty());
+                productDTO.setDeliveryQty(detail.getDeliveryQty());
+                productDTO.setExecStatus(detail.getExecStatus());
+                
                 productList.add(productDTO);
             }
         }
@@ -2612,31 +2618,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return new PagingVO(pageData);
     }
 
-    @Override
-    public List<SampleRecipientDTO.ProductDetailDTO> getProductDetail(String id) {
-        List<SampleRecipientDTO.ProductDetailDTO> result = new ArrayList<>();
-        
-        // 查询样品领用单明细
-        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
-                .eq(SampleRecipientDetailEntity::getMainId, id)
-                .list();
-        
-        if (CollUtil.isEmpty(detailList)) {
-            return result;
-        }
-        
-        for (SampleRecipientDetailEntity detail : detailList) {
-            SampleRecipientDTO.ProductDetailDTO productDetail = new SampleRecipientDTO.ProductDetailDTO();
-            productDetail.setSkuNo(detail.getSkuNo());
-            productDetail.setProductName(detail.getProductName());
-            productDetail.setQuantity(detail.getRecipientQty() + "/" + (detail.getRecipientQty()- detail.getDeliveryQty()) + "/" + detail.getDeliveryQty());
-            productDetail.setExecutionStatus(detail.getExecStatus());
-            productDetail.setRemark(detail.getRemark());
-            result.add(productDetail);
-        }
-        
-        return result;
-    }
 
 
 }
