@@ -171,7 +171,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-17 16:53
      */
-    List<BatchResultDTO>  deleteByIds(List<String> ids);
+    List<BatchResultDTO>  deleteByIds(String sourceType,List<String> ids);
 
     /**
      * 作废

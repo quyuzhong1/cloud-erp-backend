@@ -35,6 +35,11 @@ public class WorkflowTaskRecordController extends BaseController {
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
 
+    @PostMapping("/WorkflowTaskRecordRetryJob")
+    public void WorkflowTaskRecordRetryJob() {
+        workflowTaskRecordService.WorkflowTaskRecordRetryJob();
+    }
+
 
 
 }

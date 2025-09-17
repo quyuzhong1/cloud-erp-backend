@@ -13,28 +13,25 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="source_id" property="sourceId" />
-       <result column="next_id" property="nextId" />
+       <result column="index" property="index" />
        <result column="class_path" property="classPath" />
        <result column="status" property="status" />
        <result column="retry_count" property="retryCount" />
        <result column="last_error" property="lastError" />
        <result column="output_data" property="outputData" />
+       <result column="input_data" property="inputData" />
        <result column="remark" property="remark" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        source_id, next_id, class_path, status, retry_count, last_error, output_data, remark
-    </sql>
+    <select id="listErrorTask" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
+        SELECT
+            *
+        FROM
+            workflow_task_record
+        WHERE
+            is_deleted = false
+            and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status IN ( 'failed', 'processing' ) and is_deleted = false )
+    </select>
 
 
 </mapper>

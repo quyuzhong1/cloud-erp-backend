@@ -1,6 +1,7 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.wrapper.FeignQuery;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -47,22 +49,23 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
     @Override
     public void onMessage(WorkflowTaskRecordDTO.AddTaskDTO mqDTO) {
         log.info("WorkflowTaskRecordConsumer接受到参数：mqDTO={}", JSONUtil.toJsonStr(mqDTO));
-//        com.erp.server.sys.service.impl.ThirdNoticePushRecordServiceImpl.getUserList(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
         //校验mqDTO不能为空
         if (Objects.isNull(mqDTO)) {
             log.error("WorkflowTaskRecordConsumer接受参数为空");
             return;
         }
 
+        MDC.put("traceId", mqDTO.getTraceId());
+
         List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, mqDTO.getSourceId()).orderByAsc(WorkflowTaskRecordEntity::getIndex).list();
         if(CollUtil.isEmpty(list)){
-            log.error("");
+            log.error("根据sourceId未查询到任务记录，sourceId={}", mqDTO.getSourceId());
             return;
         }
 
         boolean allMatch = list.stream().allMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
         if(allMatch){
-            log.error("");
+            log.error("所有任务节点均已成功，无需重复执行，sourceId={}", mqDTO.getSourceId());
             return;
         }
 
@@ -70,30 +73,48 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         Map<Integer, WorkflowTaskRecordEntity> map = list.stream().collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, Function.identity()));
 
         for (int i = 0; i < map.size(); i++) {
-            WorkflowTaskRecordEntity entity = map.get(i);
+            WorkflowTaskRecordEntity entity = map.getOrDefault(i,null);
+            if (Objects.isNull(entity)) {
+                log.error("任务节点缺失，index={}, sourceId={}", i, mqDTO.getSourceId());
+                break;
+            }
             Boolean success = Boolean.FALSE;
             String status = entity.getStatus();
-            if(Objects.equals(status, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())){
-                success = Boolean.TRUE;
-            }else  if(Objects.equals(status, WorkflowTaskRecordStatusEnum.PROCESSING.getCode())){
-                LocalDateTime updateTime = entity.getUpdateTime();
-                //判断updateTime 和当前时间是否不超过3分钟，如果是则break;
-                if(updateTime.plusMinutes(3).isAfter(LocalDateTime.now())){
-                    // 超时处理
-                    success = remoteInvoke(map,entity,i,0);
-                }
-            }else  if(Objects.equals(status, WorkflowTaskRecordStatusEnum.PENDING.getCode())){
-                success = remoteInvoke(map,entity,i,0);
-            }else if(Objects.equals(status, WorkflowTaskRecordStatusEnum.FAILED.getCode())){
-                success = remoteInvoke(map,entity,i,1);
+            WorkflowTaskRecordStatusEnum byCode = WorkflowTaskRecordStatusEnum.getByCode(status);
+            switch (byCode) {
+                case SUCCESS:
+                    success = Boolean.TRUE;
+                    break;
+                case PROCESSING:
+                    LocalDateTime updateTime = entity.getUpdateTime();
+                    if (updateTime.plusMinutes(3).isAfter(LocalDateTime.now())) {
+                        log.warn("节点处理中且未超时，index={}, sourceId={}", i, mqDTO.getSourceId());
+                        break;
+                    } else {
+                        log.warn("节点处理超时，触发远程调用，index={}, sourceId={}", i, mqDTO.getSourceId());
+                        success = remoteInvoke(map, entity, i, 0); // 超时重试
+                    }
+                    break;
+                case PENDING:
+                    success = remoteInvoke(map, entity, i, 0); // 初始执行
+                    break;
+                case FAILED:
+                    success = remoteInvoke(map, entity, i, 1); // 失败重试
+                    break;
+                default:
+                    log.error("未知状态码，index={}, status={}, sourceId={}", i, status, mqDTO.getSourceId());
+                    break;
             }
             if(!success){
+                log.error("远程调用失败，终止后续节点执行，index={}, sourceId={}", i, mqDTO.getSourceId());
                 break;
             }
         }
     }
 
     private Boolean remoteInvoke(Map<Integer, WorkflowTaskRecordEntity> map,WorkflowTaskRecordEntity entity,Integer i,Integer plus) {
+        String traceId = MDC.get("traceId");
+
         WorkflowTaskRecordEntity nextEntity = null;
         if( i != map.size() - 1){
             nextEntity = map.get(i + 1);
@@ -108,7 +129,8 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         String jsonStr = entity.getInputData();
         if(StringUtils.isBlank(jsonStr)){
             log.error("inputData is blank for workflowTaskRecordEntity id: {}", entity.getId());
-            markAsFailed(entity,"inputData为空");
+            String msg = StrUtil.format("traceId: 【{}】，inputData为空",traceId);
+            markAsFailed(entity,msg);
             return Boolean.FALSE;
         }
 
@@ -124,14 +146,16 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             inputDataMap = gson.fromJson(jsonStr, mapType);
         } catch (Exception e) {
             log.error("Failed to parse inputData JSON for workflowTaskRecordEntity id: {}", entity.getId(), e);
-            markAsFailed(entity,"inputData转json失败");
+            String msg = StrUtil.format("traceId: 【{}】，Failed to parse inputData JSON for workflowTaskRecordEntity id: 【{}】，e :{}",traceId,entity.getId(),e);
+            markAsFailed(entity,msg);
             return Boolean.FALSE;
         }
 
         String[] split = classPath.split("#");
         if (split.length != 2) {
             log.error("Invalid classPath format: {} for workflowTaskRecordEntity id: {}", classPath, entity.getId());
-            markAsFailed(entity,"classPath格式异常");
+            String msg = StrUtil.format("traceId: 【{}】，Invalid classPath format: {} for workflowTaskRecordEntity id: {}",traceId,classPath, entity.getId());
+            markAsFailed(entity,msg);
             return Boolean.FALSE;
         }
 
@@ -141,13 +165,13 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         WorkflowTaskRecordDTO.MqRequestDTO dto = new WorkflowTaskRecordDTO.MqRequestDTO();
         dto.setData(inputDataMap);
 
-
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO;
         try {
             mqResponseDTO = FeignQuery.invoke(WorkflowTaskRecordDTO.MqResponseDTO.class, controller, methodName, Arrays.asList(dto));
         } catch (Exception e) {
             log.error("Feign invoke failed for workflowTaskRecordEntity id: {}", entity.getId(), e);
-            markAsFailed(entity,e.getMessage());
+            String msg = StrUtil.format("traceId: 【{}】，Feign invoke failed for workflowTaskRecordEntity id: {}，e :{}",traceId, entity.getId(),e);
+            markAsFailed(entity,msg);
             return Boolean.FALSE;
         }
 
@@ -165,7 +189,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                 entity.setLastError(errorMsg);
             }else {
                 entity.setStatus(WorkflowTaskRecordStatusEnum.SUCCESS.getCode());
-
+                entity.setLastError("");
                 if(Objects.nonNull(nextEntity)){
                     nextEntity.setInputData(JSON.toJSONString(mqResponseDTO.getData()));
                     map.put(nextEntity.getIndex() ,nextEntity);
@@ -176,7 +200,6 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             workflowTaskRecordService.updateById(entity);
             return Boolean.TRUE;
         }
-
     }
 
     private void markAsFailed(WorkflowTaskRecordEntity entity,String errorMsg) {

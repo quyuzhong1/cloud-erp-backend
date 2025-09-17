@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.TransferApplicationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -40,7 +41,8 @@ public interface OtherInstockFeign {
     @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);
 
-
+    @PostMapping("/feign/otherInstock/disApproveByExhibition")
+    ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(@RequestBody ExhibitionOrderDTO.DownstreamDisapproveDTO dto);
 }
 
 

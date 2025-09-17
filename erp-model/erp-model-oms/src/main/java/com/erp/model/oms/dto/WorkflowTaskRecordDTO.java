@@ -35,6 +35,10 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private DictBasicTypeEnum dictBasicTypeEnum;
 
         private String sourceId;
+
+        private String sourceCode;
+
+        private String traceId;
     }
 
 
