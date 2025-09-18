@@ -84,6 +84,7 @@ public class SampleInitialLedgerController extends BaseController {
     */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableAlias = "sil",
             tableField = "create_user_id",
             menuCode = "wms:sampleInitialLedger:paging"
     )
@@ -100,6 +101,7 @@ public class SampleInitialLedgerController extends BaseController {
     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableAlias = "sil",
             tableField = "create_user_id",
             menuCode = "wms:sampleInitialLedger:paging"
     )
