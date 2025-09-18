@@ -204,6 +204,9 @@ public class YanWenCreateWayBillRequest {
             @NotNull(message = "申报单价不能为空")
             private BigDecimal price;
 
+            @NotNull(message = "出口国- 申报单价")
+            private BigDecimal priceExport;
+
             //数量
             @NotNull(message = "数量不能为空")
             private Integer quantity;
@@ -211,6 +214,10 @@ public class YanWenCreateWayBillRequest {
             //单件重量(单位:g)
             @NotNull(message = "单件重量(单位:g)不能为空")
             private Integer weight;
+            /**
+             * 商品sku
+             */
+            private String sku;
 
             //海关编码
             private String hscode;
@@ -221,5 +228,23 @@ public class YanWenCreateWayBillRequest {
             //商品材质
             private String material;
         }
+    }
+
+    /**
+     * 海关信息
+     */
+    private Customs customs;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Customs {
+
+        //生产销售企业名称
+        private String productionAndSalesEnterpriseName;
+
+        //生产销售企业代码
+        private String productionAndSalesEnterpriseCode;
     }
 }

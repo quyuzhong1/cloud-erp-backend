@@ -5,6 +5,9 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -18,6 +21,7 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -34,6 +38,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +57,9 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
     @Resource
     private YanWenService yanWenService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    public static final String YYYY_MM_DD = "yyyy-MM-dd";
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
@@ -77,6 +88,33 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        logisticsOrderVO.getLogisticsProductVOList().forEach(logisticsProductVO -> {
+            //出口国币种处理 人民币转美元（目的国申报价默认美金）
+            BigDecimal declarePrice = logisticsProductVO.getDeclarePrice();
+            if (Objects.nonNull(declarePrice)){
+                String currency = CurrencyEnum.CNY.getCurrencyCode();
+                //默认出口申报币种为人民币
+                if (!com.alibaba.nacos.api.utils.StringUtils.isBlank(logisticsProductVO.getDeclareCurrency())){
+                    currency = logisticsProductVO.getDeclareCurrency();
+                }
+                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), currency);
+                if (Objects.isNull(exchangeRate1)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                }
+                //先转换成人民币
+                BigDecimal cnyDeclarePrice = MathUtil.multiplyWithTwo(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                //再统一转换成美元
+                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
+                if (Objects.isNull(exchangeRate2)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
+                }
+                BigDecimal usdDeclarePrice = MathUtil.divide(cnyDeclarePrice, exchangeRate2).setScale(4, RoundingMode.HALF_UP);
+                logisticsProductVO.setDeclarePrice(usdDeclarePrice);
+                logisticsProductVO.setDeclareCurrency(CurrencyEnum.USD.getCurrencyCode());
+            }else {
+                throw new ServiceException("燕文物流下单【{}】出口国申报单价不能为空",logisticsProductVO.getSkuNo());
+            }
+        });
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
         //燕文接口[{发件人税号}---senderInfo] 国家为挪威的时候推送[VOEC]税号,其他国家不用推送.
         request.getSenderInfo().setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo()));

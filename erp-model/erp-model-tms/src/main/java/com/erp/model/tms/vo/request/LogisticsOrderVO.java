@@ -115,6 +115,14 @@ public class LogisticsOrderVO implements Serializable {
      */
     private String sourceId;
     /**
+     * 生产销售企业单位
+     */
+    private String companyName;
+    /**
+     * 生产销售企业代码
+     */
+    private String companyCode;
+    /**
      * 物流单号
      */
     private String trackNo;
