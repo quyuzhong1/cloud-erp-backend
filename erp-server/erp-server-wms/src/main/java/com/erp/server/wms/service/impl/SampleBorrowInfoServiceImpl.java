@@ -751,6 +751,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         downloadTaskFeign.saveImportTask("导入样品借用单", IMPORT_WMS_SAMPLE_BORROW_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -765,6 +766,17 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
         SampleBorrowExcelListener excelListenerUtil = new SampleBorrowExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),deptList, map, userList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());

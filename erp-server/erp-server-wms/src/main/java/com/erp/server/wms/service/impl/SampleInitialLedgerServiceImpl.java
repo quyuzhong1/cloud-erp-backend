@@ -227,6 +227,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         try {
+            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
             // 创建异步导入任务
             downloadTaskFeign.saveImportTask("样品期初台账导入", FileTaskEventEnum.IMPORT_WMS_SAMPLE_INITIAL_LEDGER.getCode(), dto);
             return true;
@@ -1031,6 +1032,17 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
         SampleInitialLedgerExcelListener excelListenerUtil = new SampleInitialLedgerExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount(), deptList, map, userList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());

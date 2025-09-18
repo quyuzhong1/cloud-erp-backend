@@ -62,6 +62,11 @@ public class ExportOmsFeignController {
     private SoPriceService soPriceService;
     @Resource
     private SoPriceChangeService soPriceChangeService;
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
+
+    @Resource
+    private ExhibitionOrderService exhibitionOrderService;
 
     @Resource
     private CfgInvoiceInvalidService cfgInvoiceInvalidService;
