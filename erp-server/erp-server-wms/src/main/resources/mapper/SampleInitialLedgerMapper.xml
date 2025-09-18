@@ -126,14 +126,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        sil.approve_status AS tabFlag,
         count(*) AS count
-        FROM  sample_initial_ledger
-        WHERE is_deleted=FALSE
+        FROM  sample_initial_ledger sil
+        WHERE sil.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY sil.approve_status
     </select>
 
 </mapper>

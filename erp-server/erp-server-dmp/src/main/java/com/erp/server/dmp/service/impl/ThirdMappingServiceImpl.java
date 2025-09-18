@@ -42,7 +42,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -813,7 +812,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             String thirdName = null;
             switch (ThirdSysTypeEnum.getByCode(type)) {
                 case WAREHOUSE:
-                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType())) {
+                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.DHT.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
                         ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));

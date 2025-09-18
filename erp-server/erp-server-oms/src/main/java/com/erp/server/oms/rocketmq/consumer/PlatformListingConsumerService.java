@@ -1,6 +1,7 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -106,8 +107,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null || PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), StrUtil.blankToDefault(dto.getAuthId(),""));
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
@@ -140,7 +141,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             //上传图片到文件服务器
-            if (OmsPlatformEnum.OMS_DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
+            if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
                 MultipartFile multipartFile = FileUtil.toMultipartFile(entity.getProductImageUrl());
                 String fileUrl = fileFeign.uploadFile(multipartFile);
                 entity.setProductImageUrl(fileUrl);
