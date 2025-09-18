@@ -3616,6 +3616,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             updateDTO.setRemark(dto.getRemark());
             updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            updateDTO.setAttachUrlList(attachUrlList);
+            updateDTO.setAttachNameList(attachNameList);
             List<SoDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             List<PlatformB2bOrderDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : detailList) {
@@ -3682,6 +3686,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             addDTO.setRemark(dto.getRemark());
             addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            addDTO.setAttachUrlList(attachUrlList);
+            addDTO.setAttachNameList(attachNameList);
             List<SoDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : dto.getDetail()) {
                 SoDetailDTO.AddDTO detailDTO = new SoDetailDTO.AddDTO();
