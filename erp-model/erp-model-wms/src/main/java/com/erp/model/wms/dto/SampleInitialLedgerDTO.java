@@ -68,6 +68,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        /**
+         * 权限SQL
+         */
+        private String permissionSql;
+
      }
     /**
     * 分页列表
