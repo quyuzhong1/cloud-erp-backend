@@ -9,6 +9,8 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignBuilder;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
@@ -16,9 +18,7 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -81,6 +81,18 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         }
         // 多渠道处理
         if (dto.hasMultiChannel()){
+            if (StringUtils.isBlank(dto.getMerchantOrderId())) {
+                log.warn("【新中台销售出库单消费】:多渠道订单:商家订单ID为空：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+                return;
+            }
+            // 不存在多渠道订单跳过
+            List<SoMultiChannelEntity> entityList = FeignQuery.create(SoMultiChannelEntity.class)
+                    .eq(SoMultiChannelEntity::getDeliveryCode, dto.getMerchantOrderId())
+                    .list();
+            if (CollectionUtils.isEmpty(entityList)){
+                log.warn("【新中台销售出库单消费】:多渠道订单不存在跳过：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+                return;
+            }
             //处理多渠道出库
             handleMultiChannel(dto);
             return;
