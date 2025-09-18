@@ -1,6 +1,7 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -145,6 +146,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 MultipartFile multipartFile = FileUtil.toMultipartFile(entity.getProductImageUrl());
                 String fileUrl = fileFeign.uploadFile(multipartFile);
                 entity.setProductImageUrl(fileUrl);
+                if (ObjUtil.isNotEmpty(oldEntity)) {
+                    oldEntity.setProductImageUrl(fileUrl);
+                }
             }
 
             if (null == oldEntity) {
