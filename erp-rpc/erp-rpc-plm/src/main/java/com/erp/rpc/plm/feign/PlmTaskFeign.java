@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -636,4 +637,8 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
 }

@@ -76,6 +76,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.ProductConstant;
@@ -296,6 +297,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SkuStdCostDetailService skuStdCostDetailService;
+
+    @Resource
+    private SkuStdCostService skuStdCostService;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -4120,6 +4130,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //审核通过
         if (dto.getType().equals(ApproveType.PASS)) {
+            Integer count = skuStdCostService.lambdaQuery()
+                    .eq(SkuStdCostEntity::getSkuId, entity.getId())
+                    .count();
+            if (count <= 0) {
+                // 查询sku最新出库时间
+                Map<String, LocalDate> lastOutstockDateMap = soOutstockFeign.mapLastOutstockDateBySkuIds(Arrays.asList(entity.getId()));
+                // 审核通过添加SKU标准成本记录
+                skuStdCostDetailService.checkAndAddFirst(entity, lastOutstockDateMap.getOrDefault(entity.getId(), null));
+            }
+
+
             //审核通过 重算目的国申报单价
             resetDestDeclarePrice(Collections.singletonList(entity), Boolean.FALSE);
             //发送通知

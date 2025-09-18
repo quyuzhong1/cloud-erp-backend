@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -64,7 +65,7 @@ public class BaseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ImportResultDTO extends ImportDTO {
+    public static class ImportResultDTO extends ImportTypeDTO {
         /**
          * 失败文件URL
          */
@@ -90,5 +91,26 @@ public class BaseDTO implements Serializable {
          * 结束时间
          */
         private LocalDateTime finishTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportTypeDTO implements Serializable {
+        /**
+         * 文件URL
+         */
+        @NotNull(message = "【文件URL】不能为空")
+        private String fileUrl;
+        /**
+         * 导入类型
+         */
+        @NotNull(message = "【导入类型】不能为空")
+        private String importType;
+        /**
+         * 任务id[后端使用]
+         */
+        private String taskId;
+
     }
 }
