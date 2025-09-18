@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -82,10 +83,11 @@ public class OperateLogShowDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO {
+        private String searchKey;
         /**
          * 产品id
          */
-        @NotBlank(message = "产品id不能为空")
+        @NotEmpty(message = "产品id不能为空")
         private List<String> ids;
     }
     /**
