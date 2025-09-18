@@ -81,14 +81,14 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
         } catch (ApiException e) {
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
-            createResultDTO.setMsg("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getResponseBody()));
+            createResultDTO.setMsg(JSONUtil.toJsonStr(e.getResponseBody()));
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
-            throw new ServiceException("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getResponseBody()));
+            throw new ServiceException(JSONUtil.toJsonStr(e.getResponseBody()));
         } catch (LWAException e) {
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
-            createResultDTO.setMsg("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getErrorMessage()));
+            createResultDTO.setMsg(JSONUtil.toJsonStr(e.getErrorMessage()));
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
-            throw new ServiceException("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getErrorMessage()));
+            throw new ServiceException(JSONUtil.toJsonStr(e.getErrorMessage()));
         }
         return ApiResult.success();
     }

@@ -237,4 +237,12 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @return
      */
     SoB2cDTO.SaveSoB2cDistributionDTO buildDistributionDTO(SoMultiChannelDTO.SaveDTO dto);
+
+    /**
+     * 根据销售订单ID查询最新的多渠道订单
+     * @param soIds
+     * @param createStatus
+     * @return
+     */
+    List<SoMultiChannelEntity> getLastBySoId(List<String> soIds, String createStatus);
 }
