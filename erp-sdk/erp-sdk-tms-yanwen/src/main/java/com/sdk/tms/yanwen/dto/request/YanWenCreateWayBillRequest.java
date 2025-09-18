@@ -43,6 +43,9 @@ public class YanWenCreateWayBillRequest {
     //拣货单信息/备注（打印标签选择打印拣货单显示此字段信息）
     private String remark;
 
+    //销售平台
+    private String salesPlatform;
+
     //收件人信息
     @Valid
     @NotNull
