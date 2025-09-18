@@ -294,7 +294,7 @@
         SELECT
             sum(sod.actual_qty) as actualTotalQty,
             sum(sod.plan_qty) as planTotalQty,
-            sum(sod.all_amount_local_currency) as totalTaxAmount
+            CAST(sum(ROUND(((ROUND(sod.price * ((sod.tax_rate / 100) + 1),4)) * sod.exchange_rate),4) * sod.actual_qty)  AS VARCHAR) as totalTaxAmount
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id
         WHERE

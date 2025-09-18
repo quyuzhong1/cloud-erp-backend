@@ -75,7 +75,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     @Resource
     private CfgThirdProcessService cfgThirdProcessService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ApproveTaskInfoDTO.AddDTO addDTO) {
@@ -183,7 +183,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //数大臣单据字段信息
             List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             if (CollUtil.isEmpty(fieldList)) {
-                throw new ServiceException("数大臣单据字段配置不存在");
+                log.error("未查询到数大臣单据字段信息，业务类型：{}，字段归属类型：{}，字段：{}", entity.getBussinessKey(), CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode(), detailDTO.getSysField());
+                continue;
             }
             detailDTO.setCfgQueryOptionEntity(fieldList.get(0));
         }
@@ -214,10 +215,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
                     .collect(Collectors.groupingBy(e -> ObjectUtil.isEmpty(e.getEntityCode()) ? "" : e.getEntityCode()));
             for (Map.Entry<String, List<ApproveTaskDetailEntity>> entry : groupMap.entrySet()) {
                 if ("".equals(entry.getKey())) {
-                    // entityCode为空，直接以sysField为key，sysFieldValue为value
-                    for (ApproveTaskDetailEntity e : entry.getValue()) {
-                        detailMap.put(e.getSysField(), e.getSysFieldValue());
-                    }
+                    //根据erp字段分组，存在重复的就给list
+                    groupMapValue(entry.getValue(),detailMap);
                 } else {
                     // entityCode不为空，value为List<Map<sysField, sysFieldValue>>
                     List<Map<String, Object>> fieldList = entry.getValue().stream()
@@ -225,9 +224,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
                             .values().stream()
                             .map(group -> {
                                 Map<String, Object> map = new HashMap<>();
-                                for (ApproveTaskDetailEntity detail : group) {
-                                    map.put(detail.getSysField(), detail.getSysFieldValue());
-                                }
+                                //根据erp字段分组，存在重复的就给list
+                                groupMapValue(group,map);
                                 return map;
                             }).collect(Collectors.toList());
                     detailMap.put(entry.getKey(), fieldList);
@@ -244,6 +242,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         }
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
+
+
 
     @Override
     public ApproveTaskInfoEntity getByBusinessIdAndKey(String businessId, String businessKey) {
@@ -284,6 +284,27 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getStatus()));
             //数大臣单据名称
             listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
+        }
+    }
+
+    /**
+     * 分组mp值处理
+     * @author will
+     * @date 2025/9/18 11:45
+     * @param group
+     * @param map
+     * @return void
+     */
+    private void groupMapValue (List<ApproveTaskDetailEntity> group, Map<String, Object> map) {
+        Map<String, List<ApproveTaskDetailEntity>> detailGroupMap = group.stream().collect(Collectors.groupingBy(ApproveTaskDetailEntity::getSysField));
+        for (Map.Entry<String, List<ApproveTaskDetailEntity>> entryEntity : detailGroupMap.entrySet()) {
+            List<ApproveTaskDetailEntity> value = entryEntity.getValue();
+            if (value.size() > 1) {
+                List<String> valueList = value.stream().map(ApproveTaskDetailEntity::getSysFieldValue).collect(Collectors.toList());
+                map.put(entryEntity.getKey(), valueList);
+            } else {
+                map.put(entryEntity.getKey(), value.get(0).getSysFieldValue());
+            }
         }
     }
 

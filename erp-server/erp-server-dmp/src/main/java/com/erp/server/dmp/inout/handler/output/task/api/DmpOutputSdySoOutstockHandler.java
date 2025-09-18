@@ -433,6 +433,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoOutstockDetailEntity.getThirdOrderCode());
     	        shudiyunB2cOrderDTO.setParent_node_no(platformCode);
     			
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}
@@ -564,7 +565,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                         List<QueryParam> queryParams = new ArrayList<>();
                         queryParams.add(new QueryParam(QueryTypeEnum.IN, "id", filterMainIds));
                         request.setQueryParams(queryParams);
-                        dmpOutputCreateFactory.doHotfixOutputTask(request);
+//                        dmpOutputCreateFactory.doHotfixOutputTask(request);
                 	});
         		}
         	}

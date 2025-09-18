@@ -176,8 +176,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
 
-            // 主单待发货首次变成已发货才触发标记
-            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+            // 明细的存在没有标发的情况触发
+            List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
+            if(detailList.stream().anyMatch(v->!v.getIsSignShipped())){
                 // 校验平台来源明细
                 if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
                     // 调用第三方平台SDK标记发货(独立事务)
@@ -286,6 +287,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 generateB2cDTO.setDetailList(wantDetailList);
             }
             generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
         }
         // 第三方仓出库生成销售出库单（独立事务）
         generateB2cDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode());

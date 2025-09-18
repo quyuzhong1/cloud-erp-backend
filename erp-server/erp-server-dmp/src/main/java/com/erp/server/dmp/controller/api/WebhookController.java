@@ -5,12 +5,14 @@ import com.common.core.controller.BaseController;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
 import com.erp.server.dmp.handler.WebhookHandler;
+import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +29,8 @@ import java.util.Objects;
 @LogSystemModule("WebHook接收管理")
 @RequestMapping("/webhook")
 public class WebhookController extends BaseController {
+    @Resource
+    private CfgAppClientService cfgAppClientService;
     // 预先约定的Secret
     private static final String SECRET_KEY = "your_secret_key";
     // 允许的时间偏差（秒）
@@ -39,9 +43,10 @@ public class WebhookController extends BaseController {
 
     /**
      * 接收Webhook请求
+     *
      * @param serviceFlag 服务名称
-     * @param data 传递数据
-     * @param headers 请求头
+     * @param data        传递数据
+     * @param headers     请求头
      * @return
      */
     @PostMapping("/receive/{serviceFlag}")
@@ -49,22 +54,22 @@ public class WebhookController extends BaseController {
                                  @RequestBody String data,
                                  @RequestHeader Map<String, String> headers) {
         log.info("========接收到webhook接口请求=======start");
-        log.info("receiveWebhook:serviceFlag:{},data:{},headers:{}",serviceFlag,data,headers);
+        log.info("receiveWebhook:serviceFlag:{},data:{},headers:{}", serviceFlag, data, headers);
         // 解析请求中的服务标识，进行不同的处理
         String service = getService(serviceFlag, headers, data);
         // 根据不同平台的Webhook内容做处理
         WebhookHandler handler = webhookHandlerFactory.getHandler(service);
         //安全校验
-        handler.verify(data,headers,serviceFlag);
+        handler.verify(data, headers, serviceFlag);
         //业务处理
-        String result = handler.process(data,headers,serviceFlag);
+        String result = handler.process(data, headers, serviceFlag);
         log.info("========接收到webhook接口请求=======end");
         return result;
     }
 
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
         WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByName(serviceFlag);
-        if (Objects.nonNull(serviceEnum)){
+        if (Objects.nonNull(serviceEnum)) {
             return serviceEnum.getCode();
         }
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();

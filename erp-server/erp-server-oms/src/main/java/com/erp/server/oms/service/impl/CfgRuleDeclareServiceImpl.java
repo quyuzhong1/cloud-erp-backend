@@ -67,7 +67,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(CfgRuleDeclareDTO.AddDTO addDTO) {

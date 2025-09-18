@@ -70,7 +70,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     @Resource
     private CfgProcessValueMapService cfgProcessValueMapService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdProcessDTO.AddDTO addDTO) {

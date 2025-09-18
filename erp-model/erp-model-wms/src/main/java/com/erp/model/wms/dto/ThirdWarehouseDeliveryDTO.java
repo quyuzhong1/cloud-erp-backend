@@ -60,6 +60,10 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 销售订单id
          */
         private String soId;
@@ -182,6 +186,11 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         private List<String> ids;
+
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
 

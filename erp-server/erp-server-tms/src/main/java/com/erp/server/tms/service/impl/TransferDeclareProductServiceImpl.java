@@ -44,7 +44,7 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     @Resource
     private SoB2cFeign soB2cFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TransferDeclareProductDTO.AddDTO addDTO) {

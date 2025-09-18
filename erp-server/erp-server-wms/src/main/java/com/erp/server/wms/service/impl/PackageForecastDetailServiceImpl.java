@@ -62,7 +62,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     private ForecastFeign forecastFeign;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(String mainId, List<PackageForecastDetailDTO.AddDTO> detailList) {
@@ -96,7 +96,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
      * 修改
      */
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public Boolean update(PackageForecastEntity entity, List<String> detailIdList) {
         String mainId = entity.getId();
@@ -154,7 +154,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         return Boolean.TRUE;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updatePackageStatus(List<String> soIdList, String status) {
         UpdateStateDTO.UpdateByStrStatusDTO updatePackageStatus = new UpdateStateDTO.UpdateByStrStatusDTO();
         updatePackageStatus.setStatus(status);
@@ -196,7 +196,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void removeByMainId(String mainId,String logisticsSupplierId) {
         List<PackageForecastDetailEntity> detailList = this.listDbByMainId(mainId);
 

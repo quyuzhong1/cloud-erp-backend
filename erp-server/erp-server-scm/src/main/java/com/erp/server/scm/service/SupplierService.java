@@ -6,10 +6,13 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -333,7 +336,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      */
     List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
 
-    void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
+    BatchResultDTO updateField(String id,SupplierDTO.BatchUpdateFieldDTO dto);
 
     PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
 
@@ -352,4 +355,16 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return PagingVO<DynamicExcelDTO>
      */
     PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+    /**
+     * 获取并且校验工厂地址
+     * @author will
+     * @date 2025/9/2 12:26
+     * @param countylist
+     * @param cityList
+     * @param plantAddr
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return List<AddDTO>
+     */
+    List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist, List<DictCityEntity> cityList, String plantAddr, List<String> errorMsgList, boolean isUpdatePart);
 }

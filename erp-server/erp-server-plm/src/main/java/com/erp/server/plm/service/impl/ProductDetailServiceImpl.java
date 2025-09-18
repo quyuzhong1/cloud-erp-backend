@@ -76,6 +76,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.ProductConstant;
@@ -296,6 +297,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SkuStdCostDetailService skuStdCostDetailService;
+
+    @Resource
+    private SkuStdCostService skuStdCostService;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -1987,7 +1997,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(String skuId) {
         ProductDetailEntity detailEntity = this.getById(skuId);
         ProductDetailEntity oldEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
@@ -3558,7 +3568,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
@@ -4031,7 +4041,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt) {
         ProductDetailEntity entity = this.getById(dto.getId());
         if (!entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
@@ -4120,6 +4130,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //审核通过
         if (dto.getType().equals(ApproveType.PASS)) {
+            Integer count = skuStdCostService.lambdaQuery()
+                    .eq(SkuStdCostEntity::getSkuId, entity.getId())
+                    .count();
+            if (count <= 0) {
+                // 查询sku最新出库时间
+                Map<String, LocalDate> lastOutstockDateMap = soOutstockFeign.mapLastOutstockDateBySkuIds(Arrays.asList(entity.getId()));
+                // 审核通过添加SKU标准成本记录
+                skuStdCostDetailService.checkAndAddFirst(entity, lastOutstockDateMap.getOrDefault(entity.getId(), null));
+            }
+
+
             //审核通过 重算目的国申报单价
             resetDestDeclarePrice(Collections.singletonList(entity), Boolean.FALSE);
             //发送通知
@@ -4162,7 +4183,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(ProductDetailEntity entity) {
         //已审核支持反审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
@@ -4183,7 +4204,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -4209,7 +4230,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean deleteBatch(List<String> ids) {
         List<ProductDetailEntity> entityListt = this.listByIds(ids);
         long count = entityListt.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
@@ -6553,6 +6574,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackAndPurchaseByIds(skuIds);
         return skuList;
     }
 

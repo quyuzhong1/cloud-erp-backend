@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,6 +13,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
+import com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -32,10 +36,7 @@ import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.ThirdWarehouseDeliveryMapper;
 import com.erp.server.wms.rocketmq.consumer.PlatformOutboundConsumerService;
@@ -115,11 +116,13 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity) {
+    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity,Boolean isAddDetail) {
 
         // 生成单号
         boolean save = super.save(entity);
@@ -130,7 +133,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             entity.getDetailEntityList().forEach(v->{
                 v.setMainId(entity.getId());
             });
-            detailService.saveBatch(entity.getDetailEntityList());
+            if(isAddDetail){
+                detailService.saveBatch(entity.getDetailEntityList());
+            }
         }
 
         // 操作日志
@@ -172,6 +177,12 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<SoB2cDetailEntity> soB2cDetailEntityList = generateDeliveryAndOutStockDTO.getDetailEntityList();
         SoB2cDTO.DeliveryWithNotOutboundDTO deliveryWithNotOutboundDTO = generateDeliveryAndOutStockDTO.getDto();
         OverseasProviderWarehouseDTO.ViewDTO viewDTO = generateDeliveryAndOutStockDTO.getOverseasWarehouseDto();
+        //查询是否存在
+        ThirdWarehouseDeliveryEntity exist = service.getLatestBySoId(entity.getId());
+        if(ObjectUtil.isNotEmpty(exist) && exist.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())){
+            log.warn("销售订单{}已存在三方仓发货单{}",entity.getCode(), JSONUtil.toJsonStr(exist));
+            return;
+        }
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
@@ -200,7 +211,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity);
+        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity,true);
 
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
@@ -216,6 +227,12 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @Override
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        dto.getParams().setDynamicDataSource(dynamicDataSource);
         IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> pageData = baseMapper.paging(query, dto.getParams());
         List<ThirdWarehouseDeliveryDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -224,7 +241,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        List<WarehouseEntity> warehouseEntityList = warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
         List<String> errorSoIds = list.stream()
                 .filter(v -> Objects.equals(v.getSignOrderError(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode()))
                 .map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId)
@@ -326,6 +343,8 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO retryOutstock(String id) {
         ThirdWarehouseDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -338,17 +357,64 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (!entity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())) {
             return BatchResultDTO.fail(id, entity.getCode(), "只有已发货才能重新出库");
         }
-        if (soB2cEntity.hasPlatformWarehouseOrder()) {
+        if(CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())){
+            return BatchResultDTO.fail(id, entity.getCode(), "多渠道订单不能重新出库");
+        }
+//        if (CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
+//            //多渠道订单根据配送报告依次生成出库单
+//            List<DmpAmzSoOutstockDetailEntity> list = FeignQuery.create(DmpAmzSoOutstockDetailEntity.class).eq(DmpAmzSoOutstockDetailEntity::getMerchantOrderId, entity.getCode()).list();
+//            if (CollUtil.isEmpty(list)) {
+//                return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 未查到多渠道订单配送报告");
+//            }
+//            return batchBuildMultiChannelOutstock(entity, list);
+//
+//        }else
+            if (soB2cEntity.hasPlatformWarehouseOrder()){
             Boolean result = soB2cFeign.handleSoOutStock(soB2cEntity.getId());
             if (!result) {
                 return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 请查看订单异常");
             }
-        }else{
+        }else {
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
             PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
             platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
             platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
             platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"");
+        }
+        return BatchResultDTO.success();
+    }
+
+    /**
+     * 构建多渠道订单出库
+     * @param entity
+     * @param list
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchBuildMultiChannelOutstock(ThirdWarehouseDeliveryEntity entity, List<DmpAmzSoOutstockDetailEntity> list) {
+        //多渠道订单生成出库单
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soMultiChannelFeign.getSoOutstockGenerateB2cDTO(entity.getCode());
+        if (ObjectUtil.isEmpty(generateB2cDTO)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "重新出库失败, 生成出库单信息缺失");
+        }
+        LinkedList<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+        Map<String, List<DmpAmzSoOutstockDetailEntity>> groupMap = list.stream().collect(Collectors.groupingBy(DmpAmzSoOutstockDetailEntity::getShipmentId));
+        for (Map.Entry<String, List<DmpAmzSoOutstockDetailEntity>> entry : groupMap.entrySet()) {
+            LinkedList<SoOutstockDetailDTO.AddDTO> detailList1 = new LinkedList<>();
+            List<DmpAmzSoOutstockDetailEntity> value = entry.getValue();
+            for (DmpAmzSoOutstockDetailEntity amzSoOutstockDetailEntity : value) {
+                Optional<SoOutstockDetailDTO.AddDTO> first = detailList.stream().filter(v -> v.getSoDetailId().equals(amzSoOutstockDetailEntity.getMerchantOrderItemId())).findFirst();
+                if (first.isPresent()){
+                    SoOutstockDetailDTO.AddDTO addDTO = first.get();
+                    addDTO.setActualQty(Integer.valueOf(amzSoOutstockDetailEntity.getQuantityShipped()));
+                    detailList1.add(addDTO);
+                }
+            }
+            if (CollUtil.isEmpty(detailList1)){
+                continue;
+            }
+            generateB2cDTO.setDetailList(detailList1);
+            soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         }
         return BatchResultDTO.success();
     }
@@ -384,7 +450,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             addDTO.setSourceDetailId(id);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        return service.add(addThirdWarehouseDeliveryEntity);
+        return service.add(addThirdWarehouseDeliveryEntity,false);
 
     }
 

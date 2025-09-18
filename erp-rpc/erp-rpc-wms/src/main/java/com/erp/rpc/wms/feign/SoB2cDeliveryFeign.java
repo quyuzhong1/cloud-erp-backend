@@ -70,7 +70,7 @@ public interface SoB2cDeliveryFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/soB2cDelivery/falseDeliveryBatch")
-    Boolean falseDeliveryBatch(@RequestBody List<String> ids);
+    Boolean falseDeliveryBatch(@RequestBody(required = false) List<String> ids);
 
     /**
      * 根据来源id查询发货单

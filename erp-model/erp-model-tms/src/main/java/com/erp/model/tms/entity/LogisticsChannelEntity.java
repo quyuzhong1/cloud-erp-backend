@@ -241,6 +241,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("is_send_invoice")
     private Boolean isSendInvoice;
 
+    /**
+     * 尾程服务商
+     */
+    @TableField("last_mile_carrier")
+    private String lastMileCarrier;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String FIELD_NAME = "name";

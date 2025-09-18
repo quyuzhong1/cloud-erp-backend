@@ -60,7 +60,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Resource
     private ShopeeProductService shopeeProductService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(ShopAuthDTO.AddDTO addDTO) {
@@ -296,7 +296,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchUpdateShopAuthById(List<ShopAuthEntity> shopAuthEntityList) {
         return this.updateBatchById(shopAuthEntityList);
     }

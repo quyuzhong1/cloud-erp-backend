@@ -24,14 +24,6 @@ public interface AmzBusinessHandleService {
     Boolean checkAndSendSoOutStock(DmpPullSoOutStockDTO dto);
 
 
-    /**
-     * 检查并重推生成其他出库单
-     *
-     * @author Jim
-     * {@code @date:} 2024-03-12
-     */
-    Boolean checkAndSendOtherOutStock(DmpPullOtherOutStockDTO resultDTO);
-
 
     /**
      * 单处理平台仓B2C销售出库单

@@ -334,6 +334,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String platformOrderStatusName;
         /**
+         * 多渠道类型
+         * SoB2cMultiChannelTypeEnum
+         */
+        private String multiChannelType;
+        /**
+         * 多渠道类型名称
+         */
+        private String multiChannelTypeName;
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -2590,6 +2599,7 @@ public class SoB2cDTO implements Serializable {
          * 渠道id
          */
         private String logisticsChannelId;
+        private String logisticsChannelName;
 
         /**
          * 运输单号

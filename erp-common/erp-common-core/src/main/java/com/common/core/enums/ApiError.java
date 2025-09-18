@@ -851,6 +851,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
     ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{}】未找到数量【{}】的供应商报价信息"),
+    ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING(98131,"状态在审核中不可更新"),
 
 
     /**
@@ -1586,7 +1587,7 @@ public enum ApiError implements Serializable {
     ERROR_92162(92162,"合并后的平台订单后过长"),
     ERROR_92163(92163,"只能勾选一个自动提交发货选项"),
     ERROR_92166(92166,"【%s】已生成销售出库单，无法终止；"),
-    ERROR_92167(92167,"要货申请已经生成拣货单完成，无需再次下推"),
+    ERROR_92167(92167,"拣货单未处理无法生成"),
     ERROR_92168(92168,"要货申请已经生成发货单完成，无需再次下推"),
     TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
     ERROR_92169(92169,"sku【{}】在退货通知单中不存在"),

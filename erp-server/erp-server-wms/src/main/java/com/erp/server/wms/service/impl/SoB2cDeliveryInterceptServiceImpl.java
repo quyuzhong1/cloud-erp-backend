@@ -148,6 +148,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Resource
     private WaveListService waveListService;
 
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
@@ -211,12 +214,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
         List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-//        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//        Map<String, String> shopNameMap = new HashMap<>();
-//        if (CollUtil.isNotEmpty(shopIdList)){
-//            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-//            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
-//        }
+        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> shopNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(shopIdList)){
+            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        }
         for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
             //取消状态名称
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
@@ -228,6 +231,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
             //单据类型
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
+            record.setSourceTypeName(SoB2cDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             //产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
@@ -235,7 +239,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 record.setProductName(productDetailEntity.getName());
             }
             //店铺名称
-//            record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
+            record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
         }
     }
 
@@ -252,7 +256,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO logisticsIntercept(String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if(Objects.isNull(entity)){
@@ -260,6 +264,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
         if(HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())){
             throw new ServiceException("发货单已成功拦截，无法重复操作");
+        }
+        if(entity.getSourceType().equals(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode())){
+            throw new ServiceException("发货拦截单来源类型为三方仓，不支持发起物流拦截");
         }
         if(CancelStatusEnum.SUCCESS.getCode().equals(entity.getCancelStatus()) || InterceptStatusEnum.SUCCESS.getCode().equals(entity.getInterceptStatus())){
             throw new ServiceException("订单取消状态：取消成功或物流拦截状态：拦截成功，不支持再次发起物流拦截");
@@ -355,11 +362,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
+
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
+        }
+        if( SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
+            throw new ServiceException(ApiError.ERROR_99122, "发货拦截单来源类型为三方仓，不支持确认");
         }
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
@@ -960,6 +971,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Collections.singletonList(soB2cDeliveryInterceptEntity.getSourceId()));
         if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
+        }else{
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(soB2cDeliveryInterceptEntity.getSourceId());
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                soB2cDeliveryInterceptEntity.setSoDeliveryCode(thirdWarehouseDeliveryEntity.getCode());
+                soB2cDeliveryInterceptEntity.setDeliveryId(thirdWarehouseDeliveryEntity.getId());
+            }
         }
 
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());

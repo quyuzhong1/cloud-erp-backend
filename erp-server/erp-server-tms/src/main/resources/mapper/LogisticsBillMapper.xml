@@ -58,6 +58,7 @@
         lb.outstock_id AS outstockId,
         lb.outstock_code AS outstockCode,
         lb.channel_id AS channelId,
+        lb.channel_name AS channelName,
         lb.order_time AS orderTime,
         lb.delivery_time AS deliveryTime,
         lb.transport_no AS transportNo,

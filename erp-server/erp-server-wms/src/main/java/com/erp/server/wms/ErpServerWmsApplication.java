@@ -13,8 +13,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @author yl
  */
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 @EnableAsync
 @ServletComponentScan

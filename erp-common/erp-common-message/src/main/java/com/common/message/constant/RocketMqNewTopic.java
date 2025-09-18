@@ -148,6 +148,10 @@ public class RocketMqNewTopic {
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_topic";
+    /**
+     * 新中台平台订单
+     */
+    public static final String DMP_FULFILL_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_topic";
 
     /**
      * 新中台平台销售出库单

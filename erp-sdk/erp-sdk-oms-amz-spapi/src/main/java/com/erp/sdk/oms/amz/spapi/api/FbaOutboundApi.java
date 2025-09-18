@@ -10,28 +10,58 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.api;
 
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
-import com.erp.sdk.oms.amz.spapi.client.*;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.*;
+import com.erp.sdk.oms.amz.spapi.client.ApiCallback;
+import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.client.Configuration;
+import com.erp.sdk.oms.amz.spapi.client.Pair;
+import com.erp.sdk.oms.amz.spapi.client.ProgressRequestBody;
+import com.erp.sdk.oms.amz.spapi.client.ProgressResponseBody;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+
 import com.google.gson.reflect.TypeToken;
-import lombok.Getter;
-import okhttp3.Call;
-import okhttp3.Interceptor;
-import okhttp3.Response;
-import java.time.OffsetDateTime;
 
 import java.io.IOException;
+
+
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CancelFulfillmentOrderResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentReturnRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentReturnResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetDeliveryOffersRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetDeliveryOffersResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFeatureInventoryResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFeatureSkuResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFeaturesResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentOrderResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentPreviewRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentPreviewResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetPackageTrackingDetailsResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ListAllFulfillmentOrdersResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ListReturnReasonCodesResponse;
+import java.time.OffsetDateTime;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.SubmitFulfillmentOrderStatusUpdateRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.SubmitFulfillmentOrderStatusUpdateResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.UpdateFulfillmentOrderRequest;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.UpdateFulfillmentOrderResponse;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAccessTokenCache;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAccessTokenCacheImpl;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationSigner;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 
-@Getter
 public class FbaOutboundApi {
     private ApiClient apiClient;
 
@@ -41,6 +71,10 @@ public class FbaOutboundApi {
 
     public FbaOutboundApi(ApiClient apiClient) {
         this.apiClient = apiClient;
+    }
+
+    public ApiClient getApiClient() {
+        return apiClient;
     }
 
     public void setApiClient(ApiClient apiClient) {
@@ -54,8 +88,9 @@ public class FbaOutboundApi {
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call cancelFulfillmentOrderCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call cancelFulfillmentOrderCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -76,16 +111,16 @@ public class FbaOutboundApi {
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -98,53 +133,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call cancelFulfillmentOrderValidateBeforeCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call cancelFulfillmentOrderValidateBeforeCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'sellerFulfillmentOrderId' is set
         if (sellerFulfillmentOrderId == null) {
             throw new ApiException("Missing the required parameter 'sellerFulfillmentOrderId' when calling cancelFulfillmentOrder(Async)");
         }
-        
 
-        Call call = cancelFulfillmentOrderCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = cancelFulfillmentOrderCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return CancelFulfillmentOrderResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public CancelFulfillmentOrderResponse cancelFulfillmentOrder(String sellerFulfillmentOrderId) throws ApiException {
+    public CancelFulfillmentOrderResponse cancelFulfillmentOrder(String sellerFulfillmentOrderId) throws ApiException,LWAException {
         ApiResponse<CancelFulfillmentOrderResponse> resp = cancelFulfillmentOrderWithHttpInfo(sellerFulfillmentOrderId);
         return resp.getData();
     }
 
     /**
      * 
-     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return ApiResponse&lt;CancelFulfillmentOrderResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderWithHttpInfo(String sellerFulfillmentOrderId) throws ApiException {
-        Call call = cancelFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, null, null);
+    public ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderWithHttpInfo(String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        okhttp3.Call call = cancelFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, null, null);
         Type localVarReturnType = new TypeToken<CancelFulfillmentOrderResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Requests that Amazon stop attempting to fulfill the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call cancelFulfillmentOrderAsync(String sellerFulfillmentOrderId, final ApiCallback<CancelFulfillmentOrderResponse> callback) throws ApiException {
+    public okhttp3.Call cancelFulfillmentOrderAsync(String sellerFulfillmentOrderId, final ApiCallback<CancelFulfillmentOrderResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -165,20 +201,21 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = cancelFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = cancelFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<CancelFulfillmentOrderResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for createFulfillmentOrder
-     * @param body  (required)
+     * @param body CreateFulfillmentOrderRequest parameter (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call createFulfillmentOrderCall(CreateFulfillmentOrderRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call createFulfillmentOrderCall(CreateFulfillmentOrderRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -204,10 +241,10 @@ public class FbaOutboundApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -220,53 +257,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call createFulfillmentOrderValidateBeforeCall(CreateFulfillmentOrderRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call createFulfillmentOrderValidateBeforeCall(CreateFulfillmentOrderRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling createFulfillmentOrder(Async)");
         }
-        
 
-        Call call = createFulfillmentOrderCall(body, progressListener, progressRequestListener);
+        okhttp3.Call call = createFulfillmentOrderCall(body, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Requests that Amazon ship items from the seller&#39;s inventory in Amazon&#39;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Requests that Amazon ship items from the seller&#x27;s inventory in Amazon&#x27;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
+     * @param body CreateFulfillmentOrderRequest parameter (required)
      * @return CreateFulfillmentOrderResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public CreateFulfillmentOrderResponse createFulfillmentOrder(CreateFulfillmentOrderRequest body) throws ApiException {
+    public CreateFulfillmentOrderResponse createFulfillmentOrder(CreateFulfillmentOrderRequest body) throws ApiException,LWAException {
         ApiResponse<CreateFulfillmentOrderResponse> resp = createFulfillmentOrderWithHttpInfo(body);
         return resp.getData();
     }
 
     /**
      * 
-     * Requests that Amazon ship items from the seller&#39;s inventory in Amazon&#39;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Requests that Amazon ship items from the seller&#x27;s inventory in Amazon&#x27;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
+     * @param body CreateFulfillmentOrderRequest parameter (required)
      * @return ApiResponse&lt;CreateFulfillmentOrderResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<CreateFulfillmentOrderResponse> createFulfillmentOrderWithHttpInfo(CreateFulfillmentOrderRequest body) throws ApiException {
-        Call call = createFulfillmentOrderValidateBeforeCall(body, null, null);
+    public ApiResponse<CreateFulfillmentOrderResponse> createFulfillmentOrderWithHttpInfo(CreateFulfillmentOrderRequest body) throws ApiException,LWAException {
+        okhttp3.Call call = createFulfillmentOrderValidateBeforeCall(body, null, null);
         Type localVarReturnType = new TypeToken<CreateFulfillmentOrderResponse>(){}.getType();
-        return apiClient.execute(call, localVarReturnType);
+        return apiClient.execute(call);
     }
 
     /**
      *  (asynchronously)
-     * Requests that Amazon ship items from the seller&#39;s inventory in Amazon&#39;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Requests that Amazon ship items from the seller&#x27;s inventory in Amazon&#x27;s fulfillment network to a destination address.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
+     * @param body CreateFulfillmentOrderRequest parameter (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call createFulfillmentOrderAsync(CreateFulfillmentOrderRequest body, final ApiCallback<CreateFulfillmentOrderResponse> callback) throws ApiException {
+    public okhttp3.Call createFulfillmentOrderAsync(CreateFulfillmentOrderRequest body, final ApiCallback<CreateFulfillmentOrderResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -287,21 +325,22 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = createFulfillmentOrderValidateBeforeCall(body, progressListener, progressRequestListener);
+        okhttp3.Call call = createFulfillmentOrderValidateBeforeCall(body, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<CreateFulfillmentOrderResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for createFulfillmentReturn
-     * @param body  (required)
-     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct SellerFulfillmentOrderId value based on the buyer&#39;s request to return items. (required)
+     * @param body CreateFulfillmentReturnRequest parameter (required)
+     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct &#x60;SellerFulfillmentOrderId&#x60; value based on the buyer&#x27;s request to return items. (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call createFulfillmentReturnCall(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call createFulfillmentReturnCall(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -316,7 +355,7 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
@@ -328,10 +367,10 @@ public class FbaOutboundApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -344,61 +383,61 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call createFulfillmentReturnValidateBeforeCall(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call createFulfillmentReturnValidateBeforeCall(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling createFulfillmentReturn(Async)");
         }
-        
         // verify the required parameter 'sellerFulfillmentOrderId' is set
         if (sellerFulfillmentOrderId == null) {
             throw new ApiException("Missing the required parameter 'sellerFulfillmentOrderId' when calling createFulfillmentReturn(Async)");
         }
-        
 
-        Call call = createFulfillmentReturnCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = createFulfillmentReturnCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Creates a fulfillment return.   **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
-     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct SellerFulfillmentOrderId value based on the buyer&#39;s request to return items. (required)
+     * Creates a fulfillment return.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body CreateFulfillmentReturnRequest parameter (required)
+     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct &#x60;SellerFulfillmentOrderId&#x60; value based on the buyer&#x27;s request to return items. (required)
      * @return CreateFulfillmentReturnResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public CreateFulfillmentReturnResponse createFulfillmentReturn(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId) throws ApiException {
+    public CreateFulfillmentReturnResponse createFulfillmentReturn(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
         ApiResponse<CreateFulfillmentReturnResponse> resp = createFulfillmentReturnWithHttpInfo(body, sellerFulfillmentOrderId);
         return resp.getData();
     }
 
     /**
      * 
-     * Creates a fulfillment return.   **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
-     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct SellerFulfillmentOrderId value based on the buyer&#39;s request to return items. (required)
+     * Creates a fulfillment return.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body CreateFulfillmentReturnRequest parameter (required)
+     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct &#x60;SellerFulfillmentOrderId&#x60; value based on the buyer&#x27;s request to return items. (required)
      * @return ApiResponse&lt;CreateFulfillmentReturnResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<CreateFulfillmentReturnResponse> createFulfillmentReturnWithHttpInfo(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId) throws ApiException {
-        Call call = createFulfillmentReturnValidateBeforeCall(body, sellerFulfillmentOrderId, null, null);
+    public ApiResponse<CreateFulfillmentReturnResponse> createFulfillmentReturnWithHttpInfo(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        okhttp3.Call call = createFulfillmentReturnValidateBeforeCall(body, sellerFulfillmentOrderId, null, null);
         Type localVarReturnType = new TypeToken<CreateFulfillmentReturnResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Creates a fulfillment return.   **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
-     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct SellerFulfillmentOrderId value based on the buyer&#39;s request to return items. (required)
+     * Creates a fulfillment return.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body CreateFulfillmentReturnRequest parameter (required)
+     * @param sellerFulfillmentOrderId An identifier assigned by the seller to the fulfillment order at the time it was created. The seller uses their own records to find the correct &#x60;SellerFulfillmentOrderId&#x60; value based on the buyer&#x27;s request to return items. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call createFulfillmentReturnAsync(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ApiCallback<CreateFulfillmentReturnResponse> callback) throws ApiException {
+    public okhttp3.Call createFulfillmentReturnAsync(CreateFulfillmentReturnRequest body, String sellerFulfillmentOrderId, final ApiCallback<CreateFulfillmentReturnResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -419,8 +458,132 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = createFulfillmentReturnValidateBeforeCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = createFulfillmentReturnValidateBeforeCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<CreateFulfillmentReturnResponse>(){}.getType();
+        apiClient.executeAsync(call, localVarReturnType, callback);
+        return call;
+    }
+    /**
+     * Build call for deliveryOffers
+     * @param body GetDeliveryOffersRequest parameter (required)
+     * @param progressListener Progress listener
+     * @param progressRequestListener Progress request listener
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call deliveryOffersCall(GetDeliveryOffersRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        Object localVarPostBody = body;
+
+        // create path and map variables
+        String localVarPath = "/fba/outbound/2020-07-01/deliveryOffers";
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json", "payload"
+        };
+        final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
+
+        final String[] localVarContentTypes = {
+            "application/json"
+        };
+        final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+        localVarHeaderParams.put("Content-Type", localVarContentType);
+
+        if(progressListener != null) {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
+                @Override
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                    .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                    .build();
+                }
+            });
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return apiClient.buildCall(localVarPath, "POST", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarFormParams, localVarAuthNames, progressRequestListener);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call deliveryOffersValidateBeforeCall(GetDeliveryOffersRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        // verify the required parameter 'body' is set
+        if (body == null) {
+            throw new ApiException("Missing the required parameter 'body' when calling deliveryOffers(Async)");
+        }
+
+        okhttp3.Call call = deliveryOffersCall(body, progressListener, progressRequestListener);
+        return call;
+
+    }
+
+    /**
+     * 
+     * Returns delivery options that include an estimated delivery date and offer expiration, based on criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetDeliveryOffersRequest parameter (required)
+     * @return GetDeliveryOffersResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public GetDeliveryOffersResponse deliveryOffers(GetDeliveryOffersRequest body) throws ApiException,LWAException {
+        ApiResponse<GetDeliveryOffersResponse> resp = deliveryOffersWithHttpInfo(body);
+        return resp.getData();
+    }
+
+    /**
+     * 
+     * Returns delivery options that include an estimated delivery date and offer expiration, based on criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetDeliveryOffersRequest parameter (required)
+     * @return ApiResponse&lt;GetDeliveryOffersResponse&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public ApiResponse<GetDeliveryOffersResponse> deliveryOffersWithHttpInfo(GetDeliveryOffersRequest body) throws ApiException,LWAException {
+        okhttp3.Call call = deliveryOffersValidateBeforeCall(body, null, null);
+        Type localVarReturnType = new TypeToken<GetDeliveryOffersResponse>(){}.getType();
+        return apiClient.execute(call, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * Returns delivery options that include an estimated delivery date and offer expiration, based on criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetDeliveryOffersRequest parameter (required)
+     * @param callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call deliveryOffersAsync(GetDeliveryOffersRequest body, final ApiCallback<GetDeliveryOffersResponse> callback) throws ApiException, LWAException {
+
+        ProgressResponseBody.ProgressListener progressListener = null;
+        ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
+
+        if (callback != null) {
+            progressListener = new ProgressResponseBody.ProgressListener() {
+                @Override
+                public void update(long bytesRead, long contentLength, boolean done) {
+                    callback.onDownloadProgress(bytesRead, contentLength, done);
+                }
+            };
+
+            progressRequestListener = new ProgressRequestBody.ProgressRequestListener() {
+                @Override
+                public void onRequestProgress(long bytesWritten, long contentLength, boolean done) {
+                    callback.onUploadProgress(bytesWritten, contentLength, done);
+                }
+            };
+        }
+
+        okhttp3.Call call = deliveryOffersValidateBeforeCall(body, progressListener, progressRequestListener);
+        Type localVarReturnType = new TypeToken<GetDeliveryOffersResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
@@ -429,12 +592,14 @@ public class FbaOutboundApi {
      * @param marketplaceId The marketplace for which to return a list of the inventory that is eligible for the specified feature. (required)
      * @param featureName The name of the feature for which to return a list of eligible inventory. (required)
      * @param nextToken A string token returned in the response to your previous request that is used to return the next response page. A value of null will return the first page. (optional)
+     * @param queryStartDate A date that you can use to select inventory that has been updated since a specified date. An update is defined as any change in feature-enabled inventory availability. The date must be in the format yyyy-MM-ddTHH:mm:ss.sssZ (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeatureInventoryCall(String marketplaceId, String featureName, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getFeatureInventoryCall(String marketplaceId, String featureName, String nextToken, OffsetDateTime queryStartDate, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -447,28 +612,30 @@ public class FbaOutboundApi {
         localVarQueryParams.addAll(apiClient.parameterToPair("marketplaceId", marketplaceId));
         if (nextToken != null)
         localVarQueryParams.addAll(apiClient.parameterToPair("nextToken", nextToken));
+        if (queryStartDate != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("queryStartDate", queryStartDate));
 
         Map<String, String> localVarHeaderParams = new HashMap<String, String>();
 
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -481,64 +648,67 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getFeatureInventoryValidateBeforeCall(String marketplaceId, String featureName, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getFeatureInventoryValidateBeforeCall(String marketplaceId, String featureName, String nextToken, OffsetDateTime queryStartDate, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'marketplaceId' is set
         if (marketplaceId == null) {
             throw new ApiException("Missing the required parameter 'marketplaceId' when calling getFeatureInventory(Async)");
         }
-        
         // verify the required parameter 'featureName' is set
         if (featureName == null) {
             throw new ApiException("Missing the required parameter 'featureName' when calling getFeatureInventory(Async)");
         }
-        
 
-        Call call = getFeatureInventoryCall(marketplaceId, featureName, nextToken, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeatureInventoryCall(marketplaceId, featureName, nextToken, queryStartDate, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)..
      * @param marketplaceId The marketplace for which to return a list of the inventory that is eligible for the specified feature. (required)
      * @param featureName The name of the feature for which to return a list of eligible inventory. (required)
      * @param nextToken A string token returned in the response to your previous request that is used to return the next response page. A value of null will return the first page. (optional)
+     * @param queryStartDate A date that you can use to select inventory that has been updated since a specified date. An update is defined as any change in feature-enabled inventory availability. The date must be in the format yyyy-MM-ddTHH:mm:ss.sssZ (optional)
      * @return GetFeatureInventoryResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetFeatureInventoryResponse getFeatureInventory(String marketplaceId, String featureName, String nextToken) throws ApiException {
-        ApiResponse<GetFeatureInventoryResponse> resp = getFeatureInventoryWithHttpInfo(marketplaceId, featureName, nextToken);
+    public GetFeatureInventoryResponse getFeatureInventory(String marketplaceId, String featureName, String nextToken, OffsetDateTime queryStartDate) throws ApiException,LWAException {
+        ApiResponse<GetFeatureInventoryResponse> resp = getFeatureInventoryWithHttpInfo(marketplaceId, featureName, nextToken, queryStartDate);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)..
      * @param marketplaceId The marketplace for which to return a list of the inventory that is eligible for the specified feature. (required)
      * @param featureName The name of the feature for which to return a list of eligible inventory. (required)
      * @param nextToken A string token returned in the response to your previous request that is used to return the next response page. A value of null will return the first page. (optional)
+     * @param queryStartDate A date that you can use to select inventory that has been updated since a specified date. An update is defined as any change in feature-enabled inventory availability. The date must be in the format yyyy-MM-ddTHH:mm:ss.sssZ (optional)
      * @return ApiResponse&lt;GetFeatureInventoryResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetFeatureInventoryResponse> getFeatureInventoryWithHttpInfo(String marketplaceId, String featureName, String nextToken) throws ApiException {
-        Call call = getFeatureInventoryValidateBeforeCall(marketplaceId, featureName, nextToken, null, null);
+    public ApiResponse<GetFeatureInventoryResponse> getFeatureInventoryWithHttpInfo(String marketplaceId, String featureName, String nextToken, OffsetDateTime queryStartDate) throws ApiException,LWAException {
+        okhttp3.Call call = getFeatureInventoryValidateBeforeCall(marketplaceId, featureName, nextToken, queryStartDate, null, null);
         Type localVarReturnType = new TypeToken<GetFeatureInventoryResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of inventory items that are eligible for the fulfillment feature you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)..
      * @param marketplaceId The marketplace for which to return a list of the inventory that is eligible for the specified feature. (required)
      * @param featureName The name of the feature for which to return a list of eligible inventory. (required)
      * @param nextToken A string token returned in the response to your previous request that is used to return the next response page. A value of null will return the first page. (optional)
+     * @param queryStartDate A date that you can use to select inventory that has been updated since a specified date. An update is defined as any change in feature-enabled inventory availability. The date must be in the format yyyy-MM-ddTHH:mm:ss.sssZ (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeatureInventoryAsync(String marketplaceId, String featureName, String nextToken, final ApiCallback<GetFeatureInventoryResponse> callback) throws ApiException {
+    public okhttp3.Call getFeatureInventoryAsync(String marketplaceId, String featureName, String nextToken, OffsetDateTime queryStartDate, final ApiCallback<GetFeatureInventoryResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -559,7 +729,7 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getFeatureInventoryValidateBeforeCall(marketplaceId, featureName, nextToken, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeatureInventoryValidateBeforeCall(marketplaceId, featureName, nextToken, queryStartDate, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetFeatureInventoryResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -568,13 +738,14 @@ public class FbaOutboundApi {
      * Build call for getFeatureSKU
      * @param marketplaceId The marketplace for which to return the count. (required)
      * @param featureName The name of the feature. (required)
-     * @param sellerSku Used to identify an item in the given marketplace. SellerSKU is qualified by the seller&#39;s SellerId, which is included with every operation that you submit. (required)
+     * @param sellerSku Used to identify an item in the given marketplace. &#x60;SellerSKU&#x60; is qualified by the seller&#x27;s &#x60;SellerId&#x60;, which is included with every operation that you submit. (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeatureSKUCall(String marketplaceId, String featureName, String sellerSku, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getFeatureSKUCall(String marketplaceId, String featureName, String sellerSku, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -592,22 +763,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -620,69 +791,68 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getFeatureSKUValidateBeforeCall(String marketplaceId, String featureName, String sellerSku, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getFeatureSKUValidateBeforeCall(String marketplaceId, String featureName, String sellerSku, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'marketplaceId' is set
         if (marketplaceId == null) {
             throw new ApiException("Missing the required parameter 'marketplaceId' when calling getFeatureSKU(Async)");
         }
-        
         // verify the required parameter 'featureName' is set
         if (featureName == null) {
             throw new ApiException("Missing the required parameter 'featureName' when calling getFeatureSKU(Async)");
         }
-        
         // verify the required parameter 'sellerSku' is set
         if (sellerSku == null) {
             throw new ApiException("Missing the required parameter 'sellerSku' when calling getFeatureSKU(Async)");
         }
-        
 
-        Call call = getFeatureSKUCall(marketplaceId, featureName, sellerSku, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeatureSKUCall(marketplaceId, featureName, sellerSku, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#39;t eligible, the response will contain an empty skuInfo object.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#x27;t eligible, the response will contain an empty skuInfo object. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the count. (required)
      * @param featureName The name of the feature. (required)
-     * @param sellerSku Used to identify an item in the given marketplace. SellerSKU is qualified by the seller&#39;s SellerId, which is included with every operation that you submit. (required)
+     * @param sellerSku Used to identify an item in the given marketplace. &#x60;SellerSKU&#x60; is qualified by the seller&#x27;s &#x60;SellerId&#x60;, which is included with every operation that you submit. (required)
      * @return GetFeatureSkuResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetFeatureSkuResponse getFeatureSKU(String marketplaceId, String featureName, String sellerSku) throws ApiException {
+    public GetFeatureSkuResponse getFeatureSKU(String marketplaceId, String featureName, String sellerSku) throws ApiException,LWAException {
         ApiResponse<GetFeatureSkuResponse> resp = getFeatureSKUWithHttpInfo(marketplaceId, featureName, sellerSku);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#39;t eligible, the response will contain an empty skuInfo object.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#x27;t eligible, the response will contain an empty skuInfo object. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the count. (required)
      * @param featureName The name of the feature. (required)
-     * @param sellerSku Used to identify an item in the given marketplace. SellerSKU is qualified by the seller&#39;s SellerId, which is included with every operation that you submit. (required)
+     * @param sellerSku Used to identify an item in the given marketplace. &#x60;SellerSKU&#x60; is qualified by the seller&#x27;s &#x60;SellerId&#x60;, which is included with every operation that you submit. (required)
      * @return ApiResponse&lt;GetFeatureSkuResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetFeatureSkuResponse> getFeatureSKUWithHttpInfo(String marketplaceId, String featureName, String sellerSku) throws ApiException {
-        Call call = getFeatureSKUValidateBeforeCall(marketplaceId, featureName, sellerSku, null, null);
+    public ApiResponse<GetFeatureSkuResponse> getFeatureSKUWithHttpInfo(String marketplaceId, String featureName, String sellerSku) throws ApiException,LWAException {
+        okhttp3.Call call = getFeatureSKUValidateBeforeCall(marketplaceId, featureName, sellerSku, null, null);
         Type localVarReturnType = new TypeToken<GetFeatureSkuResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#39;t eligible, the response will contain an empty skuInfo object.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the number of items with the sellerSKU you specify that can have orders fulfilled using the specified feature. Note that if the sellerSKU isn&#x27;t eligible, the response will contain an empty skuInfo object. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the count. (required)
      * @param featureName The name of the feature. (required)
-     * @param sellerSku Used to identify an item in the given marketplace. SellerSKU is qualified by the seller&#39;s SellerId, which is included with every operation that you submit. (required)
+     * @param sellerSku Used to identify an item in the given marketplace. &#x60;SellerSKU&#x60; is qualified by the seller&#x27;s &#x60;SellerId&#x60;, which is included with every operation that you submit. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeatureSKUAsync(String marketplaceId, String featureName, String sellerSku, final ApiCallback<GetFeatureSkuResponse> callback) throws ApiException {
+    public okhttp3.Call getFeatureSKUAsync(String marketplaceId, String featureName, String sellerSku, final ApiCallback<GetFeatureSkuResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -703,7 +873,7 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getFeatureSKUValidateBeforeCall(marketplaceId, featureName, sellerSku, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeatureSKUValidateBeforeCall(marketplaceId, featureName, sellerSku, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetFeatureSkuResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -715,8 +885,9 @@ public class FbaOutboundApi {
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeaturesCall(String marketplaceId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getFeaturesCall(String marketplaceId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -732,22 +903,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -760,53 +931,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getFeaturesValidateBeforeCall(String marketplaceId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getFeaturesValidateBeforeCall(String marketplaceId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'marketplaceId' is set
         if (marketplaceId == null) {
             throw new ApiException("Missing the required parameter 'marketplaceId' when calling getFeatures(Async)");
         }
-        
 
-        Call call = getFeaturesCall(marketplaceId, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeaturesCall(marketplaceId, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the list of features. (required)
      * @return GetFeaturesResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetFeaturesResponse getFeatures(String marketplaceId) throws ApiException {
+    public GetFeaturesResponse getFeatures(String marketplaceId) throws ApiException,LWAException {
         ApiResponse<GetFeaturesResponse> resp = getFeaturesWithHttpInfo(marketplaceId);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the list of features. (required)
      * @return ApiResponse&lt;GetFeaturesResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetFeaturesResponse> getFeaturesWithHttpInfo(String marketplaceId) throws ApiException {
-        Call call = getFeaturesValidateBeforeCall(marketplaceId, null, null);
+    public ApiResponse<GetFeaturesResponse> getFeaturesWithHttpInfo(String marketplaceId) throws ApiException,LWAException {
+        okhttp3.Call call = getFeaturesValidateBeforeCall(marketplaceId, null, null);
         Type localVarReturnType = new TypeToken<GetFeaturesResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of features available for Multi-Channel Fulfillment orders in the marketplace you specify, and whether the seller for which you made the call is enrolled for each feature.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param marketplaceId The marketplace for which to return the list of features. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFeaturesAsync(String marketplaceId, final ApiCallback<GetFeaturesResponse> callback) throws ApiException {
+    public okhttp3.Call getFeaturesAsync(String marketplaceId, final ApiCallback<GetFeaturesResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -827,7 +999,7 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getFeaturesValidateBeforeCall(marketplaceId, progressListener, progressRequestListener);
+        okhttp3.Call call = getFeaturesValidateBeforeCall(marketplaceId, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetFeaturesResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -839,8 +1011,9 @@ public class FbaOutboundApi {
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFulfillmentOrderCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getFulfillmentOrderCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -855,22 +1028,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -883,53 +1056,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getFulfillmentOrderValidateBeforeCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getFulfillmentOrderValidateBeforeCall(String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'sellerFulfillmentOrderId' is set
         if (sellerFulfillmentOrderId == null) {
             throw new ApiException("Missing the required parameter 'sellerFulfillmentOrderId' when calling getFulfillmentOrder(Async)");
         }
-        
 
-        Call call = getFulfillmentOrderCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = getFulfillmentOrderCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return GetFulfillmentOrderResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetFulfillmentOrderResponse getFulfillmentOrder(String sellerFulfillmentOrderId) throws ApiException {
+    public GetFulfillmentOrderResponse getFulfillmentOrder(String sellerFulfillmentOrderId) throws ApiException,LWAException {
         ApiResponse<GetFulfillmentOrderResponse> resp = getFulfillmentOrderWithHttpInfo(sellerFulfillmentOrderId);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return ApiResponse&lt;GetFulfillmentOrderResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetFulfillmentOrderResponse> getFulfillmentOrderWithHttpInfo(String sellerFulfillmentOrderId) throws ApiException {
-        Call call = getFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, null, null);
+    public ApiResponse<GetFulfillmentOrderResponse> getFulfillmentOrderWithHttpInfo(String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        okhttp3.Call call = getFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, null, null);
         Type localVarReturnType = new TypeToken<GetFulfillmentOrderResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns the fulfillment order indicated by the specified order identifier.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFulfillmentOrderAsync(String sellerFulfillmentOrderId, final ApiCallback<GetFulfillmentOrderResponse> callback) throws ApiException {
+    public okhttp3.Call getFulfillmentOrderAsync(String sellerFulfillmentOrderId, final ApiCallback<GetFulfillmentOrderResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -950,20 +1124,21 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = getFulfillmentOrderValidateBeforeCall(sellerFulfillmentOrderId, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetFulfillmentOrderResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for getFulfillmentPreview
-     * @param body  (required)
+     * @param body GetFulfillmentPreviewRequest parameter (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFulfillmentPreviewCall(GetFulfillmentPreviewRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getFulfillmentPreviewCall(GetFulfillmentPreviewRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -977,7 +1152,7 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
@@ -989,10 +1164,10 @@ public class FbaOutboundApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -1005,53 +1180,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getFulfillmentPreviewValidateBeforeCall(GetFulfillmentPreviewRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getFulfillmentPreviewValidateBeforeCall(GetFulfillmentPreviewRequest body, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling getFulfillmentPreview(Async)");
         }
-        
 
-        Call call = getFulfillmentPreviewCall(body, progressListener, progressRequestListener);
+        okhttp3.Call call = getFulfillmentPreviewCall(body, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetFulfillmentPreviewRequest parameter (required)
      * @return GetFulfillmentPreviewResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetFulfillmentPreviewResponse getFulfillmentPreview(GetFulfillmentPreviewRequest body) throws ApiException {
+    public GetFulfillmentPreviewResponse getFulfillmentPreview(GetFulfillmentPreviewRequest body) throws ApiException,LWAException {
         ApiResponse<GetFulfillmentPreviewResponse> resp = getFulfillmentPreviewWithHttpInfo(body);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetFulfillmentPreviewRequest parameter (required)
      * @return ApiResponse&lt;GetFulfillmentPreviewResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetFulfillmentPreviewResponse> getFulfillmentPreviewWithHttpInfo(GetFulfillmentPreviewRequest body) throws ApiException {
-        Call call = getFulfillmentPreviewValidateBeforeCall(body, null, null);
+    public ApiResponse<GetFulfillmentPreviewResponse> getFulfillmentPreviewWithHttpInfo(GetFulfillmentPreviewRequest body) throws ApiException,LWAException {
+        okhttp3.Call call = getFulfillmentPreviewValidateBeforeCall(body, null, null);
         Type localVarReturnType = new TypeToken<GetFulfillmentPreviewResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Returns a list of fulfillment order previews based on shipping criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body GetFulfillmentPreviewRequest parameter (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getFulfillmentPreviewAsync(GetFulfillmentPreviewRequest body, final ApiCallback<GetFulfillmentPreviewResponse> callback) throws ApiException {
+    public okhttp3.Call getFulfillmentPreviewAsync(GetFulfillmentPreviewRequest body, final ApiCallback<GetFulfillmentPreviewResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1072,20 +1248,21 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getFulfillmentPreviewValidateBeforeCall(body, progressListener, progressRequestListener);
+        okhttp3.Call call = getFulfillmentPreviewValidateBeforeCall(body, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetFulfillmentPreviewResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for getPackageTrackingDetails
-     * @param packageNumber The unencrypted package identifier returned by the getFulfillmentOrder operation. (required)
+     * @param packageNumber The unencrypted package identifier returned by the &#x60;getFulfillmentOrder&#x60; operation. (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getPackageTrackingDetailsCall(Integer packageNumber, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getPackageTrackingDetailsCall(Integer packageNumber, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1101,22 +1278,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -1129,53 +1306,54 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getPackageTrackingDetailsValidateBeforeCall(Integer packageNumber, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getPackageTrackingDetailsValidateBeforeCall(Integer packageNumber, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'packageNumber' is set
         if (packageNumber == null) {
             throw new ApiException("Missing the required parameter 'packageNumber' when calling getPackageTrackingDetails(Async)");
         }
-        
 
-        Call call = getPackageTrackingDetailsCall(packageNumber, progressListener, progressRequestListener);
+        okhttp3.Call call = getPackageTrackingDetailsCall(packageNumber, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param packageNumber The unencrypted package identifier returned by the getFulfillmentOrder operation. (required)
+     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param packageNumber The unencrypted package identifier returned by the &#x60;getFulfillmentOrder&#x60; operation. (required)
      * @return GetPackageTrackingDetailsResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public GetPackageTrackingDetailsResponse getPackageTrackingDetails(Integer packageNumber) throws ApiException {
+    public GetPackageTrackingDetailsResponse getPackageTrackingDetails(Integer packageNumber) throws ApiException,LWAException {
         ApiResponse<GetPackageTrackingDetailsResponse> resp = getPackageTrackingDetailsWithHttpInfo(packageNumber);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param packageNumber The unencrypted package identifier returned by the getFulfillmentOrder operation. (required)
+     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param packageNumber The unencrypted package identifier returned by the &#x60;getFulfillmentOrder&#x60; operation. (required)
      * @return ApiResponse&lt;GetPackageTrackingDetailsResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<GetPackageTrackingDetailsResponse> getPackageTrackingDetailsWithHttpInfo(Integer packageNumber) throws ApiException {
-        Call call = getPackageTrackingDetailsValidateBeforeCall(packageNumber, null, null);
+    public ApiResponse<GetPackageTrackingDetailsResponse> getPackageTrackingDetailsWithHttpInfo(Integer packageNumber) throws ApiException,LWAException {
+        okhttp3.Call call = getPackageTrackingDetailsValidateBeforeCall(packageNumber, null, null);
         Type localVarReturnType = new TypeToken<GetPackageTrackingDetailsResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param packageNumber The unencrypted package identifier returned by the getFulfillmentOrder operation. (required)
+     * Returns delivery tracking information for a package in an outbound shipment for a Multi-Channel Fulfillment order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param packageNumber The unencrypted package identifier returned by the &#x60;getFulfillmentOrder&#x60; operation. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getPackageTrackingDetailsAsync(Integer packageNumber, final ApiCallback<GetPackageTrackingDetailsResponse> callback) throws ApiException {
+    public okhttp3.Call getPackageTrackingDetailsAsync(Integer packageNumber, final ApiCallback<GetPackageTrackingDetailsResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1196,7 +1374,7 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = getPackageTrackingDetailsValidateBeforeCall(packageNumber, progressListener, progressRequestListener);
+        okhttp3.Call call = getPackageTrackingDetailsValidateBeforeCall(packageNumber, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<GetPackageTrackingDetailsResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -1209,8 +1387,9 @@ public class FbaOutboundApi {
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call listAllFulfillmentOrdersCall(OffsetDateTime queryStartDate, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call listAllFulfillmentOrdersCall(String queryStartDate, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1228,22 +1407,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -1256,51 +1435,53 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call listAllFulfillmentOrdersValidateBeforeCall(OffsetDateTime queryStartDate, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call listAllFulfillmentOrdersValidateBeforeCall(String queryStartDate, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
 
-        Call call = listAllFulfillmentOrdersCall(queryStartDate, nextToken, progressListener, progressRequestListener);
+        okhttp3.Call call = listAllFulfillmentOrdersCall(queryStartDate, nextToken, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
      * @param queryStartDate A date used to select fulfillment orders that were last updated after (or at) a specified time. An update is defined as any change in fulfillment order status, including the creation of a new fulfillment order. (optional)
      * @param nextToken A string token returned in the response to your previous request. (optional)
      * @return ListAllFulfillmentOrdersResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ListAllFulfillmentOrdersResponse listAllFulfillmentOrders(OffsetDateTime queryStartDate, String nextToken) throws ApiException {
+    public ListAllFulfillmentOrdersResponse listAllFulfillmentOrders(String queryStartDate, String nextToken) throws ApiException,LWAException {
         ApiResponse<ListAllFulfillmentOrdersResponse> resp = listAllFulfillmentOrdersWithHttpInfo(queryStartDate, nextToken);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
      * @param queryStartDate A date used to select fulfillment orders that were last updated after (or at) a specified time. An update is defined as any change in fulfillment order status, including the creation of a new fulfillment order. (optional)
      * @param nextToken A string token returned in the response to your previous request. (optional)
      * @return ApiResponse&lt;ListAllFulfillmentOrdersResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ListAllFulfillmentOrdersResponse> listAllFulfillmentOrdersWithHttpInfo(OffsetDateTime queryStartDate, String nextToken) throws ApiException {
-        Call call = listAllFulfillmentOrdersValidateBeforeCall(queryStartDate, nextToken, null, null);
+    public ApiResponse<ListAllFulfillmentOrdersResponse> listAllFulfillmentOrdersWithHttpInfo(String queryStartDate, String nextToken) throws ApiException,LWAException {
+        okhttp3.Call call = listAllFulfillmentOrdersValidateBeforeCall(queryStartDate, nextToken, null, null);
         Type localVarReturnType = new TypeToken<ListAllFulfillmentOrdersResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of fulfillment orders fulfilled after (or at) a specified date-time, or indicated by the next token parameter.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)
      * @param queryStartDate A date used to select fulfillment orders that were last updated after (or at) a specified time. An update is defined as any change in fulfillment order status, including the creation of a new fulfillment order. (optional)
      * @param nextToken A string token returned in the response to your previous request. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call listAllFulfillmentOrdersAsync(OffsetDateTime queryStartDate, String nextToken, final ApiCallback<ListAllFulfillmentOrdersResponse> callback) throws ApiException {
+    public okhttp3.Call listAllFulfillmentOrdersAsync(String queryStartDate, String nextToken, final ApiCallback<ListAllFulfillmentOrdersResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1321,7 +1502,7 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = listAllFulfillmentOrdersValidateBeforeCall(queryStartDate, nextToken, progressListener, progressRequestListener);
+        okhttp3.Call call = listAllFulfillmentOrdersValidateBeforeCall(queryStartDate, nextToken, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<ListAllFulfillmentOrdersResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -1329,15 +1510,16 @@ public class FbaOutboundApi {
     /**
      * Build call for listReturnReasonCodes
      * @param sellerSku The seller SKU for which return reason codes are required. (required)
-     * @param language The language that the TranslatedDescription property of the ReasonCodeDetails response object should be translated into. (required)
      * @param marketplaceId The marketplace for which the seller wants return reason codes. (optional)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. The service uses this value to determine the marketplace for which the seller wants return reason codes. (optional)
+     * @param language The language that the &#x60;TranslatedDescription&#x60; property of the &#x60;ReasonCodeDetails&#x60; response object should be translated into. (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call listReturnReasonCodesCall(String sellerSku, String language, String marketplaceId, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call listReturnReasonCodesCall(String sellerSku, String marketplaceId, String sellerFulfillmentOrderId, String language, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1359,22 +1541,22 @@ public class FbaOutboundApi {
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 
         final String[] localVarAccepts = {
-            "application/json"
+            "application/json", "payload"
         };
         final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -1387,67 +1569,63 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call listReturnReasonCodesValidateBeforeCall(String sellerSku, String language, String marketplaceId, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call listReturnReasonCodesValidateBeforeCall(String sellerSku, String marketplaceId, String sellerFulfillmentOrderId, String language, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'sellerSku' is set
         if (sellerSku == null) {
             throw new ApiException("Missing the required parameter 'sellerSku' when calling listReturnReasonCodes(Async)");
         }
-        
-        // verify the required parameter 'language' is set
-        if (language == null) {
-            throw new ApiException("Missing the required parameter 'language' when calling listReturnReasonCodes(Async)");
-        }
-        
 
-        Call call = listReturnReasonCodesCall(sellerSku, language, marketplaceId, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = listReturnReasonCodesCall(sellerSku, marketplaceId, sellerFulfillmentOrderId, language, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns a list of return reason codes for a seller SKU in a given marketplace.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of return reason codes for a seller SKU in a given marketplace. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerSku The seller SKU for which return reason codes are required. (required)
-     * @param language The language that the TranslatedDescription property of the ReasonCodeDetails response object should be translated into. (required)
      * @param marketplaceId The marketplace for which the seller wants return reason codes. (optional)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. The service uses this value to determine the marketplace for which the seller wants return reason codes. (optional)
+     * @param language The language that the &#x60;TranslatedDescription&#x60; property of the &#x60;ReasonCodeDetails&#x60; response object should be translated into. (optional)
      * @return ListReturnReasonCodesResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ListReturnReasonCodesResponse listReturnReasonCodes(String sellerSku, String language, String marketplaceId, String sellerFulfillmentOrderId) throws ApiException {
-        ApiResponse<ListReturnReasonCodesResponse> resp = listReturnReasonCodesWithHttpInfo(sellerSku, language, marketplaceId, sellerFulfillmentOrderId);
+    public ListReturnReasonCodesResponse listReturnReasonCodes(String sellerSku, String marketplaceId, String sellerFulfillmentOrderId, String language) throws ApiException,LWAException {
+        ApiResponse<ListReturnReasonCodesResponse> resp = listReturnReasonCodesWithHttpInfo(sellerSku, marketplaceId, sellerFulfillmentOrderId, language);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns a list of return reason codes for a seller SKU in a given marketplace.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of return reason codes for a seller SKU in a given marketplace. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerSku The seller SKU for which return reason codes are required. (required)
-     * @param language The language that the TranslatedDescription property of the ReasonCodeDetails response object should be translated into. (required)
      * @param marketplaceId The marketplace for which the seller wants return reason codes. (optional)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. The service uses this value to determine the marketplace for which the seller wants return reason codes. (optional)
+     * @param language The language that the &#x60;TranslatedDescription&#x60; property of the &#x60;ReasonCodeDetails&#x60; response object should be translated into. (optional)
      * @return ApiResponse&lt;ListReturnReasonCodesResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ListReturnReasonCodesResponse> listReturnReasonCodesWithHttpInfo(String sellerSku, String language, String marketplaceId, String sellerFulfillmentOrderId) throws ApiException {
-        Call call = listReturnReasonCodesValidateBeforeCall(sellerSku, language, marketplaceId, sellerFulfillmentOrderId, null, null);
+    public ApiResponse<ListReturnReasonCodesResponse> listReturnReasonCodesWithHttpInfo(String sellerSku, String marketplaceId, String sellerFulfillmentOrderId, String language) throws ApiException,LWAException {
+        okhttp3.Call call = listReturnReasonCodesValidateBeforeCall(sellerSku, marketplaceId, sellerFulfillmentOrderId, language, null, null);
         Type localVarReturnType = new TypeToken<ListReturnReasonCodesResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns a list of return reason codes for a seller SKU in a given marketplace.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * Returns a list of return reason codes for a seller SKU in a given marketplace. The parameters for this operation may contain special characters that require URL encoding. To avoid errors with SKUs when encoding URLs, refer to [URL Encoding](https://developer-docs.amazon.com/sp-api/docs/url-encoding).  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
      * @param sellerSku The seller SKU for which return reason codes are required. (required)
-     * @param language The language that the TranslatedDescription property of the ReasonCodeDetails response object should be translated into. (required)
      * @param marketplaceId The marketplace for which the seller wants return reason codes. (optional)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. The service uses this value to determine the marketplace for which the seller wants return reason codes. (optional)
+     * @param language The language that the &#x60;TranslatedDescription&#x60; property of the &#x60;ReasonCodeDetails&#x60; response object should be translated into. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call listReturnReasonCodesAsync(String sellerSku, String language, String marketplaceId, String sellerFulfillmentOrderId, final ApiCallback<ListReturnReasonCodesResponse> callback) throws ApiException {
+    public okhttp3.Call listReturnReasonCodesAsync(String sellerSku, String marketplaceId, String sellerFulfillmentOrderId, String language, final ApiCallback<ListReturnReasonCodesResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1468,21 +1646,155 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = listReturnReasonCodesValidateBeforeCall(sellerSku, language, marketplaceId, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = listReturnReasonCodesValidateBeforeCall(sellerSku, marketplaceId, sellerFulfillmentOrderId, language, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<ListReturnReasonCodesResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
-     * Build call for updateFulfillmentOrder
-     * @param body  (required)
+     * Build call for submitFulfillmentOrderStatusUpdate
+     * @param body The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call updateFulfillmentOrderCall(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call submitFulfillmentOrderStatusUpdateCall(SubmitFulfillmentOrderStatusUpdateRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        Object localVarPostBody = body;
+
+        // create path and map variables
+        String localVarPath = "/fba/outbound/2020-07-01/fulfillmentOrders/{sellerFulfillmentOrderId}/status"
+            .replaceAll("\\{" + "sellerFulfillmentOrderId" + "\\}", apiClient.escapeString(sellerFulfillmentOrderId.toString()));
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json"
+        };
+        final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
+
+        final String[] localVarContentTypes = {
+            "application/json"
+        };
+        final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+        localVarHeaderParams.put("Content-Type", localVarContentType);
+
+        if(progressListener != null) {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
+                @Override
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                    .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                    .build();
+                }
+            });
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return apiClient.buildCall(localVarPath, "PUT", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarFormParams, localVarAuthNames, progressRequestListener);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call submitFulfillmentOrderStatusUpdateValidateBeforeCall(SubmitFulfillmentOrderStatusUpdateRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        // verify the required parameter 'body' is set
+        if (body == null) {
+            throw new ApiException("Missing the required parameter 'body' when calling submitFulfillmentOrderStatusUpdate(Async)");
+        }
+        // verify the required parameter 'sellerFulfillmentOrderId' is set
+        if (sellerFulfillmentOrderId == null) {
+            throw new ApiException("Missing the required parameter 'sellerFulfillmentOrderId' when calling submitFulfillmentOrderStatusUpdate(Async)");
+        }
+
+        okhttp3.Call call = submitFulfillmentOrderStatusUpdateCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        return call;
+
+    }
+
+    /**
+     * 
+     * Requests that Amazon update the status of an order in the sandbox testing environment. This is a sandbox-only operation and must be directed to a sandbox endpoint. Refer to [Fulfillment Outbound Dynamic Sandbox Guide](https://developer-docs.amazon.com/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) and [Selling Partner API sandbox](https://developer-docs.amazon.com/sp-api/docs/the-selling-partner-api-sandbox) for more information.
+     * @param body The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @return SubmitFulfillmentOrderStatusUpdateResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public SubmitFulfillmentOrderStatusUpdateResponse submitFulfillmentOrderStatusUpdate(SubmitFulfillmentOrderStatusUpdateRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        ApiResponse<SubmitFulfillmentOrderStatusUpdateResponse> resp = submitFulfillmentOrderStatusUpdateWithHttpInfo(body, sellerFulfillmentOrderId);
+        return resp.getData();
+    }
+
+    /**
+     * 
+     * Requests that Amazon update the status of an order in the sandbox testing environment. This is a sandbox-only operation and must be directed to a sandbox endpoint. Refer to [Fulfillment Outbound Dynamic Sandbox Guide](https://developer-docs.amazon.com/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) and [Selling Partner API sandbox](https://developer-docs.amazon.com/sp-api/docs/the-selling-partner-api-sandbox) for more information.
+     * @param body The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @return ApiResponse&lt;SubmitFulfillmentOrderStatusUpdateResponse&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public ApiResponse<SubmitFulfillmentOrderStatusUpdateResponse> submitFulfillmentOrderStatusUpdateWithHttpInfo(SubmitFulfillmentOrderStatusUpdateRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        okhttp3.Call call = submitFulfillmentOrderStatusUpdateValidateBeforeCall(body, sellerFulfillmentOrderId, null, null);
+        Type localVarReturnType = new TypeToken<SubmitFulfillmentOrderStatusUpdateResponse>(){}.getType();
+        return apiClient.execute(call, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * Requests that Amazon update the status of an order in the sandbox testing environment. This is a sandbox-only operation and must be directed to a sandbox endpoint. Refer to [Fulfillment Outbound Dynamic Sandbox Guide](https://developer-docs.amazon.com/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) and [Selling Partner API sandbox](https://developer-docs.amazon.com/sp-api/docs/the-selling-partner-api-sandbox) for more information.
+     * @param body The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @param callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call submitFulfillmentOrderStatusUpdateAsync(SubmitFulfillmentOrderStatusUpdateRequest body, String sellerFulfillmentOrderId, final ApiCallback<SubmitFulfillmentOrderStatusUpdateResponse> callback) throws ApiException, LWAException {
+
+        ProgressResponseBody.ProgressListener progressListener = null;
+        ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
+
+        if (callback != null) {
+            progressListener = new ProgressResponseBody.ProgressListener() {
+                @Override
+                public void update(long bytesRead, long contentLength, boolean done) {
+                    callback.onDownloadProgress(bytesRead, contentLength, done);
+                }
+            };
+
+            progressRequestListener = new ProgressRequestBody.ProgressRequestListener() {
+                @Override
+                public void onRequestProgress(long bytesWritten, long contentLength, boolean done) {
+                    callback.onUploadProgress(bytesWritten, contentLength, done);
+                }
+            };
+        }
+
+        okhttp3.Call call = submitFulfillmentOrderStatusUpdateValidateBeforeCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        Type localVarReturnType = new TypeToken<SubmitFulfillmentOrderStatusUpdateResponse>(){}.getType();
+        apiClient.executeAsync(call, localVarReturnType, callback);
+        return call;
+    }
+    /**
+     * Build call for updateFulfillmentOrder
+     * @param body UpdateFulfillmentOrderRequest parameter (required)
+     * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
+     * @param progressListener Progress listener
+     * @param progressRequestListener Progress request listener
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call updateFulfillmentOrderCall(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -1509,10 +1821,10 @@ public class FbaOutboundApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -1525,61 +1837,61 @@ public class FbaOutboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call updateFulfillmentOrderValidateBeforeCall(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call updateFulfillmentOrderValidateBeforeCall(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling updateFulfillmentOrder(Async)");
         }
-        
         // verify the required parameter 'sellerFulfillmentOrderId' is set
         if (sellerFulfillmentOrderId == null) {
             throw new ApiException("Missing the required parameter 'sellerFulfillmentOrderId' when calling updateFulfillmentOrder(Async)");
         }
-        
 
-        Call call = updateFulfillmentOrderCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = updateFulfillmentOrderCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body UpdateFulfillmentOrderRequest parameter (required)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return UpdateFulfillmentOrderResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public UpdateFulfillmentOrderResponse updateFulfillmentOrder(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId) throws ApiException {
+    public UpdateFulfillmentOrderResponse updateFulfillmentOrder(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
         ApiResponse<UpdateFulfillmentOrderResponse> resp = updateFulfillmentOrderWithHttpInfo(body, sellerFulfillmentOrderId);
         return resp.getData();
     }
 
     /**
      * 
-     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body UpdateFulfillmentOrderRequest parameter (required)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @return ApiResponse&lt;UpdateFulfillmentOrderResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<UpdateFulfillmentOrderResponse> updateFulfillmentOrderWithHttpInfo(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId) throws ApiException {
-        Call call = updateFulfillmentOrderValidateBeforeCall(body, sellerFulfillmentOrderId, null, null);
+    public ApiResponse<UpdateFulfillmentOrderResponse> updateFulfillmentOrderWithHttpInfo(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId) throws ApiException,LWAException {
+        okhttp3.Call call = updateFulfillmentOrderValidateBeforeCall(body, sellerFulfillmentOrderId, null, null);
         Type localVarReturnType = new TypeToken<UpdateFulfillmentOrderResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
-     * @param body  (required)
+     * Updates and/or requests shipment for a fulfillment order with an order hold on it.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param body UpdateFulfillmentOrderRequest parameter (required)
      * @param sellerFulfillmentOrderId The identifier assigned to the item by the seller when the fulfillment order was created. (required)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call updateFulfillmentOrderAsync(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ApiCallback<UpdateFulfillmentOrderResponse> callback) throws ApiException {
+    public okhttp3.Call updateFulfillmentOrderAsync(UpdateFulfillmentOrderRequest body, String sellerFulfillmentOrderId, final ApiCallback<UpdateFulfillmentOrderResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1600,24 +1912,19 @@ public class FbaOutboundApi {
             };
         }
 
-        Call call = updateFulfillmentOrderValidateBeforeCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
+        okhttp3.Call call = updateFulfillmentOrderValidateBeforeCall(body, sellerFulfillmentOrderId, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<UpdateFulfillmentOrderResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
 
     public static class Builder {
-        private AWSAuthenticationCredentials awsAuthenticationCredentials;
         private LWAAuthorizationCredentials lwaAuthorizationCredentials;
         private String endpoint;
         private LWAAccessTokenCache lwaAccessTokenCache;
         private Boolean disableAccessTokenCache = false;
-        private AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider;
+        private RateLimitConfiguration rateLimitConfiguration;
 
-        public Builder awsAuthenticationCredentials(AWSAuthenticationCredentials awsAuthenticationCredentials) {
-            this.awsAuthenticationCredentials = awsAuthenticationCredentials;
-            return this;
-        }
 
         public Builder lwaAuthorizationCredentials(LWAAuthorizationCredentials lwaAuthorizationCredentials) {
             this.lwaAuthorizationCredentials = lwaAuthorizationCredentials;
@@ -1638,18 +1945,18 @@ public class FbaOutboundApi {
             this.disableAccessTokenCache = true;
             return this;
         }
-        
-        public Builder awsAuthenticationCredentialsProvider(AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider) {
-            this.awsAuthenticationCredentialsProvider = awsAuthenticationCredentialsProvider;
+
+        public Builder rateLimitConfigurationOnRequests(RateLimitConfiguration rateLimitConfiguration){
+            this.rateLimitConfiguration = rateLimitConfiguration;
             return this;
         }
         
+        public Builder disableRateLimitOnRequests() {
+            this.rateLimitConfiguration = null;
+            return this;
+        }
 
         public FbaOutboundApi build() {
-//            if (awsAuthenticationCredentials == null) {
-//                throw new RuntimeException("AWSAuthenticationCredentials not set");
-//            }
-
             if (lwaAuthorizationCredentials == null) {
                 throw new RuntimeException("LWAAuthorizationCredentials not set");
             }
@@ -1657,14 +1964,6 @@ public class FbaOutboundApi {
             if (StringUtil.isEmpty(endpoint)) {
                 throw new RuntimeException("Endpoint not set");
             }
-
-//            AWSSigV4Signer awsSigV4Signer;
-//            if ( awsAuthenticationCredentialsProvider == null) {
-//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
-//            }
-//            else {
-//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials,awsAuthenticationCredentialsProvider);
-//            }
             
             LWAAuthorizationSigner lwaAuthorizationSigner = null;            
             if (disableAccessTokenCache) {
@@ -1678,9 +1977,9 @@ public class FbaOutboundApi {
             }
 
             return new FbaOutboundApi(new ApiClient()
-                // .setAWSSigV4Signer(awsSigV4Signer)
                 .setLWAAuthorizationSigner(lwaAuthorizationSigner)
-                .setBasePath(endpoint));
+                .setBasePath(endpoint)
+                .setRateLimiter(rateLimitConfiguration));
         }
     }
 }

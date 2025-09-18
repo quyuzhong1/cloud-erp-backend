@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -58,7 +57,6 @@ public class DmpInputFeishuApprovalsInitHandler extends DmpInputInitHandler{
 					result.add(parseObject);
 				} catch (Exception e) {
 					log.error("调用飞书失败,e= {}",e.getMessage());
-					throw new ServiceException("调用飞书失败");
 				}
 			}
 		}

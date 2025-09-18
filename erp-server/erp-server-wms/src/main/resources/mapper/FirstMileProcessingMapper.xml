@@ -300,4 +300,58 @@
         </if>
         fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
     </select>
+
+    <!-- 头程数据合计分页查询 -->
+    <select id="firstMileTotalPaging" resultType="com.erp.model.wms.dto.ReportProcessingDTO$ListDTO">
+        WITH qtyStatistics as (
+        SELECT
+            sku_id,
+            -- 统计每个区间的数量合计
+            SUM(CASE WHEN days_diff BETWEEN 0 AND 10 THEN frozen_qty ELSE 0 END) AS tenDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 11 AND 20 THEN frozen_qty ELSE 0 END) AS twentyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 21 AND 30 THEN frozen_qty ELSE 0 END) AS thirtyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 31 AND 60 THEN frozen_qty ELSE 0 END) AS sixtyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 61 AND 90 THEN frozen_qty ELSE 0 END) AS ninetyDaysCount,
+            SUM(CASE WHEN days_diff > 90 THEN frozen_qty ELSE 0 END) AS aboveNinetyDaysCount,
+            SUM(frozen_qty) AS totalFrozenQty
+        FROM (
+        SELECT
+        sku_id,
+        frozen_qty,
+        DATE_PART('day', COALESCE(outstock_order_time, NOW()) - frozen_time) AS days_diff
+        FROM first_mile_processing
+        WHERE frozen_time IS NOT NULL
+        ) AS subquery
+        GROUP BY sku_id
+        )
+        select
+            'firstMile' as type,
+            qs.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as productName,
+            qs.totalFrozenQty,
+            qs.tenDaysCount,
+            qs.twentyDaysCount,
+            qs.thirtyDaysCount,
+            qs.sixtyDaysCount,
+            qs.ninetyDaysCount,
+            qs.aboveNinetyDaysCount
+        from qtyStatistics qs
+        left join product_detail pd on qs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and qs.totalFrozenQty > 0
+            <!--权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            qs.totalFrozenQty desc
+        </where>
+    </select>
 </mapper>

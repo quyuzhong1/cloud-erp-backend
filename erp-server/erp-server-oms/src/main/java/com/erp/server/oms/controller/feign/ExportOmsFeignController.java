@@ -64,6 +64,8 @@ public class ExportOmsFeignController {
     private SoPriceService soPriceService;
     @Resource
     private SoPriceChangeService soPriceChangeService;
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @Resource
     private ExhibitionOrderService exhibitionOrderService;
@@ -269,6 +271,18 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         return soPriceChangeService.exportSoPriceChange(dto);
+    }
+
+    @PostMapping("/soMultiChannel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
+            menuCode = "oms:soMultiChannel:paging",
+            tableAlias = "smc"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
+        return soMultiChannelService.paging(dto);
     }
 
     /**

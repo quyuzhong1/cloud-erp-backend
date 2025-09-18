@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.dmp.entity.RuleConditionEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
@@ -84,8 +85,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     private SpElServer spElServer;
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY,keyName = "addDTO.mainId",waiteTime = 20)
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
         //记录是否已存在
         SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
@@ -140,8 +142,10 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public String generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson,String code) {
+        //先删除所有同类型异常再添加
+        this.removeErrorOrder(mainId, type);
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
         soB2cErrorEntity.setType(type);

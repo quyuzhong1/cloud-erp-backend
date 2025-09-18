@@ -70,7 +70,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean add(SoReturnReceiveDTO.Add dto, String id) {
         if("B2C".equals(dto.getType())){
             //B2C
@@ -342,7 +342,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         if("B2C".equals(dto.getType())){
             //B2C
@@ -691,7 +691,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(SoReturnReceiveDetailEntity::getIsDeleted, Boolean.TRUE)

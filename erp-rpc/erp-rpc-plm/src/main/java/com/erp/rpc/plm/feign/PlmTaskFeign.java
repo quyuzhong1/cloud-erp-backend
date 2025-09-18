@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -571,6 +572,17 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/listSkuPurchaseByIds")
     List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2025-28-21 12:06
+     */
+    @PostMapping("feign/product/listSkuPackAndPurchaseByIds")
+    List<SkuVO> listSkuPackAndPurchaseByIds(@RequestBody List<String> skuIds);
+
     @GetMapping("feign/product/listSkuPurchaseByIds")
     ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
 
@@ -633,4 +645,8 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
 }

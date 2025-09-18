@@ -10,19 +10,25 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Money;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
  * Item information for a fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentOrderItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -52,10 +58,10 @@ public class FulfillmentOrderItem {
   private Integer unfulfillableQuantity = null;
 
   @SerializedName("estimatedShipDate")
-  private String estimatedShipDate = null;
+  private OffsetDateTime estimatedShipDate = null;
 
   @SerializedName("estimatedArrivalDate")
-  private String estimatedArrivalDate = null;
+  private OffsetDateTime estimatedArrivalDate = null;
 
   @SerializedName("perUnitPrice")
   private Money perUnitPrice = null;
@@ -75,7 +81,7 @@ public class FulfillmentOrderItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -90,10 +96,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * A fulfillment order item identifier submitted with a call to the createFulfillmentOrder operation.
+   * A fulfillment order item identifier submitted with a call to the &#x60;createFulfillmentOrder&#x60; operation.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -111,7 +117,7 @@ public class FulfillmentOrderItem {
    * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -129,7 +135,7 @@ public class FulfillmentOrderItem {
    * A message to the gift recipient, if applicable.
    * @return giftMessage
   **/
-
+  
   public String getGiftMessage() {
     return giftMessage;
   }
@@ -147,7 +153,7 @@ public class FulfillmentOrderItem {
    * Item-specific text that displays in recipient-facing materials such as the outbound shipment packing slip.
    * @return displayableComment
   **/
-
+  
   public String getDisplayableComment() {
     return displayableComment;
   }
@@ -162,10 +168,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * Amazon&#39;s fulfillment network SKU of the item.
+   * Amazon&#x27;s fulfillment network SKU of the item.
    * @return fulfillmentNetworkSku
   **/
-
+  
   public String getFulfillmentNetworkSku() {
     return fulfillmentNetworkSku;
   }
@@ -183,7 +189,7 @@ public class FulfillmentOrderItem {
    * Indicates whether the item is sellable or unsellable.
    * @return orderItemDisposition
   **/
-
+  
   public String getOrderItemDisposition() {
     return orderItemDisposition;
   }
@@ -198,10 +204,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * The item quantity that was cancelled by the seller.
+   * Get cancelledQuantity
    * @return cancelledQuantity
   **/
-
+  
   public Integer getCancelledQuantity() {
     return cancelledQuantity;
   }
@@ -216,10 +222,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * The item quantity that is unfulfillable.
+   * Get unfulfillableQuantity
    * @return unfulfillableQuantity
   **/
-
+  
   public Integer getUnfulfillableQuantity() {
     return unfulfillableQuantity;
   }
@@ -228,39 +234,39 @@ public class FulfillmentOrderItem {
     this.unfulfillableQuantity = unfulfillableQuantity;
   }
 
-  public FulfillmentOrderItem estimatedShipDate(String estimatedShipDate) {
+  public FulfillmentOrderItem estimatedShipDate(OffsetDateTime estimatedShipDate) {
     this.estimatedShipDate = estimatedShipDate;
     return this;
   }
 
    /**
-   * The estimated date and time that the item quantity is scheduled to ship from the fulfillment center. Note that this value can change over time. If the shipment that contains the item quantity has been cancelled, estimatedShipDate is not returned.
+   * Get estimatedShipDate
    * @return estimatedShipDate
   **/
-
-  public String getEstimatedShipDate() {
+  
+  public OffsetDateTime getEstimatedShipDate() {
     return estimatedShipDate;
   }
 
-  public void setEstimatedShipDate(String estimatedShipDate) {
+  public void setEstimatedShipDate(OffsetDateTime estimatedShipDate) {
     this.estimatedShipDate = estimatedShipDate;
   }
 
-  public FulfillmentOrderItem estimatedArrivalDate(String estimatedArrivalDate) {
+  public FulfillmentOrderItem estimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
     return this;
   }
 
    /**
-   * The estimated arrival date and time of the item quantity. Note that this value can change over time. If the shipment that contains the item quantity has been cancelled, estimatedArrivalDate is not returned.
+   * Get estimatedArrivalDate
    * @return estimatedArrivalDate
   **/
-
-  public String getEstimatedArrivalDate() {
+  
+  public OffsetDateTime getEstimatedArrivalDate() {
     return estimatedArrivalDate;
   }
 
-  public void setEstimatedArrivalDate(String estimatedArrivalDate) {
+  public void setEstimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
   }
 
@@ -270,10 +276,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * The amount to be collected from the recipient for this item in a COD (Cash On Delivery) order.
+   * Get perUnitPrice
    * @return perUnitPrice
   **/
-
+  
   public Money getPerUnitPrice() {
     return perUnitPrice;
   }
@@ -288,10 +294,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * The tax on the amount to be collected from the recipient for this item in a COD (Cash On Delivery) order.
+   * Get perUnitTax
    * @return perUnitTax
   **/
-
+  
   public Money getPerUnitTax() {
     return perUnitTax;
   }
@@ -306,10 +312,10 @@ public class FulfillmentOrderItem {
   }
 
    /**
-   * The monetary value assigned by the seller to this item.
+   * Get perUnitDeclaredValue
    * @return perUnitDeclaredValue
   **/
-
+  
   public Money getPerUnitDeclaredValue() {
     return perUnitDeclaredValue;
   }
@@ -320,7 +326,7 @@ public class FulfillmentOrderItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -377,7 +383,7 @@ public class FulfillmentOrderItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -385,4 +391,3 @@ public class FulfillmentOrderItem {
   }
 
 }
-

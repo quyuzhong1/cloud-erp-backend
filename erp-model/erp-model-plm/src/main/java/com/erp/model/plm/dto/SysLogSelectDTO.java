@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BaseSearchDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,4 +25,9 @@ public class SysLogSelectDTO extends BaseSearchDTO {
      */
     private String pid;
     private String searchKey;
+
+    /**
+     * 类型:140=SKU标准成本
+     */
+    private String moduleType;
 }

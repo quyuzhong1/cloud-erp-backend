@@ -20,7 +20,7 @@ public interface BusinessNoConstant {
 
     String GYS = "GYS";
 
-    String GYSDM = "X";
+    String GYSDM = "A";
 
 
     String CGJM = "CGJM";
