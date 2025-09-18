@@ -11,9 +11,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoOutstockConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -42,6 +44,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
@@ -52,37 +55,36 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-
+        
         //操作项
         String operate = (String) map.get("operate");
+        
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         /**
-         * 作废
-         */
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,platformEntity,map,type,operate);
-        }
-        /**
-         * 反审核
-         */
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            operateDisapprove(apiUtils,platformEntity, map,type);
-        }
-        /**
-         * 审核
-         */
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils,platformEntity, map,type);
-        }
+		 * 作废
+		 */
+		if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+		    operateInvalid(apiUtils,platformEntity,map,type,operate);
+		}
+		/**
+		 * 反审核
+		 */
+		if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+		    operateDisapprove(apiUtils,platformEntity, map,type);
+		}
+		/**
+		 * 审核
+		 */
+		if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+		    operateApprove(apiUtils,platformEntity, map,type);
+		}
 
-        /**
-         * 删除
-         */
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            operateDelete(apiUtils,platformEntity,map,operate);
-        }
-
+		/**
+		 * 删除
+		 */
+		if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+		    operateDelete(apiUtils,platformEntity,map,operate);
+		}
     }
 
     /**

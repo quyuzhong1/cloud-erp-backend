@@ -44,7 +44,7 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
     @Autowired
     private ModuleOperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SupplierPlantAddrDTO.AddDTO addDTO) {

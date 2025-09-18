@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -149,6 +150,10 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoDeliveryEntity, cfgOutputId)) {
     			return result;
     		}
+    		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
+    		if(isB2B) {
+    			return result;
+    		}
     		Tools.nullToBlank(dmpSoDeliveryEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdDeliveryId = dmpSoDeliveryEntity.getThirdDeliveryId();
@@ -183,7 +188,6 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	        	platformCode = thirdDeliveryCode;
 	        }
 
-    		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
     		if(payTime != null) {
     			payTimeFormat = localDateTime.format(payTime);
@@ -345,6 +349,11 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDepartmentName);
     			
+    	        shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(dmpSoDeliveryDetailEntity.getDiscountAmount());
+    	        shudiyunB2cOrderDTO.setFreight(dmpSoDeliveryDetailEntity.getFreightAmount());
+    	        shudiyunB2cOrderDTO.setGoods_taxation(dmpSoDeliveryDetailEntity.getTaxAmount());
+    	        
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}

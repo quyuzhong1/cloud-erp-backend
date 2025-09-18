@@ -9,8 +9,8 @@ import org.springframework.data.elasticsearch.config.EnableElasticsearchAuditing
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 @EnableElasticsearchAuditing
 @EnableAsync

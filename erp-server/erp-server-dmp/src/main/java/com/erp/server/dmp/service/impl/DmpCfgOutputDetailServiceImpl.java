@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutputDetailMapper, DmpCfgOutputDetailEntity> implements DmpCfgOutputDetailService {
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpCfgOutputDetailDTO.AddDTO addDTO) {

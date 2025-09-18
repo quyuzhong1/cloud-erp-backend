@@ -24,10 +24,15 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.entity.ApplicationCategoryEntity;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.DictBankEntity;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
@@ -48,8 +53,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *@Author: hcg
@@ -101,7 +108,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
@@ -201,6 +208,12 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object paymentCondition = map.get("paymentCondition");
         List<BaseDropDownDTO.DisabledDTO> paymentConditionList = scmTaskFeign.listPaymentCondition();
 
+        //国家
+        List<DictCountryEntity> countylist = FeignQuery.create(DictCountryEntity.class).list();
+
+        //省市
+        List<DictCityEntity> cityList = FeignQuery.create(DictCityEntity.class).list();
+
         String paymentConditionCode;
         //dmp新增根据名称匹配，重新生成根据code匹配
         if (Boolean.TRUE.equals(isDmpAdd)) {
@@ -220,6 +233,51 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
         map.put("paymentCondition", paymentConditionCode);
+
+        //scm字典数据
+        List<DictBasicEntity> basicList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, Arrays.asList(com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType(), com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType(), com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).list();
+
+        //产品分类
+        List<BasicCategoryEntity> categoryList = FeignQuery.create(BasicCategoryEntity.class).list();
+
+        //应用分类
+        List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.create(ApplicationCategoryEntity.class).list();
+
+        //供应商属性
+        Object propertyJson = map.get("propertyJson");
+        if (ObjectUtil.isNotEmpty(propertyJson)) {
+            String propertyJsonCode = Arrays.stream(propertyJson.toString().split(",")).map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse("")).collect(Collectors.joining(","));
+            map.put("propertyJson", propertyJsonCode);
+        }
+
+        //供应商产品分类
+        Object productCategoryJson = map.get("productCategoryJson");
+        if (ObjectUtil.isNotEmpty(productCategoryJson)) {
+            String productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(",")).map(obj -> categoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(BasicCategoryEntity::getId).findFirst().orElse("")).collect(Collectors.joining(","));
+            map.put("productCategoryJson", productCategoryJsonId);
+        }
+
+        //供应商应用分类
+        Object applicationCategoryJson = map.get("applicationCategoryJson");
+        if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
+            String applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(",")).map(obj -> applicationCategoryList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName())).map(ApplicationCategoryEntity::getId).findFirst().orElse("")).collect(Collectors.joining(","));
+            map.put("applicationCategoryJson", applicationCategoryJsonId);
+        }
+
+        //体系认证
+        Object certificateJson = map.get("certificateJson");
+        if (ObjectUtil.isNotEmpty(certificateJson)) {
+            String certificateJsonCode = Arrays.stream(certificateJson.toString().split(",")).map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getName()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse("")).collect(Collectors.joining(","));
+            map.put("certificateJson", certificateJsonCode);
+        }
+
+        //工厂所在地
+        Object plantAddr = map.get("plantAddr");
+        if (ObjectUtil.isNotEmpty(plantAddr)) {
+            List<String> errorMsgList = new ArrayList<>();
+            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = supplierFeign.checkImportPlantAddr(new SupplierDTO.AddPlantAddrDTO(countylist, cityList, plantAddr.toString(), errorMsgList, Boolean.TRUE));
+            map.put("plantAddrList", plantAddrList);
+        }
 
         //账户信息
         List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");

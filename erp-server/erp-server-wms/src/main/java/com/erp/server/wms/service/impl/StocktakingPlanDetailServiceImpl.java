@@ -55,7 +55,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void saveList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
         if (CollUtil.isEmpty(detailList)) {
             throw new RuntimeException("盘点计划明细不能为空");
@@ -80,7 +80,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
         if (CollUtil.isEmpty(detailList)) {
             throw new RuntimeException("盘点计划明细不能为空");

@@ -56,7 +56,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WarehouseLocationMoveDTO.AddDTO addDTO, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {

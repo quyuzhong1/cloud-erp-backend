@@ -83,6 +83,7 @@ public class DmpInputTaskFactory{
 					}
 				}
 			}catch (Exception e) {
+				log.error("{}任务执行报错， 异常类型={}" , inputTaskId , ExceptionUtil.stacktraceToString(e) , e);
 				throw e;
 			}finally {
 				redisTemplate.delete(redisKey);

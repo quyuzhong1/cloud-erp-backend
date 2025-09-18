@@ -106,7 +106,8 @@
         fdp.code as partitionCode,
         fdp.name as partitionName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
-        sb2c.nfe_invoice_status as nfeInvoiceStatus
+        sb2c.nfe_invoice_status as nfeInvoiceStatus,
+        sb2c.multi_channel_type as multiChannelType
     </sql>
     <sql id="Full_Managed_Column_List">
         sb2c.id,

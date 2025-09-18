@@ -10,19 +10,23 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 /**
  * A physical address.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class Address {
   @SerializedName("name")
   private String name = null;
@@ -63,7 +67,7 @@ public class Address {
    * The name of the person, business or institution at the address.
    * @return name
   **/
-
+  
   public String getName() {
     return name;
   }
@@ -81,7 +85,7 @@ public class Address {
    * The first line of the address.
    * @return addressLine1
   **/
-
+  
   public String getAddressLine1() {
     return addressLine1;
   }
@@ -99,7 +103,7 @@ public class Address {
    * Additional address information, if required.
    * @return addressLine2
   **/
-
+  
   public String getAddressLine2() {
     return addressLine2;
   }
@@ -117,7 +121,7 @@ public class Address {
    * Additional address information, if required.
    * @return addressLine3
   **/
-
+  
   public String getAddressLine3() {
     return addressLine3;
   }
@@ -132,10 +136,10 @@ public class Address {
   }
 
    /**
-   * The city where the person, business, or institution is located.
+   * The city where the person, business, or institution is located. This property is required in all countries except Japan. It should not be used in Japan.
    * @return city
   **/
-
+  
   public String getCity() {
     return city;
   }
@@ -153,7 +157,7 @@ public class Address {
    * The district or county where the person, business, or institution is located.
    * @return districtOrCounty
   **/
-
+  
   public String getDistrictOrCounty() {
     return districtOrCounty;
   }
@@ -171,7 +175,7 @@ public class Address {
    * The state or region where the person, business or institution is located.
    * @return stateOrRegion
   **/
-
+  
   public String getStateOrRegion() {
     return stateOrRegion;
   }
@@ -189,7 +193,7 @@ public class Address {
    * The postal code of the address.
    * @return postalCode
   **/
-
+  
   public String getPostalCode() {
     return postalCode;
   }
@@ -207,7 +211,7 @@ public class Address {
    * The two digit country code. In ISO 3166-1 alpha-2 format.
    * @return countryCode
   **/
-
+  
   public String getCountryCode() {
     return countryCode;
   }
@@ -225,7 +229,7 @@ public class Address {
    * The phone number of the person, business, or institution located at the address.
    * @return phone
   **/
-
+  
   public String getPhone() {
     return phone;
   }
@@ -236,7 +240,7 @@ public class Address {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -285,7 +289,7 @@ public class Address {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -293,4 +297,3 @@ public class Address {
   }
 
 }
-

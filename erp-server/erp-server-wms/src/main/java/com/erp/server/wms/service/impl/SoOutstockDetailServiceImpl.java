@@ -893,7 +893,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param detailList
      */
-    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
+    @Override
+    public void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -903,6 +904,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+        if(Objects.isNull(soB2cEntity)){
+            return;
+        }
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getSoId()));
         if(CollectionUtils.isEmpty(soDetailList)){
             return;
@@ -1038,7 +1042,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 //    }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
         soDetailEntityList = soDetailEntityList.stream().filter(v->CharSequenceUtil.isNotBlank(v.getId())).collect(Collectors.toList());

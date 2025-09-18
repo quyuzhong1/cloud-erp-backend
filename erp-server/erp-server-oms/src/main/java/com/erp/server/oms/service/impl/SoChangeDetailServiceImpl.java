@@ -456,7 +456,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @date 2023-05-25 17:44
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void handleDb(List<SoChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {

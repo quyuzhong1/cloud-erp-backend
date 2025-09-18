@@ -601,6 +601,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     BatchResultDTO generateB2bDeclar(String id);
 
     /**
+     * 根据来源单号查询销售出库单
+     * @param sourceCode 来源单号
+     * @return
+     */
+    SoOutstockEntity getBySourceCode(String sourceCode);
+
+    /**
      * @param entity
      */
     void updateSkuStdCostOutstock(SoOutstockEntity entity);

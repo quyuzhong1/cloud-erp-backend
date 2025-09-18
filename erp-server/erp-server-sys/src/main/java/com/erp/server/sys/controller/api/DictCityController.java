@@ -73,6 +73,20 @@ public class DictCityController extends BaseController {
     }
 
     /**
+     * 城市下拉
+     *
+     * @return
+     */
+    @GetMapping("/cityList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> cityList() {
+        List<DictCityEntity> cityList = dictCityService.listCity();
+        List<BaseDropDownDTO.CommonDTO> result = cityList.stream().filter(d -> StringUtils.isNotBlank(d.getKingdeeCode()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
      * 省份导出
      * @param
      * @return

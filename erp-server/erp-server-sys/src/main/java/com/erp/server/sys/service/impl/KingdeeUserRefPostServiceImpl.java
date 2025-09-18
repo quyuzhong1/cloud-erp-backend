@@ -16,12 +16,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.sys.mapper.KingdeeUserRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.*;
@@ -71,7 +71,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
 
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(KingdeeUserRefPostDTO.AddDTO addDTO) {

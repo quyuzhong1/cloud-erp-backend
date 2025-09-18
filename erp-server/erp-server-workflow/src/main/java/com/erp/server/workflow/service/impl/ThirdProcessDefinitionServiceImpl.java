@@ -21,6 +21,7 @@ import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
@@ -58,7 +59,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Autowired
     private DictBasicService dictBasicService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdProcessDefinitionDTO.AddDTO addDTO) {
@@ -164,7 +166,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     public void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
     }
-
 
     /**
     * 新增修改处理数据

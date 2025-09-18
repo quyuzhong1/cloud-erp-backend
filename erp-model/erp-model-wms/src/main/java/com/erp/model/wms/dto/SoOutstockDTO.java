@@ -56,6 +56,7 @@ public class SoOutstockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingTotalDTO {
 
         /**
@@ -71,7 +72,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 价税合计（CNY）
          */
-        private BigDecimal totalTaxAmount;
+        private String totalTaxAmount;
     }
 
     /**

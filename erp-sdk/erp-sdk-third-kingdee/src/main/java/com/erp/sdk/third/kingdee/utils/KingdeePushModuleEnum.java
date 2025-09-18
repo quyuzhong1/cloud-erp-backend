@@ -1,4 +1,4 @@
-package com.erp.model.dmp.enums;
+package com.erp.sdk.third.kingdee.utils;
 
 /**
  * @author Will

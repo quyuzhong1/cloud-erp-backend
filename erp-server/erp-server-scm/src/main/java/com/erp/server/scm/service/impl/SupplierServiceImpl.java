@@ -317,10 +317,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getIdentificationCode () {
-        String identificationCode = docNoGenHelper.generateSeqCode(BusinessNoTypeEnum.CODE_GYSDM);
+        String identificationCode = docNoGenHelper.generateIndexCode(BusinessNoTypeEnum.CODE_GYSDM);
         SupplierEntity entity = getByIdentificationCode(identificationCode);
         if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_HAS_EXIST, CharSequenceUtil.format("供应商代码{}",identificationCode));
+            identificationCode = getIdentificationCode();
         }
         return identificationCode;
     }
@@ -746,7 +746,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
@@ -813,7 +813,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(SupplierEntity entity) {
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -855,7 +855,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SupplierEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
@@ -894,7 +894,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(SupplierEntity entity,String type, String comment) {
         if (Objects.isNull(entity)) {
             return Boolean.TRUE;
@@ -922,7 +922,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean updateStatus(UpdateStateDTO dto) {
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
@@ -1041,7 +1041,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(SupplierEntity entity){
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
@@ -2002,7 +2002,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        //工厂所在地
+        List<SupplierPlantAddrDTO.ViewDTO> plantAddrList = supplierPlantAddrService.listViewBySupplierIdList(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(plantAddrList)) {
+            String platAddr = plantAddrList.stream().map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
+            variablesMap.put("plantAddr", platAddr);
+        }
+        //阶段
+        if (ObjectUtil.isNotEmpty(entity.getPhase())) {
+            variablesMap.put("phaseCode", entity.getPhase().getPhase());
+        }
+        return variablesMap;
     }
 
     /**
@@ -2264,7 +2275,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             chekImportSupplier(paymentConditionMap,dictProductCategoryList,dictApplicationCategoryList,supplierGradeList,userList,currencyList,dictBasicList,addDTO,excelDTO,errorMsgList,isUpdatePart);
 
             //供应商工厂表赋值
-            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, addDTO, excelDTO, errorMsgList, isUpdatePart);
+            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, excelDTO.getPlantAddr(), errorMsgList, isUpdatePart);
 
             //联系人信息赋值
             SupplierContactDTO.ImportAddDTO contactAddDTO = checkImportContact(contactList,excelDTO, addDTO, errorMsgList, isUpdatePart);
@@ -2301,17 +2312,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2025/7/24 19:04
      * @param countylist
      * @param cityList
-     * @param addDTO
-     * @param excelDTO
      * @param errorMsgList
      * @param isUpdatePart
      * @return List<AddDTO>
      */
-    private List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO,List<String> errorMsgList,boolean isUpdatePart) {
+    @Override
+    public List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,String plantAddr,List<String> errorMsgList,boolean isUpdatePart) {
         List<SupplierPlantAddrDTO.AddDTO> plantAddrList = new ArrayList<>();
         //工厂地址
-        if (CharSequenceUtil.isNotBlank(excelDTO.getPlantAddr())) {
-            List<String> addrList = Arrays.stream(excelDTO.getPlantAddr().split(",")).collect(Collectors.toList());
+        if (CharSequenceUtil.isNotBlank(plantAddr)) {
+            List<String> addrList = Arrays.stream(plantAddr.split(",")).collect(Collectors.toList());
             for (String addr : addrList) {
                 SupplierPlantAddrDTO.AddDTO addrDTO = new SupplierPlantAddrDTO.AddDTO();
                 //查询是否是国家
@@ -2373,6 +2383,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         return plantAddrList;
     }
+
+
     /**
      * 资质信息处理
      * @author will

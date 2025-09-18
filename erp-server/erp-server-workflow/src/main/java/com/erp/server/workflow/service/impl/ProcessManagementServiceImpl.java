@@ -845,7 +845,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return Boolean.TRUE;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
@@ -1604,7 +1604,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1680,7 +1680,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

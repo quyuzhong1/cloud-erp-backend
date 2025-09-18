@@ -10,26 +10,28 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import java.io.IOException;
-
 /**
- * The FulfillmentPolicy value specified when you submitted the createFulfillmentOrder operation.
+ * The &#x60;FulfillmentPolicy&#x60; value specified when you submitted the &#x60;createFulfillmentOrder&#x60; operation.
  */
 @JsonAdapter(FulfillmentPolicy.Adapter.class)
 public enum FulfillmentPolicy {
-  
+  @SerializedName("FillOrKill")
   FILLORKILL("FillOrKill"),
-  
+  @SerializedName("FillAll")
   FILLALL("FillAll"),
-  
+  @SerializedName("FillAllAvailable")
   FILLALLAVAILABLE("FillAllAvailable");
 
   private String value;
@@ -47,9 +49,9 @@ public enum FulfillmentPolicy {
     return String.valueOf(value);
   }
 
-  public static FulfillmentPolicy fromValue(String text) {
+  public static FulfillmentPolicy fromValue(String input) {
     for (FulfillmentPolicy b : FulfillmentPolicy.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -59,14 +61,13 @@ public enum FulfillmentPolicy {
   public static class Adapter extends TypeAdapter<FulfillmentPolicy> {
     @Override
     public void write(final JsonWriter jsonWriter, final FulfillmentPolicy enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public FulfillmentPolicy read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return FulfillmentPolicy.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return FulfillmentPolicy.fromValue((String)(value));
     }
   }
 }
-

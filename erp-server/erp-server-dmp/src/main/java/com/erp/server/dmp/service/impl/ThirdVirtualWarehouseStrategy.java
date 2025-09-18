@@ -66,7 +66,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
 //        VirtualWarehouseEntity warehouse = null;
 //        //获取仓库信息
@@ -150,7 +150,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList,
              WarehouseDTO.ListDTO warehouse,
                                  List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
@@ -192,7 +192,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
@@ -218,7 +218,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
         if (OmsPlatformEnum.isThirdWarehouse(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
@@ -236,7 +236,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
@@ -249,7 +249,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
         // 数据处理
         handleData(thirdMappingEntity);

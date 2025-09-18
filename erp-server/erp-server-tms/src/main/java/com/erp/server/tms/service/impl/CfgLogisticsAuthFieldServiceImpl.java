@@ -31,7 +31,7 @@ import java.util.Optional;
 public class CfgLogisticsAuthFieldServiceImpl extends SuperServiceImpl<CfgLogisticsAuthFieldMapper, CfgLogisticsAuthFieldEntity> implements CfgLogisticsAuthFieldService {
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgLogisticsAuthFieldDTO.AddDTO addDTO) {

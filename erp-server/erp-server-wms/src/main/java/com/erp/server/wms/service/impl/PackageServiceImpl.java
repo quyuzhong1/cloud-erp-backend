@@ -273,7 +273,7 @@ public class PackageServiceImpl implements PackageService {
     @Override
     @DataIdempotent(keyIdName = "dto.ids")
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(dto);
         List<BatchResultDTO> resultDTOList = new ArrayList<>();

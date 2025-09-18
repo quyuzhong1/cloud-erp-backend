@@ -1,7 +1,9 @@
 package com.erp.server.wms.mapper;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -52,4 +54,13 @@ public interface SoB2bProcessingMapper extends BaseMapper<SoB2bProcessingEntity>
      * @return java.lang.Boolean
      */
     Boolean deleteB2bProcessing(@Param("params") SoB2bProcessingDTO.DeleteDTO params);
+    /**
+     * b2b汇总查询
+     * @author will
+     * @date 2025/8/20 16:03
+     * @param page
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<ReportProcessingDTO.ListDTO> b2bTotalPaging(Page<ReportProcessingDTO.PagingParamDTO> page, @Param("params") ReportProcessingDTO.PagingParamDTO params);
 }
