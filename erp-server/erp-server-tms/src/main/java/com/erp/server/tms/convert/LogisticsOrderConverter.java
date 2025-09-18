@@ -136,39 +136,43 @@ public interface LogisticsOrderConverter {
     DeclareProductInfo dsfProductMapping(LogisticsProductVO logisticsProductVO);
 
     @Mappings({
-            @Mapping(target = "channelId" ,source = "logisticsSaleChannel.platformChannelId"),
-            @Mapping(target = "orderSource" ,source = "orderSource"),
-            @Mapping(target = "orderNumber" ,source = "deliveryNo"),
-            @Mapping(target = "receiverInfo.name",source = "receiverInfoVO.contact"),
-            @Mapping(target = "receiverInfo.country",source = "receiverInfoVO.country"),
-            @Mapping(target = "receiverInfo.address",expression = "java(receiverInfoVO.getAddressFirst()+\" \"+receiverInfoVO.getAddressSecond()+\" \"+receiverInfoVO.getStreetAddress())"),
-            @Mapping(target = "receiverInfo.phone",source = "receiverInfoVO.telNumber"),
-            @Mapping(target = "receiverInfo.state",source = "receiverInfoVO.province"),
-            @Mapping(target = "receiverInfo.city",source = "receiverInfoVO.city"),
-            @Mapping(target = "receiverInfo.zipCode",source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "receiverInfo.company",source = "receiverInfoVO.companyName"),
-            @Mapping(target = "receiverInfo.taxNumber",source = "receiverInfoVO.receiverTaxNo"),
-            @Mapping(target = "senderInfo.name",source = "senderInfo.name"),
-            @Mapping(target = "senderInfo.phone",source = "senderInfo.telNumber"),
-            @Mapping(target = "senderInfo.company",source = "senderInfo.companyName"),
-            @Mapping(target = "senderInfo.email",source = "senderInfo.email"),
-            @Mapping(target = "senderInfo.country",source = "senderInfo.country"),
-            @Mapping(target = "senderInfo.state",source = "senderInfo.provinceName"),
-            @Mapping(target = "senderInfo.city",source = "senderInfo.cityName"),
-            @Mapping(target = "senderInfo.zipCode",source = "senderInfo.zipCode"),
-            @Mapping(target = "senderInfo.houseNumber",source = "senderInfo.companyName"),
-            @Mapping(target = "senderInfo.address",source = "senderInfo.addressFirst"),
+            @Mapping(target = "channelId", source = "logisticsSaleChannel.platformChannelId"),
+            @Mapping(target = "orderSource", source = "orderSource"),
+            @Mapping(target = "orderNumber", source = "deliveryNo"),
+            @Mapping(target = "salesPlatform", source = "salesPlatformName"),
+            @Mapping(target = "receiverInfo.name", source = "receiverInfoVO.contact"),
+            @Mapping(target = "receiverInfo.country", source = "receiverInfoVO.country"),
+            @Mapping(target = "receiverInfo.address", expression = "java(receiverInfoVO.getAddressFirst()+\" \"+receiverInfoVO.getAddressSecond()+\" \"+receiverInfoVO.getStreetAddress())"),
+            @Mapping(target = "receiverInfo.phone", source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "receiverInfo.state", source = "receiverInfoVO.province"),
+            @Mapping(target = "receiverInfo.city", source = "receiverInfoVO.city"),
+            @Mapping(target = "receiverInfo.zipCode", source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "receiverInfo.company", source = "receiverInfoVO.companyName"),
+            @Mapping(target = "receiverInfo.taxNumber", source = "receiverInfoVO.receiverTaxNo"),
+            @Mapping(target = "senderInfo.name", source = "senderInfo.name"),
+            @Mapping(target = "senderInfo.phone", source = "senderInfo.telNumber"),
+            @Mapping(target = "senderInfo.company", source = "senderInfo.companyName"),
+            @Mapping(target = "senderInfo.email", source = "senderInfo.email"),
+            @Mapping(target = "senderInfo.country", source = "senderInfo.country"),
+            @Mapping(target = "senderInfo.state", source = "senderInfo.provinceName"),
+            @Mapping(target = "senderInfo.city", source = "senderInfo.cityName"),
+            @Mapping(target = "senderInfo.zipCode", source = "senderInfo.zipCode"),
+            @Mapping(target = "senderInfo.houseNumber", source = "senderInfo.companyName"),
+            @Mapping(target = "senderInfo.address", source = "senderInfo.addressFirst"),
 //            @Mapping(target = "senderInfo.taxNumber",source = "senderInfo.taxNumber"),
-            @Mapping(target = "parcelInfo.hasBattery",source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
-            @Mapping(target = "parcelInfo.currency",constant = "USD"),
-            @Mapping(target = "parcelInfo.totalPrice",source = "parceInfoVO.totalPrice"),
-            @Mapping(target = "parcelInfo.totalQuantity",source = "parceInfoVO.totalQuantity"),
-            @Mapping(target = "parcelInfo.totalWeight",source = "parceInfoVO.totalWeight"),
-            @Mapping(target = "parcelInfo.height",source = "parceInfoVO.height"),
-            @Mapping(target = "parcelInfo.width",source = "parceInfoVO.width"),
-            @Mapping(target = "parcelInfo.length",source = "parceInfoVO.length"),
-            @Mapping(target = "parcelInfo.ioss",source = "iossCode"),
-            @Mapping(target = "parcelInfo.productList",source = "logisticsProductVOList")
+            @Mapping(target = "parcelInfo.hasBattery", source = "parceInfoVO.hasBattery", qualifiedByName = "boolToInteger"),
+            @Mapping(target = "parcelInfo.currency", constant = "USD"),
+            @Mapping(target = "parcelInfo.totalPrice", source = "parceInfoVO.totalPrice"),
+            @Mapping(target = "parcelInfo.totalQuantity", source = "parceInfoVO.totalQuantity"),
+            @Mapping(target = "parcelInfo.totalWeight", source = "parceInfoVO.totalWeight"),
+            @Mapping(target = "parcelInfo.height", source = "parceInfoVO.height"),
+            @Mapping(target = "parcelInfo.width", source = "parceInfoVO.width"),
+            @Mapping(target = "parcelInfo.length", source = "parceInfoVO.length"),
+            @Mapping(target = "parcelInfo.ioss", source = "iossCode"),
+            @Mapping(target = "parcelInfo.productList", source = "logisticsProductVOList"),
+            @Mapping(target = "customs", source = "logisticsOrderVO"),
+            @Mapping(target = "companyCode", ignore = true),
+            @Mapping(target = "dateOfReceipt", ignore = true)
     })
     YanWenCreateWayBillRequest orderRequestByYanWen(LogisticsOrderVO logisticsOrderVO);
 
@@ -183,7 +187,9 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "sku", source = "skuNo")
     @Mapping(target = "priceExport", source = "declarePrice")
     YanWenCreateWayBillRequest.ParcelInfo.Product yanWenProductMapping(LogisticsProductVO logisticsProductVO);
-
+    @Mapping(target = "productionAndSalesEnterpriseName", source = "logisticsOrderVO.companyName")
+    @Mapping(target = "productionAndSalesEnterpriseCode", source = "logisticsOrderVO.usciCode")
+    YanWenCreateWayBillRequest.Customs yanWenCustomsMapping(LogisticsOrderVO logisticsOrderVO);
 
     @Mapping(target = "transportNo",source = "waybillNumber")
     @Mapping(target = "deliveryNo",source = "orderNumber")

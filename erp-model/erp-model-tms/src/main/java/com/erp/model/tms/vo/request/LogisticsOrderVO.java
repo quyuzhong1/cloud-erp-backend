@@ -90,6 +90,10 @@ public class LogisticsOrderVO implements Serializable {
      * 没有就订单id
      */
     private String deliveryNo;
+    /**
+     * 销售平台
+     */
+    private String salesPlatformName;
 
     /**
      * 平台订单号
@@ -121,7 +125,7 @@ public class LogisticsOrderVO implements Serializable {
     /**
      * 生产销售企业代码
      */
-    private String companyCode;
+    private String usciCode;
     /**
      * 物流单号
      */

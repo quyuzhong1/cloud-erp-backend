@@ -746,6 +746,12 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String logisticType;
 
+        //获取申报组织id
+        private String declareOrgId = "";
+        private String declareOrgName = "";
+        //获取申报组织统一社会信用代码
+        private String usciCode = "";
+
         /**
          * 收货人
          */
@@ -782,6 +788,10 @@ public class LogisticsBillDTO implements Serializable {
          * ioss税号
          */
         private String iossTaxNo;
+        /**
+         * 申报组织id
+         */
+        private String declareOrgId;
         /**
          * 是否修改平台已标发货状态
          */
