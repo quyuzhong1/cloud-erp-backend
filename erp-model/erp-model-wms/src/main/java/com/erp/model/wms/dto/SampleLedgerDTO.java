@@ -491,4 +491,28 @@ public class SampleLedgerDTO implements Serializable {
         private List<SkuAvailableQtyDTO> detailList;
     }
 
+    /**
+     * 样品退回单视图
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SampleBackView {
+
+        /**
+         * 退回操作人ID
+         */
+        private String backUserId;
+
+        /**
+         * 退回操作人姓名
+         */
+        private String backUserName;
+
+        /**
+         * 明细
+         */
+        private List<SkuAvailableQtyDTO> detailList;
+
+    }
+
 }

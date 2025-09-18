@@ -98,6 +98,8 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
 
     SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView( List<String> ids);
 
+    SampleLedgerDTO.SampleBackView generateSampleBackInfo( List<String> ids);
+
     // ========== APP端专用方法 ==========
 
     /**
