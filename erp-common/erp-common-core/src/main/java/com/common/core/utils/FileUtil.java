@@ -365,6 +365,55 @@ public class FileUtil {
             }
         }
     }
+
+    /**
+     * @description: 转换MultipartFile
+     * @author Will
+     * @date: 2024/4/3 15:03
+     * @param filePath
+     * @return MultipartFile
+     */
+    public  static MultipartFile filePathToMultipartFile(String filePath) {
+        try {
+            // 打开 URL 连接
+            URL url = new URL(filePath);
+            URLConnection conn = url.openConnection();
+            // 从连接获取输入流
+            BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
+
+            // 读取输入流中的数据并存储到 ByteArrayOutputStream 中
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            // 关闭输入流
+            inputStream.close();
+
+            // 从 ByteArrayOutputStream 中获取 byte 数组
+            byte[] bytes = outputStream.toByteArray();
+
+            // 关闭 ByteArrayOutputStream
+            outputStream.close();
+
+            // 从文件路径中提取文件名
+            String fileName = "";
+            if (filePath.contains("?")) {
+                fileName = filePath.substring(filePath.lastIndexOf("/")+1,filePath.lastIndexOf("?"));
+            } else {
+                fileName = filePath.substring(filePath.lastIndexOf("/")+1);
+            }
+
+            // 创建 MockMultipartFile 对象
+            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            // 捕获异常并抛出自定义的 ServiceException
+            throw new ServiceException("未能获取文件");
+        }
+    }
+
     /**
      * @description: 转换MultipartFile
      * @author Will

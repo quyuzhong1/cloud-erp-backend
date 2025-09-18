@@ -143,7 +143,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
             //上传图片到文件服务器
             if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
-                MultipartFile multipartFile = FileUtil.toMultipartFile(entity.getProductImageUrl());
+                MultipartFile multipartFile = FileUtil.filePathToMultipartFile(entity.getProductImageUrl());
                 String fileUrl = fileFeign.uploadFile(multipartFile);
                 entity.setProductImageUrl(fileUrl);
                 if (ObjUtil.isNotEmpty(oldEntity)) {

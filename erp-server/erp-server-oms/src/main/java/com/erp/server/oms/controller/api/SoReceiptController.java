@@ -369,8 +369,8 @@ public class SoReceiptController extends BaseController {
             tableAlias = "sr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "收款单导出Excel数据")
-    public boolean exportList(@RequestBody @Validated SoReceiptDTO.PagingParamDTO dto, HttpServletResponse response) {
-        return soReceiptService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SoReceiptDTO.PagingParamDTO dto, HttpServletResponse response) {
+        return success(soReceiptService.exportList(dto, response));
     }
 
     /**

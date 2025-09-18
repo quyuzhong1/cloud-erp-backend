@@ -111,7 +111,7 @@
                si.sales_org_id as salesOrgId,
                si.approve_status as approveStatus,
                si.receive_account as receiptAccount,
-               si.receive_amount - COALESCE((
+               si.order_amount -si.discount_amount - COALESCE((
         select sum(red.receipt_amount) from so_receipt re
         inner join so_receipt_detail red on re.id = red.main_id
         where re.is_deleted = false
