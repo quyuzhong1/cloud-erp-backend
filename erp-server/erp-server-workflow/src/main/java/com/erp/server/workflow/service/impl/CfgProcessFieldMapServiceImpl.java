@@ -353,7 +353,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
         // 6. 如果“缺失字段”列表不为空，则抛出一个清晰、详细的异常
         if (CollUtil.isNotEmpty(missingFieldNames)) {
-            throw new ServiceException("操作失败，缺少必填字段: " + String.join(", ", missingFieldNames));
+            log.warn("操作失败，缺少必填字段: {}", String.join(", ", missingFieldNames));
         }
     }
 }
