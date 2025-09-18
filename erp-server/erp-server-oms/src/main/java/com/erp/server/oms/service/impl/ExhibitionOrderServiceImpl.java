@@ -29,10 +29,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -1618,6 +1615,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         downloadTaskFeign.saveImportTask("导入展会订单", IMPORT_OMS_EXHIBITION_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -1625,6 +1623,20 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importExhibitionOrder(BaseDTO.ImportDTO dto) {
+        //设置操作人
+        if(StringUtils.isNotBlank(dto.getUserId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if(Objects.nonNull(findUserDTO)){
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
+        }
+
         ExhibitionOrderExcelListener excelListenerUtil = new ExhibitionOrderExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());

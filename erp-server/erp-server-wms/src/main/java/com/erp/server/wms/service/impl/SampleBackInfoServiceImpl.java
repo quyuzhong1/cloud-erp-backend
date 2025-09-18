@@ -1181,6 +1181,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         try {
+            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
             // 创建异步导入任务
             downloadTaskFeign.saveImportTask("样品退回单导入", IMPORT_WMS_SAMPLE_BACK_INFO.getCode(), dto);
             return true;
@@ -1220,6 +1221,17 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
         SampleBackInfoExcelListener excelListenerUtil = new SampleBackInfoExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount(), deptList, map, userList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
