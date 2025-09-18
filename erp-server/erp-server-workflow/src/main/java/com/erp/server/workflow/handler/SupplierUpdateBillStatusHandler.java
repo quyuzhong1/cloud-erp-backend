@@ -52,10 +52,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -358,23 +355,30 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND, "资质附件");
             }
             //供应商按附件生成资质信息
-            List<Map> attachList = new ArrayList<>();
+            Set<Map> attachList =  new HashSet<>();
             if (attachmentObject instanceof Map) {
                 Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
                 attachList.add(attachment);
             } else if (attachmentObject instanceof String) {
-                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
-                attachList.add(attachment);
+                if (CharSequenceUtil.isNotBlank(attachmentObject.toString())) {
+                    Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                    attachList.add(attachment);
+                }
             }  else {
-                attachList = JSONUtil.parseArray(attachmentObject).toList(Map.class);
+                JSONArray jsonArray = JSONUtil.parseArray(attachmentObject);
+                for (Object element : jsonArray) {
+                    attachList.addAll(processJsonElement(element));
+                }
             }
             List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
 
             for (Map<String,Object> attachMap : attachList) {
+                Map<String, Object> detailAttachMap = new HashMap<>();
+
                 String key = attachMap.keySet().stream().findFirst().orElse("");
                 String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
-                        filter(req -> CharSequenceUtil.equals(String.valueOf(fieldName),req.getName()))
+                        filter(req -> CharSequenceUtil.equals(fieldName,req.getName()))
                         .map(DictBasicEntity::getValue)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
@@ -382,19 +386,24 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
-                credentialMap.put("code", credentialCode);
+                detailAttachMap.put("attachment",attachmentObject);
+                detailAttachMap.put("code", credentialCode);
+                detailAttachMap.put("name",fieldName);
                 //dmp新增特殊处理
                 if (isDmpAdd) {
                     //有效期
                     Object effectiveDate = credentialMap.get("effectiveDate");
                     if (ObjectUtil.isNotEmpty(effectiveDate)) {
-                        credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+                        detailAttachMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
                     }
                     //失效期
                     Object expireDate = credentialMap.get("expireDate");
                     if (ObjectUtil.isNotEmpty(expireDate)) {
-                        credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+                        detailAttachMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                     }
+                } else {
+                    detailAttachMap.put("effectiveDate", credentialMap.get("effectiveDate"));
+                    detailAttachMap.put("expireDate", credentialMap.get("expireDate"));
                 }
                 // 处理附件
                 List<String> attachmentUrlList = new ArrayList<>();
@@ -407,9 +416,9 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 });
 
                 // 更新凭证对象
-                credentialMap.put("attachmentUrlList", attachmentUrlList);
-                credentialMap.put("attachmentNameList", attachmentNameList);
-                credentialMapList.add(credentialMap);
+                detailAttachMap.put("attachmentUrlList", attachmentUrlList);
+                detailAttachMap.put("attachmentNameList", attachmentNameList);
+                credentialMapList.add(detailAttachMap);
             }
 
             // 将处理后的列表更新回原始 map
@@ -502,5 +511,32 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
         addDTO.setBussinessKey(bussinessKey);
         return addDTO;
+    }
+
+    // 递归处理JSON元素的方法
+    private Set<Map> processJsonElement(Object element) {
+        Set<Map> result = new HashSet<>();
+
+        if (element instanceof Map) {
+            // 如果是Map，直接添加到结果集
+            result.add((Map) element);
+        } else if (element instanceof JSONArray) {
+            // 如果是JSONArray，递归处理每个元素
+            JSONArray array = (JSONArray) element;
+            for (Object item : array) {
+                result.addAll(processJsonElement(item));
+            }
+        }else if (element instanceof String) {
+            JSONArray jsonArray = JSONUtil.parseArray(element);
+            for (Object object : jsonArray) {
+                Map<String, Object> map = JSONUtil.parseObj(object).toBean(Map.class);
+                result.add(map);
+            }
+        }  else {
+            // 其他类型尝试解析为JSON对象再转换为Map
+            Map<String, Object> map = JSONUtil.parseObj(element).toBean(Map.class);
+            result.add(map);
+        }
+        return result;
     }
 }
