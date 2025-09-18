@@ -72,11 +72,6 @@ public class ExportOmsFeignController {
     private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
     @Resource
-    private SoMultiChannelService soMultiChannelService;
-    @Resource
-    private ExhibitionOrderService exhibitionOrderService;
-
-    @Resource
     private SoReceiptService soReceiptService;
 
     @PostMapping("/customerB2BSellerChange")

@@ -4224,21 +4224,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void updateSkuStdCostOutstock(SoOutstockEntity entity) {
-        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.lambdaQuery()
-                .eq(SoOutstockDetailEntity::getMainId, entity.getId())
-                .list();
-        if (CollectionUtils.isEmpty(detailList)){
-            return;
-        }
-        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
-
-    }
-
-    @Override
     public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId) {
         List<ExhibitionOrderDTO.DownstreamListDTO> resultList = baseMapper.listSoOutstockByExhibitionId(exhibitionId);
         if(CollUtil.isEmpty(resultList)){
