@@ -478,11 +478,6 @@ public class SampleRecipientController extends BaseController {
      * @return ApiResult<List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO>>
      */
     @PostMapping("/viewGenerateOutboundOrder")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:generateOutboundOrder",
-            serviceClass = SampleRecipientService.class,
-            keyIdName = "ids")
     public ApiResult<List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO>> viewGenerateOutboundOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> list = sampleRecipientService.viewGenerateOutboundOrder(dto.getIds());
         return success(list);
