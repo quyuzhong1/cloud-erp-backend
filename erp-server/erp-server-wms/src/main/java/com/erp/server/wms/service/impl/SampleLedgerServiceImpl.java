@@ -300,6 +300,38 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         return viewDTO;
     }
 
+    @Override
+    public SampleLedgerDTO.SampleBackView generateSampleBackInfo(List<String> ids) {
+        if(CollUtil.isEmpty(ids)){
+            throw new ServiceException(ApiError.ERROR_92271);
+        }
+
+        List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
+        if(CollUtil.isEmpty(sampleLedgerEntities)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"退回单");
+        }
+        //校验是否存在多个退回人
+        long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
+        if(count > 1){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"退回人");
+        }
+
+        SampleLedgerDTO.SampleBackView viewDTO = new SampleLedgerDTO.SampleBackView();
+        SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
+        params.setIds(ids);
+        params.setType(SampleLedgerTypeEnum.BACK.getCode());
+        params.setUserId(sampleLedgerEntities.get(0).getUserId());
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"退回单");
+        }
+
+        viewDTO.setBackUserId(sampleLedgerEntities.get(0).getUserId());
+        viewDTO.setBackUserName(sampleLedgerEntities.get(0).getUserName());
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
+    }
+
     /**
      * 分页列表查询
      * @author wuhaotian

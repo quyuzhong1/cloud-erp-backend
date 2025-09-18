@@ -24,4 +24,6 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     List<WorkflowTaskRecordEntity> listErrorTask();
 
     void WorkflowTaskRecordRetryJob();
+
+    List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
 }

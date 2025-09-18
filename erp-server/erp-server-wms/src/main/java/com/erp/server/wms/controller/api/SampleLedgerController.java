@@ -133,6 +133,23 @@ public class SampleLedgerController extends BaseController {
         return success(sampleLedgerService.generateExhibitionOrderView(dto.getIds()));
     }
 
+    /**
+     * 生成样品退回单视图
+     * @author wuhaotian
+     * @date: 2025-09-18
+     * @param dto
+     * @return ApiResult<SampleLedgerDTO.SampleBackView>
+     */
+    @PostMapping("/generateSampleBackInfo")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:generateSampleBackInfo",
+            tableAlias = "sl"
+    )
+    public ApiResult<SampleLedgerDTO.SampleBackView> generateSampleBackInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(sampleLedgerService.generateSampleBackInfo(dto.getIds()));
+    }
+
 
 
 }

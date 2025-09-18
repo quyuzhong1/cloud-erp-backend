@@ -24,7 +24,7 @@ public class WorkflowTaskRecordDTO implements Serializable {
 
 
     /**
-    *
+    * 新增任务
     */
     @Data
     @NoArgsConstructor
@@ -43,7 +43,7 @@ public class WorkflowTaskRecordDTO implements Serializable {
 
 
     /**
-    *
+    * mq请求体
     */
     @Data
     @NoArgsConstructor
@@ -57,7 +57,7 @@ public class WorkflowTaskRecordDTO implements Serializable {
 
 
     /**
-     * mq
+     * mq响应体
      */
     @Data
     @NoArgsConstructor
@@ -66,6 +66,22 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private Map<String,Object> data;
 
         private String errorMsg;
+    }
+
+    /**
+     * 异常任务报告
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TaskErrorReportDTO {
+
+        private String sourceType;
+
+        private String dictBasicId;
+
+        private String dictBasicName;
+
+        private Integer errorCount;
     }
 
 
