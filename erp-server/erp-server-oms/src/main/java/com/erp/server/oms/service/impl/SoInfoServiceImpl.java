@@ -3718,7 +3718,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 soDetailService.removeByIds(deleteDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(exist);
+                this.submit(exist, true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
@@ -3773,7 +3773,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String id = this.add(addDTO);
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity);
+                this.submit(soInfoEntity, false);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
