@@ -338,7 +338,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        fillDb(list);
+        fillDb(list,Boolean.FALSE);
         return new PagingVO<>(pageData);
 
     }
@@ -1212,7 +1212,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * @author yl
      * @date 2023-06-29 19:15
      */
-    private void fillDb(List<SkuMappingDTO.PagingViewDTO> list) {
+    private void fillDb(List<SkuMappingDTO.PagingViewDTO> list,Boolean isFastdfsUrl) {
         List<String> mainIds = list.stream().map(SkuMappingDTO.PagingViewDTO::getId).collect(Collectors.toList());
         Map<String, List<SkuMappingExtendDTO.ListDTO>> extendMap =  skuMappingExtendService.mapByMainIds(mainIds, false);
 
@@ -1249,6 +1249,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
             //平台状态
             item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
+
+            //是否是飞书链接
+            if (isFastdfsUrl) {
+                item.setProductImageUrl(FastDFSClientUtil.publicUrl + item.getProductImageUrl());
+            }
         }
     }
 
@@ -1604,7 +1609,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         dto.getParams().setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
-        fillDb(page.getRecords());
+        fillDb(page.getRecords(),Boolean.FALSE);
         return new PagingVO<>(page);
     }
 
@@ -2273,7 +2278,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        fillDb(list);
+        fillDb(list,Boolean.TRUE);
         return new PagingVO<>(pageData);
     }
 
