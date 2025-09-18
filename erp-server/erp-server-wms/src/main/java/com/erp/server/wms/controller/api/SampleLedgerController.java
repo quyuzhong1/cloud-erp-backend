@@ -107,6 +107,11 @@ public class SampleLedgerController extends BaseController {
      * @return ApiResult<SampleLedgerDTO.SampleScrapView>
      */
     @PostMapping("/generateSampleScrapView")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:generateSampleScrapView",
+            tableAlias = "sl"
+    )
     public ApiResult<SampleLedgerDTO.SampleScrapView> generateSampleScrapView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(sampleLedgerService.generateSampleScrapView(dto.getIds()));
     }
@@ -119,6 +124,11 @@ public class SampleLedgerController extends BaseController {
      * @return ApiResult<SampleLedgerDTO.ExhibitionOrderView>
      */
     @PostMapping("/generateExhibitionOrderView")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:generateExhibitionOrderView",
+            tableAlias = "sl"
+    )
     public ApiResult<SampleLedgerDTO.ExhibitionOrderView> generateExhibitionOrderView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(sampleLedgerService.generateExhibitionOrderView(dto.getIds()));
     }

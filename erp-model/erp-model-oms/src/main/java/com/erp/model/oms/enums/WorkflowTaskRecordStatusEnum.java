@@ -1,8 +1,11 @@
 package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 /**
  * <p>
@@ -54,5 +57,10 @@ public enum WorkflowTaskRecordStatusEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static WorkflowTaskRecordStatusEnum getByCode(String code){
+        return Arrays.stream(values()).filter(a -> a.getCode().equalsIgnoreCase(code))
+                .findFirst().orElse(null);
     }
 }

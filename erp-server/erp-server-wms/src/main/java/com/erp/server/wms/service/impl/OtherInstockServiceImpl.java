@@ -48,6 +48,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -120,6 +121,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
 
 /**
@@ -199,6 +201,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Resource
     private ExhibitionOrderFeign exhibitionOrderFeign;
+
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
@@ -1725,6 +1730,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      * @return MQ响应数据传输对象，包含处理结果和错误信息
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
@@ -1804,6 +1810,66 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (!approve.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(ExhibitionOrderDTO.DownstreamDisapproveDTO dto) {
+        if(Objects.isNull(dto) || StringUtils.isBlank(dto.getExhibitionOrderId()) || StringUtils.isBlank(dto.getSoId())){
+            dto.setErrorMsg("参数错误");
+            return dto;
+        }
+        //销售出库单
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSourceId, dto.getSoId()).list();
+        if(CollUtil.isNotEmpty(soOutstockEntities)){
+            BatchResultDTO result = soOutstockService.disApprove(soOutstockEntities.get(0), Boolean.TRUE);
+            if(!result.getSuccess()){
+                dto.setErrorMsg("销售出库单反审核失败");
+                return dto;
+            }
+            List<BatchResultDTO> resultDTOList = soOutstockService.deleteByIds(Arrays.asList(soOutstockEntities.get(0).getId()), true);
+            boolean b = resultDTOList.stream().allMatch(BatchResultDTO::getSuccess);
+            if(!b){
+                dto.setErrorMsg("销售出库单删除失败");
+                return dto;
+            }
+        }
+
+        //其他入库单
+        List<OtherInstockEntity> otherInstockEntities = lambdaQuery().eq(OtherInstockEntity::getSourceId, dto.getExhibitionOrderId()).list();
+        if(CollUtil.isNotEmpty(otherInstockEntities)){
+            String dbId = otherInstockEntities.get(0).getId();
+            OtherInstockService bean = SpringUtil.getBean(OtherInstockService.class);
+            BatchResultDTO result = bean.disApprove(dbId, false);
+            if(!result.getSuccess()){
+                dto.setErrorMsg("其他入库单反审核失败");
+                return dto;
+            }
+
+            Boolean b = bean.delete(Collections.singletonList(dbId));
+            if(!b){
+                dto.setErrorMsg("其他入库单删除失败");
+                return dto;
+            }
+        }
+
+        //发货通知单
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeService.lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, dto.getSoId()).list();
+        if(CollUtil.isNotEmpty(soDeliveryNoticeEntities)){
+            BatchResultDTO result = soDeliveryNoticeService.disApprove(soDeliveryNoticeEntities.get(0));
+            if(!result.getSuccess()){
+                dto.setErrorMsg("发货通知单反审核失败");
+                return dto;
+            }
+            Boolean b = soDeliveryNoticeService.removeByIds(Arrays.asList(soDeliveryNoticeEntities.get(0).getId()));
+            if(!b){
+                dto.setErrorMsg("发货通知单删除失败");
+                return dto;
+            }
+        }
+
+        return dto;
     }
 
 }

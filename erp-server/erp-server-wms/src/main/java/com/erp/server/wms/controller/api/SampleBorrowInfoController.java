@@ -450,6 +450,11 @@ public class SampleBorrowInfoController extends BaseController {
      * @return 返回包含样品归还视图信息的API结果对象，数据为SampleReturnView列表
      */
     @PostMapping("/generateSampleReturnView")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBorrowInfo:generateSampleReturnView",
+            tableAlias = "sbi"
+    )
     public ApiResult<List<SampleBorrowInfoDTO.SampleReturnView>> generateSampleReturnView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto){
         return success(sampleBorrowInfoService.generateSampleReturnView(dto.getDetailIdList()));
     }
