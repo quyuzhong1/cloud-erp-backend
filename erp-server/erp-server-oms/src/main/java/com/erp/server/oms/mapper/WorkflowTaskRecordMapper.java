@@ -1,4 +1,5 @@
 package com.erp.server.oms.mapper;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -19,4 +20,6 @@ import java.util.List;
 public interface WorkflowTaskRecordMapper extends BaseMapper<WorkflowTaskRecordEntity> {
 
     List<WorkflowTaskRecordEntity> listErrorTask();
+
+    List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
 }

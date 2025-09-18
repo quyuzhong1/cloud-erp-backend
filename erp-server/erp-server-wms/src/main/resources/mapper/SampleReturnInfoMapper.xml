@@ -153,14 +153,14 @@ sri.remark as remark
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        sri.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  sample_return_info
-        WHERE is_deleted=FALSE
+        FROM  sample_return_info as sri
+        WHERE  sri.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY sri.approve_status
     </select>
 
     <select id="listReturnBySourceId" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">

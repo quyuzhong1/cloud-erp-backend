@@ -33,5 +33,26 @@
             and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status IN ( 'failed', 'processing' ) and is_deleted = false )
     </select>
 
+    <select id="getTaskErrorReport" resultType="com.erp.model.oms.dto.WorkflowTaskRecordDTO$TaskErrorReportDTO">
+        SELECT
+            wtr.source_type,
+            wtr.dict_basic_id,
+            db.name as dict_basic_name,
+            count(1) as errorCount
+        FROM
+            workflow_task_record  as wtr
+            left join dict_basic as db on wtr.dict_basic_id = db.id and db.is_deleted = false
+        WHERE
+            wtr.is_deleted = FALSE
+        and wtr.retry_count > 3
+        and wtr.source_type !=''
+	    and wtr.dict_basic_id != ''
+	    AND wtr.status =  'failed'
+        GROUP BY
+            wtr.source_type ,
+            wtr.dict_basic_id,
+            db.name
+    </select>
+
 
 </mapper>
