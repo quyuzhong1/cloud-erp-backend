@@ -200,6 +200,7 @@
             si.receive_method AS receiveMethod,
             si.receive_date AS receiveDate,
             si.receive_amount AS receiveAmount,
+        si.order_amount as orderAmount,
             si.trade_term AS tradeTerm,
             sod.amount_local_currency AS amountLocalCurrency,
             sod.all_amount_local_currency AS allAmountLocalCurrency,

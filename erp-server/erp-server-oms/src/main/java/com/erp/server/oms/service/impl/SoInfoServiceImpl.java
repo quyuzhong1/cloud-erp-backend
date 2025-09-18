@@ -448,13 +448,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //售后订单
         String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
         boolean isNotSales = !afterSaleOrder.equals(entity.getOrderType());
-        if (isNotSales && Objects.isNull(entity.getReceiveDate()) ) {
-            throw new ServiceException(entity.getCode() + " 销售订单 收款日期不能为空");
-        }
         BigDecimal zeroFlag = BigDecimal.ZERO;
-        if (isNotSales && ( Objects.isNull(entity.getReceiveAmount()) || zeroFlag.compareTo(entity.getReceiveAmount()) == 0)) {
-            throw new ServiceException(entity.getCode() + " 销售订单 收款金额不能为空或者为零");
-        }
         if (isNotSales) {
             List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(Collections.singletonList(entity.getId()));
             //这个是 单价为空的集合
@@ -1385,6 +1379,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        //已审核不能编辑
+        if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
+            throw new ServiceException(ApiError.ERROR_92017);
+        }
+        List<SoReceiptEntity> existReceipt = soReceiptService.listBySoId(id);
+
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
             String oldCustomerId = soInfo.getCustomerId();
@@ -1397,6 +1397,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         && pushDownMap.get(soId) > 0) {
                     throw new ServiceException("已下推发货通知单冻结库存，客户不允许修改，请删除发货通知单后修改");
                 }
+            }
+            //判断是否存在收款单，存在不能修改客户
+            if (CollUtil.isNotEmpty(existReceipt) && !customerId.equals(oldCustomerId)) {
+                throw new ServiceException("已存在收款单，客户不允许修改");
             }
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
         }
@@ -1413,6 +1417,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         && pushDownMap.get(soId) > 0) {
                     throw new ServiceException("已下推发货通知单冻结库存，销售组织不允许修改，请删除发货通知单后修改");
                 }
+            }
+        }
+        if (StringUtils.isNotBlank(salesOrgId)) {
+            String oldSaleOrgId = soInfo.getSalesOrgId();
+            if (CollUtil.isNotEmpty(existReceipt) && !salesOrgId.equals(oldSaleOrgId)) {
+                throw new ServiceException("已存在收款单，组织不允许修改");
             }
         }
         String code = soInfo.getCode();
@@ -3178,7 +3188,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/b2bsoExport.xlsx";
+        String path = "excel/b2bsoExport.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -4234,6 +4244,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 handleVirtualWarehouse(addSo);
             }
             Boolean isAdd = Boolean.TRUE;
+
+
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
                 List<String> msgList = new ArrayList<>();
@@ -4342,6 +4354,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     addSo.setAllAmountLc(allAmountLc);
                     this.save(addSo);
                     soDetailService.saveBatch(soDetailList);
+                    //更新收款单信息
+                    List<SoReceiptDTO.SoViewDTO> soReceiptDTOList = new ArrayList<>();
+                    //收款单
+                    SoReceiptDTO.SoViewDTO receiptDTO = new SoReceiptDTO.SoViewDTO();
+                    receiptDTO.setReceiptAmount(new BigDecimal(mainInfo.getReceiveAmount()));
+                    receiptDTO.setReceiptDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
+                    receiptDTO.setDictReceiptMethod(receiveMethod);
+                    receiptDTO.setReceiptAccount(receiveAccount);
+                    receiptDTO.setPaymentNo(mainInfo.getPaymentNo());
+                    soReceiptDTOList.add(receiptDTO);
+                    soReceiptService.addOrUpdateBySo(addSo,customerId, soReceiptDTOList);
                 } else {
                     continue;
                 }

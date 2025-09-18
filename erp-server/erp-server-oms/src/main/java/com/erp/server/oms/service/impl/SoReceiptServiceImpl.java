@@ -108,7 +108,18 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
         List<SoReceiptDetailDTO.AddDTO> detailList = addDTO.getDetailList();
 
-        if(Objects.nonNull(addDTO.getReceiptAmount())){
+        //校验明细关联的销售订单组织跟主记录的组织是否一致
+        List<String> soIds = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(soIds)){
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+            Set<String> salesOrgIdSet = soInfoEntityList.stream().map(SoInfoEntity::getSalesOrgId).collect(Collectors.toSet());
+            if(salesOrgIdSet.size() > 1 || !salesOrgIdSet.contains(soReceiptEntity.getSalesOrgId())){
+                throw new ServiceException("明细关联的销售订单组织必须跟收款单的组织一致");
+            }
+        }
+
+
+        if(Objects.isNull(addDTO.getReceiptAmount())){
             BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
             soReceiptEntity.setReceiptAmount(totalAmount);
         }
@@ -153,11 +164,26 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if(old.getSourceType().equals(SoReceiptSourceTypeEnum.THIRD.getCode()) && !addOrUpdateDTO.getIsFromPlatform()){
             throw new ServiceException("第三方平台的收款单不允许在ERP修改");
         }
+        if(!old.getCustomerId().equals(addOrUpdateDTO.getCustomerId())){
+            throw new ServiceException("不允许修改客户");
+        }
+        if(!old.getSalesOrgId().equals(addOrUpdateDTO.getSalesOrgId())){
+            throw new ServiceException("不允许修改组织");
+        }
+
         SoReceiptEntity soReceiptEntity =  BeanMapperUtils.map(SoReceiptEntity.class, addOrUpdateDTO);
 
         // 数据处理
         List<SoReceiptDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
-
+        //校验明细关联的销售订单组织跟主记录的组织是否一致
+        List<String> soIds = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(soIds)){
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+            Set<String> salesOrgIdSet = soInfoEntityList.stream().map(SoInfoEntity::getSalesOrgId).collect(Collectors.toSet());
+            if(salesOrgIdSet.size() > 1 || !salesOrgIdSet.contains(soReceiptEntity.getSalesOrgId())){
+                throw new ServiceException("明细关联的销售订单组织必须跟收款单的组织一致");
+            }
+        }
         //求和总收款金额
         BigDecimal totalAmount;
 
@@ -169,7 +195,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }else{
             totalAmount = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         }
-        if(Objects.nonNull(addOrUpdateDTO.getReceiptAmount())){
+        if(Objects.isNull(addOrUpdateDTO.getReceiptAmount())){
             soReceiptEntity.setReceiptAmount(totalAmount);
         }
         boolean save = super.updateById(soReceiptEntity);
@@ -348,7 +374,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     private Boolean validateDisApprove(SoReceiptEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         //第三方平台的不允许在ERP修改
@@ -394,7 +420,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public Boolean cancelProcess(String id) {
         SoReceiptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到收款单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -532,6 +558,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setDictReceiptMethod(add.getDictReceiptMethod());
             addDTO.setReceiptAccount(add.getReceiptAccount());
             addDTO.setReceiptDate(add.getReceiptDate());
+            addDTO.setSalesOrgId(soInfo.getSalesOrgId());
             addDTO.setSourceType(SoReceiptSourceTypeEnum.SO_INFO.getCode());
             SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
             detailAddDTO.setSoId(soInfo.getId());
@@ -556,6 +583,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             updateDTO.setId(update.getId());
             updateDTO.setAttachmentList(update.getAttachmentList());
             updateDTO.setFromSoUpdate(true);
+            updateDTO.setCustomerId(customerId);
             updateDTO.setReceiptDate(update.getReceiptDate());
             updateDTO.setDictReceiptMethod(update.getDictReceiptMethod());
             updateDTO.setReceiptAccount(update.getReceiptAccount());
@@ -747,6 +775,15 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(entity.getDictReceiptMethod())).findFirst().orElse(null);
         if(ObjectUtil.isNotEmpty(receiveMethod)) {
             data.setDictReceiptMethodName(receiveMethod.getName());
+        }
+        List<BankAccountEntity> bankAccountList = new ArrayList<>();
+        List<String> receiveAccountList = Arrays.asList(data.getReceiptAccount());
+        if (CollectionUtils.isNotEmpty(receiveAccountList)) {
+            bankAccountList = bankAccountService.listByIds(receiveAccountList);
+            BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), data.getReceiptAccount())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
+                data.setReceiptAccountName(bankAccountEntity.getAccountName());
+            }
         }
         for (SoReceiptDetailEntity soReceiptDetailEntity : detailList) {
             SoReceiptDetailDTO.ViewDTO viewDTO = BeanMapperUtils.map(SoReceiptDetailDTO.ViewDTO.class, soReceiptDetailEntity);
@@ -964,6 +1001,20 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setDetailList(detailAddDTOList);
             this.add(addDTO);
         }
+    }
+
+    @Override
+    public List<SoReceiptEntity> listBySoId(String soId) {
+        if(StrUtils.isNotEmpty(soId)){
+            List<SoReceiptDetailEntity> detailList = soReceiptDetailService.listBySoId(soId);
+            if(CollectionUtils.isNotEmpty(detailList)){
+                List<String> mainIds = detailList.stream().map(SoReceiptDetailEntity::getMainId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(mainIds)){
+                    return this.listByIds(mainIds);
+                }
+            }
+        }
+        return new ArrayList<>();
     }
 
     private boolean judgeHasChange(SoReceiptEntity exist, List<SoReceiptDetailEntity> existList, PlatformReceiptDTO dto) {
