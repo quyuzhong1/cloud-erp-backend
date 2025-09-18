@@ -180,6 +180,8 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "hscode", source = "customsCode")
     @Mapping(target = "url", source = "url")
     @Mapping(target = "material", source = "englishMaterial")
+    @Mapping(target = "sku", source = "skuNo")
+    @Mapping(target = "priceExport", source = "declarePrice")
     YanWenCreateWayBillRequest.ParcelInfo.Product yanWenProductMapping(LogisticsProductVO logisticsProductVO);
 
 

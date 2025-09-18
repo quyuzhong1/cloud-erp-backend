@@ -73,6 +73,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -588,8 +589,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
         if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSoId())) {
             return BatchResultDTO.fail("", "", "销售订单不存在不进行拦截");
@@ -618,8 +618,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
                 this.lambdaUpdate()
                         .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
-                        .set(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()), SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                        .set(SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                        .set(SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
+                        .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
                         .eq(SoMultiChannelEntity::getId, entity.getId()).update();
+                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+                entity.setInvalidStatus(Boolean.TRUE);
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse.getData())), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
             } catch (ApiException | LWAException e) {
                 log.error("亚马逊发货拦截异常：", e);
@@ -656,7 +660,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
-        if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
+        if (CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
             //销售订单取消多渠道标识
             soB2cService.lambdaUpdate()
                     .set(SoB2cEntity::getMultiChannelType, "")
