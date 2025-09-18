@@ -276,10 +276,10 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            /*if ((dto.getIsDetailField() && CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(dto.getSysParentId())) ||
+            if ((dto.getIsDetailField() && CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(dto.getSysParentId())) ||
                     (!dto.getIsDetailField() && !CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(dto.getSysParentId()))) {
                 throw new ServiceException("字段【{}】明细只能对应明细", dto.getThirdField());
-            }*/
+            }
             // 校验通过后，进行保存或更新操作
             if (CharSequenceUtil.isEmpty(dto.getId())) {
                 dto.setId(IdWorker.getIdStr());
