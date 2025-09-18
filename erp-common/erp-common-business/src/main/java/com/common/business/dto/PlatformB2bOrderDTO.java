@@ -105,7 +105,7 @@ public class PlatformB2bOrderDTO {
     /**
      * 附件列表
      */
-    private List<AttachDTO> attachmentList;
+    private List<AttachDTO> attachment;
 
     /**
      * erp信息
