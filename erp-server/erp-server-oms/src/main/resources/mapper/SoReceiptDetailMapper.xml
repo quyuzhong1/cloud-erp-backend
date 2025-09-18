@@ -37,6 +37,19 @@
         is_deleted,
         main_id, so_id, so_code, source_detail_Id, payment_no, dict_receipt_method, receipt_account, receipt_date, remark, receipt_amount
     </sql>
+    <select id="existPaymentNo" resultType="java.lang.String">
+        select srd.payment_no
+        from so_receipt_detail srd
+        inner join so_receipt sr on srd.main_id = sr.id
+        where srd.is_deleted = false
+          and sr.is_deleted = false
+          and sr.invalid_status = false
+          and sr.id != #{id}
+        and srd.payment_no in
+        <foreach collection="paymentNoSet" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 
 
 </mapper>

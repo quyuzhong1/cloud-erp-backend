@@ -409,6 +409,10 @@ public class SoReceiptDTO implements Serializable {
          * 收款账号
          */
         private String receiptAccount;
+        /**
+         * 收款账号
+         */
+        private String receiptAccountName;
 
         /**
          * 收款日期

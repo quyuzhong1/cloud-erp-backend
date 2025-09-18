@@ -17,10 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
 import com.erp.model.oms.dto.CustomerCreditApplyDTO;
-import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.OperateLogEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -28,10 +25,7 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.OperateLogMapper;
-import com.erp.server.oms.service.CfgOperateLogFieldService;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.DictBasicService;
-import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
@@ -57,6 +51,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     @Resource
     private CfgOperateLogFieldService cfgOperateLogFieldService;
+
+    @Resource
+    private BankAccountService bankAccountService;
+
 
     @Resource
     private DictBasicService dictBasicService;
@@ -142,8 +140,13 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
                 valuePair = setCurrencyValue(valuePair);
             }
+            //组织
             if (ModuleOperateLogFieldTypeEnum.TYPE_ORG.getCode().equals(type)) {
                 valuePair = setOrg(valuePair);
+            }
+            //账户
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ACCOUNT.getCode().equals(type)) {
+                valuePair = setAccount(valuePair);
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
@@ -236,8 +239,13 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
                 valuePair = setCurrencyValue(valuePair);
             }
+            //组织
             if (ModuleOperateLogFieldTypeEnum.TYPE_ORG.getCode().equals(type)) {
                 valuePair = setOrg(valuePair);
+            }
+            //账户
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ACCOUNT.getCode().equals(type)) {
+                valuePair = setAccount(valuePair);
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
@@ -553,6 +561,22 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return new Pair<>(oldValue,newValue);
     }
+
+    /**
+     * 账户
+     */
+    private Pair<String,String> setAccount (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<String> orgIds = Arrays.asList(valuePair.getKey(), valuePair.getValue());
+        List<BankAccountEntity> bankAccountEntityList = bankAccountService.listByIds(orgIds);
+        if (CollectionUtils.isNotEmpty(bankAccountEntityList)) {
+            oldValue = bankAccountEntityList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getAccountName())).orElse("");
+            newValue = bankAccountEntityList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getAccountName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
 
     /**
      * 设置枚举值
