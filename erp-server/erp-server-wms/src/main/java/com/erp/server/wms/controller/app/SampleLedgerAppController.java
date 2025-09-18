@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 样品台账app端
@@ -118,4 +119,18 @@ public class SampleLedgerAppController extends BaseController {
         return success(sampleLedgerFlowService.view(id));
     }
 
+    /**
+     * 添加产品
+     * @author jack
+     * @date: 2025-09-15
+     * @param pagingDTO
+     * @return ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>>
+     */
+    @PostMapping("/listSku")
+    public ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO) {
+        if (Objects.isNull(pagingDTO.getParams())){
+            return success();
+        }
+        return success(sampleLedgerService.listSku(pagingDTO));
+    }
 }
