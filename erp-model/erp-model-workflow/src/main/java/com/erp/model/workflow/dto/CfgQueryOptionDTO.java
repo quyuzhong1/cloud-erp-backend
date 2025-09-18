@@ -332,6 +332,8 @@ public class CfgQueryOptionDTO implements Serializable {
         private String remoteLabel;
 
         private String valueType;
+
+        private String children = "childrenList";
     }
 
     /**

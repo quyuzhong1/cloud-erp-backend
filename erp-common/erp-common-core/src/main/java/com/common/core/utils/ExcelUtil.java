@@ -1,6 +1,7 @@
 package com.common.core.utils;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
@@ -673,7 +674,8 @@ public class ExcelUtil {
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {
-            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_95131);
+            log.error("ExcelUtil.downloadTemplate 下载失败 e={}", ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(ApiError.ERROR_95131);
         }
     }
 

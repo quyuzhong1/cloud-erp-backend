@@ -3012,7 +3012,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -3073,7 +3072,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @Author Luo_WG
      * @Date 2024/1/16 18:52
      **/
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO addIntercept(String remark, SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         //映射拦截单主表信息
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
@@ -3124,8 +3122,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
                 addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
                 addDTO.setHandleTime(LocalDateTime.now());
-                resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity),Collections.singletonList(logisticsEntity), false);
-                BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
+                soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity),Collections.singletonList(logisticsEntity), false);
+                soB2cDeliveryInterceptFeign.add(addDTO);
             }
             return resultDTO;
         } else {
@@ -4208,9 +4206,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             SoB2cDeliveryEntity::getShipmentMark,
                             (existing, replacement) -> existing ));
         }
+        //获取多渠道异常信息
+        List<String> soIds = list.stream().filter(e -> SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode().equals(e.getMultiChannelType())).map(SoB2cDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<SoMultiChannelEntity> soMultiChannelEntityList = null;
+        if (CollUtil.isNotEmpty(soIds)){
+            soMultiChannelEntityList = soMultiChannelService.getLastBySoId(soIds, CreateStatusEnum.FAILED.getCode());
+        }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
             data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
+            if (SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode().equals(data.getMultiChannelType())){
+                if (CollUtil.isNotEmpty(soMultiChannelEntityList)){
+                    SoMultiChannelEntity soMultiChannelEntity = soMultiChannelEntityList.stream().filter(v -> v.getSoId().equals(data.getId())).max(Comparator.comparing(SoMultiChannelEntity::getCreateTime)).orElse(null);
+                    if (Objects.nonNull(soMultiChannelEntity)){
+                        data.setMultiChannelTypeName(data.getMultiChannelTypeName() + soMultiChannelEntity.getSignOrderError());
+                    }
+                }
+            }
             if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
                 List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getLogisticsCode());
                 if (CollectionUtils.isNotEmpty(logisticsBillVos)) {

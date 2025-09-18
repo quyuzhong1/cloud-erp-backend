@@ -50,6 +50,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
@@ -695,6 +697,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+        // 更新SKU标准成本价出库时间
+        updateSkuStdCostOutstock(entity);
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -703,6 +708,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
 
     }
+
 
     /**
      * 审核流程处理
@@ -2697,19 +2703,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-        params.setPermissionSql(getPermissionSql(params.getPermissionSql()));
-        Page query = new Page(0, -1);
-        IPage pageData = baseMapper.paging(query, params);
-        List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new SoOutstockDTO.PagingTotalDTO(0,0,"0");
-        }
-        //处理分页数据
-        fillPaging(list,false);
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = new SoOutstockDTO.PagingTotalDTO();
-        pagingTotalDTO.setActualTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getActualQty).reduce(Integer::sum).orElse(0));
-        pagingTotalDTO.setPlanTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getPlanQty).reduce(Integer::sum).orElse(0));
-        pagingTotalDTO.setTotalTaxAmount(list.stream().map(SoOutstockDTO.PagingViewDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add).stripTrailingZeros().toPlainString());
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
 
@@ -4148,5 +4142,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.lambdaQuery().eq(SoOutstockEntity::getSourceCode,sourceCode).orderByDesc(SoOutstockEntity::getCreateTime).last(" limit 1 ").one();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSkuStdCostOutstock(SoOutstockEntity entity) {
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.lambdaQuery()
+                .eq(SoOutstockDetailEntity::getMainId, entity.getId())
+                .list();
+        if (CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
+    }
 
 }

@@ -239,8 +239,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(record.getPurchaseSourceType())){
                 record.setSubcontractCode(record.getPurchaseSourceCode());
             }
-            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
-                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            ReturnOrderSourceEnum returnOrderSourceEnum  = ReturnOrderSourceEnum.checkLastReturnOrderSource(record.getSourceType());
             record.setReturnOrderSource(returnOrderSourceEnum.getCode());
             record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
             BigDecimal deductAmountAmount ;
@@ -1189,7 +1188,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     public void syncApprovePoReturnToWdt(PoReturnEntity entity, SyncOperateEnum syncOperateEnum) {
-        if(! "other".equals(entity.getSourceType())){
+        ReturnOrderSourceEnum returnOrderSourceEnum  = ReturnOrderSourceEnum.checkLastReturnOrderSource(entity.getSourceType());
+        if(! returnOrderSourceEnum.equals(ReturnOrderSourceEnum.OTHER)){
             log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
         }
