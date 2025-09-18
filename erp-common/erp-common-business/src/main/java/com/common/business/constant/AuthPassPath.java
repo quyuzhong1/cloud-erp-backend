@@ -16,7 +16,8 @@ public class AuthPassPath {
             "/shopifyWebhook/customersRedact;/shopifyWebhook/shopRedact;" +
             "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode;/shop/shopifyUrl;/webVersion/update;/webVersion/sse;"+
             "/open/api/;/logisticsTrack/webhookByTrack123;/webhook/receive/;/overseasInventory/shopifyShippedInfo;"+
-            "/fs/callback/api;"
+            "/fs/callback/api;"+
+            "/sso/login;"
             ;
 
 

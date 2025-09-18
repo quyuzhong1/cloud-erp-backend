@@ -27,6 +27,7 @@ public enum ApiError implements Serializable {
 
     ERROR_403(403, "您未登录,请登录后操作"),
     ERROR_401(401, "Unauthorized"),
+    ERROR_429(429, "访问频率过高，请稍后再试"),
 
     /**
      * 高级查询异常
@@ -1806,6 +1807,15 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
+
+    // 单点登录相关错误码
+    SSO_APP_NOT_FOUND(20001, "应用不存在"),
+    SSO_DISABLED(20002, "单点登录功能已禁用"),
+    SSO_DECRYPT_FAILED(20003, "解密失败"),
+    SSO_PARSE_PAYLOAD_FAILED(20004, "解析payload失败"),
+    SSO_INVALID_PAYLOAD(20005, "payload内容无效"),
+    SSO_USER_NOT_BOUND(20006, "用户未绑定ERP"),
+    SSO_SYSTEM_ERROR(20007, "系统异常：{}"),
     ;
 
     public Integer code;

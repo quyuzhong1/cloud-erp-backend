@@ -136,9 +136,9 @@ public class OpenApiController {
     private String getSecretKey(String referer) {
     	String secretKey = secretKeyMap.get(referer);
     	if(secretKey == null) {
-    		List<SysRefererConfigEntity> list = FeignQuery.create(SysRefererConfigEntity.class).eq(SysRefererConfigEntity::getReferer, referer).list();
+    		List<SysRefererConfigEntity> list = FeignQuery.create(SysRefererConfigEntity.class).eq(SysRefererConfigEntity::getAppId, referer).list();
     		if(CollUtil.isNotEmpty(list)) {
-    			secretKey = list.get(0).getSecretKey();
+    			secretKey = list.get(0).getAppSecret();
     			secretKeyMap.put(referer, secretKey);
     		}
     	}
