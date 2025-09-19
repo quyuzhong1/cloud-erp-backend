@@ -44,26 +44,20 @@ public class KeyNegotiationController {
         try {
             // 获取请求头信息
             String appId = httpRequest.getHeader("App-Id");
-            String userId = httpRequest.getHeader("User-Id"); // User-Id可空
 
             if (StringUtils.isBlank(appId)) {
                 return ApiResult.error(400, "请求头App-Id不能为空");
-            }
-
-            // 如果User-Id为空，使用"none"作为占位符
-            if (StringUtils.isBlank(userId)) {
-                userId = "none";
             }
 
             // 后端生成Session-Id用于标识会话密钥存储位置
             String sessionId = generateSessionId();
             log.info("生成Session-Id：{}", sessionId);
 
-            // 调用密钥注册服务
-            KeyRegistrationResponseDTO response = ssoService.registerKey(request, appId, userId, sessionId);
+            // 调用密钥注册服务，userId将从payload中解密获取
+            KeyRegistrationResponseDTO response = ssoService.registerKey(request, appId, sessionId);
 
             if (response.getSuccess()) {
-                log.info("密钥注册成功，App-Id：{}，User-Id：{}，Session-Id：{}", appId, userId, sessionId);
+                log.info("密钥注册成功，App-Id：{}，Session-Id：{}", appId, sessionId);
                 return ApiResult.success(response);
             } else {
                 log.warn("密钥注册失败：{}", response.getErrorMessage());

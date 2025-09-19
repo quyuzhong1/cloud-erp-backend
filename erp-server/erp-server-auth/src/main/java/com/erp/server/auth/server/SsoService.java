@@ -30,9 +30,8 @@ public interface SsoService {
      *
      * @param request 密钥注册请求
      * @param appId 应用ID
-     * @param userId 用户ID（可为空，为空时使用"none"）
      * @param sessionId 会话ID
      * @return 密钥注册响应
      */
-    KeyRegistrationResponseDTO registerKey(KeyRegistrationRequestDTO request, String appId, String userId, String sessionId);
+    KeyRegistrationResponseDTO registerKey(KeyRegistrationRequestDTO request, String appId, String sessionId);
 }

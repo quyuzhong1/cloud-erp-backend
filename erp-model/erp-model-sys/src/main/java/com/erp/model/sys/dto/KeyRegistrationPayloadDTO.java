@@ -21,4 +21,9 @@ public class KeyRegistrationPayloadDTO implements Serializable {
      * 前端生成的对称密钥
      */
     private String symmetricKey;
+
+    /**
+     * 用户ID（可为空，为空时使用"none"）
+     */
+    private String userId;
 }

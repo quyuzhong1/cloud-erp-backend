@@ -248,7 +248,7 @@ public class SsoServiceImpl implements SsoService {
     }
 
     @Override
-    public KeyRegistrationResponseDTO registerKey(KeyRegistrationRequestDTO request, String appId, String userId, String sessionId) {
+    public KeyRegistrationResponseDTO registerKey(KeyRegistrationRequestDTO request, String appId, String sessionId) {
         try {
             // 1. 根据App-Id查询所有配置
             List<SysRefererConfigEntity> configList = getRefererConfigList(appId);
@@ -283,13 +283,19 @@ public class SsoServiceImpl implements SsoService {
                 throw new ServiceException(ApiError.SSO_PARSE_PAYLOAD_FAILED);
             }
 
-            // 4. 生成Redis键值对存储对称密钥
+            // 4. 从payload中获取userId，如果为空则使用"none"
+            String userId = payload.getUserId();
+            if (StringUtils.isBlank(userId)) {
+                userId = "none";
+            }
+
+            // 5. 生成Redis键值对存储对称密钥
             // 格式：sign:session:{appId}:{userId}:{sessionId}
             String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, sessionId);
             redisService.setCacheObject(redisKey, payload.getSymmetricKey(), 5L, TimeUnit.MINUTES);
-            log.info("存储对称密钥到Redis，key：{}，过期时间：5分钟", redisKey);
+            log.info("存储对称密钥到Redis，key：{}，userId：{}，过期时间：5分钟", redisKey, userId);
 
-            // 5. 返回成功响应
+            // 6. 返回成功响应
             return KeyRegistrationResponseDTO.success(sessionId);
 
         } catch (ServiceException e) {

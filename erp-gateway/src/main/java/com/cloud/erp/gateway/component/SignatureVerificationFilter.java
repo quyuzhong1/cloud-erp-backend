@@ -2,12 +2,19 @@ package com.cloud.erp.gateway.component;
 
 import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.utils.ServletUtils;
+import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.service.impl.RedisService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.SignTypeEnum;
+import com.erp.rpc.sys.feign.SysRefereConfigFeign;
+import org.redisson.api.RedissonClient;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.ApiSignUtil;
+import com.erp.model.sys.entity.SysRefererConfigEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -18,7 +25,10 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,7 +41,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@Order(1) // 在AuthGatewayFilter之前执行
+@Order(2) // 在AuthGatewayFilter之后执行
 public class SignatureVerificationFilter implements GlobalFilter {
 
     /**
@@ -40,7 +50,17 @@ public class SignatureVerificationFilter implements GlobalFilter {
     private static final String OPEN_API_URL = "/open/api/";
 
     @Resource
-    private RedisService redisService;
+    private RedissonClient redissonClient;
+
+    @Resource
+    private TokenService tokenService;
+
+    @Resource
+    private SysRefereConfigFeign sysRefereConfigFeign;
+
+
+    @Value("${spring.profiles.active}")
+    private String currentEnvironment;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -53,12 +73,17 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 return chain.filter(exchange);
             }
 
+            // 只在 prod 和 uat 环境开启签名认证
+            if (!isSignatureVerificationEnabled()) {
+                log.debug("当前环境 {} 不开启签名认证，URI: {}", currentEnvironment, uri);
+                return chain.filter(exchange);
+            }
+
             log.info("开始验证签名，URI: {}", uri);
 
             // 1. 获取请求头
             HttpHeaders headers = request.getHeaders();
             String appId = headers.getFirst("App-Id");
-            String userId = headers.getFirst("User-Id");
             String signSessionId = headers.getFirst("Sign-Session-Id");
             String apiSignature = headers.getFirst("API-Signature");
 
@@ -78,23 +103,57 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 return unauthorizedResponse(exchange, ApiError.ERROR_600.msg, ApiError.ERROR_600.code);
             }
 
-            // 3. 如果User-Id为空，使用"none"作为占位符
-            if (StringUtils.isBlank(userId)) {
-                userId = "none";
+            // 3. 检查应用配置
+            AppConfigResult configResult = checkAppConfig(appId);
+            if (configResult.isSignatureDisabled()) {
+                log.debug("应用 {} 已禁用签名验证，URI: {}", appId, uri);
+                return chain.filter(exchange);
             }
 
-            // 4. 从Redis获取对称密钥
+            boolean ssoEnabled = configResult.isSsoEnabled();
+            String userId = "none"; // 默认值
+            LoginUser loginUser = null;
+
+            if (ssoEnabled) {
+                // 4. 获取JWT Token并解析用户信息
+                String token = headers.getFirst("Authorization");
+                if (StringUtils.isBlank(token)) {
+                    log.warn("开启单点登录但未提供JWT Token");
+                    return unauthorizedResponse(exchange, "未提供JWT Token", ApiError.ERROR_403.code);
+                }
+
+                // 移除Bearer前缀
+                if (token.startsWith("Bearer ")) {
+                    token = token.substring(7);
+                }
+
+                loginUser = tokenService.getLoginUser(token);
+                if (loginUser == null) {
+                    log.warn("JWT Token无效或已过期");
+                    return unauthorizedResponse(exchange, "JWT Token无效", ApiError.ERROR_403.code);
+                }
+
+                // 从JWT Token中获取用户ID
+                userId = loginUser.getUid();
+                if (StringUtils.isBlank(userId)) {
+                    userId = "none";
+                }
+
+                log.info("从JWT Token解析用户ID: {}", userId);
+            }
+
+            // 5. 从Redis获取对称密钥
             String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, signSessionId);
-            String symmetricKey = redisService.getCacheObject(redisKey);
+            String symmetricKey = (String) redissonClient.getBucket(redisKey).get();
 
             if (StringUtils.isBlank(symmetricKey)) {
                 log.warn("会话过期，Redis Key: {}", redisKey);
-                return unauthorizedResponse(exchange, "会话过期", ApiError.ERROR_403.code);
+                return unauthorizedResponse(exchange, ApiError.SESSION_EXPIRED.msg, ApiError.SESSION_EXPIRED.code);
             }
 
             log.info("获取到对称密钥，Redis Key: {}", redisKey);
 
-            // 5. 解析API-Signature头
+            // 6. 解析API-Signature头
             String[] parsedSignature = ApiSignUtil.parseSignatureHeader(apiSignature);
             if (parsedSignature == null || parsedSignature.length != 2) {
                 log.warn("API-Signature格式错误");
@@ -104,7 +163,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String timestampStr = parsedSignature[0];
             String signature = parsedSignature[1];
 
-            // 6. 验证签名
+            // 7. 验证签名
             boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey);
             if (!isValidSignature) {
                 log.warn("签名验证失败");
@@ -113,16 +172,35 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             log.info("签名验证成功，URI: {}", uri);
 
-            // 7. 将用户信息添加到请求头中
-            try {
-                // 这里可以根据需要添加用户信息到请求头
-                request.mutate()
-                    .header("App-Id", appId)
-                    .header("User-Id", userId)
-                    .header("Sign-Session-Id", signSessionId)
-                    .build();
-            } catch (Exception e) {
-                log.error("添加请求头失败", e);
+            // 8. 处理用户信息并添加到请求头
+            if (ssoEnabled && loginUser != null) {
+                // 将用户信息添加到请求头中
+                try {
+                    String token = headers.getFirst("Authorization");
+                    if (token.startsWith("Bearer ")) {
+                        token = token.substring(7);
+                    }
+                    loginUser.setAccessToken(token);
+                    request.mutate()
+                        .header("App-Id", appId)
+                        .header("User-Id", userId)
+                        .header("Sign-Session-Id", signSessionId)
+                        .header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8"))
+                        .build();
+                } catch (UnsupportedEncodingException e) {
+                    log.error("添加请求头失败", e);
+                }
+            } else {
+                // 未开启单点登录，只添加基础信息
+                try {
+                    request.mutate()
+                        .header("App-Id", appId)
+                        .header("User-Id", userId)
+                        .header("Sign-Session-Id", signSessionId)
+                        .build();
+                } catch (Exception e) {
+                    log.error("添加请求头失败", e);
+                }
             }
 
         } catch (Exception e) {
@@ -161,8 +239,8 @@ public class SignatureVerificationFilter implements GlobalFilter {
             });
             
             // 使用ApiSignUtil验证签名
-            // 这里需要确定签名类型，暂时使用AES
-            String signType = "AES"; // 或者从配置中获取
+            // 这里需要确定签名类型，暂时使用HMAC
+            String signType = SignTypeEnum.HMAC.getCode(); // 或者从配置中获取
             
             boolean isValid = ApiSignUtil.verifySignature(
                 method, uri, body, queryParams, symmetricKey, signType, 
@@ -176,6 +254,80 @@ public class SignatureVerificationFilter implements GlobalFilter {
         } catch (Exception e) {
             log.error("验证签名异常", e);
             return false;
+        }
+    }
+
+    /**
+     * 判断是否开启签名认证
+     * 只在 prod 和 uat 环境开启
+     *
+     * @return 是否开启签名认证
+     */
+    private boolean isSignatureVerificationEnabled() {
+        return "prod".equalsIgnoreCase(currentEnvironment) || "uat".equalsIgnoreCase(currentEnvironment);
+    }
+
+    /**
+     * 应用配置结果
+     */
+    private static class AppConfigResult {
+        private final boolean signatureDisabled;
+        private final boolean ssoEnabled;
+
+        public AppConfigResult(boolean signatureDisabled, boolean ssoEnabled) {
+            this.signatureDisabled = signatureDisabled;
+            this.ssoEnabled = ssoEnabled;
+        }
+
+        public boolean isSignatureDisabled() {
+            return signatureDisabled;
+        }
+
+        public boolean isSsoEnabled() {
+            return ssoEnabled;
+        }
+    }
+
+    /**
+     * 检查应用配置
+     *
+     * @param appId 应用ID
+     * @return 应用配置结果
+     */
+    private AppConfigResult checkAppConfig(String appId) {
+        try {
+            // 查询应用配置
+            ApiResult<List<SysRefererConfigEntity>> result = sysRefereConfigFeign.getByAppId(appId);
+
+            if (result == null || !result.isSuccess() || result.getData() == null || result.getData().isEmpty()) {
+                log.warn("未找到应用配置，appId: {}", appId);
+                // 默认配置：不禁用签名验证，不开启单点登录
+                return new AppConfigResult(false, false);
+            }
+
+            List<SysRefererConfigEntity> configList = result.getData();
+            boolean signatureDisabled = false;
+            boolean ssoEnabled = false;
+
+            // 检查配置
+            for (SysRefererConfigEntity config : configList) {
+                // 检查是否禁用签名验证
+                if (config.getSignatureDisabled() != null && config.getSignatureDisabled()) {
+                    signatureDisabled = true;
+                }
+                
+                // 检查是否开启单点登录
+                if (config.getSsoDisabled() == null || !config.getSsoDisabled()) {
+                    ssoEnabled = true;
+                }
+            }
+
+            log.info("应用 {} 配置 - 签名验证禁用: {}, 单点登录开启: {}", appId, signatureDisabled, ssoEnabled);
+            return new AppConfigResult(signatureDisabled, ssoEnabled);
+        } catch (Exception e) {
+            log.error("检查应用配置失败，appId: {}", appId, e);
+            // 异常时使用默认配置
+            return new AppConfigResult(false, false);
         }
     }
 
