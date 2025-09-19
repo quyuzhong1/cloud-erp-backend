@@ -17,6 +17,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
@@ -514,17 +515,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     /**
      * 修改订单详情
      *
-     * @param mainId
      * @param detailList
      * @return void
      * @author yl
      * @date 2023-05-17 16:00
      */
     @Override
-    public void updateSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity oldEntity) {
+    public void updateSoDetail(SoInfoEntity soInfo, Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity oldEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        String mainId = soInfo.getId();
         //这是修改的
         List<SoDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
@@ -537,6 +538,29 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
         //校验更新的明细和删除的明细是否冻结库存下推了发货通知
         checkSoDetailQty(dbList,updateList,removeList,soInfoEntity,oldEntity);
+
+        if(!soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) && customerInfoService.isSyncDht(soInfo.getCustomerId())){
+            if(saveOrUpdateList.stream().anyMatch(s -> StringUtils.isBlank(s.getPlatformSkuNo()))){
+                throw new ServiceException("需要同步订货通的订单，平台sku不能为空");
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = saveOrUpdateList.stream().map(SoDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(PlatformDictEnum.DHT.getCode());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoDetailEntity addDTO : saveOrUpdateList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与订单的sku不一致");
+                    }
+                }
+            }
+        }
 
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
@@ -1233,14 +1257,37 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-16 9:32
      */
     @Override
-    public void addSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.AddDTO> detailList) {
+    public void addSoDetail(SoInfoEntity addEntity, Boolean isTax, List<SoDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        String mainId = addEntity.getId();
         //这是修改的
         List<SoDetailDTO.AddDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+        if(!addEntity.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) && customerInfoService.isSyncDht(addEntity.getCustomerId())){
+            if(saveOrUpdateList.stream().anyMatch(s -> StringUtils.isBlank(s.getPlatformSkuNo()))){
+                throw new ServiceException("需要同步订货通的订单，平台sku不能为空");
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = saveOrUpdateList.stream().map(SoDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(PlatformDictEnum.DHT.getCode());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoDetailEntity addDTO : saveOrUpdateList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与订单的sku不一致");
+                    }
+                }
+            }
+        }
 
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);

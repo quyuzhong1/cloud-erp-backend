@@ -420,7 +420,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     public BatchResultDTO cancel(String id) {
         CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));
         //只有审核通过并且授信状态是正常的单据允许取消
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)
                 || !Objects.equals(entity.getCreditStatus(), CustomerCreditStatusEnum.NORMAL.getCode())) {
             throw new ServiceException("只能取消审核通过且授信状态为正常的客户授信单据");
         }

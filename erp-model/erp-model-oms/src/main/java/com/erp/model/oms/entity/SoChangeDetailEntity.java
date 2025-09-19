@@ -154,6 +154,12 @@ public class SoChangeDetailEntity extends BaseEntity<SoChangeDetailEntity> {
     private String kingdeeDetailId;
 
 
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String TYPE = "type";
