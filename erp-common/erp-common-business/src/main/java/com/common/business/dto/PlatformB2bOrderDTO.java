@@ -101,6 +101,10 @@ public class PlatformB2bOrderDTO {
      * 第三方系统
      */
     private String thirdSystem;
+    /**
+     * 币种
+     */
+    private String currency;
 
     /**
      * 附件列表
@@ -161,10 +165,7 @@ public class PlatformB2bOrderDTO {
          */
         private String receiverName;
 
-        /**
-         * 币种
-         */
-        private String currency;
+
         /**
          * 币种符号
          */
@@ -173,6 +174,14 @@ public class PlatformB2bOrderDTO {
          * 收款条件
          */
         private String receiveCondition;
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
+        /**
+         * 是否含税
+         */
+        private Boolean isTax = true;
 
     }
 }

@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.business.dto.PlatformReceiptDetailDTO;
+import com.common.core.enums.CountrySiteEnum;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -16,6 +17,7 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -83,11 +85,7 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 
 	private void fillDTO(PlatformB2bOrderDTO dto) {
 		PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
-		// 通过收货地址匹配客户地址表
-		if(StringUtils.isNotBlank(dto.getReceiveAddress())){
-			CustomerAddressEntity customerAddressEntity = customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getAddress,dto.getReceiveAddress()).getEntity();
-			erpInfoDTO.setCustomerAddressId(customerAddressEntity.getId());
-		}
+
 		//匹配中台erp的仓库
 		if(StringUtils.isNotBlank(dto.getPlatformWarehouseId())){
 			ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
@@ -102,15 +100,22 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 		//通过客户编号匹配客户
 		if(StringUtils.isNotBlank(dto.getCustomerCode())){
 			CustomerInfoEntity customerInfo = customerInfoService.getCustomerByCode(dto.getCustomerCode());
-			if(Objects.nonNull(customerInfo)){
-				erpInfoDTO.setCustomerId(customerInfo.getId());
-				erpInfoDTO.setSalesOrgId(customerInfo.getUseOrgId());
-				erpInfoDTO.setSalesDeptId(customerInfo.getSalesDeptId());
-				erpInfoDTO.setSellerId(customerInfo.getSellerId());
-				erpInfoDTO.setCountryId(customerInfo.getCountryId());
-				erpInfoDTO.setReceiverName(customerInfo.getName());
-				erpInfoDTO.setReceiveCondition(customerInfo.getConditionDict());
+			if(Objects.isNull(customerInfo)){
+				return;
 			}
+			erpInfoDTO.setCustomerId(customerInfo.getId());
+			erpInfoDTO.setSalesOrgId(customerInfo.getUseOrgId());
+			erpInfoDTO.setSalesDeptId(customerInfo.getSalesDeptId());
+			erpInfoDTO.setSellerId(customerInfo.getSellerId());
+			erpInfoDTO.setCountryId(customerInfo.getCountryId());
+			erpInfoDTO.setReceiverName(customerInfo.getName());
+			erpInfoDTO.setReceiveCondition(customerInfo.getConditionDict());
+			// 通过收货地址匹配客户地址表
+			if(StringUtils.isNotBlank(dto.getReceiveAddress())){
+				CustomerAddressEntity customerAddressEntity = customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getMainId,customerInfo.getId()).eq(CustomerAddressEntity::getAddress,dto.getReceiveAddress()).last("LIMIT 1").one();
+				erpInfoDTO.setCustomerAddressId(customerAddressEntity.getId());
+			}
+			erpInfoDTO.setIsDeclare(customerInfo.getCountryId().equals(CountrySiteEnum.CHINA.getSite()));
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -133,8 +138,28 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 					platformB2bOrderDetailDTO.setSkuNo(collect.get(0).getProductSkuNo());
 				}
 			}
-
 		}
+		//通过客户id 和产品sku查到客户sku
+		List<String> skuIdList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+		if(CollectionUtils.isNotEmpty(skuIdList)){
+			ListingInfoParamDTO customerListingDTO = new ListingInfoParamDTO();
+			customerListingDTO.setSkuIdList(skuIdList);
+			customerListingDTO.setAuthId(dto.getErpInfoDTO().getCustomerId());
+			customerListingDTO.setType(RuleTypeEnum.CUSTOMER.getCode());
+			List<ListingInfoWithSkuMappingDTO> customerMappingDTOList = skuMappingService.findListDto(customerListingDTO);
+			if(CollectionUtils.isNotEmpty(customerMappingDTOList)){
+				Map<String, List<ListingInfoWithSkuMappingDTO>> customerSkuMap = customerMappingDTOList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getProductSkuId));
+				for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : platformB2bOrderDetailDTOS) {
+					if(StringUtils.isNotBlank(platformB2bOrderDetailDTO.getSkuId()) && customerSkuMap.containsKey(platformB2bOrderDetailDTO.getSkuId())){
+						List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = customerSkuMap.get(platformB2bOrderDetailDTO.getSkuId());
+						if(CollectionUtils.isNotEmpty(listingInfoWithSkuMappingDTOS)){
+							platformB2bOrderDetailDTO.setCustomerSkuNo(listingInfoWithSkuMappingDTOS.get(0).getPlatformSkuNo());
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 
