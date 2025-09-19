@@ -354,4 +354,6 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
+
+    void resetSkuVo(List<String> skuIdList, List<SkuVO> skuList, SoInfoEntity soInfoEntity);
 }

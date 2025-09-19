@@ -3873,6 +3873,87 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return entity;
     }
 
+    @Override
+    public BatchResultDTO skuMappingBatch(String id) {
+        SoInfoEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(id, "", "销售订单不存在");
+        }
+        if(StringUtils.isBlank(entity.getDictPlatform())){
+            return BatchResultDTO.fail(id, entity.getCode(), "非平台订单无需映射");
+        }
+        List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(id);
+        detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return BatchResultDTO.success(id, entity.getCode(), "没有需要映射的SKU");
+        }
+        List<String> platformSkuNoList = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+        listingInfoParamDTO.setPlatform(entity.getDictPlatform());
+        List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+        for (SoDetailEntity soDetailEntity : detailList) {
+            if(StringUtils.isNotBlank(soDetailEntity.getPlatformSkuNo())) {
+                List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(soDetailEntity.getPlatformSkuNo())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)) {
+                    soDetailEntity.setSkuId(collect.get(0).getProductSkuId());
+                    soDetailEntity.setSkuNo(collect.get(0).getProductSkuNo());
+                }else{
+                    return BatchResultDTO.success(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
+                }
+            }else{
+                return BatchResultDTO.success(id, entity.getCode(), "平台SKU不能为空");
+            }
+        }
+        //通过客户id 和产品sku查到客户sku
+        List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(skuIdList)){
+            ListingInfoParamDTO customerListingDTO = new ListingInfoParamDTO();
+            customerListingDTO.setSkuIdList(skuIdList);
+            customerListingDTO.setAuthId(entity.getCustomerId());
+            customerListingDTO.setType(RuleTypeEnum.CUSTOMER.getCode());
+            List<ListingInfoWithSkuMappingDTO> customerMappingDTOList = skuMappingService.findListDto(customerListingDTO);
+            if(CollectionUtils.isNotEmpty(customerMappingDTOList)){
+                Map<String, List<ListingInfoWithSkuMappingDTO>> customerSkuMap = customerMappingDTOList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getProductSkuId));
+                for (SoDetailEntity soDetailEntity : detailList) {
+                    if(StringUtils.isNotBlank(soDetailEntity.getSkuId()) && customerSkuMap.containsKey(soDetailEntity.getSkuId())){
+                        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = customerSkuMap.get(soDetailEntity.getSkuId());
+                        if(CollectionUtils.isNotEmpty(listingInfoWithSkuMappingDTOS)){
+                            soDetailEntity.setCustomerSkuNo(listingInfoWithSkuMappingDTOS.get(0).getPlatformSkuNo());
+                        }
+                    }
+                }
+            }
+        }
+        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
+        soDetailService.resetSkuVo(skuIdList,skuList,entity);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        for (int i = 0; i < detailList.size(); i++) {
+            SoDetailEntity item = detailList.get(i);
+            item.setMainId(id);
+            String skuId = item.getSkuId();
+            String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+            item.setSkuNo(skuNo);
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            }
+        }
+        // 金额折扣处理
+        SoUtils.handleDetailAmount(true, entity.getDiscountAmount(), detailList);
+        for (int i = 0; i < detailList.size(); i++) {
+            SoDetailEntity item = detailList.get(i);
+            // 计算毛利成本
+           soDetailService.calCost(skuList, entity.getBillDate(), item, Boolean.FALSE);
+        }
+        BigDecimal allAmountLc = detailList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+        entity.setAllAmountLc(allAmountLc);
+        soDetailService.updateBatchById(detailList);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "映射成功");
+    }
+
     /**
      * 处理推送采购申请
      * @param list
