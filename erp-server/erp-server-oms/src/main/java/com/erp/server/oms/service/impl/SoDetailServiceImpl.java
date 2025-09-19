@@ -609,7 +609,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
-    private void resetSkuVo(List<String> skuIdList, List<SkuVO> skuList, SoInfoEntity soInfoEntity) {
+    @Override
+    public void resetSkuVo(List<String> skuIdList, List<SkuVO> skuList, SoInfoEntity soInfoEntity) {
         LocalDate billDate = soInfoEntity.getBillDate();
         if (Objects.isNull(billDate)){
             return;

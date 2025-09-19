@@ -22,6 +22,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -929,4 +930,28 @@ public class SoInfoController extends BaseController {
         List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = soInfoService.viewPushPurchaseApplication(dto.getIds());
         return success(list);
     }
+
+    @PostMapping("/skuMappingBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = soInfoService.skuMappingBatch(id);
+            } catch (Exception e) {
+                log.error("B2B批量更新sku映射失败",e);
+                SoInfoEntity entity = soInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "B2B批量更新, 更新sku映射失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }
