@@ -179,7 +179,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrency(soInfo.getCurrency());
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
-            soChangeDetailService.addDetailList(id, dto.getDetailList());
+            soChangeDetailService.addDetailList(soChange, dto.getDetailList());
             String content = String.format("新增了一个{%s}-销售变更单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), id, "新增操作");
             return id;
@@ -244,7 +244,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
-            soChangeDetailService.updateDetailList(id, dto.getDetailList());
+            soChangeDetailService.updateDetailList(soChange, dto.getDetailList());
             return id;
         }
         return "";

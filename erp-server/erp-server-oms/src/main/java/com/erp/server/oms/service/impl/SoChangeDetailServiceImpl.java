@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -97,17 +98,27 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     /**
      * 添加变更详情信息
      *
-     * @param mainId
      * @param detailList
      * @return void
      * @author yl
      * @date 2023-05-24 14:12
      */
     @Override
-    public void addDetailList(String mainId, List<SoChangeDetailDTO.AddDTO> detailList) {
+    public void addDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        String mainId = soChange.getId();
+        //如果是订货通平台，则明细的平台sku不能为空
+        SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+            for (SoChangeDetailDTO.AddDTO item : detailList) {
+                if(StringUtils.isBlank(item.getPlatformSkuNo())){
+                    throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
+        }
+
         List<SoChangeDetailEntity> addList = new ArrayList<>(detailList.size());
         //销售订单的详情id 集合
         List<String> soDetailIdList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
@@ -540,6 +551,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setIsReissue(item.getIsReissue());
                 soDetail.setRemark(item.getRemark());
                 soDetail.setMainId(soId);
+                soDetail.setPlatformSkuNo(item.getPlatformSkuNo());
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
@@ -795,9 +807,19 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateDetailList(String mainId, List<SoChangeDetailDTO.UpdateDTO> detailList) {
+    public void updateDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
+        }
+        String mainId = soChange.getId();
+        //如果是订货通平台，则明细的平台sku不能为空
+        SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+            for (SoChangeDetailDTO.AddDTO item : detailList) {
+                if(StringUtils.isBlank(item.getPlatformSkuNo())){
+                    throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
         }
         List<SoChangeDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的

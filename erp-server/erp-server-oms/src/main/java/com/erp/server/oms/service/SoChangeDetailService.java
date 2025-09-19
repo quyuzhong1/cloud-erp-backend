@@ -22,11 +22,10 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * 添加变更详情信息
      * @author yl
      * @date 2023-05-24 14:12
-     * @param mainId
      * @param detailList
      * @return void
      */
-    void addDetailList(String mainId, List<SoChangeDetailDTO.AddDTO> detailList);
+    void addDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.AddDTO> detailList);
 
     /**
      * 根据主表id 获取详情信息
@@ -73,7 +72,7 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @param detailList
      * @return void
      */
-    void updateDetailList(String mainId, List<SoChangeDetailDTO.UpdateDTO> detailList);
+    void updateDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.UpdateDTO> detailList);
 
     
     /**
