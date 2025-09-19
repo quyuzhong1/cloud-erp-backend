@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -870,6 +871,18 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         saveSoB2cDistributionDTO.setDetailList(detailList);
         return saveSoB2cDistributionDTO;
+    }
+
+    @Override
+    public List<SoMultiChannelEntity> getLastBySoId(List<String> soIds, String createStatus) {
+        if (CollUtil.isEmpty(soIds) || CharSequenceUtil.isBlank(createStatus)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.selectList(new LambdaQueryWrapper<SoMultiChannelEntity>()
+                        .select(SoMultiChannelEntity::getId, SoMultiChannelEntity::getSoId, SoMultiChannelEntity::getCreateStatus,SoMultiChannelEntity::getSignOrderError, SoMultiChannelEntity::getCreateTime)
+                .in(SoMultiChannelEntity::getSoId, soIds)
+                .eq(SoMultiChannelEntity::getCreateStatus, createStatus)
+                .orderByDesc(SoMultiChannelEntity::getCreateTime));
     }
 
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
