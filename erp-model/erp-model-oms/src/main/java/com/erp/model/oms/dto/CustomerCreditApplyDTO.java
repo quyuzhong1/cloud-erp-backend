@@ -93,6 +93,10 @@ public class CustomerCreditApplyDTO implements Serializable {
         */
         private String customerId;
 
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 客户编码
@@ -206,7 +210,10 @@ public class CustomerCreditApplyDTO implements Serializable {
         * 主键id
         */
         private String  id;
-
+        /**
+         * 备注
+         */
+        private String remark;
         /**
         * 单据编码
         */
@@ -369,6 +376,11 @@ public class CustomerCreditApplyDTO implements Serializable {
         * 审核备注
         */
         private String approveRemark;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 授信额度测评表

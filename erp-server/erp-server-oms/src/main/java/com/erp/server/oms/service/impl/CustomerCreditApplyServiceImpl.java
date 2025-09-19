@@ -424,8 +424,8 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
                 || !Objects.equals(entity.getCreditStatus(), CustomerCreditStatusEnum.NORMAL.getCode())) {
             throw new ServiceException("只能取消审核通过且授信状态为正常的客户授信单据");
         }
-        //成功更新状态为取消
-        entity.setCreditStatus(CustomerCreditStatusEnum.CANCEL.getCode());
+        //成功更新状态为取消中
+        entity.setCreditStatus(CustomerCreditStatusEnum.CANCELING.getCode());
         this.updateById(entity);
         //记录日志
         String msg = StrUtil.format("用户取消【{}】单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
