@@ -57,7 +57,7 @@
         select sum(red2.receipt_amount) from so_receipt re2
         inner join so_receipt_detail red2 on re2.id = red2.main_id
         where re2.is_deleted = false
-        and red2.is_deleted = false and re2.approve_status = 'approved'
+        and red2.is_deleted = false and re2.approve_status = 'approve'
         and red2.so_id = si.id
         ),0) as remainReceiptAmount,
             srd.receipt_amount as receiptAmount,
@@ -85,6 +85,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        order by sr.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -115,7 +116,7 @@
         select sum(red.receipt_amount) from so_receipt re
         inner join so_receipt_detail red on re.id = red.main_id
         where re.is_deleted = false
-        and red.is_deleted = false and re.approve_status = 'approved'
+        and red.is_deleted = false and re.approve_status = 'approve'
         and red.so_id = si.id
         ),0) as remainReceiptAmount
                from
@@ -132,6 +133,7 @@
                 #{item}
             </foreach>
         </if>
+order by si.create_time desc
     </select>
     <select id="queryAmountBySoIds" resultType="com.erp.model.oms.dto.SoReceiptDTO$AmountDTO">
         select srd.so_code,
@@ -140,7 +142,7 @@
         from so_receipt sr
                  inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
         where sr.is_deleted = false
-          and sr.approve_status = 'approved'
+          and sr.approve_status = 'approve'
         and srd.so_id in
         <foreach collection="soIds" item="soId" open="(" separator="," close=")">
             #{soId}

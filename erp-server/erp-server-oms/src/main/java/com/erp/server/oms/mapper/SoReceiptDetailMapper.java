@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+import java.util.Set;
+
 
 /**
  * <p>
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoReceiptDetailMapper extends BaseMapper<SoReceiptDetailEntity> {
 
+    List<String> existPaymentNo(Set<String> paymentNoSet,String id);
 }

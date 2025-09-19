@@ -9,6 +9,7 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReceiptDetailEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.SoReceiptDetailMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
 import com.erp.server.oms.service.SoInfoService;
@@ -62,6 +63,16 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
                 throw new ServiceException("付款流水号不能重复");
             }
         }
+        if(CollectionUtils.isNotEmpty(paymentNoSet)){
+            List<String> existPayNo = baseMapper.existPaymentNo(paymentNoSet,soReceiptEntity.getId());
+
+            if(CollectionUtils.isNotEmpty(existPayNo)){
+                String existPayNoStr = String.join(",", existPayNo);
+                throw new ServiceException("付款流水号已存在:"+existPayNoStr);
+            }
+        }
+
+
         //销售单号不能重复
         Set<String> soCodeSet = new HashSet<>();
         for (SoReceiptDetailDTO.AddDTO dto : detailList) {
@@ -121,6 +132,14 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
                 }
             }
         }
+        if(CollectionUtils.isNotEmpty(paymentNoSet)){
+            List<String> existPayNo = baseMapper.existPaymentNo(paymentNoSet,soReceiptEntity.getId());
+
+            if(CollectionUtils.isNotEmpty(existPayNo)){
+                String existPayNoStr = String.join(",", existPayNo);
+                throw new ServiceException("付款流水号已存在:"+existPayNoStr);
+            }
+        }
         //销售单号不能重复
         Set<String> soCodeSet = new HashSet<>();
         for (SoReceiptDetailDTO.UpdateDTO dto : detailList) {
@@ -146,6 +165,8 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
             soReceiptDetailEntity.setId(updateDTO.getId());
             updateEntityList.add(soReceiptDetailEntity);
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
+            operateLogService.addModuleOperateLogByObj(soReceiptDetailEntity, soReceiptEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
         }
         if(CollectionUtils.isNotEmpty(updateEntityList)){
             this.updateBatchById(updateEntityList);
@@ -155,6 +176,9 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         for (SoReceiptDetailEntity soReceiptDetailEntity : updateEntityList) {
             SoReceiptDetailDTO.UpdateDTO addDTO = detailList.stream().filter(v -> v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.UpdateDTO());
             List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
+            if(CollectionUtils.isEmpty(attachDTOS)){
+                continue;
+            }
             attachDTOS.forEach(v->v.setBusinessId(soReceiptDetailEntity.getId()));
             allAttachDTOS.addAll(attachDTOS);
         }
