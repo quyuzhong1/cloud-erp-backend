@@ -2112,6 +2112,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
+        //8.删除spu信息
+        ProductInfoEntity infoEntity = productInfoService.getById(id);
+        if (ObjectUtil.isNotEmpty(infoEntity)) {
+            productInfoService.removeById(infoEntity.getId());
+        }
         return this.remove(queryWrapper);
     }
 
