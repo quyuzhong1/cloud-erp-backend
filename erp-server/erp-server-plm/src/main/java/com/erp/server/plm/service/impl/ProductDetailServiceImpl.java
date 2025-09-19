@@ -8,7 +8,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -23,8 +22,14 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
-import com.common.business.enums.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -44,8 +49,6 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.enums.ImportTypeEnum;
-import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -60,7 +63,6 @@ import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -115,7 +117,10 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -134,7 +139,6 @@ import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_SKU_IMAGES;
 
 /**
  * @Description: 产品明细信息服务类
@@ -2088,6 +2092,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
+        //8.删除spu信息
+        ProductInfoEntity infoEntity = productInfoService.getById(id);
+        if (ObjectUtil.isNotEmpty(infoEntity)) {
+            productInfoService.removeById(infoEntity.getId());
+        }
         return this.remove(queryWrapper);
     }
 
