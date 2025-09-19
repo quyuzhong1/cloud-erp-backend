@@ -29,7 +29,9 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
+import com.erp.model.sys.dto.OpenApiReqNewDTO;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
+import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import com.erp.server.auth.server.OpenApiService;
 import com.erp.server.auth.utils.IPUtils;
 import com.erp.server.auth.utils.SignType;
@@ -52,6 +54,8 @@ public class OpenApiController {
     private OpenApiService openApiService;
     @Resource
     private FileFeign filefeign;
+    @Resource
+    private SysRefereConfigFeign sysRefereConfigFeign;
 
     @PostMapping("/upload")
     public @ResponseBody ApiResult<String> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
@@ -104,6 +108,47 @@ public class OpenApiController {
 		return success;
     }
 
+    /**
+     * 新逻辑上传接口 v2 - 简化版本，不需要签名验证
+     */
+    @PostMapping("/upload/v2")
+    public @ResponseBody ApiResult<String> unitPlatformServiceUploadV2(HttpServletRequest request, MultipartFile file){
+        log.warn("新逻辑上传接口请求，文件名:{}" , file.getOriginalFilename());
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        String referer = request.getHeader("App-Id");
+        if(StringUtils.isBlank(referer)) {
+            return ApiResult.error(500, "请求头App-Id不能为空");
+        }
+        if (CollectionUtils.isEmpty(fileMap) || 1 != fileMap.size()){
+            return ApiResult.error(500, "仅能上传一个文件");
+        }
+
+        // 检查应用配置，确保使用新逻辑
+        String logicType = getLogicType(referer);
+        if (!"NEW".equalsIgnoreCase(logicType)) {
+            log.warn("应用 {} 不是新逻辑类型，当前类型: {}", referer, logicType);
+            return ApiResult.error(500, "该应用不支持新逻辑接口");
+        }
+        String fileUrl = "";
+        try {
+            MultipartFile multipartFile = new ArrayList<>(fileMap.values()).get(0);
+            fileUrl = filefeign.uploadFile(multipartFile);
+        } catch (Exception e) {
+            log.error("新逻辑文件上传失败", e);
+            return ApiResult.error(500, "上传失败，请联系实施人员");
+        }
+        
+        ApiResult<String> success = ApiResult.success(fileUrl);
+        log.warn("新逻辑上传接口响应：{}" , JSON.toJSONString(success));
+        
+        // 仓库设备发送文件信息，为了响应时间，需要在此处保存文件信息
+        if("hczn".equals(referer)){
+            openApiService.addByWarehouseEquipment(fileUrl, file.getOriginalFilename());
+        }
+        return success;
+    }
+
     @PostMapping("/service")
     @ResponseBody
     public ApiResult<Object> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
@@ -133,6 +178,35 @@ public class OpenApiController {
         return result;
     }
 
+    /**
+     * 新逻辑服务接口 v2 - 简化版本，不需要签名验证（网关已处理）
+     */
+    @PostMapping("/service/v2")
+    @ResponseBody
+    public ApiResult<Object> serviceV2(@RequestBody OpenApiReqNewDTO req, HttpServletRequest request){
+        String referer = request.getHeader("App-Id");
+        if(StringUtils.isBlank(referer)) {
+            return ApiResult.error(500, "请求头App-Id不能为空");
+        }
+        log.warn("{}新逻辑服务接口请求报文：{}" , referer , JSON.toJSONString(req));
+        
+        // 检查应用配置，确保使用新逻辑
+        String logicType = getLogicType(referer);
+        if (!"NEW".equalsIgnoreCase(logicType)) {
+            log.warn("应用 {} 不是新逻辑类型，当前类型: {}", referer, logicType);
+            return ApiResult.error(500, "该应用不支持新逻辑接口");
+        }
+
+        OpenApiInputDTO openApiInputDTO = new OpenApiInputDTO();
+        BeanUtils.copyProperties(req , openApiInputDTO);
+        openApiInputDTO.setRequestIp(IPUtils.getIpAddr(request));
+
+        // 调用新的服务方法（不需要签名验证）
+        ApiResult<Object> result = openApiService.unitPlatformServiceNew(openApiInputDTO);
+        log.warn("新逻辑服务接口响应报文：{}" , JSON.toJSONString(result));
+        return result;
+    }
+
     private String getSecretKey(String referer) {
     	String secretKey = secretKeyMap.get(referer);
     	if(secretKey == null) {
@@ -143,6 +217,29 @@ public class OpenApiController {
     		}
     	}
 		return secretKey;
+    }
+
+    /**
+     * 获取应用逻辑类型
+     */
+    private String getLogicType(String appId) {
+        try {
+            ApiResult<List<SysRefererConfigEntity>> result = sysRefereConfigFeign.getByAppId(appId);
+            if (result == null || !result.isSuccess() || result.getData() == null || result.getData().isEmpty()) {
+                log.warn("未找到应用配置，appId: {}", appId);
+                return "OLD"; // 默认使用旧逻辑
+            }
+            List<SysRefererConfigEntity> configList = result.getData();
+            for (SysRefererConfigEntity config : configList) {
+                if (StringUtils.isNotBlank(config.getLogicType())) {
+                    return config.getLogicType();
+                }
+            }
+            return "OLD"; // 默认使用旧逻辑
+        } catch (Exception e) {
+            log.error("获取应用逻辑类型失败，appId: {}", appId, e);
+            return "OLD"; // 出错时默认使用旧逻辑
+        }
     }
     
     @PostMapping("/getMD5/{serviceMethod}")

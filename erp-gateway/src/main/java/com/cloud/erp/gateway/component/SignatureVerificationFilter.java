@@ -110,12 +110,18 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 return chain.filter(exchange);
             }
 
+            // 4. 检查逻辑类型，如果是OLD则直接放行
+            if (configResult.isOldLogic()) {
+                log.debug("应用 {} 使用OLD逻辑，直接放行，URI: {}", appId, uri);
+                return chain.filter(exchange);
+            }
+
             boolean ssoEnabled = configResult.isSsoEnabled();
             String userId = "none"; // 默认值
             LoginUser loginUser = null;
 
             if (ssoEnabled) {
-                // 4. 获取JWT Token并解析用户信息
+                // 5. 获取JWT Token并解析用户信息
                 String token = headers.getFirst("Authorization");
                 if (StringUtils.isBlank(token)) {
                     log.warn("开启单点登录但未提供JWT Token");
@@ -142,7 +148,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 log.info("从JWT Token解析用户ID: {}", userId);
             }
 
-            // 5. 从Redis获取对称密钥
+            // 6. 从Redis获取对称密钥
             String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, signSessionId);
             String symmetricKey = (String) redissonClient.getBucket(redisKey).get();
 
@@ -153,7 +159,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             log.info("获取到对称密钥，Redis Key: {}", redisKey);
 
-            // 6. 解析API-Signature头
+            // 7. 解析API-Signature头
             String[] parsedSignature = ApiSignUtil.parseSignatureHeader(apiSignature);
             if (parsedSignature == null || parsedSignature.length != 2) {
                 log.warn("API-Signature格式错误");
@@ -163,7 +169,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String timestampStr = parsedSignature[0];
             String signature = parsedSignature[1];
 
-            // 7. 验证签名
+            // 8. 验证签名
             boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey);
             if (!isValidSignature) {
                 log.warn("签名验证失败");
@@ -172,8 +178,8 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             log.info("签名验证成功，URI: {}", uri);
 
-            // 8. 处理用户信息并添加到请求头
-            if (ssoEnabled && loginUser != null) {
+            // 9. 处理用户信息并添加到请求头
+            if (ssoEnabled) {
                 // 将用户信息添加到请求头中
                 try {
                     String token = headers.getFirst("Authorization");
@@ -273,10 +279,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
     private static class AppConfigResult {
         private final boolean signatureDisabled;
         private final boolean ssoEnabled;
+        private final String logicType;
 
-        public AppConfigResult(boolean signatureDisabled, boolean ssoEnabled) {
+        public AppConfigResult(boolean signatureDisabled, boolean ssoEnabled, String logicType) {
             this.signatureDisabled = signatureDisabled;
             this.ssoEnabled = ssoEnabled;
+            this.logicType = logicType;
         }
 
         public boolean isSignatureDisabled() {
@@ -285,6 +293,14 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
         public boolean isSsoEnabled() {
             return ssoEnabled;
+        }
+
+        public String getLogicType() {
+            return logicType;
+        }
+
+        public boolean isOldLogic() {
+            return "OLD".equalsIgnoreCase(logicType);
         }
     }
 
@@ -301,13 +317,14 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             if (result == null || !result.isSuccess() || result.getData() == null || result.getData().isEmpty()) {
                 log.warn("未找到应用配置，appId: {}", appId);
-                // 默认配置：不禁用签名验证，不开启单点登录
-                return new AppConfigResult(false, false);
+                // 默认配置：不禁用签名验证，不开启单点登录，使用NEW逻辑
+                return new AppConfigResult(false, false, "NEW");
             }
 
             List<SysRefererConfigEntity> configList = result.getData();
             boolean signatureDisabled = false;
             boolean ssoEnabled = false;
+            String logicType = "NEW"; // 默认使用NEW逻辑
 
             // 检查配置
             for (SysRefererConfigEntity config : configList) {
@@ -320,14 +337,19 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 if (config.getSsoDisabled() == null || !config.getSsoDisabled()) {
                     ssoEnabled = true;
                 }
+
+                // 获取逻辑类型，如果配置了则使用配置的值
+                if (StringUtils.isNotBlank(config.getLogicType())) {
+                    logicType = config.getLogicType();
+                }
             }
 
-            log.info("应用 {} 配置 - 签名验证禁用: {}, 单点登录开启: {}", appId, signatureDisabled, ssoEnabled);
-            return new AppConfigResult(signatureDisabled, ssoEnabled);
+            log.info("应用 {} 配置 - 签名验证禁用: {}, 单点登录开启: {}, 逻辑类型: {}", appId, signatureDisabled, ssoEnabled, logicType);
+            return new AppConfigResult(signatureDisabled, ssoEnabled, logicType);
         } catch (Exception e) {
             log.error("检查应用配置失败，appId: {}", appId, e);
             // 异常时使用默认配置
-            return new AppConfigResult(false, false);
+            return new AppConfigResult(false, false, "NEW");
         }
     }
 

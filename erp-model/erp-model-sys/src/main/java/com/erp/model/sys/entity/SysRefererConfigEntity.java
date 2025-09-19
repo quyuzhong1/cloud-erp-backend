@@ -42,7 +42,7 @@ public class SysRefererConfigEntity extends BaseEntity<SysRefererConfigEntity> {
     private String appType;
 
     /**
-    * 逻辑类型 OLD 旧逻辑 NEW 优化的新逻辑
+    * 逻辑类型 OLD 旧逻辑 NEW 优化的新逻辑  com.erp.model.sys.enums.LogicTypeEnum
     */
     @TableField("logic_type")
     private String logicType;

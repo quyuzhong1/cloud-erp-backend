@@ -77,6 +77,36 @@ public class OpenApiService {
         return response;
     }
 
+    /**
+     * 新逻辑服务方法 - 不需要签名验证（网关已处理）
+     */
+    public ApiResult<Object> unitPlatformServiceNew(OpenApiInputDTO input) {
+        ApiResult<Object> response = null;
+        String method = input.getMethod();
+        
+        // 新逻辑不需要版本号和编码验证，因为网关已经处理了
+        String content = input.getData();
+        
+        try {
+            // 直接调用业务方法，不进行签名验证
+            response = gatewayMethod(method, content);
+        }catch(ServiceException e){
+            response = ApiResult.error(500, e.getMsg());
+        }catch(InvocationTargetException e) {
+            Throwable targetException = e.getTargetException();
+            if(targetException instanceof ServiceException) {
+                ServiceException serviceException = (ServiceException) targetException;
+                response = ApiResult.error(500, serviceException.getMsg());
+            }else {
+                log.error("新逻辑统一对外接口处理异常{}" , e);
+                response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
+            }
+        }catch(Exception e){
+            log.error("新逻辑统一对外接口处理异常{}" , e);
+            response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
+        }
+        return response;
+    }
 
     private ApiResult<Object> gatewayMethod(String serviceName, String bizContent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
     	ApiResult<Object> response = ApiResult.success();
