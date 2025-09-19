@@ -897,9 +897,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         //表字段值变化
                         if(diffFields.contains(feildValue)){
                             variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
+                        }else {
+                            return Boolean.FALSE;
                         }
                     }
                 }
+            }else {
+                return Boolean.FALSE;
             }
 
             //封装条件参数
