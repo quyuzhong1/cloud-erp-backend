@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -10,6 +11,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
@@ -94,6 +97,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private SkuMappingService skuMappingService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     /**
      * 添加变更详情信息
@@ -111,10 +119,27 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         String mainId = soChange.getId();
         //如果是订货通平台，则明细的平台sku不能为空
         SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
-        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) || customerInfoService.isSyncDht(soInfo.getCustomerId())){
             for (SoChangeDetailDTO.AddDTO item : detailList) {
                 if(StringUtils.isBlank(item.getPlatformSkuNo())){
                     throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(soInfo.getDictPlatform());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoChangeDetailDTO.AddDTO addDTO : detailList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与变更明细的产品sku不一致");
+                    }
                 }
             }
         }
@@ -814,10 +839,27 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         String mainId = soChange.getId();
         //如果是订货通平台，则明细的平台sku不能为空
         SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
-        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) || customerInfoService.isSyncDht(soInfo.getCustomerId())){
             for (SoChangeDetailDTO.AddDTO item : detailList) {
                 if(StringUtils.isBlank(item.getPlatformSkuNo())){
                     throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(soInfo.getDictPlatform());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoChangeDetailDTO.AddDTO addDTO : detailList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与变更明细的产品sku不一致");
+                    }
                 }
             }
         }

@@ -368,7 +368,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            soDetailService.addSoDetail(addEntity, dto.getIsTax(), dto.getDetailList());
             //更新收款单信息
             soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
 
@@ -1327,7 +1327,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            soDetailService.addSoDetail(draftEntity, dto.getIsTax(), dto.getDetailList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -1480,7 +1480,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),old);
+            soDetailService.updateSoDetail(soInfo, dto.getIsTax(), dto.getDetailList(),old);
             //更新收款单信息
             soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
             return id;
@@ -1603,7 +1603,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             soReceiptService.autoApproveBySo(entity);
 
             //订货通同步
-            if(isSyncDht){
+            if(isSyncDht && customerInfoService.isSyncDht(entity.getCustomerId())){
                 syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
@@ -1689,7 +1689,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             //订货通同步
-            if(!entity.getDictPlatform().equals(PlatformDictEnum.DHT.getCode())){
+            if(!entity.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) && customerInfoService.isSyncDht(entity.getCustomerId())){
                 syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
         }

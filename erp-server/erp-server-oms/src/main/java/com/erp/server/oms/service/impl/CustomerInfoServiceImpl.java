@@ -36,10 +36,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.AddressTypeEnum;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
@@ -171,6 +168,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     /**
      * 获取到分组的id 集合
      *
@@ -2469,5 +2469,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto) {
         CustomerInfoEntity entity = this.getById(dto.getId());
         return dhtService.queryCustomerAccountByCustomerCode(entity);
+    }
+
+    @Override
+    public Boolean isSyncDht(String customerId) {
+        if(StringUtils.isBlank(customerId)){
+            return false;
+        }
+        CfgSettingEntity cfgSetting = cfgSettingService.getSettingByKey(CfgSettingEnum.DHT_CUSTOMER_WHITELIST.getCode());
+        if(cfgSetting != null && StringUtils.isNotBlank(cfgSetting.getValue())){
+            List<String> whitelist = Arrays.asList(cfgSetting.getValue().split(","));
+            if(whitelist.contains(customerId)){
+                return true;
+            }
+        }
+        return false;
     }
 }

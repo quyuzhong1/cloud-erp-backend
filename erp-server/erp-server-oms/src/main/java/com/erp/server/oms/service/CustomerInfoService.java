@@ -397,4 +397,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     void updateApproveStatus(CustomerInfoEntity entity);
 
     CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto);
+
+    Boolean isSyncDht(String customerId);
 }

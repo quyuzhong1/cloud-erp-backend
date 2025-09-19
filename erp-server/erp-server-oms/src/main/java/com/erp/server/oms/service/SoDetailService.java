@@ -56,7 +56,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-16 9:32
      */
-    void addSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.AddDTO> detailList);
+    void addSoDetail(SoInfoEntity addEntity,Boolean isTax, List<SoDetailDTO.AddDTO> detailList);
 
     /**
      * 添加详情按钮-列表查询
@@ -139,7 +139,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-17 16:00
      */
-    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
+    void updateSoDetail(SoInfoEntity soInfo,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
 
     /**
      * 根据主表ids 删除数据
