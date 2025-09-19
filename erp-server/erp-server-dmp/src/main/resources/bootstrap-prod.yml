@@ -22,7 +22,7 @@ fdfs:
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.60:32570
+    server-addr: 172.16.100.10:8848
     namespace: seata-server
     group: SEATA_GROUP
 
