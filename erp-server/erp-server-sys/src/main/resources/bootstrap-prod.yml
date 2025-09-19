@@ -9,12 +9,7 @@ spring:
         namespace: prod
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml,erp-third-party.yml
-sfs:
-  nacos:
-    application: seata-server
-    server-addr: 172.16.100.10:8848
-    namespace: seata-server
-    group: SEATA_GROUP
+
 
 
 
