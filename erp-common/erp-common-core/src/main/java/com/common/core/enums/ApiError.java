@@ -1353,6 +1353,7 @@ public enum ApiError implements Serializable {
 
 
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
+    ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
 
 
     /**

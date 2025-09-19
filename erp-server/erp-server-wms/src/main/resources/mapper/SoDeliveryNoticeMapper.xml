@@ -96,6 +96,7 @@
         <if test="params.deliveryStatus != null">
             and sdn.delivery_status = #{params.deliveryStatus}
         </if>
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

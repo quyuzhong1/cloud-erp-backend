@@ -879,6 +879,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        if (!entity.getIsAllowOutstock()) {
+            throw new ServiceException(ApiError.ERROR_IS_ALLOW_OUTSTOCK_PUSH);
+        }
         //更新发货通知单实际发货日期
         updateDeliveryDate(id, deliveryDate);
         entity.setActualDeliveryDate(Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now());
