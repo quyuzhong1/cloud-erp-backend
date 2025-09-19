@@ -101,6 +101,13 @@ public class CustomerCreditApplyEntity extends BaseEntity<CustomerCreditApplyEnt
     */
     @TableField("sale_dept_id")
     private String saleDeptId;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
     /**
     * 审核备注
 

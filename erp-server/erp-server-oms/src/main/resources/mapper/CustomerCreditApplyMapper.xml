@@ -49,6 +49,7 @@
                cca.code,
                cca.customer_id as customerId,
                 ci.name as customerName,
+                cca.remark,
                 ci.code as customerCode,
                 cca.approve_status as approveStatus,
                 cca.credit_type as creditType,

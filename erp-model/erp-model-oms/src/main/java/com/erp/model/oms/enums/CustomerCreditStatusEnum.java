@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum CustomerCreditStatusEnum implements EnumMessage {
 
     NORMAL("normal", "正常"),
+    CANCELING("canceling", "取消中"),
     CANCEL("cancel", "取消"),
     ;
     /**
