@@ -3674,7 +3674,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 this.disApprove(exist,new ArrayList<>());
             }
             //其他状态，直接更新
-            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
+            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
             SoInfoDTO.UpdateDTO updateDTO = new SoInfoDTO.UpdateDTO();
             updateDTO.setId(exist.getId());
             updateDTO.setPlatformOrderCode(dto.getCode());
@@ -3690,15 +3690,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setCustomerId(erpInfoDTO.getCustomerId());
             updateDTO.setReceiverName(erpInfoDTO.getReceiverName());
             updateDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
-            updateDTO.setCurrency(erpInfoDTO.getCurrency());
+            updateDTO.setCurrency(dto.getCurrency());
             updateDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
             updateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             updateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             updateDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
             updateDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
             updateDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
+            updateDTO.setIsDeclare(erpInfoDTO.getIsDeclare());
             updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             updateDTO.setRemark(dto.getRemark());
+            updateDTO.setIsTax(erpInfoDTO.getIsTax());
             updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -3719,8 +3721,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setPlatformSkuNo(platformB2bOrderDetailDTO.getPlatformSkuNo());
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
-                detailDTO.setCurrency(erpInfoDTO.getCurrency());
+                detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
+                detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
@@ -3745,7 +3748,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return;
             }
             //新增单据
-            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
+            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
             addDTO.setPlatformOrderCode(dto.getCode());
             addDTO.setPlatformOrderId(dto.getPlatformId());
@@ -3760,7 +3763,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setCustomerId(erpInfoDTO.getCustomerId());
             addDTO.setReceiverName(erpInfoDTO.getReceiverName());
             addDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
-            addDTO.setCurrency(erpInfoDTO.getCurrency());
+            addDTO.setCurrency(dto.getCurrency());
             addDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
             addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
@@ -3768,7 +3771,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
             addDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
             addDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
+            addDTO.setIsDeclare(erpInfoDTO.getIsDeclare());
             addDTO.setRemark(dto.getRemark());
+            addDTO.setIsTax(erpInfoDTO.getIsTax());
             addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -3783,8 +3788,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setPlatformSkuNo(platformB2bOrderDetailDTO.getPlatformSkuNo());
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
-                detailDTO.setCurrency(erpInfoDTO.getCurrency());
+                detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
+                detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -3805,7 +3811,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
         //校验主表字段
         if(!exist.getCustomerId().equals(erpInfoDTO.getCustomerId())
-                || !exist.getCurrency().equals(erpInfoDTO.getCurrency())
+                || !exist.getCurrency().equals(dto.getCurrency())
                 || !exist.getOrderAmount().equals(dto.getOrderAmount())
                 || !exist.getBillDate().equals(dto.getBillDate())
                 || !exist.getRemark().equals(dto.getRemark())

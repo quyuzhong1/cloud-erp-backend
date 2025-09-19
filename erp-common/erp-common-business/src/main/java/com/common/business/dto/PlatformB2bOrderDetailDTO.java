@@ -25,6 +25,10 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
     private String platformSkuNo;
 
     /**
+     * 客户sku
+     */
+    private String customerSkuNo;
+    /**
      * 状态
      */
     private String status;

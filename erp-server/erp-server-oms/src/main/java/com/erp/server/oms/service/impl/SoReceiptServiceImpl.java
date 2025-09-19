@@ -539,6 +539,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addOrUpdateBySo(SoInfoEntity soInfo, String customerId, List<SoReceiptDTO.SoViewDTO> soReceiptDTOList) {
+        if(Objects.isNull(soReceiptDTOList)){
+            soReceiptDTOList = new ArrayList<>();
+        }
         //查询原有
         List<SoReceiptDTO.SoViewDTO> oldList = this.getSoViewDTO(soInfo);
         List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
