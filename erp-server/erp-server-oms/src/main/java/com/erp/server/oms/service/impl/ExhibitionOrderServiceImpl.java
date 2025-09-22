@@ -1112,12 +1112,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         addDTO.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+        addDTO.setDictPlatform("");
 
         List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
         for (ExhibitionOrderDetailEntity detail : detailList) {
             SoDetailDTO.AddDTO addDetailDTO = new SoDetailDTO.AddDTO();
             BeanMapperUtils.copy(detail,addDetailDTO);
             addDetailDTO.setId("");
+            addDetailDTO.setSourceDetailId(detail.getId());
             addDetailDTO.setSourceDetailId(detail.getId());
             addDTOS.add(addDetailDTO);
         }
