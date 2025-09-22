@@ -28,8 +28,8 @@ import com.erp.server.workflow.service.ApproveTaskInfoService;
 import com.erp.server.workflow.service.CfgProcessFieldMapService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.erp.server.workflow.service.ThirdProcessManagementService;
-import lombok.extern.slf4j.Slf4j;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *@Author: hcg
@@ -95,16 +96,23 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             }catch (Exception e){
                 throw new ServiceException("获取单据失败：{}", e.getMessage());
             }
-            CfgProcessFieldMapEntity uniqueField = fieldMapList.stream().filter(req -> req.getIsUnique()).findFirst().orElse(null);
+            CfgProcessFieldMapEntity uniqueField = fieldMapList.stream().filter(req -> req.getIsUnique()).findFirst().orElse(new CfgProcessFieldMapEntity());
             String uniqueValue = (String) map.get(uniqueField.getSysField());
-
-            List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).eq(uniqueField.getSysField(), uniqueValue).list();
-            if (CollUtil.isEmpty(list)||list.size()>1){
-                throw new ServiceException("三方审批生成-采购申请单合同状态更新-找到多条系统单据或为找到系统单据，请检查单据，单据唯一键{},单据唯一键值{}",  uniqueField.getSysField(), uniqueValue);
+            if (ObjectUtil.isEmpty(uniqueValue)){
+                throw new ServiceException("三方审批生成-采购订单合同状态更新-单据唯一键值为空，请检查单据，单据唯一键{}",  uniqueField.getSysField());
             }
+            List<String> uniqueList = Arrays.stream(uniqueValue.split(",")).distinct().collect(Collectors.toList());
+
+            List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).in(uniqueField.getSysField(), uniqueList).list();
+
+            if (CollUtil.isEmpty(list)){
+                throw new ServiceException("三方审批生成-采购申请单合同状态更新-未找到系统单据，请检查单据，单据唯一键{},单据唯一键值{}",  uniqueField.getSysField(), uniqueValue);
+            }
+
             //更新单
             PurchaseOrderDTO.ContractStampStatusParamsDTO contractStampStatusParamsDTO = new PurchaseOrderDTO.ContractStampStatusParamsDTO();
-            contractStampStatusParamsDTO.setIds(Arrays.asList(list.get(0).getId()));
+            List<String> poIdList = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+            contractStampStatusParamsDTO.setIds(poIdList);
             //根据审核状态更新合同盖章状态
             handleContractStatus(contractStampStatusParamsDTO,status);
 
@@ -152,15 +160,21 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             List<CfgProcessFieldMapEntity> fieldMapList = fieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
-            CfgProcessFieldMapEntity uniqueField = fieldMapList.stream().filter(req -> req.getIsUnique()).findFirst().orElse(null);
+            CfgProcessFieldMapEntity uniqueField = fieldMapList.stream().filter(req -> req.getIsUnique()).findFirst().orElse(new CfgProcessFieldMapEntity());
             String uniqueValue = (String) map.get(uniqueField.getSysField());
-            List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).eq(uniqueField.getSysField(), uniqueValue).list();
-            if (CollUtil.isEmpty(list)||list.size()>1){
-                throw new ServiceException("三方审批生成-采购订单合同状态更新-找到多条系统单据或为找到系统单据，请检查单据，单据唯一键{},单据唯一键值{}",  uniqueField.getSysField(), uniqueValue);
+            if (ObjectUtil.isEmpty(uniqueValue)){
+                throw new ServiceException("三方审批生成-采购订单合同状态更新-单据唯一键值为空，请检查单据，单据唯一键{}",  uniqueField.getSysField());
+            }
+            List<String> uniqueList = Arrays.stream(uniqueValue.split(",")).distinct().collect(Collectors.toList());
+
+            List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).in(uniqueField.getSysField(), uniqueList).list();
+            if (CollUtil.isEmpty(list)){
+                throw new ServiceException("三方审批生成-采购订单合同状态更新-未找到系统单据，请检查单据，单据唯一键{},单据唯一键值{}",  uniqueField.getSysField(), uniqueValue);
             }
             //更新单
             PurchaseOrderDTO.ContractStampStatusParamsDTO contractStampStatusParamsDTO = new PurchaseOrderDTO.ContractStampStatusParamsDTO();
-            contractStampStatusParamsDTO.setIds(Arrays.asList(list.get(0).getId()));
+            List<String> poIdList = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+            contractStampStatusParamsDTO.setIds(poIdList);
             handleContractStatus(contractStampStatusParamsDTO,taskInfo.getStatus());
 
             log.warn("采购订单数据转换完成，单据信息：{}", JSONUtil.toJsonStr(contractStampStatusParamsDTO));
