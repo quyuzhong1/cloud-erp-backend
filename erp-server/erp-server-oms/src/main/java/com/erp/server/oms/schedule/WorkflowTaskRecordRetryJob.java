@@ -69,7 +69,7 @@ public class WorkflowTaskRecordRetryJob {
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 continue;
             }
-            long count = list.stream().filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode()) && e.getRetryCount() > 3).count();
+            long count = workflowTaskRecordEntities.stream().filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode()) && e.getRetryCount() > 3).count();
             if(count > 0){
                 continue;
             }

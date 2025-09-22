@@ -145,6 +145,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         return this.baseMapper.listSkuAvailableQtyByUserId(dto);
     }
 
+    /**
+     * 根据类型查询所有台账信息
+     *
+     * @param searchAllDTO 查询条件对象，包含查询类型等参数
+     * @return 返回SKU可用数量DTO列表，如果查询条件为空或类型为空则返回空列表
+     */
+    @Override
+    public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(SampleLedgerDTO.SearchAllDTO searchAllDTO){
+        if(Objects.isNull(searchAllDTO) || StringUtils.isBlank(searchAllDTO.getType())){
+            return Collections.emptyList();
+        }
+        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+        dto.setType(searchAllDTO.getType());
+        return this.baseMapper.listSkuAvailableQtyByUserId(dto);
+    }
+
 
     @Override
     public PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO){
