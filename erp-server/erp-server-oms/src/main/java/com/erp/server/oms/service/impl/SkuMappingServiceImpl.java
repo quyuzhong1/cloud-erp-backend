@@ -531,7 +531,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setProductSkuNo(skuVOList.get(0).getSkuNo());
         addSkuMaping.setProductSkuId(productSkuId);
         addSkuMaping.setListingId(listing.getId());
-        addSkuMaping.setType(RuleTypeEnum.B2C_PLATFORM);
+        addSkuMaping.setType(skuMapping.getType());
         addSkuMaping.setIsExpire(Boolean.FALSE);
         addSkuMaping.setEffectiveTime(dto.getEffectiveTime());
         addSkuMaping.setExpireTime(dto.getEffectiveTime().plusYears(100));
