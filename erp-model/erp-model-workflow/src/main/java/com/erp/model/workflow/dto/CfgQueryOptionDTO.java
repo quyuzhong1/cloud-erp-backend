@@ -105,6 +105,11 @@ public class CfgQueryOptionDTO implements Serializable {
          * 接口类型，el-input输入框，el-select下拉框，el-cascader级联
          */
         private String controls;
+
+        /**
+         * 级联添加
+         */
+        private String children = "childrenList";
     }
 
     /**
