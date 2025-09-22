@@ -148,6 +148,9 @@ public class ExhibitionOrderDetailServiceImpl extends SuperServiceImpl<Exhibitio
             SampleLedgerEntity sampleLedgerEntity = sampleLedgerMap.getOrDefault(item.getSampleLedgerId(), null);
             if(Objects.nonNull(sampleLedgerEntity)){
                 item.setAvailableQty(sampleLedgerEntity.getQty());
+                item.setUseUserId(sampleLedgerEntity.getUseUserId());
+                item.setUseUserName(sampleLedgerEntity.getUseUserName());
+                item.setSampleLedgerId(sampleLedgerEntity.getId());
             }
         }
         return resultList;

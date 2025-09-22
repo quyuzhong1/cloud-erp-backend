@@ -101,7 +101,9 @@
         </if>
         WHERE
         sl.is_deleted = FALSE
-        AND sl.user_id = #{ params.userId}
+        <if test="params.userId != null and params.userId != ''">
+            AND sl.user_id = #{ params.userId}
+        </if>
         <if test="params.ids != null and params.ids.size() > 0">
             and sl.id in
             <foreach collection="params.ids" open="(" separator="," close=")" item="item">

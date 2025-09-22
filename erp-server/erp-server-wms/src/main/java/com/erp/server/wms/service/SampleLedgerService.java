@@ -128,4 +128,6 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
      * @return 详情信息
      */
     SampleLedgerDTO.ViewDTO view(String id);
+
+    List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(SampleLedgerDTO.SearchAllDTO dto);
 }

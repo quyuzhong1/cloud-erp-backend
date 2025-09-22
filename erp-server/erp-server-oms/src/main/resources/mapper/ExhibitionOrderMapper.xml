@@ -229,14 +229,14 @@ eo.partition_id as partitionId
     </select>
     <select id="tabList" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        eo.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  exhibition_order
-        WHERE is_deleted=FALSE
+        FROM  exhibition_order eo
+        WHERE eo.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY eo.approve_status
 
     </select>
     <select id="listFreezeQtyBySku" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$FreezeQtyBySku">

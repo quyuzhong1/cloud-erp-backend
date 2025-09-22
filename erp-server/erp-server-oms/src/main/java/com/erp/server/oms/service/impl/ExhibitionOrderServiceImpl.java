@@ -1727,6 +1727,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             List<CfgCountryPartitionEntity> cfgCountryPartitionEntities = FeignQuery.list(CfgCountryPartitionEntity.class);
             Map<String, String> partitionMap = cfgCountryPartitionEntities.stream().collect(Collectors.toMap(CfgCountryPartitionEntity::getCountry, CfgCountryPartitionEntity::getPartitionId,(o1,o2)->o1));
 
+            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+            SampleLedgerDTO.SearchAllDTO dto = new SampleLedgerDTO.SearchAllDTO();
+            dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerAll(dto);
 
 
             ExhibitionOrderServiceImpl bean = ApplicationContextUtils.getBean(ExhibitionOrderServiceImpl.class);
@@ -1742,23 +1746,20 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 ExhibitionOrderEntity addSo = new ExhibitionOrderEntity();
                 String mainId = IdWorker.getIdStr();
                 addSo.setId(mainId);
+                // 生成单号
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+                addSo.setCode(code);
 
-
-                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = new ArrayList<>();
                 //领用人
                 String recipientUserName = mainInfo.getRecipientUserName();
+                String recipientUserId ="";
                 if(StringUtils.isNotBlank(recipientUserName)){
                     FindUserDTO recipientUser = userList.stream().filter(u -> u.getUserName().equals(recipientUserName)).findFirst().orElse(null);
                     if(Objects.isNull(recipientUser)){
                         errorMsgList.add("领用人不存在");
                     }else {
-                        addSo.setRecipientUserId(recipientUser.getUserId());
-
-                        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-                        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-                        dto.setUserId(recipientUser.getUserId());
-                        dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-                        skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
+                        recipientUserId = recipientUser.getUserId();
+                        addSo.setRecipientUserId(recipientUserId);
                     }
                 }
 
@@ -1798,32 +1799,35 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 addSo.setSalesOrgId(salesOrgId);
                 addSo.setSalesOrgName(salesOrgName);
 
+                //销售部门
+                String salesDeptName = mainInfo.getSalesDeptName();
+                String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
+                        map(SysDepartmentDTO::getId).orElse("");
+                addSo.setSalesDeptId(salesDeptId);
+                if (StringUtils.isBlank(salesDeptId)) {
+                    errorMsgList.add("销售部门不存在");
+                }
+
                 //销售员
                 String sellerName = mainInfo.getSellerName();
-                if(StringUtils.isNotBlank(sellerName)){
-                    FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().orElse(null);
-                    if(Objects.isNull(findUserDTO)){
-                        errorMsgList.add("销售员不存在");
-                    }else {
-                        String sellerId = findUserDTO.getUserId();
-                        addSo.setSellerId(sellerId);
-                        addSo.setSellerName(sellerName);
+                String sellerId = userList.stream().filter(u -> StringUtils.isNotBlank(sellerName) && u.getUserName().equals(sellerName)).findFirst().
+                        map(FindUserDTO::getUserId).orElse("");
+                addSo.setSellerId(sellerId);
+                addSo.setSellerName(sellerName);
+                if (StringUtils.isBlank(sellerId)) {
+                    errorMsgList.add("销售员不存在");
+                }
 
-                        //销售部门
-                        String salesDeptId = findUserDTO.getDepartmentId();
-                        addSo.setSalesDeptId(salesDeptId);
-                        if (StringUtils.isBlank(salesDeptId)) {
-                            errorMsgList.add("销售部门不存在");
-                        }
-
-                        String finalSalesOrgId1 = salesOrgId;
-                        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
-                                k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
-                                xsyCode.equals(k.getTypeCode())
-                        ).findFirst().orElse(null);
-                        if (Objects.isNull(businessOperator)) {
-                            errorMsgList.add("金蝶未存在该销售员");
-                        }
+                if (StringUtils.isBlank(salesOrgId)||StringUtils.isBlank(salesDeptId)){
+                    errorMsgList.add("金蝶未存在该销售员");
+                }else {
+                    String finalSalesOrgId1 = salesOrgId;
+                    KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
+                            k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
+                            xsyCode.equals(k.getTypeCode())
+                    ).findFirst().orElse(null);
+                    if (Objects.isNull(businessOperator)) {
+                        errorMsgList.add("金蝶未存在该销售员");
                     }
                 }
 
@@ -1931,12 +1935,13 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //收货地址
                 String receiveAddress = mainInfo.getReceiveAddress();
-                String customerAddressId = customerAddressList.stream().filter(c -> StringUtils.isNotBlank(receiveAddress) && c.getAddress().equals(receiveAddress)).
+                String customerAddressId = customerAddressList.stream().filter(c -> c.getAddress().equals(receiveAddress)).
                         findFirst().map(CustomerAddressEntity::getId).orElse("");
                 if (StringUtils.isBlank(customerAddressId)) {
                     errorMsgList.add("联系地址不存在");
                 }
                 addSo.setReceiveAddressId(customerAddressId);
+                addSo.setReceiveAddress(receiveAddress);
 
                 //交货方式
                 String deliveryModeStr = mainInfo.getDeliveryMode();
@@ -2034,9 +2039,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                     addDetail.setQty(qty);
 
                     //台账
-                    if(StringUtils.isNotBlank(addDetail.getSkuId())){
+                    if(StringUtils.isNotBlank(addDetail.getSkuId()) && StringUtils.isNotBlank(recipientUserId)){
+                        String finalRecipientUserId = recipientUserId;
                         SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
-                                .filter(e -> e.getSkuId().equals(addDetail.getSkuId()) && e.getUseUserName().equals(item.getUseUserName()))
+                                .filter(e ->e.getUserId().equals(finalRecipientUserId) && e.getSkuId().equals(addDetail.getSkuId()) && e.getUseUserName().equals(item.getUseUserName()))
                                 .findFirst()
                                 .orElse(null);
                         if(Objects.isNull(skuAvailableQtyDTO)){
@@ -2052,6 +2058,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                                 addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             }
                         }
+                    }else {
+                        msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                     }
 
                     //销售单价

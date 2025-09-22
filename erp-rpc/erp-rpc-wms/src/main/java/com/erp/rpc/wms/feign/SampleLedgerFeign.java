@@ -19,4 +19,8 @@ public interface SampleLedgerFeign {
     @PostMapping("/feign/sampleLedger/listLedgerByUserId")
     List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(@RequestBody SampleLedgerDTO.SearchDTO dto);
 
+
+    @PostMapping("/feign/sampleLedger/listLedgerAll")
+    List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(@RequestBody SampleLedgerDTO.SearchAllDTO dto);
+
 }

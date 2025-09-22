@@ -368,6 +368,19 @@ public class SampleLedgerDTO implements Serializable {
 
         private String useUserId;
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchAllDTO {
+        /**
+         *  SampleLedgerTypeEnum  borrow：借用 ， scrap：报废 ， back：退回，exhibition：展会订单
+         */
+        private String type;
+    }
+
     /**
      *
      */
