@@ -30,7 +30,7 @@
             workflow_task_record
         WHERE
             is_deleted = false
-            and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status IN ( 'failed', 'processing' ) and is_deleted = false )
+            and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status !='success' and is_deleted = false )
     </select>
 
     <select id="getTaskErrorReport" resultType="com.erp.model.oms.dto.WorkflowTaskRecordDTO$TaskErrorReportDTO">
