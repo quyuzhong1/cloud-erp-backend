@@ -25,4 +25,24 @@ public interface SysRefereConfigFeign {
 
     @GetMapping("/feign/sysRefererConfig/getByReferer")
     List<SysRefererConfigEntity> getByReferer(@RequestParam("referer") String referer);
+
+    /**
+     * 根据App-Id和应用类型查询配置
+     *
+     * @param appId   应用ID
+     * @param appType 应用类型
+     * @return 配置列表
+     */
+    @GetMapping("/feign/sysRefererConfig/getByAppIdAndType")
+    ApiResult<List<SysRefererConfigEntity>> getByAppIdAndType(@RequestParam("appId") String appId, 
+                                                             @RequestParam("appType") String appType);
+
+    /**
+     * 根据App-Id查询配置
+     *
+     * @param appId 应用ID
+     * @return 配置列表
+     */
+    @GetMapping("/feign/sysRefererConfig/getByAppId")
+    ApiResult<List<SysRefererConfigEntity>> getByAppId(@RequestParam("appId") String appId);
 }
