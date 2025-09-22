@@ -39,9 +39,4 @@ public class OtherInstockFeignController extends BaseController{
     public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
         return otherInstockService.listOtherInstockByExhibitionId(exhibitionId);
     }
-
-    @PostMapping("/disApproveByExhibition")
-    public ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(@RequestBody ExhibitionOrderDTO.DownstreamDisapproveDTO dto){
-        return otherInstockService.disApproveByExhibition(dto);
-    }
 }

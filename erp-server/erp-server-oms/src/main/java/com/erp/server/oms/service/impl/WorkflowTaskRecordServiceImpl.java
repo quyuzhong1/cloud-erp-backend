@@ -4,29 +4,24 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.server.oms.mapper.WorkflowTaskRecordMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -34,7 +29,6 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -95,9 +89,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             entity.setDictBasicId(viewDTO.getId());
             entity.setTraceId(dto.getTraceId());
             if (i == 0) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", dto.getSourceId());
-                entity.setInputData(JSON.toJSONString(map));
+                entity.setInputData(JSON.toJSONString(dto.getFirstNodeInputData()));
             }
             entities.add(entity);
         }
@@ -133,7 +125,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             addTaskDTO.setSourceId(entity.getSourceId());
             addTaskDTO.setSourceCode(entity.getSourceCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
-            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByName(entity.getSourceType()));
             addTaskDTO.setTraceId(entity.getTraceId());
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, workflowTaskRecordEntities.get(0).getSourceId(),1);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

@@ -173,4 +173,5 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
 
     WorkflowTaskRecordDTO.MqResponseDTO generateSoInfoApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
+    WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

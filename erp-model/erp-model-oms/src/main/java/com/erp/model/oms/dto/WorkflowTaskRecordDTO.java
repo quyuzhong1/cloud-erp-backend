@@ -1,11 +1,12 @@
 package com.erp.model.oms.dto;
 
-import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +31,7 @@ public class WorkflowTaskRecordDTO implements Serializable {
     @NoArgsConstructor
     public static class AddTaskDTO {
 
-        private SourceTypeEnum sourceTypeEnum;
+        private WorkflowTaskRecordTypeEnum sourceTypeEnum;
 
         private DictBasicTypeEnum dictBasicTypeEnum;
 
@@ -39,6 +40,9 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private String sourceCode;
 
         private String traceId;
+
+        //第一个节点的入参
+        private Map<String, Object> firstNodeInputData = new HashMap<>();
     }
 
 

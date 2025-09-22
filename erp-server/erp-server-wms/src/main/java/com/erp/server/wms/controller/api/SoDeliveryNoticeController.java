@@ -557,5 +557,10 @@ public class SoDeliveryNoticeController extends BaseController {
     public WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return soDeliveryNoticeService.generateDeliveryApprove(dto);
     }
+
+    @PostMapping("/autoDeliveryDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return soDeliveryNoticeService.autoDeliveryDisApprove(dto);
+    }
 }
 

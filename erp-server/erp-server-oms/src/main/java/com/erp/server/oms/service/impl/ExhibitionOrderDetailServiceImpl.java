@@ -164,7 +164,7 @@ public class ExhibitionOrderDetailServiceImpl extends SuperServiceImpl<Exhibitio
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(recipientUserId);
         dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-        dto.setChildId(id);
+//        dto.setChildId(id);
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
 
         Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (o1, o2) -> o1));
