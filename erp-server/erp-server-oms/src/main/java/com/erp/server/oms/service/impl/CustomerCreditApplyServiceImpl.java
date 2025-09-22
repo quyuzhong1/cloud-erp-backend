@@ -437,6 +437,19 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     }
 
     @Override
+    public Boolean updateCustomerCredit(CustomerCreditApplyDTO.UpdateStatusDTO dto) {
+        CustomerCreditApplyEntity entity = lambdaQuery()
+                .eq(CustomerCreditApplyEntity::getCode, dto.getCode())
+                .one();
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到客户授信数据");
+        }
+        entity.setCreditStatus(dto.getStatus());
+        return this.updateById(entity);
+
+    }
+
+    @Override
     public CustomerCreditApplyDTO.ViewDTO view(String id) {
         CustomerCreditApplyEntity customerCreditApplyEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到客户授信数据"));
         CustomerCreditApplyDTO.ViewDTO data = BeanMapperUtils.map(CustomerCreditApplyDTO.ViewDTO.class, customerCreditApplyEntity);

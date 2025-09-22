@@ -144,4 +144,6 @@ public interface CustomerCreditApplyService extends SuperService<CustomerCreditA
     Boolean approveEnd(ApproveOneDTO dto, CustomerCreditApplyEntity entity);
 
     BatchResultDTO cancel(String ids);
+
+    Boolean updateCustomerCredit(CustomerCreditApplyDTO.UpdateStatusDTO dto);
 }
