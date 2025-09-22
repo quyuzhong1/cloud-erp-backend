@@ -108,6 +108,17 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 log.warn("App-Id不能为空，支持的请求头格式：App-Id, appId, AppId, app-id, Referer, referer");
                 return unauthorizedResponse(exchange, "应用ID不能为空，", ApiError.ERROR_600.code);
             }
+            // 3. 检查应用配置
+            AppConfigResult configResult = checkAppConfig(appId);
+            if (configResult.isSignatureDisabled()) {
+                log.debug("应用 {} 已禁用签名验证，URI: {}", appId, uri);
+                return chain.filter(exchange);
+            }
+            // 4. 检查逻辑类型，如果是OLD则直接放行
+            if (configResult.isOldLogic()) {
+                log.debug("应用 {} 使用OLD逻辑，直接放行，URI: {}", appId, uri);
+                return chain.filter(exchange);
+            }
 
             if (StringUtils.isBlank(apiSignature)) {
                 log.warn("API-Signature不能为空");
@@ -117,19 +128,6 @@ public class SignatureVerificationFilter implements GlobalFilter {
             if (StringUtils.isBlank(signSessionId)) {
                 log.warn("Sign-Session-Id不能为空");
                 return unauthorizedResponse(exchange, ApiError.ERROR_600.msg, ApiError.ERROR_600.code);
-            }
-
-            // 3. 检查应用配置
-            AppConfigResult configResult = checkAppConfig(appId);
-            if (configResult.isSignatureDisabled()) {
-                log.debug("应用 {} 已禁用签名验证，URI: {}", appId, uri);
-                return chain.filter(exchange);
-            }
-
-            // 4. 检查逻辑类型，如果是OLD则直接放行
-            if (configResult.isOldLogic()) {
-                log.debug("应用 {} 使用OLD逻辑，直接放行，URI: {}", appId, uri);
-                return chain.filter(exchange);
             }
 
             boolean ssoEnabled = configResult.isSsoEnabled();
