@@ -17,6 +17,7 @@ import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -38,17 +39,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WorkflowTaskRecordRetryJob {
 
-    private static String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
-
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
 
     @Resource
     private MQProducerService mqProducerService;
 
-
-    @Resource
-    private DictBasicService dictBasicService;
 
     /**
      * 任务节点记录表补偿重试
@@ -78,7 +74,7 @@ public class WorkflowTaskRecordRetryJob {
             addTaskDTO.setSourceId(entity.getSourceId());
             addTaskDTO.setSourceCode(entity.getSourceCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
-            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByName(entity.getSourceType()));
             addTaskDTO.setTraceId(entity.getTraceId());
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, workflowTaskRecordEntities.get(0).getSourceId(),1);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

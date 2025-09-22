@@ -820,6 +820,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //判断上一次的反审核的任务是否已经全部执行成功
+        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, dto.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException("上一次反审核任务未执行完成，无法进行审核");
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -880,39 +888,46 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         validateDisApprove(entity);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //判断上一次的审核的任务是否已经全部执行成功
+        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, id)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException("上一次审核任务未执行完成，无法进行反审核");
+        }
 
-        //反审核删除以下单据
+        //任务节点记录表
+        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
+                .eq(WorkflowTaskRecordEntity::getSourceId,id)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
+                .update();
+
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(entity.getId());
+        addTaskDTO.setSourceCode(entity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
+        addTaskDTO.setTraceId(MDC.get("traceId"));
+
+        Map<String, Object> map = new HashMap<>();
         if(CollUtil.isNotEmpty(list)){
-            //销售出库单
-            //其他入库单
-            //发货通知单
-            ExhibitionOrderDTO.DownstreamDisapproveDTO dto = new ExhibitionOrderDTO.DownstreamDisapproveDTO();
-            dto.setExhibitionOrderId(id);
-            dto.setSoId(list.get(0).getId());
-            ExhibitionOrderDTO.DownstreamDisapproveDTO downstreamDisapproveDTO = otherInstockFeign.disApproveByExhibition(dto);
-            if(StringUtils.isNotBlank(downstreamDisapproveDTO.getErrorMsg())){
-                throw new ServiceException(downstreamDisapproveDTO.getErrorMsg());
-            }
+            map.put("soId", list.get(0).getId());
+        }
+        map.put("exhibitionOrderId", entity.getId());
+        addTaskDTO.setFirstNodeInputData(map);
 
-            //B2B销售订单
-            List<String> soIds = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
-            List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(soIds);
-            BatchResultDTO result = soInfoService.disApprove(list.get(0), soChangeList);
-            if(!result.getSuccess()){
-                throw new ServiceException("B2B销售订单反审核失败");
-            }
-
-            List<BatchResultDTO> resultDTOList = soInfoService.deleteByIds(SourceTypeEnum.EXHIBITION_ORDER.getCode(), soIds);
-            boolean b = resultDTOList.stream().allMatch(BatchResultDTO::getSuccess);
-            if(!b){
-                throw new ServiceException("B2B销售订单删除失败");
-            }
+        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+        }
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
 
 
-        //任务节点记录表
-        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true).eq(WorkflowTaskRecordEntity::getSourceId,id).update();
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
@@ -1027,8 +1042,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setSourceId(entity.getId());
             addTaskDTO.setSourceCode(entity.getCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);//subType
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE);//subType
             addTaskDTO.setTraceId(MDC.get("traceId"));
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", entity.getId());
+            addTaskDTO.setFirstNodeInputData(map);
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
@@ -1140,6 +1159,57 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             return mqResponseDTO;
         }
 
+        return mqResponseDTO;
+    }
+
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId"))){
+            mqResponseDTO.setErrorMsg("soId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId 类型转换失败");
+            log.warn("soId 类型转换失败: {}", data.get("soId"));
+            return mqResponseDTO;
+        }
+        SoInfoEntity entity = soInfoService.getById(soId);
+        if(Objects.nonNull(entity)){
+            List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(Arrays.asList(entity.getId()));
+            try {
+                BatchResultDTO result = soInfoService.disApprove(entity, soChangeList);
+                if(!result.getSuccess()){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{}",entity.getId()));
+                    return mqResponseDTO;
+                }
+            }catch (Exception e){
+                log.error("B2B销售订单反审核失败",e);
+                mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{},e:{}",entity.getId(),e.getMessage()));
+                return mqResponseDTO;
+            }
+
+            try {
+                List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(Arrays.asList(entity.getId()));
+                if(!resultDTOList.get(0).getSuccess()){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{}",entity.getId()));
+                    return mqResponseDTO;
+                }
+            }catch (Exception e){
+                log.error("B2B销售订单删除失败",e);
+                mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{},e:{}",entity.getId(),e.getMessage()));
+                return mqResponseDTO;
+            }
+        }
         return mqResponseDTO;
     }
 
