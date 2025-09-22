@@ -1766,6 +1766,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 throw new ServiceException("展会订单自动生成其他入库单失败");
             }
 
+            String comment = "展会订单自动审核通过";
+            // 审核通过其他入库单
+            BatchResultDTO result = approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE);
+            if (!result.getSuccess()) {
+                throw new ServiceException(result.getMsg());
+            }
+
             //生成销售出库单
             Boolean save = soOutstockService.addB2bPushDownNo(downstreamDTO.getGenerateSoOutstockViewDTOList());
             if(!save){
@@ -1943,13 +1950,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
 
         try{
-            String comment = "展会订单自动审核通过";
-            // 审核通过其他入库单
-            BatchResultDTO result = approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE);
-            if (!result.getSuccess()) {
-                throw new ServiceException(result.getMsg());
-            }
 
+            String comment = "展会订单自动审核通过";
             //审核通过
             ApproveOneDTO approveOneDTO = new ApproveOneDTO();
             approveOneDTO.setId(soOutstockId);
@@ -1957,7 +1959,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             approveOneDTO.setComment(comment);
             BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
             if (!approve.getSuccess()) {
-                throw new ServiceException(result.getMsg());
+                throw new ServiceException(approve.getMsg());
             }
         }catch (Exception e){
             log.error("生成其他入库单和销售出库单失败，otherInstockId: {}，soOutstockId: {}", otherInstockId,soOutstockId, e);
