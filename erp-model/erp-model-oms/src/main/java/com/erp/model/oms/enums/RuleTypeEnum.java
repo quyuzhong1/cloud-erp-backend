@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 @Getter
 public enum RuleTypeEnum implements EnumMessage {
     B2C_PLATFORM("platform","b2c平台"),
-    B2B_PLATFORM("b2b_platform","b2b平台"),
+    B2B_PLATFORM("b2bPlatform","b2b平台"),
     WAREHOUSE("warehouse","仓库"),
     CUSTOMER("customer","客户"),
     ASSIGN("assign","指定物流"),

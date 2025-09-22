@@ -87,7 +87,7 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform","b2b_platform", "warehouse","customer"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform","b2bPlatform", "warehouse","customer"}, message = "类型有误")
         private String type;
 
 

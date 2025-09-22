@@ -29,6 +29,18 @@ import java.util.Map;
 @NoArgsConstructor
 public class CustomerCreditApplyDTO implements Serializable {
 
+    /**
+     * 更新客户状态DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO{
+
+        private String code;
+
+        private String status;
+
+    }
 
      /**
      * 状态统计
