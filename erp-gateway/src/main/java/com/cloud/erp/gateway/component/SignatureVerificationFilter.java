@@ -50,6 +50,14 @@ public class SignatureVerificationFilter implements GlobalFilter {
      * 开放API路径
      */
     private static final String OPEN_API_URL = "/open/api/";
+    
+    /**
+     * 需要放行的特定接口路径
+     */
+    private static final String[] BYPASS_PATHS = {
+        "/open/api/getMD5",
+        "/open/api/getAES"
+    };
 
     @Resource
     private RedissonClient redissonClient;
@@ -72,6 +80,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             // 只处理以/open/api开头的请求
             if (!uri.startsWith(OPEN_API_URL)) {
+                return chain.filter(exchange);
+            }
+            
+            // 检查是否需要放行的特定接口
+            if (isBypassPath(uri)) {
+                log.debug("接口 {} 需要放行，跳过签名验证", uri);
                 return chain.filter(exchange);
             }
 
@@ -392,6 +406,21 @@ public class SignatureVerificationFilter implements GlobalFilter {
             // 异常时使用默认配置
             return new AppConfigResult(false, false, "NEW");
         }
+    }
+
+    /**
+     * 检查是否为需要放行的路径
+     * 
+     * @param uri 请求URI
+     * @return 是否需要放行
+     */
+    private boolean isBypassPath(String uri) {
+        for (String bypassPath : BYPASS_PATHS) {
+            if (uri.contains(bypassPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
