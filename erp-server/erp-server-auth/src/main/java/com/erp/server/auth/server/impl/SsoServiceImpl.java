@@ -1,8 +1,7 @@
 package com.erp.server.auth.server.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.service.impl.RedisService;
+import org.redisson.api.RedissonClient;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -37,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class SsoServiceImpl implements SsoService {
 
     @Resource
-    private RedisService redisService;
+    private RedissonClient redissonClient;
 
     @Resource
     private AuthJwtProperties authJwtProperties;
@@ -64,7 +63,12 @@ public class SsoServiceImpl implements SsoService {
                 SysRefererConfigEntity config = null;
                 for (SysRefererConfigEntity cfg : configList) {
                     try {
-                        decryptedPayload = RsaEncryptUtil.decrypt(request.getEncryptedPayload(), cfg.getPrivateKey());
+                        // 处理PEM格式的私钥，提取Base64编码的私钥部分
+                        String privateKey = cfg.getPrivateKey();
+                        if (privateKey != null && privateKey.contains("-----BEGIN")) {
+                            privateKey = RsaEncryptUtil.extractPrivateKeyFromPem(privateKey);
+                        }
+                        decryptedPayload = RsaEncryptUtil.decrypt(request.getEncryptedPayload(), privateKey);
                         SsoPayloadDTO payload = JSON.parseObject(decryptedPayload, SsoPayloadDTO.class);
                         if (payload != null && StringUtils.isNotBlank(payload.getAppType())) {
                             config = cfg;
@@ -104,7 +108,7 @@ public class SsoServiceImpl implements SsoService {
                 
                 // 6. 生成Redis键值对存储对称密钥
                 String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, sessionId);
-                redisService.setCacheObject(redisKey, payload.getSymmetricKey(), 24L, TimeUnit.HOURS);
+                redissonClient.getBucket(redisKey).set(payload.getSymmetricKey(), 24, TimeUnit.HOURS);
                 log.info("存储对称密钥到Redis，key：{}", redisKey);
                 
                 // 7. 获取权限路径列表
@@ -261,7 +265,12 @@ public class SsoServiceImpl implements SsoService {
             String decryptedPayload = null;
             for (SysRefererConfigEntity cfg : configList) {
                 try {
-                    decryptedPayload = RsaEncryptUtil.decrypt(request.getEncryptedPayload(), cfg.getPrivateKey());
+                    // 处理PEM格式的私钥，提取Base64编码的私钥部分
+                    String privateKey = cfg.getPrivateKey();
+                    if (privateKey != null && privateKey.contains("-----BEGIN")) {
+                        privateKey = RsaEncryptUtil.extractPrivateKeyFromPem(privateKey);
+                    }
+                    decryptedPayload = RsaEncryptUtil.decrypt(request.getEncryptedPayload(), privateKey);
                     KeyRegistrationPayloadDTO payload = JSON.parseObject(decryptedPayload, KeyRegistrationPayloadDTO.class);
                     if (payload != null && StringUtils.isNotBlank(payload.getSymmetricKey())) {
                         config = cfg;
@@ -292,7 +301,7 @@ public class SsoServiceImpl implements SsoService {
             // 5. 生成Redis键值对存储对称密钥
             // 格式：sign:session:{appId}:{userId}:{sessionId}
             String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, sessionId);
-            redisService.setCacheObject(redisKey, payload.getSymmetricKey(), 5L, TimeUnit.MINUTES);
+            redissonClient.getBucket(redisKey).set(payload.getSymmetricKey(), 5, TimeUnit.MINUTES);
             log.info("存储对称密钥到Redis，key：{}，userId：{}，过期时间：5分钟", redisKey, userId);
 
             // 6. 返回成功响应

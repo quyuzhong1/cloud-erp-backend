@@ -67,7 +67,7 @@ public class ApiSignUtil {
         String signature = generateSignature(payload, secretKey, signType);
         
         // 构建签名头
-        return String.format("%s: t=%d,v=%s", SIGNATURE_HEADER, timestamp, signature);
+        return String.format("t=%d,v=%s", timestamp, signature);
     }
 
     /**
@@ -119,18 +119,7 @@ public class ApiSignUtil {
         }
 
         try {
-            // 解析格式: API-Signature: t=1617184533,v=base64signature
-            String[] parts = signatureHeader.split(":");
-            if (parts.length != 2) {
-                return null;
-            }
-
-            String headerName = parts[0].trim();
-            if (!SIGNATURE_HEADER.equals(headerName)) {
-                return null;
-            }
-
-            String headerValue = parts[1].trim();
+            String headerValue =signatureHeader.trim();
             String[] params = headerValue.split(",");
             
             String timestamp = null;
@@ -251,10 +240,7 @@ public class ApiSignUtil {
     private static String generateSignature(String payload, String secretKey, String signType) {
         try {
             // 直接使用现有的SignUtil.genSign方法
-            String signature = SignUtil.sign(payload,secretKey, SignTypeEnum.getByCode(signType));
-            
-            // 对签名结果进行Base64编码
-            return Base64.getEncoder().encodeToString(signature.getBytes(StandardCharsets.UTF_8));
+            return  SignUtil.sign(payload,secretKey, SignTypeEnum.getByCode(signType));
         } catch (Exception e) {
             log.error("生成签名失败", e);
             throw new RuntimeException("生成签名失败", e);

@@ -23,6 +23,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import org.springframework.core.io.buffer.DataBufferUtils;
 
 import javax.annotation.Resource;
 import java.io.UnsupportedEncodingException;
@@ -74,10 +75,10 @@ public class SignatureVerificationFilter implements GlobalFilter {
             }
 
             // 只在 prod 和 uat 环境开启签名认证
-            if (!isSignatureVerificationEnabled()) {
-                log.debug("当前环境 {} 不开启签名认证，URI: {}", currentEnvironment, uri);
-                return chain.filter(exchange);
-            }
+//            if (!isSignatureVerificationEnabled()) {
+//                log.debug("当前环境 {} 不开启签名认证，URI: {}", currentEnvironment, uri);
+//                return chain.filter(exchange);
+//            }
 
             log.info("开始验证签名，URI: {}", uri);
 
@@ -150,7 +151,21 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             // 6. 从Redis获取对称密钥
             String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, signSessionId);
-            String symmetricKey = (String) redissonClient.getBucket(redisKey).get();
+            String symmetricKey = null;
+            
+            try {
+                symmetricKey = (String) redissonClient.getBucket(redisKey).get();
+            } catch (Exception e) {
+                log.error("从Redis获取对称密钥失败，Redis Key: {}, 错误: {}", redisKey, e.getMessage());
+                // 如果Redis数据有问题，尝试删除该key
+                try {
+                    redissonClient.getBucket(redisKey).delete();
+                    log.info("已删除有问题的Redis key: {}", redisKey);
+                } catch (Exception deleteException) {
+                    log.warn("删除有问题的Redis key失败: {}", deleteException.getMessage());
+                }
+                return unauthorizedResponse(exchange, "会话数据异常，请重新登录", 401);
+            }
 
             if (StringUtils.isBlank(symmetricKey)) {
                 log.warn("会话过期，Redis Key: {}", redisKey);
@@ -170,7 +185,8 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String signature = parsedSignature[1];
 
             // 8. 验证签名
-            boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey);
+            String body = getRequestBody(request);
+            boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, body);
             if (!isValidSignature) {
                 log.warn("签名验证失败");
                 return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
@@ -218,15 +234,40 @@ public class SignatureVerificationFilter implements GlobalFilter {
     }
 
     /**
+     * 获取请求体内容
+     * @param request 请求对象
+     * @return 请求体字符串
+     */
+    private String getRequestBody(ServerHttpRequest request) {
+        try {
+            // 将Flux<DataBuffer>转换为字符串
+            return DataBufferUtils.join(request.getBody())
+                .map(dataBuffer -> {
+                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                    dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
+                    return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                })
+                .defaultIfEmpty("")
+                .block(); // 同步阻塞获取结果
+                
+        } catch (Exception e) {
+            log.warn("获取请求体失败", e);
+            return "";
+        }
+    }
+
+    /**
      * 验证签名
      *
      * @param request 请求对象
      * @param signature 签名
      * @param timestampStr 时间戳字符串
      * @param symmetricKey 对称密钥
+     * @param body 请求体内容
      * @return 是否验证通过
      */
-    private boolean verifySignature(ServerHttpRequest request, String signature, String timestampStr, String symmetricKey) {
+    private boolean verifySignature(ServerHttpRequest request, String signature, String timestampStr, String symmetricKey, String body) {
         try {
             // 解析时间戳
             long timestamp = Long.parseLong(timestampStr);
@@ -234,8 +275,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             // 构建请求参数
             String method = request.getMethod().name();
             String uri = request.getPath().value();
-            String body = ""; // 这里需要根据实际情况获取请求体
-            
+
             // 构建查询参数Map
             Map<String, String> queryParams = new HashMap<>();
             request.getQueryParams().forEach((key, values) -> {
@@ -253,7 +293,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 signature, timestamp
             );
             
-            log.debug("签名验证结果: {}, 方法: {}, URI: {}, 时间戳: {}", isValid, method, uri, timestamp);
+            log.info("签名验证结果: {}, 方法: {}, URI: {}, 时间戳: {}", isValid, method, uri, timestamp);
             
             return isValid;
             
