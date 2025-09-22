@@ -828,6 +828,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if(count > 0){
             throw new ServiceException("上一次反审核任务未执行完成，无法进行审核");
         }
+
+        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
+                .eq(WorkflowTaskRecordEntity::getSourceId,dto.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE)
+                .update();
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -1164,6 +1170,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         return mqResponseDTO;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();

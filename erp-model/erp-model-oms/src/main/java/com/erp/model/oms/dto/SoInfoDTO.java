@@ -868,6 +868,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 平台
+         */
+        private String dictPlatform;
 
         /**
          * 平台
