@@ -17,6 +17,7 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -216,7 +217,7 @@ public class FeiShuMsgJob {
             warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
             List<String> keyInfoList = new ArrayList<>(taskErrorReport.size());
             taskErrorReport.forEach(typeCountDTO -> {
-                String format = StrUtil.format("异常单据类型【{}】任务节点【{}】存在数量:{}", SourceTypeEnum.getName(typeCountDTO.getSourceType()) , typeCountDTO.getDictBasicName() , typeCountDTO.getErrorCount());
+                String format = StrUtil.format("异常单据类型【{}】任务节点【{}】存在数量:{}", WorkflowTaskRecordTypeEnum.getName(typeCountDTO.getSourceType()) , typeCountDTO.getDictBasicName() , typeCountDTO.getErrorCount());
                 keyInfoList.add(format);
             });
             warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
