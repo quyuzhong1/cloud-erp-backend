@@ -874,10 +874,6 @@ public class SoInfoDTO implements Serializable {
         private String dictPlatform;
 
         /**
-         * 平台
-         */
-        private String dictPlatform;
-        /**
          * 订单金额
          */
         private BigDecimal orderAmount;
