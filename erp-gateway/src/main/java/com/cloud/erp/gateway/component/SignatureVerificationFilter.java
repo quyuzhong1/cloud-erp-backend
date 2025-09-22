@@ -6,6 +6,7 @@ import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.SignTypeEnum;
+import com.erp.model.sys.enums.LogicTypeEnum;
 import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import org.redisson.api.RedissonClient;
 import com.common.business.vo.LoginUser;
@@ -84,14 +85,14 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             // 1. 获取请求头
             HttpHeaders headers = request.getHeaders();
-            String appId = headers.getFirst("App-Id");
+            String appId = getAppId(headers);
             String signSessionId = headers.getFirst("Sign-Session-Id");
             String apiSignature = headers.getFirst("API-Signature");
 
             // 2. 验证必要参数
             if (StringUtils.isBlank(appId)) {
-                log.warn("App-Id不能为空");
-                return unauthorizedResponse(exchange, ApiError.ERROR_600.msg, ApiError.ERROR_600.code);
+                log.warn("App-Id不能为空，支持的请求头格式：App-Id, appId, AppId, app-id, Referer, referer");
+                return unauthorizedResponse(exchange, "应用ID不能为空，", ApiError.ERROR_600.code);
             }
 
             if (StringUtils.isBlank(apiSignature)) {
@@ -340,7 +341,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
         }
 
         public boolean isOldLogic() {
-            return "OLD".equalsIgnoreCase(logicType);
+            return LogicTypeEnum.OLD.getCode().equalsIgnoreCase(logicType);
         }
     }
 
@@ -391,6 +392,48 @@ public class SignatureVerificationFilter implements GlobalFilter {
             // 异常时使用默认配置
             return new AppConfigResult(false, false, "NEW");
         }
+    }
+
+    /**
+     * 获取App-Id，兼容多种请求头格式
+     * 
+     * @param headers 请求头
+     * @return App-Id值
+     */
+    private String getAppId(HttpHeaders headers) {
+        // 按优先级顺序检查不同的请求头格式
+        String appId = headers.getFirst("App-Id");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        appId = headers.getFirst("appId");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        appId = headers.getFirst("AppId");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        appId = headers.getFirst("app-id");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        // 兼容旧版本的referer头
+        appId = headers.getFirst("Referer");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        appId = headers.getFirst("referer");
+        if (StringUtils.isNotBlank(appId)) {
+            return appId;
+        }
+        
+        return null;
     }
 
     /**
