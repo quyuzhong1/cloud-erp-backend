@@ -62,6 +62,7 @@
                api_type,
                select_label,
                select_value,
+               select_disabled,
                search_key_field,
                select_value,
                field_type,
