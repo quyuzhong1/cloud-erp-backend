@@ -445,6 +445,11 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
             throw new ServiceException("未找到客户授信数据");
         }
         entity.setCreditStatus(dto.getStatus());
+        operateLogService.addModuleOperateLog(
+                StrUtil.format("客户授信单【{}】状态由【{}】更新为【{}】", entity.getCode(),
+                        CustomerCreditStatusEnum.getName(entity.getCreditStatus()),
+                        CustomerCreditStatusEnum.getName(dto.getStatus())),
+                ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "更新授信状态");
         return this.updateById(entity);
 
     }
