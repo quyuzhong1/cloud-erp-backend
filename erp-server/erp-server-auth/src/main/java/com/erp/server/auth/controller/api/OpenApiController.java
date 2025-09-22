@@ -40,6 +40,11 @@ import com.erp.server.auth.utils.SignUtil;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * openApi接口
+ * @Author wuhaotian
+ * @Date 2025/9/22 18:18
+ **/
 @Controller
 @Slf4j
 @RequestMapping("/open/api")

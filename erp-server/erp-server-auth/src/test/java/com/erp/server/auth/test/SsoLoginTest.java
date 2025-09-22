@@ -317,13 +317,13 @@ public class SsoLoginTest {
                 "-----END PRIVATE KEY-----\n");
         
         // 2. 生成测试数据
-        String appId = "8962cfaa0ba74c5db34988a6cbeae0de"; // 飞书应用ID
-        String unionId = "Dmv7wTe3Y-AmA0jwIFsWOhupVixvCxIT8M6O_gFTpSM";
-        String symmetricKey = "test_symmetric_key_" + System.currentTimeMillis();
+        String appId = "cli_a8467e05407c1013"; // 飞书应用ID
+        String unionId = "on_d1c5059823f5d4591ce4f539614c3585";
+        String symmetricKey = "7dBX5zCFMhWtbAjhUzN1faENyG2ypP31";
         
         // 3. 构建payload（按照时序图步骤4）
         Map<String, Object> payload = new java.util.HashMap<>();
-        payload.put("appType", AppTypeEnum.FS.getCode()); // 飞书应用类型
+//        payload.put("appType", AppTypeEnum.FS.getCode()); // 飞书应用类型
         payload.put("unionId", unionId); // 飞书用户唯一标识
         payload.put("symmetricKey", symmetricKey); // 前端生成的对称密钥
         
@@ -444,7 +444,7 @@ public class SsoLoginTest {
         String appId = "non_exist_app_999";
         String unionId = SsoLoginTestHelper.generateTestUnionId();
         String symmetricKey = "test_symmetric_key_" + System.currentTimeMillis();
-        
+
         // 构建payload
         Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("appType", AppTypeEnum.FS.getCode());
@@ -524,7 +524,7 @@ public class SsoLoginTest {
     }
 
     public static void main(String[] args) {
-        String test="SaIJJluss/iDEqPTLqBARkFpdDw3aHdv/F32VCHCP3iQ8oIrLzeldwd8jA9Sjmc02DY5imKgk4u9EV9Fy5SFq3iPIhzriSqvrhGbEE023DMge+/mqtd5nOLIb81UxUux1JD2KpJDkXSvDeiUEHHJiNC5kUyuDPX/06UslFSqagHGLDiQDC4ZdmgB0QeLfTVl4tCo/y8UHbgehJnxay78THoGbQkA1/B417JS/ws10XHp45UL//QWEW0dkJaq6hLL3SdW/IWVYTMyWgEkXe+R8Vv8k3hHGHdkSYs5uyrT1GcwbmhfErdpN/vZLTypl9F2W/xoyx/doOs7OeX73kdQAw==";
+//        String test="Z1h4UXk4ZDdML1dhRFNUTXNtZGRsWGhzZzZjZU82eUV1UFJPZ0UwN3ZQTVE2SCtiOGsyVms3UkR3Z3djbmVCUWxLSElCU04vUUZkbW5lU3JoWXAvQjBBbEZXSlZmSWFTQkpTM0liWVlaZHYrV3FTUlJqREEyQjlEc2VtM2gzYTUwY20xQ0NTY0hvZFdsUnYwd282WEhBYm8rMlcxdE1zU3E3WStybmwvcUFVSWhMMSs5QzJENmtZWUFoV2VSbWNaM3FEbHp1ck5la3R1RmlNSG85V1Y1eml5L2psMXExRktBbkw3M2ovVENyTnhkeEVlU29WQzQ3cjVTREp5T1Q4ajBieWVxU1lXZlgwSlBnaFUzTjRDZlpmekhXbjJ0K2pORVZKQmxTbmEwc1ViTWd6cU5iM25hN0J3SDJFZlR0S2M4Q1VsL3NPNW5ubXpneEhzRVkxdGJRPT0=";
         String privateKey = RsaEncryptUtil.extractPrivateKeyFromPem("-----BEGIN PRIVATE KEY-----\n" +
                 "MIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKowggSmAgEAAoIBAQDmcwlegV2TQagr\n" +
                 "t+dBr1/J7Y1N2tId9x78YFXXQTfQWqCIhUVj5H/YeeUGhpmZ0XvaVrbCFPdVi2vH\n" +
@@ -553,7 +553,19 @@ public class SsoLoginTest {
                 "M6l8kOtX6e5xXAUnpEQCGUujDZt9lPI9b5rHhBTvemrX3GcxUSe38dWwCRvTjQhM\n" +
                 "2eBeCEugExVC46nsWv1XtiAiO8o=\n" +
                 "-----END PRIVATE KEY-----\n");
-        System.out.println(RsaEncryptUtil.decrypt(test,privateKey));
+        String publicKey = RsaEncryptUtil.extractPublicKeyFromPem("-----BEGIN PUBLIC KEY-----\n" +
+                "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5nMJXoFdk0GoK7fnQa9f\n" +
+                "ye2NTdrSHfce/GBV10E30FqgiIVFY+R/2HnlBoaZmdF72la2whT3VYtrx9jDkOZX\n" +
+                "gakXRf7IAWl1sfJLARMQkpUlwNPwbKN1Ahay95pFeoyxfev5pF69O0VkxeDmw+qm\n" +
+                "xSFyC448QWx4ISZMwvzj+j32wbemt+yoBEAojcy4cxO8oIg2D4Pkh2a30JzpgyCr\n" +
+                "+MiDgkfM/vL2d81ndxtQW7YZfO3893NGzxT8+TbgwsDVIFIaU5sUZ2rLBch/XUHu\n" +
+                "/0RE2KiaF4Kcj0ojlfvKG//W/bX0OGOy5QnF9FXQhAFF71jWNkAkf/CEjD6u1YS+\n" +
+                "gQIDAQAB\n" +
+                "-----END PUBLIC KEY-----\n");
+//        String encrypt = RsaEncryptUtil.encrypt("{\"symmetricKey\":\"7dBX5zCFMhWtbAjhUzN1faENyG2ypP31\",\"unionId\":\"on_d1c5059823f5d4591ce4f539614c3585\"}", publicKey);
+//        System.out.println(encrypt);
+
+        System.out.println(RsaEncryptUtil.decrypt("zB2Ot8L+N9X5AzISpdz+D5pymRoJAKYOoGjMKrjeTAMrUSHHEGg2jxtJ7zixBORM4E9NmEIrTsKk0E+3as06QxqDBNJfocuKQ2CHx3cWg42t59FJ+mFW44kzckdvm3m+90Bg6pneYoNwOpgF17/52PB03OMM5yyd3+DrHWOAolHktt+nESwiY7FNc0yk+UEHFw0kX6EOKlyfKS20syqEmUo2UpkrPGMX+66PJ8joXsZcXRQU4V2uzwmWJ5yZIx797+omnVyC6PXJbMbDgrRQKJkODSxP+QQDbKrCrgMTWfbZPSWwEOe+SWMJ/8DV+yyiAtq0IXBDqa971iMzbD8dSg==",privateKey));
     }
     
     /**
