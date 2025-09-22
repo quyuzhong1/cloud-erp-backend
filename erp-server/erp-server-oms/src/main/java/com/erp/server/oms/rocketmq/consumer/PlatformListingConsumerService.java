@@ -160,6 +160,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
                     skuMappingEntity.setHasMappingAll(true);
                 }
+                //订货通设置b2b平台
+                if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                    skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
+                }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
