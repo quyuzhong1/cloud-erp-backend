@@ -433,11 +433,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         }
                 )
         ));
-        if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(type)) {
-            if(thirdList.size() > 1){
-                throw new ServiceException("系统仓库不允许映射多个第三方仓");
-            }
-        }
         log.debug("校验结果：{}" , result);
     }
     @Override

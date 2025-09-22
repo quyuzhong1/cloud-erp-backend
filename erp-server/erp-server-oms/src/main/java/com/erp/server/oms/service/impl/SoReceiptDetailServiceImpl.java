@@ -19,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,8 +60,12 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         //付款流水号不能重复
         Set<String> paymentNoSet = new HashSet<>();
         for (SoReceiptDetailDTO.AddDTO dto : detailList) {
-            if(!paymentNoSet.add(dto.getPaymentNo())){
-                throw new ServiceException("付款流水号不能重复");
+            String paymentNo = dto.getPaymentNo();
+            // 如果是空字符串，跳过重复检查
+            if (paymentNo != null && !paymentNo.isEmpty()) {
+                if(!paymentNoSet.add(paymentNo)){
+                    throw new ServiceException("付款流水号不能重复");
+                }
             }
         }
         if(CollectionUtils.isNotEmpty(paymentNoSet)){
@@ -71,7 +76,6 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
                 throw new ServiceException("付款流水号已存在:"+existPayNoStr);
             }
         }
-
 
         //销售单号不能重复
         Set<String> soCodeSet = new HashSet<>();
@@ -86,7 +90,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         this.saveBatch(saveList);
         List<AttachDTO> allAttachDTOS = new ArrayList<>();
         for (SoReceiptDetailEntity soReceiptDetailEntity : saveList) {
-            SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v -> v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
+            SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v -> StringUtils.isNotBlank(v.getPaymentNo()) && v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
             List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
             if(CollectionUtils.isEmpty(attachDTOS)){
                 continue;
@@ -166,7 +170,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setId(updateDTO.getId());
             updateEntityList.add(soReceiptDetailEntity);
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
-            operateLogService.addModuleOperateLogByObj(soReceiptDetailEntity, soReceiptEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
+            operateLogService.addModuleOperateLogByObj(soReceiptDetailEntity, soReceiptDetailEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
         }
         if(CollectionUtils.isNotEmpty(updateEntityList)){
             this.updateBatchById(updateEntityList);

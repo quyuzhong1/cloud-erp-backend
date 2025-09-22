@@ -1249,7 +1249,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.AddDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
-        if(!addEntity.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) && customerInfoService.isSyncDht(addEntity.getCustomerId())){
+        if(!PlatformDictEnum.DHT.getCode().equals(addEntity.getDictPlatform()) && customerInfoService.isSyncDht(addEntity.getCustomerId())){
             if(saveOrUpdateList.stream().anyMatch(s -> StringUtils.isBlank(s.getPlatformSkuNo()))){
                 throw new ServiceException("需要同步订货通的订单，平台sku不能为空");
             }

@@ -108,12 +108,13 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 			erpInfoDTO.setSalesDeptId(customerInfo.getSalesDeptId());
 			erpInfoDTO.setSellerId(customerInfo.getSellerId());
 			erpInfoDTO.setCountryId(customerInfo.getCountryId());
-			erpInfoDTO.setReceiverName(customerInfo.getName());
 			erpInfoDTO.setReceiveCondition(customerInfo.getConditionDict());
 			// 通过收货地址匹配客户地址表
 			if(StringUtils.isNotBlank(dto.getReceiveAddress())){
 				CustomerAddressEntity customerAddressEntity = customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getMainId,customerInfo.getId()).eq(CustomerAddressEntity::getAddress,dto.getReceiveAddress()).last("LIMIT 1").one();
 				erpInfoDTO.setCustomerAddressId(customerAddressEntity.getId());
+				erpInfoDTO.setReceiverName(customerAddressEntity.getPerson());
+				erpInfoDTO.setTelNumber(customerAddressEntity.getTelNumber());
 			}
 			erpInfoDTO.setIsDeclare(customerInfo.getCountryId().equals(CountrySiteEnum.CHINA.getSite()));
 		}
