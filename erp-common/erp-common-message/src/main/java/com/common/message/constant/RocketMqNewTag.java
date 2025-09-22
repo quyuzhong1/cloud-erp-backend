@@ -41,6 +41,10 @@ public class RocketMqNewTag {
      */
     public static final String DMP_PLATFORM_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_product_to_oms_tag";
     /**
+     * restCloud平台商品
+     */
+    public static final String DMP_PLATFORM_REST_CLOUD_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_rest_cloud_product_to_oms_tag";
+    /**
      * 新中台收款单
      */
     public static final String DMP_PLATFORM_RECEIPT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_receipt_to_oms_tag";
