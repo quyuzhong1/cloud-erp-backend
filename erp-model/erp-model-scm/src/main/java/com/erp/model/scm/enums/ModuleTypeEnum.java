@@ -153,11 +153,20 @@ public enum ModuleTypeEnum {
     LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
     CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
     DICT_HS_CODE("133", "出口申报要素"),
+    SKU_STD_COST_DETAIL("140", "SKU标准成本"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
     SO_MULTI_CHANNEL("134", "多渠道订单"),
 
+    SAMPLE_RETURN_INFO("141", "样品归还单"),
+    SAMPLE_BORROW_INFO("142", "样品借用单"),
+    SAMPLE_SCRAP_INFO("143", "样品报废单"),
+    EXHIBITION_ORDER("144", "展会订单"),
 
+    SAMPLE_RECIPIENT("138", "样品领用单"),
+    SAMPLE_BACK_INFO("135", "样品退回单"),
+    SAMPLE_LEDGER("136", "样品台账"),
+    SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     ;
 
 

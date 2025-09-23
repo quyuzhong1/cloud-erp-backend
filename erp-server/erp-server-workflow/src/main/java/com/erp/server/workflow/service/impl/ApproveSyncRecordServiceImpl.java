@@ -240,6 +240,9 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             Map<String, String> map = sysUserFeign.getUserListByUserIds(userIds).stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (o1, o2) -> o1));
             for (ApproveSyncRecordEntity approveSyncRecordEntity : list) {
                 approveSyncRecordEntity.setReceiverName(map.getOrDefault(approveSyncRecordEntity.getReceiverId(),""));
+                if(Objects.isNull(approveSyncRecordEntity.getMessageId())){
+                    approveSyncRecordEntity.setMessageId("");
+                }
             }
             baseMapper.insertBatch(list);
         }

@@ -5,6 +5,8 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +100,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
+    
+    /**
+     * 获取SKU列表（支持分页和高级查询）
+     */
+    @PostMapping("feign/product/listSku")
+    PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO);
 
     @PostMapping("feign/product/listBySkuNoList")
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNoList);
@@ -636,4 +645,8 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
 }

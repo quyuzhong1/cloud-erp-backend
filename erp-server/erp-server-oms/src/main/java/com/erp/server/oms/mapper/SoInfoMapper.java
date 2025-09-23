@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.ListingTimeDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -100,4 +101,6 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return List<ViewPushPurchaseApplicationDTO>
      */
     List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(@Param("ids")List<String> ids);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(@Param("exhibitionId") String exhibitionId);
 }

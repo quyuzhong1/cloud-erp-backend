@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleLedgerMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleLedgerEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="user_id" property="userId" />
+       <result column="user_name" property="userName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="use_user_id" property="useUserId" />
+       <result column="use_user_name" property="useUserName" />
+       <result column="qty" property="qty" />
+       <result column="sku_id" property="skuId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        user_id, user_name, dept_id, dept_name, sku_no, product_name, use_user_id, use_user_name, qty
+    </sql>
+
+    <sql id="listSku">
+        SELECT
+        sl.id as sampleLedgerId,
+        sl.user_id AS userId,
+        sl.user_name AS userName,
+        sl.dept_id AS deptId,
+        sl.dept_name AS deptName,
+        sl.sku_id AS skuId,
+        sl.sku_no AS skuNo,
+        sl.product_name AS productName,
+        sl.use_user_id AS useUserId,
+        sl.use_user_name AS useUserName,
+        COALESCE(sl.qty, 0) - COALESCE(aa.freezeQty, 0) - COALESCE(bb.freezeQty, 0)- COALESCE(cc.freezeQty, 0)  AS availableQty
+        FROM
+        sample_ledger sl
+        left join (
+        select
+        ssd.sample_ledger_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi
+        inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'scrap' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
+        </if>
+        GROUP BY ssd.sample_ledger_id) as aa on aa.sample_ledger_id = sl.id
+        left join (
+        select ssd.sample_ledger_id , sum(ssd.borrow_qty) as freezeQty  from  sample_borrow_info ssi
+        inner join sample_borrow_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'borrow' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
+        </if>
+        GROUP BY ssd.sample_ledger_id) as bb on bb.sample_ledger_id = sl.id
+        left join (
+        select ssd.sample_ledger_id , sum(ssd.qty) as freezeQty  from  sample_back_info ssi
+        inner join sample_back_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'back' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
+        </if>
+        GROUP BY ssd.sample_ledger_id ) as cc on cc.sample_ledger_id = sl.id
+        WHERE
+        sl.is_deleted = FALSE
+        <if test="params.userId != null and params.userId != ''">
+            AND sl.user_id = #{ params.userId}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            and sl.id in
+            <foreach collection="params.ids" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuIds != null and params.skuIds.size() > 0">
+            and sl.sku_id in
+            <foreach collection="params.skuIds" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNos != null and params.skuNos.size() > 1">
+            and sl.sku_no in
+            <foreach collection="params.skuNos" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.useUserId != null and params.useUserId != ''">
+            and sl.use_user_id = #{params.useUserId}
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ORDER BY
+            case
+            when sl.sku_no = #{params.skuNo} THEN 1
+            when sl.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
+            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
+            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
+            end, sl.sku_no
+        </if>
+    </sql>
+
+    <select id="listSkuAvailableQtyByUserId" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+        <include refid="listSku"/>
+    </select>
+
+    <select id="listSku" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+        <include refid="listSku"/>
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
+        FROM sample_ledger sl
+        WHERE
+        ${params.sqlMap.default}
+        AND sl.is_deleted = false
+        <!--数量为0不显示-->
+        <if test="params.hideZeroQty != null and params.hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+         sl.create_time DESC
+    </select>
+
+
+    <!-- 获取状态统计（支持数量为0不显示） -->
+    <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleLedgerDTO$TabListDTO">
+        SELECT 
+            'all' as status,
+            COUNT(*) as count
+        FROM sample_ledger sl
+        WHERE sl.is_deleted = FALSE
+        <!--数量为0不显示-->
+        <if test="hideZeroQty != null and hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
+        <if test="permissionSql != null and permissionSql != ''">
+            AND (${permissionSql})
+        </if>
+    </select>
+
+    <!-- 分页导出Excel查询 -->
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
+        FROM sample_ledger sl
+        WHERE
+        ${params.sqlMap.default}
+        AND sl.is_deleted = false
+        <!--数量为0不显示-->
+        <if test="params.hideZeroQty != null and params.hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sl.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sl.create_time DESC
+    </select>
+    <select id="generateSampleScrapView" resultType="com.erp.model.wms.dto.SampleScrapDetailDTO$ViewDTO">
+        <include refid="listSku"/>
+    </select>
+
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
+        FROM sample_ledger sl
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND sl.is_deleted = false
+        <!--数量为0不显示-->
+        <if test="params.hideZeroQty != null and params.hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sl.create_time DESC
+    </select>
+
+</mapper>

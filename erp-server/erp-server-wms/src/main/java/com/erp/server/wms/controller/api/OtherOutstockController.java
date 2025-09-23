@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -393,5 +394,18 @@ public class OtherOutstockController extends BaseController {
     public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = otherOutstockService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+    /**
+     * 样品领用单-关联出库单
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/viewAssociatedDocuments")
+    public ApiResult<List<OtherOutstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        List<OtherOutstockDTO.ListDTO> resultDTO = otherOutstockService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
     }
 }

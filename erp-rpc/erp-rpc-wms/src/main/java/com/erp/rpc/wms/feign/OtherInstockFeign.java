@@ -1,12 +1,16 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -33,6 +37,9 @@ public interface OtherInstockFeign {
      */
      @PostMapping("/feign/otherInstock/updateApproveStatus")
     void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);
 }
 
 

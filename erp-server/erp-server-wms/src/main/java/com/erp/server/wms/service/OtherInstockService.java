@@ -1,12 +1,12 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
@@ -130,6 +130,7 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return Boolean
      */
     Boolean invalid(List<String> ids, String remark);
+
     /**
      * @param id
      * @param type
@@ -140,7 +141,6 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @date: 2023/12/5 11:58
      */
     BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt);
-
     /**
      * 结束审核
      * @author will
@@ -266,4 +266,21 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return Map<String, OtherInstockEntity>
      */
     Map<String, OtherInstockEntity> mapByIds(List<String> ids);
+
+    /**
+     * 样品退回单-关联其他入库单据
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO autoOtherDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

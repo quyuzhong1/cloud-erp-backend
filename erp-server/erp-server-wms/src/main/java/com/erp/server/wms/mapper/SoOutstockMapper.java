@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -110,4 +111,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<SoOutstockEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
 
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@Param("params") SoOutstockDTO.ListAmountParamDTO params);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@Param("exhibitionId") String exhibitionId);
 }

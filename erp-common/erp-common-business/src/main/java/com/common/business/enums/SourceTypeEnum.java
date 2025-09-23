@@ -91,6 +91,13 @@ public enum SourceTypeEnum {
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
     WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
+    SAMPLE_RETURN_INFO("sampleReturnInfo", "样品归还单","sample_return_info"),
+    SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单","sample_borrow_info"),
+    SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单","sample_scrap_info"),
+    SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
+    SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
+    SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -116,7 +123,7 @@ public enum SourceTypeEnum {
 
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
     CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
-
+    EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
@@ -147,6 +154,7 @@ public enum SourceTypeEnum {
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
     LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
+    SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
 
 
     //SYS
@@ -246,6 +254,7 @@ public enum SourceTypeEnum {
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
     WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
+    WDT_SO_PRESTOCK("wdt_so_prestock", "旺店通预入库", "dmp_so_prestock_info"),
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
@@ -263,6 +272,9 @@ public enum SourceTypeEnum {
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
     SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
     SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
+
+
 
 
     //售后申请
