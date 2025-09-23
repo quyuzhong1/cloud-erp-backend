@@ -421,6 +421,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.DORIS.getCode());
         				params.setDynamicDataSource(DynamicDataSourceTypeEnum.DORIS.getCode());
         				params.getSqlMap().put("default", defaultSql);
+        				params.setOnlyQueryId(1);
         				pageData = this.baseMapper.paging(query, params, null);
                 		if(CollUtil.isEmpty(pageData.getRecords())) {
                 			unSameCountFlag = false;
