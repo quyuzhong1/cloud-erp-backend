@@ -149,6 +149,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                     detailEntity.setSourceDetailId("");
                 }
 
+                // 根据归属人、使用方和SKU查询sample_ledger_id
+                String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                detailEntity.setSampleLedgerId(sampleLedgerId);
 
                 boolean detailSave = sampleBackDetailService.save(detailEntity);
                 if (!detailSave) {
@@ -280,6 +283,11 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                     SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                     BeanMapperUtils.copy(detailDTO, detailEntity);
                     detailEntity.setMainId(addOrUpdateDTO.getId());
+                    
+                    // 根据归属人、使用方和SKU查询sample_ledger_id
+                    String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                    detailEntity.setSampleLedgerId(sampleLedgerId);
+                    
                     addEntityList.add(detailEntity);
                 }
                 
@@ -301,6 +309,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                     SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                     BeanMapperUtils.copy(detailDTO, detailEntity);
                     detailEntity.setMainId(addOrUpdateDTO.getId());
+                    
+                    // 根据归属人、使用方和SKU查询sample_ledger_id
+                    String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                    detailEntity.setSampleLedgerId(sampleLedgerId);
                     
                     // 查找原有明细用于日志对比
                     SampleBackDetailEntity oldDetail = existingDetails.stream()
@@ -1586,6 +1598,42 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    /**
+     * 根据归属人、使用方和SKU查询sample_ledger_id
+     * @param userId 归属人ID
+     * @param useUserId 使用方ID
+     * @param skuId SKU ID
+     * @return sample_ledger_id
+     */
+    private String getSampleLedgerId(String userId, String useUserId, String skuId) {
+        try {
+            if (StrUtil.isBlank(userId) || StrUtil.isBlank(useUserId) || StrUtil.isBlank(skuId)) {
+                return null;
+            }
+            
+            // 直接查询样品台账表，根据归属人、使用方和SKU查询sample_ledger_id
+            List<SampleLedgerEntity> sampleLedgerList = sampleLedgerService.lambdaQuery()
+                .eq(SampleLedgerEntity::getUserId, userId)
+                .eq(SampleLedgerEntity::getUseUserId, useUserId)
+                .eq(SampleLedgerEntity::getSkuId, skuId)
+                .list();
+            
+            if (CollUtil.isNotEmpty(sampleLedgerList)) {
+                // 如果存在多条记录，返回第一个（或者可以根据业务需求选择特定的记录）
+                SampleLedgerEntity sampleLedger = sampleLedgerList.get(0);
+                log.debug("找到{}条样品台账记录，返回第一条，userId：{}，useUserId：{}，skuId：{}", 
+                    sampleLedgerList.size(), userId, useUserId, skuId);
+                return sampleLedger.getId();
+            }
+            
+            log.warn("未找到对应的样品台账，userId：{}，useUserId：{}，skuId：{}", userId, useUserId, skuId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询样品台账ID失败，userId：{}，useUserId：{}，skuId：{}，错误：{}", userId, useUserId, skuId, e.getMessage(), e);
+            return null;
+        }
     }
 
 }
