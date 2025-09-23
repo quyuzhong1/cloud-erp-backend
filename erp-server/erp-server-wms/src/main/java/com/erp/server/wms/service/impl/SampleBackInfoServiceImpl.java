@@ -141,6 +141,34 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         // 保存明细
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
+            // 收集所有SKU ID进行批量查询台账ID
+            List<String> skuIds = addDTO.getDetailList().stream()
+                .map(SampleBackDetailDTO.AddDTO::getSkuId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+            
+            // 批量查询台账ID映射
+            Map<String, String> ledgerIdMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(skuIds)) {
+                // 按使用方分组查询
+                Map<String, List<SampleBackDetailDTO.AddDTO>> groupByUseUser = addDTO.getDetailList().stream()
+                    .filter(detail -> StrUtil.isNotBlank(detail.getUseUserId()))
+                    .collect(Collectors.groupingBy(SampleBackDetailDTO.AddDTO::getUseUserId));
+                
+                for (Map.Entry<String, List<SampleBackDetailDTO.AddDTO>> entry : groupByUseUser.entrySet()) {
+                    String useUserId = entry.getKey();
+                    List<String> userSkuIds = entry.getValue().stream()
+                        .map(SampleBackDetailDTO.AddDTO::getSkuId)
+                        .filter(StrUtil::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                    
+                    Map<String, String> userLedgerIdMap = getSampleLedgerIdMap(sampleBackInfoEntity.getUserId(), useUserId, userSkuIds);
+                    ledgerIdMap.putAll(userLedgerIdMap);
+                }
+            }
+            
             for (SampleBackDetailDTO.AddDTO detailDTO : addDTO.getDetailList()) {
                 SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                 BeanMapperUtils.copy(detailDTO, detailEntity);
@@ -149,8 +177,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                     detailEntity.setSourceDetailId("");
                 }
 
-                // 根据归属人、使用方和SKU查询sample_ledger_id
-                String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                // 从批量查询结果中获取sample_ledger_id
+                String sampleLedgerId = ledgerIdMap.get(detailEntity.getSkuId());
                 detailEntity.setSampleLedgerId(sampleLedgerId);
 
                 boolean detailSave = sampleBackDetailService.save(detailEntity);
@@ -279,13 +307,34 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             // 处理新增明细
             List<SampleBackDetailEntity> addEntityList = new ArrayList<>();
             if (CollUtil.isNotEmpty(addList)) {
+                // 批量查询新增明细的台账ID映射
+                Map<String, String> addLedgerIdMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(addList)) {
+                    // 按使用方分组查询
+                    Map<String, List<SampleBackDetailDTO.UpdateDTO>> addGroupByUseUser = addList.stream()
+                        .filter(detail -> StrUtil.isNotBlank(detail.getUseUserId()))
+                        .collect(Collectors.groupingBy(SampleBackDetailDTO.UpdateDTO::getUseUserId));
+                    
+                    for (Map.Entry<String, List<SampleBackDetailDTO.UpdateDTO>> entry : addGroupByUseUser.entrySet()) {
+                        String useUserId = entry.getKey();
+                        List<String> userSkuIds = entry.getValue().stream()
+                            .map(SampleBackDetailDTO.UpdateDTO::getSkuId)
+                            .filter(StrUtil::isNotBlank)
+                            .distinct()
+                            .collect(Collectors.toList());
+                        
+                        Map<String, String> userLedgerIdMap = getSampleLedgerIdMap(sampleBackInfoEntity.getUserId(), useUserId, userSkuIds);
+                        addLedgerIdMap.putAll(userLedgerIdMap);
+                    }
+                }
+                
                 for (SampleBackDetailDTO.UpdateDTO detailDTO : addList) {
                     SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                     BeanMapperUtils.copy(detailDTO, detailEntity);
                     detailEntity.setMainId(addOrUpdateDTO.getId());
                     
-                    // 根据归属人、使用方和SKU查询sample_ledger_id
-                    String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                    // 从批量查询结果中获取sample_ledger_id
+                    String sampleLedgerId = addLedgerIdMap.get(detailEntity.getSkuId());
                     detailEntity.setSampleLedgerId(sampleLedgerId);
                     
                     addEntityList.add(detailEntity);
@@ -305,13 +354,34 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
             // 处理更新明细
             if (CollUtil.isNotEmpty(updateList)) {
+                // 批量查询更新明细的台账ID映射
+                Map<String, String> updateLedgerIdMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(updateList)) {
+                    // 按使用方分组查询
+                    Map<String, List<SampleBackDetailDTO.UpdateDTO>> updateGroupByUseUser = updateList.stream()
+                        .filter(detail -> StrUtil.isNotBlank(detail.getUseUserId()))
+                        .collect(Collectors.groupingBy(SampleBackDetailDTO.UpdateDTO::getUseUserId));
+                    
+                    for (Map.Entry<String, List<SampleBackDetailDTO.UpdateDTO>> entry : updateGroupByUseUser.entrySet()) {
+                        String useUserId = entry.getKey();
+                        List<String> userSkuIds = entry.getValue().stream()
+                            .map(SampleBackDetailDTO.UpdateDTO::getSkuId)
+                            .filter(StrUtil::isNotBlank)
+                            .distinct()
+                            .collect(Collectors.toList());
+                        
+                        Map<String, String> userLedgerIdMap = getSampleLedgerIdMap(sampleBackInfoEntity.getUserId(), useUserId, userSkuIds);
+                        updateLedgerIdMap.putAll(userLedgerIdMap);
+                    }
+                }
+                
                 for (SampleBackDetailDTO.UpdateDTO detailDTO : updateList) {
                     SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                     BeanMapperUtils.copy(detailDTO, detailEntity);
                     detailEntity.setMainId(addOrUpdateDTO.getId());
                     
-                    // 根据归属人、使用方和SKU查询sample_ledger_id
-                    String sampleLedgerId = getSampleLedgerId(sampleBackInfoEntity.getUserId(), detailEntity.getUseUserId(), detailEntity.getSkuId());
+                    // 从批量查询结果中获取sample_ledger_id
+                    String sampleLedgerId = updateLedgerIdMap.get(detailEntity.getSkuId());
                     detailEntity.setSampleLedgerId(sampleLedgerId);
                     
                     // 查找原有明细用于日志对比
@@ -1601,39 +1671,59 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     }
 
     /**
-     * 根据归属人、使用方和SKU查询sample_ledger_id
+     * 批量根据归属人、使用方和SKU列表查询sample_ledger_id映射
+     * @param userId 归属人ID
+     * @param useUserId 使用方ID
+     * @param skuIds SKU ID列表
+     * @return SKU ID到sample_ledger_id的映射
+     */
+    private Map<String, String> getSampleLedgerIdMap(String userId, String useUserId, List<String> skuIds) {
+        Map<String, String> resultMap = new HashMap<>();
+        try {
+            if (StrUtil.isBlank(userId) || StrUtil.isBlank(useUserId) || CollUtil.isEmpty(skuIds)) {
+                return resultMap;
+            }
+            
+            // 批量查询样品台账表，根据归属人、使用方和SKU列表查询
+            List<SampleLedgerEntity> sampleLedgerList = sampleLedgerService.lambdaQuery()
+                .eq(SampleLedgerEntity::getUserId, userId)
+                .eq(SampleLedgerEntity::getUseUserId, useUserId)
+                .in(SampleLedgerEntity::getSkuId, skuIds)
+                .list();
+            
+            if (CollUtil.isNotEmpty(sampleLedgerList)) {
+                // 构建SKU ID到sample_ledger_id的映射
+                for (SampleLedgerEntity sampleLedger : sampleLedgerList) {
+                    if (StrUtil.isNotBlank(sampleLedger.getSkuId())) {
+                        resultMap.put(sampleLedger.getSkuId(), sampleLedger.getId());
+                    }
+                }
+                log.debug("批量查询样品台账完成，找到{}条记录，userId：{}，useUserId：{}，skuIds：{}", 
+                    sampleLedgerList.size(), userId, useUserId, skuIds);
+            }
+            
+            return resultMap;
+        } catch (Exception e) {
+            log.error("批量查询样品台账ID失败，userId：{}，useUserId：{}，skuIds：{}，错误：{}", 
+                userId, useUserId, skuIds, e.getMessage(), e);
+            return resultMap;
+        }
+    }
+
+    /**
+     * 根据归属人、使用方和SKU查询sample_ledger_id（单个SKU查询，兼容原有调用）
      * @param userId 归属人ID
      * @param useUserId 使用方ID
      * @param skuId SKU ID
      * @return sample_ledger_id
      */
     private String getSampleLedgerId(String userId, String useUserId, String skuId) {
-        try {
-            if (StrUtil.isBlank(userId) || StrUtil.isBlank(useUserId) || StrUtil.isBlank(skuId)) {
-                return null;
-            }
-            
-            // 直接查询样品台账表，根据归属人、使用方和SKU查询sample_ledger_id
-            List<SampleLedgerEntity> sampleLedgerList = sampleLedgerService.lambdaQuery()
-                .eq(SampleLedgerEntity::getUserId, userId)
-                .eq(SampleLedgerEntity::getUseUserId, useUserId)
-                .eq(SampleLedgerEntity::getSkuId, skuId)
-                .list();
-            
-            if (CollUtil.isNotEmpty(sampleLedgerList)) {
-                // 如果存在多条记录，返回第一个（或者可以根据业务需求选择特定的记录）
-                SampleLedgerEntity sampleLedger = sampleLedgerList.get(0);
-                log.debug("找到{}条样品台账记录，返回第一条，userId：{}，useUserId：{}，skuId：{}", 
-                    sampleLedgerList.size(), userId, useUserId, skuId);
-                return sampleLedger.getId();
-            }
-            
-            log.warn("未找到对应的样品台账，userId：{}，useUserId：{}，skuId：{}", userId, useUserId, skuId);
-            return null;
-        } catch (Exception e) {
-            log.error("查询样品台账ID失败，userId：{}，useUserId：{}，skuId：{}，错误：{}", userId, useUserId, skuId, e.getMessage(), e);
+        if (StrUtil.isBlank(userId) || StrUtil.isBlank(useUserId) || StrUtil.isBlank(skuId)) {
             return null;
         }
+        
+        Map<String, String> ledgerIdMap = getSampleLedgerIdMap(userId, useUserId, Collections.singletonList(skuId));
+        return ledgerIdMap.get(skuId);
     }
 
 }
