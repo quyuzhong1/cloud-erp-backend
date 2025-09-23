@@ -632,4 +632,15 @@ public interface SysUserFeign {
     @PostMapping("feign/user/getUserByThirdIdList")
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
 
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    @PostMapping("feign/user/getFsUserUnionIdByAppId")
+    ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto);
+
 }
