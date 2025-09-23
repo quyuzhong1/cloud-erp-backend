@@ -538,4 +538,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     BatchResultDTO skuMappingBatch(String id);
 
     List<SoInfoEntity> listByPlatformOrderCodes(List<String> platformOrderCodeList,String dictPlatform);
+    /**
+     * 更新订货通平台订单id
+     * @author will
+     * @date 2025/9/23 12:07
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
 }

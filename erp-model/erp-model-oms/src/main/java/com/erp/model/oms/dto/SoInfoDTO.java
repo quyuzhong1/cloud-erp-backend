@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -8,8 +7,8 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -3150,5 +3149,28 @@ public class SoInfoDTO implements Serializable {
     public static class UpdateApprovalStatusDTO {
         private SoInfoEntity soInfoEntity;
         private BillApproveStatusEnum  billApproveStatusEnum;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePlatformOrderIdDTO {
+        /**
+         * 销售订单编码
+         */
+        @NotBlank(message = "销售订单编码")
+        private String soCode;
+
+        /**
+         * 平台订单Id
+         */
+        @NotBlank(message = "平台订单Id不能为空")
+        private String platformOrderId;
+
+        /**
+         * 平台订单明细ID
+         */
+        @NotEmpty(message = "平台订单明细Id不能为空")
+        private List<String> platformDetailIdList;
     }
 }

@@ -354,4 +354,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 
     void resetSkuVo(List<String> skuIdList, List<SkuVO> skuList, SoInfoEntity soInfoEntity);
+
+    /**
+     * 更新平台订单明细id
+     * @author will
+     * @date 2025/9/23 12:17
+     * @param id
+     * @param platformDetailIdList
+     * @return Boolean
+     */
+    Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
 }
