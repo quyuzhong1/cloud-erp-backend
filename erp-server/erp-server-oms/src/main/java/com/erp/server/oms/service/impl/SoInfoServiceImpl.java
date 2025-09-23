@@ -3966,6 +3966,43 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return this.list(new LambdaQueryWrapper<SoInfoEntity>().in(SoInfoEntity::getPlatformOrderCode, platformOrderCodeList).eq(SoInfoEntity::getDictPlatform,dictPlatform));
     }
 
+    @Override
+    @Transactional(rollbackFor =  Exception.class)
+    public Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto) {
+        SoInfoEntity soInfoEntity = getBySoCode(dto.getSoCode());
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        //更新主表平台订单Id
+        updatePlatformOrderId(soInfoEntity.getId(),dto.getPlatformOrderId());
+        //更新明细表平台订单Id
+        soDetailService.updatePlatformOrderIdByMainId(soInfoEntity.getId(),dto.getPlatformDetailIdList());
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 更新平台订单ID
+     * @author will
+     * @date 2025/9/23 12:17
+     * @param id
+     * @param platformOrderId
+     * @return Boolean
+     */
+    private Boolean updatePlatformOrderId (String id,String platformOrderId){
+      return  lambdaUpdate().set(SoInfoEntity::getPlatformOrderId, platformOrderId).eq(SoInfoEntity::getId, id).update();
+    }
+
+    /**
+     * 更新销售订单编号查询
+     * @author will
+     * @date 2025/9/23 12:11
+     * @param soCode
+     * @return SoInfoEntity
+     */
+    private SoInfoEntity getBySoCode(String soCode) {
+       return lambdaQuery().eq(SoInfoEntity::getCode,soCode).last("limit 1").one();
+    }
+
     /**
      * 处理推送采购申请
      * @param list

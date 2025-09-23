@@ -646,6 +646,27 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
     }
 
+    @Override
+    public Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList) {
+        //需要id顺序排序
+        List<SoDetailEntity> soDetailList = listBaseByMainId(id);
+        if (CollUtil.isEmpty(soDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        if (soDetailList.size() != platformDetailIdList.size()) {
+            throw new ServiceException("平台订单明细数量和系统订单明细数量不一致");
+        }
+        for (int i = 0; i < soDetailList.size(); i++) {
+            SoDetailEntity soDetailEntity = soDetailList.get(i);
+            if (platformDetailIdList.size() > i) {
+                soDetailEntity.setPlatformDetailId(platformDetailIdList.get(i));
+            } else {
+                soDetailEntity.setPlatformDetailId(null);
+            }
+        }
+        return super.updateBatchById(soDetailList);
+    }
+
 
     /**
      * 根据主表ids 删除数据
@@ -1236,6 +1257,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     public List<SoDetailEntity> listBaseByMainId(String mainId) {
+        //排序不能改
         return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).orderByAsc(SoDetailEntity::getId).list();
 
     }
