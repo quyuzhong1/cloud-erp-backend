@@ -1661,7 +1661,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Override
     public List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(ExhibitionOrderDTO.SearchDTO dto) {
-        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIds())){
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIds()) || CollectionUtils.isEmpty(dto.getSampleLedgerIds())) {
             return Collections.emptyList();
         }
 
@@ -1669,28 +1669,16 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = soDetailService.listSkuPriceHistory(dto.getSkuIds());
 
         List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = baseMapper.listFreezeQtyBySku(dto);
-
-        List<ExhibitionOrderDTO.FreezeQtyBySku> resulst =new ArrayList<>();
-
-        for (String skuId : dto.getSkuIds()) {
-            ExhibitionOrderDTO.FreezeQtyBySku item = freezeQtyBySkus.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if(Objects.isNull(item)){
-                item = new ExhibitionOrderDTO.FreezeQtyBySku();
-                item.setSkuId(skuId);
-                item.setFreezeQty(0);
-            }
+        for (ExhibitionOrderDTO.FreezeQtyBySku item : freezeQtyBySkus) {
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    filter(p -> p.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
             if (skuHistoryPrice != null) {
                 item.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
             }
-
-
-            resulst.add(item);
         }
-        return resulst;
+        return freezeQtyBySkus;
     }
 
     @Override

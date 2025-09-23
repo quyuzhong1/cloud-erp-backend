@@ -213,35 +213,36 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * @param records
      */
     private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, List<SampleLedgerDTO.SkuAvailableQtyDTO> records) {
+        // 提取所有记录的SKU并去重
+        List<String> sampleLedgerIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId).distinct().collect(Collectors.toList());
+        List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        // 构造展会订单查询条件并获取冻结库存数量
+        ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
+        dto.setSkuIds(skuIds);
+        dto.setSampleLedgerIds(sampleLedgerIds);
         // 判断查询类型是否为展会类型
         if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())){
-            // 提取所有记录的SKU并去重
-            List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
-
-            // 构造展会订单查询条件并获取冻结库存数量
-            ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
-            dto.setSkuIds(skuIds);
             dto.setChildId(params.getChildId());
-            List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+        }
+        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+        // 如果存在冻结库存数据，则更新可用库存数量
+        if(CollUtil.isNotEmpty(freezeQtyBySkus)){
+            // 将冻结库存数据转换为Map便于快速查找
+            Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, Function.identity(),(o1,o2)->o1));
 
-            // 如果存在冻结库存数据，则更新可用库存数量
-            if(CollUtil.isNotEmpty(freezeQtyBySkus)){
-                // 将冻结库存数据转换为Map便于快速查找
-                Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, Function.identity(),(o1,o2)->o1));
-
-                // 遍历所有记录，扣除冻结库存数量
-                for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
-                    ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
-                    if(Objects.nonNull(freezeQtyBySku)){
-                        Integer freezeQty = freezeQtyBySku.getFreezeQty();
-                        if(Objects.nonNull(freezeQty) && freezeQty > 0){
-                            Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
-                            record.setAvailableQty(availableQty - freezeQty);
-                        }
-                        record.setMaxPrice(freezeQtyBySku.getMaxPrice());
-                        record.setMinPrice(freezeQtyBySku.getMinPrice());
-                        record.setAvgPrice(freezeQtyBySku.getAvgPrice());
+            // 遍历所有记录，扣除冻结库存数量
+            for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
+                ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
+                if(Objects.nonNull(freezeQtyBySku)){
+                    Integer freezeQty = freezeQtyBySku.getFreezeQty();
+                    if(Objects.nonNull(freezeQty) && freezeQty > 0){
+                        Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
+                        record.setAvailableQty(availableQty - freezeQty);
                     }
+                    record.setMaxPrice(freezeQtyBySku.getMaxPrice());
+                    record.setMinPrice(freezeQtyBySku.getMinPrice());
+                    record.setAvgPrice(freezeQtyBySku.getAvgPrice());
                 }
             }
         }
