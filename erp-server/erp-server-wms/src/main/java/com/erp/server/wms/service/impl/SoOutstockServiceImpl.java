@@ -1287,7 +1287,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
             //推送到订货通
-            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_INVALID.getCode());
+            if(customerFeign.isSyncDht(entity.getCustomerId())){
+                syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
