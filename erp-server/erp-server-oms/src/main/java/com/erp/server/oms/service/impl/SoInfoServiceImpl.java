@@ -4330,6 +4330,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customsFeeStr = mainInfo.getCustomsFee();
             BigDecimal customsFee = MathUtil.getBigDecimalByStr(customsFeeStr);
 
+            //报关费
+            String orderAmountStr = mainInfo.getOrderAmount();
+            BigDecimal orderAmount = MathUtil.getBigDecimalByStr(orderAmountStr);
+
             //折扣总额
             String discountAmountStr = mainInfo.getDiscountAmount();
             BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
@@ -4337,6 +4341,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setShippingFee(shippingFee);
             addSo.setReceiveAmount(receiveAmount);
             addSo.setCustomsFee(customsFee);
+            addSo.setOrderAmount(orderAmount);
             addSo.setDiscountAmount(discountAmount);
             this.buildPartition(addSo);
             if (CharSequenceUtil.isNotBlank(addSo.getCustomerId())){

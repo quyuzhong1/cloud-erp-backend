@@ -75,6 +75,9 @@ public class DhtServiceImpl implements DhtService {
         if(!resp.getErrorCode().equals(0)){
             throw new ServiceException("调用订货通查询客户接口失败，错误信息："+ JSON.toJSONString(resp));
         }
+        if(CollectionUtils.isEmpty(resp.getData().getDataList())){
+            throw new ServiceException("订货通客户信息为空，客户编码："+customerInfoEntity.getCode());
+        }
         //通过客户id查询客户账户
         DhtCommonQueryReq customerAccountResp = new DhtCommonQueryReq();
         customerAccountResp.setCurrentOpenUserId(userResp.getEmpList().get(0).getOpenUserId());

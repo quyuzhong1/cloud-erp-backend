@@ -539,7 +539,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //校验更新的明细和删除的明细是否冻结库存下推了发货通知
         checkSoDetailQty(dbList,updateList,removeList,soInfoEntity,oldEntity);
 
-        if(!soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) && customerInfoService.isSyncDht(soInfo.getCustomerId())){
+        if(!PlatformDictEnum.DHT.getCode().equals(soInfo.getDictPlatform()) && customerInfoService.isSyncDht(soInfo.getCustomerId())){
             if(saveOrUpdateList.stream().anyMatch(s -> StringUtils.isBlank(s.getPlatformSkuNo()))){
                 throw new ServiceException("需要同步订货通的订单，平台sku不能为空");
             }
