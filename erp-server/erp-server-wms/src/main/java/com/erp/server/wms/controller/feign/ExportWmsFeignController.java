@@ -30,6 +30,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import com.erp.server.wms.query.SampleLedgerQueryHandler;
+import com.erp.server.wms.service.SampleLedgerFlowService;
+import com.erp.server.wms.query.SampleLedgerFlowQueryHandler;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -185,6 +188,28 @@ public class ExportWmsFeignController {
     private VirtualInventoryAgeService virtualInventoryAgeService;
 
 
+    @Resource
+    private SampleScrapInfoService sampleScrapInfoService;
+
+    @Resource
+    private SampleRecipientService sampleRecipientService;
+
+    @Resource
+    private SampleLedgerService sampleLedgerService;
+
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
+
+    @Resource
+    private SampleBorrowInfoService sampleBorrowInfoService;
+    @Resource
+    private SampleReturnInfoService sampleReturnInfoService;
+
+    @Resource
+    private SampleBackInfoService sampleBackInfoService;
+    @Resource
+    private SampleInitialLedgerService sampleInitialLedgerService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -310,6 +335,26 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(@RequestBody PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         return inventoryService.getInventoryPageData(dto);
+    }
+
+    @PostMapping("/getSampleRecipientPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleRecipient:export"
+    )
+    @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
+    public PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto) {
+        return sampleRecipientService.getSampleRecipientPageData(dto);
+    }
+
+    @PostMapping("/getSampleBackInfoPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBackInfo:export"
+    )
+    @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
+    public PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {
+        return sampleBackInfoService.getSampleBackInfoPageData(dto);
     }
 
     @PostMapping("/dailyQcBill")
@@ -1082,4 +1127,96 @@ public class ExportWmsFeignController {
     public PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2cProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
         return soB2cProcessingService.b2cTotalPaging(dto);
     }
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleScrapInfo")
+    @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
+    public PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto) {
+        return sampleScrapInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品台账统计Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedger")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:export",
+            tableAlias = ""
+    )
+    @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
+    public PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto) {
+        return sampleLedgerService.getSampleLedgerPageData(dto);
+    }
+
+    /**
+     * 导出样品台账流水Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedgerFlow")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedgerFlow:export",
+            tableAlias = ""
+    )
+    @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
+    public PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {
+        return sampleLedgerFlowService.getSampleLedgerFlowPageData(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleBorrowInfo")
+    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
+    public PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
+        return sampleBorrowInfoService.paging(dto);
+    }
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleReturnInfo")
+    @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class)
+    public PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(@RequestBody PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
+        return sampleReturnInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品期初台账Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-25
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSampleInitialLedgerPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleInitialLedger:export",
+            tableAlias = "sil"
+    )
+    @WebAdvanceQuery(handler = SampleInitialLedgerQueryHandler.class)
+    public PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.PagingParamDTO> dto) {
+        return sampleInitialLedgerService.paging(dto);
+    }
+
 }

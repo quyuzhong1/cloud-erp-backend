@@ -883,7 +883,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         list = ThirdNoticePushRecordNoticeNodeEnum.NOT_SUBSEQUENT_BATCH.getCode().equals(feildValue)
                                 ? map.get(Boolean.TRUE)
                                 : map.get(Boolean.FALSE);
-
                         if (CollUtil.isEmpty(list)) {
                             return Boolean.FALSE;
                         }

@@ -70,6 +70,25 @@ public class AccountingCompanyFeignController extends BaseController {
 
     }
 
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param orgName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("/getCompanyByName")
+    public SysAccountingCompanyEntity getCompanyByName(@RequestBody String orgName) {
+        if (StringUtils.isBlank(orgName)) {
+            return new SysAccountingCompanyEntity();
+        } else {
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getCompanyByName(orgName);
+            return sysAccountingCompanyEntity;
+        }
+
+    }
+
     @PostMapping("/listCompanyById")
     public List<SysAccountingCompanyEntity> listCompanyById(@RequestBody List<String> ids) {
         if (CollectionUtil.isEmpty(ids)) {

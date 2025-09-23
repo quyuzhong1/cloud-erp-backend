@@ -158,7 +158,15 @@ public enum ModuleTypeEnum {
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
     SO_MULTI_CHANNEL("134", "多渠道订单"),
 
+    SAMPLE_RETURN_INFO("141", "样品归还单"),
+    SAMPLE_BORROW_INFO("142", "样品借用单"),
+    SAMPLE_SCRAP_INFO("143", "样品报废单"),
+    EXHIBITION_ORDER("144", "展会订单"),
 
+    SAMPLE_RECIPIENT("138", "样品领用单"),
+    SAMPLE_BACK_INFO("135", "样品退回单"),
+    SAMPLE_LEDGER("136", "样品台账"),
+    SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     ;
 
 

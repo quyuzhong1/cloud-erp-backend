@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
@@ -15,6 +16,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +83,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param ids ids
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -332,4 +334,8 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return Map<String, SoDeliveryNoticeEntity>
      */
     Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

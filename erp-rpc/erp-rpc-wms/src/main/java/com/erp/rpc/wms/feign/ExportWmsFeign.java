@@ -335,4 +335,51 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportTotalFirstMileProcessing")
     PagingVO<ReportProcessingDTO.ListDTO> exportTotalFirstMileProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品报废单
+     */
+    @PostMapping("/feign/export/exportSampleScrapInfo")
+    PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品领用单
+     */
+    @PostMapping("/feign/export/getSampleRecipientPageData")
+    PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账统计
+     */
+    @PostMapping("/feign/export/exportSampleLedger")
+    PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账流水
+     */
+    @PostMapping("/feign/export/exportSampleLedgerFlow")
+    PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品借出单
+     */
+    @PostMapping("/feign/export/exportSampleBorrowInfo")
+    PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
+    /**
+     * 导出样品归还单
+     */
+    @PostMapping("/feign/export/exportSampleReturnInfo")
+    PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品退回单
+     */
+    @PostMapping("/feign/export/getSampleBackInfoPageData")
+    PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品期初台账
+     */
+    @PostMapping("/feign/export/getSampleInitialLedgerPageData")
+    PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.ExportDTO> dto);
 }

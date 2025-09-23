@@ -336,6 +336,18 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("country_name")
     private String countryName;
 
+    /**
+     * 来源单据ID
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
