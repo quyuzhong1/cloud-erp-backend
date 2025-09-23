@@ -293,5 +293,15 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto);
 
     void syncFsUser();
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    String getFsUserUnionIdByAppId(String appId, FindThirdUserDTO dto);
 }
 

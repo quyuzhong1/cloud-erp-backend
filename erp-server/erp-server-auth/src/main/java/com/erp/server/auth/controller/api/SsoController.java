@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.IdUtils;
+import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.dto.SsoLoginRequestDTO;
 import com.erp.model.sys.dto.SsoLoginResponseDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.SsoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -30,6 +34,9 @@ public class SsoController {
 
     @Resource
     private SsoService ssoService;
+    
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 单点登录接口
@@ -113,6 +120,40 @@ public class SsoController {
     }
 
     /**
+     * 获取飞书用户UnionId接口
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param request 查找第三方用户DTO
+     * @param httpRequest HTTP请求
+     * @return 用户UnionId
+     */
+    @PostMapping("/getFsUserUnionId")
+    public ApiResult<String> getFsUserUnionId(@Valid @RequestBody FindThirdUserDTO request, HttpServletRequest httpRequest) {
+        log.info("获取飞书用户UnionId请求：{}", JSON.toJSONString(request));
+        
+        try {
+            String appId = httpRequest.getHeader("App-Id");
+            if (StringUtils.isBlank(appId)) {
+                return ApiResult.error(ApiError.ERROR_400.code, "请求头App-Id不能为空");
+            }
+            
+            // 使用Feign调用SysUserInfoService的方法
+            ApiResult<String> result = sysUserFeign.getFsUserUnionIdByAppId(appId, request);
+            
+            if (result == null || !result.isSuccess()) {
+                log.warn("获取飞书用户UnionId失败，appId: {}, 错误信息: {}", appId, result != null ? result.getMsg() : "调用失败");
+                return ApiResult.error(ApiError.ERROR_500.code, result != null ? result.getMsg() : "获取飞书用户UnionId失败");
+            }
+            String unionId = result.getData();
+            log.info("成功获取飞书用户UnionId：{}，appId：{}", unionId, appId);
+            return ApiResult.success(unionId);
+        } catch (Exception e) {
+            log.error("获取飞书用户UnionId异常", e);
+            return ApiResult.error(ApiError.ERROR_500.code, "获取飞书用户UnionId失败：" + e.getMessage());
+        }
+    }
+
+    /**
      * 生成Sign-Session-Id
      * 用于标识会话密钥在Redis中的存储位置
      *
@@ -122,4 +163,7 @@ public class SsoController {
         // 使用UUID生成唯一的会话标识
         return "sign_session_" + IdUtils.fastUUID();
     }
+    
+
+
 }

@@ -588,4 +588,22 @@ public class SysUserFeignController extends BaseController {
     public List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds)  {
         return sysUserThirdService.getUserByThirdIdList( platform,thirdIds);
     }
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    @PostMapping("/getFsUserUnionIdByAppId")
+    public ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto) {
+        try {
+            String unionId = sysUserInfoService.getFsUserUnionIdByAppId(appId, dto);
+            return ApiResult.success(unionId);
+        } catch (Exception e) {
+            return ApiResult.error(500, "获取飞书用户UnionId失败：" + e.getMessage());
+        }
+    }
 }

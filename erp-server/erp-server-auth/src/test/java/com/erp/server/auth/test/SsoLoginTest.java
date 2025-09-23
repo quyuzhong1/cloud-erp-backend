@@ -565,7 +565,7 @@ public class SsoLoginTest {
 //        String encrypt = RsaEncryptUtil.encrypt("{\"symmetricKey\":\"7dBX5zCFMhWtbAjhUzN1faENyG2ypP31\",\"unionId\":\"on_d1c5059823f5d4591ce4f539614c3585\"}", publicKey);
 //        System.out.println(encrypt);
 
-        System.out.println(RsaEncryptUtil.decrypt("zB2Ot8L+N9X5AzISpdz+D5pymRoJAKYOoGjMKrjeTAMrUSHHEGg2jxtJ7zixBORM4E9NmEIrTsKk0E+3as06QxqDBNJfocuKQ2CHx3cWg42t59FJ+mFW44kzckdvm3m+90Bg6pneYoNwOpgF17/52PB03OMM5yyd3+DrHWOAolHktt+nESwiY7FNc0yk+UEHFw0kX6EOKlyfKS20syqEmUo2UpkrPGMX+66PJ8joXsZcXRQU4V2uzwmWJ5yZIx797+omnVyC6PXJbMbDgrRQKJkODSxP+QQDbKrCrgMTWfbZPSWwEOe+SWMJ/8DV+yyiAtq0IXBDqa971iMzbD8dSg==",privateKey));
+        System.out.println(RsaEncryptUtil.decrypt("4BlHClpFD036xpakECm3SqrmSGsDumlvB0nF60LHovaiwRUsSBNGVIo9UN/+P3QTILK1rxTc32ciudMdP6stQP+F/cMoAaudULtzm1zY/oI4/5+yOgq/hlaFaVsbdptOSWgjBsWVhIB9Q7Bw64IdlJJig/hWZ/zvkCV39tZUXH2Qs/edaDsF+8wqi00oOcYZh8cK9ZPol3fnPN9R8mvNdlYXTX40oaM4uu8Wo60o4KzTb6tPo5NmxUPFk3do5i9i0+pKLTqm1kk5zb5MwBFlTo8fmnvq56xueb4RTi8ZsAmwa0dUY9joDxcwRd4cXbZnGHB7HQvYU2lhmcQXV+DOMA==",privateKey));
     }
     
     /**

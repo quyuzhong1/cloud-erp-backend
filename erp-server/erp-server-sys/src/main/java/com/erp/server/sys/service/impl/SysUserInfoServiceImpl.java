@@ -40,6 +40,7 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
 import com.erp.model.sys.entity.password.PassHandler;
+import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
@@ -52,6 +53,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
+import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.SysUserConvert;
@@ -138,6 +140,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private AuthUserWarehouseService authUserWarehouseService;
     @Resource
     private FileFeign filefeign;
+    
+    @Resource
+    private SysRefererConfigService sysRefererConfigService;
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
@@ -1840,5 +1845,54 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return IntStream.range(0, (list.size() + partitionSize - 1) / partitionSize)
                 .mapToObj(i -> list.subList(i * partitionSize, Math.min(list.size(), (i + 1) * partitionSize)))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    public String getFsUserUnionIdByAppId(String appId, FindThirdUserDTO dto) {
+        log.info("通过App-Id获取飞书用户UnionId，appId: {}, dto: {}", appId, JSONObject.toJSONString(dto));
+        
+        try {
+            // 从sys_referer_config表获取配置信息
+            List<SysRefererConfigEntity> byAppId = sysRefererConfigService.getByAppId(appId);
+            SysRefererConfigEntity config = byAppId.get(0); // 取第一个配置
+            
+            // 检查应用类型是否为飞书
+            if (!"FS".equalsIgnoreCase(config.getAppType())) {
+                throw new ServiceException(ApiError.ERROR_400.code, "应用类型不是飞书");
+            }
+            
+            // 调用FsService获取用户信息
+            Map<String, Object> userInfo = fsService.getFsUser(dto, config.getAppId(), config.getAppSecret());
+            
+            if (userInfo == null || userInfo.isEmpty()) {
+                log.warn("获取飞书用户信息失败，appId: {}", appId);
+                throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户信息失败");
+            }
+            
+            // 提取unionId
+            Object unionIdObj = userInfo.get("union_id");
+            if (unionIdObj == null) {
+                throw new ServiceException(ApiError.ERROR_500.code, "未获取到用户UnionId");
+            }
+            
+            String unionId = unionIdObj.toString();
+            log.info("成功获取飞书用户UnionId：{}，appId：{}", unionId, appId);
+            
+            return unionId;
+            
+        } catch (ServiceException e) {
+            log.error("通过App-Id获取飞书用户UnionId失败，appId: {}", appId, e);
+            throw e;
+        } catch (Exception e) {
+            log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
+            throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户UnionId失败：" + e.getMessage());
+        }
     }
 }
