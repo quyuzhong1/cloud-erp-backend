@@ -240,7 +240,7 @@ eo.partition_id as partitionId
 
     </select>
     <select id="listFreezeQtyBySku" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$FreezeQtyBySku">
-        select ssd.sku_id , sum(ssd.qty) as freezeQty  from  exhibition_order ssi
+        select ssd.sample_ledger_id ,ssd.sku_id , sum(ssd.qty) as freezeQty  from  exhibition_order ssi
         inner join exhibition_order_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
         where ssi.is_deleted = false
         and ssi.approve_status !='approve'
@@ -253,6 +253,6 @@ eo.partition_id as partitionId
                 #{item}
             </foreach>
         </if>
-        GROUP BY ssd.sku_id
+        GROUP BY ssd.sample_ledger_id,ssd.sku_id
     </select>
 </mapper>
