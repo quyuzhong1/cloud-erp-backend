@@ -5,6 +5,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
+
 /**
  *收款单消费DTO
  **/
@@ -46,7 +48,7 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
     /**
      * 单价
      */
-    private Integer price;
+    private BigDecimal price;
 
     /**
      * 平台是否已删除

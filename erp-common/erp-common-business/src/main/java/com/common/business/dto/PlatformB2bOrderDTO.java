@@ -183,5 +183,14 @@ public class PlatformB2bOrderDTO {
          */
         private Boolean isTax = true;
 
+        /**
+         * 交货方式
+         */
+        private String deliveryMode;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
     }
 }
