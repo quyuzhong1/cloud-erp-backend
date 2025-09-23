@@ -539,4 +539,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     SoInfoEntity getByThirdSystemAndCode(String thirdSystem, String code);
 
     BatchResultDTO skuMappingBatch(String id);
+
+    List<SoInfoEntity> listByPlatformOrderCodes(List<String> platformOrderCodeList,String dictPlatform);
 }

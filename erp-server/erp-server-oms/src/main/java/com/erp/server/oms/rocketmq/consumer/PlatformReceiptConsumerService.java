@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -67,6 +68,10 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 			return;
 		}
 		this.fillDTO(dto);
+		if(StringUtils.isBlank(dto.getErpCustomerId())){
+			log.warn("PlatformReceiptConsumerService.handle 收款单消费失败，客户编码{}未找到对应客户",dto.getCustomerCode());
+			return;
+		}
 		soReceiptService.handlePlatformConsumer(dto);
 
 	}
@@ -89,15 +94,21 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 		BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> b.getBankAccountNo().equals(dto.getReceiptAccount())).findFirst().orElse(null);
 		if(bankAccountEntity != null){
 			dto.setErpReceiptAccountId(bankAccountEntity.getId());
+		}else{
+			dto.setErpReceiptAccountId("");
 		}
 
 		DictBasicEntity receiveMethod = receiveMethodList.stream().filter(d -> d.getName().equals(dto.getReceiptMethod())).findFirst().orElse(null);
 		if(receiveMethod != null){
 			dto.setErpReceiptMethod(receiveMethod.getValue());
+		}else{
+			dto.setErpReceiptMethod("");
 		}
 		DictBasicEntity accountType = accountTypeList.stream().filter(d -> d.getValue().equals(dto.getPostedAccountId())).findFirst().orElse(null);
 		if(accountType != null){
 			dto.setErpPostedAccount(accountType.getName());
+		}else{
+			dto.setErpPostedAccount("");
 		}
 
 		List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetail();
@@ -105,14 +116,16 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 		if(CollectionUtils.isNotEmpty(platformReceiptDetailDTOList)){
 			List<PlatformReceiptDetailDTO> filterList = platformReceiptDetailDTOList.stream().filter(d -> !d.getIsInvalid()).collect(Collectors.toList());
 			List<String> soCodes = filterList.stream().map(PlatformReceiptDetailDTO::getSoCode).distinct().collect(Collectors.toList());
-			List<SoInfoEntity> soInfoList = soInfoService.listByCodes(soCodes);
-			Map<String, SoInfoEntity> soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getCode, e->e));
+			List<SoInfoEntity> soInfoList = soInfoService.listByPlatformOrderCodes(soCodes,dto.getThirdSystem());
+			Map<String, SoInfoEntity> soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getPlatformOrderCode, e->e,(v1,v2)->v1));
 			for(PlatformReceiptDetailDTO detailDTO : filterList){
 				SoInfoEntity soInfo = soInfoMap.get(detailDTO.getSoCode());
 				if(soInfo != null){
 					detailDTO.setErpSoId(soInfo.getId());
+					detailDTO.setSoCode(soInfo.getCode());
 				}else{
 					detailDTO.setErpSoId("");
+					detailDTO.setSoCode("");
 				}
 			}
 

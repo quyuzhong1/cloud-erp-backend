@@ -685,7 +685,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public SoReceiptEntity getByThirdSystemAndCode(String thirdSystem, String code) {
         LambdaQueryWrapper<SoReceiptEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SoReceiptEntity::getThirdSystem,thirdSystem);
-        queryWrapper.eq(SoReceiptEntity::getCode,code);
+        queryWrapper.eq(SoReceiptEntity::getThirdCode,code);
         List<SoReceiptEntity> list = this.list(queryWrapper);
         if(CollectionUtils.isNotEmpty(list)){
             return list.get(0);
@@ -940,6 +940,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setThirdCode(dto.getCode());
             addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
             addOrUpdateDTO.setIsFromPlatform(true);
+            addOrUpdateDTO.setCustomerId(dto.getErpCustomerId());
             List<SoReceiptDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
@@ -987,6 +988,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setRemark(dto.getRemark());
             addDTO.setThirdCode(dto.getCode());
             addDTO.setThirdSystem(dto.getThirdSystem());
+            addDTO.setCustomerId(dto.getErpCustomerId());
             List<SoReceiptDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(dto.getDetail())){
                 for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetail()) {
