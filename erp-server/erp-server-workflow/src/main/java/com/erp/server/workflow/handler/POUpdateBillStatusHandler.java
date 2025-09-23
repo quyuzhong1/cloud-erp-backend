@@ -101,7 +101,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isEmpty(uniqueValue)){
                 throw new ServiceException("三方审批生成-采购订单合同状态更新-单据唯一键值为空，请检查单据，单据唯一键{}",  uniqueField.getSysField());
             }
-            List<String> uniqueList = Arrays.stream(uniqueValue.split(",")).distinct().collect(Collectors.toList());
+            List<String> uniqueList = Arrays.stream(uniqueValue.split(";")).distinct().collect(Collectors.toList());
 
             List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).in(uniqueField.getSysField(), uniqueList).list();
 
@@ -165,7 +165,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isEmpty(uniqueValue)){
                 throw new ServiceException("三方审批生成-采购订单合同状态更新-单据唯一键值为空，请检查单据，单据唯一键{}",  uniqueField.getSysField());
             }
-            List<String> uniqueList = Arrays.stream(uniqueValue.split(",")).distinct().collect(Collectors.toList());
+            List<String> uniqueList = Arrays.stream(uniqueValue.split(";")).distinct().collect(Collectors.toList());
 
             List<PurchaseOrderEntity> list= FeignQuery.create(PurchaseOrderEntity.class).in(uniqueField.getSysField(), uniqueList).list();
             if (CollUtil.isEmpty(list)){
