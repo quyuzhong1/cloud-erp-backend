@@ -208,4 +208,5 @@ public class CommonServiceImpl implements CommonService {
                 .list();
         return CollUtil.isEmpty(list) ? new CfgSettingEntity() : list.get(0);
     }
+
 }
