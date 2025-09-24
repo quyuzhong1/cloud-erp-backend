@@ -180,6 +180,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         PlatformDictEnum amazon = PlatformDictEnum.AMAZON;
         //shopify
         PlatformDictEnum shopify = PlatformDictEnum.SHOPIFY;
+        //wildberries
+        PlatformDictEnum wildberries = PlatformDictEnum.WILDBERRIES;
         //检查店铺是否存在
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //检测仓库
@@ -194,6 +196,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 throw new ServiceException("域名不能为空");
             }
             checkDomain("", dto.getDomain());
+        }
+        if (wildberries.equals(dictPlatform)){
+            if (CharSequenceUtil.isBlank(dto.getToken())){
+                throw new ServiceException("店铺授权不能为空");
+            }
         }
         if(CollectionUtils.isNotEmpty(dto.getDictCountryCodeList())){
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(dto.getDictCountryCodeList());
@@ -506,7 +513,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
         String shopAuthorizeUrl = "";
         //temu全托管通过用户输入的信息检验授权
-        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) || PlatformDictEnum.WILDBERRIES.getCode().equals(entity.getDictPlatform())){
             ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
             shopAuthorizeDTO.setShopId(entity.getId());
             shopAuthorizeDTO.setPlatformCode(entity.getDictPlatform());
@@ -1527,7 +1534,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         String shopAuthorizeUrl = "";
         //temu全托管通过用户输入的信息检验授权
-        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) || PlatformDictEnum.WILDBERRIES.getCode().equals(infoEntity.getDictPlatform())){
             ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
             shopAuthorizeDTO.setShopId(infoEntity.getId());
             shopAuthorizeDTO.setPlatformCode(infoEntity.getDictPlatform());

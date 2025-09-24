@@ -1,9 +1,4 @@
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONUtil;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.sdk.oms.wildberries.constant.WildberriesConstant;
 import com.sdk.oms.wildberries.dto.*;
 import com.sdk.oms.wildberries.service.WildberriesSDKService;
@@ -13,8 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author zdy
@@ -31,7 +24,7 @@ public class WildberriesSDKServiceTest {
     private WildberriesSDKService wildberriesSDKService;
     @Test
     public void shopCheck() {
-        WildberriesResponse response = wildberriesSDKService.shopCheck(WildberriesConstant.TOKEN);
+        WildberriesResponse response = wildberriesSDKService.checkToken(WildberriesConstant.TOKEN);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 

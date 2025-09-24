@@ -25,7 +25,7 @@ import java.util.Map;
 @Component
 public class WildberriesSDKService {
 
-    public WildberriesResponse shopCheck(String token) {
+    public WildberriesResponse checkToken(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
         String url = WildberriesConstant.GET_SHOP_CHECK_PING;
         Map<String, String> headerMap = new HashMap<>();
