@@ -4,6 +4,7 @@ package com.erp.server.oms.controller.api;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleBorrowDetailDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -64,6 +65,9 @@ public class ExhibitionOrderDetailController extends BaseController {
     @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.EXPORT, desc = "展会订单明细导入")
     public ApiResult<ExhibitionOrderDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "id",required = false) String id,@RequestParam(value = "recipientUserId") String recipientUserId,  @RequestParam(value = "isTax") Boolean isTax, HttpServletResponse response) {
+        if (StringUtils.isBlank(recipientUserId)) {
+            return failure("领用人不能为空");
+        }
         return success(exhibitionOrderDetailService.importFile(excelFile,id,recipientUserId,isTax, response));
     }
 

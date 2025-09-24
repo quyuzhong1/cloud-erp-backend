@@ -485,4 +485,10 @@ public class ExhibitionOrderController extends BaseController {
     }
 
 
+    @PostMapping("/autoSoInfoDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return exhibitionOrderService.autoSoInfoDisApprove(dto);
+    }
+
+
 }

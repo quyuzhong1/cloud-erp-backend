@@ -820,6 +820,20 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //判断上一次的反审核的任务是否已经全部执行成功
+        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, dto.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException("上一次反审核任务未执行完成，无法进行审核");
+        }
+
+        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
+                .eq(WorkflowTaskRecordEntity::getSourceId,dto.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE)
+                .update();
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -880,39 +894,46 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         validateDisApprove(entity);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //判断上一次的审核的任务是否已经全部执行成功
+        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, id)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException("上一次审核任务未执行完成，无法进行反审核");
+        }
 
-        //反审核删除以下单据
+        //任务节点记录表
+        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
+                .eq(WorkflowTaskRecordEntity::getSourceId,id)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
+                .update();
+
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(entity.getId());
+        addTaskDTO.setSourceCode(entity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
+        addTaskDTO.setTraceId(MDC.get("traceId"));
+
+        Map<String, Object> map = new HashMap<>();
         if(CollUtil.isNotEmpty(list)){
-            //销售出库单
-            //其他入库单
-            //发货通知单
-            ExhibitionOrderDTO.DownstreamDisapproveDTO dto = new ExhibitionOrderDTO.DownstreamDisapproveDTO();
-            dto.setExhibitionOrderId(id);
-            dto.setSoId(list.get(0).getId());
-            ExhibitionOrderDTO.DownstreamDisapproveDTO downstreamDisapproveDTO = otherInstockFeign.disApproveByExhibition(dto);
-            if(StringUtils.isNotBlank(downstreamDisapproveDTO.getErrorMsg())){
-                throw new ServiceException(downstreamDisapproveDTO.getErrorMsg());
-            }
+            map.put("soId", list.get(0).getId());
+        }
+        map.put("exhibitionOrderId", entity.getId());
+        addTaskDTO.setFirstNodeInputData(map);
 
-            //B2B销售订单
-            List<String> soIds = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
-            List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(soIds);
-            BatchResultDTO result = soInfoService.disApprove(list.get(0), soChangeList);
-            if(!result.getSuccess()){
-                throw new ServiceException("B2B销售订单反审核失败");
-            }
-
-            List<BatchResultDTO> resultDTOList = soInfoService.deleteByIds(SourceTypeEnum.EXHIBITION_ORDER.getCode(), soIds);
-            boolean b = resultDTOList.stream().allMatch(BatchResultDTO::getSuccess);
-            if(!b){
-                throw new ServiceException("B2B销售订单删除失败");
-            }
+        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+        }
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
 
 
-        //任务节点记录表
-        workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true).eq(WorkflowTaskRecordEntity::getSourceId,id).update();
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
@@ -1027,8 +1048,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setSourceId(entity.getId());
             addTaskDTO.setSourceCode(entity.getCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-            addTaskDTO.setSourceTypeEnum(SourceTypeEnum.EXHIBITION_ORDER);//subType
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE);//subType
             addTaskDTO.setTraceId(MDC.get("traceId"));
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", entity.getId());
+            addTaskDTO.setFirstNodeInputData(map);
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
@@ -1093,6 +1118,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         addDTO.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+        addDTO.setDictPlatform("");
 
         List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
         for (ExhibitionOrderDetailEntity detail : detailList) {
@@ -1140,6 +1166,59 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             return mqResponseDTO;
         }
 
+        return mqResponseDTO;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId"))){
+            mqResponseDTO.setErrorMsg("soId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId 类型转换失败");
+            log.warn("soId 类型转换失败: {}", data.get("soId"));
+            return mqResponseDTO;
+        }
+        SoInfoEntity entity = soInfoService.getById(soId);
+        if(Objects.nonNull(entity)){
+            List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(Arrays.asList(entity.getId()));
+            try {
+                BatchResultDTO result = soInfoService.disApprove(entity, soChangeList);
+                if(!result.getSuccess()){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{}",entity.getId()));
+                    return mqResponseDTO;
+                }
+            }catch (Exception e){
+                log.error("B2B销售订单反审核失败",e);
+                mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{},e:{}",entity.getId(),e.getMessage()));
+                return mqResponseDTO;
+            }
+
+            try {
+                List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(Arrays.asList(entity.getId()));
+                if(!resultDTOList.get(0).getSuccess()){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{}",entity.getId()));
+                    return mqResponseDTO;
+                }
+            }catch (Exception e){
+                log.error("B2B销售订单删除失败",e);
+                mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{},e:{}",entity.getId(),e.getMessage()));
+                return mqResponseDTO;
+            }
+        }
         return mqResponseDTO;
     }
 
@@ -1581,7 +1660,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Override
     public List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(ExhibitionOrderDTO.SearchDTO dto) {
-        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIds())){
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIds()) || CollectionUtils.isEmpty(dto.getSampleLedgerIds())) {
             return Collections.emptyList();
         }
 
@@ -1589,28 +1668,16 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = soDetailService.listSkuPriceHistory(dto.getSkuIds());
 
         List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = baseMapper.listFreezeQtyBySku(dto);
-
-        List<ExhibitionOrderDTO.FreezeQtyBySku> resulst =new ArrayList<>();
-
-        for (String skuId : dto.getSkuIds()) {
-            ExhibitionOrderDTO.FreezeQtyBySku item = freezeQtyBySkus.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if(Objects.isNull(item)){
-                item = new ExhibitionOrderDTO.FreezeQtyBySku();
-                item.setSkuId(skuId);
-                item.setFreezeQty(0);
-            }
+        for (ExhibitionOrderDTO.FreezeQtyBySku item : freezeQtyBySkus) {
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    filter(p -> p.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
             if (skuHistoryPrice != null) {
                 item.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
             }
-
-
-            resulst.add(item);
         }
-        return resulst;
+        return freezeQtyBySkus;
     }
 
     @Override
@@ -1727,6 +1794,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             List<CfgCountryPartitionEntity> cfgCountryPartitionEntities = FeignQuery.list(CfgCountryPartitionEntity.class);
             Map<String, String> partitionMap = cfgCountryPartitionEntities.stream().collect(Collectors.toMap(CfgCountryPartitionEntity::getCountry, CfgCountryPartitionEntity::getPartitionId,(o1,o2)->o1));
 
+            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+            SampleLedgerDTO.SearchAllDTO dto = new SampleLedgerDTO.SearchAllDTO();
+            dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerAll(dto);
 
 
             ExhibitionOrderServiceImpl bean = ApplicationContextUtils.getBean(ExhibitionOrderServiceImpl.class);
@@ -1742,23 +1813,20 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 ExhibitionOrderEntity addSo = new ExhibitionOrderEntity();
                 String mainId = IdWorker.getIdStr();
                 addSo.setId(mainId);
+                // 生成单号
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+                addSo.setCode(code);
 
-
-                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = new ArrayList<>();
                 //领用人
                 String recipientUserName = mainInfo.getRecipientUserName();
+                String recipientUserId ="";
                 if(StringUtils.isNotBlank(recipientUserName)){
                     FindUserDTO recipientUser = userList.stream().filter(u -> u.getUserName().equals(recipientUserName)).findFirst().orElse(null);
                     if(Objects.isNull(recipientUser)){
                         errorMsgList.add("领用人不存在");
                     }else {
-                        addSo.setRecipientUserId(recipientUser.getUserId());
-
-                        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-                        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-                        dto.setUserId(recipientUser.getUserId());
-                        dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-                        skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
+                        recipientUserId = recipientUser.getUserId();
+                        addSo.setRecipientUserId(recipientUserId);
                     }
                 }
 
@@ -1798,32 +1866,35 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 addSo.setSalesOrgId(salesOrgId);
                 addSo.setSalesOrgName(salesOrgName);
 
+                //销售部门
+                String salesDeptName = mainInfo.getSalesDeptName();
+                String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
+                        map(SysDepartmentDTO::getId).orElse("");
+                addSo.setSalesDeptId(salesDeptId);
+                if (StringUtils.isBlank(salesDeptId)) {
+                    errorMsgList.add("销售部门不存在");
+                }
+
                 //销售员
                 String sellerName = mainInfo.getSellerName();
-                if(StringUtils.isNotBlank(sellerName)){
-                    FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().orElse(null);
-                    if(Objects.isNull(findUserDTO)){
-                        errorMsgList.add("销售员不存在");
-                    }else {
-                        String sellerId = findUserDTO.getUserId();
-                        addSo.setSellerId(sellerId);
-                        addSo.setSellerName(sellerName);
+                String sellerId = userList.stream().filter(u -> StringUtils.isNotBlank(sellerName) && u.getUserName().equals(sellerName)).findFirst().
+                        map(FindUserDTO::getUserId).orElse("");
+                addSo.setSellerId(sellerId);
+                addSo.setSellerName(sellerName);
+                if (StringUtils.isBlank(sellerId)) {
+                    errorMsgList.add("销售员不存在");
+                }
 
-                        //销售部门
-                        String salesDeptId = findUserDTO.getDepartmentId();
-                        addSo.setSalesDeptId(salesDeptId);
-                        if (StringUtils.isBlank(salesDeptId)) {
-                            errorMsgList.add("销售部门不存在");
-                        }
-
-                        String finalSalesOrgId1 = salesOrgId;
-                        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
-                                k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
-                                xsyCode.equals(k.getTypeCode())
-                        ).findFirst().orElse(null);
-                        if (Objects.isNull(businessOperator)) {
-                            errorMsgList.add("金蝶未存在该销售员");
-                        }
+                if (StringUtils.isBlank(salesOrgId)||StringUtils.isBlank(salesDeptId)){
+                    errorMsgList.add("金蝶未存在该销售员");
+                }else {
+                    String finalSalesOrgId1 = salesOrgId;
+                    KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
+                            k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
+                            xsyCode.equals(k.getTypeCode())
+                    ).findFirst().orElse(null);
+                    if (Objects.isNull(businessOperator)) {
+                        errorMsgList.add("金蝶未存在该销售员");
                     }
                 }
 
@@ -1931,12 +2002,13 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //收货地址
                 String receiveAddress = mainInfo.getReceiveAddress();
-                String customerAddressId = customerAddressList.stream().filter(c -> StringUtils.isNotBlank(receiveAddress) && c.getAddress().equals(receiveAddress)).
+                String customerAddressId = customerAddressList.stream().filter(c -> c.getAddress().equals(receiveAddress)).
                         findFirst().map(CustomerAddressEntity::getId).orElse("");
                 if (StringUtils.isBlank(customerAddressId)) {
                     errorMsgList.add("联系地址不存在");
                 }
                 addSo.setReceiveAddressId(customerAddressId);
+                addSo.setReceiveAddress(receiveAddress);
 
                 //交货方式
                 String deliveryModeStr = mainInfo.getDeliveryMode();
@@ -2034,9 +2106,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                     addDetail.setQty(qty);
 
                     //台账
-                    if(StringUtils.isNotBlank(addDetail.getSkuId())){
+                    if(StringUtils.isNotBlank(addDetail.getSkuId()) && StringUtils.isNotBlank(recipientUserId)){
+                        String finalRecipientUserId = recipientUserId;
                         SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
-                                .filter(e -> e.getSkuId().equals(addDetail.getSkuId()) && e.getUseUserName().equals(item.getUseUserName()))
+                                .filter(e ->e.getUserId().equals(finalRecipientUserId) && e.getSkuId().equals(addDetail.getSkuId()) && e.getUseUserName().equals(item.getUseUserName()))
                                 .findFirst()
                                 .orElse(null);
                         if(Objects.isNull(skuAvailableQtyDTO)){
@@ -2052,6 +2125,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                                 addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             }
                         }
+                    }else {
+                        msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                     }
 
                     //销售单价

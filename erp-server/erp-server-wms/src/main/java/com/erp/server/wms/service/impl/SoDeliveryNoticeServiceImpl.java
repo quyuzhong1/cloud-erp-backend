@@ -2346,6 +2346,78 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return mqResponseDTO;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId"))){
+            mqResponseDTO.setErrorMsg("soId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId 类型转换失败");
+            log.warn("soId 类型转换失败: {}", data.get("soId"));
+            return mqResponseDTO;
+        }
+
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, soId).list();
+        if(CollUtil.isNotEmpty(soDeliveryNoticeEntities)){
+            SoDeliveryNoticeService bean = SpringUtil.getBean(SoDeliveryNoticeService.class);
+
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(soDeliveryNoticeEntities.size());
+
+            StringBuilder sb = new StringBuilder();
+            for (SoDeliveryNoticeEntity entity : soDeliveryNoticeEntities) {
+                try {
+                    BatchResultDTO result = bean.disApprove(entity);
+                    if(!result.getSuccess()){
+                        sb.append(StrUtil.format("发货通知单反审核失败,soDeliveryNoticeId:{} ;",entity.getId()));
+                    }
+                    resultDTOS.add(result);
+                }catch (Exception e){
+                    log.error("发货通知单反审核失败",e);
+                    sb.append(StrUtil.format("发货通知单反审核失败,soDeliveryNoticeId:{} ,e:{};",entity.getId(),e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                }
+            }
+
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)) {
+                List<String> ids = soDeliveryNoticeEntities.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
+                String idsStr = soDeliveryNoticeEntities.stream()
+                        .map(SoDeliveryNoticeEntity::getId)
+                        .collect(Collectors.joining(","));
+                try {
+                    Boolean delete = bean.delete(ids);
+                    if(!delete){
+                        mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{}",idsStr));
+                        log.warn(sb.toString());
+                        return mqResponseDTO;
+                    }
+                }catch (Exception e){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
+                    log.error("发货通知单删除失败",e);
+                    return mqResponseDTO;
+                }
+            }else {
+                mqResponseDTO.setErrorMsg(sb.toString());
+                log.warn(sb.toString());
+                return mqResponseDTO;
+            }
+        }
+        mqResponseDTO.setData(data);
+        return mqResponseDTO;
+    }
+
     private SoDeliveryNoticeEntity addBySoId(SoInfoEntity soInfoEntity) {
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHTZ);

@@ -874,6 +874,8 @@ public class ExhibitionOrderDTO implements Serializable {
 
         private String childId;
 
+        private List<String> sampleLedgerIds;
+
         private List<String> skuIds;
     }
     /**
@@ -884,6 +886,8 @@ public class ExhibitionOrderDTO implements Serializable {
     public static class FreezeQtyBySku {
 
         private String skuId;
+
+        private String sampleLedgerId;
 
         private Integer freezeQty;
 

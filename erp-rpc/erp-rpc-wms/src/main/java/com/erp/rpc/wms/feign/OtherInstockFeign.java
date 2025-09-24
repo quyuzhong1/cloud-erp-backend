@@ -40,9 +40,6 @@ public interface OtherInstockFeign {
 
     @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);
-
-    @PostMapping("/feign/otherInstock/disApproveByExhibition")
-    ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(@RequestBody ExhibitionOrderDTO.DownstreamDisapproveDTO dto);
 }
 
 

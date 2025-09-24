@@ -84,12 +84,14 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
             sku = skuMap.getOrDefault(skuNo, null);
             if (Objects.isNull(sku)) {
                 errorMsgList.add("sku不存在");
+            }else {
+                addDTO.setSkuNo(skuNo);
+                addDTO.setSkuId(sku.getSkuId());
+                addDTO.setProductName(sku.getSkuName());
+                addDTO.setUnit(sku.getUnitName());
             }
         }else {
-            addDTO.setSkuNo(skuNo);
-            addDTO.setSkuId(sku.getSkuId());
-            addDTO.setProductName(sku.getSkuName());
-            addDTO.setUnit(sku.getUnitName());
+            errorMsgList.add("sku不能为空");
         }
 
         //是否赠品
