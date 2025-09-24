@@ -5,21 +5,36 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.sys.dto.CfgQueryConditionDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.DictPartitionDTO;
+import com.erp.model.sys.dto.SysAccountingCompanyDTO;
+import com.erp.model.sys.dto.TypeAndValueDTO;
+import com.erp.model.sys.vo.SysDeptDropDownVO;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.wms.dto.SampleBackInfoDTO;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
+import com.erp.rpc.oms.feign.OmsFeign;
+import com.erp.rpc.sys.feign.CfgQueryConditionFeign;
+import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.wms.feign.SampleFeign;
+import com.erp.rpc.wms.feign.WmsFeign;
+import com.erp.rpc.plm.feign.PlmFeign;
+import com.erp.rpc.scm.feign.ScmFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +59,24 @@ public class SampleOpenApi {
 
     @Resource
     private OmsDropDownFeign omsDropDownFeign;
+
+    @Resource
+    private CfgQueryConditionFeign cfgQueryConditionFeign;
+
+    @Resource
+    private SysFeign sysFeign;
+
+    @Resource
+    private WmsFeign wmsFeign;
+
+    @Resource
+    private PlmFeign plmFeign;
+
+    @Resource
+    private OmsFeign omsFeign;
+
+    @Resource
+    private ScmFeign scmFeign;
 
     // ==================== 样品借用单相关接口 ====================
 
@@ -457,8 +490,8 @@ public class SampleOpenApi {
     }
 
     @OpenApi("omsDropDownGetByTypeAndValue")
-    public DictBasicEntity omsDropDownGetByTypeAndValue(String type, String value) {
-        return omsDropDownFeign.getByTypeAndValue(type, value);
+    public DictBasicEntity omsDropDownGetByTypeAndValue(@Valid TypeAndValueDTO dto) {
+        return omsDropDownFeign.getByTypeAndValue(dto.getType(), dto.getValue());
     }
 
     @OpenApi("omsDropDownList")
@@ -470,5 +503,74 @@ public class SampleOpenApi {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> omsDropDownListInternalSalesPlatform(String key) {
         return omsDropDownFeign.listInternalSalesPlatform(key);
     }
+
+    // ==================== 查询条件配置相关接口 ====================
+
+    @OpenApi("cfgQueryConditionGetQueryCondition")
+    public ApiResult<List<CfgQueryConditionDTO.ViewDTO>> cfgQueryConditionGetQueryCondition(String code) {
+        return cfgQueryConditionFeign.getQueryCondition(code);
+    }
+
+    // ==================== Sys 服务相关接口 ====================
+
+    @OpenApi("sysCompanyList")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> sysCompanyList() {
+        return sysFeign.companyList();
+    }
+
+    @OpenApi("sysDictCountryList")
+    public ApiResult<List<DictCountryDTO.ListDTO>> sysDictCountryList() {
+        return sysFeign.countryList();
+    }
+
+    @OpenApi("sysDictPartitionDropDown")
+    public ApiResult<List<DictPartitionDTO.DictDTO>> sysDictPartitionDropDown(DictPartitionDTO.SelectDTO dto) {
+        return sysFeign.dictPartitionDropDown(dto);
+    }
+
+    @OpenApi("sysDepartmentDropDown")
+    public ApiResult<List<SysDeptDropDownVO>> sysDepartmentDropDown() {
+        return sysFeign.departmentDropDown();
+    }
+
+    // ==================== WMS 服务相关接口 ====================
+
+    @OpenApi("wmsWarehouseList")
+    public ApiResult<List<WarehouseDTO.ListDTO>> wmsWarehouseList(Boolean showByAuth) {
+        return wmsFeign.warehouseList(showByAuth);
+    }
+
+    @OpenApi("wmsDictList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> wmsDictList(String key) {
+        return wmsFeign.dictList(key);
+    }
+
+    @OpenApi("wmsDropDownApproveStatusList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> wmsDropDownApproveStatusList() {
+        return wmsFeign.approveStatusList();
+    }
+
+    // ==================== PLM 服务相关接口 ====================
+
+    @OpenApi("plmCommonFindUserList")
+    public ApiResult<List<FindUserDTO>> plmCommonFindUserList(BaseSearchDTO dto) {
+        return plmFeign.findUserList(dto);
+    }
+
+    // ==================== OMS 服务相关接口 ====================
+
+    @OpenApi("omsCustomerListEnable")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> omsCustomerListEnable(PermissionsDTO dto) {
+        return omsFeign.customerListEnable(dto);
+    }
+
+    // ==================== SCM 服务相关接口 ====================
+
+    @OpenApi("scmDropDownApproveStatusList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> scmDropDownApproveStatusList() {
+        return scmFeign.approveStatusList();
+    }
+
+
 
 }
