@@ -163,6 +163,14 @@
         LIMIT 1
     </select>
 
+    <!-- 根据台账ID查询数量总和 -->
+    <select id="selectTotalQtyByLedgerId" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(slf.qty), 0)
+        FROM sample_ledger_flow slf
+        WHERE slf.is_deleted = false
+        AND slf.sample_ledger_id = #{ledgerId}
+    </select>
+
     <!-- 移动端分页查询 -->
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
         SELECT
