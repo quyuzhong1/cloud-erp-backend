@@ -370,6 +370,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
         //供应商账号信息
         if (CharSequenceUtil.isNotBlank(supplierUpdateDTO.getSupplierAccountId())) {
+            dto.setSupplierAccountId(supplierUpdateDTO.getSupplierAccountId());
+
             SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(supplierUpdateDTO.getSupplierAccountId());
             if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
                 dto.setPayee(supplierAccountEntity.getPayee());
