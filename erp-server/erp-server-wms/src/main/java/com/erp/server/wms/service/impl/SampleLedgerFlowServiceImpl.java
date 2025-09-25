@@ -227,7 +227,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 }
                 
                 // 更新对应的主表数量并回填SampleLedgerId
-                String ledgerId = updateSampleLedgerQtyForDetail(addDTO, detail, flowEntity);
+                String ledgerId = updateSampleLedgerQtyForDetail(detail, flowEntity);
                 if (StrUtil.isNotBlank(ledgerId)) {
                     // 回填SampleLedgerId到明细
                     detail.setSampleLedgerId(ledgerId);
@@ -254,12 +254,11 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     /**
      * 更新单个明细对应的SampleLedger主表数量
      * 优先通过detail中的SampleLedgerId直接更新，如果没有则按条件查询更新
-     * @param addDTO 添加DTO
      * @param detail 明细DTO
      * @param flowEntity 流水实体
      * @return 主表ID
      */
-    private String updateSampleLedgerQtyForDetail(SampleLedgerFlowDTO.AddFlowDTO addDTO, 
+    private String updateSampleLedgerQtyForDetail(
                                                 SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail,
                                                 SampleLedgerFlowEntity flowEntity) {
         try {
@@ -282,8 +281,8 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             } else {
                 // 如果没有台账ID，按原来的逻辑查询和更新
                 Integer totalQty = this.baseMapper.selectTotalQtyByConditions(
-                    addDTO.getUserId(),
-                    addDTO.getUseUserId(),
+                        flowEntity.getUserId(),
+                        flowEntity.getUseUserId(),
                     detail.getSkuNo(),
                     detail.getSkuId()
                 );
@@ -291,15 +290,15 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 if (totalQty != null) {
                     // 更新或插入SampleLedger主表记录
                     String newLedgerId = updateOrInsertSampleLedger(
-                        addDTO.getUserId(),
-                        addDTO.getUserName(),
-                        addDTO.getDeptId(),
-                        addDTO.getDeptName(),
+                            flowEntity.getUserId(),
+                            flowEntity.getUserName(),
+                            flowEntity.getDeptId(),
+                            flowEntity.getDeptName(),
                         detail.getSkuNo(),
                         detail.getSkuId(),
                         detail.getProductName(),
-                        addDTO.getUseUserId(),
-                        addDTO.getUseUserName(),
+                            flowEntity.getUseUserId(),
+                            flowEntity.getUseUserName(),
                         totalQty
                     );
                     return newLedgerId;
