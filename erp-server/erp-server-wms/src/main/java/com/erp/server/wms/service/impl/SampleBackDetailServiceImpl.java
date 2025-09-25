@@ -4,12 +4,14 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
 import com.erp.model.wms.dto.excel.SampleBackDetailImportExcelDTO;
 import com.erp.model.wms.entity.SampleBackDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.SampleBackDetailExcelListener;
 import com.erp.server.wms.mapper.SampleBackDetailMapper;
 import com.erp.server.wms.service.CommonService;
@@ -52,6 +54,8 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
 
     @Resource
     private SampleLedgerService sampleLedgerService;
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -121,10 +125,11 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
     @Override
     public SampleBackDetailDTO.ImportDTO importFile(MultipartFile excelFile, String backUserId, HttpServletResponse response) {
         //sku信息
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
 
-        SampleBackDetailExcelListener excelListenerUtil = new SampleBackDetailExcelListener(sampleLedgerService, map, backUserId);
+        SampleBackDetailExcelListener excelListenerUtil = new SampleBackDetailExcelListener(sampleLedgerService, map, backUserId,userList);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), SampleBackDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
