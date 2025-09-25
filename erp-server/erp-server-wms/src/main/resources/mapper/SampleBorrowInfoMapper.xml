@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleBorrowInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleBorrowInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="borrow_user_id" property="borrowUserId" />
+       <result column="borrow_user_name" property="borrowUserName" />
+       <result column="borrow_dept_id" property="borrowDeptId" />
+       <result column="borrow_dept_name" property="borrowDeptName" />
+       <result column="lend_user_id" property="lendUserId" />
+       <result column="lend_user_name" property="lendUserName" />
+       <result column="lend_dept_id" property="lendDeptId" />
+       <result column="lend_dept_name" property="lendDeptName" />
+       <result column="borrow_date" property="borrowDate" />
+       <result column="estimated_return_date" property="estimatedReturnDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sbi.id as id,
+sbi.create_user_id as createUserId,
+sbi.create_user_name as createUserName,
+sbi.create_time as createTime,
+sbi.update_user_id as updateUserId,
+sbi.update_user_name as updateUserName,
+sbi.update_time as updateTime,
+sbi.version as version,
+sbi.is_deleted as isDeleted,
+sbi.code as code,
+sbi.approve_status as approveStatus,
+sbi.approve_time as approveTime,
+sbi.approve_user_id as approveUserId,
+sbi.approve_user_name as approveUserName,
+sbi.invalid_status as invalidStatus,
+sbi.borrow_user_id as borrowUserId,
+sbi.borrow_user_name as borrowUserName,
+sbi.borrow_dept_id as borrowDeptId,
+sbi.borrow_dept_name as borrowDeptName,
+sbi.lend_user_id as lendUserId,
+sbi.lend_user_name as lendUserName,
+sbi.lend_dept_id as lendDeptId,
+sbi.lend_dept_name as lendDeptName,
+sbi.borrow_date as borrowDate,
+sbi.estimated_return_date as estimatedReturnDate,
+sbi.remark as remark
+    </sql>
+
+    <sql id="Query_Column_List">
+            sbi.ID AS ID,
+            sbi.create_user_id AS createUserId,
+            sbi.create_user_name AS createUserName,
+            sbi.create_time AS createTime,
+            sbi.update_user_id AS updateUserId,
+            sbi.update_user_name AS updateUserName,
+            sbi.update_time AS updateTime,
+            sbi.VERSION AS VERSION,
+            sbi.is_deleted AS isDeleted,
+            sbi.code AS code,
+            sbi.approve_status AS approveStatus,
+            sbi.approve_time AS approveTime,
+            sbi.approve_user_id AS approveUserId,
+            sbi.approve_user_name AS approveUserName,
+            sbi.invalid_status AS invalidStatus,
+            sbi.borrow_user_id AS borrowUserId,
+            sbi.borrow_user_name AS borrowUserName,
+            sbi.borrow_dept_id AS borrowDeptId,
+            sbi.borrow_dept_name AS borrowDeptName,
+            sbi.lend_user_id AS lendUserId,
+            sbi.lend_user_name AS lendUserName,
+            sbi.lend_dept_id AS lendDeptId,
+            sbi.lend_dept_name AS lendDeptName,
+            sbi.borrow_date AS borrowDate,
+            sbi.estimated_return_date AS estimatedReturnDate,
+            sbi.remark AS remark,
+            sbd.ID AS detailId,
+            sbd.sku_id AS skuId,
+            sbd.sku_no AS skuNo,
+            sbd.product_name AS productName,
+            sbd.borrow_qty AS borrowQty,
+            sbd.wait_return_qty AS waitReturnQty,
+            sbd.borrow_qty - sbd.wait_return_qty as returnQty,
+            sbd.remark AS detailRemark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$ListDTO">
+        SELECT
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_borrow_info sbi
+        LEFT JOIN sample_borrow_detail sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sbi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbi.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_borrow_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$ListDTO">
+        SELECT
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_borrow_info sbi
+        LEFT JOIN sample_borrow_detail sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sbi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbi.create_time desc
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$TabListDTO">
+        SELECT
+        sbi.approve_status AS tabFlag,
+        COUNT ( * ) AS COUNT
+        FROM
+        sample_borrow_info sbi
+        INNER JOIN sample_borrow_detail sbd ON sbi.ID = sbd.main_id
+        AND sbd.is_deleted = FALSE
+        AND sbd.wait_return_qty > 0
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.approve_status = 'approve'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY
+        sbi.approve_status UNION ALL
+        SELECT
+        sbi.approve_status AS tabFlag,
+        COUNT ( * ) AS COUNT
+        FROM
+        sample_borrow_info sbi
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.approve_status != 'approve'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY
+        sbi.approve_status
+    </select>
+
+    <select id="generateSampleReturnView"
+            resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$SampleReturnView">
+        SELECT
+        sbi.ID AS sourceId,
+        sbi.code AS sourceCode,
+        sbi.approve_status AS approveStatus,
+        sbi.borrow_user_id AS returnUserId,
+        sbi.borrow_user_name AS returnUserName,
+        sbi.borrow_dept_id AS returnDeptId,
+        sbi.borrow_dept_name AS returnDeptName,
+        sbi.lend_user_id AS receiverUserId,
+        sbi.lend_user_name AS receiverUserName,
+        sbi.lend_dept_id AS receiverDeptId,
+        sbi.lend_dept_name AS receiverDeptName,
+        sbd.ID AS sourceDetailId,
+        sl.use_user_id as useUserId,
+        sl.use_user_name as useUserName,
+        sbd.sku_id AS skuId,
+        sbd.sku_no AS skuNo,
+        sbd.product_name AS productName,
+        COALESCE ( sbd.wait_return_qty, 0 ) AS waitReturnQty,
+        COALESCE ( b.returnedQty, 0 ) AS returnedQty,
+        COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty
+        FROM
+        sample_borrow_info AS sbi
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted = FALSE
+        LEFT JOIN sample_ledger as sl on sbd.sample_ledger_id = sl.id and sl.is_deleted = FALSE
+        LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status = 'approve'
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND srd.source_detail_id IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS b ON b.source_detail_id = sbd.
+        ID LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status != 'approve'
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND srd.source_detail_id IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="notId != null and notId!=''">
+            AND sri.id != #{notId}
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS C ON C.source_detail_id = sbd.ID
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.invalid_status = FALSE
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND sbd.ID IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY
+        sbi.code
+    </select>
+
+    <select id="listSku" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$SkuAvailableQtyDTO">
+        SELECT
+        sbi.ID AS sourceId,
+        sbi.code AS sourceCode,
+        sbd.ID AS sourceDetailId,
+        sl.use_user_id as useUserId,
+        sl.use_user_name as useUserName,
+        sbd.sku_id AS skuId,
+        sbd.sku_no AS skuNo,
+        sbd.product_name AS productName,
+        COALESCE ( sbd.borrow_qty, 0 ) AS borrowQty,
+        COALESCE ( sbd.wait_return_qty, 0 ) AS waitReturnQty,
+        COALESCE ( b.returnedQty, 0 ) AS returnedQty,
+        COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty,
+        sbd.remark
+        FROM
+        sample_borrow_info AS sbi
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted =FALSE
+        LEFT JOIN sample_ledger as sl on sbd.sample_ledger_id = sl.id and sl.is_deleted = FALSE
+        LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status = 'approve'
+        GROUP BY
+        srd.source_detail_id
+        ) AS b ON b.source_detail_id = sbd.
+        ID LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status != 'approve'
+        <if test="params.notId != null and params.notId!=''">
+            AND sri.id != #{notId}
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS C ON C.source_detail_id = sbd.ID
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.invalid_status = FALSE
+        AND sbi.approve_status = 'approve'
+        AND sbd.wait_return_qty > 0
+        AND sbi.code = #{params.sourceCode}
+        <if test="params.skuNos != null and params.skuNos.size > 1">
+            AND sbd.sku_no IN
+            <foreach item="item" index="index" collection="params.skuNos" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ORDER BY
+            case
+            when sbd.sku_no = #{params.skuNo} THEN 1
+            when sbd.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
+            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
+            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
+            end, sbd.sku_no
+        </if>
+    </select>
+
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$ListDTO">
+        SELECT
+        DISTINCT ON (sbi.ID)
+        COUNT ( sbd.ID ) OVER ( PARTITION BY sbi.ID ) AS skuCount ,
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_borrow_info sbi
+        LEFT JOIN sample_borrow_detail sbd ON sbi.ID = sbd.main_id AND sbd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sbi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sbi.ID desc,
+        sbi.create_time desc,
+        sbd.id
+    </select>
+
+</mapper>

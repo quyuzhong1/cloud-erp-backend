@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ExhibitionOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ExhibitionOrderEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="code" property="code" />
+       <result column="exhibition_title" property="exhibitionTitle" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="sales_org_id" property="salesOrgId" />
+       <result column="sales_dept_id" property="salesDeptId" />
+       <result column="seller_id" property="sellerId" />
+       <result column="seller_name" property="sellerName" />
+       <result column="recipient_user_id" property="recipientUserId" />
+       <result column="recipient_user_name" property="recipientUserName" />
+       <result column="is_collect_shipping_fee" property="isCollectShippingFee" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_org_id" property="warehouseOrgId" />
+       <result column="bank_service_fee" property="bankServiceFee" />
+       <result column="shipping_fee" property="shippingFee" />
+       <result column="customer_id" property="customerId" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="tel_number" property="telNumber" />
+       <result column="receive_address" property="receiveAddress" />
+       <result column="delivery_mode" property="deliveryMode" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="is_tax" property="isTax" />
+       <result column="address_type" property="addressType" />
+       <result column="sales_org_name" property="salesOrgName" />
+       <result column="warehouse_org_name" property="warehouseOrgName" />
+       <result column="receive_address_id" property="receiveAddressId" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="receive_condition" property="receiveCondition" />
+       <result column="receive_account" property="receiveAccount" />
+       <result column="receive_amount" property="receiveAmount" />
+       <result column="receive_date" property="receiveDate" />
+       <result column="receive_method" property="receiveMethod" />
+       <result column="remark" property="remark" />
+       <result column="bill_date" property="billDate" />
+       <result column="trade_term" property="tradeTerm" />
+       <result column="approve_time" property="approveTime" />
+       <result column="discount_amount" property="discountAmount" />
+       <result column="all_amount_lc" property="allAmountLc" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+       <result column="partition_id" property="partitionId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        eo.id as id,
+eo.create_user_id as createUserId,
+eo.create_user_name as createUserName,
+eo.create_time as createTime,
+eo.update_user_id as updateUserId,
+eo.update_user_name as updateUserName,
+eo.update_time as updateTime,
+eo.version as version,
+eo.is_deleted as isDeleted,
+eo.invalid_status as invalidStatus,
+eo.code as code,
+eo.exhibition_title as exhibitionTitle,
+eo.approve_status as approveStatus,
+eo.sales_org_id as salesOrgId,
+eo.sales_dept_id as salesDeptId,
+eo.seller_id as sellerId,
+eo.seller_name as sellerName,
+eo.recipient_user_id as recipientUserId,
+eo.recipient_user_name as recipientUserName,
+eo.is_collect_shipping_fee as isCollectShippingFee,
+eo.warehouse_id as warehouseId,
+eo.warehouse_org_id as warehouseOrgId,
+eo.bank_service_fee as bankServiceFee,
+eo.shipping_fee as shippingFee,
+eo.customer_id as customerId,
+eo.receiver_name as receiverName,
+eo.tel_number as telNumber,
+eo.receive_address as receiveAddress,
+eo.delivery_mode as deliveryMode,
+eo.currency as currency,
+eo.currency_symbol as currencySymbol,
+eo.is_tax as isTax,
+eo.address_type as addressType,
+eo.sales_org_name as salesOrgName,
+eo.warehouse_org_name as warehouseOrgName,
+eo.receive_address_id as receiveAddressId,
+eo.approve_user_id as approveUserId,
+eo.approve_user_name as approveUserName,
+eo.receive_condition as receiveCondition,
+eo.receive_account as receiveAccount,
+eo.receive_amount as receiveAmount,
+eo.receive_date as receiveDate,
+eo.receive_method as receiveMethod,
+eo.remark as remark,
+eo.bill_date as billDate,
+eo.trade_term as tradeTerm,
+eo.approve_time as approveTime,
+eo.discount_amount as discountAmount,
+eo.all_amount_lc as allAmountLc,
+eo.country_id as countryId,
+eo.country_name as countryName,
+eo.partition_id as partitionId
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+        eo.ID AS ID,
+        eo.create_user_id AS createUserId,
+        eo.create_user_name AS createUserName,
+        eo.create_time AS createTime,
+        eo.update_user_id AS updateUserId,
+        eo.update_user_name AS updateUserName,
+        eo.update_time AS updateTime,
+        eo.VERSION AS VERSION,
+        eo.is_deleted AS isDeleted,
+        eo.invalid_status AS invalidStatus,
+        eo.code AS code,
+        eo.exhibition_title AS exhibitionTitle,
+        eo.approve_status AS approveStatus,
+        eo.sales_org_id AS salesOrgId,
+        eo.sales_dept_id AS salesDeptId,
+        eo.seller_id AS sellerId,
+        eo.seller_name AS sellerName,
+        eo.recipient_user_id AS recipientUserId,
+        eo.recipient_user_name AS recipientUserName,
+        eo.is_collect_shipping_fee AS isCollectShippingFee,
+        eo.warehouse_id AS warehouseId,
+        eo.warehouse_org_id AS warehouseOrgId,
+        eo.bank_service_fee AS bankServiceFee,
+        eo.shipping_fee AS shippingFee,
+        eo.customer_id AS customerId,
+        eo.receiver_name AS receiverName,
+        eo.tel_number AS telNumber,
+        eo.receive_address AS receiveAddress,
+        eo.delivery_mode AS deliveryMode,
+        eo.currency AS currency,
+        eo.currency_symbol AS currencySymbol,
+        eo.is_tax AS isTax,
+        eo.address_type AS addressType,
+        eo.sales_org_name AS salesOrgName,
+        eo.warehouse_org_name AS warehouseOrgName,
+        eo.receive_address_id AS receiveAddressId,
+        eo.approve_user_id AS approveUserId,
+        eo.approve_user_name AS approveUserName,
+        eo.receive_condition AS receiveCondition,
+        eo.receive_account AS receiveAccount,
+        eo.receive_amount AS receiveAmount,
+        eo.receive_date AS receiveDate,
+        eo.receive_method AS receiveMethod,
+        eo.remark AS remark,
+        eo.bill_date AS billDate,
+        eo.trade_term AS tradeTerm,
+        eo.approve_time AS approveTime,
+        eo.discount_amount AS discountAmount,
+        eo.all_amount_lc AS allAmountLc,
+        eo.country_id AS countryId,
+        eo.country_name AS countryName,
+        eo.partition_id AS partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName,
+        eod.ID AS detailId,
+        eod.main_id AS mainId,
+        eod.sample_ledger_id AS sampleLedgerId,
+        eod.sku_id AS skuId,
+        eod.sku_no AS skuNo,
+        eod.product_name AS productName,
+        eod.qty AS qty,
+        eod.price AS price,
+        eod.tax_rate AS taxRate,
+        eod.amount AS amount,
+        eod.currency AS currency,
+        eod.currency_symbol AS currencySymbol,
+        eod.is_gift AS isGift,
+        eod.remark AS detailRemark,
+        eod.purchase_price AS purchasePrice,
+        eod.sale_cost AS saleCost,
+        eod.sale_profit AS saleProfit,
+        eod.sale_profit_rate AS saleProfitRate,
+        eod.tax_amount AS taxAmount,
+        eod.amount_local_currency AS amountLocalCurrency,
+        eod.all_amount_local_currency AS allAmountLocalCurrency,
+        eod.discount_amount AS discountAmount,
+        eod.tax_amount_before AS taxAmountBefore,
+        eod.exchange_rate AS exchangeRate,
+        eod.tax AS tax,
+        eod.bom_version AS bomVersion,
+        eod.cost_source AS costSource,
+        eod.tax_price AS taxPrice
+        FROM
+        exhibition_order AS eo
+        LEFT JOIN exhibition_order_detail AS eod ON eo.ID = eod.main_id AND eod.is_deleted = FALSE
+        left join foreign_dict_partition fdp on fdp.id = eo.partition_id and fdp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and eo.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        eo.create_time desc
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from exhibition_order where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+    <select id="tabList" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$TabListDTO">
+        SELECT
+        eo.approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  exhibition_order eo
+        WHERE eo.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY eo.approve_status
+
+    </select>
+    <select id="listFreezeQtyBySku" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$FreezeQtyBySku">
+        select ssd.sample_ledger_id ,ssd.sku_id , sum(ssd.qty) as freezeQty  from  exhibition_order ssi
+        inner join exhibition_order_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.approve_status !='approve'
+        <if test="params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
+        </if>
+        <if test="params.skuIds != null and params.skuIds.size() > 0">
+            and ssd.sku_id in
+            <foreach collection="params.skuIds" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY ssd.sample_ledger_id,ssd.sku_id
+    </select>
+</mapper>

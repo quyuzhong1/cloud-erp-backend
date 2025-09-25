@@ -154,7 +154,7 @@ public class PdaSoOutstockController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.submit(dto.getIds());
+        Boolean result = soOutstockService.submit(dto.getIds(),Boolean.TRUE);
         return result ? success() : failure();
     }
 

@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -100,5 +101,12 @@ public interface SysDictFeign {
      */
     @PostMapping("/feign/dictCountry/listCountryByIdsOrAlpha3")
     List<DictCountryEntity> listCountryByIdsOrAlpha3(@RequestBody List<String> code);
+
+
+    /**
+     * 根据id获取示例用户字典值
+     */
+    @PostMapping("feign/sampleUseUser/getByIds")
+    List<BaseIdDTO> getByIds(@RequestBody List<String> ids);
 
 }

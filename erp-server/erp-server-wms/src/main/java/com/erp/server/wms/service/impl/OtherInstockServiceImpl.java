@@ -6,6 +6,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -27,6 +28,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -44,6 +46,9 @@ import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -71,6 +76,7 @@ import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -115,6 +121,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
 
 /**
@@ -185,10 +192,18 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private AbstractWdtService abstractWdtService;
     @Resource
     private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Lazy
     @Resource
     private OtherInstockService service;
+
+    @Resource
+    private ExhibitionOrderFeign exhibitionOrderFeign;
+
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
@@ -286,6 +301,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 //        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTRK, BusinessNoTypeEnum.CODE_QTRK.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         entity.setCode(code);
+
+        if(StringUtils.isBlank(entity.getSourceType())){
+            //默认手动新增
+            entity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+        }
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
@@ -307,7 +327,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(id,Boolean.TRUE);
+        this.submit(id,dto.getIsProcess());
         return id;
     }
 
@@ -560,6 +580,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         return Boolean.TRUE;
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -575,7 +596,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
         entity.setIsPushWdt(isPushWdt);
         approveProcess(entity, dto);
-
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
 
@@ -584,6 +604,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     /**
      * 审核流程处理
+     *
      * @param entity
      * @param dto
      */
@@ -1023,7 +1044,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark, boolean isTransitWarehouse) {
         //目的仓
         WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
-        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse, isTransitWarehouse, entity.getCreateUserId());
+        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse, isTransitWarehouse, entity);
         List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
             OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
@@ -1031,6 +1052,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             detailAddDTO.setSkuNo(detailEntity.getSkuNo());
             detailAddDTO.setActualQty(Math.abs(detailEntity.getDiffQty()));
             detailAddDTO.setRemark(remark);
+            detailAddDTO.setSourceDetailId(detailEntity.getId());
             detailAddDTOList.add(detailAddDTO);
         }
         addDTO.setDetailList(detailAddDTOList);
@@ -1041,7 +1063,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      * 封装报损出库单主记录
      */
-    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse, boolean isTransitWarehouse, String userId) {
+    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse, boolean isTransitWarehouse, OverseasWarehouseInboundEntity entity) {
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (CharSequenceUtil.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
@@ -1058,11 +1080,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             addDTO.setWarehouseId(warehouse.getId());
         }
         //部门
-        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(userId);
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(entity.getCreateUserId());
         addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
         //出库类型：报损
         addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
         addDTO.setTypeName(InstockTypeEnum.REPORT_OVERFLOW.getName());
+        //来源：海外仓入库单
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
         return addDTO;
     }
 
@@ -1497,6 +1523,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         otherInstockEntity.setThirdCode(dto.getThirdCode());
         otherInstockEntity.setThirdPlatform(PlatformDictEnum.WDT.getCode());
         otherInstockEntity.setRemark(dto.getRemark());
+        otherInstockEntity.setSourceType(SourceTypeEnum.WDT_SO_PRESTOCK.getCode());
+        otherInstockEntity.setSourceId(dto.getId());
+        otherInstockEntity.setSourceCode(dto.getThirdCode());
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (DmpSoPrestockDetailDTO.PrestockDetailDTO prestockDetailDTO : dto.getDetailList()) {
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
@@ -1507,6 +1536,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setWarehouseLocation(WmsConstant.WDT_NULL_LOCATION.contains(prestockDetailDTO.getWarehouseLocation()) ? "" : prestockDetailDTO.getWarehouseLocation());
             detailEntity.setRemark(prestockDetailDTO.getRemark());
+            detailEntity.setSourceDetailId(prestockDetailDTO.getId());
             detailEntityList.add(detailEntity);
         }
         otherInstockEntity.setDetailEntityList(detailEntityList);
@@ -1527,12 +1557,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             resultList.add(pushTaskEntity);
         });
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     /**
@@ -1608,11 +1638,334 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    public List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto) {
+        List<OtherInstockDTO.ListDTO> list = baseMapper.viewAssociatedDocuments(dto);
+        // 格式化入库单数据
+        formatOtherInstock(list);
+        return list;
+    }
+
+    /**
+     * @description: 格式化列表数据
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param records
+     */
+    private void formatOtherInstock(List<OtherInstockDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        
+        // 获取所有SKU ID
+        List<String> skuIds = records.stream()
+                .map(OtherInstockDTO.ListDTO::getSkuNo)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 批量查询SKU信息
+        Map<String, String> productNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(skuIds)) {
+            try {
+                List<ProductDetailEntity> skuList = plmTaskFeign.listBySkuNos(skuIds);
+                if (CollectionUtils.isNotEmpty(skuList)) {
+                    productNameMap = skuList.stream()
+                            .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getName));
+                }
+            } catch (Exception e) {
+                log.warn("获取SKU信息失败，错误：{}", e.getMessage());
+            }
+        }
+        
+        // 查询流程id判断是否存在流程
+        Map<String, String> finalProductNameMap = productNameMap;
+        records.forEach(obj -> {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
+            
+            // 设置产品名称
+            if (Objects.nonNull(obj.getSkuId())) {
+                String productName =
+                        finalProductNameMap.get(obj.getSkuNo());
+                obj.setProductName(productName != null ? productName : "");
+            }
+        });
+    }
+
+    @Override
     public Map<String, OtherInstockEntity> mapByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyMap();
         }
         List<OtherInstockEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(OtherInstockEntity::getId, Function.identity()));
+    }
+
+
+
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId) {
+        List<ExhibitionOrderDTO.DownstreamListDTO> resultList = baseMapper.listOtherInstockInByExhibitionId(exhibitionId);
+        if(CollUtil.isEmpty(resultList)){
+            return Collections.emptyList();
+        }
+
+        List<String> skuIds = resultList.stream().map(ExhibitionOrderDTO.DownstreamListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+
+        for (ExhibitionOrderDTO.DownstreamListDTO listDTO : resultList) {
+            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            listDTO.setInvalidStatusName(InvalidStatusEnum.getName(listDTO.getInvalidStatus()));
+            listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
+        }
+        return resultList;
+    }
+
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("exhibitionOrderId") || Objects.isNull(data.get("exhibitionOrderId"))){
+            mqResponseDTO.setErrorMsg("exhibitionOrderId为空");
+            return mqResponseDTO;
+        }
+        String exhibitionOrderId;
+        try {
+            exhibitionOrderId = String.valueOf(data.get("exhibitionOrderId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("exhibitionOrderId 类型转换失败");
+            log.warn("exhibitionOrderId 类型转换失败: {}", data.get("exhibitionOrderId"));
+            return mqResponseDTO;
+        }
+
+        ExhibitionOrderDTO.DownstreamDTO downstreamDTO = null;
+        try{
+            downstreamDTO = exhibitionOrderFeign.generateDownstreamByExhibitionOrder(exhibitionOrderId);
+        }catch (Exception e){
+            log.error("构建其他入库单和销售出库单入参失败，exhibitionOrderId: {}", exhibitionOrderId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        try{
+            // 生成其他入库单
+            OtherInstockDTO.AddDTO otherInstockAddDTO = downstreamDTO.getOtherInstockAddDTO();
+            OtherInstockService bean = SpringUtil.getBean(OtherInstockService.class);
+            String otherInstockId = bean.addAndSubmit(otherInstockAddDTO);
+            if(StringUtils.isBlank(otherInstockId)){
+                throw new ServiceException("展会订单自动生成其他入库单失败");
+            }
+
+            String comment = "展会订单自动审核通过";
+            // 审核通过其他入库单
+            BatchResultDTO result = approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE);
+            if (!result.getSuccess()) {
+                throw new ServiceException(result.getMsg());
+            }
+
+            //生成销售出库单
+            Boolean save = soOutstockService.addB2bPushDownNo(downstreamDTO.getGenerateSoOutstockViewDTOList());
+            if(!save){
+                throw new ServiceException("展会订单自动生成销售出库单失败");
+            }
+
+            List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSoId, downstreamDTO.getSoId()).list();
+            List<String> soOutstockIds = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+
+            //提审
+            soOutstockService.submit(soOutstockIds,Boolean.FALSE);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("otherInstockId", otherInstockId);
+            map.put("soOutstockId", soOutstockIds.get(0));
+            mqResponseDTO.setData(map);
+
+        }catch (Exception e){
+            log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+        return mqResponseDTO;
+    }
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO autoOtherDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId")) || !data.containsKey("exhibitionOrderId") || Objects.isNull(data.get("exhibitionOrderId")) ){
+            mqResponseDTO.setErrorMsg("soId或exhibitionOrderId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        String exhibitionOrderId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+            exhibitionOrderId = String.valueOf(data.get("exhibitionOrderId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId或exhibitionOrderId类型转换失败");
+            log.warn("soId 类型转换失败: {} 或 exhibitionOrderId 类型转换失败: {}", data.get("soId"), data.get("exhibitionOrderId"));
+            return mqResponseDTO;
+        }
+
+        //销售出库单
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSoId, soId).list();
+        if(CollUtil.isNotEmpty(soOutstockEntities)){
+            StringBuilder sb = new StringBuilder();
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(soOutstockEntities.size());
+            for (SoOutstockEntity entity : soOutstockEntities) {
+                try {
+                    BatchResultDTO result = soOutstockService.disApprove(entity, Boolean.TRUE);
+                    if(!result.getSuccess()){
+                        sb.append(StrUtil.format("销售出库单反审核失败,soOutstockId:{} ;",entity.getId()));
+                    }
+                    resultDTOS.add(result);
+                }catch (Exception e){
+                    sb.append(StrUtil.format("销售出库单反审核失败,soOutstockId:{},e:{};",entity.getId(),e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                }
+            }
+
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)) {
+                List<String> ids = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+                String idsStr = soOutstockEntities.stream()
+                        .map(SoOutstockEntity::getId)
+                        .collect(Collectors.joining(","));
+                try {
+                    Boolean delete = soOutstockService.delete(ids);
+                    if(!delete){
+                        mqResponseDTO.setErrorMsg(StrUtil.format("销售出库单删除失败,soOutstockId:{}",idsStr));
+                        log.warn(sb.toString());
+                        return mqResponseDTO;
+                    }
+                }catch (Exception e){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("销售出库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
+                    log.warn(sb.toString());
+                    return mqResponseDTO;
+                }
+            }else {
+                mqResponseDTO.setErrorMsg(sb.toString());
+                log.warn(sb.toString());
+                return mqResponseDTO;
+            }
+        }
+
+        //其他入库单
+        List<OtherInstockEntity> otherInstockEntities = lambdaQuery().eq(OtherInstockEntity::getSourceId, exhibitionOrderId).list();
+        if(CollUtil.isNotEmpty(otherInstockEntities)){
+            OtherInstockService bean = SpringUtil.getBean(OtherInstockService.class);
+            StringBuilder sb = new StringBuilder();
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(otherInstockEntities.size());
+            for (OtherInstockEntity entity : otherInstockEntities) {
+                try {
+                    BatchResultDTO result = bean.disApprove(entity.getId(), Boolean.TRUE);
+                    if(!result.getSuccess()){
+                        sb.append(StrUtil.format("其他入库单反审核失败,otherInstockId:{} ;",entity.getId()));
+                    }
+                    resultDTOS.add(result);
+                }catch (Exception e){
+                    log.error("其他入库单反审核失败",e);
+                    sb.append(StrUtil.format("其他入库单反审核失败,otherInstockId:{},e:{} ;",entity.getId(),e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                }
+            }
+
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)) {
+                List<String> ids = otherInstockEntities.stream().map(OtherInstockEntity::getId).collect(Collectors.toList());
+                String idsStr = otherInstockEntities.stream()
+                        .map(OtherInstockEntity::getId)
+                        .collect(Collectors.joining(","));
+                try {
+                    Boolean delete = bean.delete(ids);
+                    if(!delete){
+                        mqResponseDTO.setErrorMsg(StrUtil.format("其他入库单删除失败,soOutstockId:{}",idsStr));
+                        log.warn(sb.toString());
+                        return mqResponseDTO;
+                    }
+                }catch (Exception e){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("其他入库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
+                    log.error("其他入库单删除失败",e);
+                    return mqResponseDTO;
+                }
+            }else {
+                mqResponseDTO.setErrorMsg(sb.toString());
+                log.warn(sb.toString());
+                return mqResponseDTO;
+            }
+        }
+
+        mqResponseDTO.setData(data);
+        return mqResponseDTO;
+    }
+
+    /**
+     * 生成其他入库单和销售出库单并审批流程
+     *
+     * @param dto MQ请求数据传输对象，包含流程审批所需的数据
+     * @return MQ响应数据传输对象，包含处理结果和错误信息
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+
+        if(!data.containsKey("otherInstockId") || Objects.isNull(data.get("otherInstockId")) || !data.containsKey("soOutstockId") || Objects.isNull(data.get("soOutstockId")) ){
+            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId为空");
+            return mqResponseDTO;
+        }
+        String otherInstockId;
+        String soOutstockId;
+        try {
+            otherInstockId = String.valueOf(data.get("otherInstockId"));
+            soOutstockId = String.valueOf(data.get("soOutstockId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId类型转换失败");
+            log.warn("otherInstockId 类型转换失败: {} 或 soOutstockId 类型转换失败: {}", data.get("otherInstockId"),data.get("soOutstockId"));
+            return mqResponseDTO;
+        }
+
+        try{
+
+            String comment = "展会订单自动审核通过";
+            //审核通过
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(soOutstockId);
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setComment(comment);
+            BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
+            if (!approve.getSuccess()) {
+                throw new ServiceException(approve.getMsg());
+            }
+        }catch (Exception e){
+            log.error("生成其他入库单和销售出库单失败，otherInstockId: {}，soOutstockId: {}", otherInstockId,soOutstockId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+        return mqResponseDTO;
     }
 }

@@ -81,4 +81,6 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      * @param dto
      */
     void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto);
+
+    void deleteByUrlList(List<String> urlList);
 }

@@ -37,6 +37,7 @@ import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1103,6 +1104,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @GlobalTransactional(propagation = Propagation.NOT_SUPPORTED)
     public Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds) {
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyMap();

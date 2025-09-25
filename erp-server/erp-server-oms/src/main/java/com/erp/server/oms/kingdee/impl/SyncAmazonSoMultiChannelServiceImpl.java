@@ -97,7 +97,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
             taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceCode(entity.getDeliveryCode());
             taskFeignDTO.setSourceType(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_AMAZON_ERP_TOPIC);
             taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_MULTI_CHANNEL_TAG.getName());
@@ -110,7 +110,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
 
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setSourceId(entity.getId());
-        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceCode(entity.getDeliveryCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         omsPushMsgEntity.setTargetPlatform(PlatformEnum.AMAZON.getName());

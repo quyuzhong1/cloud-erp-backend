@@ -164,4 +164,12 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/listChannelBlacklist")
     List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList);
+
+    /**
+     * 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币）
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/getSkuCostInCNY")
+    List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
 }

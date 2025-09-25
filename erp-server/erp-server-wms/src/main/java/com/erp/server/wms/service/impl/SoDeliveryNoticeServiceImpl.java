@@ -5,7 +5,10 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -31,6 +34,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
@@ -543,7 +547,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids,Boolean isNeedProcess) {
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -558,8 +562,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != soDeliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-
         //TODO 待加审核流程
+        if(isNeedProcess){
+
+        }
         //操作日志
         List<Pair<String, String>> pairList = soDeliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("提交了一个发货通知单【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "提交操作");
@@ -577,7 +583,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Collections.singletonList(id));
+        return this.submit(Collections.singletonList(id),Boolean.TRUE);
     }
 
     @Override
@@ -586,7 +592,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Collections.singletonList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()),Boolean.TRUE);
     }
 
     @Override
@@ -645,6 +651,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
         //已审核支持反审核
@@ -2262,6 +2269,212 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         List<SoDeliveryNoticeEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity()));
+    }
+
+    /**
+     * 根据B2B销售订单ID生成发货通知单并审批通过
+     * @param dto 用于查询相关数据并生成发货通知单
+     * @return MqRequestDTO 包含处理结果的对象，包含ID和错误信息（如果有）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId"))){
+            mqResponseDTO.setErrorMsg("soId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId 类型转换失败");
+            log.warn("soId 类型转换失败: {}", data.get("soId"));
+            return mqResponseDTO;
+        }
+
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
+
+        SoInfoEntity soInfoEntity = null;
+        try {
+            //获取销售单信息
+            soInfoEntity = soInfoFeign.getSoInfoById(soId);
+            if(Objects.isNull(soInfoEntity)){
+                mqResponseDTO.setErrorMsg("销售订单不存在 soId:"+soId);
+                return mqResponseDTO;
+            }
+            soDeliveryNoticeEntity = addBySoId(soInfoEntity);
+        }catch (Exception e) {
+            log.error("发货通知单新增异常，soId: {}", soId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        try {
+            submit(Arrays.asList(soDeliveryNoticeEntity.getId()), Boolean.FALSE);
+        }catch (Exception e) {
+            log.error("发货通知单提交异常，soId: {}", soId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        try {
+            String id = soDeliveryNoticeEntity.getId();
+//            approve(soDeliveryNoticeEntity,ApproveTypeEnum.PASS.getStatus(),"展会订单自动审核通过", Boolean.FALSE);
+            //审核通过
+            lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .eq(SoDeliveryNoticeEntity::getId, id)
+                    .update();
+            //操作日志
+            String comment = "展会订单自动审核通过";
+            operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.PASS.getName(),soDeliveryNoticeEntity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), id, "审核操作");
+        }catch (Exception e) {
+            log.error("发货通知单审批通过异常，soId: {}", soId, e);
+            mqResponseDTO.setErrorMsg(e.getMessage());
+            return mqResponseDTO;
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("exhibitionOrderId", soInfoEntity.getSourceId());
+        mqResponseDTO.setData(map);
+        return mqResponseDTO;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        Map<String, Object> data = dto.getData();
+        //校验data是否为空
+        if (ObjectUtil.isEmpty(data)) {
+            mqResponseDTO.setErrorMsg("data为空");
+            return mqResponseDTO;
+        }
+        if(!data.containsKey("soId") || Objects.isNull(data.get("soId"))){
+            mqResponseDTO.setErrorMsg("soId为空");
+            return mqResponseDTO;
+        }
+        String soId;
+        try {
+            soId = String.valueOf(data.get("soId"));
+        } catch (Exception e) {
+            mqResponseDTO.setErrorMsg("soId 类型转换失败");
+            log.warn("soId 类型转换失败: {}", data.get("soId"));
+            return mqResponseDTO;
+        }
+
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, soId).list();
+        if(CollUtil.isNotEmpty(soDeliveryNoticeEntities)){
+            SoDeliveryNoticeService bean = SpringUtil.getBean(SoDeliveryNoticeService.class);
+
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(soDeliveryNoticeEntities.size());
+
+            StringBuilder sb = new StringBuilder();
+            for (SoDeliveryNoticeEntity entity : soDeliveryNoticeEntities) {
+                try {
+                    BatchResultDTO result = bean.disApprove(entity);
+                    if(!result.getSuccess()){
+                        sb.append(StrUtil.format("发货通知单反审核失败,soDeliveryNoticeId:{} ;",entity.getId()));
+                    }
+                    resultDTOS.add(result);
+                }catch (Exception e){
+                    log.error("发货通知单反审核失败",e);
+                    sb.append(StrUtil.format("发货通知单反审核失败,soDeliveryNoticeId:{} ,e:{};",entity.getId(),e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                }
+            }
+
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)) {
+                List<String> ids = soDeliveryNoticeEntities.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
+                String idsStr = soDeliveryNoticeEntities.stream()
+                        .map(SoDeliveryNoticeEntity::getId)
+                        .collect(Collectors.joining(","));
+                try {
+                    Boolean delete = bean.delete(ids);
+                    if(!delete){
+                        mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{}",idsStr));
+                        log.warn(sb.toString());
+                        return mqResponseDTO;
+                    }
+                }catch (Exception e){
+                    mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
+                    log.error("发货通知单删除失败",e);
+                    return mqResponseDTO;
+                }
+            }else {
+                mqResponseDTO.setErrorMsg(sb.toString());
+                log.warn(sb.toString());
+                return mqResponseDTO;
+            }
+        }
+        mqResponseDTO.setData(data);
+        return mqResponseDTO;
+    }
+
+    private SoDeliveryNoticeEntity addBySoId(SoInfoEntity soInfoEntity) {
+        //生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHTZ);
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
+        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType());
+        soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                soDeliveryNoticeEntity.setSalesDeptName(dept.getName());
+            }
+        }
+        //虚拟仓库
+//        soDeliveryNoticeEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+        soDeliveryNoticeEntity.setSellerId(soInfoEntity.getSellerId());
+        soDeliveryNoticeEntity.setSellerName(soInfoEntity.getSellerName());
+        soDeliveryNoticeEntity.setCustomerId(soInfoEntity.getCustomerId());
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        soDeliveryNoticeEntity.setCustomerName(customerInfoEntity.getName());
+        soDeliveryNoticeEntity.setReceiverName(soInfoEntity.getReceiverName());
+        soDeliveryNoticeEntity.setTelNumber(soInfoEntity.getTelNumber());
+        soDeliveryNoticeEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
+        soDeliveryNoticeEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
+        soDeliveryNoticeEntity.setRequireDate(soInfoEntity.getRequireDate());
+        soDeliveryNoticeEntity.setWarehouseId(soInfoEntity.getWarehouseId());
+        soDeliveryNoticeEntity.setWarehouseName(soInfoEntity.getWarehouseOrgName());
+        soDeliveryNoticeEntity.setCode(code);
+        soDeliveryNoticeEntity.setSourceId(soInfoEntity.getId());
+        soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
+        soDeliveryNoticeEntity.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        save(soDeliveryNoticeEntity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
+        String id = soDeliveryNoticeEntity.getId();
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
+        List<SoDeliveryNoticeDetailEntity> detailList = new ArrayList<>();
+        for (SoDetailEntity soDetailEntity : soDetailEntitieList) {
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
+            String idStr = IdWorker.getIdStr();
+            soDeliveryNoticeDetailEntity.setId(idStr);
+            soDeliveryNoticeDetailEntity.setMainId(id);
+            soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
+            soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
+            soDeliveryNoticeDetailEntity.setToCountry(soDetailEntity.getToCountry());
+            soDeliveryNoticeDetailEntity.setDeliveryQty(soDetailEntity.getQty());
+            soDeliveryNoticeDetailEntity.setSourceDetailId(soDetailEntity.getId());
+            soDeliveryNoticeDetailEntity.setLastPickingQty(0);
+            detailList.add(soDeliveryNoticeDetailEntity);
+        }
+        soDeliveryNoticeDetailService.saveBatch(detailList);
+        return soDeliveryNoticeEntity;
     }
 
     @Override

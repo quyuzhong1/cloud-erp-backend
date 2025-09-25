@@ -193,6 +193,7 @@ public enum ApiError implements Serializable {
 
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_DICT_BANK_IS_EXIST(9057,"银行名称【{}】不能重复"),
 
 
     /**
@@ -950,6 +951,7 @@ public enum ApiError implements Serializable {
     ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
     ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
     ERROR_WAREHOUSE_NO_STAGING(99089,"仓库【{}】对应默认暂存库位不存在"),
+
     ERROR_99100(99100,"暂无可用仓位"),
 
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
@@ -1117,6 +1119,21 @@ public enum ApiError implements Serializable {
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+
+    ERROR_SAMPLE_AVAILABLE_QTY(99153,"SKU【{}】{}数量不能大于台账数量"),
+    ERROR_SAMPLE_BORROW_DATE(99154,"预计退回日期不能小于借用日期"),
+    ERROR_GENERATE_SAMPLE_RETURN_VIEW(99155,"只有已审核且可归还数量大于0的样品借用单支持下推样品归还单"),
+    ERROR_GENERATE_SAMPLE_VIEW(99156,"台账数量为0，无法下推{}"),
+    ERROR_GENERATE_SAMPLE_USER_IDS(99157,"请勿选择多个{}"),
+    ERROR_SAMPLE_RETURN_QTY_NOT_EXIST(99158,"【{}】不存在可归还数量"),
+    ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH(99159,"SKU【{}】归还数量【{}】不能大于可归还数量【{}】"),
+    ERROR_SAMPLE_LEDGER_NOT_EXIST(99160,"样品台账不存在"),
+    ERROR_SAMPLE_BORROW_USER_SAME(99161,"借入人和借出人不能相同"),
+    ERROR_SAMPLE_RETURN_USER_SAME(99162,"归还人和接收人不能相同"),
+    ERROR_SAMPLE_RETURN_EXIST(99163,"已下推的归还单不支持反审核"),
+    ERROR_GENERATE_CAN_RETURN_QTY_NOT(99164,"可归还数量为0，没有可下推的数据"),
+
+
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     ERROR_PDF_MERGE_SKU_BARCODE(92115,"打印SKU条码失败，合并PDF时出错"),
     ERROR_PDF_SO_MERGE(92115,"打印面单失败，合并PDF时出错"),
@@ -1323,6 +1340,12 @@ public enum ApiError implements Serializable {
 
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+
+
+
+
+
+
 
     /**
      * OMS 错误

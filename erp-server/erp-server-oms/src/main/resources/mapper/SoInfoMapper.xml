@@ -406,4 +406,31 @@
             #{item}
         </foreach>
     </select>
+    <select id="listByExhibitionId" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$DownstreamListDTO">
+        SELECT
+            si.ID,
+            si.code,
+            si.approve_status,
+            si.invalid_status,
+            si.approve_time,
+            si.approve_status,
+            si.approve_user_name,
+            si.bill_date,
+            si.remark,
+            si.warehouse_id,
+            sd.ID AS detailId,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.remark AS detailRemark
+        FROM
+            so_info AS si
+                LEFT JOIN so_detail AS sd ON si.ID = sd.main_id
+                AND sd.is_deleted = FALSE
+        WHERE
+            si.is_deleted = FALSE
+          AND si.source_id = #{exhibitionId}
+        ORDER BY
+            si.create_time DESC
+    </select>
 </mapper>
