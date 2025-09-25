@@ -112,14 +112,8 @@
         </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
-            ORDER BY
-            case
-            when sl.sku_no = #{params.skuNo} THEN 1
-            when sl.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
-            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
-            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
-            end, sl.sku_no
         </if>
+        ORDER BY sl.sku_no
     </sql>
 
     <select id="listSkuAvailableQtyByUserId" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
