@@ -1001,7 +1001,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
-
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
         if (CharSequenceUtil.isNotBlank(shop.getBusinessModel()) && PlatformDictEnum.MERCADOLIBRE.getCode().equals(shop.getDictPlatform())) {
             DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
             if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
@@ -1020,7 +1020,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
             view.setClientId(clientId);
             view.setClientSecret(clientSecret);
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
+            if(Objects.nonNull(shopAuth)){
+                view.setToken(shopAuth.getAccessToken());
+            }
+        }
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(dictPlatform)){
             if(Objects.nonNull(shopAuth)){
                 view.setToken(shopAuth.getAccessToken());
             }
