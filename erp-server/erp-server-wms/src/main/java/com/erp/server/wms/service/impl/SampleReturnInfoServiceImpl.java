@@ -1036,7 +1036,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
                 // 设置样品台账ID，用于查询使用方信息
-                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                // 设置样品台账ID，用于查询使用方信息
+                SampleBorrowDetailEntity byId = sampleBorrowDetailService.getById(detail.getSourceDetailId());
+                flowDetail.setSampleLedgerId(byId != null ? byId.getSampleLedgerId() : null);
                 flowDetails.add(flowDetail);
             }
 
@@ -1099,7 +1101,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
                 // 设置样品台账ID，用于查询使用方信息
-                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                SampleBorrowDetailEntity byId = sampleBorrowDetailService.getById(detail.getSourceDetailId());
+                flowDetail.setSampleLedgerId(byId != null ? byId.getSampleLedgerId() : null);
                 flowDetails.add(flowDetail);
             }
 
@@ -1112,8 +1115,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             flowDTO.setSourceName("样品归还单");
             flowDTO.setSourceCode(sourceCode);
             flowDTO.setSourceId(sourceId);
-            flowDTO.setUseUserId(entity.getReceiverUserId());
-            flowDTO.setUseUserName(entity.getReceiverUserName());
+//            flowDTO.setUseUserId(entity.getReceiverUserId());
+//            flowDTO.setUseUserName(entity.getReceiverUserName());
             flowDTO.setUserId(entity.getReceiverUserId());
             flowDTO.setUserName(entity.getReceiverUserName());
             flowDTO.setDeptId(entity.getReceiverDeptId());
