@@ -1181,8 +1181,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             flowDTO.setSourceName("样品报废单");
             flowDTO.setSourceCode(sourceCode);
             flowDTO.setSourceId(sourceId);
-            flowDTO.setUseUserId(entity.getScrapUserId());
-            flowDTO.setUseUserName(entity.getScrapUserName());
+            // 使用方信息将通过每个明细的sampleLedgerId在SampleLedgerFlowServiceImpl中查询获取
+            // flowDTO.setUseUserId(entity.getScrapUserId());
+            // flowDTO.setUseUserName(entity.getScrapUserName());
             flowDTO.setUserId(entity.getScrapUserId());
             flowDTO.setUserName(entity.getScrapUserName());
             flowDTO.setDeptId(entity.getScrapDeptId());

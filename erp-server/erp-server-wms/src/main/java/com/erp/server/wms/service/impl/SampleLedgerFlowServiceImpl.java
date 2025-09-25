@@ -194,16 +194,33 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setUserName(addDTO.getUserName());
                 flowEntity.setDeptId(addDTO.getDeptId());
                 flowEntity.setDeptName(addDTO.getDeptName());
-                flowEntity.setUseUserId(addDTO.getUseUserId());
-                flowEntity.setUseUserName(addDTO.getUseUserName());
+                
+                // 设置主表ID
+                String finalLedgerId = StrUtil.isNotBlank(ledgerId) ? ledgerId : detail.getSampleLedgerId();
+                flowEntity.setSampleLedgerId(finalLedgerId);
+                
+                // 通过sample_ledger_id查询台账获取使用方信息
+                if (StrUtil.isNotBlank(finalLedgerId)) {
+                    SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(finalLedgerId);
+                    if (ledgerEntity != null) {
+                        flowEntity.setUseUserId(ledgerEntity.getUseUserId());
+                        flowEntity.setUseUserName(ledgerEntity.getUseUserName());
+                    } else {
+                        // 如果台账不存在，使用兜底逻辑
+                        flowEntity.setUseUserId(addDTO.getUseUserId());
+                        flowEntity.setUseUserName(addDTO.getUseUserName());
+                    }
+                } else {
+                    // 如果没有台账ID，使用兜底逻辑
+                    flowEntity.setUseUserId(addDTO.getUseUserId());
+                    flowEntity.setUseUserName(addDTO.getUseUserName());
+                }
                 
                 // 设置SKU信息
                 flowEntity.setSkuNo(detail.getSkuNo());
                 flowEntity.setSkuId(detail.getSkuId());
                 flowEntity.setProductName(detail.getProductName());
                 flowEntity.setQty(detail.getQty());
-                // 设置主表ID
-                flowEntity.setSampleLedgerId(StrUtil.isNotBlank(ledgerId) ? ledgerId : detail.getSampleLedgerId());
                 
                 flowEntities.add(flowEntity);
             }
