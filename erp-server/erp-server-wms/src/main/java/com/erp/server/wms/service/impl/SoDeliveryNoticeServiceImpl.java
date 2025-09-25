@@ -2453,7 +2453,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
         }
         //虚拟仓库
-        soDeliveryNoticeEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+//        soDeliveryNoticeEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         soDeliveryNoticeEntity.setSellerId(soInfoEntity.getSellerId());
         soDeliveryNoticeEntity.setSellerName(soInfoEntity.getSellerName());
         soDeliveryNoticeEntity.setCustomerId(soInfoEntity.getCustomerId());
@@ -2490,7 +2490,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             soDeliveryNoticeDetailEntity.setToCountry(soDetailEntity.getToCountry());
             soDeliveryNoticeDetailEntity.setDeliveryQty(soDetailEntity.getQty());
             soDeliveryNoticeDetailEntity.setSourceDetailId(soDetailEntity.getId());
-            soDeliveryNoticeDetailEntity.setLastPickingQty(soDeliveryNoticeDetailEntity.getDeliveryQty());
+            soDeliveryNoticeDetailEntity.setLastPickingQty(0);
             detailList.add(soDeliveryNoticeDetailEntity);
         }
         soDeliveryNoticeDetailService.saveBatch(detailList);
