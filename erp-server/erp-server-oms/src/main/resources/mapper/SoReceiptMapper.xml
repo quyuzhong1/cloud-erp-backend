@@ -99,7 +99,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  so_receipt
+        FROM  so_receipt sr
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
