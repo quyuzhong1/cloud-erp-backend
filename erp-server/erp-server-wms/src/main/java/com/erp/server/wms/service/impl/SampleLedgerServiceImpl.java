@@ -173,7 +173,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         if (pagingDTO == null || pagingDTO.getParams() == null) {
             throw new IllegalArgumentException("pagingDTO and its params must not be null");
         }
-        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize(), false);
+        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         SampleLedgerDTO.SearchDTO params = pagingDTO.getParams();
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
             params.setSkuNo(params.getSkuNos().get(0));
