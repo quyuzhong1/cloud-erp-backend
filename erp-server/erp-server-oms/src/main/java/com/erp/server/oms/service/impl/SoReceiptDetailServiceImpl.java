@@ -19,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,6 +162,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<SoReceiptDetailEntity> updateEntityList = new ArrayList<>();
         for (SoReceiptDetailDTO.UpdateDTO updateDTO : updateList) {
             SoReceiptDetailEntity soReceiptDetailEntity = dbList.stream().filter(v -> v.getId().equals(updateDTO.getId())).findFirst().orElse(new SoReceiptDetailEntity());
+            SoReceiptDetailEntity old = SerializationUtils.clone(soReceiptDetailEntity);
             soReceiptDetailEntity.setSoCode(updateDTO.getSoCode());
             soReceiptDetailEntity.setSoId(updateDTO.getSoId());
             soReceiptDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
@@ -169,8 +171,8 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
             soReceiptDetailEntity.setId(updateDTO.getId());
             updateEntityList.add(soReceiptDetailEntity);
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
-            operateLogService.addModuleOperateLogByObj(soReceiptDetailEntity, soReceiptDetailEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
+            String msg = StrUtil.format("用户【{}】编辑【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), "收款单");
+            operateLogService.addModuleOperateLogByObj(old, soReceiptDetailEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
         }
         if(CollectionUtils.isNotEmpty(updateEntityList)){
             this.updateBatchById(updateEntityList);

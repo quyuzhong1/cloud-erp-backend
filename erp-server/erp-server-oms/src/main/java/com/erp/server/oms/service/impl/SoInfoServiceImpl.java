@@ -1137,7 +1137,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setRemainReceiveAmount(
                     item.getOrderAmount()
                             .subtract(item.getReceiveAmount())
-                            .max(BigDecimal.ZERO)
+                            .min(BigDecimal.ZERO)
             );
         }
 
@@ -1688,6 +1688,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //表示 有变更中的销售变更单
         if (soChangeCount > 0) {
             throw new ServiceException(ApiError.ERROR_92047);
+        }
+        //订货通来源的订单不能反审核
+        if(PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException("订货通来源的订单不允许反审核");
         }
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(approveStatus)).
@@ -3617,21 +3621,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap) {
-        List<String> ids = new ArrayList<>(updateSoReceiptAmountMap.keySet());
-        List<SoInfoEntity> soInfoEntityList = this.listByIds(ids);
+    public void updateSoReceiptAmount(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return;
+        }
+        //查询已审核的收款单
+        List<SoReceiptDTO.AmountDTO> amountDTOS = soReceiptService.queryAmountBySoIds(soIds);
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(soIds);
         if (CollectionUtils.isEmpty(soInfoEntityList)) {
             return;
         }
         for (SoInfoEntity soInfoEntity : soInfoEntityList) {
-            BigDecimal receiptAmount = updateSoReceiptAmountMap.get(soInfoEntity.getId());
-            if (Objects.isNull(receiptAmount)) {
-                continue;
-            }
-            soInfoEntity.setReceiveAmount(soInfoEntity.getReceiveAmount().add(receiptAmount));
+            BigDecimal receiptAmount = amountDTOS.stream().filter(v -> v.getSoId().equals(soInfoEntity.getId())).map(SoReceiptDTO.AmountDTO::getReceiptAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            soInfoEntity.setReceiveAmount(receiptAmount);
         }
         this.updateBatchById(soInfoEntityList);
-
     }
 
     @Override
@@ -4376,7 +4380,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
             addSo.setBankServiceFee(bankServiceFee);
             addSo.setShippingFee(shippingFee);
-            addSo.setReceiveAmount(receiveAmount);
             addSo.setCustomsFee(customsFee);
             addSo.setOrderAmount(orderAmount);
             addSo.setDiscountAmount(discountAmount);

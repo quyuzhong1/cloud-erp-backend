@@ -366,6 +366,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+
+        //更新销售订单的收款金额
+        List<String> soIds = detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        soInfoService.updateSoReceiptAmount(soIds);
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(),  "收款单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), entity.getId(), "反审核操作");
@@ -447,8 +453,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if(Objects.equals(ApproveTypeEnum.PASS.getStatus(), dto.getType())){
             List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             //更新销售订单的收款金额
-            Map<String,BigDecimal> updateSoReceiptAmountMap = detailEntityList.stream().collect(Collectors.groupingBy(SoReceiptDetailEntity::getSoId,Collectors.mapping(SoReceiptDetailEntity::getReceiptAmount,Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
-            soInfoService.updateSoReceiptAmount(updateSoReceiptAmountMap);
+            List<String> soIds = detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            soInfoService.updateSoReceiptAmount(soIds);
             //创建推送订货通任务
             syncDhtService.createSyncReceiptTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
@@ -597,6 +603,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             detailUpdateDTO.setReceiptAmount(update.getReceiptAmount());
             detailUpdateDTO.setPaymentNo(update.getPaymentNo());
             detailUpdateDTO.setRemark(update.getRemark());
+            detailUpdateDTO.setAttachmentList(update.getDetailAttachmentList());
             updateDTO.setDetailList(Arrays.asList(detailUpdateDTO));
             this.update(updateDTO);
         }

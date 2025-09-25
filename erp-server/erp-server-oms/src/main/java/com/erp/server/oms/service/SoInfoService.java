@@ -532,7 +532,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
 
-    void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap);
+    void updateSoReceiptAmount(List<String> soIds);
 
     void handlePlatformConsumer(PlatformB2bOrderDTO dto);
 
