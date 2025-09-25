@@ -35,7 +35,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        sb2c.id,
+        distinct sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
@@ -110,7 +110,7 @@
         sb2c.multi_channel_type as multiChannelType
     </sql>
     <sql id="Full_Managed_Column_List">
-        sb2c.id,
+        distinct sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
