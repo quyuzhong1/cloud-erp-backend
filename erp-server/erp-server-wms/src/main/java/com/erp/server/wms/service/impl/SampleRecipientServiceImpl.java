@@ -959,6 +959,14 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 log.info("结束领用 开始记录操作日志，明细id：【{}】", detailId);
                 String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】明细结束领用操作", 
                     UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode(), "样品领用单");
+                
+                // 添加SKU信息
+                if (StrUtil.isNotBlank(detailEntity.getSkuNo())) {
+                    msg += StrUtil.format("，SKU：【{}】", detailEntity.getSkuNo());
+                }
+                if (StrUtil.isNotBlank(detailEntity.getProductName())) {
+                    msg += StrUtil.format("，产品：【{}】", detailEntity.getProductName());
+                }
                 if (StrUtil.isNotBlank(reason)) {
                     msg += StrUtil.format("，结束原因：【{}】", reason);
                 }
