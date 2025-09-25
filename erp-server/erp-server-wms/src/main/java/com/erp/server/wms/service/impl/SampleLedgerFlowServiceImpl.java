@@ -264,21 +264,21 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
         try {
             String ledgerId = detail.getSampleLedgerId();
             
-            if (StrUtil.isNotBlank(ledgerId)) {
-                // 如果有台账ID，直接通过ID查询该台账记录，然后更新数量
-                SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(ledgerId);
-                if (ledgerEntity != null) {
-                    // 查询该台账ID对应的所有明细数量总和
-                    Integer totalQty = this.baseMapper.selectTotalQtyByLedgerId(ledgerId);
-                    if (totalQty != null) {
-                        // 直接更新该台账记录的数量
-                        ledgerEntity.setQty(totalQty);
-                        sampleLedgerService.updateById(ledgerEntity);
-                        log.info("通过台账ID更新数量成功，台账ID：{}，数量：{}", ledgerId, totalQty);
-                        return ledgerId;
-                    }
-                }
-            } else {
+//            if (StrUtil.isNotBlank(ledgerId)) {
+//                // 如果有台账ID，直接通过ID查询该台账记录，然后更新数量
+//                SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(ledgerId);
+//                if (ledgerEntity != null) {
+//                    // 查询该台账ID对应的所有明细数量总和
+//                    Integer totalQty = this.baseMapper.selectTotalQtyByLedgerId(ledgerId);
+//                    if (totalQty != null) {
+//                        // 直接更新该台账记录的数量
+//                        ledgerEntity.setQty(totalQty);
+//                        sampleLedgerService.updateById(ledgerEntity);
+//                        log.info("通过台账ID更新数量成功，台账ID：{}，数量：{}", ledgerId, totalQty);
+//                        return ledgerId;
+//                    }
+//                }
+//            } else {
                 // 如果没有台账ID，按原来的逻辑查询和更新
                 Integer totalQty = this.baseMapper.selectTotalQtyByConditions(
                         flowEntity.getUserId(),
@@ -303,7 +303,6 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                     );
                     return newLedgerId;
                 }
-            }
         } catch (Exception e) {
             log.error("更新SampleLedger主表数量失败，SKU：{}，错误：{}", detail.getSkuNo(), e.getMessage(), e);
             // 更新失败不影响主流程，只记录日志
