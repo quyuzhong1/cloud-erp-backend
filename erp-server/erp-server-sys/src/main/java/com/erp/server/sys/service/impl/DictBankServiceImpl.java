@@ -1,9 +1,13 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.BankDTO;
 import com.erp.model.sys.entity.DictBankEntity;
@@ -13,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -36,11 +41,28 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
      */
     @Override
     public Boolean saveOrUpdateBatchBank(ValidList<BankDTO.AddOrUpdateDTO> bankList) {
-        if (CollectionUtils.isNotEmpty(bankList)) {
-            List<DictBankEntity> addList = BeanMapper.copyList(bankList, DictBankEntity.class);
-            return this.saveOrUpdateBatch(addList);
+        List<BankDTO.AddOrUpdateDTO> list = bankList.getList();
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST);
         }
-        return true;
+        List<String> bankNameList = list.stream().map(BankDTO.AddOrUpdateDTO::getName).distinct().collect(Collectors.toList());
+        List<DictBankEntity> dictBankList = listByBankNameList(bankNameList);
+        for (BankDTO.AddOrUpdateDTO bankDTO: list){
+            //查询是否有传重复的名称保存
+            long count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), bankDTO.getName())).count();
+            if (count > 1) {
+                throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST, bankDTO.getName());
+            }
+
+            //查询是否存在相同名称
+            String oldName = dictBankList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), bankDTO.getName()) && !CharSequenceUtil.equals(obj.getId(),bankDTO.getId())).map(DictBankEntity::getName).findFirst().orElse("");
+            if (CharSequenceUtil.isNotBlank(oldName)) {
+                throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST, oldName);
+            }
+        }
+
+        List<DictBankEntity> addList = BeanMapper.copyList(bankList, DictBankEntity.class);
+        return this.saveOrUpdateBatch(addList);
     }
 
 
@@ -67,5 +89,18 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
         }
         List<DictBankEntity> list = this.listByIds(ids);
         return BeanMapper.copyList(list, BaseIdDTO.class);
+    }
+
+    /**
+     * 根据银行名称查询
+     * @author will
+     * @date 2025/9/19 15:43
+     * @param bankNameList
+     * @return List<DictBankEntity>
+     */
+    private List<DictBankEntity> listByBankNameList(List<String> bankNameList) {
+        LambdaQueryWrapper<DictBankEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DictBankEntity::getName, bankNameList);
+        return this.list(queryWrapper);
     }
 }

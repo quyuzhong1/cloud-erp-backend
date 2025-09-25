@@ -14,6 +14,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.SampleLedgerFlowEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.mapper.SampleLedgerFlowMapper;
 import com.erp.server.wms.service.SampleLedgerFlowService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -60,6 +61,9 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
 
     @Autowired
     private SampleLedgerService sampleLedgerService;
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -164,7 +168,13 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             return false;
         }
         
+        // 兜底逻辑：填充userName和useUserName
+        fillUserNameIfEmpty(addDTO);
+        
         try {
+            // 先更新SampleLedger主表数量，获取主表ID
+            String ledgerId = updateSampleLedgerQty(addDTO);
+            
             List<SampleLedgerFlowEntity> flowEntities = new ArrayList<>();
             
             for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
@@ -184,15 +194,33 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setUserName(addDTO.getUserName());
                 flowEntity.setDeptId(addDTO.getDeptId());
                 flowEntity.setDeptName(addDTO.getDeptName());
-                flowEntity.setUseUserId(addDTO.getUseUserId());
-                flowEntity.setUseUserName(addDTO.getUseUserName());
+                
+                // 设置主表ID
+                String finalLedgerId = StrUtil.isNotBlank(ledgerId) ? ledgerId : detail.getSampleLedgerId();
+                flowEntity.setSampleLedgerId(finalLedgerId);
+                
+                // 通过sample_ledger_id查询台账获取使用方信息
+                if (StrUtil.isNotBlank(finalLedgerId)) {
+                    SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(finalLedgerId);
+                    if (ledgerEntity != null) {
+                        flowEntity.setUseUserId(ledgerEntity.getUseUserId());
+                        flowEntity.setUseUserName(ledgerEntity.getUseUserName());
+                    } else {
+                        // 如果台账不存在，使用兜底逻辑
+                        flowEntity.setUseUserId(addDTO.getUseUserId());
+                        flowEntity.setUseUserName(addDTO.getUseUserName());
+                    }
+                } else {
+                    // 如果没有台账ID，使用兜底逻辑
+                    flowEntity.setUseUserId(addDTO.getUseUserId());
+                    flowEntity.setUseUserName(addDTO.getUseUserName());
+                }
                 
                 // 设置SKU信息
                 flowEntity.setSkuNo(detail.getSkuNo());
                 flowEntity.setSkuId(detail.getSkuId());
                 flowEntity.setProductName(detail.getProductName());
                 flowEntity.setQty(detail.getQty());
-                flowEntity.setSampleLedgerId(detail.getSampleLedgerId());
                 
                 flowEntities.add(flowEntity);
             }
@@ -200,11 +228,8 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             // 批量保存
             boolean result = super.saveBatch(flowEntities);
             if (result) {
-                log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}", 
-                    addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size());
-                
-                // 更新SampleLedger主表数量
-                updateSampleLedgerQty(addDTO);
+                log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}，主表ID：{}", 
+                    addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size(), ledgerId);
             } else {
                 log.error("新增样品台账流水失败，单据类型：{}，单据编号：{}", 
                     addDTO.getSourceType(), addDTO.getSourceCode());
@@ -222,8 +247,9 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     /**
      * 更新SampleLedger主表数量
      * 通过查询明细表，按四个条件分组求和来更新主表数量
+     * @return 主表ID
      */
-    private void updateSampleLedgerQty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+    private String updateSampleLedgerQty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
         try {
             for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
                 // 查询该SKU在明细表中的数量总和
@@ -236,7 +262,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 
                 if (totalQty != null) {
                     // 更新或插入SampleLedger主表记录
-                    updateOrInsertSampleLedger(
+                    String ledgerId = updateOrInsertSampleLedger(
                         addDTO.getUserId(),
                         addDTO.getUserName(),
                         addDTO.getDeptId(),
@@ -248,18 +274,21 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                         addDTO.getUseUserName(),
                         totalQty
                     );
+                    return ledgerId;
                 }
             }
         } catch (Exception e) {
             log.error("更新SampleLedger主表数量失败，错误：{}", e.getMessage(), e);
             // 更新失败不影响主流程，只记录日志
         }
+        return null;
     }
 
     /**
      * 更新或插入SampleLedger主表记录
+     * @return 主表ID
      */
-    private void updateOrInsertSampleLedger(String userId, String userName, String deptId, String deptName,
+    private String updateOrInsertSampleLedger(String userId, String userName, String deptId, String deptName,
                                           String skuNo, String skuId, String productName, String useUserId, 
                                           String useUserName, Integer totalQty) {
         try {
@@ -278,6 +307,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 // 使用SampleLedgerService来更新
                 sampleLedgerService.updateById(existingLedger);
                 log.debug("更新SampleLedger记录成功，ID：{}，数量：{}", existingLedger.getId(), totalQty);
+                return existingLedger.getId();
             } else {
                 // 插入新记录
                 SampleLedgerEntity newLedger = new SampleLedgerEntity();
@@ -293,10 +323,12 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 newLedger.setQty(totalQty);
                 // 使用SampleLedgerService来插入
                 sampleLedgerService.save(newLedger);
-                log.debug("插入SampleLedger记录成功，数量：{}", totalQty);
+                log.debug("插入SampleLedger记录成功，ID：{}，数量：{}", newLedger.getId(), totalQty);
+                return newLedger.getId();
             }
         } catch (Exception e) {
             log.error("更新或插入SampleLedger记录失败，错误：{}", e.getMessage(), e);
+            return null;
         }
     }
 
@@ -391,6 +423,89 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
         BeanMapperUtils.copy(entity, viewDTO);
         
         return viewDTO;
+    }
+
+    /**
+     * 兜底逻辑：当userName或useUserName为空时，通过不同方式查询用户信息
+     * @param addDTO 新增参数
+     */
+    private void fillUserNameIfEmpty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+        try {
+            // 兜底userName
+            if (StrUtil.isBlank(addDTO.getUserName()) && StrUtil.isNotBlank(addDTO.getUserId())) {
+                String userName = getUserNameById(addDTO.getUserId());
+                if (StrUtil.isNotBlank(userName)) {
+                    addDTO.setUserName(userName);
+                    log.debug("通过userId查询到userName：{}", userName);
+                }
+            }
+            
+            // 兜底useUserName
+            if (StrUtil.isBlank(addDTO.getUseUserName()) && StrUtil.isNotBlank(addDTO.getUseUserId())) {
+                String useUserName = getUserNameById(addDTO.getUseUserId());
+                if (StrUtil.isNotBlank(useUserName)) {
+                    addDTO.setUseUserName(useUserName);
+                    log.debug("通过useUserId查询到useUserName：{}", useUserName);
+                } else {
+                    // 如果通过sysUserFeign查不到，尝试通过SampleUseUserFeign查询
+                    useUserName = getSampleUseUserNameById(addDTO.getUseUserId());
+                    if (StrUtil.isNotBlank(useUserName)) {
+                        addDTO.setUseUserName(useUserName);
+                        log.debug("通过SampleUseUserFeign查询到useUserName：{}", useUserName);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("兜底查询用户名称失败，错误：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 通过userId查询userName
+     * @param userId 用户ID
+     * @return 用户名称
+     */
+    private String getUserNameById(String userId) {
+        try {
+            com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
+            
+            com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> result = 
+                sysUserFeign.userList(searchDTO);
+            
+            if (result != null && result.isSuccess() && CollUtil.isNotEmpty(result.getData())) {
+                // 使用Map匹配ID
+                Map<String, String> userMap = result.getData().stream()
+                    .collect(Collectors.toMap(
+                        com.common.business.dto.FindUserDTO::getUserId,
+                        com.common.business.dto.FindUserDTO::getUserName,
+                        (existing, replacement) -> existing
+                    ));
+                return userMap.get(userId);
+            }
+        } catch (Exception e) {
+            log.warn("通过sysUserFeign查询用户失败，userId：{}，错误：{}", userId, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 通过SampleUseUserFeign查询用户名称
+     * @param userId 用户ID
+     * @return 用户名称
+     */
+    private String getSampleUseUserNameById(String userId) {
+        try {
+            List<String> ids = Arrays.asList(userId);
+            List<com.common.business.dto.base.BaseIdDTO> result = sysDictFeign.getByIds(ids);
+            
+            if (CollUtil.isNotEmpty(result)) {
+                com.common.business.dto.base.BaseIdDTO user = result.get(0);
+                return user.getName();
+            }
+        } catch (Exception e) {
+            log.warn("通过SampleUseUserFeign查询用户失败，userId：{}，错误：{}", userId, e.getMessage());
+        }
+        return null;
     }
 
 }

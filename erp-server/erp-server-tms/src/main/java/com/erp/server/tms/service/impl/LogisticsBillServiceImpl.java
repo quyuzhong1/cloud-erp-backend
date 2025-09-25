@@ -512,6 +512,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 topUserKey(dto.getTopUserKey()).
                 sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
+                salesPlatformName(PlatformDictEnum.getNameByCode(dto.getSalesPlatform())).
                 shipmentId(dto.getShipmentId()).
                 deliveryNo(dto.getOrderCode()).
                 platformCode(dto.getPlatformCode()).
@@ -528,6 +529,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).
                 deliveryType(logisticsChannel.getDeliveryType()).
+                companyName(dto.getDeclareOrgName()).
+                usciCode(dto.getUsciCode()).
                 build();
         //根据规则处理物流单请求参数
         logisticsOrderVO = cfgRuleFeign.handleRuleOrderLogistic(LogisticsOrderRuleVO.builder().logisticsOrderVO(logisticsOrderVO).map(map).build());
@@ -540,6 +543,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     .transportNo(orderResult.getData().getTransportNo())
                     .iossTaxNo(CharSequenceUtil.isNotBlank(orderResult.getData().getIossTaxNo()) ? orderResult.getData().getIossTaxNo() : CharSequenceUtil.EMPTY)
                     .isPlatformShip(logisticsChannel.getIsPlatformShip())
+                    .declareOrgId(dto.getDeclareOrgId())
                     .build();
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();

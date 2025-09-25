@@ -193,6 +193,7 @@ public enum ApiError implements Serializable {
 
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_DICT_BANK_IS_EXIST(9057,"银行名称【{}】不能重复"),
 
 
     /**

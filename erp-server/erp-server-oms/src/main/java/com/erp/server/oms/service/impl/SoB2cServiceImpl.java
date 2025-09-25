@@ -13,6 +13,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -82,6 +83,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
@@ -406,11 +408,56 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return this.filterIsVirtualOutStockList(pagingParamDTO, isVirtualOutStock, params.getIsFullyManaged());
         } else {
             Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-            IPage<SoB2cDTO.ListDTO> pageData;
+            IPage<SoB2cDTO.ListDTO> pageData = null;
             if (params.getIsFullyManaged()){
                 pageData = this.baseMapper.fullyManagedPaging(query, params, null);
             }else {
-                pageData = this.baseMapper.paging(query, params, null);
+            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource)) {
+            		int queryCount = 0;
+            		String defaultSql = params.getSqlMap().get("default");
+            		boolean unSameCountFlag = true;
+        			while(queryCount < 3) {
+        				DynamicDataSourceContextHolder.poll();
+        				DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.DORIS);
+        	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.DORIS.getCode());
+        				params.setDynamicDataSource(DynamicDataSourceTypeEnum.DORIS.getCode());
+        				params.getSqlMap().put("default", defaultSql);
+        				params.setOnlyQueryId(1);
+        				pageData = this.baseMapper.paging(query, params, null);
+                		if(CollUtil.isEmpty(pageData.getRecords())) {
+                			unSameCountFlag = false;
+                			break;
+                		}
+                		int dorisCurrentCount = pageData.getRecords().size();
+                		long pageCurrent = pageData.getCurrent();
+                        long pages = pageData.getPages();
+                        long pageSize = pageData.getSize();
+                        long pageTotal = pageData.getTotal();
+                		
+                		DynamicDataSourceContextHolder.poll();
+        				DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.POSTGRES);
+        	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.POSTGRES.getCode());
+        				params.setDynamicDataSource(DynamicDataSourceTypeEnum.POSTGRES.getCode());
+        				params.getSqlMap().put("default", defaultSql + " and sb2c.id in (" + pageData.getRecords().stream().map(d -> d.getId()).collect(Collectors.joining("','", "'", "'")) +")");
+        				Page pgQuery = new Page(1, -1 , dorisCurrentCount , false);
+        				pageData = this.baseMapper.paging(pgQuery, params, null);
+        				if(CollUtil.isNotEmpty(pageData.getRecords()) && (dorisCurrentCount == pageData.getRecords().size())) {
+        					pageData.setCurrent(pageCurrent);
+        			        pageData.setPages(pages);
+        			        pageData.setSize(pageSize);
+        			        pageData.setTotal(pageTotal);
+        					unSameCountFlag = false;
+        					break;
+        				}
+        				queryCount = queryCount + 1;
+        			}
+        			if(unSameCountFlag) {
+        				params.getSqlMap().put("default", defaultSql);
+        				pageData = this.baseMapper.paging(query, params, null);
+        			}
+            	}else {
+            		pageData = this.baseMapper.paging(query, params, null);
+            	}
             }
             if (CollUtil.isEmpty(pageData.getRecords())) {
                 return new PagingVO(pageData);
@@ -1859,7 +1906,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //如果取消物流单 则需要清空物流单信息
             String msg = "取消物流单号，修改单号【{}/{}】改为【/】";
             operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单号");
-            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "");
+            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "", "");
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
@@ -1911,7 +1958,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             String transportNo = resultDTO.getTransportNo();
             String iossTaxNo = resultDTO.getIossTaxNo();
-            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo);
+            String declareOrgId = resultDTO.getDeclareOrgId();
+            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId);
 
             //操作日志
             String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】";
@@ -2006,6 +2054,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(auth)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setLogisticType(soB2cLogisticsEntity.getLogisticType());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
@@ -2071,6 +2123,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.nonNull(receiverEntity)) {
                 LogisticsBillDTO.ReceiverDTO receiverDTO = B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
                 result.setReceiver(receiverDTO);
+                //获取申报组织信息
+                SysAccountingCompanyEntity companyEntity = getDeclareOrg(entity, receiverEntity,detailList);
+                if (Objects.nonNull(companyEntity)) {
+                    result.setDeclareOrgId(companyEntity.getId());
+                    result.setDeclareOrgName(companyEntity.getCompanyName());
+                    result.setUsciCode(companyEntity.getUsciCode());
+                }
             }
             //获取申报信息
             List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
@@ -2079,7 +2138,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST, entity.getCode());
             }
             List<LogisticsProductVO> productVOS = new ArrayList<>(declareList.size());
-            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             if(CollectionUtils.isNotEmpty(detailList)){
                 result.setPackageId(detailList.get(0).getPlatformPackageId());
             }
@@ -2112,10 +2170,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             packageDTO.setCurrency(productVOS2.get(0).getDestCurrency());
             result.setPackageInfo(packageDTO);
         }else {
-            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
-            if (CollUtil.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-            }
             List<LogisticsProductVO> productVOS = new ArrayList<>(detailList.size());
             detailList.forEach(detail -> {
                 LogisticsProductVO productVO = B2cOrderConverter.INSTANCE.convertProductVOByEntity(detail);
@@ -2127,6 +2181,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             result.setPackageInfo(packageDTO);
         }
         return result;
+    }
+
+    private SysAccountingCompanyEntity getDeclareOrg(SoB2cEntity entity, SoB2cReceiverEntity receiverEntity, List<SoB2cDetailEntity> detailList) {
+        // B2C订单根据中转规则判断是否中转
+        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
+        ruleDTO.setReceiveCountry(receiverEntity.getCountry());
+        String deliveryWarehouseId = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).findFirst().orElse("");
+        ruleDTO.setFromWarehouse(deliveryWarehouseId);
+        ruleDTO.setSalesOrgId(entity.getOrgId());
+        ruleDTO.setDictPlatform(entity.getDictPlatform());
+        CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
+        if (Objects.isNull(resultDTO) || Boolean.FALSE.equals(resultDTO.getIsTransit()) || CollUtil.isEmpty(resultDTO.getTransferWarehouseIdList())) {
+            return null;
+        }
+        List<String> transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
+        //获取最后一个仓库
+        String lastWarehouseId = transferWarehouseIdList.get(transferWarehouseIdList.size() - 1);
+        if (CharSequenceUtil.isEmpty(lastWarehouseId)){
+            return null;
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(lastWarehouseId));
+        if (CollUtil.isEmpty(warehouseList)){
+            return null;
+        }
+        String orgId = warehouseList.get(0).getOrgId();
+        if (CharSequenceUtil.isEmpty(orgId)){
+            return null;
+        }
+        return sysUserFeign.getCompanyById(orgId);
     }
 
     /**
@@ -3681,6 +3765,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoOutstockEntity> soOutstockEntityList = soOutstockFeign.listBySoIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(soOutstockEntityList) && Objects.nonNull(soOutstockEntityList.get(0).getBillDate())) {
             logisticsDTO.setDeliveryTime(soOutstockEntityList.get(0).getBillDate().atStartOfDay());
+        }
+        if(CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getDeclareOrgId())){
+            SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(soB2cLogisticsEntity.getDeclareOrgId());
+            logisticsDTO.setDeclareOrgId(Objects.nonNull(company)?company.getId():"");
+            logisticsDTO.setDeclareOrgName(Objects.nonNull(company)?company.getCompanyName():"");
+            logisticsDTO.setUsciCode(Objects.nonNull(company)?company.getUsciCode():"");
         }
 //        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
         data.setLogisticsDTO(logisticsDTO);

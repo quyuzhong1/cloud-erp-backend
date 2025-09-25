@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.service.SampleBackInfoService;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.erp.server.wms.service.WarehouseService;
@@ -61,6 +62,7 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
     private final WarehouseService warehouseService = SpringUtil.getBean(WarehouseService.class);
     private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+    private final SysDictFeign sysDictFeign = SpringUtil.getBean(SysDictFeign.class);
     private final SampleLedgerService sampleLedgerService = SpringUtil.getBean(SampleLedgerService.class);
 
     /**
@@ -119,6 +121,7 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
             excelDTO.setUserId(findUserDTO.getUserId());
             excelDTO.setUserName(findUserDTO.getUserName());
         }
+        
 
         // 退回日期
         String backDateStr = excelDTO.getBackDateStr();
@@ -184,17 +187,40 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
             }
         }
 
+        // 处理使用方信息
+        String useUserName = excelDTO.getUseUserName();
+        String useUserId = null;
+        if (StringUtils.isNotBlank(useUserName)) {
+            // 先尝试从普通用户中查找
+            FindUserDTO useUser = userList.stream()
+                .filter(e -> useUserName.equals(e.getUserName()))
+                .findFirst()
+                .orElse(null);
+            
+            if (useUser != null) {
+                useUserId = useUser.getUserId();
+            } else {
+                // 如果普通用户中找不到，查询示例用户
+                useUserId = getSampleUseUserIdByName(useUserName);
+                if (useUserId == null) {
+                    errorMsgList.add("使用方不存在：" + useUserName);
+                }
+            }
+        }
+        
         // 查询台账信息并验证数量
         if (StringUtils.isNotBlank(excelDTO.getUserId()) && StringUtils.isNotBlank(excelDTO.getSkuId())) {
             try {
                 SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
                 searchDTO.setUserId(excelDTO.getUserId());
+                searchDTO.setUseUserId(useUserId); // 设置使用方ID
                 searchDTO.setSkuIds(new ArrayList<>(Arrays.asList(excelDTO.getSkuId())));
                 searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
                 List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
                 
                 if (CollectionUtils.isNotEmpty(skuAvailableQtyDTOS)) {
                     SampleLedgerDTO.SkuAvailableQtyDTO ledgerDTO = skuAvailableQtyDTOS.get(0);
+                    // 回填使用方信息
                     excelDTO.setUseUserId(ledgerDTO.getUseUserId());
                     excelDTO.setUseUserName(ledgerDTO.getUseUserName());
                     
@@ -298,6 +324,32 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
             log.warn("获取当前登录用户信息失败，使用系统用户：{}", e.getMessage());
             data.setCreateUserId("0");
             data.setCreateUserName("system");
+        }
+    }
+
+    /**
+     * 根据使用方名称查询使用方ID
+     */
+    private String getSampleUseUserIdByName(String useUserName) {
+        if (StringUtils.isBlank(useUserName)) {
+            return null;
+        }
+
+        try {
+            // 调用feign接口查询
+            List<String> nameList = Collections.singletonList(useUserName);
+            com.common.core.controller.vo.ApiResult<List<com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO>> result = 
+                sysUserFeign.getSampleUseUserListByNameList(nameList);
+            
+            if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO user = result.getData().get(0);
+                return user.getId();
+            }
+            
+            return null;
+        } catch (Exception e) {
+            log.error("查询使用方ID失败，使用方名称：{}，错误：{}", useUserName, e.getMessage(), e);
+            return null;
         }
     }
 

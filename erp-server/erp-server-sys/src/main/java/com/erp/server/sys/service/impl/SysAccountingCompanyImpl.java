@@ -105,6 +105,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setCurrency(dto.getCurrency());
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
+        entity.setUsciCode(dto.getUsciCode());
         entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
@@ -138,8 +139,8 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
 
     @Override
-    public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+    public PagingVO<SysAccountingCompanyEntity> paging(PagingDTO<CompanyPagingSearchDTO> dto) {
+        Page<SysAccountingCompanyEntity> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
         IPage<SysAccountingCompanyEntity> pageData = baseMapper.paging(query, params);
         List<SysAccountingCompanyEntity> records = pageData.getRecords();
@@ -152,7 +153,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         		}
         	});
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 

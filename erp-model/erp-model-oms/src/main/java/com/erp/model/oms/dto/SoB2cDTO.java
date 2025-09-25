@@ -290,6 +290,11 @@ public class SoB2cDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        
+        /**
+         * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
+         */
+        private Integer onlyQueryId;
     }
 
     @Data
