@@ -170,6 +170,7 @@ public final class SoUtils {
                 data.put("shippingFee", "");
                 data.put("receiveAmount", "");
                 data.put("discountAmount", "");
+                data.put("orderAmount", "");
                 data.put("allAmountLc", "");
                 continue;
             }
