@@ -1121,7 +1121,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setRemainReceiveAmount(
                     item.getOrderAmount()
                             .subtract(item.getReceiveAmount())
-                            .min(BigDecimal.ZERO)
+                            .max(BigDecimal.ZERO)
             );
         }
 
