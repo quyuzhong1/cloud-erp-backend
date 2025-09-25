@@ -114,6 +114,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_DELIVERY_ORDER;
 
@@ -214,6 +215,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private AuthDataFeign authDataFeign;
     @Resource
     private TikTokFullService tikTokFullService;
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1645,6 +1648,43 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if(soB2cEntity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
             throw new ServiceException("生成销售出库单失败,请查看订单异常");
         }
+    }
+
+    /**
+     * 根据源ID列表获取deliveryCode映射
+     * @param sourceIds 源ID列表
+     * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
+     */
+    @Override
+    public Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds) {
+        if(CollUtil.isEmpty(sourceIds)){
+            return Collections.emptyMap();
+        }
+
+        // 查询SoB2cDeliveryEntity中的有效配送记录
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).list();
+        Map<String, String> sourceIdToCodesMap = soB2cDeliveryEntities.stream()
+                .collect(Collectors.groupingBy(
+                        SoB2cDeliveryEntity::getSourceId,
+                        Collectors.mapping(SoB2cDeliveryEntity::getCode, Collectors.joining(","))
+                ));
+
+        // 查询ThirdWarehouseDeliveryEntity中的有效配送记录
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntities = thirdWarehouseDeliveryService.lambdaQuery().in(ThirdWarehouseDeliveryEntity::getSoId, sourceIds).ne(ThirdWarehouseDeliveryEntity::getStatus, SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()).list();
+        Map<String, String> soIdToCodesMap = thirdWarehouseDeliveryEntities.stream()
+                .collect(Collectors.groupingBy(
+                        ThirdWarehouseDeliveryEntity::getSoId,
+                        Collectors.mapping(ThirdWarehouseDeliveryEntity::getCode, Collectors.joining(","))
+                ));
+
+        // 合并两个 map，当 key 相同时优先使用 soIdToCodesMap 的值
+        Map<String, String> resultMap = Stream.concat(sourceIdToCodesMap.entrySet().stream(), soIdToCodesMap.entrySet().stream())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existingValue, newValue) -> newValue // 冲突时使用 newValue（来自 soIdToCodesMap）
+                ));
+        return resultMap;
     }
 
     @Override
