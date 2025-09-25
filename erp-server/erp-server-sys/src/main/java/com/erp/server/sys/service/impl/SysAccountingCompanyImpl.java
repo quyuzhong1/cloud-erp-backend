@@ -105,6 +105,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setCurrency(dto.getCurrency());
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
+        entity.setUsciCode(dto.getUsciCode());
         entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
