@@ -229,11 +229,11 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         // 如果存在冻结库存数据，则更新可用库存数量
         if(CollUtil.isNotEmpty(freezeQtyBySkus)){
             // 将冻结库存数据转换为Map便于快速查找
-            Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, Function.identity(),(o1,o2)->o1));
+            Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSampleLedgerId, Function.identity(),(o1,o2)->o1));
 
             // 遍历所有记录，扣除冻结库存数量
             for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
-                ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
+                ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSampleLedgerId(), null);
                 if(Objects.nonNull(freezeQtyBySku)){
                     Integer freezeQty = freezeQtyBySku.getFreezeQty();
                     if(Objects.nonNull(freezeQty) && freezeQty > 0){
