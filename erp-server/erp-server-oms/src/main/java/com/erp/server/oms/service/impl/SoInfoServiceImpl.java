@@ -1120,6 +1120,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //剩余收款金额,不能小于0
             item.setRemainReceiveAmount(
                     item.getOrderAmount()
+                            .subtract(item.getDiscountAmount())
                             .subtract(item.getReceiveAmount())
                             .max(BigDecimal.ZERO)
             );
