@@ -1342,8 +1342,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             flowDTO.setSourceName("样品借用单");
             flowDTO.setSourceCode(sourceCode);
             flowDTO.setSourceId(sourceId);
-            flowDTO.setUseUserId(entity.getBorrowUserId());
-            flowDTO.setUseUserName(entity.getBorrowUserName());
+            // 使用方信息将通过每个明细的sampleLedgerId在SampleLedgerFlowServiceImpl中查询获取
+            // flowDTO.setUseUserId(entity.getBorrowUserId());
+            // flowDTO.setUseUserName(entity.getBorrowUserName());
             flowDTO.setUserId(entity.getBorrowUserId());
             flowDTO.setUserName(entity.getBorrowUserName());
             flowDTO.setDeptId(entity.getBorrowDeptId());
