@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * b2c发货单
@@ -206,5 +207,10 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/generateDeliveryAndOutStock")
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+    }
+
+    @PostMapping("/getDeliveryCodeBySourceId")
+    public Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds){
+        return soB2cDeliveryService.getDeliveryCodeBySourceId(sourceIds);
     }
 }

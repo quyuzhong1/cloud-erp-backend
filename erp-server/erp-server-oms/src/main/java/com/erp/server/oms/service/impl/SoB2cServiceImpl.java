@@ -410,9 +410,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         //是否虚拟仓缺货
         Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        //发货单号
-        Boolean deliveryCode = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("deliveryCode")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-
         if (Objects.nonNull(isOutStock)) {
             return this.filterIsOutStockList(pagingParamDTO, isOutStock, params.getIsFullyManaged());
         } else if (Objects.nonNull(isVirtualOutStock)) {
@@ -4169,8 +4166,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
         Map<String, String> shippedMap = new HashMap<>();
         Map<String, String> manualMap = new HashMap<>();
-        //查询B2C发货单
-        Map<String, String> deliveryMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
             shippedMap = soB2cDeliveryEntities.stream()
                     .filter(v -> StringUtils.isNotBlank(v.getStatus()) && v.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
@@ -4183,6 +4178,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             SoB2cDeliveryEntity::getShipmentMark,
                             (existing, replacement) -> existing ));
         }
+
+        //查询发货单号（so_b2c_delivery 、 third_warehouse_delivery）
+        Map<String, String> deliveryCodeMap = soB2cDeliveryFeign.getDeliveryCodeBySourceId(ids);
+
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
@@ -4323,6 +4322,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } else {
                 data.setTag(data.getIsManualDelivery());
             }
+
+            //获取发货单号
+            data.setDeliveryCode(deliveryCodeMap.getOrDefault(data.getId(),""));
 
             Boolean isCombination = Boolean.FALSE;
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
