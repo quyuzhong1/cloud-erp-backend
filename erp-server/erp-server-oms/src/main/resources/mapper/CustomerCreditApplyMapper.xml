@@ -88,7 +88,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  customer_credit_apply
+        FROM  customer_credit_apply cca
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
