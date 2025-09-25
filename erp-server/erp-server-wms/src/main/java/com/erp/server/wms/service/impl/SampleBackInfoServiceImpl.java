@@ -1103,8 +1103,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 flowDetail.setSkuId(detail.getSkuId());
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
-                // 设置样品台账ID（如果有的话）
-                // flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                // 设置样品台账ID，用于查询使用方信息
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
                 flowDetails.add(flowDetail);
             }
 
@@ -1117,8 +1117,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             flowDTO.setSourceName("样品退回单");
             flowDTO.setSourceCode(sourceCode);
             flowDTO.setSourceId(sourceId);
-            flowDTO.setUseUserId(entity.getUserId());
-            flowDTO.setUseUserName(entity.getUserName());
+            // 使用方信息将通过每个明细的sampleLedgerId在SampleLedgerFlowServiceImpl中查询获取
+            // flowDTO.setUseUserId(entity.getUserId());
+            // flowDTO.setUseUserName(entity.getUserName());
             flowDTO.setUserId(entity.getUserId());
             flowDTO.setUserName(entity.getUserName());
             flowDTO.setDeptId(entity.getDeptId());
