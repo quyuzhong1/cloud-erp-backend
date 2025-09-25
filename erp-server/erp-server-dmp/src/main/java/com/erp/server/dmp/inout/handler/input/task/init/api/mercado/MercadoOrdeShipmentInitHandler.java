@@ -83,7 +83,7 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
 
 			Object fid = shipping.get("fid");
-			if(Objects.isNull(fid) || StringUtils.isBlank(fid.toString()) || fid.toString().equals("0")){
+			if(Objects.isNull(fid) || fid.toString().equals("0")){
 				continue;
 			}
 

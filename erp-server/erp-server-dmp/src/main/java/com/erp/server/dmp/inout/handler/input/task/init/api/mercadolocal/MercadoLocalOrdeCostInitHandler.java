@@ -74,7 +74,7 @@ public class MercadoLocalOrdeCostInitHandler extends DmpInputInitHandler {
 			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
 
 			Object id = shipping.get("id");
-			if(Objects.isNull(id) || StringUtils.isBlank(id.toString()) || id.toString().equals("0")){
+			if(Objects.isNull(id)|| id.toString().equals("0")){
 				continue;
 			}
 
