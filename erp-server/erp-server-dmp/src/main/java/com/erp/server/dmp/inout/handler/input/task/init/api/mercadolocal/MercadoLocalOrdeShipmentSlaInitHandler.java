@@ -98,8 +98,13 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 			}
 
 			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
+			if(Objects.isNull(shipping)){
+				continue;
+			}
 			Object fid = shipping.get("id");
-
+			if(Objects.isNull(fid) || fid.toString().equals("0")){
+				continue;
+			}
 			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", fid.toString());
 
 			Map<String, Object>  shipmentMap = shipmentMongoListMap.getOrDefault(fid, null);
