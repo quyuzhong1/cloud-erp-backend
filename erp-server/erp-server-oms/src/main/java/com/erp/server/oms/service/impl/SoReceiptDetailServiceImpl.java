@@ -90,6 +90,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<SoReceiptDetailEntity> saveList = BeanMapper.copyList(detailList, SoReceiptDetailEntity.class);
         this.saveBatch(saveList);
         List<AttachDTO> allAttachDTOS = new ArrayList<>();
+
         for (SoReceiptDetailEntity soReceiptDetailEntity : saveList) {
             SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v -> StringUtils.isNotBlank(v.getPaymentNo()) && v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
             List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
@@ -124,6 +125,10 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<SoReceiptDetailEntity> deleteList = dbList.stream().filter(v -> !ids.contains(v.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(deleteList) && !isFromSoUpdate){
             List<String> deleteIds = deleteList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
+            List<String> deleteSoCodes = deleteList.stream().map(SoReceiptDetailEntity::getSoCode).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(deleteSoCodes)){
+                operateLogService.addModuleOperateLog("用户【"+ UserContext.getDefaultLoginUser().getUserName()+"】删除【"+ String.join(",", deleteSoCodes)+"】销售单", ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(),"删除明细");
+            }
             this.removeByIds(deleteIds);
         }
         //付款流水号不能重复
@@ -156,6 +161,10 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<SoReceiptDetailDTO.UpdateDTO> addList = detailList.stream().filter(v -> StrUtil.isBlank(v.getId())).collect(Collectors.toList());
         List<SoReceiptDetailDTO.AddDTO> addDTOList = BeanMapper.copyList(addList, SoReceiptDetailDTO.AddDTO.class);
         this.addDetail(soReceiptEntity, addDTOList);
+        List<String> addSoCodes = addList.stream().map(SoReceiptDetailDTO.UpdateDTO::getSoCode).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(addSoCodes)){
+            operateLogService.addModuleOperateLog("用户【"+ UserContext.getDefaultLoginUser().getUserName()+"】新增【"+ String.join(",", addSoCodes)+"】销售单到【收款单】", ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(),"新增明细");
+        }
 
         //修改的
         List<SoReceiptDetailDTO.UpdateDTO> updateList = detailList.stream().filter(v -> StrUtil.isNotBlank(v.getId())).collect(Collectors.toList());
