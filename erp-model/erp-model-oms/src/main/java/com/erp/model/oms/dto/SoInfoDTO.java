@@ -1007,12 +1007,6 @@ public class SoInfoDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
-         * 收款金额
-         */
-        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
-        private BigDecimal receiveAmount;
-
-        /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/cat_2732
          */
         @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
@@ -1798,12 +1792,6 @@ public class SoInfoDTO implements Serializable {
          * 收款日期
          */
         private LocalDate receiveDate;
-
-        /**
-         * 收款金额
-         */
-        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
-        private BigDecimal receiveAmount;
 
         /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms

@@ -53,7 +53,7 @@
                sr.receipt_amount as totalReceiptAmount,
                sr.currency,
                srd.so_code as soCode,
-        si.receive_amount - COALESCE((
+        si.order_amount - COALESCE((
         select sum(red2.receipt_amount) from so_receipt re2
         inner join so_receipt_detail red2 on re2.id = red2.main_id
         where re2.is_deleted = false

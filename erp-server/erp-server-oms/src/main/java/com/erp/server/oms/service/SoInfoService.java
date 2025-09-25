@@ -529,7 +529,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
-    void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap);
+    void updateSoReceiptAmount(List<String> soIds);
 
     void handlePlatformConsumer(PlatformB2bOrderDTO dto);
 
