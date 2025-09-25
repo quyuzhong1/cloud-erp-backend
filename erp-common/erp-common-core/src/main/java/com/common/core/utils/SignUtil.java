@@ -3,6 +3,7 @@ package com.common.core.utils;
 import com.common.core.enums.SignTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -117,24 +118,23 @@ public class SignUtil {
     }
 
     /**
-     * AES签名
+     * AES签名（实际是HMAC签名，保持兼容性）
      *
      * @param data 待签名数据
      * @param key  密钥
-     * @return 签名结果（Base64编码）
+     * @return 签名结果（十六进制字符串）
      */
     public static String aesSign(String data, String key) {
         try {
-            // 生成AES密钥
-            SecretKeySpec secretKey = generateAesKey(key);
-            
-            // 使用AES密钥对数据进行HMAC签名
+            // 直接使用原始密钥进行HMAC签名，与前端保持一致
             Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secretKey);
-            
+
             // 生成签名
             byte[] signatureBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(signatureBytes);
+            String hexString = bytesToHex(signatureBytes);
+            return Base64.getEncoder().encodeToString(hexString.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("AES签名失败", e);
             throw new RuntimeException("AES签名失败", e);
@@ -164,7 +164,7 @@ public class SignUtil {
      *
      * @param data 待签名数据
      * @param key  密钥
-     * @return 签名结果（Base64编码）
+     * @return 签名结果（十六进制字符串）
      */
     public static String hmacSign(String data, String key) {
         try {
@@ -175,7 +175,8 @@ public class SignUtil {
             
             // 生成签名
             byte[] signatureBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(signatureBytes);
+            String hexString = bytesToHex(signatureBytes);
+            return Base64.getEncoder().encodeToString(hexString.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("HMAC签名失败", e);
             throw new RuntimeException("HMAC签名失败", e);
@@ -197,7 +198,7 @@ public class SignUtil {
             // 截取前32字节作为HMAC密钥
             byte[] hmacKey = new byte[32];
             System.arraycopy(keyBytes, 0, hmacKey, 0, 32);
-            
+
             return new SecretKeySpec(hmacKey, "HmacSHA256");
         } catch (Exception e) {
             log.error("生成AES密钥失败", e);
@@ -282,5 +283,23 @@ public class SignUtil {
             default:
                 throw new IllegalArgumentException("不支持的签名算法: " + algorithm);
         }
+    }
+
+    /**
+     * 字节数组转十六进制字符串
+     *
+     * @param bytes 字节数组
+     * @return 十六进制字符串
+     */
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte b : bytes) {
+            result.append(String.format("%02x", b));
+        }
+        return result.toString();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(sign("POST&/auth/open/api/service/v2&1758796536&{\"method\":\"sampleRecipientTabList\"}","ti1PUyZVGvcXwFlXN4fzHGwfxnhQKKmK",SignTypeEnum.HMAC));
     }
 }
