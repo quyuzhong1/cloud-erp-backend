@@ -101,7 +101,7 @@ public class MercadoOrdeShipmentSlaInitHandler extends DmpInputInitHandler {
 				continue;
 			}
 			Object fid = shipping.get("fid");
-			if(Objects.isNull(fid) || StringUtils.isBlank(fid.toString()) || fid.toString().equals("0")){
+			if(Objects.isNull(fid) || fid.toString().equals("0")){
 				continue;
 			}
 			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}",fid.toString() );
