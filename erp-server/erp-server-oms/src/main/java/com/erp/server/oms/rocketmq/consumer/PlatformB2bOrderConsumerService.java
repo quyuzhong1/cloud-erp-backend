@@ -106,6 +106,12 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 					erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
 				}
 			}
+		}else{
+			//默认仓库
+			List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
+			if(CollectionUtils.isNotEmpty(viewDTOList)){
+				erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
+			}
 		}
 		//通过客户编号匹配客户
 		if(StringUtils.isNotBlank(dto.getCustomerCode())){
