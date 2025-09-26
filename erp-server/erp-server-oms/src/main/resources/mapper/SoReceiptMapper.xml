@@ -53,19 +53,19 @@
                sr.receipt_amount as totalReceiptAmount,
                sr.currency,
                srd.so_code as soCode,
-        si.order_amount -si.discount_amount - COALESCE((
+        GREATEST(si.order_amount -si.discount_amount - COALESCE((
         select sum(red2.receipt_amount) from so_receipt re2
         inner join so_receipt_detail red2 on re2.id = red2.main_id
         where re2.is_deleted = false
         and red2.is_deleted = false and re2.approve_status = 'approve'
         and red2.so_id = si.id
-        ),0) as remainReceiptAmount,
+        ),0) - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0)  as remainReceiptAmount,
             srd.receipt_amount as receiptAmount,
         sr.receipt_account as receiptAccount,
         sr.receipt_date as receiptDate,
         sr.dict_receipt_method as dictReceiptMethod,
         sr.is_posted as isPosted,
-        sr.posted_account as postedAccount,
+        sr.posted_acco  unt as postedAccount,
         sr.source_type as sourceType,
         sr.approve_time as approveTime,
         sr.approve_user_name as approveUserName,
@@ -112,13 +112,13 @@
                si.sales_org_id as salesOrgId,
                si.approve_status as approveStatus,
                si.receive_account as receiptAccount,
-               si.order_amount -si.discount_amount - COALESCE((
+        GREATEST(si.order_amount -si.discount_amount - COALESCE((
         select sum(red.receipt_amount) from so_receipt re
         inner join so_receipt_detail red on re.id = red.main_id
         where re.is_deleted = false
         and red.is_deleted = false and re.approve_status = 'approve'
         and red.so_id = si.id
-        ),0) as remainReceiptAmount
+        ),0)- si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiptAmount
                from
                      so_info si
         where si.is_deleted = false

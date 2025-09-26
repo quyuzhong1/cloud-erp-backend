@@ -56,9 +56,9 @@ public class DhtOrderServiceTest {
                         .orders(null)
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
-                                        .fieldName("last_modified_time")
-                                        .fieldValues(Arrays.asList(startTimestamp,endTimestamp))
-                                        .operator("BETWEEN")
+                                        .fieldName("_id")
+                                        .fieldValues(Arrays.asList("68d550485ac1b20007fca0c2"))
+                                        .operator("eq")
                                         .build()
                         ))
                         .build())
