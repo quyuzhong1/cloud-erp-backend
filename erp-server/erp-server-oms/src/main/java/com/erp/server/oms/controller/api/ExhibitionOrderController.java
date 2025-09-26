@@ -416,7 +416,7 @@ public class ExhibitionOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品借用单")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入展会订单")
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = exhibitionOrderService.importFile(dto);
@@ -482,6 +482,12 @@ public class ExhibitionOrderController extends BaseController {
     @PostMapping("/generateSoInfoApprove")
     public WorkflowTaskRecordDTO.MqResponseDTO generateSoInfoApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
         return exhibitionOrderService.generateSoInfoApprove(dto);
+    }
+
+
+    @PostMapping("/autoSoInfoDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoSoInfoDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return exhibitionOrderService.autoSoInfoDisApprove(dto);
     }
 
 

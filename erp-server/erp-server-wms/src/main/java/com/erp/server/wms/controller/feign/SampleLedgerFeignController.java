@@ -60,6 +60,19 @@ public class SampleLedgerFeignController extends BaseController {
 
 
     /**
+     * 添加产品
+     * @author jack
+     * @date: 2025-08-21
+     * @param dto
+     * @return List<SampleLedgerDTO.SkuAvailableQtyDTO>
+     */
+    @PostMapping("/listLedgerAll")
+    public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(@RequestBody SampleLedgerDTO.SearchAllDTO dto) {
+        return sampleLedgerService.listLedgerAll(dto);
+    }
+
+
+    /**
      * APP端标签页列表
      * @author wuhaotian
      * @date: 2025-09-15

@@ -99,16 +99,4 @@ public class DmpMongoDbFeignController{
         return amzBusinessHandleService.checkAndSendSoOutStock(resultDTO);
     }
 
-
-
-    /**
-     * 查询mongodb生成其他出库单
-     *
-     * @Author Jim
-     * @since 2024-02-14
-     **/
-    @PostMapping("/checkOtherOutStock")
-    Boolean checkOtherOutStock(@RequestBody DmpPullOtherOutStockDTO resultDTO){
-        return amzBusinessHandleService.checkAndSendOtherOutStock(resultDTO);
-    }
 }

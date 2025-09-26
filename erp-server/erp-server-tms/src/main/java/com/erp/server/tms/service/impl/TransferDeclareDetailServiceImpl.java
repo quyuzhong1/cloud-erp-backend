@@ -58,7 +58,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(TransferDeclareDTO.AddDTO addDTO, String mainId) {

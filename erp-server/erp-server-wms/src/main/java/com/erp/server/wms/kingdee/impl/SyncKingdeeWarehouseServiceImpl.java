@@ -88,7 +88,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate) {
     	//生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {

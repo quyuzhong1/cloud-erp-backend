@@ -143,7 +143,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ScmTaskFeign scmTaskFeign;
     private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
@@ -393,7 +393,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addAndSubmit(PilotApplicationDTO.AddDTO dto) {
@@ -404,7 +404,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(PilotApplicationDTO.UpdateDTO dto) {
@@ -414,7 +414,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO approveDTO) {
@@ -637,7 +637,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return map;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -701,7 +701,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     /**
      * 撤销
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {

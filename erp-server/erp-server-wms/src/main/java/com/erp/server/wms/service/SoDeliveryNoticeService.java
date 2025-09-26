@@ -336,4 +336,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
 
     WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

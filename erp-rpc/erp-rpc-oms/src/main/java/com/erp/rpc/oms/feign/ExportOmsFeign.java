@@ -76,4 +76,7 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/exportExhibitionOrder")
     PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/soMultiChannel")
+    PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
+
 }

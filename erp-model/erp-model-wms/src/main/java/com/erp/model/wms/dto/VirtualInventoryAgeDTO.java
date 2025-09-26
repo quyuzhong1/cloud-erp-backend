@@ -26,6 +26,72 @@ import java.util.Map;
 public class VirtualInventoryAgeDTO implements Serializable {
 
     /**
+     * 虚拟仓新增对象
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库存
+         */
+        private Integer virtualQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+        /**
+         * 平均库存（反推）
+         */
+        private BigDecimal backAvgInventoryAge;
+        /**
+         * 平均库龄（正推）
+         */
+        private BigDecimal avgInventoryAge;
+
+        /**
+         * 库龄计算差异
+         */
+        private String isDiff;
+        /**
+         * 单据冻结数
+         */
+        private Integer frozenQty;
+        /**
+         * 冻结差异
+         */
+        private String frozenIsDiff;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+    }
+
+
+    /**
+     * 虚拟仓新增对象
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+    }
+    /**
      * 分页显示数据
      */
     @Data
@@ -151,6 +217,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 日期
          */
+        @NotNull(message = "统计日期不能为空")
         private LocalDate date;
     }
 
@@ -228,6 +295,12 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         @NotBlank(message = "虚拟仓Id不能为空")
         private String virtualWarehouseId;
+
+        /**
+         * 日期
+         */
+        @NotNull(message = "统计日期不能为空")
+        private LocalDate date;
 
         /**
          * 天数间隔区间
@@ -552,4 +625,133 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private BigDecimal avgInventoryAge;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeFlowParamDTO extends SortDTO{
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 批次号
+         */
+        @NotBlank(message = "批次号不能为空")
+        private String batchNo;
+    }
+
+    /**
+     * 批次库龄流水DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeFlowDTO {
+        /**
+         * 出入库时间【可排序】
+         */
+        private LocalDate billDate;
+        /**
+         * 单据类型【可排序】
+         */
+        private String sourceType;
+        /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+        /**
+         * 单据单号【可排序】
+         */
+        private String sourceCode;
+        /**
+         * 批次号【可排序】
+         */
+        private String batchNo;
+        /**
+         * 操作【可排序】
+         */
+        private String operationMode;
+        /**
+         * 操作名称
+         */
+        private String operationModeName;
+        /**
+         * skuId【可排序】
+         */
+        private String skuId;
+        /**
+         * sku编码【可排序】
+         */
+        private String skuNo;
+        /**
+         * 产品名称【可排序】
+         */
+        private String productName;
+        /**
+         * 库存状态【可排序】
+         */
+        private String dictInventoryStatus;
+        /**
+         * 库存状态名称
+         */
+        private String dictInventoryStatusName;
+        /**
+         * 出入库数量【可排序】
+         */
+        private Integer qty;
+        /**
+         * 操作后库存数量【可排序】
+         */
+        private Integer curInventoryQty;
+        /**
+         * 组织id【可排序】
+         */
+        private String orgId;
+        /**
+         * 组织名称
+         */
+        private String orgName;
+        /**
+         * 仓库id【可排序】
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称【可排序】
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id【可排序】
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓名称【可排序】
+         */
+        private String virtualWarehouseName;
+        /**
+         * 流水号【可排序】
+         */
+        private String transactionNo;
+    }
 }

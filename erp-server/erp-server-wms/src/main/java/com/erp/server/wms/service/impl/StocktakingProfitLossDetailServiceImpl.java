@@ -94,7 +94,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         return viewList;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateInfo(String mainId, List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList) {

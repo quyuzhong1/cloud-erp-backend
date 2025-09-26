@@ -177,7 +177,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelAuthorize(String id) {
         //清空授权信息
         OverseasProviderEntity entity = this.getById(id);
@@ -436,7 +436,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
-        if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
+        if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform) || PlatformDictEnum.DA_MAI.getCode().equals(platform)){
             //邮政编码不能为空
             if (CharSequenceUtil.isBlank(params.getPostCode())){
                 return Collections.emptyList();

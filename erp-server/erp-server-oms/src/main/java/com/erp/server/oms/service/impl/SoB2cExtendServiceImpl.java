@@ -62,7 +62,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
     @Resource
     private DictBasicService dictBasicService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cExtendDTO.AddDTO addDTO, SoB2cEntity soB2cEntity) {

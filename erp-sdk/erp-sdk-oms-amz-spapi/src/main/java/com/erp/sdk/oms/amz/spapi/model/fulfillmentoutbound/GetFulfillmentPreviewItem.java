@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Money;
 
+import java.io.IOException;
 /**
  * Item information for a fulfillment order preview.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFulfillmentPreviewItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -45,7 +50,7 @@ public class GetFulfillmentPreviewItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -63,7 +68,7 @@ public class GetFulfillmentPreviewItem {
    * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -78,10 +83,10 @@ public class GetFulfillmentPreviewItem {
   }
 
    /**
-   * The monetary value assigned by the seller to this item. This is a required field if this order is an export order.
+   * Get perUnitDeclaredValue
    * @return perUnitDeclaredValue
   **/
-
+  
   public Money getPerUnitDeclaredValue() {
     return perUnitDeclaredValue;
   }
@@ -99,7 +104,7 @@ public class GetFulfillmentPreviewItem {
    * A fulfillment order item identifier that the seller creates to track items in the fulfillment preview.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -110,7 +115,7 @@ public class GetFulfillmentPreviewItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -147,7 +152,7 @@ public class GetFulfillmentPreviewItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -155,4 +160,3 @@ public class GetFulfillmentPreviewItem {
   }
 
 }
-

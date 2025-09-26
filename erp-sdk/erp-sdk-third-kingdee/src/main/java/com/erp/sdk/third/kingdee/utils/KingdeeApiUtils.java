@@ -11,6 +11,8 @@ import com.common.business.dto.KingdeeParamDTO;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,22 +29,24 @@ public class KingdeeApiUtils {
     public K3CloudApi client;
 
     private String formId;
+    
+    public static String APPID;
 
-    private static String APPID;
+    public static String USERNAME;
 
-    private static String USERNAME;
+    public static String SERVERURL;
 
-    private static String SERVERURL;
+    public static String APPSECRET;
 
-    private static String APPSECRET;
-
-    private static String DCID;
+    public static String DCID;
 
     private static Integer REQUEST_TIME_OUT;
 
     private static Integer STOCK_TIME_OUT;
 
     private static String SWITCH_TIME;
+    
+    public static Integer MAX_CLIENT_TOTAL = 100;
 
     @Value("${openApi.kingdee.switchTime}")
     private void setSwitchTime(String switchTime) {
@@ -83,18 +87,17 @@ public class KingdeeApiUtils {
     public void setStockTimeout(Integer stockTimeout) {
         KingdeeApiUtils.STOCK_TIME_OUT = stockTimeout;
     }
-
-    public KingdeeApiUtils() {
+    
+    @Value("${openApi.kingdee.maxClientTotal:100}")
+    public void setMaxClientTotal(Integer maxClientTotal) {
+        KingdeeApiUtils.MAX_CLIENT_TOTAL = maxClientTotal;
     }
-
+    
+	public KingdeeApiUtils() {
+    }
+	
     public KingdeeApiUtils(String formId) {
-        IdentifyInfo identifyInfo = new IdentifyInfo();
-        identifyInfo.setdCID(DCID);
-        identifyInfo.setAppId(APPID);
-        identifyInfo.setUserName(USERNAME);
-        identifyInfo.setServerUrl(SERVERURL);
-        identifyInfo.setAppSecret(APPSECRET);
-        this.client = new K3CloudApi(identifyInfo);
+        this.client = K3CloudApiThreadLocal.get();
         this.formId = formId;
     }
 
@@ -332,6 +335,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}审核金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}审核金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;
@@ -378,6 +386,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}反审核金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}反审核金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;
@@ -443,6 +456,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}提交金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}提交金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;

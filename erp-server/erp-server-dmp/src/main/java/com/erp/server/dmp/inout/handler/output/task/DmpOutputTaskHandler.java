@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
@@ -185,6 +186,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			String requestData = next.getRequestData();
 			if(StringUtils.isNotBlank(requestData)) {
 				JSONObject parseObject = JSON.parseObject(requestData);
+				Boolean isQuerySync = parseObject.getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
+				if (isQuerySync != null && isQuerySync) {
+					continue;
+				}
 				if("1801574477567165866".equals(systemId)) {
 					String status = parseObject.getString("status");
 					if(isRetryPush && "已删除".equals(status)) {
@@ -230,7 +235,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 		
-		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getCreateTime().compareTo(d2.getCreateTime()));
 		dmpOutputExecutorPool.execute(() -> {
 			int i = 0;
 	    	Integer pushRate = dmpCfgOutputEntity.getPushRate();

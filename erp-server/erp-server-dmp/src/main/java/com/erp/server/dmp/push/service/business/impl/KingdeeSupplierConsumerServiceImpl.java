@@ -13,9 +13,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSupplierConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -43,6 +45,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型

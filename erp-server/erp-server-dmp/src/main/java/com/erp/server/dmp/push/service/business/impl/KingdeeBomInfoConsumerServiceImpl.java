@@ -12,10 +12,12 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeBomInfoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -54,6 +56,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeBomInfoConsumer(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();

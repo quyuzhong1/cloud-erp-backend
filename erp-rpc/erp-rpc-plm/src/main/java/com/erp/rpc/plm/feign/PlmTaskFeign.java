@@ -9,10 +9,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -571,6 +575,17 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/listSkuPurchaseByIds")
     List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2025-28-21 12:06
+     */
+    @PostMapping("feign/product/listSkuPackAndPurchaseByIds")
+    List<SkuVO> listSkuPackAndPurchaseByIds(@RequestBody List<String> skuIds);
+
     @GetMapping("feign/product/listSkuPurchaseByIds")
     ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
 
@@ -633,4 +648,24 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
+
+    /**
+     * 项目任务-任务审批通过
+     */
+    @PostMapping("feign/projectTask/approvalTaskPass")
+    void approvalTaskPass(@RequestBody String processId);
+
+    /**
+     * 审核通过回调
+     * @author will
+     * @date 2025/9/25 17:12
+     * @param dto
+     * @return void
+     */
+    @PostMapping("feign/projectTask/approvalTaskSchedulePass")
+    void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
 }

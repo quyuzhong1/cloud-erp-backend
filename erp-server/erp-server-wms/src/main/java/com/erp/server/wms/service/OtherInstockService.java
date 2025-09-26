@@ -280,5 +280,7 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
 
     WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
-    ExhibitionOrderDTO.DownstreamDisapproveDTO disApproveByExhibition(ExhibitionOrderDTO.DownstreamDisapproveDTO dto);
+    WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO autoOtherDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 }

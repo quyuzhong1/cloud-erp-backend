@@ -165,7 +165,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return warehouseLocationMoveEntity.getId();
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String pcAdd(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO) {
@@ -523,7 +523,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO pcApprove(ApproveOneDTO dto) {
@@ -557,7 +557,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -631,7 +631,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), ingoodsList, SourceTypeEnum.OTHER_INSTOCK);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO pcDisApprove(String id) {
@@ -734,7 +734,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -766,7 +766,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
   /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO pcCancelProcess(String id) {
@@ -1245,7 +1245,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return pushWdtDTO;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public void wdtAutoAdd(PcAddDTO pcAddDTO) {

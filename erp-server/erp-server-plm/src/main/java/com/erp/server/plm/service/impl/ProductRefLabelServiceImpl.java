@@ -35,7 +35,7 @@ import java.util.Set;
 @Service
 public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabelMapper, ProductRefLabelEntity> implements ProductRefLabelService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {

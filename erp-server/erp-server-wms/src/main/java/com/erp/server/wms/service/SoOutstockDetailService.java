@@ -9,7 +9,9 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -185,4 +187,14 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return List<SoOutstockDetailEntity>
      */
     List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
+
+    void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
+
+    /**
+     * 根据skuId查询Doris最新出库时间
+     * @author Jim
+     * @date 2025-08-13
+     * @return
+     */
+    Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds);
 }

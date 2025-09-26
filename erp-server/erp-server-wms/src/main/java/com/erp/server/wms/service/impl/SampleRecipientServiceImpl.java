@@ -891,69 +891,97 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> finishRecipient(SampleRecipientDTO.FinishRecipientDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> detailIds = dto.getIds(); // 这里传入的是明细ID
         String reason = dto.getReason();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleRecipientEntity> list = this.lambdaQuery().in(SampleRecipientEntity::getId, ids).list();
-        Map<String, SampleRecipientEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(detailIds.size());
+        
+        // 根据明细ID查询明细信息
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+            .in(SampleRecipientDetailEntity::getId, detailIds)
+            .eq(SampleRecipientDetailEntity::getIsDeleted, false)
+            .list();
+        Map<String, SampleRecipientDetailEntity> detailIdEntityMap = detailList.stream()
+            .collect(Collectors.toMap(SampleRecipientDetailEntity::getId, w -> w));
+        
+        // 获取所有主单ID
+        List<String> mainIds = detailList.stream()
+            .map(SampleRecipientDetailEntity::getMainId)
+            .distinct()
+            .collect(Collectors.toList());
+        
+        // 查询主单信息
+        List<SampleRecipientEntity> mainList = this.lambdaQuery().in(SampleRecipientEntity::getId, mainIds).list();
+        Map<String, SampleRecipientEntity> mainIdEntityMap = mainList.stream()
+            .collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
 
-        for (String id : ids) {
+        for (String detailId : detailIds) {
             BatchResultDTO finishResult;
             try {
-                SampleRecipientEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
+                SampleRecipientDetailEntity detailEntity = detailIdEntityMap.get(detailId);
+                if (ObjectUtil.isEmpty(detailEntity)) {
+                    finishResult = BatchResultDTO.fail(detailId, detailId, "样品领用单明细不存在, 结束领用失败");
+                    resultDTOS.add(finishResult);
+                    continue;
+                }
+                
+                // 获取对应的主单
+                SampleRecipientEntity mainEntity = mainIdEntityMap.get(detailEntity.getMainId());
+                if (ObjectUtil.isEmpty(mainEntity)) {
+                    finishResult = BatchResultDTO.fail(detailId, detailId, "样品领用单不存在, 结束领用失败");
                     resultDTOS.add(finishResult);
                     continue;
                 }
 
                 // 检查单据是否已作废
-                if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-                    finishResult = BatchResultDTO.fail(id, entity.getCode(), "已作废的样品领用单不支持结束领用操作");
+                if (InvalidStatusEnum.VOIDED.getStatus().equals(mainEntity.getInvalidStatus())) {
+                    finishResult = BatchResultDTO.fail(detailId, mainEntity.getCode(), "已作废的样品领用单不支持结束领用操作");
                     resultDTOS.add(finishResult);
                     continue;
                 }
 
                 // 验证结束领用条件
-                validateFinishRecipient(entity);
+                validateFinishRecipient(mainEntity);
 
-                // 更新单据状态为已结束，并保存结束原因
-                log.info("结束领用 开始修改样品领用单状态，id：【{}】，原因：【{}】", id, reason);
+                // 更新明细状态
+                log.info("结束领用 开始修改样品领用单明细状态，明细id：【{}】，原因：【{}】", detailId, reason);
+                detailEntity.setExecStatus(SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus());
+                sampleRecipientDetailService.updateById(detailEntity);
 
-                // 更新主单的结束原因
-                if (StrUtil.isNotBlank(reason)) {
+                // 更新主单的结束原因（如果还没有设置过）
+                if (StrUtil.isNotBlank(reason) && StrUtil.isBlank(mainEntity.getReason())) {
                     lambdaUpdate()
-                        .eq(SampleRecipientEntity::getId, id)
+                        .eq(SampleRecipientEntity::getId, mainEntity.getId())
                         .set(SampleRecipientEntity::getReason, reason)
                         .update();
                 }
 
-                // 更新明细状态
-                List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
-                    .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
-                    .eq(SampleRecipientDetailEntity::getIsDeleted, false)
-                    .list();
-                for (SampleRecipientDetailEntity sampleRecipientDetailEntity : detailList) {
-                    sampleRecipientDetailEntity.setExecStatus(SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus());
-                }
-                sampleRecipientDetailService.saveOrUpdateBatch(detailList);
-
                 // 操作日志
-                log.info("结束领用 开始记录操作日志，id：【{}】", id);
-                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据结束领用操作", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+                log.info("结束领用 开始记录操作日志，明细id：【{}】", detailId);
+                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】明细结束领用操作", 
+                    UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode(), "样品领用单");
+                
+                // 添加SKU信息
+                if (StrUtil.isNotBlank(detailEntity.getSkuNo())) {
+                    msg += StrUtil.format("，SKU：【{}】", detailEntity.getSkuNo());
+                }
+                if (StrUtil.isNotBlank(detailEntity.getProductName())) {
+                    msg += StrUtil.format("，产品：【{}】", detailEntity.getProductName());
+                }
                 if (StrUtil.isNotBlank(reason)) {
                     msg += StrUtil.format("，结束原因：【{}】", reason);
                 }
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "结束领用操作");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), mainEntity.getId(), "结束领用操作");
 
-                finishResult = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+                finishResult = BatchResultDTO.success(detailEntity.getId(), mainEntity.getCode(), OperationTypeEnum.UPDATE);
             } catch (Exception e) {
-                log.error("样品领用单结束领用失败", e);
-                SampleRecipientEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
+                log.error("样品领用单明细结束领用失败", e);
+                SampleRecipientDetailEntity detailEntity = detailIdEntityMap.get(detailId);
+                if (ObjectUtil.isEmpty(detailEntity)) {
+                    finishResult = BatchResultDTO.fail(detailId, detailId, "样品领用单明细不存在, 结束领用失败");
                 } else {
-                    finishResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                    SampleRecipientEntity mainEntity = mainIdEntityMap.get(detailEntity.getMainId());
+                    String mainCode = mainEntity != null ? mainEntity.getCode() : detailId;
+                    finishResult = BatchResultDTO.fail(detailEntity.getId(), mainCode, e.getMessage());
                 }
             }
             resultDTOS.add(finishResult);
@@ -2246,6 +2274,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         downloadTaskFeign.saveImportTask("样品领用单导入", IMPORT_WMS_SAMPLE_RECIPIENT.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -2263,6 +2292,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
         SampleRecipientExcelListener excelListenerUtil = new SampleRecipientExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());

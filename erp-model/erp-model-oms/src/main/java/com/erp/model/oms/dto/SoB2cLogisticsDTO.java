@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -81,6 +82,10 @@ public class SoB2cLogisticsDTO implements Serializable {
          * 第三方平台订单包裹号
          */
         private String platformPackageId;
+        /**
+         * 申报组织ID（sys_accounting_company.id）
+         */
+        private String declareOrgId;
     }
 
     @Data
@@ -236,6 +241,18 @@ public class SoB2cLogisticsDTO implements Serializable {
          * ioss税号
          */
         private String iossTaxNo;
+        /**
+         * 申报组织ID（sys_accounting_company.id）
+         */
+        private String declareOrgId;
+        /**
+         * 申报组织名称
+         */
+        private String declareOrgName;
+        /**
+         * 统一社会信用代码
+         */
+        private String usciCode;
     }
 
 

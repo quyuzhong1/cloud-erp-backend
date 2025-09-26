@@ -279,7 +279,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public PurchaseOrderEntity add(PurchaseOrderDTO.AddDTO dto) {
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
@@ -296,7 +296,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购订单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "新增操作");
             //新增供应商信息
-            purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO(), entity.getId());
+            PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO = dto.getPurchaseOrderSupplierDTO();
+            purchaseOrderSupplierDTO.setSupplierAccountId(dto.getSupplierAccountId());
+            purchaseOrderSupplierService.add(purchaseOrderSupplierDTO, entity.getId());
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(), entity.getId());
             //同步到WMS
@@ -328,12 +330,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //更新主表数据
         this.updateById(entity);
         //供应商数据
-        purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO(), entity.getId());
+        PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO = dto.getPurchaseOrderSupplierDTO();
+        purchaseOrderSupplierDTO.setSupplierAccountId(dto.getSupplierAccountId());
+        purchaseOrderSupplierService.update(purchaseOrderSupplierDTO, entity.getId());
         //更新明细数据
         purchaseOrderDetailService.update(dto.getDetails(), entity.getId());
         //同步到WMS
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(),Arrays.asList(entity), IdUtil.simpleUUID());
-
         return Boolean.TRUE;
     }
 
@@ -350,20 +353,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //能否编辑
         dto.setCanEdit(purchaseApplicationRefPoService.getPurchaseApplicationByPurchaseOrderId(id));
-        //供应商账号信息
-        if (CharSequenceUtil.isNotBlank(dto.getSupplierAccountId())) {
-            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(dto.getSupplierAccountId());
-            if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
-                dto.setPayee(supplierAccountEntity.getPayee());
-                dto.setBankAccount(supplierAccountEntity.getBankAccount());
-                if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankName())) {
-                    dto.setBankName(supplierAccountEntity.getBankName());
-                } else if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankId())) {
-                    List<BaseIdDTO> bankList = sysUserFeign.getBankList(Collections.singletonList(supplierAccountEntity.getBankId()));
-                    dto.setBankName(CollUtil.isNotEmpty(bankList) ? bankList.get(0).getName() : "");
-                }
-            }
-        }
+
         // 采购员名称
         if (StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
@@ -378,6 +368,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98031);
         }
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
+        //供应商账号信息
+        if (CharSequenceUtil.isNotBlank(supplierUpdateDTO.getSupplierAccountId())) {
+            dto.setSupplierAccountId(supplierUpdateDTO.getSupplierAccountId());
+
+            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(supplierUpdateDTO.getSupplierAccountId());
+            if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
+                dto.setPayee(supplierAccountEntity.getPayee());
+                dto.setBankAccount(supplierAccountEntity.getBankAccount());
+                if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankName())) {
+                    dto.setBankName(supplierAccountEntity.getBankName());
+                } else if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankId())) {
+                    List<BaseIdDTO> bankList = sysUserFeign.getBankList(Collections.singletonList(supplierAccountEntity.getBankId()));
+                    dto.setBankName(CollUtil.isNotEmpty(bankList) ? bankList.get(0).getName() : "");
+                }
+            }
+        }
 
         //结算方式
         DictBasicEntity payMethod = dictBasicService.getById(supplierUpdateDTO.getPayMethodId());
@@ -499,7 +505,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(PurchaseOrderEntity entity) {
         //待提交允许删除
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
@@ -532,7 +538,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
@@ -559,7 +565,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity) {
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
@@ -599,7 +605,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(String id) {
         PurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到采购订单数据"));
@@ -752,8 +758,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         String supplierBankNo = "";
         String supplierBankName = "";
         String supplierAccountName = "";
-        if (CharSequenceUtil.isNotBlank(purchaseOrderEntity.getSupplierAccountId())) {
-            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(purchaseOrderEntity.getSupplierAccountId());
+        if (CharSequenceUtil.isNotBlank(purchaseOrderSupplier.getSupplierAccountId())) {
+            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(purchaseOrderSupplier.getSupplierAccountId());
             supplierBankNo = Objects.nonNull(supplierAccountEntity) ? supplierAccountEntity.getBankAccount() : "";
             supplierBankName = Objects.nonNull(supplierAccountEntity) ? supplierAccountEntity.getBankName() : "";
             supplierAccountName = Objects.nonNull(supplierAccountEntity) ? supplierAccountEntity.getPayee() : "";
@@ -952,7 +958,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO invalid(PurchaseOrderEntity entity, String reason) {
         //非待提交和审核不通过不能作废
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
@@ -3210,13 +3216,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+
+        //供应商信息
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
+        Map<String, String> purchaseOrderSupplierAccountMap = purchaseOrderSupplierEntities.stream().collect(Collectors.toMap(PurchaseOrderSupplierEntity::getPurchaseOrderId, PurchaseOrderSupplierEntity::getSupplierAccountId));
+
         //明细预计交货日期校验
         for (PurchaseOrderEntity entity : list) {
             String skuNos = detailList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseOrderId()) && ObjectUtils.isEmpty(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(skuNos)) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE, entity.getCode(), skuNos);
             }
-            if (CharSequenceUtil.isBlank(entity.getSupplierAccountId())) {
+            if (CharSequenceUtil.isBlank(purchaseOrderSupplierAccountMap.getOrDefault(entity.getId(),""))) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_SUPPLIER_ACCOUNT, entity.getCode());
             }
         }
@@ -3823,7 +3834,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setPurchaseUserId(userInfo.getUid());
             addDTO.setPurchaseDeptId(ObjectUtil.isEmpty(departmentUserNumberDTO) ? "" : departmentUserNumberDTO.getDepartmentId());
             addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
-            addDTO.setSupplierAccountId(supplierAccountId);
             //供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierAddDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierAddDTO.setSupplierId(supplierEntity.getId());
@@ -3834,6 +3844,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             supplierAddDTO.setPaymentConditionName(mainExcelDTO.getPaymentConditionName());
             supplierAddDTO.setContactTelNumber(mainExcelDTO.getContactTelNumber());
             supplierAddDTO.setSupplierContactId(supplierContactId);
+            supplierAddDTO.setSupplierAccountId(supplierAccountId);
             addDTO.setPurchaseOrderSupplierDTO(supplierAddDTO);
 
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();

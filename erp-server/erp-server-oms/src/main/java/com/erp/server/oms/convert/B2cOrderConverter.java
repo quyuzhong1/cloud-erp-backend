@@ -80,6 +80,7 @@ public interface B2cOrderConverter {
     @Mappings({
             @Mapping(target = "name", source = "receiverName"),
             @Mapping(target = "buyerName", source = "name"),
+            @Mapping(target = "buyerNumber", source = "telNumber"),
             @Mapping(target = "phone", source = "receiverTelNumber"),
             @Mapping(target = "countryCode", source = "country"),
             @Mapping(target = "province", source = "provinceName"),

@@ -10,19 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.DeliveryInformation;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.LockerDetails;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
  * Package information for a shipment in a fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentShipmentPackage {
   @SerializedName("packageNumber")
   private Integer packageNumber = null;
@@ -34,7 +41,13 @@ public class FulfillmentShipmentPackage {
   private String trackingNumber = null;
 
   @SerializedName("estimatedArrivalDate")
-  private String estimatedArrivalDate = null;
+  private OffsetDateTime estimatedArrivalDate = null;
+
+  @SerializedName("lockerDetails")
+  private LockerDetails lockerDetails = null;
+
+  @SerializedName("deliveryInformation")
+  private DeliveryInformation deliveryInformation = null;
 
   public FulfillmentShipmentPackage packageNumber(Integer packageNumber) {
     this.packageNumber = packageNumber;
@@ -45,7 +58,7 @@ public class FulfillmentShipmentPackage {
    * Identifies a package in a shipment.
    * @return packageNumber
   **/
-
+  
   public Integer getPackageNumber() {
     return packageNumber;
   }
@@ -63,7 +76,7 @@ public class FulfillmentShipmentPackage {
    * Identifies the carrier who will deliver the shipment to the recipient.
    * @return carrierCode
   **/
-
+  
   public String getCarrierCode() {
     return carrierCode;
   }
@@ -81,7 +94,7 @@ public class FulfillmentShipmentPackage {
    * The tracking number, if provided, can be used to obtain tracking and delivery information.
    * @return trackingNumber
   **/
-
+  
   public String getTrackingNumber() {
     return trackingNumber;
   }
@@ -90,27 +103,63 @@ public class FulfillmentShipmentPackage {
     this.trackingNumber = trackingNumber;
   }
 
-  public FulfillmentShipmentPackage estimatedArrivalDate(String estimatedArrivalDate) {
+  public FulfillmentShipmentPackage estimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
     return this;
   }
 
    /**
-   * The estimated arrival date and time of the package, in ISO 8601 date time format.
+   * Get estimatedArrivalDate
    * @return estimatedArrivalDate
   **/
-
-  public String getEstimatedArrivalDate() {
+  
+  public OffsetDateTime getEstimatedArrivalDate() {
     return estimatedArrivalDate;
   }
 
-  public void setEstimatedArrivalDate(String estimatedArrivalDate) {
+  public void setEstimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
+  }
+
+  public FulfillmentShipmentPackage lockerDetails(LockerDetails lockerDetails) {
+    this.lockerDetails = lockerDetails;
+    return this;
+  }
+
+   /**
+   * Get lockerDetails
+   * @return lockerDetails
+  **/
+  
+  public LockerDetails getLockerDetails() {
+    return lockerDetails;
+  }
+
+  public void setLockerDetails(LockerDetails lockerDetails) {
+    this.lockerDetails = lockerDetails;
+  }
+
+  public FulfillmentShipmentPackage deliveryInformation(DeliveryInformation deliveryInformation) {
+    this.deliveryInformation = deliveryInformation;
+    return this;
+  }
+
+   /**
+   * Get deliveryInformation
+   * @return deliveryInformation
+  **/
+  
+  public DeliveryInformation getDeliveryInformation() {
+    return deliveryInformation;
+  }
+
+  public void setDeliveryInformation(DeliveryInformation deliveryInformation) {
+    this.deliveryInformation = deliveryInformation;
   }
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -121,12 +170,14 @@ public class FulfillmentShipmentPackage {
     return Objects.equals(this.packageNumber, fulfillmentShipmentPackage.packageNumber) &&
         Objects.equals(this.carrierCode, fulfillmentShipmentPackage.carrierCode) &&
         Objects.equals(this.trackingNumber, fulfillmentShipmentPackage.trackingNumber) &&
-        Objects.equals(this.estimatedArrivalDate, fulfillmentShipmentPackage.estimatedArrivalDate);
+        Objects.equals(this.estimatedArrivalDate, fulfillmentShipmentPackage.estimatedArrivalDate) &&
+        Objects.equals(this.lockerDetails, fulfillmentShipmentPackage.lockerDetails) &&
+        Objects.equals(this.deliveryInformation, fulfillmentShipmentPackage.deliveryInformation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(packageNumber, carrierCode, trackingNumber, estimatedArrivalDate);
+    return Objects.hash(packageNumber, carrierCode, trackingNumber, estimatedArrivalDate, lockerDetails, deliveryInformation);
   }
 
 
@@ -139,6 +190,8 @@ public class FulfillmentShipmentPackage {
     sb.append("    carrierCode: ").append(toIndentedString(carrierCode)).append("\n");
     sb.append("    trackingNumber: ").append(toIndentedString(trackingNumber)).append("\n");
     sb.append("    estimatedArrivalDate: ").append(toIndentedString(estimatedArrivalDate)).append("\n");
+    sb.append("    lockerDetails: ").append(toIndentedString(lockerDetails)).append("\n");
+    sb.append("    deliveryInformation: ").append(toIndentedString(deliveryInformation)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -147,7 +200,7 @@ public class FulfillmentShipmentPackage {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -155,4 +208,3 @@ public class FulfillmentShipmentPackage {
   }
 
 }
-

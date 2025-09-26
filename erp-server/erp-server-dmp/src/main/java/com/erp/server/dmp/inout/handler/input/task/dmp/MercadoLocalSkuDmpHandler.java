@@ -101,22 +101,28 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                                 List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
                                 if (CollectionUtils.isNotEmpty(valuesList)) {
                                     Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
-                                    dmpDataMap.put("packageLength", structMap.get("number"));
+                                    if (null != structMap) {
+                                        dmpDataMap.put("packageLength", structMap.get("number"));
+                                    }
                                 }
                             }
                             if ("PACKAGE_WIDTH".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
                                 List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
                                 if (CollectionUtils.isNotEmpty(valuesList)) {
                                     Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
-                                    dmpDataMap.put("packageWidth", structMap.get("number"));
+                                    if (null != structMap) {
+                                        dmpDataMap.put("packageWidth", structMap.get("number"));
+                                    }
                                 }
                             }
                             if ("PACKAGE_HEIGHT".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
                                 List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
                                 if (CollectionUtils.isNotEmpty(valuesList)) {
                                     Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
-                                    dmpDataMap.put("packageHeight", structMap.get("number"));
-                                    dmpDataMap.put("packageUnit", structMap.get("unit"));
+                                    if (null != structMap) {
+                                        dmpDataMap.put("packageHeight", structMap.get("number"));
+                                        dmpDataMap.put("packageUnit", structMap.get("unit"));
+                                    }
                                 }
                             }
 
@@ -124,8 +130,10 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                                 List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
                                 if (CollectionUtils.isNotEmpty(valuesList)) {
                                     Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
-                                    dmpDataMap.put("grossWeight", structMap.get("number"));
-                                    dmpDataMap.put("weightUnit", structMap.get("unit"));
+                                    if (null != structMap) {
+                                        dmpDataMap.put("grossWeight", structMap.get("number"));
+                                        dmpDataMap.put("weightUnit", structMap.get("unit"));
+                                    }
                                 }
                             }
 

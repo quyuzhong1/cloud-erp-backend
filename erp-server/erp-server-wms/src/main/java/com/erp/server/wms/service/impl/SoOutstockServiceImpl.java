@@ -44,12 +44,14 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
@@ -87,6 +89,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -100,6 +103,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
+import com.erp.server.wms.rocketmq.consumer.PlatformOutboundConsumerService;
 import com.erp.server.wms.service.*;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
@@ -186,6 +190,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Resource
+    private PlatformOutboundConsumerService platformOutboundConsumerService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -232,6 +238,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+    @Resource
+    private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
     @Lazy
     @Resource
@@ -263,6 +271,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -689,6 +699,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+        // 更新SKU标准成本价出库时间
+        updateSkuStdCostOutstock(entity);
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -697,6 +710,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
 
     }
+
 
     /**
      * 审核流程处理
@@ -737,7 +751,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -859,7 +873,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @author Lambda
      * @create 2024-01-01 10:50
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void handleSoB2cData(SoOutstockEntity entity) {
         if (Objects.isNull(entity)) {
@@ -961,7 +975,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 20:01
      */
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void handleData(SoOutstockEntity entity) {
         if (Objects.isNull(entity)) {
             return;
@@ -1096,6 +1110,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     }
                     addDTO.setCurrency(soInfo.getCurrency());
                     addDTO.setChannelId(entity.getLogisticsChannelId());
+                    addDTO.setChannelName(entity.getLogisticsChannelName());
                     addDTO.setTransportNo(entity.getTrackNo());
                     addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
                 }
@@ -1126,6 +1141,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                         addDTO.setToCountry(countryName);
                         addDTO.setChannelId(customer.getLogisticsChannelId());
+                        addDTO.setChannelName(customer.getLogisticsChannelName());
                         addDTO.setTransportNo(customer.getTransportNo());
 
                         String shipmentType = ShipmentTypeEnum.SELF_DELIVER.getCode();
@@ -1150,6 +1166,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                             addDTO.setToCountry(countryList.get(0).getNameCn());
                         }
                     }
+                    addDTO.setChannelId(entity.getLogisticsChannelId());
+                    addDTO.setChannelName(entity.getLogisticsChannelName());
                     addDTO.setTransportNo(entity.getTrackNo());
                     CustomerInfoEntity customer = customerFeign.getCustomerById(entity.getCustomerId());
                     addDTO.setSalesPlatform(Objects.nonNull(customer) ? customer.getPlatformType() : CharSequenceUtil.EMPTY);
@@ -1192,7 +1210,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param entity
      */
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateOrderStatusAndRemoveBill(SoOutstockEntity entity) {
         if (CharSequenceUtil.isBlank(entity.getId())){
             return;
@@ -1339,7 +1357,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(List<String> ids) {
         List<SoOutstockEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1396,7 +1414,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO deleteEntity(SoOutstockEntity entity) {
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus) || entity.getInvalidStatus()) {
@@ -1428,7 +1446,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送数帝云
             List<SoOutstockDetailEntity> detailEntityList = detailMap.get(entity.getId());
             syncKingdeeSoOutstockService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
-
+            //删除三方仓发货单
+            if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(entity.getSourceId()));
+            }
             //清空销售订单的出库时间
             this.handleSoOutDate(Collections.singletonList(entity));
 
@@ -1483,7 +1504,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void deleteTransferInfo(List<SoOutstockEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -1521,7 +1542,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
     }
-    
+
     /**
      * 作废
      *
@@ -1533,7 +1554,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoOutstockEntity> list = this.listByIds(ids);
 
@@ -1631,7 +1652,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
-    
+
     /**
      * 分页列表
      *
@@ -1654,7 +1675,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(list,false);
         return new PagingVO<>(pageData);
     }
-    
+
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
@@ -1815,7 +1836,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String updateSoOutstock(SoOutstockDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoOutstockEntity soOutstock = this.getById(id);
@@ -2621,7 +2642,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void tempRepairHistoryDb() {
         List<SoInfoDTO.ListDTO> soList = soInfoFeign.listRepairHistoryDb();
@@ -2702,7 +2723,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
-    
+
     /**
      * 生成销售出库单
      *
@@ -2745,7 +2766,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     newDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(newDetailList);
+                return createB2cSoOutstock(generateB2cDTO);
             } else if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(generateB2cDTO.getSourceType())){
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(soB2cId);
                 ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(generateB2cDTO.getSoId());
                 List<String> sourceCodes = new ArrayList<>();
                 sourceCodes.add(generateB2cDTO.getSoCode());
@@ -2761,16 +2784,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 DmpThirdOutboundEntity outboundEntity = list.get(0);
                 LocalDateTime outBoundTime = outboundEntity.getDateShipping();
+                PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
                 if(Objects.nonNull(outBoundTime)){
-                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+                    platformOutboundDTO.setOutBoundTime(outBoundTime);
                 }
-                //跟踪号
-                generateB2cDTO.setTrackNo(outboundEntity.getTrackingNo());
-                //运单号
-                generateB2cDTO.setTransportNo(outboundEntity.getTrackingNo());
+                platformOutboundDTO.setTrackNo(outboundEntity.getTrackingNo());
+                platformOutboundConsumerService.generateSoOut(soB2cEntity,thirdWarehouseDeliveryEntity,platformOutboundDTO,"");
+                return true;
             }
-            Boolean result = createB2cSoOutstock(generateB2cDTO);
-            return result;
+            return true;
         } else {
             String id = outstock.getId();
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
@@ -2997,7 +3019,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 删除B2C销售订单 生成销售出库单异常
      * @param soB2cId
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void  removeSoB2cOutstockError(String soB2cId) {
         String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
@@ -3104,8 +3126,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //如果是平台仓发货，处理发货单生成情况
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
-            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.generatePlatformDelivery(soOutstock,detailList);
+            thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.generatePlatformDelivery(soOutstock,detailList);
             soOutstock.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
             soOutstock.setSourceId(thirdWarehouseDeliveryEntity.getId());
         }
@@ -3116,10 +3139,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
-//            //如果是平台仓发货，处理发货单生成情况
-//            if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
-//                thirdWarehouseDeliveryService.generatePlatformDetailDelivery(soOutstock.getSourceId(),detailEntities);
-//            }
+            //如果是平台仓发货，处理发货单明细生成情况
+            if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
+                List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = thirdWarehouseDeliveryEntity.getDetailEntityList();
+                if(CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntities)){
+                    for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntities) {
+                        SoOutstockDetailEntity soOutstockDetailEntity = detailEntities.stream().filter(d -> d.getSourceDetailId().equals(thirdWarehouseDeliveryDetailEntity.getId())).findFirst().orElse(null);
+                        if(Objects.nonNull(soOutstockDetailEntity)){
+                            thirdWarehouseDeliveryDetailEntity.setSoDetailId(soOutstockDetailEntity.getSoDetailId());
+                            thirdWarehouseDeliveryDetailEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
+                        }
+                    }
+                    thirdWarehouseDeliveryDetailService.saveBatch(thirdWarehouseDeliveryDetailEntities);
+                }
+            }
 
             return soOutstock.getId();
         }
@@ -3146,7 +3179,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity) {
         // 补充来源
         // 根据销售订单生成的销售出库单DTO != 平台的销售出库单
@@ -3499,7 +3532,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return baseMapper.logisticStatistics(deliveryStaticsReq);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
@@ -3768,7 +3801,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkAndDeletePlatformB2cOutStock(List<PlatformSoOutStockDetailDTO> existSourceDetailList, SoB2cEntity soB2cEntity, Collection<SoOutstockDetailEntity> detailEntityList) {
         if (CollectionUtils.isEmpty(existSourceDetailList) || CollectionUtils.isEmpty(detailEntityList) ) {
             return;
@@ -3995,7 +4028,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<SoOutstockEntity> list = this.listByIds(ids);
         List<SoOutstockEntity> removeList=new ArrayList<>();
@@ -4016,6 +4049,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(removeIdList);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+        //更新多渠道订单出库数量
+        updateSoMultiOutstockQty(removeList,soOutstockDetailEntityList);
 
         Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
@@ -4040,6 +4075,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
+            //删除三方仓发货单
+            List<String> sourceIds = list.stream()
+                    .filter(obj -> SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(obj.getSourceType()))
+                    .map(SoOutstockEntity::getSourceId)
+                    .collect(Collectors.toList());
+            thirdWarehouseDeliveryService.deleteByIds(sourceIds);
 
             //清空销售订单的出库时间
             this.handleSoOutDate(removeList);
@@ -4050,9 +4091,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return resultDTOList;
     }
 
+    private void updateSoMultiOutstockQty(List<SoOutstockEntity> removeList, List<SoOutstockDetailEntity> soOutstockDetailAllList) {
+        List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList = new ArrayList<>();
+        soOutstockDetailAllList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getPlatformDetailId())).forEach(e -> {
+            SoMultiChannelDetailDTO.OutstockQtyDTO outstockQtyDTO = new SoMultiChannelDetailDTO.OutstockQtyDTO();
+            outstockQtyDTO.setPlatformDetailId(e.getPlatformDetailId());
+            outstockQtyDTO.setSoDetailId(e.getSoDetailId());
+            outstockQtyDTO.setOutstockQty(e.getActualQty());
+            removeList.stream().filter(f -> f.getId().equals(e.getMainId())).findFirst().ifPresent(f -> {
+                outstockQtyDTO.setDeliveryCode(f.getSourceCode());
+            });
+            outstockQtyDTOList.add(outstockQtyDTO);
+        });
+        if (CollUtil.isEmpty(outstockQtyDTOList)){
+            return;
+        }
+        soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO generateB2bDeclar(String id) {
         SoOutstockEntity entity = getById(id);
         if (Objects.isNull(entity)) {
@@ -4093,6 +4152,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
+    @Override
+    public SoOutstockEntity getBySourceCode(String sourceCode) {
+        if (CharSequenceUtil.isBlank(sourceCode)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoOutstockEntity::getSourceCode,sourceCode).orderByDesc(SoOutstockEntity::getCreateTime).last(" limit 1 ").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSkuStdCostOutstock(SoOutstockEntity entity) {
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.lambdaQuery()
+                .eq(SoOutstockDetailEntity::getMainId, entity.getId())
+                .list();
+        if (CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
+    }
 
     @Override
     public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId) {

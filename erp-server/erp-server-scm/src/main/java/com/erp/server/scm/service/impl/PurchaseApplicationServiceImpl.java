@@ -228,7 +228,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public PurchaseApplicationEntity add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
@@ -331,7 +331,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, PurchaseApplicationEntity entity) {
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatusForApprove(entity, approveStatus);
@@ -544,7 +544,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (CollectionUtils.isNotEmpty(defaultSupplierAccountList)) {
                 SupplierAccountEntity supplierAccountEntity = defaultSupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
                 if (Objects.nonNull(supplierAccountEntity)) {
-                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
+                    supplierDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

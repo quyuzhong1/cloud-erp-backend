@@ -99,7 +99,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Lazy
     private LogisticsBaseService logisticsBaseService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsSupplierDTO.AddDTO addDTO) {
@@ -237,7 +237,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
@@ -254,7 +254,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         //同步第三方渠道
-        logisticsBaseService.syncSingleChannel(logisticsPlatform);
+        logisticsBaseService.syncLogisticsChannel(logisticsPlatform);
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
@@ -529,10 +529,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             if (Objects.nonNull(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 item.setLogisticsPlatform(logisticsPlatform);
-                String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
-                if ("N".equals(printDelivery)) {
-                    item.setIsPrintPlatform(Boolean.FALSE);
-                } else {
+                if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
+                    String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
+                    if ("N".equals(printDelivery)) {
+                        item.setIsPrintPlatform(Boolean.FALSE);
+                    } else {
+                        item.setIsPrintPlatform(Boolean.TRUE);
+                    }
+                }else{
                     item.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {

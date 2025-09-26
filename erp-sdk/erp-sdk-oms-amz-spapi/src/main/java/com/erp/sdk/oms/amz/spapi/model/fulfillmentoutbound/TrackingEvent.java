@@ -10,22 +10,29 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.EventCode;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.TrackingAddress;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
  * Information for tracking package deliveries.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class TrackingEvent {
   @SerializedName("eventDate")
-  private String eventDate = null;
+  private OffsetDateTime eventDate = null;
 
   @SerializedName("eventAddress")
   private TrackingAddress eventAddress = null;
@@ -36,21 +43,21 @@ public class TrackingEvent {
   @SerializedName("eventDescription")
   private String eventDescription = null;
 
-  public TrackingEvent eventDate(String eventDate) {
+  public TrackingEvent eventDate(OffsetDateTime eventDate) {
     this.eventDate = eventDate;
     return this;
   }
 
    /**
-   * The date and time that the delivery event took place, in ISO 8601 date time format.
+   * Get eventDate
    * @return eventDate
   **/
-
-  public String getEventDate() {
+  
+  public OffsetDateTime getEventDate() {
     return eventDate;
   }
 
-  public void setEventDate(String eventDate) {
+  public void setEventDate(OffsetDateTime eventDate) {
     this.eventDate = eventDate;
   }
 
@@ -60,10 +67,10 @@ public class TrackingEvent {
   }
 
    /**
-   * The city where the delivery event took place.
+   * Get eventAddress
    * @return eventAddress
   **/
-
+  
   public TrackingAddress getEventAddress() {
     return eventAddress;
   }
@@ -78,10 +85,10 @@ public class TrackingEvent {
   }
 
    /**
-   * The event code for the delivery event.
+   * Get eventCode
    * @return eventCode
   **/
-
+  
   public EventCode getEventCode() {
     return eventCode;
   }
@@ -99,7 +106,7 @@ public class TrackingEvent {
    * A description for the corresponding event code.
    * @return eventDescription
   **/
-
+  
   public String getEventDescription() {
     return eventDescription;
   }
@@ -110,7 +117,7 @@ public class TrackingEvent {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -147,7 +154,7 @@ public class TrackingEvent {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -155,4 +162,3 @@ public class TrackingEvent {
   }
 
 }
-

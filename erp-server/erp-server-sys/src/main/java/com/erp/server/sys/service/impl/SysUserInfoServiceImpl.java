@@ -150,7 +150,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
@@ -219,7 +219,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String addSrmUser(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
@@ -273,7 +273,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
@@ -315,7 +315,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean updateSrmUser(SysUserInfoDTO sysUserInfoDTO) {
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
@@ -558,7 +558,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateState(UpdateUserStateDTO stateDTO) {
         LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
@@ -590,7 +590,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateStateSrm(UpdateUserStateDTO stateDTO) {
         LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
@@ -1299,7 +1299,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void deleteByIds(List<String> uids) {
         List<SysUserInfoEntity> list = this.listByIds(uids);
         if (CollectionUtils.isEmpty(list)) {

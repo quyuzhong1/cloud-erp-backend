@@ -400,6 +400,12 @@ public class OtherInstockController extends BaseController {
         return success(resultDTO);
     }
 
+
+    @PostMapping("/generateOtherAddAndSubmit")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return otherInstockService.generateOtherAddAndSubmit(dto);
+    }
+
     /**
      * @author jack
      * @date:  2025-9-16
@@ -410,5 +416,11 @@ public class OtherInstockController extends BaseController {
     @PostMapping("/generateOtherApprove")
     public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
         return otherInstockService.generateOtherApprove(dto);
+    }
+
+
+    @PostMapping("/autoOtherDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoOtherDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return otherInstockService.autoOtherDisApprove(dto);
     }
 }

@@ -239,8 +239,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(record.getPurchaseSourceType())){
                 record.setSubcontractCode(record.getPurchaseSourceCode());
             }
-            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
-                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            ReturnOrderSourceEnum returnOrderSourceEnum  = ReturnOrderSourceEnum.checkLastReturnOrderSource(record.getSourceType());
             record.setReturnOrderSource(returnOrderSourceEnum.getCode());
             record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
             BigDecimal deductAmountAmount ;
@@ -857,7 +856,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void approveTransactional (List<String> purchaseDetailIdList,List<PoReturnEntity> poReturnEntityList1) {
         //更新采购订单明细中的执行状态
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
@@ -1189,7 +1188,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     public void syncApprovePoReturnToWdt(PoReturnEntity entity, SyncOperateEnum syncOperateEnum) {
-        if(! "other".equals(entity.getSourceType())){
+        ReturnOrderSourceEnum returnOrderSourceEnum  = ReturnOrderSourceEnum.checkLastReturnOrderSource(entity.getSourceType());
+        if(! returnOrderSourceEnum.equals(ReturnOrderSourceEnum.OTHER)){
             log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
         }
@@ -1274,7 +1274,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @Date 2023/4/6 19:29
      **/
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList) {
         //已审核支持反审核
@@ -1467,7 +1467,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean invalid(List<String> ids, String remark) {
         List<PoReturnEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1509,7 +1509,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(List<String> ids) {
         List<PoReturnEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1701,7 +1701,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @Date 2023/4/28 11:37
      **/
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void updateArrivalState(List<String> podIds) {
         //采购订单明细
@@ -2787,7 +2787,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO returnConfirm(String id) {
         PoReturnEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -2931,7 +2931,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void poReturnAutoConfirm() {
         //查询规则设置
         List<CfgSettingDTO.ViewDTO> list = srmCfgSettingFeign.listByKey(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode());
@@ -3298,7 +3298,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO invalidEntity(PoReturnEntity entity, String remark) {
         //审核不通过 待提交可以作废
         long count = Stream.of(entity).filter(e -> !e.getInvalidStatus()
@@ -3329,7 +3329,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO deleteEntity(PoReturnEntity entity) {
         //待提交支持删除
         long count = Stream.of(entity).filter(e -> !e.getInvalidStatus()

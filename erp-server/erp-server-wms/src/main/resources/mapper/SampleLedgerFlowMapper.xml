@@ -118,7 +118,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        slf.create_time DESC
+        slf.bill_date desc,slf.create_time DESC
     </select>
 
     <!-- 根据四个条件查询数量总和 -->
@@ -161,6 +161,14 @@
         AND sl.sku_no = #{skuNo}
         AND sl.sku_id = #{skuId}
         LIMIT 1
+    </select>
+
+    <!-- 根据台账ID查询数量总和 -->
+    <select id="selectTotalQtyByLedgerId" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(slf.qty), 0)
+        FROM sample_ledger_flow slf
+        WHERE slf.is_deleted = false
+        AND slf.sample_ledger_id = #{ledgerId}
     </select>
 
     <!-- 移动端分页查询 -->

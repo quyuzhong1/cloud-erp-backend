@@ -990,6 +990,17 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
         SampleScrapAsynExcelListener excelListenerUtil = new SampleScrapAsynExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),deptList, map, userList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
@@ -1114,6 +1125,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
     @Override
     public Boolean importAsynExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         downloadTaskFeign.saveImportTask("导入样品报废单", IMPORT_WMS_SAMPLE_SCRAP_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -1169,8 +1181,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             flowDTO.setSourceName("样品报废单");
             flowDTO.setSourceCode(sourceCode);
             flowDTO.setSourceId(sourceId);
-            flowDTO.setUseUserId(entity.getScrapUserId());
-            flowDTO.setUseUserName(entity.getScrapUserName());
+            // 使用方信息将通过每个明细的sampleLedgerId在SampleLedgerFlowServiceImpl中查询获取
+            // flowDTO.setUseUserId(entity.getScrapUserId());
+            // flowDTO.setUseUserName(entity.getScrapUserName());
             flowDTO.setUserId(entity.getScrapUserId());
             flowDTO.setUserName(entity.getScrapUserName());
             flowDTO.setDeptId(entity.getScrapDeptId());

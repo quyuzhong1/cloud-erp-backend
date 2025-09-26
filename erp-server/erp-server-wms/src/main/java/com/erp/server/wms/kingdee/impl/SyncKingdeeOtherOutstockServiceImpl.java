@@ -87,7 +87,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(OtherOutstockEntity entity, String operate) {
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     		List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());

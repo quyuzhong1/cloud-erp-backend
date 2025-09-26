@@ -30,7 +30,6 @@ import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -194,11 +193,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo) {
+    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId) {
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
                 set(SoB2cLogisticsEntity::getIossTaxNo, iossTaxNo).
+                set(SoB2cLogisticsEntity::getDeclareOrgId, declareOrgId).
                 set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.THIRD.getCode()).
                 update();
     }

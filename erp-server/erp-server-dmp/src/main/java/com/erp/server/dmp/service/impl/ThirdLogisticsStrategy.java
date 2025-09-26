@@ -60,7 +60,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
         //校验系统物流渠道是否存在
         LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(addDTO.getSysId());
@@ -165,7 +165,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdAddDTO> thirdList,
                                 WarehouseDTO.ListDTO warehouse,
                                  List<ThirdAddDTO> resultUpdatedList) {
@@ -206,7 +206,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
@@ -219,7 +219,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);

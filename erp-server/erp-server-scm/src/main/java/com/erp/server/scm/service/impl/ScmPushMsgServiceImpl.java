@@ -28,7 +28,7 @@ import java.util.Optional;
 @Service
 public class ScmPushMsgServiceImpl extends SuperServiceImpl<ScmPushMsgMapper, ScmPushMsgEntity> implements ScmPushMsgService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ScmPushMsgDTO.AddDTO addDTO) {

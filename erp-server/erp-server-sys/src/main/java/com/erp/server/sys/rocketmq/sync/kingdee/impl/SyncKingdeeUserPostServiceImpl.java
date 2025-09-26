@@ -75,7 +75,7 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
 
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public DmpPushTaskEntity syncDataToKingdee(KingdeeUserRefPostEntity entity, String operate) {
         //生成任务

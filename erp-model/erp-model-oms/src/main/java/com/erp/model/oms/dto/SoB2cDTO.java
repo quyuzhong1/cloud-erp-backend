@@ -290,6 +290,11 @@ public class SoB2cDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        
+        /**
+         * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
+         */
+        private Integer onlyQueryId;
     }
 
     @Data
@@ -333,6 +338,15 @@ public class SoB2cDTO implements Serializable {
          * 全托管平台订单状态
          */
         private String platformOrderStatusName;
+        /**
+         * 多渠道类型
+         * SoB2cMultiChannelTypeEnum
+         */
+        private String multiChannelType;
+        /**
+         * 多渠道类型名称
+         */
+        private String multiChannelTypeName;
         /**
          * 创建时间
          */
@@ -2590,6 +2604,7 @@ public class SoB2cDTO implements Serializable {
          * 渠道id
          */
         private String logisticsChannelId;
+        private String logisticsChannelName;
 
         /**
          * 运输单号

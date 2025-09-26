@@ -25,7 +25,7 @@ import com.common.business.enums.ApproveStatusEnum;
 public class WorkflowTaskRecordEntity extends BaseEntity<WorkflowTaskRecordEntity> {
 
     /**
-    * 来源类型
+    * 来源类型 WorkflowTaskRecordTypeEnum
     */
     @TableField("source_type")
     private String sourceType;

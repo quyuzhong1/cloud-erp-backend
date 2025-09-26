@@ -57,7 +57,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Resource
     private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList, String mainId) {

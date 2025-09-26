@@ -252,7 +252,6 @@ sbi.remark as remark
         WHERE
         sbi.is_deleted = FALSE
         AND sbi.invalid_status = FALSE
-        AND sbd.wait_return_qty > 0
         <if test="detailIdList != null and detailIdList.size > 0">
             AND sbd.ID IN
             <foreach item="item" index="index" collection="detailIdList"

@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "erp-wms", contextId = "soOutstock" ,configuration = {FeignErrorDecoder.class})
 public interface SoOutstockFeign {
@@ -160,6 +162,16 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/getPushDownBySoDetailIds")
     List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds);
+
+
+    /**
+     * 根据skuId查询Doris最新出库时间
+     * @author Jim
+     * @date 2025-08-13
+     * @return
+     */
+    @PostMapping("feign/soOutstock/mapLastOutstockDateBySkuIds")
+    Map<String, LocalDate> mapLastOutstockDateBySkuIds(@RequestBody List<String> skuIds);
 
     @GetMapping("/feign/soOutstock/listSoOutstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId")String exhibitionId);

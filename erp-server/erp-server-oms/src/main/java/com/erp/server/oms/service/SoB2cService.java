@@ -101,7 +101,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
       * @author Will
       * @date: 2023-08-18
       */
-    BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
+    ApproveResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
 
     /**
     * 审核
@@ -318,6 +318,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
+
+    void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList);
 
     /**
      * 获取销售出库单需要的数据
@@ -1122,4 +1124,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateAmount(String id, BigDecimal amount);
 
     void clearOutDateBySoIds(List<String> clearOutDateSoIds);
+
+    /**
+     * 更新销售订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
 }
