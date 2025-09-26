@@ -57,6 +57,14 @@
             SELECT source_id from so_b2c_ref where target_id = #{soId} and is_deleted =false
         ) and type = 'split' and is_deleted =false
     </select>
+    <select id="listBySourceIdOrTargetId" resultType="com.erp.model.oms.entity.SoB2cRefEntity">
+        SELECT id,type,source_id,target_id,source_detail_id,target_detail_id
+        FROM so_b2c_ref
+        WHERE is_deleted =false
+        and (
+            source_id = ANY(ARRAY[#{sourceIds}]) OR target_id = ANY(ARRAY[#{targetIds}])
+            )
+    </select>
 
 
 </mapper>
