@@ -19,6 +19,7 @@ import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -184,6 +185,22 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 			return null;
 		}
 		return baseMapper.getByInputIdAndExtendJson(inputId,key,value);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void createNewTask(DmpInputTaskEntity dmpInputTaskEntity) {
+		String errorMessage = dmpInputTaskEntity.getErrorMessage();
+		String id = dmpInputTaskEntity.getId();
+		String init = DmpInputTaskStatusEnum.INIT.getCode();
+		if(StringUtils.isNotBlank(errorMessage) && errorMessage.startsWith(init)) {
+			lambdaUpdate().eq(DmpInputTaskEntity::getId, id).set(DmpInputTaskEntity::getStatus, init).set(DmpInputTaskEntity::getErrorCount, 0).update();
+		}else {
+			dmpInputTaskEntity.setId(null);
+			dmpInputTaskEntity.setErrorCount(0);
+			save(dmpInputTaskEntity);
+			removeById(id);
+		}
 	}
 
 }
