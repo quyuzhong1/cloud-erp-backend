@@ -81,7 +81,7 @@ public enum PlatformDictEnum implements EnumMessage {
     CAINIAO("cainiao", "菜鸟仓", "菜鸟仓", "55"),
 
     DA_MAI("damai", "大卖仓", "大卖仓", "60"),
-    WILDBERRIES("wildberries", "Wildberries", "野莓", "61"),
+    WILDBERRIES("wildberries", "Wildberries", "Wildberries", "61"),
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),
         ;
