@@ -260,7 +260,6 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         Collections.singletonList(createOutboundReq.getTrackingNo()):null)
                 .consigneeName(createOutboundReq.getReceiverInfo().getName())
                 .consigneeTel(createOutboundReq.getReceiverInfo().getPhone())
-                .consigneeTelExt(createOutboundReq.getReceiverInfo().getBuyerNumber())
                 .consigneeEmail(createOutboundReq.getReceiverInfo().getEmail())
                 .consigneeCountryCode(createOutboundReq.getReceiverInfo().getCountryCode())
                 .consigneeProvince(createOutboundReq.getReceiverInfo().getProvince())
