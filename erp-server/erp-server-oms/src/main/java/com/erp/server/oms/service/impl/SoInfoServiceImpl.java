@@ -1133,13 +1133,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
-            //剩余收款金额,不能小于0
-            item.setRemainReceiveAmount(
-                    item.getOrderAmount()
-                            .subtract(item.getDiscountAmount())
-                            .subtract(item.getReceiveAmount())
-                            .max(BigDecimal.ZERO)
-            );
         }
 
 

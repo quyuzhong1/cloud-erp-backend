@@ -67,7 +67,8 @@
         sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        GREATEST(si.order_amount - si.discount_amount - si.receive_amount - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiveAmount
         <if test="params.fieldList != null and params.fieldList.size > 0 and  params.fieldList.contains('remainingNoticeQty')">
         ,COALESCE(sdnd.deliveryQty, 0) as effectiveNoticeQty,
         (sod.qty - COALESCE(sdnd.deliveryQty, 0)) as remainingNoticeQty
