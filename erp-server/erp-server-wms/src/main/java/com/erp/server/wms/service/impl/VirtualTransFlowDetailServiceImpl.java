@@ -109,7 +109,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         return Boolean.TRUE;
     }
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void consumeMsgJob(List<WmsVirtualDetailMsgDTO.ListDTO> msgList) {
         if (CollUtil.isEmpty(msgList)) {
             return;
