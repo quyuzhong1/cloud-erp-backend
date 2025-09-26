@@ -13,6 +13,7 @@ import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
@@ -60,6 +61,9 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 	@Resource
 	private DmpThirdMappingFeign dmpThirdMappingFeign;
 
+	@Resource
+	private DictBasicService dictBasicService;
+
 	@Override
 	public String getBizName() {
 		return "b2b销售订单";
@@ -95,6 +99,12 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 			List<ThirdMappingEntity> thirdMappingEntities = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
 			if(CollectionUtils.isNotEmpty(thirdMappingEntities)){
 				erpInfoDTO.setWarehouseId(thirdMappingEntities.get(0).getSysId());
+			}else{
+				//默认仓库
+				List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
+				if(CollectionUtils.isNotEmpty(viewDTOList)){
+					erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
+				}
 			}
 		}
 		//通过客户编号匹配客户

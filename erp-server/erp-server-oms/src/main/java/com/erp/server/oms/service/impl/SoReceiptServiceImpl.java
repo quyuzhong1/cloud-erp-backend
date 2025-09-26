@@ -776,11 +776,11 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
 
         //查询销售订单信息
-        List<String> soCodes = detailList.stream().map(SoReceiptDetailEntity::getSoCode).distinct().collect(Collectors.toList());
+        List<String> soCodes = detailList.stream().map(SoReceiptDetailEntity::getSoCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         SoReceiptDTO.SoSearchDTO dto = new SoReceiptDTO.SoSearchDTO();
         dto.setCustomerId(entity.getCustomerId());
         dto.setSoCodeList(soCodes);
-        List<SoReceiptDTO.SoInfoAndReceiptDTO> soInfoDTOS = this.listSoReceiptBySoCode(dto);
+        List<SoReceiptDTO.SoInfoAndReceiptDTO> soInfoDTOS = CollectionUtils.isNotEmpty(soCodes)? this.listSoReceiptBySoCode(dto):new ArrayList<>();
         List<SoReceiptDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
         DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(entity.getDictReceiptMethod())).findFirst().orElse(null);
         if(ObjectUtil.isNotEmpty(receiveMethod)) {
