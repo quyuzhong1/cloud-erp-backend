@@ -1,8 +1,8 @@
 package com.erp.server.srm.kingdee;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
-import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.entity.PayableDetailEntity;
+import com.erp.model.srm.entity.PayableInfoEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.Map;
 
  * @date 2023/5/23 16:24
  */
-public interface SyncKingdeePoReconciliationService {
+public interface SyncKingdeePayableInfoService {
 
     /**
      * 生成或查询任务
@@ -24,7 +24,7 @@ public interface SyncKingdeePoReconciliationService {
      * @param operate
      * @return DmpPushTaskEntity
      */
-    DmpPushTaskEntity syncDataToKingdee(PoReconciliationEntity entity, List<PoReconciliationDetailEntity> detailList, String operate);
+    DmpPushTaskEntity syncDataToKingdee(PayableInfoEntity entity, List<PayableDetailEntity> detailList, String operate);
     /**
      * 获取数据
      * @author will
@@ -34,5 +34,5 @@ public interface SyncKingdeePoReconciliationService {
      * @param operate
      * @return Map<String,Object>
      */
-    Map<String , Object> newSyncDataToKingdee(PoReconciliationEntity entity, List<PoReconciliationDetailEntity> detailList,String operate);
+    Map<String , Object> newSyncDataToKingdee(PayableInfoEntity entity, List<PayableDetailEntity> detailList,String operate);
 }
