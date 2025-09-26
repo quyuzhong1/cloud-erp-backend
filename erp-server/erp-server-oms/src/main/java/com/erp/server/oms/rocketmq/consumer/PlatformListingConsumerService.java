@@ -116,7 +116,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                         PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform()) ||
                         PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform()) ||
                         PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform()) ||
-                        PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())
+                        PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())||
+                        PlatformDictEnum.WILDBERRIES.getCode().equalsIgnoreCase(dto.getPlatform())
                 ){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
                     paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
