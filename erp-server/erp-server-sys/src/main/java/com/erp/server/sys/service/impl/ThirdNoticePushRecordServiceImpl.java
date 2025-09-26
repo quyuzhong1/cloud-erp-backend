@@ -21,7 +21,9 @@ import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
@@ -36,6 +38,7 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
@@ -67,6 +70,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.ThirdNoticePushRecordMapper;
 import com.erp.server.sys.service.*;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -600,7 +604,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     continue;
                 }
 
-                List<String> userIdList = getUserList(post,roleType, specificPerson, businessId, noticeEntity.getBusinessType());
+                List<String> userIdList = getUserList(post,roleType, specificPerson, variablesMap, noticeEntity.getBusinessType());
                 if (CollUtil.isEmpty(userIdList)) {
                     //如果没有unionId，则保存失败记录
                     String errorReason = "通知人员不存在";
@@ -937,7 +941,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * @date 2025-05-30
      */
     @Override
-    public List<String> getUserList(String post, String roleType, String specificPerson, String businessId, String businessKey) {
+    public List<String> getUserList(String post, String roleType, String specificPerson, Map<String, Object> variablesMap , String businessKey) {
         List<String> resultList = new ArrayList<>();
 
         //具体人员
@@ -945,26 +949,40 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             List<String> otherPeopleIds = Arrays.asList(specificPerson.split(","));
             resultList.addAll(otherPeopleIds);
         }
-
+        //岗位
         if(StringUtils.isNotBlank(post)){
             List<String> postIdList = Arrays.asList(post.split(","));
 
             //岗位id
             List<SysPostUserEntity> userEntityList = sysPostFeign.getUserIdByPostIds(postIdList);
-            if(CollectionUtils.isNotEmpty(userEntityList)){
-                resultList.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
+            if (CollectionUtils.isNotEmpty(userEntityList)) {
+                userEntityList.stream()
+                        .map(SysPostUserEntity::getUserId)
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(resultList::add);
             }
         }
-        //
+        //自定义角色
         if(StringUtils.isNotBlank(roleType)){
             List<String> roleId = Arrays.asList(roleType.split(","));
             List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.lambdaQuery().in(DictNoticeRoleOptionEntity::getId, roleId).list();
             if(CollUtil.isNotEmpty(list)){
+                //主键id
+                String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+                Gson gson = new Gson();
                 for (DictNoticeRoleOptionEntity optionEntity : list) {
                     String field = optionEntity.getField();
                     String classPath = optionEntity.getClassPath();
-                    String refField = optionEntity.getRefField();
-                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)) {
+                    String dataJson = optionEntity.getDataJson();
+
+                    if(StringUtils.isNotBlank(field)){
+                        Object fieldObj = variablesMap.getOrDefault(field, null);
+                        if(Objects.nonNull(fieldObj)){
+                            Collections.addAll(resultList, String.valueOf(fieldObj).split(","));
+                        }
+                    }
+
+                    if(StringUtils.isNotBlank(classPath) && !Objects.equals(dataJson,"[{}]")){
                         try {
                             if (classPath.contains("getCurApprover")) {
                                 //获取当前审批人逻辑需要特殊处理
@@ -978,7 +996,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                                 if(Objects.nonNull(select)){
                                     List<ProcessManagementDTO.CurApproveInfoDTO> data = JSON.parseArray(JSON.toJSONString(select.getData()), ProcessManagementDTO.CurApproveInfoDTO.class);
                                     if(CollUtil.isNotEmpty(data)){
-                                        resultList.addAll(Arrays.asList(data.get(0).getCurApproveId().split(",")));
+                                        Collections.addAll(resultList, data.get(0).getCurApproveId().split(","));
                                     }
                                 }
                             }else if (classPath.contains("listQcItemRolePeople")) {
@@ -997,27 +1015,89 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                                     // 转换为 Map
                                     Map<String, String> data = JSON.parseObject(JSON.toJSONString(select.getData()), Map.class);
                                     if(CollUtil.isNotEmpty(data)){
-                                        resultList.addAll(Arrays.asList(data.get(field).split(",")));
+                                        Collections.addAll(resultList, data.get(field).split(","));
                                     }
                                 }
                             } else {
-                                //根据配置查询
-                                String ref = "id";
-                                Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
-                                if (StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())) {
-                                    ref = refField;
-                                }
-                                List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
-                                        .eq(ref, businessId)
-                                        .list();
-                                if (CollUtil.isNotEmpty(baseEntityList)) {
-                                    // 获取字段值
-                                    String result = baseEntityList.stream()
-                                            .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
-                                            .filter(value -> StringUtils.isNotBlank(value))
-                                            .collect(Collectors.joining(","));
-                                    if (StringUtils.isNotBlank(result)) {
-                                        resultList.add(result);
+                                //获取查询配置
+                                List<DictNoticeRoleOptionDTO.SelectDTO> dtoList = gson.fromJson(
+                                        dataJson,
+                                        new TypeToken<List<DictNoticeRoleOptionDTO.SelectDTO>>() {}.getType()
+                                );
+                                dtoList = dtoList.stream()
+                                        .filter(e -> StringUtils.isNotBlank(e.getCondition()) && StringUtils.isNotBlank(e.getMapKey()))
+                                        .collect(Collectors.toList());
+
+                                if(CollUtil.isNotEmpty(dtoList)){
+                                    Boolean isQuery = Boolean.FALSE;
+                                    //根据配置查询
+                                    Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                                    FeignBuilder feignBuilder = FeignQuery.create(clazz);
+
+                                    for (DictNoticeRoleOptionDTO.SelectDTO selectDTO : dtoList) {
+                                        String mapKey = selectDTO.getMapKey();
+                                        String compareCode = selectDTO.getCompareCode();
+                                        String condition = selectDTO.getCondition();
+                                        Object mapValue = variablesMap.getOrDefault(mapKey,null);
+
+                                        if(Objects.nonNull(mapValue)){
+                                            isQuery = Boolean.TRUE;
+
+                                            QueryTypeEnum queryType = QueryTypeEnum.getByValue(compareCode);
+                                            if (queryType == null) {
+                                                queryType = QueryTypeEnum.EQ;
+                                            }
+
+                                            switch (queryType) {
+                                                case EQ:
+                                                    feignBuilder.eq(condition, mapValue);
+                                                    break;
+                                                case NE:
+                                                    feignBuilder.ne(condition,mapValue);
+                                                    break;
+                                                case IN:
+                                                    feignBuilder.in(condition, Arrays.asList(String.valueOf(mapValue).split(",")));
+                                                    break;
+                                                case NOT_IN:
+                                                    feignBuilder.notIn(condition, Arrays.asList(String.valueOf(mapValue).split(",")));
+                                                    break;
+                                                case LE:
+                                                    feignBuilder.le(condition, mapValue);
+                                                    break;
+                                                case GE:
+                                                    feignBuilder.ge(condition, mapValue);
+                                                    break;
+                                                case LT:
+                                                    feignBuilder.lt(condition, mapValue);
+                                                    break;
+                                                case GT:
+                                                    feignBuilder.gt(condition, mapValue);
+                                                    break;
+                                                case LIKE:
+                                                    feignBuilder.like(condition, mapValue);
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
+                                    }
+
+                                    if(isQuery) {
+                                        List<BaseEntity> baseEntityList = feignBuilder.list();
+                                        if (CollUtil.isNotEmpty(baseEntityList)) {
+                                            String select = dtoList.get(0).getSelect();
+                                            // 获取字段值
+                                            List<String> result = baseEntityList.stream()
+                                                    .map(item -> {
+                                                        Object value = ReflectUtil.getFieldValue(item, select);
+                                                        return value != null ? String.valueOf(value) : null;
+                                                    })
+                                                    .filter(StringUtils::isNotBlank)
+                                                    .collect(Collectors.toList());
+                                            if (CollUtil.isNotEmpty(result)) {
+                                                resultList.addAll(result);
+                                            }
+                                        }
                                     }
                                 }
                             }

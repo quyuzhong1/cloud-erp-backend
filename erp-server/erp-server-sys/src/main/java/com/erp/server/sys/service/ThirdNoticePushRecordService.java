@@ -50,7 +50,7 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     boolean checkRule(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> cfgRuleConditionEntities, String bussinessKey);
 
-    List<String> getUserList(String post, String roleType, String specificPerson, String businessId, String businessKey);
+    List<String> getUserList(String post, String roleType, String specificPerson, Map<String, Object> variablesMap , String businessKey);
 
     List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO);
 
