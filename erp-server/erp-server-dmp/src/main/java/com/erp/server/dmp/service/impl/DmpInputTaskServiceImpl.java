@@ -197,6 +197,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 			lambdaUpdate().eq(DmpInputTaskEntity::getId, id).set(DmpInputTaskEntity::getStatus, init).set(DmpInputTaskEntity::getErrorCount, 0).update();
 		}else {
 			dmpInputTaskEntity.setId(null);
+			dmpInputTaskEntity.setStatus(init);
 			dmpInputTaskEntity.setErrorCount(0);
 			save(dmpInputTaskEntity);
 			removeById(id);
