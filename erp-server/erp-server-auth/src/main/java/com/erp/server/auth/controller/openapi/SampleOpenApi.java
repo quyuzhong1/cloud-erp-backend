@@ -18,6 +18,7 @@ import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.dto.TypeAndValueDTO;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.common.business.dto.FindUserDTO;
+import com.erp.model.sys.vo.SysLoginUserVO;
 import com.erp.model.wms.dto.SampleBackInfoDTO;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
@@ -36,6 +37,7 @@ import com.erp.rpc.wms.feign.WmsFeign;
 import com.erp.rpc.plm.feign.PlmFeign;
 import com.erp.rpc.scm.feign.ScmFeign;
 import com.erp.server.auth.config.OpenApi;
+import com.erp.server.auth.server.LoginAuthService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -77,6 +79,9 @@ public class SampleOpenApi {
 
     @Resource
     private ScmFeign scmFeign;
+
+    @Resource
+    private LoginAuthService loginAuthService;
 
     // ==================== 样品借用单相关接口 ====================
 
@@ -569,6 +574,11 @@ public class SampleOpenApi {
     @OpenApi("scmDropDownApproveStatusList")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> scmDropDownApproveStatusList() {
         return scmFeign.approveStatusList();
+    }
+
+    @OpenApi("authUserGetUserByToken")
+    public ApiResult<SysLoginUserVO> authUserGetUserByToken(String token){
+        return ApiResult.success(loginAuthService.getByToken(token));
     }
 
 
