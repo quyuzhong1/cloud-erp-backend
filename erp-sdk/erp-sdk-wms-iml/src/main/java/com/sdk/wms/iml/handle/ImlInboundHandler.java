@@ -52,28 +52,7 @@ public class ImlInboundHandler extends AbstractPullThirdWarehouseHandler<ImlRece
 
     @Override
     public List<ImlReceiptResp> download(JobTaskDTO data) {
-        //查询待签收、部分签收状态的入库单
-        List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_IML.getCode());
-        if(CollectionUtils.isEmpty(receiveCodeList)){
-            return new ArrayList<>();
-        }
-        //查询数据
-        ImlGetReceiptReq imlGetReceiptReq = ImlGetReceiptReq.builder()
-                .page(1)
-                .pageSize(receiveCodeList.size())
-                .receivingCodeArr(receiveCodeList)
-                .build();
-        ImlResponse<List<ImlReceiptResp>> response = imlService.getReceiptBatch(imlGetReceiptReq);
-        checkResponse(response);
-        List<ImlReceiptResp> respList =response.getData();
-        respList.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.INBOUND.getCode()+v.getReceivingCode()));
-            v.setAuthId(data.getShopId());
-        });
-
-        return respList;
+        return new ArrayList<>();
     }
 
     private void checkResponse(ImlResponse<?> response) {
