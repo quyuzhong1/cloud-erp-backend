@@ -54,7 +54,11 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("receiverTelNumber", recipientAddressMap.get("phoneNumber"));
                     detail.put("country", recipientAddressMap.get("regionCode"));
                     detail.put("postCode", recipientAddressMap.get("postalCode"));
-                    detail.put("fullAddress", recipientAddressMap.get("fullAddress") + " " + recipientAddressMap.get("addressDetail"));
+                    if ("US".equalsIgnoreCase(regionCode)) {
+                        detail.put("fullAddress", recipientAddressMap.get("addressDetail"));
+                    } else {
+                        detail.put("fullAddress", recipientAddressMap.get("fullAddress") + " " + recipientAddressMap.get("addressDetail"));
+                    }
 
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 
