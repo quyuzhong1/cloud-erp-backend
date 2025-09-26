@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.app;
+package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @LogSystemModule("样品领用单app端")
-@RequestMapping("/app/sampleRecipient")
-public class SampleRecipientAppController extends BaseController {
+@RequestMapping("/feign/sampleRecipient")
+public class SampleRecipientFeignController extends BaseController {
 
     @Resource
     private SampleRecipientService sampleRecipientService;

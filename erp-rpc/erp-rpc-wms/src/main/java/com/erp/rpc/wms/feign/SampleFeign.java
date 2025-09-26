@@ -22,92 +22,92 @@ import java.util.List;
  * @CreateTime: 2025-09-10
  * @Author: jack
  */
-@FeignClient(name = "erp-wms", contextId = "sampleFeign" ,configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-wms",path = "/feign", contextId = "sampleFeign" ,configuration = {FeignErrorDecoder.class})
 public interface SampleFeign {
     // ==================== 样品借用单相关接口 ====================
 
     /**
      * 样品借用单新增
      */
-    @PostMapping("/app/sampleBorrowInfo/add")
+    @PostMapping("/sampleBorrowInfo/add")
     ApiResult<BaseResultDTO.AddDTO> sampleBorrowInfoAdd(@RequestBody @Valid SampleBorrowInfoDTO.AddDTO dto);
 
     /**
      * 样品借用单修改
      */
-    @PostMapping("/app/sampleBorrowInfo/update")
+    @PostMapping("/sampleBorrowInfo/update")
     ApiResult<?> sampleBorrowInfoUpdate(@RequestBody @Valid SampleBorrowInfoDTO.UpdateDTO dto);
 
     /**
      * 样品借用单标签页列表
      */
-    @PostMapping("/app/sampleBorrowInfo/tabList")
+    @PostMapping("/sampleBorrowInfo/tabList")
     ApiResult<List<SampleBorrowInfoDTO.TabListDTO>> sampleBorrowInfoTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品借用单分页查询
      */
-    @PostMapping("/app/sampleBorrowInfo/paging")
+    @PostMapping("/sampleBorrowInfo/paging")
     ApiResult<PagingVO<SampleBorrowInfoDTO.ListDTO>> sampleBorrowInfoPaging(@RequestBody @Valid PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
 
     /**
      * 样品借用单新增并提交
      */
-    @PostMapping("/app/sampleBorrowInfo/addAndSubmit")
+    @PostMapping("/sampleBorrowInfo/addAndSubmit")
     ApiResult<BaseResultDTO.AddDTO> sampleBorrowInfoAddAndSubmit(@RequestBody @Valid SampleBorrowInfoDTO.AddDTO dto);
 
     /**
      * 样品借用单修改并提交
      */
-    @PostMapping("/app/sampleBorrowInfo/updateAndSubmit")
+    @PostMapping("/sampleBorrowInfo/updateAndSubmit")
     ApiResult<Void> sampleBorrowInfoUpdateAndSubmit(@RequestBody @Valid SampleBorrowInfoDTO.UpdateDTO dto);
 
     /**
      * 样品借用单提交审核
      */
-    @PostMapping("/app/sampleBorrowInfo/submit")
+    @PostMapping("/sampleBorrowInfo/submit")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单审核通过
      */
-    @PostMapping("/app/sampleBorrowInfo/approve")
+    @PostMapping("/sampleBorrowInfo/approve")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单审核不通过
      */
-    @PostMapping("/app/sampleBorrowInfo/disApprove")
+    @PostMapping("/sampleBorrowInfo/disApprove")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品借用单删除
      */
-    @PostMapping("/app/sampleBorrowInfo/delete")
+    @PostMapping("/sampleBorrowInfo/delete")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单作废
      */
-    @PostMapping("/app/sampleBorrowInfo/invalid")
+    @PostMapping("/sampleBorrowInfo/invalid")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品借用单取消流程
      */
-    @PostMapping("/app/sampleBorrowInfo/cancelProcess")
+    @PostMapping("/sampleBorrowInfo/cancelProcess")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单完成借用
      */
-    @PostMapping("/app/sampleBorrowInfo/finishBorrow")
+    @PostMapping("/sampleBorrowInfo/finishBorrow")
     ApiResult<List<BatchResultDTO>> sampleBorrowInfoFinishBorrow(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单查看详情
      */
-    @GetMapping("/app/sampleBorrowInfo/view")
+    @GetMapping("/sampleBorrowInfo/view")
     ApiResult<SampleBorrowInfoDTO.ViewDTO> sampleBorrowInfoView(@RequestParam("id") String id);
 
     // ==================== 样品领用单相关接口 ====================
@@ -115,103 +115,103 @@ public interface SampleFeign {
     /**
      * 样品领用单新增
      */
-    @PostMapping("/app/sampleRecipient/add")
+    @PostMapping("/sampleRecipient/add")
     ApiResult<BaseResultDTO.AddDTO> sampleRecipientAdd(@RequestBody @Valid SampleRecipientDTO.AddDTO dto);
 
     /**
      * 样品领用单修改
      */
-    @PostMapping("/app/sampleRecipient/update")
+    @PostMapping("/sampleRecipient/update")
     ApiResult<?> sampleRecipientUpdate(@RequestBody @Valid SampleRecipientDTO.UpdateDTO dto);
 
     /**
      * 样品领用单标签页列表
      */
-    @PostMapping("/app/sampleRecipient/tabList")
+    @PostMapping("/sampleRecipient/tabList")
     ApiResult<List<SampleRecipientDTO.TabListDTO>> sampleRecipientTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品领用单分页查询
      */
-    @PostMapping("/app/sampleRecipient/paging")
+    @PostMapping("/sampleRecipient/paging")
     ApiResult<PagingVO<SampleRecipientDTO.ListDTO>> sampleRecipientPaging(@RequestBody @Valid PagingDTO<SampleRecipientDTO.PagingParamDTO> dto);
 
     /**
      * 样品领用单新增并提交
      */
-    @PostMapping("/app/sampleRecipient/addAndSubmit")
+    @PostMapping("/sampleRecipient/addAndSubmit")
     ApiResult<BaseResultDTO.AddDTO> sampleRecipientAddAndSubmit(@RequestBody @Valid SampleRecipientDTO.AddDTO dto);
 
     /**
      * 样品领用单修改并提交
      */
-    @PostMapping("/app/sampleRecipient/updateAndSubmit")
+    @PostMapping("/sampleRecipient/updateAndSubmit")
     ApiResult<Void> sampleRecipientUpdateAndSubmit(@RequestBody @Valid SampleRecipientDTO.UpdateDTO dto);
 
     /**
      * 样品领用单提交审核
      */
-    @PostMapping("/app/sampleRecipient/submit")
+    @PostMapping("/sampleRecipient/submit")
     ApiResult<List<BatchResultDTO>> sampleRecipientSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单审核通过
      */
-    @PostMapping("/app/sampleRecipient/approve")
+    @PostMapping("/sampleRecipient/approve")
     ApiResult<List<BatchResultDTO>> sampleRecipientApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单审核不通过
      */
-    @PostMapping("/app/sampleRecipient/disApprove")
+    @PostMapping("/sampleRecipient/disApprove")
     ApiResult<List<BatchResultDTO>> sampleRecipientDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品领用单删除
      */
-    @PostMapping("/app/sampleRecipient/delete")
+    @PostMapping("/sampleRecipient/delete")
     ApiResult<List<BatchResultDTO>> sampleRecipientDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单作废
      */
-    @PostMapping("/app/sampleRecipient/invalid")
+    @PostMapping("/sampleRecipient/invalid")
     ApiResult<List<BatchResultDTO>> sampleRecipientInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品领用单取消流程
      */
-    @PostMapping("/app/sampleRecipient/cancelProcess")
+    @PostMapping("/sampleRecipient/cancelProcess")
     ApiResult<List<BatchResultDTO>> sampleRecipientCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单完成领用
      */
-    @PostMapping("/app/sampleRecipient/finishRecipient")
+    @PostMapping("/sampleRecipient/finishRecipient")
     ApiResult<List<BatchResultDTO>> sampleRecipientFinishRecipient(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单查看详情
      */
-    @GetMapping("/app/sampleRecipient/view")
+    @GetMapping("/sampleRecipient/view")
     ApiResult<SampleRecipientDTO.ViewDTO> sampleRecipientView(@RequestParam("id") String id);
 
     /**
      * 样品领用单SKU列表
      */
-    @PostMapping("/app/sampleRecipient/listSku")
+    @PostMapping("/sampleRecipient/listSku")
     ApiResult<PagingVO<SampleRecipientDTO.SkuListResponseDTO>> sampleRecipientListSku(@RequestBody @Valid SampleRecipientDTO.SkuListQueryDTO dto);
 
     /**
      * 样品领用单SKU可用库存
      */
-    @PostMapping("/app/sampleRecipient/skuAvailableStock")
+    @PostMapping("/sampleRecipient/skuAvailableStock")
     ApiResult<List<SampleRecipientDTO.SkuAvailableStockDTO>> sampleRecipientSkuAvailableStock(@RequestBody @Valid SampleRecipientDTO.SkuAvailableStockQueryDTO dto);
 
     /**
      * 样品领用单SKU成本
      */
-    @PostMapping("/app/sampleRecipient/skuCost")
+    @PostMapping("/sampleRecipient/skuCost")
     ApiResult<List<SampleRecipientDTO.SkuDTO>> sampleRecipientSkuCost(@RequestBody @Valid SampleRecipientDTO.SkuCostQueryDTO dto);
 
     // ==================== 样品退回单相关接口 ====================
@@ -219,79 +219,79 @@ public interface SampleFeign {
     /**
      * 样品退回单新增
      */
-    @PostMapping("/app/sampleBackInfo/add")
+    @PostMapping("/sampleBackInfo/add")
     ApiResult<BaseResultDTO.AddDTO> sampleBackInfoAdd(@RequestBody @Valid SampleBackInfoDTO.AddDTO dto);
 
     /**
      * 样品退回单修改
      */
-    @PostMapping("/app/sampleBackInfo/update")
+    @PostMapping("/sampleBackInfo/update")
     ApiResult<?> sampleBackInfoUpdate(@RequestBody @Valid SampleBackInfoDTO.UpdateDTO dto);
 
     /**
      * 样品退回单标签页列表
      */
-    @PostMapping("/app/sampleBackInfo/tabList")
+    @PostMapping("/sampleBackInfo/tabList")
     ApiResult<List<SampleBackInfoDTO.TabListDTO>> sampleBackInfoTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品退回单分页查询
      */
-    @PostMapping("/app/sampleBackInfo/paging")
+    @PostMapping("/sampleBackInfo/paging")
     ApiResult<PagingVO<SampleBackInfoDTO.ListDTO>> sampleBackInfoPaging(@RequestBody @Valid PagingDTO<SampleBackInfoDTO.PagingParamDTO> dto);
 
     /**
      * 样品退回单新增并提交
      */
-    @PostMapping("/app/sampleBackInfo/addAndSubmit")
+    @PostMapping("/sampleBackInfo/addAndSubmit")
     ApiResult<BaseResultDTO.AddDTO> sampleBackInfoAddAndSubmit(@RequestBody @Valid SampleBackInfoDTO.AddDTO dto);
 
     /**
      * 样品退回单修改并提交
      */
-    @PostMapping("/app/sampleBackInfo/updateAndSubmit")
+    @PostMapping("/sampleBackInfo/updateAndSubmit")
     ApiResult<Void> sampleBackInfoUpdateAndSubmit(@RequestBody @Valid SampleBackInfoDTO.UpdateDTO dto);
 
     /**
      * 样品退回单提交审核
      */
-    @PostMapping("/app/sampleBackInfo/submit")
+    @PostMapping("/sampleBackInfo/submit")
     ApiResult<List<BatchResultDTO>> sampleBackInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品退回单审核通过
      */
-    @PostMapping("/app/sampleBackInfo/approve")
+    @PostMapping("/sampleBackInfo/approve")
     ApiResult<List<BatchResultDTO>> sampleBackInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品退回单审核不通过
      */
-    @PostMapping("/app/sampleBackInfo/disApprove")
+    @PostMapping("/sampleBackInfo/disApprove")
     ApiResult<List<BatchResultDTO>> sampleBackInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品退回单删除
      */
-    @PostMapping("/app/sampleBackInfo/delete")
+    @PostMapping("/sampleBackInfo/delete")
     ApiResult<List<BatchResultDTO>> sampleBackInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品退回单作废
      */
-    @PostMapping("/app/sampleBackInfo/invalid")
+    @PostMapping("/sampleBackInfo/invalid")
     ApiResult<List<BatchResultDTO>> sampleBackInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品退回单取消流程
      */
-    @PostMapping("/app/sampleBackInfo/cancelProcess")
+    @PostMapping("/sampleBackInfo/cancelProcess")
     ApiResult<List<BatchResultDTO>> sampleBackInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品退回单查看详情
      */
-    @GetMapping("/app/sampleBackInfo/view")
+    @GetMapping("/sampleBackInfo/view")
     ApiResult<SampleBackInfoDTO.ViewDTO> sampleBackInfoView(@RequestParam("id") String id);
 
     // ==================== 样品归还单相关接口 ====================
@@ -299,79 +299,79 @@ public interface SampleFeign {
     /**
      * 样品归还单新增
      */
-    @PostMapping("/app/sampleReturnInfo/add")
+    @PostMapping("/sampleReturnInfo/add")
     ApiResult<BaseResultDTO.AddDTO> sampleReturnInfoAdd(@RequestBody @Valid SampleReturnInfoDTO.AddDTO dto);
 
     /**
      * 样品归还单修改
      */
-    @PostMapping("/app/sampleReturnInfo/update")
+    @PostMapping("/sampleReturnInfo/update")
     ApiResult<?> sampleReturnInfoUpdate(@RequestBody @Valid SampleReturnInfoDTO.UpdateDTO dto);
 
     /**
      * 样品归还单标签页列表
      */
-    @PostMapping("/app/sampleReturnInfo/tabList")
+    @PostMapping("/sampleReturnInfo/tabList")
     ApiResult<List<SampleReturnInfoDTO.TabListDTO>> sampleReturnInfoTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品归还单分页查询
      */
-    @PostMapping("/app/sampleReturnInfo/paging")
+    @PostMapping("/sampleReturnInfo/paging")
     ApiResult<PagingVO<SampleReturnInfoDTO.ListDTO>> sampleReturnInfoPaging(@RequestBody @Valid PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto);
 
     /**
      * 样品归还单新增并提交
      */
-    @PostMapping("/app/sampleReturnInfo/addAndSubmit")
+    @PostMapping("/sampleReturnInfo/addAndSubmit")
     ApiResult<BaseResultDTO.AddDTO> sampleReturnInfoAddAndSubmit(@RequestBody @Valid SampleReturnInfoDTO.AddDTO dto);
 
     /**
      * 样品归还单修改并提交
      */
-    @PostMapping("/app/sampleReturnInfo/updateAndSubmit")
+    @PostMapping("/sampleReturnInfo/updateAndSubmit")
     ApiResult<Void> sampleReturnInfoUpdateAndSubmit(@RequestBody @Valid SampleReturnInfoDTO.UpdateDTO dto);
 
     /**
      * 样品归还单提交审核
      */
-    @PostMapping("/app/sampleReturnInfo/submit")
+    @PostMapping("/sampleReturnInfo/submit")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品归还单审核通过
      */
-    @PostMapping("/app/sampleReturnInfo/approve")
+    @PostMapping("/sampleReturnInfo/approve")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品归还单审核不通过
      */
-    @PostMapping("/app/sampleReturnInfo/disApprove")
+    @PostMapping("/sampleReturnInfo/disApprove")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品归还单删除
      */
-    @PostMapping("/app/sampleReturnInfo/delete")
+    @PostMapping("/sampleReturnInfo/delete")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品归还单作废
      */
-    @PostMapping("/app/sampleReturnInfo/invalid")
+    @PostMapping("/sampleReturnInfo/invalid")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品归还单取消流程
      */
-    @PostMapping("/app/sampleReturnInfo/cancelProcess")
+    @PostMapping("/sampleReturnInfo/cancelProcess")
     ApiResult<List<BatchResultDTO>> sampleReturnInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品归还单查看详情
      */
-    @GetMapping("/app/sampleReturnInfo/view")
+    @GetMapping("/sampleReturnInfo/view")
     ApiResult<SampleReturnInfoDTO.ViewDTO> sampleReturnInfoView(@RequestParam("id") String id);
 
     // ==================== 样品报废单相关接口 ====================
@@ -379,79 +379,79 @@ public interface SampleFeign {
     /**
      * 样品报废单新增
      */
-    @PostMapping("/app/sampleScrapInfo/add")
+    @PostMapping("/sampleScrapInfo/add")
     ApiResult<BaseResultDTO.AddDTO> sampleScrapInfoAdd(@RequestBody @Valid SampleScrapInfoDTO.AddDTO dto);
 
     /**
      * 样品报废单修改
      */
-    @PostMapping("/app/sampleScrapInfo/update")
+    @PostMapping("/sampleScrapInfo/update")
     ApiResult<?> sampleScrapInfoUpdate(@RequestBody @Valid SampleScrapInfoDTO.UpdateDTO dto);
 
     /**
      * 样品报废单标签页列表
      */
-    @PostMapping("/app/sampleScrapInfo/tabList")
+    @PostMapping("/sampleScrapInfo/tabList")
     ApiResult<List<SampleScrapInfoDTO.TabListDTO>> sampleScrapInfoTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品报废单分页查询
      */
-    @PostMapping("/app/sampleScrapInfo/paging")
+    @PostMapping("/sampleScrapInfo/paging")
     ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>> sampleScrapInfoPaging(@RequestBody @Valid PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
 
     /**
      * 样品报废单新增并提交
      */
-    @PostMapping("/app/sampleScrapInfo/addAndSubmit")
+    @PostMapping("/sampleScrapInfo/addAndSubmit")
     ApiResult<BaseResultDTO.AddDTO> sampleScrapInfoAddAndSubmit(@RequestBody @Valid SampleScrapInfoDTO.AddDTO dto);
 
     /**
      * 样品报废单修改并提交
      */
-    @PostMapping("/app/sampleScrapInfo/updateAndSubmit")
+    @PostMapping("/sampleScrapInfo/updateAndSubmit")
     ApiResult<Void> sampleScrapInfoUpdateAndSubmit(@RequestBody @Valid SampleScrapInfoDTO.UpdateDTO dto);
 
     /**
      * 样品报废单提交审核
      */
-    @PostMapping("/app/sampleScrapInfo/submit")
+    @PostMapping("/sampleScrapInfo/submit")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品报废单审核通过
      */
-    @PostMapping("/app/sampleScrapInfo/approve")
+    @PostMapping("/sampleScrapInfo/approve")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品报废单审核不通过
      */
-    @PostMapping("/app/sampleScrapInfo/disApprove")
+    @PostMapping("/sampleScrapInfo/disApprove")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品报废单删除
      */
-    @PostMapping("/app/sampleScrapInfo/delete")
+    @PostMapping("/sampleScrapInfo/delete")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品报废单作废
      */
-    @PostMapping("/app/sampleScrapInfo/invalid")
+    @PostMapping("/sampleScrapInfo/invalid")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
 
     /**
      * 样品报废单取消流程
      */
-    @PostMapping("/app/sampleScrapInfo/cancelProcess")
+    @PostMapping("/sampleScrapInfo/cancelProcess")
     ApiResult<List<BatchResultDTO>> sampleScrapInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品报废单查看详情
      */
-    @GetMapping("/app/sampleScrapInfo/view")
+    @GetMapping("/sampleScrapInfo/view")
     ApiResult<SampleScrapInfoDTO.ViewDTO> sampleScrapInfoView(@RequestParam("id") String id);
 
     // ==================== 样品台账相关接口 ====================
@@ -459,36 +459,36 @@ public interface SampleFeign {
     /**
      * 样品台账标签页列表
      */
-    @PostMapping("/app/sampleLedger/tabList")
+    @PostMapping("/sampleLedger/tabList")
     ApiResult<List<SampleLedgerDTO.TabListDTO>> sampleLedgerTabList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品台账分页查询
      */
-    @PostMapping("/app/sampleLedger/paging")
+    @PostMapping("/sampleLedger/paging")
     ApiResult<PagingVO<SampleLedgerDTO.ListDTO>> sampleLedgerPaging(@RequestBody @Valid PagingDTO<SampleLedgerDTO.PagingParamDTO> dto);
 
     /**
      * 样品台账查看详情
      */
-    @GetMapping("/app/sampleLedger/view")
+    @GetMapping("/sampleLedger/view")
     ApiResult<SampleLedgerDTO.ViewDTO> sampleLedgerView(@RequestParam("id") String id);
 
     /**
      * 样品台账流程列表
      */
-    @PostMapping("/app/sampleLedger/flowList")
+    @PostMapping("/sampleLedger/flowList")
     ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(@RequestBody PermissionsDTO param);
 
     /**
      * 样品台账流程详情
      */
-    @GetMapping("/app/sampleLedger/flowDetail")
+    @GetMapping("/sampleLedger/flowDetail")
     ApiResult<SampleLedgerFlowDTO.ViewDTO> sampleLedgerFlowDetail(@RequestParam("id") String id);
 
     /**
      * 样品台账SKU列表
      */
-    @PostMapping("/app/sampleLedger/listSku")
+    @PostMapping("/sampleLedger/listSku")
     ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> sampleLedgerListSku(@RequestBody @Valid PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
 }

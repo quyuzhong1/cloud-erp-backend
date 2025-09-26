@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
@@ -185,6 +186,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			String requestData = next.getRequestData();
 			if(StringUtils.isNotBlank(requestData)) {
 				JSONObject parseObject = JSON.parseObject(requestData);
+				Boolean isQuerySync = parseObject.getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
+				if (isQuerySync != null && isQuerySync) {
+					continue;
+				}
 				if("1801574477567165866".equals(systemId)) {
 					String status = parseObject.getString("status");
 					if(isRetryPush && "已删除".equals(status)) {

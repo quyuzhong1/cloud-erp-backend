@@ -1,5 +1,4 @@
-package com.erp.server.wms.controller.app;
-
+package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -14,11 +13,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
-import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
-import com.erp.server.wms.service.SampleBorrowInfoService;
-import com.erp.server.wms.service.SampleScrapInfoService;
+import com.erp.model.wms.dto.SampleBackInfoDTO;
+import com.erp.model.wms.entity.SampleBackInfoEntity;
+import com.erp.server.wms.query.SampleBackInfoQueryHandler;
+import com.erp.server.wms.service.SampleBackInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,151 +27,150 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 样品借用单app端
+ * 样品退回单app端
  *
- * @author jack
- * @since 2025-09-11
+ * @author wuhaotian
+ * @since 2025-09-15
  */
 @Slf4j
 @RestController
-@LogSystemModule("样品借用单app端")
-@RequestMapping("/app/sampleBorrowInfo")
-public class SampleBorrowInfoAppController extends BaseController {
+@LogSystemModule("样品退回单app端")
+@RequestMapping("/feign/sampleBackInfo")
+public class SampleBackInfoFeignController extends BaseController {
 
     @Resource
-    private SampleBorrowInfoService sampleBorrowInfoService;
+    private SampleBackInfoService sampleBackInfoService;
 
     /**
      * 新增
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<String>
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "样品借用单app端新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleBorrowInfoDTO.AddDTO dto) {
+    @LogAction(value = LogActionEnum.INSERT, desc = "样品退回单app端新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleBackInfoDTO.AddDTO dto) {
         dto.setClientType(ClientTypeEnum.APP);
-        return success(sampleBorrowInfoService.add(dto));
+        return success(sampleBackInfoService.add(dto));
     }
 
     /**
      * 修改
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult
      */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "样品借用单app端修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "样品退回单app端修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:update",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:update",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SampleBorrowInfoDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated SampleBackInfoDTO.UpdateDTO dto) {
         dto.setClientType(ClientTypeEnum.APP);
-        sampleBorrowInfoService.update(dto);
+        sampleBackInfoService.update(dto);
         return success();
     }
 
     /**
      * APP端标签页列表
-     * @author jack
-     * @date: 2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param param 权限参数对象，用于控制数据访问权限
-     * @return 标签页列表，包含待提交/不通过、审核中、待归还三个标签页的统计信息
+     * @return 标签页列表，包含待提交/不通过、审核中、待入库、已入库四个标签页的统计信息
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:paging",
+            menuCode = "wms:sampleBackInfo:paging",
             tableAlias = "sbi"
     )
-    public ApiResult<List<SampleBorrowInfoDTO.TabListDTO>> tabListApp(@RequestBody PermissionsDTO param) {
-        return success(sampleBorrowInfoService.tabListApp(param));
+    public ApiResult<List<SampleBackInfoDTO.TabListDTO>> tabListApp(@RequestBody PermissionsDTO param) {
+        return success(sampleBackInfoService.tabListApp(param));
     }
 
     /**
      * APP端列表查询
-     * @author jack
-     * @date: 2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
-     * @return ApiResult<PagingVO<SampleBorrowInfoDTO.ListDTO>>
+     * @return ApiResult<PagingVO<SampleBackInfoDTO.ListDTO>>
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:paging",
+            menuCode = "wms:sampleBackInfo:paging",
             tableAlias = "sbi"
     )
-    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
-    public ApiResult<PagingVO<SampleBorrowInfoDTO.ListDTO>> pagingApp(@RequestBody @Validated PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
-        return success(sampleBorrowInfoService.pagingApp(dto));
+    @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
+    public ApiResult<PagingVO<SampleBackInfoDTO.ListDTO>> pagingApp(@RequestBody @Validated PagingDTO<SampleBackInfoDTO.PagingParamDTO> dto) {
+        return success(sampleBackInfoService.pagingApp(dto));
     }
 
     /**
      * 新增并提交审核
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<Void>
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleBorrowInfoDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SampleBackInfoDTO.AddDTO dto) {
         dto.setClientType(ClientTypeEnum.APP);
-        BaseResultDTO.AddDTO result = sampleBorrowInfoService.addAndSubmit(dto);
+        BaseResultDTO.AddDTO result = sampleBackInfoService.addAndSubmit(dto);
         return success(result);
     }
 
     /**
      * 修改并提交审核
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<Void>
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:updateAndSubmit",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:updateAndSubmit",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleBorrowInfoDTO.UpdateDTO dto) {
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleBackInfoDTO.UpdateDTO dto) {
         dto.setClientType(ClientTypeEnum.APP);
-        sampleBorrowInfoService.updateAndSubmit(dto);
+        sampleBackInfoService.updateAndSubmit(dto);
         return success();
     }
 
-
     /**
      * 提交审核
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:submit",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:submit",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "样品借用单app端提交审核")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "样品退回单app端提交审核")
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = sampleBorrowInfoService.submit(id,ClientTypeEnum.APP);
+                submit = sampleBackInfoService.submit(id, ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端 提交审核失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端 提交审核失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "样品借用单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "样品退回单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -186,32 +183,32 @@ public class SampleBorrowInfoAppController extends BaseController {
 
     /**
      * 审核
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:approve",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:approve",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "样品借用单app端审核")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "样品退回单app端审核")
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()),ClientTypeEnum.APP);
+                approveResult = sampleBackInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端审核失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端审核失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "样品退回单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -224,32 +221,32 @@ public class SampleBorrowInfoAppController extends BaseController {
 
     /**
      * 反审核
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:disApprove",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:disApprove",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品借用单app端反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品退回单app端反审核")
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = sampleBorrowInfoService.disApprove(id,ClientTypeEnum.APP);
+                disApproveResult = sampleBackInfoService.disApprove(id, ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端反审核失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端反审核失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "样品退回单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -260,35 +257,34 @@ public class SampleBorrowInfoAppController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
     /**
      * 删除
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:delete",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:delete",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "样品借用单app端删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "样品退回单app端删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.delete(id,ClientTypeEnum.APP);
+                deleteResult = sampleBackInfoService.delete(id, ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端删除失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端删除失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品退回单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -301,32 +297,32 @@ public class SampleBorrowInfoAppController extends BaseController {
 
     /**
      * 作废
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:invalid",
-            serviceClass = SampleScrapInfoService.class,
+            menuCode = "wms:sampleBackInfo:invalid",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.INVALID, desc = "样品借用单app端作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "样品退回单app端作废")
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark(),ClientTypeEnum.APP);
+                deleteResult = sampleBackInfoService.invalid(id, dto.getRemark(), ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端作废失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端作废失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 作废失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品退回单不存在, 作废失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -339,32 +335,32 @@ public class SampleBorrowInfoAppController extends BaseController {
 
     /**
      * 撤销
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:cancelProcess",
-            serviceClass = SampleBorrowInfoService.class,
+            menuCode = "wms:sampleBackInfo:cancelProcess",
+            serviceClass = SampleBackInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "样品借用单app端撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "样品退回单app端撤销")
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
-        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        List<SampleBackInfoEntity> list = sampleBackInfoService.lambdaQuery().in(SampleBackInfoEntity::getId, ids).list();
+        Map<String, SampleBackInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBackInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleBorrowInfoService.cancelProcess(id,ClientTypeEnum.APP);
+                cancelResult = sampleBackInfoService.cancelProcess(id, ClientTypeEnum.APP);
             }catch (Exception e){
-                log.error("样品借用单app端撤回流程失败",e);
-                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                log.error("样品退回单app端撤回流程失败",e);
+                SampleBackInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "样品退回单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -377,38 +373,15 @@ public class SampleBorrowInfoAppController extends BaseController {
 
     /**
      * APP端详情
-     * @author jack
-     * @date:  2025-09-11
+     * @author wuhaotian
+     * @date: 2025-09-15
      * @param id
-     * @return ApiResult<SampleBorrowInfoDTO.ViewDTO>>
+     * @return ApiResult<SampleBackInfoDTO.ViewDTO>>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<SampleBorrowInfoDTO.ViewDTO> viewApp(@RequestParam("id") String id) {
-        return success(sampleBorrowInfoService.view(id));
-    }
-
-    /**
-     * 归还单添加产品
-     * @author jack
-     * @date: 2025-09-11
-     * @param dto
-     * @return ApiResult<List<SampleBorrowInfoDTO.SkuAvailableQtyDTO>>
-     */
-    @PostMapping("/listSku")
-    public ApiResult<PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleBorrowInfoDTO.SearchDTO> dto) {
-        return success(sampleBorrowInfoService.listSku(dto));
-    }
-
-    /**
-     * 借用单编号下拉
-     * @author jack
-     * @date: 2025-09-11
-     * @return ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>>
-     */
-    @PostMapping("/drop/down")
-    public ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> dropDown(@RequestBody SampleBorrowInfoDTO.SelectDTO dto) {
-        return success(sampleBorrowInfoService.dropDown(dto));
+    public ApiResult<SampleBackInfoDTO.ViewDTO> viewApp(@RequestParam("id") String id) {
+        return success(sampleBackInfoService.view(id));
     }
 
 
