@@ -40,9 +40,9 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
-        selectorExpression = RocketMqNewTag.DMP_PLATFORM_B2B_ORDER_TO_OMS_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
+@RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
+        selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
 @Slf4j
 public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 

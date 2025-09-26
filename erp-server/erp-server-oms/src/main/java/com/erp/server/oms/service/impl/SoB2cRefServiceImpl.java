@@ -116,11 +116,7 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery()
-                .in(SoB2cRefEntity::getSourceId,ids)
-                .or()
-                .in(SoB2cRefEntity::getTargetId,ids)
-                .list();
+        return baseMapper.listBySourceIdOrTargetId(ids);
     }
 
     @Override

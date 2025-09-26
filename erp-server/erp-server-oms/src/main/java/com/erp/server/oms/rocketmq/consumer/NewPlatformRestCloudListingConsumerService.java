@@ -15,9 +15,9 @@ import javax.annotation.Resource;
  * @date 2025/9/22 12:22
  */
 @Service
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_PRODUCT_TO_OMS_TOPIC,
-        selectorExpression = RocketMqNewTag.DMP_PLATFORM_REST_CLOUD_PRODUCT_TO_OMS_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_PRODUCT_TO_OMS_GROUP)
+@RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TOPIC,
+        selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_GROUP)
 public class NewPlatformRestCloudListingConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 	@Resource
 	private PlatformListingConsumerService platformListingConsumerService;
