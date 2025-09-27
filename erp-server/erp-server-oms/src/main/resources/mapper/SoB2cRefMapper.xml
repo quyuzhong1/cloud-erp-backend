@@ -62,7 +62,7 @@
         FROM so_b2c_ref
         WHERE is_deleted =false
         and (
-            source_id = ANY(ARRAY[#{sourceIds}]) OR target_id = ANY(ARRAY[#{targetIds}])
+            source_id = ANY(ARRAY[#{ids}]) OR target_id = ANY(ARRAY[#{ids}])
             )
     </select>
 
