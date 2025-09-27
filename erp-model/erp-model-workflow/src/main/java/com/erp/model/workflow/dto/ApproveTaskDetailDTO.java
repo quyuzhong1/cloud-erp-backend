@@ -144,7 +144,6 @@ public class ApproveTaskDetailDTO implements Serializable {
          * 数大臣字段值
          */
         @NotBlank(message = "数大臣字段值不能为空")
-        @Size(max = 255,message = "数大臣字段值最大长度不能超过255位")
         private String sysFieldValue;
 
     }
@@ -223,7 +222,6 @@ public class ApproveTaskDetailDTO implements Serializable {
         * 数大臣字段值
         */
         @NotBlank(message = "数大臣字段值不能为空")
-        @Size(max = 255,message = "数大臣字段值最大长度不能超过255位")
         private String sysFieldValue;
 
         /**
