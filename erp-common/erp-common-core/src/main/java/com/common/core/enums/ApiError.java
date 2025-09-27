@@ -193,6 +193,7 @@ public enum ApiError implements Serializable {
 
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_DICT_BANK_IS_EXIST(9057,"银行名称【{}】不能重复"),
 
 
     /**
@@ -1822,7 +1823,7 @@ public enum ApiError implements Serializable {
             ServiceException serviceException = (ServiceException) e;
             return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
                     serviceException.getMsg().contains("Read timed out") ||
-                    serviceException.getMsg().contains("获取锁失败,请求超时")
+                    serviceException.getMsg().contains("获取锁失败")
                     ;
         }
     }

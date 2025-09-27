@@ -16,6 +16,7 @@ import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +44,10 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
 
     @Resource
     private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
+    @Resource
+    @Qualifier("wmsDataCompareExecutorPool")
+    private ExecutorService executorPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -76,11 +82,11 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         }
         //按sku、仓库、虚拟仓分组
         Map<String, List<WmsVirtualDetailMsgDTO.ListDTO>> map = wmsVirtualDetailMsgList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat("|").concat(obj.getWarehouseId()).concat("|").concat(obj.getVirtualWarehouseId())));
-        // 多线程更新库存流水
+        // 使用固定大小的线程池
         CompletableFuture<Void> allOf = CompletableFuture.allOf(map.entrySet().stream()
                 .map(value -> CompletableFuture.runAsync(() ->
-                        virtualTransFlowDetailService.consumeMsgJob(value.getValue()))
-                ).toArray(CompletableFuture[]::new));
+                        virtualTransFlowDetailService.consumeMsgJob(value.getValue()), executorPool))
+                .toArray(CompletableFuture[]::new));
         allOf.thenRun(() -> log.info("虚拟仓库存流水消费，所有任务执行完毕")).join();
     }
 
