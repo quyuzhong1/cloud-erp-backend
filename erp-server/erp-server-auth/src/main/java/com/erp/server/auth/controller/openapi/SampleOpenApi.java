@@ -541,8 +541,8 @@ public class SampleOpenApi {
     // ==================== WMS 服务相关接口 ====================
 
     @OpenApi("wmsWarehouseList")
-    public ApiResult<List<WarehouseDTO.ListDTO>> wmsWarehouseList(Boolean showByAuth) {
-        return wmsFeign.warehouseList(showByAuth);
+    public ApiResult<List<WarehouseDTO.ListDTO>> wmsWarehouseList() {
+        return wmsFeign.warehouseList(null);
     }
 
     @OpenApi("wmsDictList")
