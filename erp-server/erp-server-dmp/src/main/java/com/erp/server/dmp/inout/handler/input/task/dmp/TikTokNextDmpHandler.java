@@ -3,10 +3,12 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.JSONObjectCodec;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +56,17 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("receiverTelNumber", recipientAddressMap.get("phoneNumber"));
                     detail.put("country", recipientAddressMap.get("regionCode"));
                     detail.put("postCode", recipientAddressMap.get("postalCode"));
-                    detail.put("fullAddress", recipientAddressMap.get("fullAddress") + " " + recipientAddressMap.get("addressDetail"));
+                    if ("US".equalsIgnoreCase(regionCode)) {
+                        String result = "";
+                        String fullAddress = recipientAddressMap.getOrDefault("fullAddress", "").toString();
+                        if (StringUtils.isNotBlank(fullAddress)) {
+                            List<String> parts = StrUtil.split(fullAddress, ",");
+                            result = StrUtil.join(",", parts.subList(2, parts.size())).trim();
+                        }
+                        detail.put("fullAddress",result);
+                    } else {
+                        detail.put("fullAddress", recipientAddressMap.get("fullAddress") + " " + recipientAddressMap.get("addressDetail"));
+                    }
 
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 

@@ -9,10 +9,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -22,7 +26,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -649,4 +652,20 @@ public interface PlmTaskFeign {
 
     @PostMapping("feign/skuStdCost/updateSkuStdCost")
     void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
+
+    /**
+     * 项目任务-任务审批通过
+     */
+    @PostMapping("feign/projectTask/approvalTaskPass")
+    void approvalTaskPass(@RequestBody String processId);
+
+    /**
+     * 审核通过回调
+     * @author will
+     * @date 2025/9/25 17:12
+     * @param dto
+     * @return void
+     */
+    @PostMapping("feign/projectTask/approvalTaskSchedulePass")
+    void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
 }

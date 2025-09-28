@@ -172,9 +172,6 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
         fillUserNameIfEmpty(addDTO);
         
         try {
-            // 先更新SampleLedger主表数量，获取主表ID
-            String ledgerId = updateSampleLedgerQty(addDTO);
-            
             List<SampleLedgerFlowEntity> flowEntities = new ArrayList<>();
             
             for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
@@ -195,23 +192,23 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setDeptId(addDTO.getDeptId());
                 flowEntity.setDeptName(addDTO.getDeptName());
                 
-                // 设置主表ID
-                String finalLedgerId = StrUtil.isNotBlank(ledgerId) ? ledgerId : detail.getSampleLedgerId();
+                // 设置主表ID和使用方信息
+                String finalLedgerId = detail.getSampleLedgerId();
                 flowEntity.setSampleLedgerId(finalLedgerId);
                 
-                // 通过sample_ledger_id查询台账获取使用方信息
                 if (StrUtil.isNotBlank(finalLedgerId)) {
+                    // 如果有台账ID，直接通过ID查询主表获取使用方信息
                     SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(finalLedgerId);
                     if (ledgerEntity != null) {
                         flowEntity.setUseUserId(ledgerEntity.getUseUserId());
                         flowEntity.setUseUserName(ledgerEntity.getUseUserName());
                     } else {
-                        // 如果台账不存在，使用兜底逻辑
+                        // 如果台账不存在，使用addDTO的兜底逻辑
                         flowEntity.setUseUserId(addDTO.getUseUserId());
                         flowEntity.setUseUserName(addDTO.getUseUserName());
                     }
                 } else {
-                    // 如果没有台账ID，使用兜底逻辑
+                    // 如果没有台账ID，使用addDTO的useUserId和useUserName
                     flowEntity.setUseUserId(addDTO.getUseUserId());
                     flowEntity.setUseUserName(addDTO.getUseUserName());
                 }
@@ -222,20 +219,30 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setProductName(detail.getProductName());
                 flowEntity.setQty(detail.getQty());
                 
+                // 保存单个明细
+                boolean saved = super.save(flowEntity);
+                if (!saved) {
+                    log.error("保存明细失败，SKU：{}", detail.getSkuNo());
+                    return false;
+                }
+                
+                // 更新对应的主表数量并回填SampleLedgerId
+                String ledgerId = updateSampleLedgerQtyForDetail(detail, flowEntity);
+                if (StrUtil.isNotBlank(ledgerId)) {
+                    // 回填SampleLedgerId到明细
+                    detail.setSampleLedgerId(ledgerId);
+                    flowEntity.setSampleLedgerId(ledgerId);
+                    // 更新明细记录
+                    super.updateById(flowEntity);
+                }
+                
                 flowEntities.add(flowEntity);
             }
             
-            // 批量保存
-            boolean result = super.saveBatch(flowEntities);
-            if (result) {
-                log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}，主表ID：{}", 
-                    addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size(), ledgerId);
-            } else {
-                log.error("新增样品台账流水失败，单据类型：{}，单据编号：{}", 
-                    addDTO.getSourceType(), addDTO.getSourceCode());
-            }
+            log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}", 
+                addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size());
             
-            return result;
+            return true;
             
         } catch (Exception e) {
             log.error("新增样品台账流水异常，单据类型：{}，单据编号：{}，错误：{}", 
@@ -245,36 +252,112 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     }
 
     /**
-     * 更新SampleLedger主表数量
-     * 通过查询明细表，按四个条件分组求和来更新主表数量
+     * 更新单个明细对应的SampleLedger主表数量
+     * 优先通过detail中的SampleLedgerId直接更新，如果没有则按条件查询更新
+     * @param detail 明细DTO
+     * @param flowEntity 流水实体
      * @return 主表ID
      */
-    private String updateSampleLedgerQty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+    private String updateSampleLedgerQtyForDetail(
+                                                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail,
+                                                SampleLedgerFlowEntity flowEntity) {
         try {
-            for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
-                // 查询该SKU在明细表中的数量总和
+            String ledgerId = detail.getSampleLedgerId();
+            
+//            if (StrUtil.isNotBlank(ledgerId)) {
+//                // 如果有台账ID，直接通过ID查询该台账记录，然后更新数量
+//                SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(ledgerId);
+//                if (ledgerEntity != null) {
+//                    // 查询该台账ID对应的所有明细数量总和
+//                    Integer totalQty = this.baseMapper.selectTotalQtyByLedgerId(ledgerId);
+//                    if (totalQty != null) {
+//                        // 直接更新该台账记录的数量
+//                        ledgerEntity.setQty(totalQty);
+//                        sampleLedgerService.updateById(ledgerEntity);
+//                        log.info("通过台账ID更新数量成功，台账ID：{}，数量：{}", ledgerId, totalQty);
+//                        return ledgerId;
+//                    }
+//                }
+//            } else {
+                // 如果没有台账ID，按原来的逻辑查询和更新
                 Integer totalQty = this.baseMapper.selectTotalQtyByConditions(
-                    addDTO.getUserId(),
-                    addDTO.getUseUserId(),
+                        flowEntity.getUserId(),
+                        flowEntity.getUseUserId(),
                     detail.getSkuNo(),
                     detail.getSkuId()
                 );
                 
                 if (totalQty != null) {
                     // 更新或插入SampleLedger主表记录
-                    String ledgerId = updateOrInsertSampleLedger(
-                        addDTO.getUserId(),
-                        addDTO.getUserName(),
-                        addDTO.getDeptId(),
-                        addDTO.getDeptName(),
+                    String newLedgerId = updateOrInsertSampleLedger(
+                            flowEntity.getUserId(),
+                            flowEntity.getUserName(),
+                            flowEntity.getDeptId(),
+                            flowEntity.getDeptName(),
                         detail.getSkuNo(),
                         detail.getSkuId(),
                         detail.getProductName(),
-                        addDTO.getUseUserId(),
-                        addDTO.getUseUserName(),
+                            flowEntity.getUseUserId(),
+                            flowEntity.getUseUserName(),
                         totalQty
                     );
-                    return ledgerId;
+                    return newLedgerId;
+                }
+        } catch (Exception e) {
+            log.error("更新SampleLedger主表数量失败，SKU：{}，错误：{}", detail.getSkuNo(), e.getMessage(), e);
+            // 更新失败不影响主流程，只记录日志
+        }
+        return null;
+    }
+
+    /**
+     * 更新SampleLedger主表数量
+     * 优先通过detail中的SampleLedgerId直接更新，如果没有则按条件查询更新
+     * @return 主表ID
+     */
+    private String updateSampleLedgerQty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+        try {
+            for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
+                String ledgerId = detail.getSampleLedgerId();
+                
+                if (StrUtil.isNotBlank(ledgerId)) {
+                    // 如果有台账ID，直接通过ID查询该台账记录，然后更新数量
+                    SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(ledgerId);
+                    if (ledgerEntity != null) {
+                        // 查询该台账ID对应的所有明细数量总和
+                        Integer totalQty = this.baseMapper.selectTotalQtyByLedgerId(ledgerId);
+                        if (totalQty != null) {
+                            // 直接更新该台账记录的数量
+                            ledgerEntity.setQty(totalQty);
+                            sampleLedgerService.updateById(ledgerEntity);
+                            log.info("通过台账ID更新数量成功，台账ID：{}，数量：{}", ledgerId, totalQty);
+                        }
+                    }
+                } else {
+                    // 如果没有台账ID，按原来的逻辑查询和更新
+                    Integer totalQty = this.baseMapper.selectTotalQtyByConditions(
+                        addDTO.getUserId(),
+                        addDTO.getUseUserId(),
+                        detail.getSkuNo(),
+                        detail.getSkuId()
+                    );
+                    
+                    if (totalQty != null) {
+                        // 更新或插入SampleLedger主表记录
+                        String newLedgerId = updateOrInsertSampleLedger(
+                            addDTO.getUserId(),
+                            addDTO.getUserName(),
+                            addDTO.getDeptId(),
+                            addDTO.getDeptName(),
+                            detail.getSkuNo(),
+                            detail.getSkuId(),
+                            detail.getProductName(),
+                            addDTO.getUseUserId(),
+                            addDTO.getUseUserName(),
+                            totalQty
+                        );
+                        return newLedgerId;
+                    }
                 }
             }
         } catch (Exception e) {
