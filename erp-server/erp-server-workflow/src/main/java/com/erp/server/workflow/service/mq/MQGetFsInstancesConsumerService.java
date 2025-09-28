@@ -50,7 +50,7 @@ import static com.common.business.enums.ApproveTypeEnum.REJECT;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC,
+@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_FS_INSTANCES_TO_WORKFLOW_TAG,
         consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
