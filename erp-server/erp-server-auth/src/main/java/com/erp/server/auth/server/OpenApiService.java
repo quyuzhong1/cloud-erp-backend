@@ -133,7 +133,7 @@ public class OpenApiService {
                         throw new ServiceException("内容解析失败：" + e.getMessage());
                     }
                 }else{
-                    args[i] = getDefaultValue(parameterTypes[i]);
+                    args[i] = parameterTypes[i].newInstance();
                 }
                 checkAnnotations(annotations, args[i], i);
             }

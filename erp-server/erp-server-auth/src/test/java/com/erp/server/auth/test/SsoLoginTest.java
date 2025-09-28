@@ -319,7 +319,7 @@ public class SsoLoginTest {
         // 2. 生成测试数据
         String appId = "cli_a8467e05407c1013"; // 飞书应用ID
         String unionId = "on_d1c5059823f5d4591ce4f539614c3585";
-        String symmetricKey = "7dBX5zCFMhWtbAjhUzN1faENyG2ypP31";
+        String symmetricKey = "d2KmS0aD2vwcVy1Wowc6OVPIsbIbEzmu";
         
         // 3. 构建payload（按照时序图步骤4）
         Map<String, Object> payload = new java.util.HashMap<>();
