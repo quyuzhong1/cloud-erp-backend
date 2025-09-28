@@ -133,7 +133,7 @@ public class OpenApiService {
                         throw new ServiceException("内容解析失败：" + e.getMessage());
                     }
                 }else{
-                    args[i] = parameterTypes[i].newInstance();
+                    args[i] = getDefaultValue(parameterTypes[i]);
                 }
                 checkAnnotations(annotations, args[i], i);
             }
@@ -234,6 +234,74 @@ public class OpenApiService {
         return clazz == Boolean.class || clazz == Character.class || clazz == Byte.class ||
                clazz == Short.class || clazz == Integer.class || clazz == Long.class ||
                clazz == Float.class || clazz == Double.class;
+    }
+    
+    /**
+     * 获取类型的默认值
+     * 当 bizContent 为空时，为不同类型的参数提供合适的默认值
+     */
+    private Object getDefaultValue(Class<?> clazz) {
+        // 基本类型的默认值
+        if (clazz == boolean.class) {
+            return false;
+        }
+        if (clazz == byte.class) {
+            return (byte) 0;
+        }
+        if (clazz == short.class) {
+            return (short) 0;
+        }
+        if (clazz == int.class) {
+            return 0;
+        }
+        if (clazz == long.class) {
+            return 0L;
+        }
+        if (clazz == float.class) {
+            return 0.0f;
+        }
+        if (clazz == double.class) {
+            return 0.0;
+        }
+        if (clazz == char.class) {
+            return '\0';
+        }
+        
+        // 包装类型的默认值
+        if (clazz == Boolean.class) {
+            return Boolean.FALSE;
+        }
+        if (clazz == Byte.class) {
+            return Byte.valueOf((byte) 0);
+        }
+        if (clazz == Short.class) {
+            return Short.valueOf((short) 0);
+        }
+        if (clazz == Integer.class) {
+            return Integer.valueOf(0);
+        }
+        if (clazz == Long.class) {
+            return Long.valueOf(0L);
+        }
+        if (clazz == Float.class) {
+            return Float.valueOf(0.0f);
+        }
+        if (clazz == Double.class) {
+            return Double.valueOf(0.0);
+        }
+        if (clazz == Character.class) {
+            return Character.valueOf('\0');
+        }
+        
+        // 字符串类型
+        if (clazz == String.class) {
+            return "";
+        }
+        
+        // 对于其他复杂类型，返回 null
+        // 注意：这可能会导致 NullPointerException，但这是合理的，
+        // 因为空内容通常意味着不需要传递该参数
+        return null;
     }
 
     private void checkAnnotations(Annotation[][] annotations, Object arg, int i) {

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,9 +58,9 @@ public class WmsFeignController extends BaseController {
      */
     @GetMapping("/dropDown/approveStatus/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> approveStatusList() {
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("approveStatus");
-        return success(dictList.stream()
-                .map(dict -> new BaseDropDownDTO.CommonDTO(dict.getValue(), dict.getName()))
-                .collect(Collectors.toList()));
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(ApproveStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
     }
 }
