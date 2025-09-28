@@ -143,7 +143,7 @@
             sbd.sku_no as skuNo,
             sbd.qty as qty
         FROM so_b2c sb2c
-        LEFT JOIN so_b2c_detail sbd on sbd.main_id = sb2c.id and sb2c.is_deleted = FALSE
+        LEFT JOIN so_b2c_detail sbd on sbd.main_id = sb2c.id and sbd.is_deleted = FALSE
         WHERE sb2c.is_deleted = FALSE
         AND sb2c.id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
