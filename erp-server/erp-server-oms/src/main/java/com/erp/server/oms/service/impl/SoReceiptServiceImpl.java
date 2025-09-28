@@ -916,6 +916,11 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 this.updateById(exist);
                 return;
             }
+            //判断平台更新时间有更新
+            if(!dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
+                log.warn("平台更新时间没有更新，{}",exist.getCode());
+                return;
+            }
             //存在判断是否有字段变更
             boolean hasChange = judgeHasChange(exist,existList, dto);
             if(!hasChange){
@@ -948,6 +953,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
             addOrUpdateDTO.setIsFromPlatform(true);
             addOrUpdateDTO.setCustomerId(dto.getErpCustomerId());
+            addOrUpdateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
+            addOrUpdateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             List<SoReceiptDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
@@ -965,6 +972,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 detailUpdateDTO.setSoId(platformReceiptDetailDTO.getErpSoId());
                 detailUpdateDTO.setMainId(exist.getId());
                 detailUpdateDTO.setPlatformDetailId(platformReceiptDetailDTO.getPlatformDetailId());
+                detailUpdateDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
                 updateDTOList.add(detailUpdateDTO);
             }
             addOrUpdateDTO.setDetailList(updateDTOList);
@@ -996,6 +1004,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setThirdCode(dto.getCode());
             addDTO.setThirdSystem(dto.getThirdSystem());
             addDTO.setCustomerId(dto.getErpCustomerId());
+            addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
+            addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             List<SoReceiptDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(dto.getDetail())){
                 for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetail()) {

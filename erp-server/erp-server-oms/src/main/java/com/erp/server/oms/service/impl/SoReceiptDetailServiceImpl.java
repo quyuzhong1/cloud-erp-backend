@@ -92,7 +92,11 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<AttachDTO> allAttachDTOS = new ArrayList<>();
 
         for (SoReceiptDetailEntity soReceiptDetailEntity : saveList) {
-            SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v -> StringUtils.isNotBlank(v.getPaymentNo()) && v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
+            SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v ->
+                            (StringUtils.isNotBlank(v.getPaymentNo()) && v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo()))
+                    || (StringUtils.isNotBlank(v.getPlatformDetailId()) && v.getPlatformDetailId().equals(soReceiptDetailEntity.getPlatformDetailId()))
+                    )
+                    .findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
             List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
             if(CollectionUtils.isEmpty(attachDTOS)){
                 continue;

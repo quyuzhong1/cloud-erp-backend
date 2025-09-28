@@ -546,6 +546,10 @@ public class SoReceiptDTO implements Serializable {
         private String thirdCode;
 
         private String thirdSystem;
+
+        private LocalDateTime platformCreateTime;
+
+        private LocalDateTime platformUpdateTime;
         /**
         * 客户Id
         */
