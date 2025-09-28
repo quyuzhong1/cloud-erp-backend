@@ -3616,6 +3616,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setCustomerId(erpInfoDTO.getCustomerId());
             updateDTO.setSalesDeptId(erpInfoDTO.getSalesDeptId());
             updateDTO.setReceiverName(erpInfoDTO.getReceiverName());
+            updateDTO.setIsCollectShippingFee(false);
             updateDTO.setTelNumber(erpInfoDTO.getTelNumber());
             updateDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
             updateDTO.setCurrency(dto.getCurrency());
@@ -3685,6 +3686,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setOrderAmount(dto.getOrderAmount());
             addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
             addDTO.setRequireDate(dto.getBillDate());
+            addDTO.setIsCollectShippingFee(false);
             addDTO.setBillDate(dto.getBillDate());
             addDTO.setDiscountAmount(dto.getDiscountAmount());
             addDTO.setSalesOrgId(erpInfoDTO.getSalesOrgId());
