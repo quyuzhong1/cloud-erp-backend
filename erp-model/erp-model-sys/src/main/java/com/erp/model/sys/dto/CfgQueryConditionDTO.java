@@ -330,7 +330,7 @@ public class CfgQueryConditionDTO implements Serializable {
     @NoArgsConstructor
     public static class Option {
 
-        private Objects code;
+        private Object code;
 
         private String name;
     }
