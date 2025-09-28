@@ -144,8 +144,8 @@ public class ApiSignatureTestExample {
     public static void verifyApiSignatures() {
         log.info("=== 示例4：验证API签名 ===");
         
-        String secretKey = "test_key_1758271850812";
-        String requestBody ="{\"method\":\"sampleBorrowInfoTabList\",\"data\":\"{\\\"dataScope\\\":3,\\\"permissionSql\\\":\\\"\\\"}\"}";
+        String secretKey = "d2KmS0aD2vwcVy1Wowc6OVPIsbIbEzmu";
+        String requestBody ="{\"method\":\"wmsWarehouseList\",\"data\":\"\"}";
         String httpMethod = "POST";
         String uri = "/open/api/service/v2";
         // 生成签名
