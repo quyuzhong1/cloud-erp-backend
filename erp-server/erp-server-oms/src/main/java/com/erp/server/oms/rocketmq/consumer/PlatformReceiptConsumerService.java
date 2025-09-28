@@ -91,7 +91,7 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 		// 账户类型
 		List<DictBasicEntity> accountTypeList = dictBasicMap.get(DictBasicTypeEnum.DHT_ACCOUNT_TYPE.getType());
 
-		BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> b.getBankAccountNo().equals(dto.getReceiptAccount())).findFirst().orElse(null);
+		BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> b.getAccountName().equals(dto.getReceiptAccount())).findFirst().orElse(null);
 		if(bankAccountEntity != null){
 			dto.setErpReceiptAccountId(bankAccountEntity.getId());
 		}else{

@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -85,6 +86,9 @@ public class PlatformReceiptDTO extends UniqueDto {
      */
     private String erpReceiptAccountId;
 
+    private LocalDateTime platformCreateTime;
+
+    private LocalDateTime platformUpdateTime;
     /**
      * erp 销售组织ID
      */
