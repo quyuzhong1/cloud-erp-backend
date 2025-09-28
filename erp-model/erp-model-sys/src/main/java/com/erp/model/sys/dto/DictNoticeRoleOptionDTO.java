@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -58,10 +59,11 @@ public class DictNoticeRoleOptionDTO implements Serializable {
     }
 
     /**
-     * 下拉值
+     * 远程调用参数
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SelectDTO {
 
         /**
@@ -69,6 +71,20 @@ public class DictNoticeRoleOptionDTO implements Serializable {
          */
         private String select;
 
+        /**
+         *条件设置
+         */
+        private List<ConditionDTO> conditions;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConditionDTO {
         /**
          *条件设置
          */

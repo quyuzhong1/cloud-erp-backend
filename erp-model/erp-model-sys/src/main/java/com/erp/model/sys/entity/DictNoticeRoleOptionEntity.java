@@ -85,6 +85,12 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
     @TableField("data_json")
     private String dataJson;
 
+    /**
+     * 是否拓展（ 根据class_path 和 data_json 进行远程调用）
+     */
+    @TableField("is_extend")
+    private Boolean isExtend;
+
 
     public static final String BUSINESS_TYPE = "business_type";
 
