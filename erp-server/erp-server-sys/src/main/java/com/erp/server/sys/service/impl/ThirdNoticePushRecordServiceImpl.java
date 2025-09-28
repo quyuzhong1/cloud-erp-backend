@@ -21,7 +21,9 @@ import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
@@ -36,6 +38,7 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
@@ -67,6 +70,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.ThirdNoticePushRecordMapper;
 import com.erp.server.sys.service.*;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -600,7 +604,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     continue;
                 }
 
-                List<String> userIdList = getUserList(post,roleType, specificPerson, businessId, noticeEntity.getBusinessType());
+                List<String> userIdList = getUserList(post,roleType, specificPerson, variablesMap, noticeEntity.getBusinessType());
                 if (CollUtil.isEmpty(userIdList)) {
                     //如果没有unionId，则保存失败记录
                     String errorReason = "通知人员不存在";
@@ -891,8 +895,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     //产品尺寸变更
                     else if(ThirdNoticePushRecordNoticeNodeEnum.QC_BACK_FILL_PACKAGING.getCode().equals(feildValue)){
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
-                    }
-                    else {
+                    }else {
                         //表字段值变化
                         if(diffFields.contains(feildValue)){
                             variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
@@ -901,8 +904,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }
                     }
                 }
-            }else {
-                return Boolean.FALSE;
             }
 
             //封装条件参数
@@ -937,7 +938,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * @date 2025-05-30
      */
     @Override
-    public List<String> getUserList(String post, String roleType, String specificPerson, String businessId, String businessKey) {
+    public List<String> getUserList(String post, String roleType, String specificPerson, Map<String, Object> variablesMap , String businessKey) {
         List<String> resultList = new ArrayList<>();
 
         //具体人员
@@ -945,84 +946,165 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             List<String> otherPeopleIds = Arrays.asList(specificPerson.split(","));
             resultList.addAll(otherPeopleIds);
         }
-
+        //岗位
         if(StringUtils.isNotBlank(post)){
             List<String> postIdList = Arrays.asList(post.split(","));
 
             //岗位id
             List<SysPostUserEntity> userEntityList = sysPostFeign.getUserIdByPostIds(postIdList);
-            if(CollectionUtils.isNotEmpty(userEntityList)){
-                resultList.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
+            if (CollectionUtils.isNotEmpty(userEntityList)) {
+                userEntityList.stream()
+                        .map(SysPostUserEntity::getUserId)
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(resultList::add);
             }
         }
-        //
+        //自定义角色
         if(StringUtils.isNotBlank(roleType)){
             List<String> roleId = Arrays.asList(roleType.split(","));
             List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.lambdaQuery().in(DictNoticeRoleOptionEntity::getId, roleId).list();
             if(CollUtil.isNotEmpty(list)){
+                //主键id
+                String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+                Gson gson = new Gson();
                 for (DictNoticeRoleOptionEntity optionEntity : list) {
+                    Boolean isExtend = optionEntity.getIsExtend();
                     String field = optionEntity.getField();
                     String classPath = optionEntity.getClassPath();
-                    String refField = optionEntity.getRefField();
-                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)) {
-                        try {
-                            if (classPath.contains("getCurApprover")) {
-                                //获取当前审批人逻辑需要特殊处理
-                                String[] split = classPath.split("#");
-                                String controller = split[0];
-                                String methodName = split[1];
-                                ProcessManagementDTO.HistoryActivityDTO dto = new ProcessManagementDTO.HistoryActivityDTO();
-                                dto.setBusinessKey(businessKey);
-                                dto.setBusinessId(businessId);
-                                ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
-                                if(Objects.nonNull(select)){
-                                    List<ProcessManagementDTO.CurApproveInfoDTO> data = JSON.parseArray(JSON.toJSONString(select.getData()), ProcessManagementDTO.CurApproveInfoDTO.class);
-                                    if(CollUtil.isNotEmpty(data)){
-                                        resultList.addAll(Arrays.asList(data.get(0).getCurApproveId().split(",")));
-                                    }
-                                }
-                            }else if (classPath.contains("listQcItemRolePeople")) {
-                                //质检单角色人员需要取sku的项目经理和产品经理
-                                String[] split = classPath.split("#");
-                                String controller = split[0];
-                                String methodName = split[1];
-                                //参数 是否首批
-                                Boolean isFirstMassProduct =  Boolean.parseBoolean(split[2]);
-                                //根据质检单id去查询sku中的项目经理和产品经理
-                                QcResultDTO.QcItemRolePeopleDTO dto = new QcResultDTO.QcItemRolePeopleDTO();
-                                dto.setQcInfoIds(Arrays.asList(businessId));
-                                dto.setIsFirstMassProduct(isFirstMassProduct);
-                                ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
-                                if(Objects.nonNull(select)){
-                                    // 转换为 Map
-                                    Map<String, String> data = JSON.parseObject(JSON.toJSONString(select.getData()), Map.class);
-                                    if(CollUtil.isNotEmpty(data)){
-                                        resultList.addAll(Arrays.asList(data.get(field).split(",")));
-                                    }
-                                }
-                            } else {
-                                //根据配置查询
-                                String ref = "id";
-                                Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
-                                if (StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())) {
-                                    ref = refField;
-                                }
-                                List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
-                                        .eq(ref, businessId)
-                                        .list();
-                                if (CollUtil.isNotEmpty(baseEntityList)) {
-                                    // 获取字段值
-                                    String result = baseEntityList.stream()
-                                            .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
-                                            .filter(value -> StringUtils.isNotBlank(value))
-                                            .collect(Collectors.joining(","));
-                                    if (StringUtils.isNotBlank(result)) {
-                                        resultList.add(result);
-                                    }
-                                }
+                    String dataJson = optionEntity.getDataJson();
+                    if(!isExtend ){
+                        if(StringUtils.isNotBlank(field)){
+                            Object fieldObj = variablesMap.getOrDefault(field, null);
+                            if(Objects.nonNull(fieldObj)){
+                                Collections.addAll(resultList, String.valueOf(fieldObj).split(","));
                             }
-                        } catch (ClassNotFoundException e) {
-                            log.error("执行 getUserList 失败", e);
+                        }
+                    }else {
+                        if(StringUtils.isNotBlank(classPath)){
+                            try {
+                                if (classPath.contains("getCurApprover")) {
+                                    //获取当前审批人逻辑需要特殊处理
+                                    String[] split = classPath.split("#");
+                                    String controller = split[0];
+                                    String methodName = split[1];
+                                    ProcessManagementDTO.HistoryActivityDTO dto = new ProcessManagementDTO.HistoryActivityDTO();
+                                    dto.setBusinessKey(businessKey);
+                                    dto.setBusinessId(businessId);
+                                    ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
+                                    if(Objects.nonNull(select) && select.getCode() == 200){
+                                        List<ProcessManagementDTO.CurApproveInfoDTO> data = JSON.parseArray(JSON.toJSONString(select.getData()), ProcessManagementDTO.CurApproveInfoDTO.class);
+                                        if(CollUtil.isNotEmpty(data) && data.size() > 0 && Objects.nonNull(data.get(0)) && Objects.nonNull(data.get(0).getCurApproveId())){
+                                            Collections.addAll(resultList, data.get(0).getCurApproveId().split(","));
+                                        }
+                                    }
+                                }else if (classPath.contains("listQcItemRolePeople")) {
+                                    //质检单角色人员需要取sku的项目经理和产品经理
+                                    String[] split = classPath.split("#");
+                                    String controller = split[0];
+                                    String methodName = split[1];
+                                    //参数 是否首批
+                                    Boolean isFirstMassProduct =  Boolean.parseBoolean(split[2]);
+                                    //根据质检单id去查询sku中的项目经理和产品经理
+                                    QcResultDTO.QcItemRolePeopleDTO dto = new QcResultDTO.QcItemRolePeopleDTO();
+                                    dto.setQcInfoIds(Arrays.asList(businessId));
+                                    dto.setIsFirstMassProduct(isFirstMassProduct);
+                                    ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
+                                    if(Objects.nonNull(select) && select.getCode() == 200 && Objects.nonNull(select.getData())){
+                                        // 转换为 Map
+                                        Map<String, String> data = JSON.parseObject(JSON.toJSONString(select.getData()), Map.class);
+                                        if(CollUtil.isNotEmpty(data) && Objects.nonNull(data.get(field))){
+                                            Collections.addAll(resultList, data.get(field).split(","));
+                                        }
+                                    }
+                                } else {
+                                    //获取查询配置
+                                    DictNoticeRoleOptionDTO.SelectDTO dto = gson.fromJson(
+                                            dataJson,
+                                            new TypeToken<DictNoticeRoleOptionDTO.SelectDTO>() {}.getType()
+                                    );
+                                    if(Objects.isNull(dto) || StringUtils.isBlank(dto.getSelect()) || CollUtil.isEmpty(dto.getConditions())){
+                                        continue;
+                                    }
+
+                                    String select = dto.getSelect();
+                                    List<DictNoticeRoleOptionDTO.ConditionDTO> conditions = dto.getConditions();
+                                    conditions = conditions.stream().filter(e -> StringUtils.isNotBlank(e.getCondition()) && StringUtils.isNotBlank(e.getMapKey())).collect(Collectors.toList());
+
+                                    if(CollUtil.isNotEmpty(conditions)){
+                                        Boolean isQuery = Boolean.FALSE;
+                                        //根据配置查询
+                                        Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                                        FeignBuilder feignBuilder = FeignQuery.create(clazz);
+
+                                        for (DictNoticeRoleOptionDTO.ConditionDTO conditionsDTO : conditions) {
+                                            String mapKey = conditionsDTO.getMapKey();
+                                            String compareCode = conditionsDTO.getCompareCode();
+                                            String condition = conditionsDTO.getCondition();
+                                            Object mapValue = variablesMap.getOrDefault(mapKey,null);
+
+                                            if(Objects.nonNull(mapValue)){
+                                                isQuery = Boolean.TRUE;
+
+                                                QueryTypeEnum queryType = QueryTypeEnum.getByValue(compareCode);
+                                                if (queryType == null) {
+                                                    queryType = QueryTypeEnum.EQ;
+                                                }
+
+                                                switch (queryType) {
+                                                    case EQ:
+                                                        feignBuilder.eq(condition, mapValue);
+                                                        break;
+                                                    case NE:
+                                                        feignBuilder.ne(condition,mapValue);
+                                                        break;
+                                                    case IN:
+                                                        feignBuilder.in(condition, Arrays.asList(String.valueOf(mapValue).split(",")));
+                                                        break;
+                                                    case NOT_IN:
+                                                        feignBuilder.notIn(condition, Arrays.asList(String.valueOf(mapValue).split(",")));
+                                                        break;
+                                                    case LE:
+                                                        feignBuilder.le(condition, mapValue);
+                                                        break;
+                                                    case GE:
+                                                        feignBuilder.ge(condition, mapValue);
+                                                        break;
+                                                    case LT:
+                                                        feignBuilder.lt(condition, mapValue);
+                                                        break;
+                                                    case GT:
+                                                        feignBuilder.gt(condition, mapValue);
+                                                        break;
+                                                    case LIKE:
+                                                        feignBuilder.like(condition, mapValue);
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }
+                                        }
+
+                                        if(isQuery) {
+                                            List<BaseEntity> baseEntityList = feignBuilder.list();
+                                            if (CollUtil.isNotEmpty(baseEntityList)) {
+                                                // 获取字段值
+                                                List<String> result = baseEntityList.stream()
+                                                        .map(item -> {
+                                                            Object value = ReflectUtil.getFieldValue(item, select);
+                                                            return value != null ? String.valueOf(value) : null;
+                                                        })
+                                                        .filter(StringUtils::isNotBlank)
+                                                        .collect(Collectors.toList());
+                                                if (CollUtil.isNotEmpty(result)) {
+                                                    resultList.addAll(result);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (ClassNotFoundException e) {
+                                log.error("执行 getUserList 失败", e);
+                            }
                         }
                     }
                 }

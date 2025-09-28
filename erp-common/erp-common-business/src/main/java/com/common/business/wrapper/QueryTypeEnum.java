@@ -40,4 +40,14 @@ public enum QueryTypeEnum {
     public String getValue() {
 		return value;
 	}
+
+    public static QueryTypeEnum getByValue(String value) {
+    	for (QueryTypeEnum queryTypeEnum : QueryTypeEnum.values()) {
+			if (queryTypeEnum.value.equals(value)) {
+				return queryTypeEnum;
+			}
+		}
+    	return null;
+    }
+
 }
