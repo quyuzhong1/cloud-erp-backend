@@ -104,5 +104,5 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 
-    List<SoDeliveryNoticeDetailEntity> listSoDeliveryNoticeDetailBySourceDetailIds(List<String> list);
+    List<SoDeliveryNoticeDetailEntity> listSoDeliveryNoticeDetailBySourceDetailIds(@Param("ids")List<String> ids);
 }
