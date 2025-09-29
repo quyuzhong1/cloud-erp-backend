@@ -187,4 +187,9 @@ public class RocketMqNewTopic {
      * 新中台同步飞书审批定义
      */
     public static final String DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_approvals_to_workflow_topic";
+
+    /**
+     * 新中台同步飞书审批详情
+     */
+    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_topic";
 }
