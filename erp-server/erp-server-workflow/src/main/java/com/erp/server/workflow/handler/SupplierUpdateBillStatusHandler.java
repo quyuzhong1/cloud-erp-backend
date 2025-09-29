@@ -203,7 +203,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     private void addCreateUser (String createUserId,SupplierDTO.InsertDTO addDTO) {
         SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), createUserId);
         if (Objects.isNull(userByThird)) {
-            throw new ServiceException("第三方用户信息不存在,thirdUserId:"+createUserId);
+            throw new ServiceException("飞书创建人未绑定，请绑定后重新生成,thirdUserId:"+createUserId);
         }
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
         if (ObjUtil.isEmpty(findUserDTO)) {
