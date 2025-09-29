@@ -1,4 +1,5 @@
 import cn.hutool.json.JSONUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.sdk.oms.wildberries.constant.WildberriesConstant;
 import com.sdk.oms.wildberries.dto.*;
 import com.sdk.oms.wildberries.service.WildberriesSDKService;
@@ -8,6 +9,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.util.Calendar;
 
 /**
  * @author zdy
@@ -46,7 +53,15 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void getOrderList() {
-        OrderRequest orderRequest = OrderRequest.builder().build();
+        Calendar specifiedTime = Calendar.getInstance();
+        specifiedTime.set(2025, Calendar.SEPTEMBER, 01, 0, 0, 0);
+        long dateFrom = specifiedTime.getTimeInMillis() / 1000;
+        System.out.println("dateFrom："+ dateFrom);
+
+        specifiedTime.set(2025, Calendar.SEPTEMBER, 25, 0, 0, 0);
+        long dateTo = specifiedTime.getTimeInMillis() / 1000;
+
+        OrderRequest orderRequest = OrderRequest.builder().limit(100).next(0L).dateFrom(dateFrom).dateTo(dateTo).build();
         System.out.println(JSONUtil.toJsonStr(orderRequest));
         OrderResponse response = wildberriesSDKService.getOrderList(WildberriesConstant.TOKEN, orderRequest);
         System.out.println(response);

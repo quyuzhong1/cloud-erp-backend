@@ -53,13 +53,15 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
-        headerMap.put("limit", String.valueOf(request.getLimit()));
-        headerMap.put("next", String.valueOf(request.getNext()));
-        headerMap.put("dateFrom", String.valueOf(request.getDateFrom()));
-        headerMap.put("dateTo", String.valueOf(request.getDateTo()));
-        String bodyStr = OkHttpUtils.doGet(url, new HashMap<>(), headerMap);
+
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("limit", request.getLimit());
+        paramMap.put("next", request.getNext());
+        paramMap.put("dateFrom", request.getDateFrom());
+        paramMap.put("dateTo", request.getDateTo());
+        String bodyStr = OkHttpUtils.doGet(url, paramMap, headerMap);
         log.error("接口返回：{}", bodyStr);
-        OrderResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<SkuResponse>() {}.getType());
+        OrderResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<OrderResponse>() {}.getType());
         return response;
     }
 
