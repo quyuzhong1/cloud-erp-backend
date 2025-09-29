@@ -222,12 +222,16 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(propertyJson)) {
             List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(",")).collect(Collectors.toList());
             map.put("propertyJson", propertyJsonCode);
+        } else {
+            map.put("propertyJson", new ArrayList<String>());
         }
         //供应商产品分类
         Object productCategoryJson = map.get("productCategoryJson");
         if (ObjectUtil.isNotEmpty(productCategoryJson)) {
             List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(",")).collect(Collectors.toList());
             map.put("productCategoryJson", productCategoryJsonId);
+        } else {
+            map.put("productCategoryJson", new ArrayList<String>());
         }
 
         //供应商应用分类
@@ -235,6 +239,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
             List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(",")).collect(Collectors.toList());
             map.put("applicationCategoryJson", applicationCategoryJsonId);
+        } else {
+            map.put("applicationCategoryJson", new ArrayList<String>());
         }
 
         //体系认证
@@ -242,6 +248,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(certificateJson)) {
             List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(",")).collect(Collectors.toList());
             map.put("certificateJson", certificateJsonCode);
+        } else {
+            map.put("certificateJson", new ArrayList<String>());
         }
     }
 
