@@ -247,7 +247,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段是否是明细控件
          */
-        @NotNull(message = "是否是明细控件不能为空")
+        //@NotNull(message = "是否是明细控件不能为空")
         private Boolean isDetailField;
 
         /**
