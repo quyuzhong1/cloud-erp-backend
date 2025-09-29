@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -86,4 +87,6 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
+
+    List<SoDeliveryNoticeDetailEntity> listSoDeliveryNoticeDetailBySourceDetailIds(List<String> list);
 }

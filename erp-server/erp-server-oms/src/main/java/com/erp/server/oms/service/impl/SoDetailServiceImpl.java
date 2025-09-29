@@ -1609,15 +1609,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(keyName = "saveDTO.detailId")
-    public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
+    public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO, SoInfoEntity soInfoEntity, List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList) {
+        // 在事务内查询明细表，保证数据一致性
         SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
         if (ObjectUtil.isEmpty(soDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_92015);
-        }
-        //销售订单
-        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
-        if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
         }
         if (CharSequenceUtil.equals(soInfoEntity.getApproveStatus().getStatus(), BillApproveStatusEnum.DRAFT.getStatus())) {
             throw new ServiceException("暂存状态不允许锁定");
@@ -1631,7 +1627,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
 
         //发货通知单
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(Arrays.asList(soDetailEntity.getId()));
+//        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(Arrays.asList(soDetailEntity.getId()));
+
 
         //旧冻结库存
         Integer oldFrozenQty = soDetailEntity.getFrozenQty();
@@ -1755,6 +1752,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail() {
         return baseMapper.listAllVirtualSoDetail();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDetailEntity> listSoDeliveryNoticeDetailBySourceDetailIds(List<String> detailIdList) {
+        return this.baseMapper.listSoDeliveryNoticeDetailBySourceDetailIds(detailIdList);
     }
 
     /**
