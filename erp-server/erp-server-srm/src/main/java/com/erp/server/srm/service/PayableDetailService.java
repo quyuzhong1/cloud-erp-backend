@@ -20,10 +20,10 @@ public interface PayableDetailService extends SuperService<PayableDetailEntity> 
     * 新增
     * @author will
     * @date: 2025-09-24
-    * @param dto
+    * @param detailList
     * @return
     */
-    BaseResultDTO.AddDTO add(PayableDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO batchAdd(List<PayableDetailDTO.AddDTO> detailList,String mainId);
 
     /**
      * 根据主表id集合查询

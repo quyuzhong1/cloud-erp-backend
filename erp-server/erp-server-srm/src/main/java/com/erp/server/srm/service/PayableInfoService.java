@@ -1,10 +1,13 @@
 package com.erp.server.srm.service;
-import com.erp.model.srm.entity.PayableInfoEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.srm.dto.PayableInfoDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+import com.erp.model.srm.dto.PayableInfoDTO;
+import com.erp.model.srm.entity.PayableInfoEntity;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+import com.erp.model.srm.entity.PoReconciliationEntity;
+
 import java.util.List;
 
 /**
@@ -87,7 +90,7 @@ public interface PayableInfoService extends SuperService<PayableInfoEntity> {
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id,Boolean isProcess);
 
     /**
     * 审核
@@ -133,5 +136,12 @@ public interface PayableInfoService extends SuperService<PayableInfoEntity> {
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, PayableInfoEntity entity);
-
+    /**
+     * 生成应用单
+     * @author will
+     * @date 2025/9/29 14:04
+     * @param entity
+     * @return void
+     */
+    void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationDetailEntity> poReconciliationDetailList);
 }

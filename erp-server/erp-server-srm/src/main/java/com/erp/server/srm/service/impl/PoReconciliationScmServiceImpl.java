@@ -49,17 +49,13 @@ import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.srm.listener.PoReconciliationDetailExcelListener;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
-import com.erp.server.srm.service.AttachmentService;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.PoReconciliationDetailScmService;
-import com.erp.server.srm.service.PoReconciliationScmService;
+import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -125,7 +121,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
+    private PayableInfoService payableInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -600,6 +596,14 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
                 .update();
 
+        //明细
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(id));
+        if (CollUtil.isEmpty(poReconciliationDetailList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
+        }
+        //添加应付单
+        payableInfoService.generatePayableInfo(entity,poReconciliationDetailList);
+
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
@@ -628,6 +632,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId,"")
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName,"")
                 .update();
+
+        //反审核并且删除应付单
+
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");

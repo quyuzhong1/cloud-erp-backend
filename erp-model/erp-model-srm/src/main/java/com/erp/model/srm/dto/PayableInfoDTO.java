@@ -1,19 +1,19 @@
 package com.erp.model.srm.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -278,8 +278,12 @@ public class PayableInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 应付单明细
+         */
+        @NotEmpty(message = "应付单明细不能为空")
+        @Valid
+        private List<PayableDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -354,21 +358,6 @@ public class PayableInfoDTO implements Serializable {
         @NotBlank(message = "业务类型,payableType字典不能为空")
         @Size(max = 32,message = "业务类型,payableType字典最大长度不能超过32位")
         private String type;
-
-        /**
-        * 三方系统id
-        */
-        @NotBlank(message = "三方系统id不能为空")
-        @Size(max = 19,message = "三方系统id最大长度不能超过19位")
-        private String thirdPayableId;
-
-        /**
-        * 三方系统编码
-        */
-        @NotBlank(message = "三方系统编码不能为空")
-        @Size(max = 255,message = "三方系统编码最大长度不能超过255位")
-        private String thirdPayableCode;
-
 
     }
 

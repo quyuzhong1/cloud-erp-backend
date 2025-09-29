@@ -9,25 +9,34 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.srm.dto.PayableDetailDTO;
 import com.erp.model.srm.dto.PayableInfoDTO;
 import com.erp.model.srm.entity.PayableDetailEntity;
 import com.erp.model.srm.entity.PayableInfoEntity;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.enums.PayableTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.srm.convert.PayableInfoConverter;
 import com.erp.server.srm.kingdee.SyncKingdeePayableInfoService;
 import com.erp.server.srm.mapper.PayableInfoMapper;
 import com.erp.server.srm.service.OperateLogService;
@@ -36,15 +45,14 @@ import com.erp.server.srm.service.PayableInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -73,6 +81,9 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     @Resource
     private SyncKingdeePayableInfoService syncKingdeePayableInfoService;
 
+    @Resource
+    @Lazy
+    private PayableInfoService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -90,10 +101,13 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         if(!save) {
             throw new ServiceException("保存失败");
         }
+
+        //添加明细信息
+        payableDetailService.batchAdd(addDTO.getDetailList(),payableInfoEntity.getId());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , payableInfoEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PAYABLE_INFO.getCode(), payableInfoEntity.getId(), "新增操作");
-
         return new BaseResultDTO.AddDTO(payableInfoEntity.getId(), payableInfoEntity.getCode());
     }
 
@@ -162,7 +176,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
+    public BatchResultDTO submit(String id,Boolean isProcess) {
         PayableInfoEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到数据");
@@ -173,7 +187,9 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
         log.info("提交 开始启动流程，id=：【{}】", entity.getId());
-        startProcess(entity);
+        if (isProcess) {
+            startProcess(entity);
+        }
         // 记录操作日志
         log.info("提交 开始记录日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
@@ -188,7 +204,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId());
+        this.submit(result.getId(),Boolean.TRUE);
         return result;
     }
 
@@ -199,7 +215,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        this.submit(dto.getId(),Boolean.TRUE);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -340,6 +356,55 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
             syncApproveInfoToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+        //采购订单id集合
+        List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<PurchaseOrderEntity> poList = FeignQuery.getByIds(PurchaseOrderEntity.class, poIdList);
+        Map<String, PurchaseOrderEntity> poMap = CollUtil.isEmpty(poList) ? new HashMap<>() : poList.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
+        for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
+            PurchaseOrderEntity purchaseOrderEntity = poMap.get(detailEntity.getPoId());
+            if (ObjectUtil.isEmpty(purchaseOrderEntity) || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode())) {
+                if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_INSTOCK.getCode())) {
+                    detailEntity.setPayableType(PayableTypeEnum.PURCHASE_INSTOCK.getCode());
+                } else if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
+                    detailEntity.setPayableType(PayableTypeEnum.PURCHASE_RETURN.getCode());
+                }
+            } else if (CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode())) {
+                if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_INSTOCK.getCode())) {
+                    detailEntity.setPayableType(PayableTypeEnum.SUBCONTRACT_INSTOCK.getCode());
+                } else if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
+                    detailEntity.setPayableType(PayableTypeEnum.SUBCONTRACT_RETURN.getCode());
+                }
+            } else {
+                log.error("采购订单类型异常，对账单明细id：{}", detailEntity.getId());
+                throw new ServiceException("采购订单类型异常，请检查");
+            }
+        }
+        //根据类型分组生成数据
+        Map<String, List<PoReconciliationDetailEntity>> payableMap = poReconciliationDetailList.stream().collect(Collectors.groupingBy(obj -> obj.getPayableType()));
+        for (Map.Entry<String, List<PoReconciliationDetailEntity>> entry : payableMap.entrySet()) {
+            List<PoReconciliationDetailEntity> value = entry.getValue();
+            PayableInfoDTO.AddDTO addDTO = PayableInfoConverter.INSTANCE.poReconciliationToPayableEntity(entity);
+            addDTO.setType(value.get(0).getPayableType());
+            List<PayableDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (PoReconciliationDetailEntity detailEntity : value) {
+                PayableDetailDTO.AddDTO detailAddDTO = PayableInfoConverter.INSTANCE.poReconciliationDetailToPayableDetailEntity(detailEntity);
+                detailList.add(detailAddDTO);
+            }
+            addDTO.setDetailList(detailList);
+            //新增
+            BaseResultDTO.AddDTO result = self.add(addDTO);
+           //提交
+            self.submit(result.getId(),Boolean.FALSE);
+            //审核
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(result.getId());
+            approveOneDTO.setType(ApproveType.PASS);
+            self.approve(approveOneDTO);
+        }
     }
 
     @Override
