@@ -80,6 +80,12 @@ public class DmpOutputTaskEntity extends BaseEntity<DmpOutputTaskEntity> {
        */
       @TableField("error_message")
       private String errorMessage;
+      
+      /**
+       * 执行系统：DmpCfgInputExecSystemEnum 枚举
+       */
+      @TableField("exec_system")
+      private String execSystem;
 
     public static final String CFG_OUTPUT_ID = "cfg_output_id";
 
