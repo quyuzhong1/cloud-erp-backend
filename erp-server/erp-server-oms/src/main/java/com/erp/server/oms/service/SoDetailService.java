@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -322,7 +323,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param saveDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO);
+    BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO, SoInfoEntity soInfoEntity, List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList);
     /**
      * 批量释放库存
      * @author will
@@ -366,4 +367,6 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return Boolean
      */
     Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
+
+    List<SoDeliveryNoticeDetailEntity> listSoDeliveryNoticeDetailBySourceDetailIds(List<String> collect);
 }

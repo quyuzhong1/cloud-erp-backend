@@ -231,4 +231,28 @@
         </where>
         order by si.id desc
     </select>
+
+    <select id="listSoDeliveryNoticeDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity">
+        SELECT
+        sdnd.id,
+        sdnd.main_id mainId,
+        sdnd.sku_id skuId,
+        sdnd.sku_no skuNo,
+        sdnd.delivery_qty deliveryQty,
+        sdnd.is_close isClose,
+        sdnd.remark,
+        sdnd.source_detail_id sourceDetailId,
+        sdn.invalid_status invalidStatus,
+        sdn.approve_status approveStatus
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        AND sdn.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sdnd.source_detail_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

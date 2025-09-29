@@ -26,6 +26,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -850,25 +851,63 @@ public class SoInfoController extends BaseController {
     @PostMapping("/saveLockVirtualInventory")
     public ApiResult<List<BatchResultDTO>> saveLockVirtualInventory(@RequestBody @Validated List<SoInfoDTO.LockVirtualInventorySaveDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        
+        // 预先获取所有需要的明细ID，用于查询发货通知单
+        List<String> detailIds = list.stream().map(SoInfoDTO.LockVirtualInventorySaveDTO::getDetailId).collect(Collectors.toList());
+        
+        // 预先获取发货通知单数据
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDetailService.listSoDeliveryNoticeDetailBySourceDetailIds(detailIds);
+        Map<String, List<SoDeliveryNoticeDetailEntity>> groupedBySourceDetailId = soDeliveryNoticeDetailList.stream()
+                .filter(x->StringUtils.isNotBlank(x.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getSourceDetailId));
+        
+        // 预先获取所有需要的主表ID
+        List<SoDetailEntity> tempDetailEntities = soDetailService.listByIds(detailIds);
+        List<String> mainIds = tempDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntities = soInfoService.listByIds(mainIds);
+        Map<String, SoInfoEntity> infoEntityMap = soInfoEntities.stream()
+                .collect(Collectors.toMap(SoInfoEntity::getId, entity -> entity));
+        
         for (SoInfoDTO.LockVirtualInventorySaveDTO saveDTO : list) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soDetailService.saveLockVirtualInventory(saveDTO);
-            }catch (Exception e){
-                log.error("销售订单明细释放库存失败",e);
-                SoDetailEntity entity = soDetailService.getById(saveDTO.getDetailId());
-                if (ObjectUtil.isEmpty(entity)) {
+                // 从预获取的数据中获取主表实体
+                SoDetailEntity tempDetail = tempDetailEntities.stream()
+                        .filter(entity -> entity.getId().equals(saveDTO.getDetailId()))
+                        .findFirst().orElse(null);
+                
+                if (ObjectUtil.isEmpty(tempDetail)) {
                     resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单明细不存在, 锁定库存失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                SoInfoEntity soInfoEntity = soInfoService.getById(entity.getMainId());
+                
+                SoInfoEntity soInfoEntity = infoEntityMap.get(tempDetail.getMainId());
                 if (ObjectUtil.isEmpty(soInfoEntity)) {
                     resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单不存在, 锁定库存失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
+                
+                List<SoDeliveryNoticeDetailEntity> detailList = groupedBySourceDetailId.getOrDefault(saveDTO.getDetailId(), new ArrayList<>());
+                resultDTO = soDetailService.saveLockVirtualInventory(saveDTO, soInfoEntity, detailList);
+            }catch (Exception e){
+                log.error("销售订单明细释放库存失败",e);
+                SoDetailEntity tempDetail = tempDetailEntities.stream()
+                        .filter(entity -> entity.getId().equals(saveDTO.getDetailId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(tempDetail)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单明细不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                SoInfoEntity soInfoEntity = infoEntityMap.get(tempDetail.getMainId());
+                if (ObjectUtil.isEmpty(soInfoEntity)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(tempDetail.getId(),  CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),tempDetail.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
