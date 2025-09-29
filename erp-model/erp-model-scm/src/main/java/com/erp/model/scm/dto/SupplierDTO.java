@@ -477,6 +477,11 @@ public class SupplierDTO implements Serializable {
         private JSONArray productCategoryJson;
 
         /**
+         * 产品分类名称（级联需要）
+         */
+        private String productCategoryNames;
+
+        /**
          * 应用分类集合,get,plm/applicationCategory/list
          */
         private JSONArray applicationCategoryJson;
@@ -509,6 +514,10 @@ public class SupplierDTO implements Serializable {
          */
         private List<SupplierPlantAddrDTO.ViewDTO> plantAddrList;
 
+        /**
+         * 工厂所在地名称
+         */
+        private String plantAddrNames;
     }
 
 
