@@ -274,19 +274,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         //省市
         List<DictCityEntity> cityList = FeignQuery.create(DictCityEntity.class).list();
 
-        String paymentConditionCode;
-        //dmp新增根据名称匹配，重新生成根据code匹配
-        if (Boolean.TRUE.equals(isDmpAdd)) {
-             paymentConditionCode = paymentConditionList.stream().
-                    filter(req -> CharSequenceUtil.equals(String.valueOf(paymentCondition),req.getValue()))
-                    .map(BaseDropDownDTO.DisabledDTO::getCode)
-                    .findFirst().orElse("");
-        } else {
-             paymentConditionCode = paymentConditionList.stream().
-                     map(BaseDropDownDTO.DisabledDTO::getCode)
-                    .filter(code -> CharSequenceUtil.equals(String.valueOf(paymentCondition), code))
-                    .findFirst().orElse("");
-        }
+        //根据code匹配
+        String paymentConditionCode = paymentConditionList.stream().
+                map(BaseDropDownDTO.DisabledDTO::getCode)
+                .filter(code -> CharSequenceUtil.equals(String.valueOf(paymentCondition), code))
+                .findFirst().orElse("");
         // 如果付款条件不存在，抛出异常
         if (CharSequenceUtil.isBlank(paymentConditionCode)) {
             log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
