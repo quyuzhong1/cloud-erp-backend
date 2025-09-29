@@ -1819,7 +1819,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(updateApproveStatusDTO.getThirdApprovalUserId())){
             SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), updateApproveStatusDTO.getThirdApprovalUserId());
             if (Objects.isNull(userByThird)) {
-                throw new ServiceException("第三方用户信息不存在");
+                throw new ServiceException("第三方用户信息不存在,thirdUserId:"+updateApproveStatusDTO.getThirdApprovalUserId());
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
             if (ObjUtil.isEmpty(findUserDTO)) {

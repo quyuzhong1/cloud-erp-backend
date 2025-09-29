@@ -1293,6 +1293,25 @@ public class SupplierDTO implements Serializable {
     @NoArgsConstructor
     public static class InsertDTO extends AddDTO{
         /**
+         * 创建人
+         */
+        private String createUserId;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 更新人
+         */
+        private String updateUserId;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
+        /**
          * 审核状态
          */
         private ApproveStatusEnum approvalStatus;
