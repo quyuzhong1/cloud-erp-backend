@@ -152,4 +152,13 @@ public interface PayableInfoService extends SuperService<PayableInfoEntity> {
      * @return void
      */
     void deleteBySourceId(String sourceId);
+    /**
+     * 更新金蝶id
+     * @author will
+     * @date 2025/9/30 17:29
+     * @param businessId
+     * @param syncKingdeeId
+     * @return void
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

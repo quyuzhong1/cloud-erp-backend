@@ -3,6 +3,9 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -13,6 +16,7 @@ import com.erp.server.srm.mapper.PayableDetailMapper;
 import com.erp.server.srm.service.PayableDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +58,27 @@ public class PayableDetailServiceImpl extends SuperServiceImpl<PayableDetailMapp
             return Collections.emptyList();
         }
         return lambdaQuery().in(PayableDetailEntity::getMainId,mainIdList).list();
+    }
+
+    @Override
+    public Boolean removeByMainId(String mainId) {
+        return lambdaUpdate().eq(PayableDetailEntity::getMainId,mainId).remove();
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PayableDetailEntity::getThirdPayableDetailId, kingdeeDetailId)
+                    .eq(PayableDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 
 

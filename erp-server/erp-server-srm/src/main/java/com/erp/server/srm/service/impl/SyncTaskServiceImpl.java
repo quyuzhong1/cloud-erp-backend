@@ -48,6 +48,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private PayableDetailService payableDetailService;
 
+
     @Override
     public Map<String, Map<String, Object>> newFindDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
@@ -111,13 +112,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         Object details = params.get("details");
 
         //采购对账单
-        if (ApiModuleTypeEnum.PO_RECONCILIATION.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.PAYABLE_INFO.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {
                 JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
-                poReconciliationDetailScmService.updateKingdeeDetailId(list);
+                payableDetailService.updateKingdeeDetailId(list);
                 return;
             }
-            poReconciliationService.updateSyncKingdeeId(businessId, syncKingdeeId);
+            payableInfoService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
 
     }

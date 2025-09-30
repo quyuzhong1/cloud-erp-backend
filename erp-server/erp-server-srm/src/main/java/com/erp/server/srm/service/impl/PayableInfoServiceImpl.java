@@ -305,7 +305,16 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
 
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
-        super.removeById(id);
+        boolean remove = super.removeById(id);
+        if (!remove) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+        }
+
+        //删除明细信息
+        Boolean detailRemove = payableDetailService.removeByMainId(id);
+        if (!detailRemove) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+        }
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
@@ -408,6 +417,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBySourceId(String sourceId) {
         List<PayableInfoEntity> payableInfoList = listBySourceId(sourceId);
         if (CollUtil.isEmpty(payableInfoList)) {
@@ -417,6 +427,26 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         if (count > 0) {
             throw new ServiceException("存在未审核的应付单，无法删除");
         }
+        List<String> payableIdList = payableInfoList.stream().map(PayableInfoEntity::getId).distinct().collect(Collectors.toList());
+        //反审核
+        for (String id : payableIdList) {
+            BatchResultDTO disApproveResult = self.disApprove(id);
+            if (!disApproveResult.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_DATA_DISAPPROVE);
+            }
+            BatchResultDTO deleteResult = self.delete(id);
+            if (!deleteResult.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+            }
+        }
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(PayableInfoEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),PayableInfoEntity::getThirdPayableId,syncKingdeeId)
+                .update();
     }
 
     @Override

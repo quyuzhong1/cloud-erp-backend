@@ -96,6 +96,8 @@ public enum ApiError implements Serializable {
     ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
     ERROR_DATA_DELETE(1046, "数据删除失败"),
+    ERROR_DATA_APPROVE(1046, "数据审核失败"),
+    ERROR_DATA_DISAPPROVE(1046, "数据反审核失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),

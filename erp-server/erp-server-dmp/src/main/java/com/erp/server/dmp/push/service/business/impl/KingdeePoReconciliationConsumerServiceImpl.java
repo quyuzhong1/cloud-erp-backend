@@ -17,7 +17,6 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.srm.feign.SrmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -101,7 +100,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
      */
     public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map,String operate){
         //作废
-        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,ApiModuleTypeEnum.PO_RECONCILIATION.getCode(),operate);
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,ApiModuleTypeEnum.PAYABLE_INFO.getCode(),operate);
         return;
     }
 
@@ -115,7 +114,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
      */
     public void operateDisapprove ( KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //反审核
-        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, ApiModuleTypeEnum.PO_RECONCILIATION.getCode());
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, ApiModuleTypeEnum.PAYABLE_INFO.getCode());
         return;
     }
 
@@ -130,7 +129,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
      */
     public void operateApprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //模块类型
-        Integer type = ApiModuleTypeEnum.PO_RECONCILIATION.getCode();
+        Integer type = ApiModuleTypeEnum.PAYABLE_INFO.getCode();
 
         //数据处理
         handlePoReconciliationData(map);
@@ -184,7 +183,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
      */
     public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
         //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PO_RECONCILIATION.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PAYABLE_INFO.getCode(),operate);
         return;
     }
 
@@ -196,7 +195,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
     public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
         //无需自动审核
         param.setIsAutoAudit(Boolean.FALSE);
-        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.PO_RECONCILIATION.getCode());
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.PAYABLE_INFO.getCode());
         if (isAdd) {
             //给明细id赋值
             JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
@@ -297,7 +296,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
     public void updateKingdeeDetailId (JSONArray jsonArray) {
         //更新业务单据状态
         Map<String,Object> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",ApiModuleTypeEnum.PO_RECONCILIATION.getCode().toString());
+        params.put("code",ApiModuleTypeEnum.PAYABLE_INFO.getCode().toString());
         params.put("details",jsonArray);
         srmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
