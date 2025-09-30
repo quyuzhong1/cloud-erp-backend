@@ -408,6 +408,18 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     }
 
     @Override
+    public void deleteBySourceId(String sourceId) {
+        List<PayableInfoEntity> payableInfoList = listBySourceId(sourceId);
+        if (CollUtil.isEmpty(payableInfoList)) {
+            return;
+        }
+        long count = payableInfoList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())).count();
+        if (count > 0) {
+            throw new ServiceException("存在未审核的应付单，无法删除");
+        }
+    }
+
+    @Override
     public PayableInfoDTO.ViewDTO view(String id) {
         PayableInfoEntity payableInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到数据"));
         PayableInfoDTO.ViewDTO data = BeanMapperUtils.map(PayableInfoDTO.ViewDTO.class, payableInfoEntity);
@@ -416,6 +428,18 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         // TODO 查询明细数据（如果有的话）
         return data;
     }
+
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2025/9/30 16:26
+     * @param sourceId
+     * @return List<PayableInfoEntity>
+     */
+    private List<PayableInfoEntity> listBySourceId(String sourceId) {
+      return   lambdaQuery().eq(PayableInfoEntity::getSourceId,sourceId).list();
+    }
+
     /**
     * 启动流程
     *

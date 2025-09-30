@@ -634,6 +634,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
 
         //反审核并且删除应付单
+        payableInfoService.deleteBySourceId(id);
 
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);

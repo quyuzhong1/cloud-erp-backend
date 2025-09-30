@@ -144,4 +144,12 @@ public interface PayableInfoService extends SuperService<PayableInfoEntity> {
      * @return void
      */
     void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationDetailEntity> poReconciliationDetailList);
+    /**
+     * 根据来源id删除
+     * @author will
+     * @date 2025/9/30 16:24
+     * @param sourceId
+     * @return void
+     */
+    void deleteBySourceId(String sourceId);
 }
