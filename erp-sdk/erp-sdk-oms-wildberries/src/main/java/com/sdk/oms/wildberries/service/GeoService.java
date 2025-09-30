@@ -65,6 +65,7 @@ public class GeoService {
                     bodyStr.append(inputLine);
                 }
                 in.close();
+                System.out.println("bodyStr:" + bodyStr.toString());
                 // 可以在此处添加JSON解析逻辑
                 GeoResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr.toString()),new TypeReference<GeoResponse>() {}.getType());
                 return response;

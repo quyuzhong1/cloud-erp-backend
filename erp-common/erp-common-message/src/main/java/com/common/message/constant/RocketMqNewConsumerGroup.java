@@ -40,11 +40,19 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台商品
      */
     public static final String DMP_PLATFORM_PRODUCT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_product_to_oms_group";
-    
+    /**
+     * restcloud平台商品
+     */
+    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_group";
+
     /**
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_group";
+    /**
+     * restcloud平台订单
+     */
+    public static final String RESTCLOUD_PLATFORM_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_order_to_oms_group";
 
     /**
      * 新中台Track123

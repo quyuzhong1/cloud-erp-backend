@@ -14,6 +14,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.Arrays;
 import java.util.Calendar;
 
 /**
@@ -67,5 +68,11 @@ public class WildberriesSDKServiceTest {
         System.out.println(response);
         System.out.println(response.isSuccess());
         System.out.println(response.getMsg());
+    }
+    @Test
+    public void getOrderStatus() {
+        OrderStatusRequest request = OrderStatusRequest.builder().orders(Arrays.asList(3893097985L)).build();
+        OrderStatusResponse orderStatus = wildberriesSDKService.getOrderStatus(WildberriesConstant.TOKEN, request);
+        System.out.println(JSONUtil.toJsonStr(orderStatus));
     }
 }

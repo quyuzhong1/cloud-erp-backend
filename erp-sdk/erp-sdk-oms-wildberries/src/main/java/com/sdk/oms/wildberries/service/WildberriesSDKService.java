@@ -41,6 +41,7 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
         String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
         log.error("接口返回：{}", bodyStr);
         SkuResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<SkuResponse>() {}.getType());
@@ -77,7 +78,12 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
-        String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
+//        String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
+        String bodyStr = HttpRequest.post(url)
+                .header("Authorization", token)
+                .header("Content-Type", "application/json")
+                        .body(JSONUtil.toJsonStr(request))
+                                .execute().body();
         log.error("接口返回：{}", bodyStr);
         OrderStatusResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<OrderStatusResponse>() {}.getType());
         return response;
