@@ -171,6 +171,7 @@
             odp.id AS sourceId,
             odpd.id AS sourceDetailId,
             odp.code AS sourceCode,
+        odp.to_warehouse_id AS toWarehouseId,
             odp.to_warehouse_id AS channelId,
             odp.to_warehouse_name AS channelName,
             odp.approve_status AS approveStatus,
