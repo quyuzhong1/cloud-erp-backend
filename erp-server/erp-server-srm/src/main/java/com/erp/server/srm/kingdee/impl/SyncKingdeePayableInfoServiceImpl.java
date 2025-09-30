@@ -147,7 +147,8 @@ public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfo
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
-
+        //应付类型
+        resultMap.put("type",entity.getType());
         //对账结束日期
         resultMap.put("date", entity.getDate());
 

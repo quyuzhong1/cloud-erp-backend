@@ -134,44 +134,6 @@ public class PayableInfoController extends BaseController {
         return success();
     }
 
-    /**
-    * 提交审核
-    * @author will
-    * @date:  2025-09-25
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/submit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:payableInfo:submit",
-            serviceClass = PayableInfoService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
-    public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<PayableInfoEntity> list = payableInfoService.lambdaQuery().in(PayableInfoEntity::getId, ids).list();
-		Map<String, PayableInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(PayableInfoEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO submit;
-            try {
-                submit = payableInfoService.submit(id);
-            }catch (Exception e){
-                log.error(" 提交审核失败",e);
-                PayableInfoEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "不存在, 提交失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(submit);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
     * 审核
