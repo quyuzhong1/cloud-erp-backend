@@ -52,8 +52,7 @@ import static com.common.business.enums.ApproveTypeEnum.REJECT;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_FS_INSTANCES_TO_WORKFLOW_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP,
-        consumeMode = ConsumeMode.ORDERLY)
+        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP)
 public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsumerHandler {
 
     @Resource
