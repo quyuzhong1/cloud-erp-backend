@@ -3,7 +3,7 @@ package com.erp.server.oms.rocketmq.consumer.restcloud;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.server.oms.rocketmq.consumer.PlatformOrderConsumerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -22,7 +22,7 @@ import javax.annotation.Resource;
 selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_ORDER_TO_OMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_ORDER_TO_OMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
-public class RestcloudPlatformOrderConsumerService extends AbstractNewPlatformConsumerHandler{
+public class RestcloudPlatformOrderConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 	@Resource
 	private PlatformOrderConsumerService platformOrderConsumerService;
 
