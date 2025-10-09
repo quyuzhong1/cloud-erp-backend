@@ -1,6 +1,10 @@
 package com.erp.server.auth.server.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.business.dto.FindUserDTO;
+import com.common.core.utils.IdUtils;
+import com.erp.server.auth.server.AuthTokenService;
 import org.redisson.api.RedissonClient;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -16,6 +20,7 @@ import com.erp.server.auth.config.AuthJwtProperties;
 import com.erp.server.auth.server.SsoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -46,6 +51,9 @@ public class SsoServiceImpl implements SsoService {
 
     @Resource
     private SysRefereConfigFeign sysRefereConfigFeign;
+
+    @Resource
+    private AuthTokenService authTokenService;
 
     @Override
     public SsoLoginResponseDTO ssoLogin(SsoLoginRequestDTO request, String appId, String sessionId) {
@@ -117,9 +125,12 @@ public class SsoServiceImpl implements SsoService {
                 // 8. 生成JWT Token（带权限路径列表）
                 SysUserDTO userDTO = new SysUserDTO();
                 userDTO.setUid(userId);
-                userDTO.setUserName(userId); // 这里可以根据需要设置用户名
-                userDTO.setToken(userId);
-                
+                FindUserDTO userByUserId = sysUserFeign.getUserByUserId(userId);
+                BeanUtils.copyProperties(userByUserId,userDTO);
+                //先生成一个token
+                String token = IdUtils.fastUUID();
+                userDTO.setToken(token);
+                authTokenService.refreshToken(userDTO, authJwtProperties.getExpire());
                 String jwtToken = JwtUtils.generateToken(userDTO, authJwtProperties.getSecret(), authJwtProperties.getExpire(), pathList);
                 
                 // 9. 返回成功响应，包含signSessionId
