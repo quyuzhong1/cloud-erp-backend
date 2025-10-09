@@ -3176,6 +3176,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             CustomerInfoEntity customer = customerFeign.getCustomerById(soOutstock.getCustomerId());
             soOutstock.setSellerId(Objects.nonNull(customer) ? customer.getSellerId(): CharSequenceUtil.EMPTY);
             soOutstock.setSalesDeptId(Objects.nonNull(customer) ? customer.getSalesDeptId() : CharSequenceUtil.EMPTY);
+            soOutstock.setDictPlatform(Objects.nonNull(customer) ? customer.getPlatformType() : CharSequenceUtil.EMPTY);
         }
 
         //如果是平台仓发货，处理发货单生成情况
