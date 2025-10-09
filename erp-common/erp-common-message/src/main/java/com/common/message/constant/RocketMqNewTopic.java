@@ -55,6 +55,11 @@ public class RocketMqNewTopic {
     public static final String RESTCLOUD_PLATFORM_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_order_to_oms_topic";
 
     /**
+     * restcloud平台退货订单
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_order_to_oms_topic";
+
+    /**
      * 新中台Track123
      */
     public static final String DMP_TRACK123_TO_TMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_topic";
