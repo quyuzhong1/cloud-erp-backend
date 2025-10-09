@@ -15,5 +15,5 @@ import java.util.List;
 @Data
 @Builder
 public class OrderStatusRequest {
-    private List<String> orders;
+    private List<Long> orders;
 }

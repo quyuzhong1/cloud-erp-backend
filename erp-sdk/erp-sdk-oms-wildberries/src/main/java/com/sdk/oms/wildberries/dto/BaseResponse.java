@@ -19,6 +19,7 @@ public class BaseResponse {
     private String requestId;
     private String origin;
     private String timestamp;
+    private String message;
     /**
      * 状态 OK
      */

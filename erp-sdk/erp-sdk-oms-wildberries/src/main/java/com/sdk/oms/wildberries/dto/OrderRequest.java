@@ -14,7 +14,7 @@ import lombok.Data;
 @Builder
 public class OrderRequest {
     private Integer limit;
-    private Integer next;
+    private Long next;
     //时间戳
     private Long dateFrom;
     private Long dateTo;

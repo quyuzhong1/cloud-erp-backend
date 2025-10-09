@@ -40,11 +40,24 @@ public class RocketMqNewTag {
      * 新中台平台商品
      */
     public static final String DMP_PLATFORM_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_product_to_oms_tag";
-    
+    /**
+     * restcloud平台商品
+     */
+    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_tag";
+
     /**
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_tag";
+    /**
+     * restcloud平台订单
+     */
+    public static final String RESTCLOUD_PLATFORM_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_order_to_oms_tag";
+
+    /**
+     * restcloud平台订单
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_order_to_oms_tag";
 
     /**
      * 物流轨迹

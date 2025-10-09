@@ -643,4 +643,11 @@ public interface SysUserFeign {
     @PostMapping("feign/user/getFsUserUnionIdByAppId")
     ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto);
 
+    /**
+     * 根据币种三字码获取币种符号
+     * @param num
+     * @return
+     */
+    @GetMapping("feign/currency/getCurrencyByNum")
+    DictCurrencyEntity getCurrencyByNum(@RequestParam(value = "num") String num);
 }

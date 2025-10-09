@@ -41,9 +41,23 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String DMP_PLATFORM_PRODUCT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_product_to_oms_group";
     /**
+     * restcloud平台商品
+     */
+    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_group";
+
+    /**
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_group";
+    /**
+     * restcloud平台订单
+     */
+    public static final String RESTCLOUD_PLATFORM_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_order_to_oms_group";
+
+    /**
+     * restcloud平台退货订单
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_order_to_oms_group";
 
     /**
      * 新中台Track123
@@ -185,17 +199,12 @@ public class RocketMqNewConsumerGroup {
      * 新中台飞书对接
      */
     public static final String DMP_FS_INSTANCES_TO_WORKFLOW_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_group";
-    
-    /**
-     * restcloud平台商品
-     */
-    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_group";
-    
+
     /**
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_group";
-    
+
     /**
      * 新中台平台收款单
      */
