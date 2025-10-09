@@ -33,16 +33,6 @@ public class ImlServerTest {
 
     @Test
     public void getSkuList() {
-        ImlGetProductReq imlProductReq = ImlGetProductReq.builder()
-                .page(1)
-                .pageSize(50)
-//                .productSku("0044")
-//                .productSkuArr(Arrays.asList("0044"))
-                .updateStartTime("2000-01-01 11:11:11")
-                .updateEndTime("2024-01-01 11:11:11")
-                .build();
-        ImlResponse<List<ImlProductResp>> response = imlServer.getSkuList(imlProductReq);
-        System.out.println(response);
     }
 
     @Test
@@ -57,8 +47,6 @@ public class ImlServerTest {
 
     @Test
     public void getReceivingRegionTest() {
-        ImlResponse<List<ImlRegionResp>> response = imlServer.getReceivingRegion();
-        System.out.println(response);
     }
 
     @Test
@@ -75,13 +63,7 @@ public class ImlServerTest {
 
     @Test
     public void getProductInventoryTest() {
-        ImlGetInventoryReq imlGetInventoryReq = ImlGetInventoryReq.builder()
-                .page(1)
-                .pageSize(1000)
-//                .receivingCode("RV86526-230919-0005")
-                .build();
-        ImlResponse<List<ImlInventoryResp>> response = imlServer.getProductInventory(imlGetInventoryReq);
-        System.out.println(response);
+
     }
 
     @Test

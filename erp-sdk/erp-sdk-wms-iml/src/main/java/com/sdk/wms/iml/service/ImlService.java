@@ -28,21 +28,6 @@ public class ImlService {
     public static final String RECEIVING_CODE = "receiving_code";
 
     /**
-     * 授权（调用拉取仓库接口，接口调用成功则说明授权成功）
-     */
-    public ImlResponse<Object> authorization(){
-        return ImlResponse.builder().build();
-    }
-
-    /**
-     * 获取商品列表
-     */
-    public ImlResponse<List<ImlProductResp>> getSkuList(@Valid ImlGetProductReq imlProductReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_LIST, imlProductReq);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlProductResp>>>() {}.getType());
-    }
-
-    /**
      * 获取仓库列表
      */
     public ImlResponse<List<ImlWarehouseResp>> getWarehouse(ImlBaseRequest imlBaseRequest){
@@ -51,27 +36,11 @@ public class ImlService {
     }
 
     /**
-     * 获取揽收区域
-     */
-    public ImlResponse<List<ImlRegionResp>> getReceivingRegion(){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIVING_REGION,null);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlRegionResp>>>() {}.getType());
-    }
-
-    /**
      * 获取入库单
      */
     public ImlResponse<List<ImlReceiptResp>> getReceiptBatch(@Valid ImlGetReceiptReq imlGetReceiptReq){
         String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIPT,imlGetReceiptReq);
         return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {}.getType());
-    }
-
-    /**
-     * 获取库存
-     */
-    public ImlResponse<List<ImlInventoryResp>> getProductInventory(@Valid ImlGetInventoryReq imlGetInventoryReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryResp>>>() {}.getType());
     }
 
     /**
@@ -84,14 +53,6 @@ public class ImlService {
         }
         String response = ImlUtils.callService(ImlConstants.GET_SHIPPING_METHOD,paramsMap);
         return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryLogisticsProductsResp>>>() {}.getType());
-    }
-
-    /**
-     * 获取出库单
-     */
-    public ImlResponse<List<ImlOutboundResp>> getOutboundBatch(ImlGetOutboundReq imlGetOutboundReq){
-        String response = ImlUtils.callService(ImlConstants.GET_ORDER_LIST,imlGetOutboundReq);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlOutboundResp>>>() {}.getType());
     }
 
     /**
