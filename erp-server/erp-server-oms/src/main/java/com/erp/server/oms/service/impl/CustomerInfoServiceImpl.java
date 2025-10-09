@@ -36,6 +36,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
@@ -399,6 +400,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return false;
         }
         List<CustomerInfoEntity> list = this.listByIds(ids);
+        
+        List<CustomerInfoEntity> hasPartitionList = list.stream().filter(l -> StringUtils.isNotBlank(l.getPartitionId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(hasPartitionList)) {
+        	Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+            Map<String, String> dictPartitionIdCodeMap = FeignQuery.getByIds(DictPartitionEntity.class, 
+            		hasPartitionList.stream().map(CustomerInfoEntity::getPartitionId).filter(Objects::nonNull).collect(Collectors.toList()))
+            		  .stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getCode));
+            String errorDepartmentCodeJoin = hasPartitionList.stream().filter(l -> queryAndCacheOmsDictBasic(cacheMap, dictPartitionIdCodeMap.get(l.getPartitionId()), l.getPlatformType()) == null)
+            		.map(CustomerInfoEntity::getCode).collect(Collectors.joining("、"));
+            if(StringUtils.isNotBlank(errorDepartmentCodeJoin)) {
+            	throw new ServiceException(errorDepartmentCodeJoin + "军区未关联部门，请联系实施配置");
+            }
+        }
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -433,6 +447,58 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return result;
 
+    }
+    
+    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String partitionCode, String dictPlatform) {
+        if (StringUtils.isBlank(partitionCode) || StringUtils.isBlank(dictPlatform)){
+            return null;
+        }
+        Map<String, Object> dictBasicMap = cacheMap.getOrDefault("omsDictBasic", new HashMap<>());
+        List<DictBasicEntity> sdyPartitionDeptList = new ArrayList<>();
+        List<DictBasicEntity> sdyPlatformDeptList = new ArrayList<>();
+        List<SysDepartmentEntity> deptList = new LinkedList<>();
+
+        Object level1ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+        Object level2ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+        Object deptListObj = dictBasicMap.get("deptList");
+        if (null == level2ListObj || null == level1ListObj || null == deptListObj) {
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
+            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+                Map<String, List<DictBasicEntity>> groupMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+                sdyPartitionDeptList = groupMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+                sdyPlatformDeptList = groupMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+                dictBasicMap.putAll(groupMap);
+            }
+            // 部门信息
+            deptList = sysUserFeign.getDeptEntityList();
+            if (CollectionUtils.isNotEmpty(deptList)){
+                dictBasicMap.put("deptList", deptList);
+            }
+            cacheMap.put("omsDictBasic", dictBasicMap);
+        } else {
+            sdyPartitionDeptList = (List<DictBasicEntity>) level1ListObj;
+            sdyPlatformDeptList = (List<DictBasicEntity>) level2ListObj;
+            deptList = (List<SysDepartmentEntity>) deptListObj;
+        }
+
+        // 军区一级部门映射
+        DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(partitionCode)).findFirst().orElse(null);
+        // 销售平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
+            List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+            return deptList.stream().filter(e -> e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                    && deptLevel2Ids.contains(e.getId())
+                    )
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
     }
 
     /**
