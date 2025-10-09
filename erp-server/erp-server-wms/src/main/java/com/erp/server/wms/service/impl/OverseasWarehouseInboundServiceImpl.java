@@ -157,6 +157,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
             providerEntity = null;
         }
+        if (FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(deliveryEntity.getDemandType())) {
+            providerEntity = null;
+        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
 
