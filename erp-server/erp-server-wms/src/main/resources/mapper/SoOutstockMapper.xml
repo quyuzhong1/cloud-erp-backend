@@ -47,6 +47,7 @@
         so.shop_id AS shopId,
         so.remark AS remark,
         so.customer_remark AS customerRemark,
+        so.dict_platform AS dictPlatform,
         sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
