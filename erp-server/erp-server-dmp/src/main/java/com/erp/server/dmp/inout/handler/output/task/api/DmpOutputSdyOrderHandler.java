@@ -797,6 +797,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             	shudiyunB2cOrderDTO.setGoods_status("已取消");
             }
             
+            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getDepartment_code()) && StringUtils.isNotBlank(shudiyunB2cOrderDTO.getShop_no())) {
+            	List<CustomerInfoEntity> deptCustomerInfoList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getCode, 
+            			shudiyunB2cOrderDTO.getShop_no()).list();
+            	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
+            		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
+            		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
+            			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getSalesDeptId()).list();
+            		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
+            			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+            			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+            		}
+            	}
+            }
             shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {

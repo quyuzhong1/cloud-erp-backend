@@ -353,6 +353,19 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setFreight(dmpSoDeliveryDetailEntity.getFreightAmount());
     	        shudiyunB2cOrderDTO.setGoods_taxation(dmpSoDeliveryDetailEntity.getTaxAmount());
     	        
+    	        if(StringUtils.isBlank(shudiyunB2cOrderDTO.getDepartment_code()) && StringUtils.isNotBlank(shudiyunB2cOrderDTO.getShop_no())) {
+                	List<CustomerInfoEntity> deptCustomerInfoList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getCode, 
+                			shudiyunB2cOrderDTO.getShop_no()).list();
+                	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
+                		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
+                		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
+                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getSalesDeptId()).list();
+                		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
+                			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+                			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+                		}
+                	}
+                }
     	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}

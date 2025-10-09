@@ -552,6 +552,11 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
+        
+        /**
+         * 军区id
+         */
+        private String partitionId;
     }
 
     /**

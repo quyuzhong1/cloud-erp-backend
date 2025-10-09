@@ -328,6 +328,19 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
     			
+    	        if(StringUtils.isBlank(shudiyunB2cOrderDTO.getDepartment_code()) && StringUtils.isNotBlank(shudiyunB2cOrderDTO.getShop_no())) {
+                	List<CustomerInfoEntity> deptCustomerInfoList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getCode, 
+                			shudiyunB2cOrderDTO.getShop_no()).list();
+                	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
+                		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
+                		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
+                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getSalesDeptId()).list();
+                		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
+                			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+                			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+                		}
+                	}
+                }
     	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
