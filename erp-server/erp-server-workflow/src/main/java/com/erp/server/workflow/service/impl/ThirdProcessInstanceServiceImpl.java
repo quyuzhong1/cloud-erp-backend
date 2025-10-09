@@ -1,25 +1,26 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
-import com.erp.server.workflow.mapper.ThirdProcessInstanceMapper;
-import com.erp.server.workflow.service.ThirdProcessInstanceService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.workflow.dto.ThirdProcessInstanceDTO;
+import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
+import com.erp.server.workflow.mapper.ThirdProcessInstanceMapper;
+import com.erp.server.workflow.service.OperateLogService;
+import com.erp.server.workflow.service.ThirdProcessInstanceService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ThirdProcessInstanceDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 三方流程实例清单 服务实现类
@@ -86,11 +87,30 @@ public class ThirdProcessInstanceServiceImpl extends SuperServiceImpl<ThirdProce
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据审批定义编码查询
+     * @author will
+     * @date 2025/9/29 17:04
+     * @param approvalCode
+     * @return ThirdProcessInstanceEntity
+     */
+    private ThirdProcessInstanceEntity getByApprovalCode(String approvalCode) {
+        if(StrUtil.isBlank(approvalCode)) {
+            throw new ServiceException("审批编码不能为空");
+        }
+
+        return lambdaQuery().eq(ThirdProcessInstanceEntity::getApprovalCode, approvalCode).last("limit 1").one();
+    }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(ThirdProcessInstanceEntity thirdProcessInstanceEntity) {
-    // TODO 验证数据 & 数据赋值
+        //查询审批定义编码是否已经存在
+        ThirdProcessInstanceEntity old = this.getByApprovalCode(thirdProcessInstanceEntity.getApprovalCode());
+        if (ObjUtil.isNotEmpty(old) && !old.getId().equals(thirdProcessInstanceEntity.getId())) {
+            throw new ServiceException("审批编码已存在");
+
+        }
     }
 }
