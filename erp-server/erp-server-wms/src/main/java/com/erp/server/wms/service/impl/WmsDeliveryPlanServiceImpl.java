@@ -1275,7 +1275,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             wmsDeliveryPlanEntity.setShopName(shopInfoEntity.getName());
             wmsDeliveryPlanEntity.setCountry(shopInfoEntity.getDictCountryCode());
             wmsDeliveryPlanEntity.setCountryName(shopInfoEntity.getCountryName());
-        }else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(wmsDeliveryPlanEntity.getType())){
+        }else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(wmsDeliveryPlanEntity.getType())
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
             OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
