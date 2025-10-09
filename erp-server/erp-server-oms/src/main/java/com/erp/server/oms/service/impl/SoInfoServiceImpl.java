@@ -2048,6 +2048,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             countryId = customerInfo.getCountryId();
             customer.setCustomerSellerId(customerInfo.getSellerId());
             customer.setCustomerRemark(customerInfo.getRemark());
+            customer.setDictPlatform(customerInfo.getPlatformType());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息

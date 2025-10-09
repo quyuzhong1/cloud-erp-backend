@@ -412,6 +412,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSoCode(soCustomer.getCode());
         soOutstock.setCustomerId(soCustomer.getCustomerId());
         soOutstock.setCustomerName(soCustomer.getCustomerName());
+        soOutstock.setDictPlatform(soCustomer.getDictPlatform());
         soOutstock.setOrderType(soCustomer.getOrderType());
         soOutstock.setSalesDeptId(soCustomer.getSalesDeptId());
         soOutstock.setWarehouseOrgId(warehouse.getOrgId());
@@ -1740,9 +1741,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
 
         //根据客户id集合查询客户信息
-        List<String> customerIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
-        Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
+//        List<String> customerIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+//        Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
 
         //查询虚拟仓信息
         List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1836,7 +1837,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //装箱状态
             item.setPackingStatusName(PackingTaskStatusEnum.getName(item.getPackingStatus()));
             //销售平台名称
-            item.setDictPlatform(customerPlatformTypeMap.get(item.getCustomerId()));
+//            item.setDictPlatform(customerPlatformTypeMap.get(item.getCustomerId()));
             item.setDictPlatformName(salesPlatformMap.get(item.getDictPlatform()));
 
             // 设置军区信息

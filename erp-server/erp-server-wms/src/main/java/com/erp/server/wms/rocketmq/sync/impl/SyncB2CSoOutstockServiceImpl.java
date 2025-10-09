@@ -645,6 +645,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
             soOutstock.setCustomerRemark(customerInfo.getRemark());
+            soOutstock.setDictPlatform(customerInfo.getPlatformType());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号
