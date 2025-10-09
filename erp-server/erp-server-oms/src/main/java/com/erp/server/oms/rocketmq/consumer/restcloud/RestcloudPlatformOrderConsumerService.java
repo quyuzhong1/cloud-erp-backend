@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer.restcloud;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -33,7 +34,7 @@ public class RestcloudPlatformOrderConsumerService extends AbstractRestCloudPlat
 	
     @Override
 	public void handle(String data) {
-    	platformOrderConsumerService.handle(data);
+    	platformOrderConsumerService.handle(JSONObject.parse(data));
 	}
 
 }
