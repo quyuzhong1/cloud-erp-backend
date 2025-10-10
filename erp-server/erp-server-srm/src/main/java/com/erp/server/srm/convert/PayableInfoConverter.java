@@ -22,6 +22,7 @@ public interface PayableInfoConverter {
 
 
     @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "skuNo", source = "skuNo")
     @Mapping(target = "qty", source = "qty")
     @Mapping(target = "taxIncludedPrice", source = "taxPrice")
     @Mapping(target = "taxRate", source = "taxRate")
@@ -34,6 +35,7 @@ public interface PayableInfoConverter {
     @Mapping(target = "sourceDetailId", source = "id")
     @Mapping(target = "poDetailId", source = "poDetailId")
     @Mapping(target = "poId", source = "poId")
+    @Mapping(target = "poCode", source = "poCode")
     @Mapping(target = "businessId", source = "sourceId")
     @Mapping(target = "businessCode", source = "sourceCode")
     @Mapping(target = "businessType", source = "sourceType")

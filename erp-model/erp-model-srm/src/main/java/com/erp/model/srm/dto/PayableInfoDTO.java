@@ -304,6 +304,10 @@ public class PayableInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 单号
+         */
+        private String code;
 
         /**
         * 供应商id

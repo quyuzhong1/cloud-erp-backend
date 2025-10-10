@@ -392,12 +392,15 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
                 throw new ServiceException("采购订单类型异常，请检查");
             }
         }
+        Integer index = 1;
         //根据类型分组生成数据
-        Map<String, List<PoReconciliationDetailEntity>> payableMap = poReconciliationDetailList.stream().collect(Collectors.groupingBy(obj -> obj.getPayableType()));
+        Map<String, List<PoReconciliationDetailEntity>> payableMap = poReconciliationDetailList.stream().collect(Collectors.groupingBy(PoReconciliationDetailEntity::getPayableType));
         for (Map.Entry<String, List<PoReconciliationDetailEntity>> entry : payableMap.entrySet()) {
             List<PoReconciliationDetailEntity> value = entry.getValue();
             PayableInfoDTO.AddDTO addDTO = PayableInfoConverter.INSTANCE.poReconciliationToPayableEntity(entity);
             addDTO.setType(value.get(0).getPayableType());
+            addDTO.setCode(CharSequenceUtil.format("{}_{}",entity.getCode(),index));
+            addDTO.setDate(entity.getEndDate());
             List<PayableDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (PoReconciliationDetailEntity detailEntity : value) {
                 PayableDetailDTO.AddDTO detailAddDTO = PayableInfoConverter.INSTANCE.poReconciliationDetailToPayableDetailEntity(detailEntity);
@@ -413,6 +416,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
             approveOneDTO.setId(result.getId());
             approveOneDTO.setType(ApproveType.PASS);
             self.approve(approveOneDTO);
+            index++;
         }
     }
 
@@ -567,7 +571,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     * 新增修改处理数据
     */
     private void handleData(PayableInfoEntity payableInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 
     /**
