@@ -297,7 +297,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购订单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "新增操作");
             //新增供应商信息
             PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO = dto.getPurchaseOrderSupplierDTO();
-            purchaseOrderSupplierDTO.setSupplierAccountId(dto.getSupplierAccountId());
+            if(StringUtils.isBlank(purchaseOrderSupplierDTO.getSupplierAccountId())){
+                purchaseOrderSupplierDTO.setSupplierAccountId(dto.getSupplierAccountId());
+            }
             purchaseOrderSupplierService.add(purchaseOrderSupplierDTO, entity.getId());
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(), entity.getId());
