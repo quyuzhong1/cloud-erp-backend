@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -9,6 +10,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
@@ -126,6 +128,10 @@ public class DmpInoutTaskFeignController{
 			// 执行任务
 			if(CollectionUtils.isNotEmpty(response.getAfterDmpInputTaskEntityList())) {
 				for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
+					//系统非dmp不立即执行，存在restcloud
+					if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
+						continue;
+					}
 					dmpInputExecutorPool.execute(() -> {
 						DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 						dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
