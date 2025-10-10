@@ -910,7 +910,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             .collect(Collectors.toList());
         
         // 查询主单信息
-        List<SampleRecipientEntity> mainList = this.lambdaQuery().in(SampleRecipientEntity::getId, mainIds).list();
+        List<SampleRecipientEntity> mainList = new ArrayList<>();
+        if (!mainIds.isEmpty()) {
+            mainList = this.lambdaQuery().in(SampleRecipientEntity::getId, mainIds).list();
+        }
         Map<String, SampleRecipientEntity> mainIdEntityMap = mainList.stream()
             .collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
 
