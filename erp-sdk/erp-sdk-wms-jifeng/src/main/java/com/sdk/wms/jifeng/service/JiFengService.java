@@ -327,6 +327,10 @@ public class JiFengService {
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风取消入库单失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风取消入库单详情失败，返回结果为空");
+        }
         return response;
     }
     /**
@@ -342,6 +346,10 @@ public class JiFengService {
         paramMap.put("inboundNo",inboundNo);
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
         JiFengBaseResp<JiFengInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengInboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风获取入库单详情失败，返回结果为空");
+        }
         return response;
     }
 
