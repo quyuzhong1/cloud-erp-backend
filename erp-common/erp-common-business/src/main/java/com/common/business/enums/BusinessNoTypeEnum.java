@@ -102,7 +102,7 @@ public enum BusinessNoTypeEnum {
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
     CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     CODE_YHBG(75, "YHBG","要货申请变更单",BusinessNoConstant.YHBG),
-    CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
+    CODE_MOLD(90, "MJ","模具管理",BusinessNoConstant.MJ),
     CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
     CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.MoldInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.MoldInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="remark" property="remark" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="tag" property="tag" />
+       <result column="project_code" property="projectCode" />
+       <result column="project_name" property="projectName" />
+       <result column="charge_id" property="chargeId" />
+       <result column="charge_name" property="chargeName" />
+       <result column="project_charge_id" property="projectChargeId" />
+       <result column="project_charge_name" property="projectChargeName" />
+       <result column="category_id" property="categoryId" />
+       <result column="category_code" property="categoryCode" />
+       <result column="type" property="type" />
+       <result column="mold_holes" property="moldHoles" />
+       <result column="size_unit" property="sizeUnit" />
+       <result column="product_length" property="productLength" />
+       <result column="product_width" property="productWidth" />
+       <result column="product_height" property="productHeight" />
+       <result column="materials" property="materials" />
+       <result column="cycle" property="cycle" />
+       <result column="activation_date" property="activationDate" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="tax_price" property="taxPrice" />
+       <result column="rate" property="rate" />
+       <result column="pay_method_id" property="payMethodId" />
+       <result column="payment_condition" property="paymentCondition" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        invalid_status, remark, invalid_remark, approve_status, approve_time, approve_user_id, approve_user_name, code, name, tag, project_code, project_name, charge_id, charge_name, project_charge_id, project_charge_name, category_id, category_code, type, mold_holes, size_unit, product_length, product_width, product_height, materials, cycle, activation_date, supplier_id, supplier_code, supplier_name, tax_price, rate, pay_method_id, payment_condition
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from mold_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.plm.dto.MoldInfoDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  mold_info
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
