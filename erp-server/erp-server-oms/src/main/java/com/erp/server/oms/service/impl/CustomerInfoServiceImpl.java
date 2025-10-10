@@ -684,12 +684,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 subregionName = globalArea.getSubregionName();
             }
         }
-        if(StringUtils.isNotBlank(customer.getCountryId())){
-            List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,customer.getCountryId()).list();
-            if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
-                view.setPartitionName(cfgCountryPartitionEntity.get(0).getPartitionName());
-                view.setPartitionCode(cfgCountryPartitionEntity.get(0).getPartitionCode());
-                view.setPartitionId(cfgCountryPartitionEntity.get(0).getPartitionId());
+        String partitionId = customer.getPartitionId();
+		if(StringUtils.isNotBlank(partitionId)){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class, partitionId);
+            if(dictPartitionEntity != null){
+                view.setPartitionName(dictPartitionEntity.getName());
+                view.setPartitionCode(dictPartitionEntity.getCode());
             }
         }
         view.setAreaName(areaName);
