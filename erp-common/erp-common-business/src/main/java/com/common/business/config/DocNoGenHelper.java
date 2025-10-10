@@ -107,11 +107,11 @@ public class DocNoGenHelper implements InitializingBean {
         // 拼接结果
         String currentDateStr = currentDate.getYear() % 100 + Integer.toHexString(currentDate.getMonthValue()).toUpperCase();
         //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
-        String docNoKey = "generate_mould_code:" + BusinessNoTypeEnum.CODE_MOULD + ":"+ currentDateStr;
+        String docNoKey = "generate_mould_code:" + BusinessNoTypeEnum.CODE_MOLD + ":"+ currentDateStr;
         Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
         int fillZeroDigit = 2;
         // 单据前缀+6位日期+5位顺序位
-        return CharSequenceUtil.format("{}{}{}{}",StrUtils.null2EmptyWithTrim(BusinessNoTypeEnum.CODE_MOULD.getPrefix()), code, currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
+        return CharSequenceUtil.format("{}{}{}{}",StrUtils.null2EmptyWithTrim(BusinessNoTypeEnum.CODE_MOLD.getPrefix()), code, currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
     }
 
 
