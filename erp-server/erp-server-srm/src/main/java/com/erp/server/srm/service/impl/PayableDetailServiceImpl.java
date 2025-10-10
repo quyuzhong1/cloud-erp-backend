@@ -43,6 +43,7 @@ public class PayableDetailServiceImpl extends SuperServiceImpl<PayableDetailMapp
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"应付单明细");
         }
         List<PayableDetailEntity> list = BeanUtil.copyToList(detailList, PayableDetailEntity.class);
+        list.forEach(obj->obj.setMainId(mainId));
 
         log.info("开始新增");
         boolean save = super.saveBatch(list);
