@@ -461,7 +461,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         //单据状态
         String documentStatus = "";
-        if (type.equals(ApiModuleTypeEnum.PO_RECONCILIATION.getCode())) {
+        if (type.equals(ApiModuleTypeEnum.PAYABLE_INFO.getCode())) {
             documentStatus = (String) model.get("DOCUMENTSTATUS");
         } else {
             documentStatus = (String) model.get("DocumentStatus");

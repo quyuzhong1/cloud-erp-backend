@@ -132,7 +132,7 @@ public enum SourceTypeEnum {
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
-
+    PAYABLE_INFO( "payableInfo", "应付单","payable_info"),
 
 
     //Kingdee

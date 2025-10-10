@@ -349,9 +349,9 @@ public enum RocketMqTagEnum {
     KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
 
     /**
-     * 对账单同步金蝶
+     * 应付单同步金蝶
      */
-    KINGDEE_PO_RECONCILIATION_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_reconciliation_tag"),
+    KINGDEE_PAYABLE_INFO_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_payable_info_tag"),
     /**
      * 多渠道订单同步金蝶
      */

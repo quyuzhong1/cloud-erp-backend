@@ -26,9 +26,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
-import com.erp.model.srm.entity.PoReconciliationEntity;
-import com.erp.model.srm.entity.SrmPushMsgEntity;
+import com.erp.model.srm.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
@@ -39,7 +37,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
+import com.erp.server.srm.kingdee.SyncKingdeePayableInfoService;
 import com.erp.server.srm.service.SrmPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +57,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReconciliationService {
+public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfoService {
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -82,7 +80,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public DmpPushTaskEntity syncDataToKingdee(PoReconciliationEntity entity, List<PoReconciliationDetailEntity> detailList, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PayableInfoEntity entity, List<PayableDetailEntity> detailList, String operate) {
         //生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
@@ -99,10 +97,10 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
      * @param operate
      * @param resultMap
      */
-    private DmpPushTaskEntity saveTask (PoReconciliationEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PayableInfoEntity entity, String operate, Map<String, Object> resultMap) {
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PO_RECONCILIATION.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PAYABLE_INFO.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -111,9 +109,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             dmpSyncTaskDTO.setSourceId(entity.getId());
             dmpSyncTaskDTO.setSourceCode(entity.getCode());
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.PO_RECONCILIATION.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.PAYABLE_INFO.getCode());
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PO_RECONCILIATION_TAG.getName());
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PAYABLE_INFO_TAG.getName());
             dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
@@ -123,7 +121,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         
         SrmPushMsgEntity srmPushMsgEntity = new SrmPushMsgEntity();
         srmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        srmPushMsgEntity.setSourceType(SourceTypeEnum.PO_RECONCILIATION.getCode());
+        srmPushMsgEntity.setSourceType(SourceTypeEnum.PAYABLE_INFO.getCode());
         srmPushMsgEntity.setSourceId(entity.getId());
         srmPushMsgEntity.setSourceCode(entity.getCode());
         srmPushMsgEntity.setSyncOperate(operate);
@@ -135,10 +133,10 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
     }
 
 	@Override
-	public Map<String, Object> newSyncDataToKingdee(PoReconciliationEntity entity, List<PoReconciliationDetailEntity> detailList, String operate) {
+	public Map<String, Object> newSyncDataToKingdee(PayableInfoEntity entity, List<PayableDetailEntity> detailList, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        resultMap.put("syncKingdeeId", entity.getThirdPayableId());
         //业务id
         resultMap.put("id", entity.getId());
         //调拨单号
@@ -149,22 +147,23 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
-
+        //应付类型
+        resultMap.put("type",entity.getType());
         //对账结束日期
-        resultMap.put("endDate", entity.getEndDate());
+        resultMap.put("date", entity.getDate());
 
         //供应商名称
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         resultMap.put("supplierCode", supplierEntity.getCode());
 
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getSettleOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
 
         //组织机构编码
-        String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSettleOrgId()))
+        String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId()))
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("orgCode", orgCode);
         //日期
@@ -178,7 +177,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         }
 
         //获取sku的id集合
-        List<String> skuIdList = detailList.stream().map(PoReconciliationDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(PayableDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -187,8 +186,8 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         //退货id集合
         Map<String,String> returnMap = new HashMap<>();
         Map<String,String> returnDetailMap = new HashMap<>();
-        List<String> returnIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode())).map(PoReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<String> returnDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode())).map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> returnIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessType(), SourceTypeEnum.PO_RETURN.getCode())).map(PayableDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<String> returnDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessType(), SourceTypeEnum.PO_RETURN.getCode())).map(PayableDetailEntity::getBusinessDetailId).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(returnIdList)) {
             List<PoReturnEntity> returnList = FeignQuery.getByIds(PoReturnEntity.class, returnIdList);
             returnMap = returnList.stream().collect(Collectors.toMap(PoReturnEntity::getId, PoReturnEntity::getSyncKingdeeId));
@@ -200,8 +199,8 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         //入库id集合
         Map<String,String> instockMap = new HashMap<>();
         Map<String,String> instockDetailMap = new HashMap<>();
-        List<String> instockIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_INSTOCK.getCode())).map(PoReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<String> instockDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_INSTOCK.getCode())).map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> instockIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessType(), SourceTypeEnum.PO_INSTOCK.getCode())).map(PayableDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<String> instockDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessType(), SourceTypeEnum.PO_INSTOCK.getCode())).map(PayableDetailEntity::getBusinessDetailId).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(instockIdList)) {
             List<PoInstockEntity> instockList = FeignQuery.getByIds(PoInstockEntity.class, instockIdList);
             instockMap = instockList.stream().collect(Collectors.toMap(PoInstockEntity::getId, PoInstockEntity::getSyncKingdeeId));
@@ -212,18 +211,18 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
 
         //采购详情id
         Map<String,PurchaseOrderDetailEntity> poDetailMap = new HashMap<>();
-        List<String> poDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPoDetailId())).map(PoReconciliationDetailEntity::getPoDetailId).distinct().collect(Collectors.toList());
+        List<String> poDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPoDetailId())).map(PayableDetailEntity::getPoDetailId).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(poDetailIdList)) {
             List<PurchaseOrderDetailEntity> poDetailList = FeignQuery.getByIds(PurchaseOrderDetailEntity.class, poDetailIdList);
             poDetailMap = poDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
         }
 
         //获取币别信息
-        List<String> currencyCodeList = detailList.stream().map(PoReconciliationDetailEntity::getCurrency).distinct().collect(Collectors.toList());
+        List<String> currencyCodeList = detailList.stream().map(PayableDetailEntity::getCurrency).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
 
         List<JSONObject> list = new ArrayList<>();
-        for (PoReconciliationDetailEntity detail : detailList) {
+        for (PayableDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
@@ -233,15 +232,15 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             //数量
             jsonObject.set("qty", detail.getQty());
             //含税单价
-            jsonObject.set("taxPrice", detail.getTaxPrice());
+            jsonObject.set("taxPrice", detail.getTaxIncludedPrice());
             //税率
             jsonObject.set("taxRate",  MathUtil.multiplyWithFour(detail.getTaxRate(),MathUtil.BigDecimal_100));
             //折扣率
             jsonObject.set("discountRate", MathUtil.multiplyWithFour(detail.getDiscountRate(),MathUtil.BigDecimal_100));
             //折扣额
-            jsonObject.set("discountAmount", MathUtil.multiplyWithTwo(detail.getDiscountRate(),detail.getTaxAmount()));
+            jsonObject.set("discountAmount", MathUtil.multiplyWithTwo(detail.getDiscountRate(),detail.getTaxIncludedTotal()));
             //税额
-            jsonObject.set("taxAmount", detail.getTaxAmount());
+            jsonObject.set("taxAmount", detail.getTaxIncludedTotal());
             //价税合计
             jsonObject.set("discountTaxAmount", detail.getDiscountTaxAmount());
 
@@ -253,9 +252,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             //采购订单号
             jsonObject.set("poCode", detail.getPoCode());
             //来源编码
-            jsonObject.set("sourceCode", detail.getSourceCode());
+            jsonObject.set("sourceCode", detail.getBusinessCode());
             //来源类型
-            jsonObject.set("sourceType", detail.getSourceType());
+            jsonObject.set("sourceType", detail.getBusinessType());
             //明细id
             jsonObject.set("detailId", detail.getId());
 
@@ -272,16 +271,16 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             JSONObject refJsonObject = new JSONObject();
             String refKingdeeId = "";
             String refDetailKingdeeId = "";
-            if (SourceTypeEnum.PO_INSTOCK.getCode().equals(detail.getSourceType())) {
-                refKingdeeId =  instockMap.get(detail.getSourceId());
-                refDetailKingdeeId =  instockDetailMap.get(detail.getSourceDetailId());
+            if (SourceTypeEnum.PO_INSTOCK.getCode().equals(detail.getBusinessType())) {
+                refKingdeeId =  instockMap.get(detail.getBusinessId());
+                refDetailKingdeeId =  instockDetailMap.get(detail.getBusinessDetailId());
             } else {
-                refKingdeeId =  returnMap.get(detail.getSourceId());
-                refDetailKingdeeId =  returnDetailMap.get(detail.getSourceDetailId());
+                refKingdeeId =  returnMap.get(detail.getBusinessId());
+                refDetailKingdeeId =  returnDetailMap.get(detail.getBusinessDetailId());
             }
             refJsonObject.set("refKingdeeId",refKingdeeId);
             refJsonObject.set("refDetailKingdeeId",refDetailKingdeeId);
-            refJsonObject.set("sourceType", detail.getSourceType());
+            refJsonObject.set("sourceType", detail.getBusinessType());
             refList.add(refJsonObject);
             jsonObject.set("refList",refList);
             list.add(jsonObject);
