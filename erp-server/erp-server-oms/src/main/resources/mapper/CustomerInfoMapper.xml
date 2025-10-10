@@ -35,7 +35,7 @@
         ccp.partition_name as partitionName,
         ci.sales_dept_id as salesDeptId
         FROM customer_info ci
-        left join foreign_cfg_country_partition ccp on ccp.id = ci.partition_id and ccp.is_deleted = false and ccp.disabled = false
+        left join foreign_cfg_country_partition ccp on ccp.partition_id = ci.partition_id and ccp.is_deleted = false and ccp.disabled = false
         WHERE
 
         ${params.sqlMap.default}
@@ -83,7 +83,7 @@
         ci.sales_dept_id as salesDeptId
         FROM
         customer_info ci
-        left join foreign_cfg_country_partition ccp on ccp.country = ci.country_id and ccp.is_deleted = false and ccp.disabled = false
+        left join foreign_cfg_country_partition ccp on ccp.partition_id = ci.partition_id and ccp.is_deleted = false and ccp.disabled = false
         WHERE
         ${params.sqlMap.default}
         and    ci.is_deleted=FALSE
