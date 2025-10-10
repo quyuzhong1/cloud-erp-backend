@@ -519,6 +519,7 @@ public class CustomerDTO implements Serializable {
         
         /**
          * 军区id
+         * 下拉接口：http://172.16.100.11:3002/project/36/interface/api/34966
          */
         private String partitionId;
     }
