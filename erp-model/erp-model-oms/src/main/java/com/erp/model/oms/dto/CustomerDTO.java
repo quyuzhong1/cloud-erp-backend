@@ -1036,6 +1036,12 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
+        
+        /**
+         * 军区id
+         * 下拉接口：http://172.16.100.11:3002/project/36/interface/api/34966
+         */
+        private String partitionId;
     }
 
     @Data
