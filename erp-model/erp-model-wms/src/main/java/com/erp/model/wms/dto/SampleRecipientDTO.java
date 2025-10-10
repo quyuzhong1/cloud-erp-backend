@@ -302,6 +302,11 @@ public class SampleRecipientDTO implements Serializable {
          */
         private String detailRemark;
 
+        /**
+         * 商品种类
+         */
+        private String skuCount;
+
     }
 
     /**
