@@ -1,15 +1,14 @@
 package com.erp.model.srm.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -183,6 +182,11 @@ public class PayableDetailDTO implements Serializable {
         private String skuId;
 
         /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
         * 数量
         */
         @NotNull(message = "数量不能为空")
@@ -264,6 +268,11 @@ public class PayableDetailDTO implements Serializable {
         @NotBlank(message = "采购订单id不能为空")
         @Size(max = 19,message = "采购订单id最大长度不能超过19位")
         private String poId;
+
+        /**
+         * 采购订单编码
+         */
+        private String poCode;
 
         /**
         * 主表id
