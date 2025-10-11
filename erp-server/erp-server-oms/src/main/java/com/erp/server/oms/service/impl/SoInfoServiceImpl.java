@@ -3640,11 +3640,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<PlatformB2bOrderDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : detailList) {
                 SoDetailEntity existDetail = existList.stream().filter(v -> v.getPlatformDetailId().equals(platformB2bOrderDetailDTO.getPlatformDetailId())).findFirst().orElse(null);
-                if(Objects.isNull(existDetail)){
-                    continue;
-                }
                 SoDetailDTO.UpdateDTO detailDTO = new SoDetailDTO.UpdateDTO();
-                detailDTO.setId(existDetail.getId());
+                if(Objects.nonNull(existDetail)){
+                    detailDTO.setId(existDetail.getId());
+                }
                 detailDTO.setRemark(platformB2bOrderDetailDTO.getRemark());
                 detailDTO.setQty(platformB2bOrderDetailDTO.getQty());
                 detailDTO.setSkuId(platformB2bOrderDetailDTO.getSkuId());
