@@ -145,7 +145,7 @@ public class ApiSignatureTestExample {
         log.info("=== 示例4：验证API签名 ===");
         
         String secretKey = "d2KmS0aD2vwcVy1Wowc6OVPIsbIbEzmu";
-        String requestBody ="{\"method\":\"wmsWarehouseList\",\"data\":\"\"}";
+        String requestBody ="{\"method\":\"cfgQueryConditionGetQueryCondition\",\"data\":\"wms:sampleRecipient:paging\"}";
         String httpMethod = "POST";
         String uri = "/open/api/service/v2";
         // 生成签名
