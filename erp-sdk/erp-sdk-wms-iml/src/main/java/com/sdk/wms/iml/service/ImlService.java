@@ -42,7 +42,7 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/query_warehouse";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/fms/product_query";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {
@@ -69,23 +69,21 @@ public class ImlService {
     }
 
     /**
+     * 获取物流产品
+     */
+    public ImlBaseResp<List<ImlLogisticChannelResp>> getShippingMethod(){
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(new HashMap<>());
+        String path = "open-sdk/fms/product_query";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,new HashMap<>(), headerMap);
+        return ImlUtils.parseToImlResp(bodyStr, new TypeReference<ImlBaseResp<List<ImlLogisticChannelResp>>>() {});
+    }
+
+    /**
      * 获取入库单
      */
     public ImlResponse<List<ImlReceiptResp>> getReceiptBatch(@Valid ImlGetReceiptReq imlGetReceiptReq){
         String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIPT,imlGetReceiptReq);
         return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {}.getType());
-    }
-
-    /**
-     * 获取物流产品
-     */
-    public ImlResponse<List<ImlInventoryLogisticsProductsResp>> getShippingMethod(String warehouseCode){
-        Map<String,Object> paramsMap = new HashMap<>();
-        if(StringUtils.isNotBlank(warehouseCode)){
-            paramsMap.put("warehouseCode",warehouseCode);
-        }
-        String response = ImlUtils.callService(ImlConstants.GET_SHIPPING_METHOD,paramsMap);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryLogisticsProductsResp>>>() {}.getType());
     }
 
     /**
