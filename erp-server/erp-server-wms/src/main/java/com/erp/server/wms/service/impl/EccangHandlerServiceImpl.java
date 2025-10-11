@@ -3,7 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -21,12 +23,16 @@ import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
+import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
+import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
+import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -143,7 +149,10 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        throw new ServiceException("查询eccang出库单失败");
+    }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(AntuBaseRequest.builder()
