@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.sys.dto.DictKingdeeDTO;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -108,5 +109,19 @@ public interface SysDictFeign {
      */
     @PostMapping("feign/sampleUseUser/getByIds")
     List<BaseIdDTO> getByIds(@RequestBody List<String> ids);
+
+    /**
+     * 获取示例用户列表
+     * methodName: getSampleUseUserList
+     */
+    @GetMapping("feign/sampleUseUser/list")
+    List<SampleUseUserDTO.ViewDTO> getSampleUseUserList();
+
+    /**
+     * 根据条件模糊查询示例用户列表
+     * methodName: getSampleUseUserListByCondition
+     */
+    @PostMapping("feign/sampleUseUser/listByCondition")
+    List<SampleUseUserDTO.ViewDTO> getSampleUseUserListByCondition(@RequestBody SampleUseUserDTO.QueryDTO queryDTO);
 
 }

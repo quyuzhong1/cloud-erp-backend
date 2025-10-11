@@ -5,10 +5,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.server.sys.service.DictSampleUseUserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -43,6 +40,33 @@ public class SampleUseUserFeignController extends BaseController {
     public ApiResult<List<SampleUseUserDTO.ViewDTO>> getListByNameList(@RequestBody List<String> nameList) {
         List<SampleUseUserDTO.ViewDTO> list = sampleUseUserService.getListByNameList(nameList);
         return success(list);
+    }
+
+    /**
+     * 获取示例用户列表
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @author Lambda
+     * @date 2025-01-27 16:29
+     */
+    @GetMapping("/list")
+    public List<SampleUseUserDTO.ViewDTO> list() {
+        List<SampleUseUserDTO.ViewDTO> list = sampleUseUserService.getList();
+        return list;
+    }
+
+    /**
+     * 根据条件模糊查询示例用户列表
+     *
+     * @param queryDTO 查询条件
+     * @return com.common.core.controller.vo.ApiResult
+     * @author Lambda
+     * @date 2025-01-27 16:29
+     */
+    @PostMapping("/listByCondition")
+    public List<SampleUseUserDTO.ViewDTO> listByCondition(@RequestBody SampleUseUserDTO.QueryDTO queryDTO) {
+        List<SampleUseUserDTO.ViewDTO> list = sampleUseUserService.getListByCondition(queryDTO);
+        return list;
     }
 
 }

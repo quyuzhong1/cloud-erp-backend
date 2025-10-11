@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictPartitionDTO;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.dto.TypeAndValueDTO;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
@@ -31,6 +32,7 @@ import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.OmsFeign;
 import com.erp.rpc.sys.feign.CfgQueryConditionFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.wms.feign.SampleFeign;
 import com.erp.rpc.wms.feign.WmsFeign;
@@ -82,6 +84,9 @@ public class SampleOpenApi {
 
     @Resource
     private LoginAuthService loginAuthService;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     // ==================== 样品借用单相关接口 ====================
 
@@ -581,6 +586,22 @@ public class SampleOpenApi {
         return ApiResult.success(loginAuthService.getByToken(token));
     }
 
+    // ==================== 示例用户字典相关接口 ====================
 
+    /**
+     * 获取示例用户列表
+     */
+    @OpenApi("sampleUseUserList")
+    public List<SampleUseUserDTO.ViewDTO> getSampleUseUserList() {
+        return sysDictFeign.getSampleUseUserList();
+    }
+
+    /**
+     * 根据条件模糊查询示例用户列表
+     */
+    @OpenApi("sampleUseUserListByCondition")
+    public List<SampleUseUserDTO.ViewDTO> getSampleUseUserListByCondition(@Valid SampleUseUserDTO.QueryDTO queryDTO) {
+        return sysDictFeign.getSampleUseUserListByCondition(queryDTO);
+    }
 
 }
