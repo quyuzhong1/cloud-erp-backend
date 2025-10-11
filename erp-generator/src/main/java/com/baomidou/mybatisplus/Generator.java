@@ -33,11 +33,11 @@ public class Generator {
     /**
        模块名（需要更改）新加控制台输入，无需改动代码
      */
-    private static String MODEL = "fms";
+    private static String MODEL = "tms";
     /**
      * 作者（需要更改）新加控制台输入，无需改动代码
      */
-    private static String AUTHOR = "wuht";
+    private static String AUTHOR = "lrp";
     /**
      * 项目路径
      */
