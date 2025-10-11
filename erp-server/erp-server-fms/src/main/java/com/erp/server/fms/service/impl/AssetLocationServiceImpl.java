@@ -11,6 +11,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -26,6 +27,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetLocationDTO;
 import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetLocationMapper;
@@ -39,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -74,8 +77,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
 
         log.info("开始新增资产位置单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZCWZ);
         assetLocationEntity.setCode(code);
         boolean save = super.save(assetLocationEntity);
         if(!save) {
@@ -84,9 +86,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产位置单" , assetLocationEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, assetLocationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), assetLocationEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(assetLocationEntity.getId(), code);
     }
@@ -113,13 +113,11 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         if(!save) {
             throw new ServiceException("资产位置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产位置单日志数据，单号：【{}】", assetLocationEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetLocationEntity.getCode(), "资产位置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, assetLocationEntity, null, assetLocationEntity.getId(), msg);
+        log.info("编辑 开始记录资产位置单日志数据，单号：【{}】", assetLocationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetLocationEntity.getCode(), "资产位置单");
+        operateLogService.addModuleOperateLogByObj(old, assetLocationEntity, ModuleTypeEnum.ASSET_LOCATION.getCode(), assetLocationEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -141,18 +139,42 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     public List<AssetLocationDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetLocationDTO.PagingParamDTO searchParam = new AssetLocationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        
+        // 使用一个SQL查询获取所有状态的统计数量
         List<AssetLocationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
+        
+        // 设置tabFlagName
+        list.stream().forEach(e -> {
+            e.setTabFlagName(ApproveStatusEnum.getTableName(e.getTabFlag()));
+        });
+        
+        // 获取状态列表，确保所有状态都存在
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetLocationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        
+        // 不存在的状态赋值为0
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetLocationDTO.TabListDTO(status, 0));
-        }
+                AssetLocationDTO.TabListDTO newTab = new AssetLocationDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
+                list.add(newTab);
+            }
         });
-        list.add(new AssetLocationDTO.TabListDTO("all", list.stream().mapToInt(AssetLocationDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        
+        // 按照指定顺序排序：待提交、审核中、已审核、不通过
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approve", "reject");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
+        // 计算合计数量并添加"全部"标签
+        int totalCount = list.stream().mapToInt(AssetLocationDTO.TabListDTO::getCount).sum();
+        AssetLocationDTO.TabListDTO allTab = new AssetLocationDTO.TabListDTO("all", "全部", totalCount);
+        list.add(0, allTab); // 添加到第一位
+        
         return list;
     }
 
