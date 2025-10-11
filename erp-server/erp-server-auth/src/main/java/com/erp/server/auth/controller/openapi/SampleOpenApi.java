@@ -7,6 +7,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
@@ -602,6 +603,14 @@ public class SampleOpenApi {
     @OpenApi("sampleUseUserListByCondition")
     public List<SampleUseUserDTO.ViewDTO> getSampleUseUserListByCondition(@Valid SampleUseUserDTO.QueryDTO queryDTO) {
         return sysDictFeign.getSampleUseUserListByCondition(queryDTO);
+    }
+
+    /**
+     * 新增或更新示例用户
+     */
+    @OpenApi("sampleUseUserSaveOrUpdate")
+    public Boolean sampleUseUserSaveOrUpdate(@Valid ValidList<SampleUseUserDTO.AddOrUpdateDTO> userList) {
+        return sysDictFeign.saveOrUpdateSampleUseUser(userList);
     }
 
 }

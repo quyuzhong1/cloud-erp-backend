@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.SampleUseUserDTO;
@@ -8,6 +9,7 @@ import com.erp.server.sys.service.DictSampleUseUserService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -67,6 +69,20 @@ public class SampleUseUserFeignController extends BaseController {
     public List<SampleUseUserDTO.ViewDTO> listByCondition(@RequestBody SampleUseUserDTO.QueryDTO queryDTO) {
         List<SampleUseUserDTO.ViewDTO> list = sampleUseUserService.getListByCondition(queryDTO);
         return list;
+    }
+
+    /**
+     * 新增或更新示例用户
+     *
+     * @param userList 用户列表
+     * @return Boolean
+     * @author Lambda
+     * @date 2025-01-27 16:29
+     */
+    @PostMapping("/saveOrUpdate")
+    public Boolean saveOrUpdate(@RequestBody @Valid ValidList<SampleUseUserDTO.AddOrUpdateDTO> userList) {
+        Boolean result = sampleUseUserService.saveOrUpdateBatchUser(userList);
+        return result;
     }
 
 }
