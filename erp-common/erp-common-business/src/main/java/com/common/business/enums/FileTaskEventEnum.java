@@ -87,6 +87,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
+    EXPORT_OMS_PACKAGE_PLAN("EXPORT_OMS_PACKAGE_PLAN","组包计划导出","","",""),
 
     EXPORT_OMS_EXHIBITION_ORDER("EXPORT_OMS_EXHIBITION_ORDER", "展会订单导出","","",""),
     IMPORT_OMS_EXHIBITION_ORDER("IMPORT_OMS_EXHIBITION_ORDER","展会订单导入","com.erp.rpc.oms.feign.ImportOmsFeign","importExhibitionOrder",""),

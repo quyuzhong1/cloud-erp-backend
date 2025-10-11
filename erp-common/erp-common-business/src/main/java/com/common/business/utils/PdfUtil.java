@@ -14,6 +14,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
@@ -22,6 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -261,6 +266,35 @@ public class PdfUtil {
         // 将字节数组写入文件
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(pdfBytes);
+        }
+    }
+
+    /**
+     * 根据base64图片生成pdf base64
+     * @param imageBase64 图片base64
+     * @return pdf base64
+     * @throws IOException
+     */
+    public static String ImageToPdfBase64(String imageBase64)throws IOException {
+        // 清理Base64前缀
+        String pureBase64 = imageBase64.replaceFirst("^data:image/\\w+;base64,", "");
+        byte[] imageBytes = Base64.getDecoder().decode(pureBase64);
+        try (PDDocument document = new PDDocument();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            // 创建与图片同尺寸的PDF页面
+            PDImageXObject image = PDImageXObject.createFromByteArray(
+                    document, imageBytes, "converted");
+            PDPage page = new PDPage(new org.apache.pdfbox.pdmodel.common.PDRectangle(
+                    image.getWidth(), image.getHeight()));
+            document.addPage(page);
+            // 绘制图片到PDF
+            try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                stream.drawImage(image, 0, 0);
+            }
+            // 直接输出到内存流
+            document.save(baos);
+            return "data:application/pdf;base64," +
+                    Base64.getEncoder().encodeToString(baos.toByteArray());
         }
     }
 }

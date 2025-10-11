@@ -18,7 +18,7 @@ public class OrderLabelRequest {
     /**
      * 供货单名称 取erp销售订单单号
      */
-    private List<String> orders;
+    private List<Long> orders;
     //58
     private Integer width=58;
     private Integer height=40;

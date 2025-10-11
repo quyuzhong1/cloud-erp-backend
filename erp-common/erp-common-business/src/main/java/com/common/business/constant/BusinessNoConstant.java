@@ -210,6 +210,8 @@ public interface BusinessNoConstant {
     String YPTH="YPTH";
     //期初台账
     String QCTZ="QCTZ";
+    //组包计划
+    String ZBJH="ZBJH";
 
 
 }

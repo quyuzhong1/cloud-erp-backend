@@ -69,6 +69,9 @@ public class ExportOmsFeignController {
 
     @Resource
     private ExhibitionOrderService exhibitionOrderService;
+    @Resource
+    private PackagePlanService packagePlanService;
+
 
 
     @PostMapping("/customerB2BSellerChange")
@@ -283,6 +286,16 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);
+    }
+    @PostMapping("/packagePlan")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:packagePlan:paging",
+            tableAlias = "pp"
+    )
+    @WebAdvanceQuery
+    public PagingVO<PackagePlanDTO.ExportDTO> exportPackagePlan(@RequestBody PagingDTO<PackagePlanDTO.PagingParamDTO> dto) {
+        return packagePlanService.exportPaging(dto);
     }
 
     /**

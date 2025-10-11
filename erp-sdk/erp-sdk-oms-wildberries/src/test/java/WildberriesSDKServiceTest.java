@@ -1,4 +1,5 @@
 import cn.hutool.json.JSONUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.sdk.oms.wildberries.constant.WildberriesConstant;
 import com.sdk.oms.wildberries.dto.*;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -71,8 +73,42 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void getOrderStatus() {
-        OrderStatusRequest request = OrderStatusRequest.builder().orders(Arrays.asList(3893097985L)).build();
+        OrderStatusRequest request = OrderStatusRequest.builder().orders(Arrays.asList(3893097985L,3876478927L,3916460244L)).build();
         OrderStatusResponse orderStatus = wildberriesSDKService.getOrderStatus(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(orderStatus));
     }
+
+    @Test
+    public void getOrderLabel() {
+        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3916460244L))
+                .width(58)
+                .height(40)
+                .type("png")
+                .build();
+        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request);
+        String pdfBase64 = null;
+        try {
+            pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(pdfBase64);
+    }
+    @Test
+    public void getCrossOrderLabel() {
+        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3916460244L))
+                .width(58)
+                .height(40)
+                .type("png")
+                .build();
+        CrossOrderLabelResponse crossOrderLabel = wildberriesSDKService.getCrossOrderLabel(WildberriesConstant.TOKEN, request);
+//        String pdfBase64 = null;
+//        try {
+//            pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        System.out.println(pdfBase64);
+    }
+    
 }

@@ -54,7 +54,7 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
-
+        headerMap.put("locale", "zh");
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("limit", request.getLimit());
         paramMap.put("next", request.getNext());
@@ -75,13 +75,10 @@ public class WildberriesSDKService {
     public OrderStatusResponse getOrderStatus(String token, OrderStatusRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
         String url = WildberriesConstant.POST_ORDERS_STATUS;
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("Authorization", token);
-        headerMap.put("Content-Type", "application/json");
-//        String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
         String bodyStr = HttpRequest.post(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
+                .header("locale", "zh")
                         .body(JSONUtil.toJsonStr(request))
                                 .execute().body();
         log.error("接口返回：{}", bodyStr);
@@ -100,6 +97,7 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
         String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
         log.error("接口返回：{}", bodyStr);
         CreateSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<CreateSupplyResponse>() {}.getType());
@@ -119,6 +117,7 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
         String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
         log.error("接口返回：{}", bodyStr);
         AddBoxToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddBoxToSupplyResponse>() {}.getType());
@@ -136,6 +135,7 @@ public class WildberriesSDKService {
         String bodyStr = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
+                .header("locale", "zh")
                 .execute().body();
         log.error("接口返回：{}", bodyStr);
         AddOrderToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddOrderToSupplyResponse>() {}.getType());
@@ -150,17 +150,25 @@ public class WildberriesSDKService {
      * @return
      */
     public OrderLabelResponse getOrderLabel(String token, OrderLabelRequest request) {
-        log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_CREATE_SUPPLY;
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("Authorization", token);
-        headerMap.put("Content-Type", "application/json");
-        headerMap.put("type", request.getType());
-        headerMap.put("height", request.getHeight().toString());
-        headerMap.put("width", request.getWidth().toString());
+        log.error("接口请求：{} token:{}", JSONUtil.toJsonStr(request),token);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", token);
+        headers.put("Content-Type", "application/json");
+        headers.put("locale", "zh");
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("orders",request.getOrders());
-        String bodyStr = OkHttpUtils.doPostJsonObject(url, paramMap, headerMap);
+        okhttp3.HttpUrl httpUrl = new okhttp3.HttpUrl.Builder()
+                .scheme("https")
+                .host("marketplace-api.wildberries.ru")
+                .addPathSegment("api")
+                .addPathSegment("v3")
+                .addPathSegment("orders")
+                .addPathSegment("stickers")
+                .addQueryParameter("type", "png")
+                .addQueryParameter("width", "58")
+                .addQueryParameter("height", "40")
+                .build();
+        String bodyStr = OkHttpUtils.doPostJsonQueryParam(httpUrl, paramMap, headers);
         log.error("接口返回：{}", bodyStr);
         OrderLabelResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<OrderLabelResponse>() {}.getType());
         return response;
@@ -178,6 +186,7 @@ public class WildberriesSDKService {
         String bodyStr = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
+                .header("locale", "zh")
                 .execute().body();
         log.error("接口返回：{}", bodyStr);
         BaseResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<BaseResponse>() {}.getType());
@@ -195,9 +204,7 @@ public class WildberriesSDKService {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
-//        headerMap.put("type", orderLabelRequest.getType());
-//        headerMap.put("height", orderLabelRequest.getHeight().toString());
-//        headerMap.put("width", orderLabelRequest.getWidth().toString());
+        headerMap.put("locale", "zh");
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("orders",request.getOrders());
         String bodyStr = OkHttpUtils.doPostJsonObject(url, paramMap, headerMap);
@@ -220,6 +227,7 @@ public class WildberriesSDKService {
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
                 .header("type", "png")
+                .header("locale", "zh")
                 .execute().body();
         log.error("接口返回：{}", bodyStr);
         SupplyLabelResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<SupplyLabelResponse>() {}.getType());
