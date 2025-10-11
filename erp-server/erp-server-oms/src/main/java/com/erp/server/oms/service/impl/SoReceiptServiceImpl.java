@@ -959,11 +959,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
                 SoReceiptDetailEntity existDetail = existList.stream().filter(v -> v.getPlatformDetailId().equals(platformReceiptDetailDTO.getPlatformDetailId())).findFirst().orElse(null);
-                if(Objects.isNull(existDetail)){
-                    continue;
-                }
                 SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
-                detailUpdateDTO.setId(existDetail.getId());
+                if(Objects.nonNull(existDetail)){
+                    detailUpdateDTO.setId(existDetail.getId());
+                }
                 detailUpdateDTO.setReceiptAmount(platformReceiptDetailDTO.getAmount());
                 detailUpdateDTO.setRemark(platformReceiptDetailDTO.getRemark());
                 detailUpdateDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
