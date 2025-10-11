@@ -125,10 +125,4 @@ public class OperateLogEntity {
      */
     @TableField(exist = false)
     private String description;
-
-    /**
-     * 类型
-     */
-    @TableField("module_type")
-    private String moduleType;
 }
