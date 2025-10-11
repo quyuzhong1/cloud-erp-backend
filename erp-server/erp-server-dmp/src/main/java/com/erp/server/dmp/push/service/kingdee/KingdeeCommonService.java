@@ -41,11 +41,11 @@ public interface KingdeeCommonService {
      * @param apiUtils
      * @param json
      * @param param
-     * @description: 新增或修改
+     * @description: 新增或修改后提审，审核
      * @author Will
      * @date: 2023/3/3 14:52
      */
-    Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
+    Boolean saveAndAutoApprove(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 
     /**
      * 新增或修改客户地址

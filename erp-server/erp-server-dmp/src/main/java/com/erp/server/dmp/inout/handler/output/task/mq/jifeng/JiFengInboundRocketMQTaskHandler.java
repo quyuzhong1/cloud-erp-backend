@@ -100,7 +100,7 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 			LocalDateTime receiveTime = systemZoned.toLocalDateTime();
 			platformInboundDTO.setDownloadTime(receiveTime);
     		receiving.setProductSku(skuListDTO.getSku());
-    		receiving.setReceiveQty(skuListDTO.getPutawayCount());
+    		receiving.setReceiveQty(Objects.isNull(skuListDTO.getPutawayCount())?0:skuListDTO.getPutawayCount());
     		receiving.setReceiveTime(receiveTime);
     		receivingDataList.add(receiving);
     	}

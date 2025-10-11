@@ -59,7 +59,7 @@ public enum ApiModuleTypeEnum {
     TRANSFER_IN(46, "transferIn", "分步式调入单","wms"),
     TRANSFER_OUT(47, "transferOut", "分步式调出单","wms"),
     PO_RECONCILIATION(48, "poReconciliation", "采购对账","srm"),
-
+    BD_RATE(49, "bdRate", "汇率","sys"),
     ;
     private Integer code;
 
