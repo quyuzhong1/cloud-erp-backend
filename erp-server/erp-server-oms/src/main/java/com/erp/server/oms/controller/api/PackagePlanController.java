@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -17,7 +18,9 @@ import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.PackagePlanDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.PackagePlanService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +31,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 组包计划主表
@@ -43,6 +49,43 @@ public class PackagePlanController extends BaseController {
 
     @Resource
     private PackagePlanService packagePlanService;
+    @Resource
+    private SoB2cService soB2cService;
+
+
+
+    /**
+     * 批量生成组包计划
+     *
+     * @param dtoList
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2024-01-09 14:09
+     */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量生成组包计划")
+    public ApiResult<List<BatchResultDTO>> batchAdd(@RequestBody @Validated List<PackagePlanDTO.SoB2cDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (PackagePlanDTO.SoB2cDTO dto : dtoList) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = packagePlanService.addPlan(dto);
+            } catch (Exception e) {
+                log.error("B2C销售订单组包计划失败>>>>>{}", e.getMessage());
+                SoB2cEntity entity = soB2cService.getById(dto.getSoId());
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(dto.getSoId(), dto.getSoCode(), "B2c销售订单不存在, 组包计划失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(dto.getSoId(), dto.getSoCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
     /**
      * 分页查询
      *

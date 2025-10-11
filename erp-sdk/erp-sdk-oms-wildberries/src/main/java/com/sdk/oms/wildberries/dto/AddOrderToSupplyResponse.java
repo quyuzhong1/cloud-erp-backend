@@ -2,6 +2,7 @@ package com.sdk.oms.wildberries.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
@@ -12,8 +13,8 @@ import java.util.List;
  * @date 2025年09月19日
  * @version: 1.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
 public class AddOrderToSupplyResponse extends BaseResponse{
     /**
      * 异常信息

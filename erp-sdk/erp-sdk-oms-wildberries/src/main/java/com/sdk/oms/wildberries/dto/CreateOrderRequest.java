@@ -3,6 +3,8 @@ package com.sdk.oms.wildberries.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * @author zdy
  * @ClassName OrderRequest
@@ -12,10 +14,12 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class AddOrderToSupplyRequest {
-    /**
-     * 箱子数量
-     */
-    private String supplyId;
-    private Long orderId;
+public class CreateOrderRequest {
+    private List<Order> orders;
+    @Data
+    @Builder
+    public static class Order{
+        private String sku;
+        private Integer amount;
+    }
 }

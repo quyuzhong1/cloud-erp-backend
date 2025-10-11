@@ -329,4 +329,11 @@ public class PackagePlanDTO implements Serializable {
          */
         private String barcode;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SoB2cDTO {
+        private String soId;
+        private String soCode;
+    }
 }

@@ -197,7 +197,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             checkDomain("", dto.getDomain());
         }
-        if (wildberries.equals(dictPlatform)){
+        if (wildberries.getCode().equals(dictPlatform)){
             if (CharSequenceUtil.isBlank(dto.getToken())){
                 throw new ServiceException("店铺授权不能为空");
             }

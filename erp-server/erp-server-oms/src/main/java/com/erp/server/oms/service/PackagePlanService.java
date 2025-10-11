@@ -99,5 +99,17 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      */
     void listExport(PackagePlanDTO.PagingParamDTO dto);
 
+    /**
+     * 批量打印
+     * @param ids
+     * @param response
+     */
     void batchPrint(List<String> ids, HttpServletResponse response);
+
+    /**
+     * 新增组包计划
+     * @param dto
+     * @return
+     */
+    BatchResultDTO addPlan(PackagePlanDTO.SoB2cDTO dto);
 }

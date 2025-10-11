@@ -66,6 +66,11 @@ public class PackagePlanDetailEntity extends BaseEntity<PackagePlanDetailEntity>
      */
     @TableField("barcode")
     private String barcode;
+    /**
+     * 平台订单号
+     */
+    @TableField("platform_code")
+    private String platformCode;
 
     public static final String MAIN_ID = "main_id";
 

@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -22,13 +23,18 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.PackagePlanDTO;
 import com.erp.model.oms.dto.PackagePlanDetailDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -41,6 +47,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +99,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private MQProducerService mqProducerService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -456,7 +469,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder()
                 .supplyId(packageNo)
-                .orderId(platformCode)
+                .orderId(Long.valueOf(platformCode))
                 .build();
         try {
             AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
@@ -955,10 +968,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
 
     @Override
     public void batchPrint(List<String> ids, HttpServletResponse response) {
-        List<PackagePlanEntity> packageForecastEntityList = this.listByIds(ids);
+        List<PackagePlanEntity> entityList = this.listByIds(ids);
         List<String> errorCodeList = new ArrayList<>();
         List<String> base64List = new ArrayList<>();
-        for (PackagePlanEntity entity : packageForecastEntityList) {
+        for (PackagePlanEntity entity : entityList) {
             String base64 = this.print(entity.getId());
             if(StringUtils.isEmpty(base64)){
                 errorCodeList.add(entity.getCode());
@@ -991,6 +1004,31 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 throw new ServiceException(e.getMessage());
             }
         }
+    }
+
+    @Override
+    public BatchResultDTO addPlan(PackagePlanDTO.SoB2cDTO dto) {
+        //自动生成并完成节点功能
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(dto.getSoId());
+        addTaskDTO.setSourceCode(dto.getSoCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE);//subType
+        addTaskDTO.setTraceId(MDC.get("traceId"));
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.getSoId());
+        map.put("orderType", WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+        addTaskDTO.setFirstNodeInputData(map);
+        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+        }
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, dto.getSoId(),2);
+        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            throw new RuntimeException(StrUtil.format("生成组包计划通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+        return BatchResultDTO.success(dto.getSoId(), dto.getSoCode(), "生成组包计划任务编排已生成");
     }
 
     private String print(String id) {
@@ -1045,6 +1083,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         PackagePlanDetailDTO.AddDTO addDTO = new PackagePlanDetailDTO.AddDTO();
         addDTO.setSoId(soB2cEntity.getId());
         addDTO.setSoCode(soB2cEntity.getCode());
+        addDTO.setPlatformCode(soB2cEntity.getPlatformCode());
         addDTO.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         addDTO.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         addDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());

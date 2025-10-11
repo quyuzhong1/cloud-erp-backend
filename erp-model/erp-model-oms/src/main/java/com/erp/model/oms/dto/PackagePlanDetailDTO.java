@@ -118,6 +118,12 @@ public class PackagePlanDetailDTO implements Serializable {
         @NotBlank(message = "销售订单code不能为空")
         @Size(max = 32,message = "销售订单code最大长度不能超过32位")
         private String soCode;
+        /**
+        * 平台订单号
+        */
+        @NotBlank(message = "平台订单号不能为空")
+        @Size(max = 32,message = "平台订单号最大长度不能超过32位")
+        private String platformCode;
 
         /**
         * 销售订单id

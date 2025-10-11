@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +36,68 @@ public class WildberriesSDKService {
         WildberriesResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<WildberriesResponse>() {}.getType());
         return response;
     }
+    public String getProductCategory(String token) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(token));
+        String url = WildberriesConstant.GET_PRODUCT_CATEGORY;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
+        String bodyStr = OkHttpUtils.doGet(url, new HashMap<>(), headerMap);
+        log.error("接口返回：{}", bodyStr);
+        return bodyStr;
+    }
+    public String getProductSubject(String token) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(token));
+        String url = WildberriesConstant.GET_PRODUCT_SUBJECT;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("locale", "zh");
+        paramMap.put("limit", 1000);
+        paramMap.put("offset", 0);
+        String bodyStr = OkHttpUtils.doGet(url, paramMap, headerMap);
+        log.error("接口返回：{}", bodyStr);
+        return bodyStr;
+    }
+    public String getProductCharacteristic(String token, Integer subjectId) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(token));
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_PRODUCT_CHARACTERISTIC, subjectId);
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("locale", "zh");
+        paramMap.put("limit", 1000);
+        paramMap.put("offset", 0);
+        String bodyStr = OkHttpUtils.doGet(url, paramMap, headerMap);
+        log.error("接口返回：{}", bodyStr);
+        return bodyStr;
+    }
+
+    /**
+     * 创建订单
+     * @param token
+     * @param requestList
+     * @return
+     */
+    public String createProduct(String token, List<CreateProductRequest> requestList) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(requestList));
+        String url = WildberriesConstant.POST_CREATE_PRODUCT_CARD;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
+        String bodyStr = HttpRequest.post(url)
+                .headerMap(headerMap, true)
+                .body(JSONUtil.toJsonStr(requestList))
+                .execute().body();
+        log.error("接口返回：{}", bodyStr);
+//        CreateSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<CreateSupplyResponse>() {}.getType());
+        return bodyStr;
+    }
+
     public SkuResponse getSkuList(String token, SkuRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
         String url = WildberriesConstant.POST_GET_SKU_LIST;
@@ -48,6 +111,23 @@ public class WildberriesSDKService {
         return response;
     }
 
+    public OrderResponse getOrderNewList(String token, OrderRequest request) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(request));
+        String url = WildberriesConstant.GET_ORDERS_NEW;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
+        Map<String, Object> paramMap = new HashMap<>();
+//        paramMap.put("limit", request.getLimit());
+//        paramMap.put("next", request.getNext());
+//        paramMap.put("dateFrom", request.getDateFrom());
+//        paramMap.put("dateTo", request.getDateTo());
+        String bodyStr = OkHttpUtils.doGet(url, paramMap, headerMap);
+        log.error("接口返回：{}", bodyStr);
+        OrderResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<OrderResponse>() {}.getType());
+        return response;
+    }
     public OrderResponse getOrderList(String token, OrderRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
         String url = WildberriesConstant.GET_ORDERS;
@@ -65,7 +145,27 @@ public class WildberriesSDKService {
         OrderResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<OrderResponse>() {}.getType());
         return response;
     }
-
+    /**
+     * 创建订单
+     * @param token
+     * @param request
+     * @return
+     */
+    public String createOrder(String token, CreateOrderRequest request) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(request));
+        String url = WildberriesConstant.POST_CREATE_FBS_ORDER;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
+        String bodyStr = HttpRequest.post(url)
+                .headerMap(headerMap, true)
+                .body(JSONUtil.toJsonStr(request))
+                .execute().body();
+        log.error("接口返回：{}", bodyStr);
+//        CreateSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<CreateSupplyResponse>() {}.getType());
+        return bodyStr;
+    }
     /**
      * 获取订单状态
      * @param token
@@ -98,7 +198,10 @@ public class WildberriesSDKService {
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
         headerMap.put("locale", "zh");
-        String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
+        String bodyStr = HttpRequest.post(url)
+                .headerMap(headerMap, true)
+                .body(JSONUtil.toJsonStr(request))
+                .execute().body();
         log.error("接口返回：{}", bodyStr);
         CreateSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<CreateSupplyResponse>() {}.getType());
         return response;
@@ -118,7 +221,10 @@ public class WildberriesSDKService {
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
         headerMap.put("locale", "zh");
-        String bodyStr = OkHttpUtils.doPostJsonObject(url, request, headerMap);
+        String bodyStr = HttpRequest.post(url)
+                .headerMap(headerMap, true)
+                .body(JSONUtil.toJsonStr(request))
+                .execute().body();
         log.error("接口返回：{}", bodyStr);
         AddBoxToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddBoxToSupplyResponse>() {}.getType());
         return response;

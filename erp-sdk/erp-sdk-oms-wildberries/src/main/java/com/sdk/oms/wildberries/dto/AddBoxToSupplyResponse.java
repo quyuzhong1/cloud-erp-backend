@@ -2,6 +2,8 @@ package com.sdk.oms.wildberries.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,8 +14,9 @@ import java.util.List;
  * @date 2025年09月19日
  * @version: 1.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@NoArgsConstructor
 public class AddBoxToSupplyResponse extends BaseResponse{
     /**
      * 箱子数量

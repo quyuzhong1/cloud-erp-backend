@@ -2016,7 +2016,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     private BatchResultDTO getWildberrisLogistics(SoB2cEntity entity, Boolean isDelivery) {
-
         //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceId(entity.getId());
@@ -2027,6 +2026,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
+        map.put("orderType", WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
