@@ -167,6 +167,17 @@ public enum ModuleTypeEnum {
     SAMPLE_BACK_INFO("135", "样品退回单"),
     SAMPLE_LEDGER("136", "样品台账"),
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
+
+    // ==================== 资产相关模块 ====================
+    ASSET_LOCATION("145", "资产位置"),
+    ASSET_ACCEPTANCE("146", "资产验收单"),
+    ASSET_CARD("147", "资产卡片"),
+    INVENTORY_PLAN("148", "盘点方案"),
+    ASSET_INVENTORY_SHEET("149", "资产盘点表"),
+    INVENTORY_GAIN_LOSS("150", "盘盈盘亏单"),
+    ASSET_DISPOSAL("151", "资产处置单"),
+
+    
     ;
 
 

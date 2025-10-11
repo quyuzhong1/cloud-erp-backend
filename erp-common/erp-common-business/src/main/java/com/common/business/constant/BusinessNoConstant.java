@@ -211,5 +211,21 @@ public interface BusinessNoConstant {
     //期初台账
     String QCTZ="QCTZ";
 
+    //资产位置
+    String ZCWZ="ZCWZ";
+    //资产验收单
+    String YSD="YSD";
+    //资产卡片
+    String ZCKP="ZCKP";
+    //盘点方案
+    String PDFA="PDFA";
+    //资产盘点表
+    String ZCPDB="ZCPDB";
+    //盘盈盘亏单
+    String PYPKD="PYPKD";
+    //资产处置单
+    String PRODIS="PRODIS";
+
+
 
 }

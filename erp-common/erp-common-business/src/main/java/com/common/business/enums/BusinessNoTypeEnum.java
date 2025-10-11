@@ -129,6 +129,15 @@ public enum BusinessNoTypeEnum {
     CODE_ZHDD(100, "ZHDD","展会订单", BusinessNoConstant.ZHDD),
     CODE_YPTH(101, "YPTH","样品退回单", BusinessNoConstant.YPTH),
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
+
+    CODE_ZCWZ(102, "ZCWZ","资产位置", BusinessNoConstant.ZCWZ),
+    CODE_YSD(103, "YSD","资产验收单", BusinessNoConstant.YSD),
+    CODE_ZCKP(104, "ZCKP","资产卡片", BusinessNoConstant.ZCKP),
+    CODE_PDFA(105, "PDFA","盘点方案", BusinessNoConstant.PDFA),
+    CODE_ZCPDB(106, "ZCPDB","资产盘点表", BusinessNoConstant.ZCPDB),
+    CODE_PYPKD(107, "PYPKD","盘盈盘亏单", BusinessNoConstant.PYPKD),
+    CODE_PRODIS(107, "PRODIS","资产处置单", BusinessNoConstant.PRODIS),
+
     ;
 
 
