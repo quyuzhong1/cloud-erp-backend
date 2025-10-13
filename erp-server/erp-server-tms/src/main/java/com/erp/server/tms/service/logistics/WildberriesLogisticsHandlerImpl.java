@@ -20,7 +20,9 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -134,7 +136,10 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     }
 
-
+    @Override
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> cancelOrderVOList)  {
+        return ApiResult.success();
+    }
     /**
      * 授权判断
      * @param authMap

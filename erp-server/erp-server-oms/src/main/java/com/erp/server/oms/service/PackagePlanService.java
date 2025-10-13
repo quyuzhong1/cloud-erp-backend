@@ -112,4 +112,6 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      * @return
      */
     BatchResultDTO addPlan(PackagePlanDTO.SoB2cDTO dto);
+
+    void removeBySoId(String id);
 }

@@ -1042,6 +1042,19 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         return BatchResultDTO.success(dto.getSoId(), dto.getSoCode(), "生成组包计划任务编排已生成");
     }
 
+    @Override
+    public void removeBySoId(String id) {
+        if (CharSequenceUtil.isBlank(id)){
+            return;
+        }
+        List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getBySoId(id);
+        if(CollectionUtils.isNotEmpty(detailEntityList)){
+            packagePlanDetailService.removeByIds(detailEntityList);
+        }
+        List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).collect(Collectors.toList());
+        this.lambdaUpdate().in(PackagePlanEntity::getId,mainIds).remove();
+    }
+
     private String print(String id) {
         PackagePlanEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
