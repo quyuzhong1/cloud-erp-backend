@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -35,6 +32,7 @@ import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -218,8 +216,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         // 记录操作日志
         log.info("提交 开始记录资产位置单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -261,8 +258,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -276,8 +272,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_LOCATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -301,15 +296,13 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         AssetLocationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产位置单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -318,7 +311,6 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -330,7 +322,6 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
         log.info("删除 开始删除资产位置单主单数据，id：【{}】", id);
@@ -338,7 +329,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         // 删除日志数据
         log.info("删除 开始删除资产位置单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除资产位置单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getCode(), "删除资产位置单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -360,8 +351,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -377,7 +367,6 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改资产位置单状态，id：【{}】", id);
@@ -386,12 +375,10 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_LOCATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -405,7 +392,6 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
     }
@@ -431,8 +417,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_LOCATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -500,6 +485,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         for(AssetLocationDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            data.setDisabledStatusName(data.getDisabled() ? "是" : "否");
             // TODO 其他如需要显示名称的字段赋值
         }
     }
@@ -519,5 +505,42 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     */
     private void handleData(AssetLocationEntity assetLocationEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+    * 批量启用/禁用
+    * @author wuht
+    * @date: 2025-10-13
+    * @param dto
+    * @return Boolean
+    */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
+        List<String> ids = dto.getIds();
+        List<AssetLocationEntity> list = this.listByIds(ids);
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "资产位置");
+        }
+
+        Boolean disabled = dto.getDisabled();
+        // 检查所有数据的当前状态是否与目标状态不同
+        long count = list.stream().filter(d -> !d.getDisabled().equals(disabled)).count();
+        if (count != list.size()) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+
+        // 更新禁用状态
+        list.forEach(d -> d.setDisabled(disabled));
+        
+        // 添加日志
+        List<Pair<String, String>> pairList = list.stream()
+                .map(obj -> new Pair<>(obj.getId(), obj.getCode()))
+                .collect(Collectors.toList());
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "禁用", disabled ? "禁用" : "启用");
+        String finalContent = "[%s]," + content;
+        operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.ASSET_LOCATION.getCode(), pairList, "状态变更");
+
+        return this.updateBatchById(list);
     }
 }
