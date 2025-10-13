@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.KingdeeParamDTO;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 
@@ -279,6 +280,14 @@ public interface KingdeeCommonService {
      * @author Lambda
      */
     Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
+    /**
+     * 判断金蝶单据是否已审核
+     * @author will
+     * @date 2025/10/13 16:34
+     * @param kingdeeDTO
+     * @return String
+     */
+    String checkKingdeeSyncApprove(KingdeeDTO kingdeeDTO);
 }
 
 
