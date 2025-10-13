@@ -332,7 +332,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
+    public Boolean saveAndAutoApprove(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
@@ -410,7 +410,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
-        saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+        saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         return Boolean.TRUE;
     }
 
