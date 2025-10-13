@@ -170,7 +170,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         // 记录主单操作日志
         log.info("编辑 开始记录模具档案日志数据，单号：【{}】", moldInfoEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), moldInfoEntity.getCode(), "模具档案");
-        sysLogService.addSysLogByUpdate(old,moldInfoEntity,"", moldInfoEntity.getId(), "", msg);
+        sysLogService.addSysLogByUpdate(old,moldInfoEntity,String.valueOf(MoldInfoEntity.class), moldInfoEntity.getId(), "", msg);
         return Boolean.TRUE;
     }
 
