@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
+import com.erp.server.plm.query.MoldInfoQueryHandler;
+import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -103,6 +106,7 @@ public class MoldInfoController extends BaseController {
             menuCode = "plm:moldInfo:paging",
             tableAlias = "mi"
     )
+    @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
     public ApiResult<PagingVO<MoldInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<MoldInfoDTO.PagingParamDTO> dto) {
         return success(moldInfoService.paging(dto));
     }
@@ -399,7 +403,8 @@ public class MoldInfoController extends BaseController {
             tableAlias = "mi"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具档案导出Excel数据")
-    public ApiResult<Object> exportList(@RequestBody @Validated MoldInfoDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated MoldInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         moldInfoService.exportList(dto, response);
         return success();
     }

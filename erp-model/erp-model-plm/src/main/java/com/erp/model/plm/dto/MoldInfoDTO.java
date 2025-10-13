@@ -197,6 +197,8 @@ public class MoldInfoDTO implements Serializable {
         */
         private BigDecimal productHeight;
 
+        private String size;
+
         /**
         * 模具材质
         */
@@ -299,6 +301,7 @@ public class MoldInfoDTO implements Serializable {
         * 是否作废
         */
         private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * 备注
@@ -698,10 +701,10 @@ public class MoldInfoDTO implements Serializable {
         @NotEmpty(message = "模具id集合不能为空")
         private List<String> ids;
         /**
-         * skuId集合
+         * sku集合
          */
-        @NotEmpty(message = "skuId集合不能为空")
-        private List<String> skuIds;
+        @NotEmpty(message = "sku集合不能为空")
+        private List<String> skuNos;
     }
 
 

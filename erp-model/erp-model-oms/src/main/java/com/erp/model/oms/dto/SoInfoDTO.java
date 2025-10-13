@@ -1880,6 +1880,10 @@ public class SoInfoDTO implements Serializable {
          * 客户备注
          */
         private String customerRemark;
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
 
         private String syncKingdeeId;
 
