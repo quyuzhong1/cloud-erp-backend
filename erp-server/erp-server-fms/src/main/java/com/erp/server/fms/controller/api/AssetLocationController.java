@@ -430,4 +430,31 @@ public class AssetLocationController extends BaseController {
         return success();
     }
 
+    /**
+     * 下载模板
+     * @author wuht
+     * @date: 2025-10-13
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产位置导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        assetLocationService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 异步导入
+     * @author wuht
+     * @date: 2025-10-13
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/importExcel")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = assetLocationService.importExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
 }
