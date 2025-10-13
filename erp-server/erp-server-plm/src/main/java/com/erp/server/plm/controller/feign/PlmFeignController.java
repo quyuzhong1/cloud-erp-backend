@@ -1,10 +1,19 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.dto.ProductDetailShowDTO;
+import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.query.ProductDetailQueryHandler;
+import com.erp.server.plm.service.ProductDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,11 +34,25 @@ public class PlmFeignController extends BaseController {
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ProductDetailService productDetailService;
+
     /**
      * 查找用户列表
      */
     @PostMapping("/common/findUserList")
     public ApiResult<List<FindUserDTO>> findUserList(@RequestBody BaseSearchDTO dto) {
         return sysUserFeign.userList(dto);
+    }
+
+    /**
+     * 产品明细列表
+     */
+    @PostMapping("/productDetail/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    public ApiResult<PagingVO<ProductDetailShowDTO>> productDetailList(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
+        PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
+        return success(paging);
     }
 }
