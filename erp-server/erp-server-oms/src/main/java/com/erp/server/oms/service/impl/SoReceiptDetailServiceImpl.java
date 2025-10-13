@@ -78,10 +78,15 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             }
         }
 
-        //销售单号不能重复
+        // 销售单号不能重复（空字符串除外）
         Set<String> soCodeSet = new HashSet<>();
         for (SoReceiptDetailDTO.AddDTO dto : detailList) {
-            if(!soCodeSet.add(dto.getSoCode())){
+            String soCode = dto.getSoCode();
+            // 跳过空字符串的检查
+            if (soCode == null || soCode.trim().isEmpty()) {
+                continue;
+            }
+            if (!soCodeSet.add(soCode)) {
                 throw new ServiceException("销售单号不能重复");
             }
         }
@@ -154,10 +159,15 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
                 throw new ServiceException("付款流水号已存在:"+existPayNoStr);
             }
         }
-        //销售单号不能重复
+        // 销售单号不能重复（空字符串除外）
         Set<String> soCodeSet = new HashSet<>();
         for (SoReceiptDetailDTO.UpdateDTO dto : detailList) {
-            if(!soCodeSet.add(dto.getSoCode())){
+            String soCode = dto.getSoCode();
+            // 跳过空字符串的检查
+            if (soCode == null || soCode.trim().isEmpty()) {
+                continue;
+            }
+            if (!soCodeSet.add(soCode)) {
                 throw new ServiceException("销售单号不能重复");
             }
         }
