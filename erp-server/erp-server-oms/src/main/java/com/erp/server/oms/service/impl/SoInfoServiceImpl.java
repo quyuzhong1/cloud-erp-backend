@@ -457,6 +457,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 throw new ServiceException(entity.getCode() + " 销售订单 销售单价不能为空或者为零");
             }
         }
+        if(PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException("订货单创建的订单无法提审");
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -3741,20 +3744,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
-            this.updateSo(updateDTO);
+            String id = this.updateSo(updateDTO);
             //处理删除的明细
             List<String> platformDetailIds = detailList.stream().map(PlatformB2bOrderDetailDTO::getPlatformDetailId).collect(Collectors.toList());
             List<SoDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soDetailService.removeByIds(deleteDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
             }
+            SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(exist, true);
+                this.submit(soInfoEntity, true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
                 baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                this.approveEnd(baseApproveParamDTO,exist,false);
+                this.approveEnd(baseApproveParamDTO,soInfoEntity,false);
             }
         }else{
             //如果是作废，直接跳过
@@ -3840,6 +3844,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 || !exist.getRebateDeductAmount().equals(dto.getRebateDeductAmount())
                 || !exist.getCreditDeductAmount().equals(dto.getCreditDeductAmount())
                 || !exist.getDiscountAmount().equals(dto.getDiscountAmount())
+                || !exist.getApproveStatus().getStatus().equals(dto.getStatus())
         ){
             return true;
         }
