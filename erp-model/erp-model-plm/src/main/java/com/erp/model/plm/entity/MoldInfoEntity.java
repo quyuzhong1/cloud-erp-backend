@@ -111,11 +111,15 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
     */
     @TableField("category_id")
     private String categoryId;
+    @TableField(exist = false)
+    private String categoryName;
     /**
     * 模具类型
     */
     @TableField("type")
     private String type;
+    @TableField(exist = false)
+    private String typeName;
     /**
     * 模具穴数
     */
@@ -186,11 +190,15 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
     */
     @TableField("pay_method_id")
     private String payMethodId;
+    @TableField(exist = false)
+    private String payMethodName;
     /**
     * 付款条件
     */
     @TableField("payment_condition")
     private String paymentCondition;
+    @TableField(exist = false)
+    private String paymentConditionName;
 
 
     public static final String INVALID_STATUS = "invalid_status";
