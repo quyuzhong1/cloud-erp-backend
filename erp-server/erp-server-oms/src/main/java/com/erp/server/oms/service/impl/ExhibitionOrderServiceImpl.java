@@ -1147,7 +1147,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         SoInfoEntity soInfoEntity = soInfoService.getById(soId);
         try {
-            soInfoService.submit(soInfoEntity,Boolean.FALSE);
+            soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
         }catch (Exception e) {
             log.error("B2B订单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());

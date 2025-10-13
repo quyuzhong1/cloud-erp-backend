@@ -45,6 +45,16 @@ public class PlatformB2bOrderDTO {
      */
     private String platformWarehouseId;
 
+
+    /**
+     * 仓库名称
+     */
+    private String platformWarehouseName;
+
+    /**
+     * 金蝶组织id
+     */
+    private String kindgeeOrgId;
     /**
      * 订单状态
      */

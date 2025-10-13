@@ -15,10 +15,8 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -45,11 +43,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 提交
      *
      * @param entity
+     * @param isFromDht
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
      */
-    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess);
+    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht);
 
 
     /**

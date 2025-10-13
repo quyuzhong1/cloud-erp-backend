@@ -1830,7 +1830,7 @@ public enum ApiError implements Serializable {
     SSO_INVALID_PAYLOAD(20005, "payload内容无效"),
     SSO_USER_NOT_BOUND(20006, "用户未绑定ERP"),
     SSO_SYSTEM_ERROR(20007, "系统异常：{}"),
-    
+
     // 会话密钥相关错误码
     SESSION_EXPIRED(29999, "会话过期，请重新协商密钥"),
     ;

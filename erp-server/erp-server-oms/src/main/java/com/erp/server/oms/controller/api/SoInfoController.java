@@ -22,7 +22,6 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -199,7 +198,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.submit(entity,Boolean.TRUE));
+                resultDTOS.add(soInfoService.submit(entity,Boolean.TRUE, false));
             }catch (Exception e){
                 log.error("销售订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
