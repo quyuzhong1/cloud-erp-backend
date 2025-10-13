@@ -14,6 +14,8 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -436,6 +438,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
         skuParamDTO.setCutomerId(dto.getCustomerId());
         skuParamDTO.setPlatformSkuNoList(dto.getPlatformSkuNoList());
+        skuParamDTO.setType(RuleTypeEnum.CUSTOMER.getCode());
+        skuParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
         if(CollectionUtils.isEmpty(productSkuInfoList)){
             return new SoDetailDTO.ListAddDetailNoBomViewDTO();
@@ -490,6 +494,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
             if(CollUtil.isNotEmpty(bomChildrenSkuList)){
+                //存在套装SKU
+                view.setExistBom(Boolean.TRUE);
                 //根据父skuno 分组
                 Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
                 List<String> childSkuNoList = new ArrayList<>();
@@ -540,10 +546,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                         }else {
                             bomList.add(addDetailView);
                         }
-                    }
-                    if(CollUtil.isNotEmpty(parentSkuNoList)){
-                        //存在套装SKU
-                        view.setExistBom(Boolean.TRUE);
                     }
                 }
             }

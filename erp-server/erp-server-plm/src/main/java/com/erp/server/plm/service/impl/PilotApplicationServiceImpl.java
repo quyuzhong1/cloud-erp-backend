@@ -111,7 +111,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Resource
     private WmsTaskFeign warehouseFeign;
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
     @Resource
     private ProductDetailMapper productDetailMapper;
     @Autowired
@@ -173,7 +173,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             plmAttachmentService.save(entity);
         }
         String format = String.format("用户【%s】新增【试产量产单】单据编号为【%s】", UserContext.getNonLoginUser().getUserName(), code);
-        sysLogService.addSysLogBySave(format, "", pilotApplicationEntity.getId(), "");
+        operateLogService.addSysLogBySave(format, "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
         saveProductDetail(addDTO, pilotApplicationEntity);
@@ -657,14 +657,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     private void addLog(String id, String operation, String content, String field, String oldValue, String newValue) {
-        SysLogEntity logEntity = new SysLogEntity();
+        OperateLogEntity logEntity = new OperateLogEntity();
         logEntity.setBusinessId(id);
         logEntity.setOperation(operation);
         logEntity.setContent(content);
         logEntity.setFieldName(field);
         logEntity.setOldValue(oldValue);
         logEntity.setNewValue(newValue);
-        sysLogService.addSysLogByOther(logEntity);
+        operateLogService.addSysLogByOther(logEntity);
     }
 
     private Boolean validateDisApprove(PilotApplicationEntity entity) {
@@ -1601,7 +1601,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 操作日志
         String msg = StrUtil.format("用户{}，作废了{}，作废原因{}",userInfo.getUserName(), old.getCode(), old.getInvalidRemark());
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.INVALID);
     }
@@ -1625,7 +1625,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 操作日志
         String msg = StrUtil.format("用户{}，取消作废了{}",UserContext.getDefaultLoginUser().getUserName(), old.getCode());
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("取消作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UN_INVALID);
     }

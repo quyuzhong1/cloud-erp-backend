@@ -58,6 +58,13 @@ public class SignatureVerificationFilter implements GlobalFilter {
         "/open/api/getMD5",
         "/open/api/getAES"
     };
+    
+    /**
+     * 签名验证时需要使用空字符串作为 body 的接口路径（如文件上传接口）
+     */
+    private static final String[] EMPTY_BODY_PATHS = {
+        "/open/api/upload/v2"
+    };
 
     @Resource
     private RedissonClient redissonClient;
@@ -198,7 +205,8 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String signature = parsedSignature[1];
 
             // 8. 验证签名
-            String body = getRequestBody(request);
+            // 对于文件上传等接口，body 使用空字符串
+            String body = isEmptyBodyPath(uri) ? "" : getRequestBody(request);
             boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, body);
             if (!isValidSignature) {
                 log.warn("签名验证失败");
@@ -415,6 +423,20 @@ public class SignatureVerificationFilter implements GlobalFilter {
     private boolean isBypassPath(String uri) {
         for (String bypassPath : BYPASS_PATHS) {
             if (uri.contains(bypassPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 判断是否为需要使用空 body 的接口
+     * @param uri 请求URI
+     * @return true-需要使用空body，false-使用实际body
+     */
+    private boolean isEmptyBodyPath(String uri) {
+        for (String emptyBodyPath : EMPTY_BODY_PATHS) {
+            if (uri.equals(emptyBodyPath)) {
                 return true;
             }
         }

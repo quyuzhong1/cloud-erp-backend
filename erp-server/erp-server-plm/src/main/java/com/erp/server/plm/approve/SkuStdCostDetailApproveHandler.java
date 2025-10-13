@@ -12,13 +12,13 @@ import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.server.plm.service.SkuStdCostDetailService;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.server.plm.service.SkuStdCostService;
 import org.springframework.stereotype.Component;
@@ -38,7 +38,7 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
     @Resource
     private SkuStdCostService skuStdCostService;
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
@@ -88,9 +88,9 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
             log.warn("无评论无需添加日志，businessKey = {},id={}",dto.getBusinessKey(),dto.getId());
             return;
         }
-        List<SysLogEntity> list = new ArrayList<>();
+        List<OperateLogEntity> list = new ArrayList<>();
         for (String comment : dto.getComments()) {
-            SysLogEntity sysLogEntity = new SysLogEntity();
+            OperateLogEntity sysLogEntity = new OperateLogEntity();
             sysLogEntity.setBusinessId(dto.getId());
             sysLogEntity.setOperation("添加评论");
             //添加评论日志
@@ -98,6 +98,6 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
             sysLogEntity.setContent(operateContent);
             list.add(sysLogEntity);
         }
-        sysLogService.addSysLogByBatchSave(list);
+        operateLogService.addSysLogByBatchSave(list);
     }
 }

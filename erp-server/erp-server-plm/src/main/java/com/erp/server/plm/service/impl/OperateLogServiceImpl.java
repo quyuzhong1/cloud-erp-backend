@@ -16,16 +16,16 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.plm.dto.SysLogSelectDTO;
-import com.erp.model.plm.dto.SysLogShowDTO;
+import com.erp.model.plm.dto.OperateLogShowDTO;
+import com.erp.model.plm.dto.OperateLogSelectDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.SysLogEntity;
-import com.erp.model.plm.entity.SysLogFieldEntity;
+import com.erp.model.plm.entity.OperateLogEntity;
+import com.erp.model.plm.entity.CfgOperateLogFieldEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.mapper.SysLogMapper;
+import com.erp.server.plm.mapper.OperateLogMapper;
 import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.SysLogFieldService;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.CfgOperateLogFieldService;
+import com.erp.server.plm.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
  * @date 2022/12/5 18:18
  */
 @Service
-public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> implements SysLogService {
+public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, OperateLogEntity> implements OperateLogService {
 
     @Autowired
-    private SysLogFieldService sysLogFieldService;
+    private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     @Autowired
     private BasicDictService basicDictService;
@@ -63,14 +63,14 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             return true;
         }
         List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
-        List<SysLogFieldEntity> sysLogFieldList = sysLogFieldService.listByClassPaths(classPaths);
+        List<CfgOperateLogFieldEntity> sysLogFieldList = cfgOperateLogFieldService.listByClassPaths(classPaths);
         if (CollectionUtils.isEmpty(sysLogFieldList)) {
             return true;
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        List<SysLogEntity> list = new LinkedList<>();
+        List<OperateLogEntity> list = new LinkedList<>();
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
             Pair<String, String> keyPair = entry.getKey();
@@ -78,12 +78,12 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             String fieldClass = keyPair.getValue();
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
-            SysLogFieldEntity sysLogFieldEntity = sysLogFieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(sysLogFieldEntity)) {
+            CfgOperateLogFieldEntity cfgOperateLogFieldEntity = sysLogFieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(cfgOperateLogFieldEntity)) {
                 continue;
             }
-            String fieldName = sysLogFieldEntity.getFieldName();
-            Integer type = sysLogFieldEntity.getType();
+            String fieldName = cfgOperateLogFieldEntity.getFieldName();
+            Integer type = cfgOperateLogFieldEntity.getType();
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
             if (type == 1) {
@@ -96,12 +96,12 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                 }
             } else if (type == 2) {
                 //枚举
-                if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
+                if (StringUtils.isBlank(cfgOperateLogFieldEntity.getEnumClass())) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
                 Class<?> aClass = null;
                 try {
-                    aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
+                    aClass = Class.forName(PACKAGEPATH.concat(".").concat(cfgOperateLogFieldEntity.getEnumClass()));
                 } catch (ClassNotFoundException e) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
@@ -157,7 +157,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             } else {
                 content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
-            SysLogEntity entity = new SysLogEntity();
+            OperateLogEntity entity = new OperateLogEntity();
             entity.setClassPath(classPath)
                     .setBusinessId(businessId)
                     .setPid(pid)
@@ -192,7 +192,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
 
     @Override
     public Boolean addSysLogBySave(String content, String classPath, String businessId, String pid) {
-        SysLogEntity entity = new SysLogEntity();
+        OperateLogEntity entity = new OperateLogEntity();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -207,19 +207,19 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     }
 
     @Override
-    public Boolean addSysLogByBatchSave(List<SysLogEntity> list) {
+    public Boolean addSysLogByBatchSave(List<OperateLogEntity> list) {
 
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        for (SysLogEntity entity : list) {
+        for (OperateLogEntity entity : list) {
             entity.setCreateUserId(userId).setCreateUserName(userName);
         }
         return this.saveBatch(list);
     }
 
     @Override
-    public Boolean addSysLogByOther(SysLogEntity entity) {
+    public Boolean addSysLogByOther(OperateLogEntity entity) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -241,15 +241,23 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     }
 
     @Override
-    public PagingVO<SysLogShowDTO> paging(PagingDTO<SysLogSelectDTO> dto) {
+    public PagingVO<OperateLogShowDTO> paging(PagingDTO<OperateLogSelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        SysLogSelectDTO params = dto.getParams();
+        OperateLogSelectDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
         return new PagingVO(pageData);
     }
 
     @Override
-    public List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto) {
+    public List<OperateLogShowDTO> listSysLog(OperateLogSelectDTO dto) {
         return baseMapper.listSysLog(dto);
+    }
+
+    @Override
+    public PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+        Page<OperateLogShowDTO.HistoryDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        OperateLogShowDTO.PagingParamDTO params = dto.getParams();
+        IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
+        return new PagingVO(pageData);
     }
 }
