@@ -152,4 +152,13 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetLocationEntity entity);
 
+    /**
+    * 批量启用/禁用
+    * @author wuht
+    * @date: 2025-10-13
+    * @param dto
+    * @return
+    */
+    Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
+
 }

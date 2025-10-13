@@ -154,6 +154,11 @@ public class AssetLocationDTO implements Serializable {
         private String invalidStatusName;
 
         /**
+        * 禁用状态名称
+        */
+        private String disabledStatusName;
+
+        /**
         * 创建时间
         */
         private LocalDateTime createTime;

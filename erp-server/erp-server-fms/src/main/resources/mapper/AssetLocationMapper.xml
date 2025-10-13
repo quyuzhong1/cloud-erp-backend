@@ -41,7 +41,35 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetLocationDTO$ListDTO">
-
+        SELECT
+            al.id,
+            al.disabled,
+            al.approve_status AS approveStatus,
+            al.approve_user_id AS approveUserId,
+            al.approve_user_name AS approveUserName,
+            al.approve_time AS approveTime,
+            al.invalid_status AS invalidStatus,
+            al.invalid_remark AS invalidRemark,
+            al.code,
+            al.description,
+            al.address,
+            al.detailed_address AS detailedAddress,
+            al.remark,
+            al.create_time AS createTime,
+            al.create_user_name AS createUserName
+        FROM asset_location al
+        WHERE
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        al.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -49,7 +77,43 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.fms.dto.AssetLocationDTO$ListDTO">
-
+        SELECT
+            al.id,
+            al.disabled,
+            al.approve_status AS approveStatus,
+            al.approve_user_id AS approveUserId,
+            al.approve_user_name AS approveUserName,
+            al.approve_time AS approveTime,
+            al.invalid_status AS invalidStatus,
+            al.invalid_remark AS invalidRemark,
+            al.code,
+            al.description,
+            al.address,
+            al.detailed_address AS detailedAddress,
+            al.remark,
+            al.create_time AS createTime,
+            al.create_user_name AS createUserName
+        FROM asset_location al
+        WHERE
+        ${params.sqlMap.default}
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND al.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        al.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.fms.dto.AssetLocationDTO$TabListDTO">
         SELECT

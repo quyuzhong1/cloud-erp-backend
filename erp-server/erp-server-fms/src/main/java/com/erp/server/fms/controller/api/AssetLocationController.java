@@ -1,6 +1,8 @@
 package com.erp.server.fms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -101,6 +103,7 @@ public class AssetLocationController extends BaseController {
             menuCode = "fms:assetLocation:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = AssetLocationQueryHandler.class)
     public ApiResult<PagingVO<AssetLocationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetLocationDTO.PagingParamDTO> dto) {
         return success(assetLocationService.paging(dto));
     }
@@ -402,10 +405,29 @@ public class AssetLocationController extends BaseController {
             menuCode = "fms:assetLocation:export",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = AssetLocationQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产位置表导出Excel数据")
     public void exportList(@RequestBody @Validated AssetLocationDTO.ExportDTO dto, HttpServletResponse response) {
         assetLocationService.exportList(dto, response);
     }
 
+    /**
+    * 批量启用/禁用
+    * @author wuht
+    * @date:  2025-10-13
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/updateStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "fms:assetLocation:updateStatus",
+            serviceClass = AssetLocationService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+        assetLocationService.updateStatus(dto);
+        return success();
+    }
 
 }
