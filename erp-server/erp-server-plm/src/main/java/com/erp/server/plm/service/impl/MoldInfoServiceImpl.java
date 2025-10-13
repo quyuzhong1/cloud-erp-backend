@@ -119,9 +119,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(MoldInfoDTO.AddDTO addDTO) {
-
-
-
         MoldInfoEntity moldInfoEntity = new MoldInfoEntity();
         BeanMapperUtils.copy(addDTO, moldInfoEntity);
 
@@ -336,7 +333,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
     private Boolean validateDisApprove(MoldInfoEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // 校验下游SKU是否存在
@@ -397,7 +394,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     public BatchResultDTO cancelProcess(String id) {
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
