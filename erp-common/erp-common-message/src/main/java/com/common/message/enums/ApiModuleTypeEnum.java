@@ -60,6 +60,7 @@ public enum ApiModuleTypeEnum {
     TRANSFER_OUT(47, "transferOut", "分步式调出单","wms"),
     PAYABLE_INFO(48, "payableInfo", "采购对账","srm"),
 
+    BD_RATE(49, "bdRate", "汇率","sys"),
     ;
     private Integer code;
 

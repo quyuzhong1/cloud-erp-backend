@@ -195,7 +195,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
     public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
         //无需自动审核
         param.setIsAutoAudit(Boolean.FALSE);
-        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.PAYABLE_INFO.getCode());
+        Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.PAYABLE_INFO.getCode());
         if (isAdd) {
             //给明细id赋值
             JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
