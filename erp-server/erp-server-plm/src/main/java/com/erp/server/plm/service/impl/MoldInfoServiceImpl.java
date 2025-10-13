@@ -167,11 +167,47 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if(!save) {
             throw new ServiceException("模具档案保存失败");
         }
+
+        handleLogEntity(old,moldInfoEntity);
+
+
         // 记录主单操作日志
         log.info("编辑 开始记录模具档案日志数据，单号：【{}】", moldInfoEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), moldInfoEntity.getCode(), "模具档案");
         sysLogService.addSysLogByUpdate(old,moldInfoEntity,String.valueOf(MoldInfoEntity.class), moldInfoEntity.getId(), "", msg);
         return Boolean.TRUE;
+    }
+
+    private void handleLogEntity(MoldInfoEntity old, MoldInfoEntity moldInfoEntity) {
+        List<MoldInfoEntity> list = new ArrayList<>(2);
+        list.add(old);
+        list.add(moldInfoEntity);
+        //分类
+        List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
+        Map<String, String> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName));
+
+        //结算方式
+        List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+
+        //付款条件
+        List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
+        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue));
+
+        //模具类型
+        List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
+        Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName));
+
+        for (MoldInfoEntity data : list) {
+            // 分类名称
+            data.setCategoryName(categoryMap.getOrDefault(data.getCategoryId(),""));
+            //付款条件
+            data.setPaymentConditionName(paymentConditionMap.getOrDefault(data.getPaymentCondition(),""));
+            //结算方式
+            data.setPayMethodName(settleDictMap.getOrDefault(data.getPayMethodId(),""));
+            //模具类型
+            data.setTypeName(cfgMouldSettingMap.getOrDefault(data.getType(),""));
+        }
     }
 
 
