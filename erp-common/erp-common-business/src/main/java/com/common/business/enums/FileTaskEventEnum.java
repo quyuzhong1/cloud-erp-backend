@@ -312,7 +312,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PROCESS_APPROVE_SYNC_RECORD("EXPORT_PROCESS_APPROVE_SYNC_RECORD", "三方推送记录导出","","",""),
     EXPORT_THIRD_PROCESS_DEFINITION("EXPORT_THIRD_PROCESS_DEFINITION", "审批定义导出","","",""),
 
-
+    //fms
+    IMPORT_FMS_ASSET_LOCATION("IMPORT_FMS_ASSET_LOCATION","导入资产位置","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetLocation",""),
 
     DEFAULT("DEFAULT", "默认","","","");
     private final String code;

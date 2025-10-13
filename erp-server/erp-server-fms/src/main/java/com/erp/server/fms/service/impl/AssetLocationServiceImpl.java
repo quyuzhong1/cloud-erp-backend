@@ -4,10 +4,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,25 +22,44 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetLocationDTO;
+import com.erp.model.fms.dto.excel.AssetLocationExcelDTO;
 import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.fms.listener.AssetLocationExcelListener;
 import com.erp.server.fms.mapper.AssetLocationMapper;
 import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
@@ -45,6 +67,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_FMS_ASSET_LOCATION;
 /**
  * <p>
  * 资产位置表 服务实现类
@@ -62,6 +86,12 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -542,5 +572,125 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.ASSET_LOCATION.getCode(), pairList, "状态变更");
 
         return this.updateBatchById(list);
+    }
+
+    /**
+     * 下载模板
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        // 下载资产位置导入模板
+        String path = "classpath:excel/assetLocationTemplate.xlsx";
+        String excelName = "资产位置导入模板.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+            log.info("开始下载资产位置导入模板");
+        } catch (Exception e) {
+            log.error("资产位置导入模板下载失败", e);
+            throw new ServiceException("下载模板失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 异步导入
+     */
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("资产位置导入", IMPORT_FMS_ASSET_LOCATION.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入资产位置
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetLocation(BaseDTO.ImportDTO dto) {
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream()
+                .filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(findUserDTO)) {
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+        AssetLocationExcelListener excelListenerUtil = new AssetLocationExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetLocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetLocationExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "资产位置错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetLocationExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 处理导入成功的数据
+     */
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<AssetLocationExcelDTO> successList, List<AssetLocationExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        if (StringUtils.isBlank(importType)) {
+            //给个默认值
+            importType = ImportTypeEnum.ADD.getCode();
+        }
+
+        // 处理每条数据
+        for (AssetLocationExcelDTO excelDTO : successList) {
+            try {
+                if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                    AssetLocationDTO.AddDTO addDTO = new AssetLocationDTO.AddDTO();
+                    addDTO.setDescription(excelDTO.getDescription());
+                    addDTO.setAddress(excelDTO.getAddress());
+                    addDTO.setDetailedAddress(excelDTO.getDetailedAddress());
+                    this.add(addDTO);
+                }
+            } catch (Exception e) {
+                log.error("导入资产位置失败，行号：{}，错误：{}", excelDTO.getRowNum(), e.getMessage(), e);
+                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                errorList2.add(excelDTO);
+            }
+        }
     }
 }

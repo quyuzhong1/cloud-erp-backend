@@ -161,4 +161,40 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
     */
     Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
 
+    /**
+     * 下载模板
+     * @author wuht
+     * @date: 2025-10-13
+     * @param response
+     * @return
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 异步导入
+     * @author wuht
+     * @date: 2025-10-13
+     * @param dto
+     * @return
+     */
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    /**
+     * 导入资产位置
+     * @author wuht
+     * @date: 2025-10-13
+     * @param dto
+     */
+    void importAssetLocation(BaseDTO.ImportDTO dto);
+
+    /**
+     * 处理导入成功的数据列表
+     * @author wuht
+     * @date: 2025-10-13
+     * @param successList 成功的数据列表
+     * @param errorList2 错误数据列表2
+     * @param importType 导入类型
+     */
+    void handleImportSuccessList(List<com.erp.model.fms.dto.excel.AssetLocationExcelDTO> successList, List<com.erp.model.fms.dto.excel.AssetLocationExcelDTO> errorList2, String importType);
+
 }
