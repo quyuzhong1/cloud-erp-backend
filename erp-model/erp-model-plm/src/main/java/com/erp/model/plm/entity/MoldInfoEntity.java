@@ -228,8 +228,6 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
 
     public static final String CATEGORY_ID = "category_id";
 
-    public static final String CATEGORY_CODE = "category_code";
-
     public static final String TYPE = "type";
 
     public static final String MOLD_HOLES = "mold_holes";

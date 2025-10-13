@@ -112,11 +112,16 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private SysUserFeign sysUserFeign;
     @Resource
     private MoldRefSkuService moldRefSkuService;
+    @Resource
+    private CfgMouldSettingService cfgMouldSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(MoldInfoDTO.AddDTO addDTO) {
+
+
+
         MoldInfoEntity moldInfoEntity = new MoldInfoEntity();
         BeanMapperUtils.copy(addDTO, moldInfoEntity);
 
@@ -579,11 +584,15 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
 
         //付款条件
         List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
         Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue));
+
+        //模具类型
+        List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
+        Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName));
 
         // 属性赋值
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -600,6 +609,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 //            String settleDictName = settleDictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), data.getPayMethodId())).findFirst()
 //                    .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setPayMethodName(settleDictMap.getOrDefault(data.getPayMethodId(),""));
+        //模具类型
+        data.setTypeName(cfgMouldSettingMap.getOrDefault(data.getType(),""));
     }
 
     /**
@@ -659,11 +670,15 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
 
         //付款条件
         List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
         Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue));
+
+        //模具类型
+        List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
+        Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName));
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -697,6 +712,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             } else {
                 data.setSize("");
             }
+            //模具类型
+            data.setTypeName(cfgMouldSettingMap.getOrDefault(data.getType(),""));
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -719,8 +736,17 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     * 新增修改处理数据
     */
     private void handleData(MoldInfoEntity moldInfoEntity) {
-
-
+        //货款供应商
+        List<SupplierDTO.SupplierSimpleDTO> supplierSimpleList = supplierFeign.listApproveSupplierByCategoryType(SupplierCategoryEnum.LOAN.getCode());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getId, Function.identity(),(o1,o2)->o1));
+        SupplierDTO.SupplierSimpleDTO supplier = supplierMap.getOrDefault(moldInfoEntity.getSupplierId(), null);
+        if(Objects.isNull(supplier)){
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        moldInfoEntity.setSupplierCode(supplier.getCode());
+        moldInfoEntity.setSupplierName(supplier.getName());
+        //尺寸单位
+        moldInfoEntity.setSizeUnit("mm");
     }
 
     @Override
@@ -739,7 +765,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getValue,(o1,o2)->o1));
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getId,(o1,o2)->o1));
 
         //付款条件
         List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
@@ -748,6 +774,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         //货款供应商
         List<SupplierDTO.SupplierSimpleDTO> supplierSimpleList = supplierFeign.listApproveSupplierByCategoryType(SupplierCategoryEnum.LOAN.getCode());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getName, Function.identity(),(o1,o2)->o1));
+
+        //模具类型
+        List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
+        Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId));
 
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -764,7 +794,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             UserContext.setLoginUser(user);
         }
 
-        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,categoryMap,settleDictMap,paymentConditionMap);
+        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,cfgMouldSettingMap,categoryMap,settleDictMap,paymentConditionMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
