@@ -81,7 +81,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                     throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
-        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
+        ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(type)) {
             Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 
@@ -142,7 +143,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                     throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
-        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
+        ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(type)) {
             Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 

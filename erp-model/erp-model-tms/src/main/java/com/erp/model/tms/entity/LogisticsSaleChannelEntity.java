@@ -116,6 +116,12 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("carrier_type")
     private String carrierType;
 
+    /**
+     * 渠道类型
+     */
+    @TableField("channel_type")
+    private String channelType;
+
     public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";
 
     public static final String CN_NAME = "cn_name";

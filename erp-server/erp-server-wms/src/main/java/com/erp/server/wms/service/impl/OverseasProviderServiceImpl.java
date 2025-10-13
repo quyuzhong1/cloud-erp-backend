@@ -438,6 +438,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 .one();
     }
 
+    @Override
+    public List<OverseasProviderEntity> listByAuthStatus(String code) {
+        if(StringUtils.isNotBlank(code)){
+            return lambdaQuery().eq(OverseasProviderEntity::getAuthStatus,code).list();
+        }
+        return Collections.emptyList();
+    }
+
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform) || PlatformDictEnum.DA_MAI.getCode().equals(platform)){
             //邮政编码不能为空

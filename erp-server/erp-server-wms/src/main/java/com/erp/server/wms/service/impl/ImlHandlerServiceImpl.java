@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
@@ -51,26 +52,20 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        ImlCreateInboundReq imlCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToIml(createInboundReq);;
-        ImlResponse<String> imlResponse = imlService.createInboundBill(imlCreateInboundReq);
-        return isSuccess(imlResponse.getAsk()) ? success(imlResponse.getData()) : failure(imlResponse.getMessage());
+
+        return null;
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        ImlCreateInboundReq imlCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToIml(createInboundReq);
-        // 修改入库单
-        if("FHD24031900016".equals(createInboundReq.getReferenceNo())){
-            imlCreateInboundReq.setSmCode("XBLY");
-        }
-        ImlResponse<String> imlResponse = imlService.editInboundBill(imlCreateInboundReq);
-        return isSuccess(imlResponse.getAsk()) ? success(imlResponse.getData()) : failure(imlResponse.getMessage());
+
+        return null;
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        ImlResponse<String> response = imlService.cancelInboundBill(cancelInboundReq.getReceivingCode());
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+
+        return null;
     }
 
     @Override
@@ -90,18 +85,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        ImlCreateOutboundReq imlCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToIml(createOutboundReq);
-        // 艾姆勒同个客户同个参考号5分钟内不允许重复提交
-        String key = "wms-iml:"+createOutboundReq.getReferenceNo();
-        if(redisUtil.get(key) != null){
-            return failure("艾姆勒同个客户同个参考号5分钟内不允许重复提交");
-        }
-        redisUtil.set("wms-iml:"+createOutboundReq.getReferenceNo(),createOutboundReq.getReferenceNo(),300);
-        ImlResponse<String> response =  imlService.createOutboundBill(imlCreateOutboundReq);
-        if(response.getMessage().contains("参考编号已存在")){
-            return ApiResult.success();
-        }
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        return null;
     }
 
     @Override
@@ -124,17 +108,14 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
-        ImlResponse<List<ImlWarehouseResp>> response = imlService.getWarehouse(ImlBaseRequest.builder()
-                        .pageSize(1)
-                        .page(1)
-                .build());
-        if(!isSuccess(response.getAsk())){
+        ImlBaseResp<String> response = imlService.getWarehouse();
+        if(!isSuccess(response.getCode())){
             throw new ServiceException("授权失败,"+response.getMessage());
         }
-        return isSuccess(response.getAsk());
+        return true;
     }
 
-    public boolean isSuccess(String ask){
-        return "Success".equals(ask);
+    public boolean isSuccess(Integer code){
+        return code.equals(0);
     }
 }

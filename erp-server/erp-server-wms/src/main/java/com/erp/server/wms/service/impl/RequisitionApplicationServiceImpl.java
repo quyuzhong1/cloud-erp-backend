@@ -1913,7 +1913,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(view);
 
             //备货类型
-            addDTO.setDemandType(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) ? FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode():FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            }else{
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode());
+            }
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
             List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
