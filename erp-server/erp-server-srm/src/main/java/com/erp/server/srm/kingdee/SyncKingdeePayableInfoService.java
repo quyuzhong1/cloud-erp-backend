@@ -35,4 +35,12 @@ public interface SyncKingdeePayableInfoService {
      * @return Map<String,Object>
      */
     Map<String , Object> newSyncDataToKingdee(PayableInfoEntity entity, List<PayableDetailEntity> detailList,String operate);
+    /**
+     * 检查是否可以反审核
+     * @author will
+     * @date 2025/9/25 10:29
+     * @param entity
+     * @return void
+     */
+    void checkCanDisApprove(PayableInfoEntity entity);
 }
