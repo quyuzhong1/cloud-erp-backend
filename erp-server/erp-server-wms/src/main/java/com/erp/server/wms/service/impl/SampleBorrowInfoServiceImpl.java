@@ -873,6 +873,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 }else {
                     SampleBorrowDetailDTO.AddDTO detailDTO = new SampleBorrowDetailDTO.AddDTO();
                     BeanMapperUtils.copy(importDTO, detailDTO);
+
                     //明细备注
                     detailDTO.setRemark(importDTO.getDetailRemark());
                     detailList.add(detailDTO);
@@ -884,7 +885,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 SampleBorrowInfoDTO.AddDTO addDTO = new SampleBorrowInfoDTO.AddDTO();
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setDetailList(detailList);
-
                 bean.add(addDTO);
             }
         }

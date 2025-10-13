@@ -19,7 +19,11 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 public class MoldInfoImportExcelDTO implements Serializable {
-
+    /**
+     * 模具编号
+     */
+    @ExcelIgnore
+    private String code;
 
     /**
      * 模具名称
@@ -209,7 +213,7 @@ public class MoldInfoImportExcelDTO implements Serializable {
      * 付款条件
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*模付款条件", index = 20)
+    @ExcelProperty(value = "*付款条件", index = 20)
     @FieldValid(fieldName = "*付款条件",isNotBlank = true)
     private String paymentConditionName;
     @ExcelIgnore
