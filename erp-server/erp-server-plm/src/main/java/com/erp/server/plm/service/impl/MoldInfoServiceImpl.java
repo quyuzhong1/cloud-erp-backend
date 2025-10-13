@@ -15,6 +15,7 @@ import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.enums.ProductTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
@@ -109,6 +110,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private SupplierFeign supplierFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -124,6 +127,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         // 生成单号
 //        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MOLD);
         BasicCategoryEntity category = basicCategoryService.getById(addDTO.getCategoryId());
+        if(Objects.isNull(category)){
+            throw new ServiceException(ApiError.ERROR_95025);
+        }
         String code = docNoGenHelper.generateMouldCode(category.getCode());
         moldInfoEntity.setCode(code);
         boolean save = super.save(moldInfoEntity);
@@ -190,7 +196,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<MoldInfoDTO.TabListDTO> result = new ArrayList<>();
         result.add(new MoldInfoDTO.TabListDTO("all","全部", 0));
         for (String status : statusList) {
-            MoldInfoDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new MoldInfoDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
+            MoldInfoDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new MoldInfoDTO.TabListDTO(status, "", 0));
+            tabListDTO.setTabFlagName(ApproveStatusEnum.getName(status));
             result.add(tabListDTO);
         }
         return result;
@@ -807,8 +814,49 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchRefSku(MoldInfoDTO.RefSkuDTO dto) {
-        return null;
+        List<String> skuNos = dto.getSkuNos();
+        List<String> ids = dto.getIds();
+        List<SkuVO> skuList = productDetailService.listByApprovePropertyNotAsset(skuNos);
+        Map<String, SkuVO> skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+
+        List<MoldInfoEntity> moldInfoEntities = listByIds(ids);
+        long count = moldInfoEntities.stream().filter(e -> !Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())).count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_95294);
+        }
+        Map<String, MoldInfoEntity> moldMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getId, Function.identity(), (o1, o2) -> o1));
+
+        List<MoldRefSkuEntity> moldRefSkuEntities = new ArrayList<>();
+        for (String skuNo : skuNos) {
+            SkuVO skuVO = skuVOMap.getOrDefault(skuNo, null);
+            if(Objects.isNull(skuVO)){
+                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND,skuNo);
+            }
+            for (String id : ids) {
+                MoldRefSkuEntity moldRefSkuEntity = new MoldRefSkuEntity();
+                moldRefSkuEntity.setMoldId(id);
+                moldRefSkuEntity.setSkuId(skuVO.getSkuId());
+                moldRefSkuEntity.setSkuNo(skuNo);
+                moldRefSkuEntity.setProductName(skuVO.getSkuName());
+                moldRefSkuEntity.setOutputQty(1);
+                moldRefSkuEntity.setSkuQty(1);
+                moldRefSkuEntities.add(moldRefSkuEntity);
+            }
+        }
+
+        if(CollUtil.isNotEmpty(moldRefSkuEntities)){
+            moldRefSkuService.saveBatch(moldRefSkuEntities);
+            // 操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
+                MoldInfoEntity moldInfoEntity = moldMap.get(moldRefSkuEntity.getMoldId());
+                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+            }
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        }
+        return Boolean.TRUE;
     }
 
 }
