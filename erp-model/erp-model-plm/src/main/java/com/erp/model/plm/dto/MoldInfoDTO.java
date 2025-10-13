@@ -701,10 +701,10 @@ public class MoldInfoDTO implements Serializable {
         @NotEmpty(message = "模具id集合不能为空")
         private List<String> ids;
         /**
-         * skuId集合
+         * sku集合
          */
-        @NotEmpty(message = "skuId集合不能为空")
-        private List<String> skuIds;
+        @NotEmpty(message = "sku集合不能为空")
+        private List<String> skuNos;
     }
 
 
