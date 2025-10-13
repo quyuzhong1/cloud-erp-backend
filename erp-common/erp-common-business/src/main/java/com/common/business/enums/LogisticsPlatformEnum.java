@@ -20,6 +20,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多-本土站", "美客多-本土站", "","Y","N"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "","Y","N"),
     TIK_TOK_FULLY("TikTokFully", "TikTok全托管", "TikTok全托管", "","Y","N"),
+    AMZ_MULTI_CHANNEL("AmazonMultiChannel", "亚马逊多渠道发货", "亚马逊", "","N","N"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "","Y","N"),
@@ -112,6 +113,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         for (LogisticsPlatformEnum value : values) {
             if (value.code.equals(code)) {
                 return value.getName();
+            }
+        }
+        return "";
+    }
+    public static String getDescByCode(String code) {
+        LogisticsPlatformEnum[] values = values();
+        for (LogisticsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return value.getDesc();
             }
         }
         return "";

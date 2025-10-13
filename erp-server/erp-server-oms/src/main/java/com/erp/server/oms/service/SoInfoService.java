@@ -6,6 +6,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -14,10 +15,8 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -44,11 +43,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 提交
      *
      * @param entity
+     * @param isFromDht
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
      */
-    BatchResultDTO submit(SoInfoEntity entity);
+    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht);
 
 
     /**
@@ -528,6 +528,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
 
     void updateSoReceiptAmount(List<String> soIds);
 

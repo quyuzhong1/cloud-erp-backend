@@ -95,6 +95,8 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/getTotalByQuery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -133,7 +135,7 @@ public class SoOutstockController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.submit(dto.getIds());
+        Boolean result = soOutstockService.submit(dto.getIds(),Boolean.TRUE);
         return result ? success() : failure();
     }
 

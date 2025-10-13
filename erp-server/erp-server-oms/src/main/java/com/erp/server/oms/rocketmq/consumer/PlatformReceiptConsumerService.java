@@ -104,7 +104,8 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 		}else{
 			dto.setErpReceiptMethod("");
 		}
-		DictBasicEntity accountType = accountTypeList.stream().filter(d -> d.getValue().equals(dto.getPostedAccountId())).findFirst().orElse(null);
+		DictBasicEntity accountType = accountTypeList.stream().filter(d ->
+				d.getValue().equals(dto.getPostedAccountId())).findFirst().orElse(null);
 		if(accountType != null){
 			dto.setErpPostedAccount(accountType.getName());
 		}else{
@@ -114,7 +115,11 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 		List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetail();
 		//过滤掉作废的
 		if(CollectionUtils.isNotEmpty(platformReceiptDetailDTOList)){
-			List<PlatformReceiptDetailDTO> filterList = platformReceiptDetailDTOList.stream().filter(d -> !d.getIsInvalid()).collect(Collectors.toList());
+			List<PlatformReceiptDetailDTO> filterList = platformReceiptDetailDTOList.stream().filter(d -> !d.getIsInvalid() && !d.getPlatformIsDeleted()).collect(Collectors.toList());
+			if(CollectionUtils.isEmpty(filterList)){
+				dto.setDetail(new ArrayList<>());
+				return;
+			}
 			List<String> soCodes = filterList.stream().map(PlatformReceiptDetailDTO::getSoCode).distinct().collect(Collectors.toList());
 			List<SoInfoEntity> soInfoList = soInfoService.listByPlatformOrderCodes(soCodes,dto.getThirdSystem());
 			Map<String, SoInfoEntity> soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getPlatformOrderCode, e->e,(v1,v2)->v1));

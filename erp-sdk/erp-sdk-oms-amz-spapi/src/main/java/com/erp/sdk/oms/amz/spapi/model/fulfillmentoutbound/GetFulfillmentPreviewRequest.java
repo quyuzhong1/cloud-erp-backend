@@ -10,21 +10,29 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Address;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeatureSettings;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentPreviewItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ShippingSpeedCategoryList;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
- * The request body schema for the getFulfillmentPreview operation.
+ * The request body schema for the &#x60;getFulfillmentPreview&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFulfillmentPreviewRequest {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -71,7 +79,7 @@ public class GetFulfillmentPreviewRequest {
   }
 
    /**
-   * The destination address for the fulfillment order preview.
+   * Get address
    * @return address
   **/
 
@@ -89,7 +97,7 @@ public class GetFulfillmentPreviewRequest {
   }
 
    /**
-   * Identifying information and quantity information for the items in the fulfillment order preview.
+   * Get items
    * @return items
   **/
 
@@ -107,7 +115,7 @@ public class GetFulfillmentPreviewRequest {
   }
 
    /**
-   * A list of shipping methods used for creating fulfillment order previews.  Possible values:  * Standard - Standard shipping method. * Expedited - Expedited shipping method. * Priority - Priority shipping method. * ScheduledDelivery - Scheduled Delivery shipping method. Note: Shipping method service level agreements vary by marketplace. Sellers should see the Seller Central website in their marketplace for shipping method service level agreements and fulfillment fees.
+   * Get shippingSpeedCategories
    * @return shippingSpeedCategories
   **/
 
@@ -125,7 +133,7 @@ public class GetFulfillmentPreviewRequest {
   }
 
    /**
-   * Specifies whether to return fulfillment order previews that are for COD (Cash On Delivery).  Possible values:  * true - Returns all fulfillment order previews (both for COD and not for COD). * false - Returns only fulfillment order previews that are not for COD.
+   * When true, returns all fulfillment order previews both for COD and not for COD. Otherwise, returns only fulfillment order previews that are not for COD.
    * @return includeCODFulfillmentPreview
   **/
 
@@ -143,7 +151,7 @@ public class GetFulfillmentPreviewRequest {
   }
 
    /**
-   * Specifies whether to return the ScheduledDeliveryInfo response object, which contains the available delivery windows for a Scheduled Delivery. The ScheduledDeliveryInfo response object can only be returned for fulfillment order previews with ShippingSpeedCategories &#x3D; ScheduledDelivery.
+   * When true, returns the &#x60;ScheduledDeliveryInfo&#x60; response object, which contains the available delivery windows for a Scheduled Delivery. The &#x60;ScheduledDeliveryInfo&#x60; response object can only be returned for fulfillment order previews with &#x60;ShippingSpeedCategories&#x60; &#x3D; &#x60;ScheduledDelivery&#x60;.
    * @return includeDeliveryWindows
   **/
 
@@ -183,7 +191,7 @@ public class GetFulfillmentPreviewRequest {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -226,7 +234,7 @@ public class GetFulfillmentPreviewRequest {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -234,4 +242,3 @@ public class GetFulfillmentPreviewRequest {
   }
 
 }
-

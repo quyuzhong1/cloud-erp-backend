@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.StringList;
 
+import java.io.IOException;
 /**
  * Information about unfulfillable items in a fulfillment order preview.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class UnfulfillablePreviewItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -45,7 +50,7 @@ public class UnfulfillablePreviewItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -63,7 +68,7 @@ public class UnfulfillablePreviewItem {
    * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -78,10 +83,10 @@ public class UnfulfillablePreviewItem {
   }
 
    /**
-   * A fulfillment order item identifier created with a call to the getFulfillmentPreview operation.
+   * A fulfillment order item identifier created with a call to the &#x60;getFulfillmentPreview&#x60; operation.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -96,10 +101,10 @@ public class UnfulfillablePreviewItem {
   }
 
    /**
-   * Error codes associated with the fulfillment order preview that indicate why the item is unfulfillable.
+   * Get itemUnfulfillableReasons
    * @return itemUnfulfillableReasons
   **/
-
+  
   public StringList getItemUnfulfillableReasons() {
     return itemUnfulfillableReasons;
   }
@@ -110,7 +115,7 @@ public class UnfulfillablePreviewItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -147,7 +152,7 @@ public class UnfulfillablePreviewItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -155,4 +160,3 @@ public class UnfulfillablePreviewItem {
   }
 
 }
-

@@ -337,6 +337,18 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String countryName;
 
     /**
+     * 来源单据ID
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+
+    /**
      * 订单金额
      */
     @TableField("order_amount")

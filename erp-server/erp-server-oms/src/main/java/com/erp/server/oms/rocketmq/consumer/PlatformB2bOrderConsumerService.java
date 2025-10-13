@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.business.dto.PlatformReceiptDetailDTO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -19,7 +20,12 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +60,9 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 
 	@Resource
 	private CustomerAddressService customerAddressService;
+
+	@Resource
+	private SysUserFeign sysUserFeign;
 
 	@Resource
 	private SoInfoService soInfoService;
@@ -91,26 +100,31 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 		PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = new PlatformB2bOrderDTO.ErpInfoDTO();
 
 		//匹配中台erp的仓库
-		if(StringUtils.isNotBlank(dto.getPlatformWarehouseId())){
-			ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
-			viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
-			viewParamDTO.setThirdId(dto.getPlatformWarehouseId());
-			viewParamDTO.setSysType(dto.getThirdSystem());
-			List<ThirdMappingEntity> thirdMappingEntities = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
-			if(CollectionUtils.isNotEmpty(thirdMappingEntities)){
-				erpInfoDTO.setWarehouseId(thirdMappingEntities.get(0).getSysId());
-			}else{
-				//默认仓库
-				List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
-				if(CollectionUtils.isNotEmpty(viewDTOList)){
-					erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
-				}
+		if(StringUtils.isNotBlank(dto.getPlatformWarehouseName())){
+			List<WarehouseEntity> warehouseEntity = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName,dto.getPlatformWarehouseName()).list();
+			if(CollectionUtils.isNotEmpty(warehouseEntity)){
+				erpInfoDTO.setWarehouseId(warehouseEntity.get(0).getId());
 			}
-		}else{
-			//默认仓库
-			List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
-			if(CollectionUtils.isNotEmpty(viewDTOList)){
-				erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
+//			else{
+//				//默认仓库
+//				List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
+//				if(CollectionUtils.isNotEmpty(viewDTOList)){
+//					erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
+//				}
+//			}
+		}
+//		else{
+//			//默认仓库
+//			List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtDefaultWarehouse");
+//			if(CollectionUtils.isNotEmpty(viewDTOList)){
+//				erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
+//			}
+//		}
+
+		if(StringUtils.isNotBlank(dto.getKindgeeOrgId())){
+			SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyByKindgeeId(dto.getKindgeeOrgId());
+			if(Objects.nonNull(sysAccountingCompanyEntity)){
+				erpInfoDTO.setSalesOrgId(sysAccountingCompanyEntity.getId());
 			}
 		}
 		//通过客户编号匹配客户
@@ -120,7 +134,9 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 				return;
 			}
 			erpInfoDTO.setCustomerId(customerInfo.getId());
-			erpInfoDTO.setSalesOrgId(customerInfo.getUseOrgId());
+			if(StringUtils.isBlank(erpInfoDTO.getSalesOrgId())){
+				erpInfoDTO.setSalesOrgId(customerInfo.getUseOrgId());
+			}
 			erpInfoDTO.setSalesDeptId(customerInfo.getSalesDeptId());
 			erpInfoDTO.setSellerId(customerInfo.getSellerId());
 			erpInfoDTO.setCountryId(customerInfo.getCountryId());

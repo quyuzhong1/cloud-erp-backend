@@ -37,6 +37,7 @@ import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1099,5 +1101,19 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
         }
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @GlobalTransactional(propagation = Propagation.NOT_SUPPORTED)
+    public Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoOutstockDTO.LastBillDateDTO> lastBillDateDTOS = baseMapper.mapLastOutstockDateBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(lastBillDateDTOS)) {
+            return Collections.emptyMap();
+        }
+        return lastBillDateDTOS.stream().collect(Collectors.toMap(SoOutstockDTO.LastBillDateDTO::getSkuId, SoOutstockDTO.LastBillDateDTO::getBillDate));
     }
 }

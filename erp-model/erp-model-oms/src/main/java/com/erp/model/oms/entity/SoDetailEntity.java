@@ -276,6 +276,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private BigDecimal originalTaxPrice;
 
     /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
      * 平台明细Id
      */
     @TableField("platform_detail_id")

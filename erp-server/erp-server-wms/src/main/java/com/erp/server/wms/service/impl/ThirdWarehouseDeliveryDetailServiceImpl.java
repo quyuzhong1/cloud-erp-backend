@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import com.alibaba.excel.util.CollectionUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
@@ -32,6 +33,14 @@ public class ThirdWarehouseDeliveryDetailServiceImpl extends SuperServiceImpl<Th
             return new ArrayList<>();
         }
         return lambdaQuery().eq(ThirdWarehouseDeliveryDetailEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    public List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(ThirdWarehouseDeliveryDetailEntity::getMainId,mainIds).list();
     }
 
     @Override

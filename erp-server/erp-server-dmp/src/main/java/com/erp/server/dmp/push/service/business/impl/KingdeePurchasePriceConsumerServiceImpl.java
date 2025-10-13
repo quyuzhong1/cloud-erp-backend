@@ -18,7 +18,6 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -51,7 +50,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.PUR_PRICECATEGORY)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -64,7 +63,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");
@@ -138,7 +137,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
 
             log.error("采购价目表查看失败 map = {}", JSONUtil.toJsonStr(map));
             //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //禁用启用
                 JSONArray jsonArray = excuteOperation(apiUtils, map, operate);
@@ -164,7 +163,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //禁用启用
                 JSONArray jsonArray = excuteOperation(apiUtils, map, operate);

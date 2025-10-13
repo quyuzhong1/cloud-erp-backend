@@ -200,5 +200,19 @@ public interface BusinessNoConstant {
 
     //合同管理
     String GYSHT = "GYSHT";
+    //样品作废单
+    String YPZF = "YPZF";
+    //样品借用单
+    String YPJY = "YPJY";
+    String YPGH = "YPGH";
+    String ZHDD = "ZHDD";
+
+    //样品领用
+    String YPLY="YPLY";
+    //样品退回
+    String YPTH="YPTH";
+    //期初台账
+    String QCTZ="QCTZ";
+
 
 }

@@ -176,21 +176,21 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 第三方字段(英文：控件name)
         */
-        @NotBlank(message = "第三方字段(中文：控件name)不能为空")
+        //@NotBlank(message = "第三方字段(中文：控件name)不能为空")
         @Size(max = 19,message = "第三方字段(中文：控件name)最大长度不能超过19位")
         private String thirdField;
 
         /**
         * 第三方类型（选项、数值等）：控件type
         */
-        @NotBlank(message = "第三方类型（选项、数值等）：控件type不能为空")
+        //@NotBlank(message = "第三方类型（选项、数值等）：控件type不能为空")
         @Size(max = 30,message = "第三方类型（选项、数值等）：控件type最大长度不能超过30位")
         private String thirdFieldType;
 
         /**
         * 第三方是否必填：必填
         */
-        @NotNull(message = "第三方是否必填：必填不能为空")
+        //@NotNull(message = "第三方是否必填：必填不能为空")
         private Boolean thirdFieldRequired;
 
         /**
@@ -247,7 +247,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段是否是明细控件
          */
-        @NotNull(message = "是否是明细控件不能为空")
+        //@NotNull(message = "是否是明细控件不能为空")
         private Boolean isDetailField;
 
         /**

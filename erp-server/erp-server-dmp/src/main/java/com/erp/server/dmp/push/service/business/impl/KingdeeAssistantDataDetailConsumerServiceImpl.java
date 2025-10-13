@@ -15,7 +15,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -47,7 +46,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL)
+    @KingdeeApi
     public void executeAssistantDataDetailConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -60,7 +59,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
 
         /**
          * 审核
@@ -130,7 +129,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -158,7 +157,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         }
     }
 

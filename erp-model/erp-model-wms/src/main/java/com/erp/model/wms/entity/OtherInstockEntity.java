@@ -177,6 +177,24 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     @TableField("return_logistic_code")
     private String returnLogisticCode;
 
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 来源ID
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
     @TableField(exist = false)
     private List<OtherInstockDetailEntity> detailEntityList;
 

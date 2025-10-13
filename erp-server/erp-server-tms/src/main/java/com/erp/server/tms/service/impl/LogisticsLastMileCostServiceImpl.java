@@ -429,7 +429,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();
-        }catch (ExcelCommonException e) {
+        } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }

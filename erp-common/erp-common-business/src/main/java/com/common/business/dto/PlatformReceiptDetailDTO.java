@@ -50,6 +50,10 @@ public class PlatformReceiptDetailDTO extends UniqueDto {
      */
     private Boolean isInvalid;
 
+    /**
+     * 是否作废
+     */
+    private Boolean platformIsDeleted;
 
     /**
      * erp销售订单Id

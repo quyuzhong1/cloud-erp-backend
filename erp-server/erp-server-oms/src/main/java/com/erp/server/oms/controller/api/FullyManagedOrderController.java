@@ -192,10 +192,8 @@ public class FullyManagedOrderController extends BaseController {
             SoB2cErrorEntity error = soB2cErrorEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             try {
-                if (Objects.nonNull(processBusiness)){
-                    submit = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
-                }else {
-                    soB2cService.submit(entity,error,logisticsEntity, Boolean.FALSE);
+                ApproveResultDTO submit1 = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
+                if (submit1.getSuccess() && !submit1.getIsExistProcess()){
                     submit = soB2cService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核"), null, "");
                     //速卖通平台仓订单不走任何规则
                     if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
@@ -203,8 +201,9 @@ public class FullyManagedOrderController extends BaseController {
                         continue;
                     }
                     afterApprove(id, entity);
+                }else {
+                    submit = submit1;
                 }
-
             } catch (Exception e) {
                 log.error("全平台销售订单 提交审核失败", e);
                 submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
@@ -678,7 +677,6 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 16:49
      */
     @PostMapping("/submitDelivery")
-    @Idempotent
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {

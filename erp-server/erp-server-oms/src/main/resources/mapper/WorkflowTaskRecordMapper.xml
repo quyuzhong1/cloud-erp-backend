@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.WorkflowTaskRecordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="index" property="index" />
+       <result column="class_path" property="classPath" />
+       <result column="status" property="status" />
+       <result column="retry_count" property="retryCount" />
+       <result column="last_error" property="lastError" />
+       <result column="output_data" property="outputData" />
+       <result column="input_data" property="inputData" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <select id="listErrorTask" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
+        SELECT
+            *
+        FROM
+            workflow_task_record
+        WHERE
+            is_deleted = false
+            and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status !='success' and is_deleted = false )
+    </select>
+
+    <select id="getTaskErrorReport" resultType="com.erp.model.oms.dto.WorkflowTaskRecordDTO$TaskErrorReportDTO">
+        SELECT
+            wtr.source_type,
+            wtr.dict_basic_id,
+            db.name as dict_basic_name,
+            count(1) as errorCount
+        FROM
+            workflow_task_record  as wtr
+            left join dict_basic as db on wtr.dict_basic_id = db.id and db.is_deleted = false
+        WHERE
+            wtr.is_deleted = FALSE
+        and wtr.retry_count > 3
+        and wtr.source_type !=''
+	    and wtr.dict_basic_id != ''
+	    AND wtr.status =  'failed'
+        GROUP BY
+            wtr.source_type ,
+            wtr.dict_basic_id,
+            db.name
+    </select>
+
+
+</mapper>

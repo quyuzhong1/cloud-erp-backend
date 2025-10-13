@@ -40,4 +40,9 @@ public class SysLogShowDTO implements Serializable {
      */
     private String createUserName;
 
+    /**
+     * 类型
+     */
+    private String moduleType;
+
 }

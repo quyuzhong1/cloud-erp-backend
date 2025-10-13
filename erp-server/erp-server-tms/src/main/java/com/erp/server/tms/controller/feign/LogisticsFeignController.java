@@ -262,4 +262,14 @@ public class LogisticsFeignController {
     public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList){
         return logisticsChannelBlacklistService.listChannelBlacklist(channelIdList);
     }
+
+    /**
+     * 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币）
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/getSkuCostInCNY")
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        return inventorySkuCostService.getSkuCostInCNY(queryDTO);
+    }
 }

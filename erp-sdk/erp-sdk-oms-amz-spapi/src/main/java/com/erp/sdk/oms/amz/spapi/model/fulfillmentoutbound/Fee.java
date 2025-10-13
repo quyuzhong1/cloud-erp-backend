@@ -10,36 +10,37 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Money;
 
 import java.io.IOException;
-import java.util.Objects;
-
 /**
  * Fee type and cost.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class Fee {
   /**
    * The type of fee.
    */
   @JsonAdapter(NameEnum.Adapter.class)
   public enum NameEnum {
+    @SerializedName("FBAPerUnitFulfillmentFee")
     FBAPERUNITFULFILLMENTFEE("FBAPerUnitFulfillmentFee"),
-    
+    @SerializedName("FBAPerOrderFulfillmentFee")
     FBAPERORDERFULFILLMENTFEE("FBAPerOrderFulfillmentFee"),
-    
+    @SerializedName("FBATransportationFee")
     FBATRANSPORTATIONFEE("FBATransportationFee"),
-    
+    @SerializedName("FBAFulfillmentCODFee")
     FBAFULFILLMENTCODFEE("FBAFulfillmentCODFee");
 
     private String value;
@@ -47,7 +48,6 @@ public class Fee {
     NameEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -56,31 +56,27 @@ public class Fee {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static NameEnum fromValue(String text) {
+    public static NameEnum fromValue(String input) {
       for (NameEnum b : NameEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<NameEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final NameEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public NameEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return NameEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return NameEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("name")
+  }  @SerializedName("name")
   private NameEnum name = null;
 
   @SerializedName("amount")
@@ -95,7 +91,7 @@ public class Fee {
    * The type of fee.
    * @return name
   **/
-
+  
   public NameEnum getName() {
     return name;
   }
@@ -110,10 +106,10 @@ public class Fee {
   }
 
    /**
-   * The amount of the fee.
+   * Get amount
    * @return amount
   **/
-
+  
   public Money getAmount() {
     return amount;
   }
@@ -124,7 +120,7 @@ public class Fee {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -157,7 +153,7 @@ public class Fee {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -165,4 +161,3 @@ public class Fee {
   }
 
 }
-

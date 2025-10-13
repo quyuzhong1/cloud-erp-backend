@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
@@ -13,6 +14,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
@@ -23,7 +25,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +53,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -178,6 +182,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
         }
         this.remove(queryWrapper);
+        fileFeign.deleteFile(dto.getAttachUrl());
     }
 
     @Override
@@ -229,5 +234,17 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             entity.setBusinessId(soB2cDeliveryEntity.getId());
         }
         this.save(entity);
+    }
+
+
+    @Override
+    public void deleteByUrlList(List<String> urlList) {
+        if (CollectionUtils.isNotEmpty(urlList)) {
+            LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(WmsAttachmentEntity::getAttachUrl, urlList);
+            this.remove(queryWrapper);
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+        }
     }
 }

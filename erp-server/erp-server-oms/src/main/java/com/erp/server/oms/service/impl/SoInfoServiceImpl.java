@@ -319,7 +319,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setSellerName(userInfo.getUserName());
         }
         //报关费
-        if (!addEntity.getIsDeclare()) {
+        if (Objects.isNull(addEntity.getIsDeclare()) || !addEntity.getIsDeclare()) {
             addEntity.setCustomsFee(BigDecimal.ZERO);
         }
 
@@ -360,6 +360,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setCountryId(base.getCountryId());
             addEntity.setCountryName(base.getCountryName());
         }
+
+        //来源
+        addEntity.setSourceId(dto.getSourceId());
+        addEntity.setSourceType(dto.getSourceType());
+
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -427,6 +432,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 提交
      *
      * @param entity
+     * @param isFromDht
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
@@ -435,7 +441,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
-    public BatchResultDTO submit(SoInfoEntity entity) {
+    public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
@@ -451,6 +457,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 throw new ServiceException(entity.getCode() + " 销售订单 销售单价不能为空或者为零");
             }
         }
+        if(!isFromDht && PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException("订货单创建的订单无法提审");
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -464,7 +473,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //启动审核流程
-        startProcess(entity);
+        if(isNeedProcess){
+            startProcess(entity);
+        }
 
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
@@ -633,7 +644,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
     }
 
@@ -1503,7 +1514,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
     }
 
@@ -1526,7 +1537,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //审核流程
         approveProcess(entity, dto);
-
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1729,7 +1739,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private void checkRemove(List<String> soIds) {
-
         Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
         if (wmsCount > 0) {
             throw new ServiceException(ApiError.ERROR_92018);
@@ -1816,6 +1825,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(removeIdList)){
             return resultDTOList;
         }
+
         //检查能否删除
         checkRemove(removeIdList);
         //需要同步的数据
@@ -2022,6 +2032,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             countryId = customerInfo.getCountryId();
             customer.setCustomerSellerId(customerInfo.getSellerId());
             customer.setCustomerRemark(customerInfo.getRemark());
+            customer.setDictPlatform(customerInfo.getPlatformType());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息
@@ -3657,20 +3668,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
-            this.updateSo(updateDTO);
+            String id = this.updateSo(updateDTO);
             //处理删除的明细
             List<String> platformDetailIds = detailList.stream().map(PlatformB2bOrderDetailDTO::getPlatformDetailId).collect(Collectors.toList());
             List<SoDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soDetailService.removeByIds(deleteDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
             }
+            SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(exist);
+                this.submit(soInfoEntity, true,true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
                 baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                this.approveEnd(baseApproveParamDTO,exist,false);
+                this.approveEnd(baseApproveParamDTO,soInfoEntity,false);
             }
         }else{
             //如果是作废，直接跳过
@@ -3733,7 +3745,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String id = this.add(addDTO);
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity);
+                this.submit(soInfoEntity, true,true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
@@ -3756,6 +3768,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 || !exist.getRebateDeductAmount().equals(dto.getRebateDeductAmount())
                 || !exist.getCreditDeductAmount().equals(dto.getCreditDeductAmount())
                 || !exist.getDiscountAmount().equals(dto.getDiscountAmount())
+                || !exist.getApproveStatus().getStatus().equals(dto.getStatus())
         ){
             return true;
         }
@@ -4465,13 +4478,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSoService.syncDataToKingdee(obj, operate);
             resultList.add(pushTaskEntity);
         });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        //推送金蝶
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     /**
@@ -4743,4 +4756,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
         return baseMapper.pagePartitionIsNull(query);
     }
+
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId) {
+        return baseMapper.listByExhibitionId(exhibitionId);
+    }
+
+
 }

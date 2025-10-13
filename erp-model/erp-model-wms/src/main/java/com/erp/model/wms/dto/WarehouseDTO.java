@@ -7,6 +7,8 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -377,6 +379,8 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
     public static class ListParamDTO {
 
         /**

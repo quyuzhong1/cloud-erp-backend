@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.DeliveryWindowList;
 
+import java.io.IOException;
 /**
- * Delivery information for a scheduled delivery.
+ * Delivery information for a scheduled delivery. This is only available in the JP marketplace.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class ScheduledDeliveryInfo {
   @SerializedName("deliveryTimeZone")
   private String deliveryTimeZone = null;
@@ -39,7 +44,7 @@ public class ScheduledDeliveryInfo {
    * The time zone of the destination address for the fulfillment order preview. Must be an IANA time zone name. Example: Asia/Tokyo.
    * @return deliveryTimeZone
   **/
-
+  
   public String getDeliveryTimeZone() {
     return deliveryTimeZone;
   }
@@ -54,10 +59,10 @@ public class ScheduledDeliveryInfo {
   }
 
    /**
-   * An array of time ranges that are available for scheduled delivery.
+   * Get deliveryWindows
    * @return deliveryWindows
   **/
-
+  
   public DeliveryWindowList getDeliveryWindows() {
     return deliveryWindows;
   }
@@ -68,7 +73,7 @@ public class ScheduledDeliveryInfo {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -101,7 +106,7 @@ public class ScheduledDeliveryInfo {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -109,4 +114,3 @@ public class ScheduledDeliveryInfo {
   }
 
 }
-

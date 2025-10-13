@@ -148,6 +148,10 @@ public class RocketMqNewTopic {
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_topic";
+    /**
+     * 新中台平台订单
+     */
+    public static final String DMP_FULFILL_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_topic";
 
     /**
      * 新中台平台销售出库单
@@ -183,19 +187,24 @@ public class RocketMqNewTopic {
      * 新中台同步飞书审批定义
      */
     public static final String DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_approvals_to_workflow_topic";
-    
+
     /**
      * restcloud平台商品
      */
     public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_topic";
-    
+
     /**
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_topic";
-    
+
     /**
      * restcloud收款单
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_topic";
+
+    /**
+     * 新中台同步飞书审批详情
+     */
+    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_topic";
 }

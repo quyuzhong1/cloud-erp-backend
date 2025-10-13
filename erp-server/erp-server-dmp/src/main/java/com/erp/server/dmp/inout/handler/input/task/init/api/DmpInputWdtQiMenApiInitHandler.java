@@ -29,6 +29,7 @@ import com.taobao.api.ApiException;
 import com.taobao.api.TaobaoRequest;
 import com.taobao.api.TaobaoResponse;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 
 /**
@@ -154,7 +155,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				if(order == null) {
 					order = data.getJSONArray("details");
 				}
-				
+				if(CollUtil.isEmpty(order)) {
+					break;
+				}
 				currTotal = currTotal + order.size();
 				DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 				dmpInputTaskInitDTO.setMsg(order.toJSONString());

@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Money;
 
+import java.io.IOException;
 /**
  * The COD (Cash On Delivery) charges that you associate with a COD fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class CODSettings {
   @SerializedName("isCodRequired")
   private Boolean isCodRequired = null;
@@ -48,7 +53,7 @@ public class CODSettings {
    * When true, this fulfillment order requires a COD (Cash On Delivery) payment.
    * @return isCodRequired
   **/
-
+  
   public Boolean isIsCodRequired() {
     return isCodRequired;
   }
@@ -63,10 +68,10 @@ public class CODSettings {
   }
 
    /**
-   * The amount of the COD charge to be collected from the recipient for a COD order.
+   * Get codCharge
    * @return codCharge
   **/
-
+  
   public Money getCodCharge() {
     return codCharge;
   }
@@ -81,10 +86,10 @@ public class CODSettings {
   }
 
    /**
-   * The amount of the tax on the COD charge to be collected from the recipient for a COD order.
+   * Get codChargeTax
    * @return codChargeTax
   **/
-
+  
   public Money getCodChargeTax() {
     return codChargeTax;
   }
@@ -99,10 +104,10 @@ public class CODSettings {
   }
 
    /**
-   * The amount of the tax on the COD charge to be collected from the recipient for a COD order.
+   * Get shippingCharge
    * @return shippingCharge
   **/
-
+  
   public Money getShippingCharge() {
     return shippingCharge;
   }
@@ -117,10 +122,10 @@ public class CODSettings {
   }
 
    /**
-   * The amount of the tax on the shipping charge to be collected from the recipient for a COD order.
+   * Get shippingChargeTax
    * @return shippingChargeTax
   **/
-
+  
   public Money getShippingChargeTax() {
     return shippingChargeTax;
   }
@@ -131,7 +136,7 @@ public class CODSettings {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -170,7 +175,7 @@ public class CODSettings {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -178,4 +183,3 @@ public class CODSettings {
   }
 
 }
-

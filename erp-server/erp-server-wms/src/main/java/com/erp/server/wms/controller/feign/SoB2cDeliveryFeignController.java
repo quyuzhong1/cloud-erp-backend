@@ -118,7 +118,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/falseDeliveryBatch")
-    public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+    public Boolean falseDeliveryBatch(@RequestBody(required = false) List<String> ids) {
         if (CollectionUtils.isEmpty(ids)){
             return Boolean.FALSE;
         }
@@ -172,7 +172,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @param code 类型
      */
     @PostMapping("/updateShipmentMark")
-    void updateShipmentMark(@RequestParam("ids")List<String> ids, @RequestParam("code")String code) {
+    void updateShipmentMark(@RequestParam(value = "ids",required = false)List<String> ids, @RequestParam("code")String code) {
         soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 

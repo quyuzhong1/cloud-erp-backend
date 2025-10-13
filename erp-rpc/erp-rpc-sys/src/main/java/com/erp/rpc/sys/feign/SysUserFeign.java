@@ -162,6 +162,12 @@ public interface SysUserFeign {
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
 
     /**
+     * 根据名称列表批量查询示例用户
+     */
+    @PostMapping("feign/sampleUseUser/getListByNameList")
+    ApiResult<List<SampleUseUserDTO.ViewDTO>> getSampleUseUserListByNameList(@RequestBody List<String> nameList);
+
+    /**
      * 查询spu编码
      */
     @PostMapping("feign/code/getSpuNo")
@@ -301,6 +307,24 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/accountingCompany/getCompanyById")
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
+
+    /**
+     * 根据金蝶id查询组织信息
+     *
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByKindgeeId")
+    SysAccountingCompanyEntity getCompanyByKindgeeId(@RequestBody String KindgeeId);
+
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param orgName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByName")
+    SysAccountingCompanyEntity getCompanyByName(@RequestBody String orgName);
 
     /**
      * 根据主键id查询组织信息
@@ -614,4 +638,5 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserByThirdIdList")
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
+
 }

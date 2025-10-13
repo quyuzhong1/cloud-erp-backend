@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -15,8 +16,12 @@ import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.sys.enums.OrgFunctionsEnum;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
+
+import cn.hutool.core.collection.CollUtil;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Administrator
@@ -50,6 +56,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         checkName("", dto.getCompanyName());
         BeanMapperUtils.copy(dto, entity);
         entity.setCode(entity.getKingdeeCode());
+        entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.save(entity);
     }
 
@@ -98,6 +105,8 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setCurrency(dto.getCurrency());
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
+        entity.setUsciCode(dto.getUsciCode());
+        entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
 
@@ -130,11 +139,21 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
 
     @Override
-    public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+    public PagingVO<SysAccountingCompanyEntity> paging(PagingDTO<CompanyPagingSearchDTO> dto) {
+        Page<SysAccountingCompanyEntity> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        IPage<SysAccountingCompanyEntity> pageData = baseMapper.paging(query, params);
+        List<SysAccountingCompanyEntity> records = pageData.getRecords();
+        if(CollUtil.isNotEmpty(records)) {
+        	records.forEach(r -> {
+        		String orgFunctions = r.getOrgFunctions();
+        		if(StringUtils.isNotBlank(orgFunctions)) {
+        			r.setOrgFunctionList(Stream.of(orgFunctions.split(",")).collect(Collectors.toList()));
+        			r.setOrgFunctionNames(Stream.of(orgFunctions.split(",")).map(o -> EnumMessage.getNameByCode(OrgFunctionsEnum.class, o)).collect(Collectors.joining(",")));
+        		}
+        	});
+        }
+        return new PagingVO<>(pageData);
     }
 
 
@@ -255,5 +274,38 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param companyName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @Override
+    public SysAccountingCompanyEntity getCompanyByName(String companyName) {
+        if (StringUtils.isBlank(companyName)) {
+            return new SysAccountingCompanyEntity();
+        } else {
+            LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName, companyName);
+            queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+            queryWrapper.last("LIMIT 1");
+            return this.getOne(queryWrapper);
+        }
+    }
+
+    @Override
+    public SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId) {
+        if (StringUtils.isBlank(kindgeeId)) {
+            return null;
+        } else {
+            LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysAccountingCompanyEntity::getKingdeeId, kindgeeId);
+            queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+            queryWrapper.last("LIMIT 1");
+            return this.getOne(queryWrapper);
+        }
+    }
 
 }
