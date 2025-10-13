@@ -197,6 +197,8 @@ public class MoldInfoDTO implements Serializable {
         */
         private BigDecimal productHeight;
 
+        private String size;
+
         /**
         * 模具材质
         */
@@ -299,6 +301,7 @@ public class MoldInfoDTO implements Serializable {
         * 是否作废
         */
         private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * 备注

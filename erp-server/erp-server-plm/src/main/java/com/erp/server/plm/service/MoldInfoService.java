@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -142,7 +143,7 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
     * @param response
     * @return
     */
-    void exportList(MoldInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(MoldInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -167,4 +168,13 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
      * @return
      */
     Boolean batchRefSku(MoldInfoDTO.RefSkuDTO dto);
+    /**
+     * 导入
+     * @author jack
+     * @date:  2025-10-10
+     * @param dto
+     * @return
+     */
+    void importMoldInfo(BaseDTO.ImportDTO dto);
+    void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<String> errorNoList, List<MoldInfoImportExcelDTO> errorList2, String importType);
 }

@@ -93,6 +93,15 @@ public class ProductConstant implements Serializable {
      * 产品属性:服务
      */
     public static final String PRODUCT_PROPERTY_SERVICE = "服务";
+    /**
+     * 产品属性:资产
+     */
+    public static final String PRODUCT_PROPERTY_ASSET = "资产";
+
+    /**
+     * 品牌:未知
+     */
+    public static final String PRODUCT_BRAND_UNKNOWN = "未知";
 
     /**
      * 换行符
