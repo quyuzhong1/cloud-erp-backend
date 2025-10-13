@@ -145,9 +145,9 @@ public class ApiSignatureTestExample {
         log.info("=== 示例4：验证API签名 ===");
         
         String secretKey = "d2KmS0aD2vwcVy1Wowc6OVPIsbIbEzmu";
-        String requestBody ="{\"method\":\"cfgQueryConditionGetQueryCondition\",\"data\":\"wms:sampleRecipient:paging\"}";
+        String requestBody ="";
         String httpMethod = "POST";
-        String uri = "/open/api/service/v2";
+        String uri = "/open/api/upload/v2";
         // 生成签名
         String signatureHeader = SsoLoginTestHelper.generateApiSignature(httpMethod, uri, requestBody, null, secretKey, SignTypeEnum.HMAC.getCode());
         log.info("原始签名头: {}", signatureHeader);
