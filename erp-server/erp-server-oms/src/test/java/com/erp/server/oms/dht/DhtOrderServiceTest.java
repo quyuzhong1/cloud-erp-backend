@@ -56,8 +56,8 @@ public class DhtOrderServiceTest {
                         .orders(null)
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
-                                        .fieldName("_id")
-                                        .fieldValues(Arrays.asList("68d550485ac1b20007fca0c2"))
+                                        .fieldName("name")
+                                        .fieldValues(Arrays.asList("Order20251013-000126"))
                                         .operator("eq")
                                         .build()
                         ))
