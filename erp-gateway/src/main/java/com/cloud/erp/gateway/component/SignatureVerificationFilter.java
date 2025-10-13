@@ -56,14 +56,15 @@ public class SignatureVerificationFilter implements GlobalFilter {
      */
     private static final String[] BYPASS_PATHS = {
         "/open/api/getMD5",
-        "/open/api/getAES"
+        "/open/api/getAES",
+        "/open/api/upload/v2"
     };
     
     /**
      * 签名验证时需要使用空字符串作为 body 的接口路径（如文件上传接口）
      */
     private static final String[] EMPTY_BODY_PATHS = {
-        "/open/api/upload/v2"
+        // 当前没有需要特殊处理 body 的接口
     };
 
     @Resource
