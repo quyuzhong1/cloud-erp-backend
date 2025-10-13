@@ -1,14 +1,17 @@
-package com.erp.model.wms.enums;
+package com.erp.model.tms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
-public enum RequisitionApplicationTypeEnum implements EnumMessage {
-    FBA("fba", "FBA要货单"),
-    THIRD_WAREHOUSE("thirdWarehouse", "第三方仓要货单"),
-    ALIEXPRESS("AliExpress","速卖通要货单"),
+/**
+ * 物流标签类型
+ */
+public enum ChannelTypeEnum implements EnumMessage {
 
+    FIRST_MILE("firstMile", "头程"),
+    LAST_MILE("lastMile", "尾程")
     ;
 
     /**
@@ -22,7 +25,8 @@ public enum RequisitionApplicationTypeEnum implements EnumMessage {
      */
     private String name;
 
-    RequisitionApplicationTypeEnum(String code, String name) {
+
+    ChannelTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -38,11 +42,16 @@ public enum RequisitionApplicationTypeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        for (RequisitionApplicationTypeEnum typeEnum : RequisitionApplicationTypeEnum.values()) {
-            if (code.equals(typeEnum.getCode())) {
-                return typeEnum.getName();
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (ChannelTypeEnum statusEnum : ChannelTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
             }
         }
         return "";
     }
 }
+
+

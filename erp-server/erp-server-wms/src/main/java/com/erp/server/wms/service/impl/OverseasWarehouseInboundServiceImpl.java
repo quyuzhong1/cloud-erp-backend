@@ -154,6 +154,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
+        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+            providerEntity = null;
+        }
+        if (FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(deliveryEntity.getDemandType())) {
+            providerEntity = null;
+        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
@@ -893,10 +899,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public List<String> getReceiptNumbersForStatus(List<String> statusList, String platform) {
+    public List<String> getReceiptNumbersForStatus(List<String> statusList, String authId) {
+        //查询授权信息下有关联erp仓库的数据
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Arrays.asList(authId));
+        overseasProviderWarehouseEntities = overseasProviderWarehouseEntities.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId()) && !v.getDisabled()).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(overseasProviderWarehouseEntities)){
+            return Collections.emptyList();
+        }
+        List<String> warehouseIds = overseasProviderWarehouseEntities.stream().map(OverseasProviderWarehouseEntity::getWarehouseId).distinct().collect(Collectors.toList());
         return this.list(Wrappers.<OverseasWarehouseInboundEntity>lambdaQuery()
                         .in(OverseasWarehouseInboundEntity::getInstockStatus, statusList)
-                        .eq(OverseasWarehouseInboundEntity::getDictPlatform,platform))
+                        .in(OverseasWarehouseInboundEntity::getToWarehouseId,warehouseIds))
                 .stream()
                 .map(OverseasWarehouseInboundEntity::getCode)
                 .distinct()

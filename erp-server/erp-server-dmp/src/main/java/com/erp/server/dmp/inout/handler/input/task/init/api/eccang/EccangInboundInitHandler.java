@@ -50,49 +50,51 @@ public abstract class EccangInboundInitHandler extends DmpInputInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+        List<AntuReceiptResp> allResult = new ArrayList<>();
+
+        String typeId = dmpCfgInputEntity.getTypeId();
+        DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
+        String apiType = dmpCfgApiEntity.getApiType();
+
+        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(getPlatForm().getCode()));
+        if (CollUtil.isEmpty(overseasProviderEntityList)) {
+            return Collections.emptyList();
+        }
+        // 取对应授权ID授权
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+                .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+                .findFirst()
+                .orElse(null);
+        if (null == overseasProviderEntity) {
+            throw new ServiceException(getPlatForm().getName() + "对应授权ID信息不存在");
+        }
+        if (overseasProviderEntity.getEnableDate().isAfter(LocalDate.now())) {
+            return Collections.emptyList();
+        }
         //查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 , OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                , OverseasInstockStatusEnum.SIGNED.getCode()), getPlatForm().getCode());
-        List<AntuReceiptResp> allResult = new ArrayList<>();
+                , OverseasInstockStatusEnum.SIGNED.getCode()), overseasProviderEntity.getId());
 
-        if (CollUtil.isNotEmpty(receiveCodeList)) {
-            String typeId = dmpCfgInputEntity.getTypeId();
-            DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-            String apiType = dmpCfgApiEntity.getApiType();
-
-            List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(getPlatForm().getCode()));
-            if (CollUtil.isEmpty(overseasProviderEntityList)) {
-                return Collections.emptyList();
-            }
-            // 取对应授权ID授权
-            OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
-                    .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
-                    .findFirst()
-                    .orElse(null);
-            if(null == overseasProviderEntity) {
-                throw new ServiceException(getPlatForm().getName()+"对应授权ID信息不存在");
-            }
-            if (overseasProviderEntity.getEnableDate().isAfter(LocalDate.now())) {
-                return Collections.emptyList();
-            }
-            Integer page = 1;
-            ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
-
-            //查询数据
-            AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
-                    .page(page)
-                    .pageSize(MathUtil.NUMBER_100)
-                    .receivingCodeArr(receiveCodeList)
-                    .build();
-            String response = AntuUtils.callService(getPlatForm(),apiType, antuGetReceiptReq);
-            log.info(getPlatForm().getName()+"（"+apiType+"）api接口返回数据：{}", response);
-            AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
-            }.getType());
-
-            allResult.addAll(result.getData());
-            page++;
+        if(CollUtil.isEmpty(receiveCodeList)){
+            return Collections.emptyList();
         }
+        Integer page = 1;
+        ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
+
+        //查询数据
+        AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
+                .page(page)
+                .pageSize(MathUtil.NUMBER_100)
+                .receivingCodeArr(receiveCodeList)
+                .build();
+        String response = AntuUtils.callService(getPlatForm(), apiType, antuGetReceiptReq);
+        log.info(getPlatForm().getName() + "（" + apiType + "）api接口返回数据：{}", response);
+        AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
+        }.getType());
+
+        allResult.addAll(result.getData());
+        page++;
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));

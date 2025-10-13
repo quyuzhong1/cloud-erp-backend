@@ -657,9 +657,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
-            }else{
+            }else if(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
+            }else if(DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.ALIEXPRESS.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.ALIEXPRESS.getName());
             }
 
             //来源类型
@@ -1272,7 +1275,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             wmsDeliveryPlanEntity.setShopName(shopInfoEntity.getName());
             wmsDeliveryPlanEntity.setCountry(shopInfoEntity.getDictCountryCode());
             wmsDeliveryPlanEntity.setCountryName(shopInfoEntity.getCountryName());
-        }else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(wmsDeliveryPlanEntity.getType())){
+        }else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(wmsDeliveryPlanEntity.getType())
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
             OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
