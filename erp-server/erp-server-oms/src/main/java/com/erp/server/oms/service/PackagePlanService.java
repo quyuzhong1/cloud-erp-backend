@@ -104,7 +104,7 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      * @param ids
      * @param response
      */
-    void batchPrint(List<String> ids, HttpServletResponse response);
+    void batchOrderPrint(List<String> ids, HttpServletResponse response);
 
     /**
      * 新增组包计划

@@ -2026,7 +2026,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
-        map.put("orderType", WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
+        map.put("errorType", SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
@@ -10625,6 +10625,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds) {
+        List<PackagePlanDTO.SoB2cDTO> soB2cDTOS = baseMapper.packagePlanPreview(soIds);
+        if (CollUtil.isEmpty(soB2cDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> shopIds = soB2cDTOS.stream().map(PackagePlanDTO.SoB2cDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.lambdaQuery().select(ShopInfoEntity::getId, ShopInfoEntity::getName).in(ShopInfoEntity::getId, shopIds).list();
+        Map<String, String> shopInfoMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        soB2cDTOS.forEach(soB2cDTO -> {
+            String shopName = shopInfoMap.get(soB2cDTO.getShopId());
+            if (Objects.nonNull(shopName)){
+                soB2cDTO.setShopName(shopName);
+            }
+        });
+        return soB2cDTOS;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
@@ -10639,7 +10657,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         LogisticsBillDTO.PrintLogisticsWaybillDTO dto = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
         dto.setB2cSoId(entity.getId());
-        dto.setDeliveryNo(entity.getCode());
+        dto.setDeliveryNo(entity.getPlatformCode());
         dto.setShopId(entity.getShopId());
         dto.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         dto.setTransportNo(soB2cLogisticsEntity.getCode());

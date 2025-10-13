@@ -13,7 +13,7 @@ public enum WorkflowTaskRecordTypeEnum implements EnumMessage {
     EXHIBITION_ORDER_APPROVE("exhibitionOrderApprove", "展会订单审核"),
     EXHIBITION_ORDER_DISAPPROVE("exhibitionOrderDisapprove", "展会订单反审核"),
     SO_B2C_GET_LOGISTICS("soB2cGetLogistics", "b2c销售订单获取物流单"),
-    PACKAGE_PLAN_GENERATE("packagePlanGenerate", "生成组包计划")
+    PACKAGE_PLAN_GENERATE("packagePlanGenerate", "生成组包计划"),
     ;
     /**
      * 类型

@@ -31,13 +31,12 @@ import com.erp.model.oms.dto.PackagePlanDetailDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.PackageStatusEnum;
-import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.PackagePlanMapper;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.wildberries.dto.*;
@@ -103,6 +102,8 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -831,10 +832,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         String receiverCountry = receiverEntity.getCountry();
         if (CharSequenceUtil.isBlank(receiverCountry)) {
-//            mqResponseDTO.setErrorMsg("销售订单接收人国家不能为空");
+            ShopInfoEntity shopInfo = shopInfoService.getById(soB2cEntity.getShopId());
+            receiverCountry = shopInfo.getDictCountryCode();
             return mqResponseDTO;
         }
-//        String platformCode = soB2cEntity.getPlatformCode();
         if (CharSequenceUtil.isBlank(platformCode)) {
             mqResponseDTO.setErrorMsg("销售订单平台编码不能为空");
             return mqResponseDTO;
@@ -872,6 +873,16 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         String deliveryWarehouseId = packagePlanEntity.getDeliveryWarehouseId();
         if (CharSequenceUtil.isBlank(deliveryWarehouseId)) {
             mqResponseDTO.setErrorMsg("销售订单发货仓库ID不能为空");
+            return mqResponseDTO;
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(deliveryWarehouseId));
+        if (CollUtil.isEmpty(warehouseList)) {
+            mqResponseDTO.setErrorMsg("发货仓库记录不存在");
+            return mqResponseDTO;
+        }
+        WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+        if (warehouse.getCountry().equals(receiverCountry)) {
+            data.put("isCrossOrder", Boolean.FALSE);
             return mqResponseDTO;
         }
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soId);
@@ -967,7 +978,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     }
 
     @Override
-    public void batchPrint(List<String> ids, HttpServletResponse response) {
+    public void batchOrderPrint(List<String> ids, HttpServletResponse response) {
         List<PackagePlanEntity> entityList = this.listByIds(ids);
         List<String> errorCodeList = new ArrayList<>();
         List<String> base64List = new ArrayList<>();
@@ -1018,7 +1029,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", dto.getSoId());
-        map.put("orderType", WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+        map.put("errorType", SoB2cErrorTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){

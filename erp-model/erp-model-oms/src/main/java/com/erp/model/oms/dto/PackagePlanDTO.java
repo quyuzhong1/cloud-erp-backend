@@ -333,7 +333,13 @@ public class PackagePlanDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SoB2cDTO {
+        @NotBlank(message = "销售订单id不能为空")
         private String soId;
         private String soCode;
+        @NotBlank(message = "平台不能为空")
+        private String platformCode;
+        private String shopId;
+        private String shopName;
+        private String platformCreateTime;
     }
 }
