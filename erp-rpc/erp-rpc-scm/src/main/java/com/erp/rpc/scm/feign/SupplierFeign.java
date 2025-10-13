@@ -3,6 +3,7 @@ package com.erp.rpc.scm.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -108,4 +109,13 @@ public interface SupplierFeign {
      */
     @PostMapping("/feign/supplier/checkImportPlantAddr")
     List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(@RequestBody SupplierDTO.AddPlantAddrDTO addPlantAddrDTO);
+
+    /**
+     * 根据供应商类型 获取到已审核的对应供应商
+     * 未审核通过的会置为禁用
+     *
+     * @return
+     */
+    @GetMapping("/feign/supplier/listApproveSupplierByCategoryType")
+    List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType);
 }

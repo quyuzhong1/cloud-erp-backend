@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -14,7 +16,9 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.scm.enums.SupplierCategoryEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -22,6 +26,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.MoldInfoExcelListener;
@@ -39,6 +44,7 @@ import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -54,6 +60,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -100,6 +107,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private FileFeign fileFeign;
     @Resource
     private SupplierFeign supplierFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -184,7 +193,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             MoldInfoDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new MoldInfoDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
             result.add(tabListDTO);
         }
-        return list;
+        return result;
     }
 
     @Override
@@ -719,18 +728,36 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     public void importMoldInfo(BaseDTO.ImportDTO dto) {
         //分类
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
-        Map<String, String> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName));
+        Map<String, BasicCategoryEntity> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getName, Function.identity(),(o1,o2)->o1));
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getValue,(o1,o2)->o1));
 
         //付款条件
         List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
-        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue));
+        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode,(o1,o2)->o1));
 
+        //货款供应商
+        List<SupplierDTO.SupplierSimpleDTO> supplierSimpleList = supplierFeign.listApproveSupplierByCategoryType(SupplierCategoryEnum.LOAN.getCode());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getName, Function.identity(),(o1,o2)->o1));
 
-        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,categoryMap,settleDictMap,paymentConditionMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -759,8 +786,24 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     }
 
     @Override
-    public void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<String> errorNoList, List<MoldInfoImportExcelDTO> errorList2, String importType) {
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<MoldInfoImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        MoldInfoServiceImpl bean = ApplicationContextUtils.getBean(MoldInfoServiceImpl.class);
+        List<MoldInfoEntity> moldInfoEntities = BeanMapper.copyList(successList, MoldInfoEntity.class);
+        boolean save = bean.saveBatch(moldInfoEntities);
+        if(!save) {
+            throw new ServiceException("模具档案保存失败");
+        }
 
+        // 操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        for (MoldInfoEntity moldInfoEntity : moldInfoEntities) {
+            sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
+        }
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
 
     @Override

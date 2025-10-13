@@ -176,5 +176,5 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
      * @return
      */
     void importMoldInfo(BaseDTO.ImportDTO dto);
-    void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<String> errorNoList, List<MoldInfoImportExcelDTO> errorList2, String importType);
+    void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<MoldInfoImportExcelDTO> errorList2, String importType);
 }
