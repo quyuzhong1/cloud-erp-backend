@@ -1,44 +1,28 @@
 package com.erp.server.auth.controller.openapi;
 
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.sys.dto.CfgQueryConditionDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.DictPartitionDTO;
-import com.erp.model.sys.dto.SampleUseUserDTO;
-import com.erp.model.sys.dto.SysAccountingCompanyDTO;
-import com.erp.model.sys.dto.TypeAndValueDTO;
+import com.erp.model.plm.dto.ProductDetailShowDTO;
+import com.erp.model.plm.dto.ProductSkuDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
-import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.SampleRecipientDTO;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.OmsFeign;
+import com.erp.rpc.plm.feign.PlmFeign;
+import com.erp.rpc.scm.feign.ScmFeign;
 import com.erp.rpc.sys.feign.CfgQueryConditionFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.wms.feign.SampleFeign;
 import com.erp.rpc.wms.feign.WmsFeign;
-import com.erp.rpc.plm.feign.PlmFeign;
-import com.erp.rpc.scm.feign.ScmFeign;
 import com.erp.server.auth.config.OpenApi;
 import com.erp.server.auth.server.LoginAuthService;
 import org.springframework.stereotype.Component;
@@ -566,6 +550,11 @@ public class SampleOpenApi {
     @OpenApi("plmCommonFindUserList")
     public ApiResult<List<FindUserDTO>> plmCommonFindUserList(BaseSearchDTO dto) {
         return plmFeign.findUserList(dto);
+    }
+
+    @OpenApi("plmProductDetailList")
+    public ApiResult<PagingVO<ProductDetailShowDTO>> plmProductDetailList(@Valid PagingDTO<ProductSkuDTO> pagingDTO) {
+        return plmFeign.productDetailList(pagingDTO);
     }
 
     // ==================== OMS 服务相关接口 ====================
