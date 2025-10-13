@@ -1,6 +1,10 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
@@ -39,6 +43,9 @@ public class ThirdWarehouseRefreshTokenJob {
 
     @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 刷新三方仓token
@@ -102,10 +109,6 @@ public class ThirdWarehouseRefreshTokenJob {
                     return false;
                 })
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(overseasProviderEntityList)){
-            XxlJobHelper.log("[刷新三方仓token] 任务结束: 无需要刷新token的仓库--------------------------------------->");
-            return ReturnT.SUCCESS;
-        }
         List<OverseasProviderEntity> updateList = new ArrayList<>();
         List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
         for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
@@ -152,6 +155,13 @@ public class ThirdWarehouseRefreshTokenJob {
         if(CollectionUtils.isNotEmpty(updateLogistic)){
             logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
         }
+        //将三方仓的token封装到redis
+        List<OverseasProviderEntity> alreadyAuthList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        for (OverseasProviderEntity overseasProviderEntity : alreadyAuthList) {
+            String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, overseasProviderEntity.getCode(), overseasProviderEntity.getId());
+            redisUtil.set(tokenKey, overseasProviderEntity.getAuthJson(), 86400);
+        }
+
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");
         return ReturnT.SUCCESS;
     }
