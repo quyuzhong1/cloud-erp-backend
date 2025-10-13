@@ -16,6 +16,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -543,6 +545,24 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping(value = "/printSkuLabelConfirm")
     public void printSkuLabelConfirm(@RequestBody @Validated SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto , HttpServletResponse response) {
         soDeliveryNoticeService.printSkuLabelConfirm(dto, response);
+    }
+
+
+    /**
+     * @author jack
+     * @date:  2025-9-16
+     * 根据B2B销售订单ID生成发货通知单并审批通过
+     * @param dto 用于查询相关数据并生成发货通知单
+     * @return MqRequestDTO 包含处理结果的对象，包含ID和错误信息（如果有）
+     */
+    @PostMapping("/generateDeliveryApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return soDeliveryNoticeService.generateDeliveryApprove(dto);
+    }
+
+    @PostMapping("/autoDeliveryDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return soDeliveryNoticeService.autoDeliveryDisApprove(dto);
     }
 
     /**
