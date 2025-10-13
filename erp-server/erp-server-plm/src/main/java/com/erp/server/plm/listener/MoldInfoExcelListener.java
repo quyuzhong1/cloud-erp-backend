@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author jack
@@ -56,6 +55,8 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
     private List<FindUserDTO> userList ;
     //贷款供应商
     private Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap ;
+    //模具类型
+    private Map<String, String> cfgMouldSettingMap;
 
     private final MoldInfoService moldInfoService = SpringUtil.getBean(MoldInfoService.class);
 
@@ -77,6 +78,7 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
                                  Integer importCount,
                                  List<FindUserDTO> userList,
                                  Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap,
+                                 Map<String, String> cfgMouldSettingMap,
                                  Map<String, BasicCategoryEntity> categoryMap,
                                  Map<String, String> settleDictMap,
                                  Map<String, String> paymentConditionMap) {
@@ -84,6 +86,7 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
         this.importType = importType;
         this.importCount = importCount;
         this.userList = userList;
+        this.cfgMouldSettingMap = cfgMouldSettingMap;
         this.supplierMap = supplierMap;
         this.categoryMap = categoryMap;
         this.settleDictMap = settleDictMap;
@@ -156,6 +159,17 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
                 excelDTO.setCode(code);
             }
         }
+
+        String typeName = excelDTO.getTypeName();
+        if(StringUtils.isNotBlank(typeName)){
+            String type = cfgMouldSettingMap.getOrDefault(typeName, "");
+            if(StringUtils.isBlank(type)){
+                errorMsgList.add("模具类型不存在");
+            }else {
+                excelDTO.setType(type);
+            }
+        }
+
 
         String activationDateStr = excelDTO.getActivationDateStr();
         if(StringUtils.isNotBlank(activationDateStr)){
