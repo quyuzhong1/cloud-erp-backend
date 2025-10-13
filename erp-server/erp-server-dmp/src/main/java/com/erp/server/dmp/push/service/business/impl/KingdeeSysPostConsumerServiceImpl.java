@@ -13,7 +13,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -45,7 +44,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.HR_ORG_HRPOST)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_POST.getCode();
@@ -61,7 +60,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.HR_ORG_HRPOST.getCode());
 
         /**
          * 添加
@@ -114,7 +113,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
             //未查找到数据，新增数据
             JSONObject firstJson = json;
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -133,7 +132,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         }
 
 

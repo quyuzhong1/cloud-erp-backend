@@ -210,8 +210,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setPlatformSpuNoList(platformSpuNoList);
         // 所有包含历史映射关系
-        List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));
 
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
@@ -236,12 +234,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
-            }
-            for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
-                List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo(), soB2cEntity.getShopId()));
-                if (CollUtil.isEmpty(listingInfoWithSkuMappingList)) {
-                    throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}平台SKU{}映射关系",soB2cEntity.getCode(),soB2cDetailEntity.getPlatformSkuNo()));
-                }
             }
         }
     }

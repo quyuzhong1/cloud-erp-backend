@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service.mq;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -42,10 +43,9 @@ import static com.common.business.enums.ApproveTypeEnum.REJECT;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC,
+@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_FS_INSTANCES_TO_WORKFLOW_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP,
-        consumeMode = ConsumeMode.ORDERLY)
+        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP)
 public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsumerHandler {
 
     @Resource
@@ -157,6 +157,9 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         // 从 jsonObject 中获取 instanceCode
         CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).eq(CfgThirdProcessEntity::getIsDeleted, false));
 
+        if (ObjectUtil.isEmpty(thirdProcessEntity)) {
+            throw new ServiceException("未找到对应的三方审批生成配置");
+        }
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
 
         List<String> fieldIdList = fieldMapList.stream().map(BaseEntity::getId).collect(Collectors.toList());

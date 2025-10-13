@@ -107,10 +107,16 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             String platformOrderId = mainEntity.getPlatformCode();
             String shopifyShopDomain = shopInfoDTO.getShopDomain();
             String accessToken = shopInfoDTO.getAccessToken();
+            List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrderList = null;
             // 初始化客户端
             ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
-            // Retrieves a list of fulfillment orders for a specific order
-            List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrderList = shopifyRestClient.getFulfillmentOrdersFromOrder(platformOrderId);
+            try {
+                // Retrieves a list of fulfillment orders for a specific order
+                fulfillmentOrdersFromOrderList = shopifyRestClient.getFulfillmentOrdersFromOrder(platformOrderId);
+            }catch (Exception e) {
+                log.error("[Shopify标记发货] 订单ID={}, 异常信息={}", platformOrderId, e.getMessage());
+                throw new ServiceException("获取Shopify订单信息失败：{}",e.getMessage());
+            }
             log.warn("[Shopify标记发货] 订单ID={}, 获取的配送明细参数 fulfillmentOrdersFromOrderList={}",platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
             if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
                 throw new ServiceException("找不到Shopify发货单");

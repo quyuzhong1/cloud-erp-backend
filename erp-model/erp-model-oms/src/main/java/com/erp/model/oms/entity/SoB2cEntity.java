@@ -384,6 +384,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("nfe_invoice_status")
     private String nfeInvoiceStatus;
+    /**
+     * 多渠道类型
+     * SoB2cMultiChannelTypeEnum
+     */
+    @TableField("multi_channel_type")
+    private String multiChannelType;
 
     /**
      * 总税费

@@ -565,7 +565,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                         List<QueryParam> queryParams = new ArrayList<>();
                         queryParams.add(new QueryParam(QueryTypeEnum.IN, "id", filterMainIds));
                         request.setQueryParams(queryParams);
-                        dmpOutputCreateFactory.doHotfixOutputTask(request);
+//                        dmpOutputCreateFactory.doHotfixOutputTask(request);
                 	});
         		}
         	}

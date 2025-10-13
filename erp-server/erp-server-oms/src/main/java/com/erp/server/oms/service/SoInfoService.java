@@ -6,6 +6,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -47,7 +48,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-16 14:41
      */
-    BatchResultDTO submit(SoInfoEntity entity, boolean isFromDht);
+    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht);
 
 
     /**
@@ -527,6 +528,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
 
     void updateSoReceiptAmount(List<String> soIds);
 

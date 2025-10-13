@@ -9,14 +9,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtilsPool;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoOutstockConsumerService;
@@ -46,7 +43,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.SAL_OUTSTOCK)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
@@ -61,7 +58,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         //操作项
         String operate = (String) map.get("operate");
         
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         /**
 		 * 作废
 		 */
@@ -110,7 +107,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -130,7 +127,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
         }
     }
 

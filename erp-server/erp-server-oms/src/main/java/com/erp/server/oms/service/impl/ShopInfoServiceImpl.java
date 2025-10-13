@@ -293,7 +293,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //        }
 
         if (StringUtils.isBlank(countryId)) {
-            countryId = DictValueEnum.ALL.getCode();
+            countryId = DictValueEnum.CN.getCode();
         }
         customer.setName(shop.getName());
         customer.setCountryId(countryId);
@@ -627,6 +627,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setBusinessModel(dto.getBusinessModel());
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
+        shopInfo.setIsMultiChannel(Objects.nonNull(dto.getIsMultiChannel())? dto.getIsMultiChannel() : shopInfo.getIsMultiChannel());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));

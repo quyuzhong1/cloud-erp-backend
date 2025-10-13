@@ -319,7 +319,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setSellerName(userInfo.getUserName());
         }
         //报关费
-        if (!addEntity.getIsDeclare()) {
+        if (Objects.isNull(addEntity.getIsDeclare()) || !addEntity.getIsDeclare()) {
             addEntity.setCustomsFee(BigDecimal.ZERO);
         }
 
@@ -360,6 +360,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setCountryId(base.getCountryId());
             addEntity.setCountryName(base.getCountryName());
         }
+
+        //来源
+        addEntity.setSourceId(dto.getSourceId());
+        addEntity.setSourceType(dto.getSourceType());
+
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -436,7 +441,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
-    public BatchResultDTO submit(SoInfoEntity entity, boolean isFromDht) {
+    public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
@@ -468,7 +473,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //启动审核流程
-        startProcess(entity);
+        if(isNeedProcess){
+            startProcess(entity);
+        }
 
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
@@ -637,7 +644,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity, false);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
     }
 
@@ -1507,7 +1514,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity, false);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
     }
 
@@ -1530,7 +1537,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //审核流程
         approveProcess(entity, dto);
-
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1733,7 +1739,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private void checkRemove(List<String> soIds) {
-
         Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
         if (wmsCount > 0) {
             throw new ServiceException(ApiError.ERROR_92018);
@@ -1820,6 +1825,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(removeIdList)){
             return resultDTOList;
         }
+
         //检查能否删除
         checkRemove(removeIdList);
         //需要同步的数据
@@ -2026,6 +2032,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             countryId = customerInfo.getCountryId();
             customer.setCustomerSellerId(customerInfo.getSellerId());
             customer.setCustomerRemark(customerInfo.getRemark());
+            customer.setDictPlatform(customerInfo.getPlatformType());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息
@@ -4471,13 +4478,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSoService.syncDataToKingdee(obj, operate);
             resultList.add(pushTaskEntity);
         });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        //推送金蝶
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     /**
@@ -4749,4 +4756,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
         return baseMapper.pagePartitionIsNull(query);
     }
+
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId) {
+        return baseMapper.listByExhibitionId(exhibitionId);
+    }
+
+
 }

@@ -32,6 +32,7 @@ import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -292,6 +293,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
+            soOutstock.setDictPlatform(customerInfo.getPlatformType());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -377,6 +379,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //订单标签
         soOutstock.setTradeLabel(entity.getTradeLabel());
         log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
+        // 记录最新出库日期
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
         //保存销售出库单
         soOutstockService.save(soOutstock);
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
@@ -401,7 +407,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
-
 
         //推送金蝶
         sendPushTask(soOutstock);
@@ -640,6 +645,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
             soOutstock.setCustomerRemark(customerInfo.getRemark());
+            soOutstock.setDictPlatform(customerInfo.getPlatformType());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号

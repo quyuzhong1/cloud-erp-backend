@@ -5,12 +5,18 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -97,6 +103,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
+    
+    /**
+     * 获取SKU列表（支持分页和高级查询）
+     */
+    @PostMapping("feign/product/listSku")
+    PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO);
 
     @PostMapping("feign/product/listBySkuNoList")
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNoList);
@@ -636,4 +648,24 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
+
+    /**
+     * 项目任务-任务审批通过
+     */
+    @PostMapping("feign/projectTask/approvalTaskPass")
+    void approvalTaskPass(@RequestBody String processId);
+
+    /**
+     * 审核通过回调
+     * @author will
+     * @date 2025/9/25 17:12
+     * @param dto
+     * @return void
+     */
+    @PostMapping("feign/projectTask/approvalTaskSchedulePass")
+    void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
 }

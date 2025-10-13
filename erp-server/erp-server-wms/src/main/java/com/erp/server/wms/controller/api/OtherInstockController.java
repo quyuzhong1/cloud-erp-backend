@@ -14,6 +14,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.server.wms.query.OtherInstockQueryHandler;
@@ -384,5 +385,42 @@ public class OtherInstockController extends BaseController {
     public ApiResult<?> exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = otherInstockService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+    /**
+     * 样品退回单-关联其他入库单据
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/viewAssociatedDocuments")
+    public ApiResult<List<OtherInstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        List<OtherInstockDTO.ListDTO> resultDTO = otherInstockService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
+    }
+
+
+    @PostMapping("/generateOtherAddAndSubmit")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return otherInstockService.generateOtherAddAndSubmit(dto);
+    }
+
+    /**
+     * @author jack
+     * @date:  2025-9-16
+     * 生成其他入库单和销售出库单并审批流程
+     * @param dto MQ请求数据传输对象，包含流程审批所需的数据
+     * @return MQ响应数据传输对象，包含处理结果和错误信息
+     */
+    @PostMapping("/generateOtherApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return otherInstockService.generateOtherApprove(dto);
+    }
+
+
+    @PostMapping("/autoOtherDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoOtherDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
+        return otherInstockService.autoOtherDisApprove(dto);
     }
 }

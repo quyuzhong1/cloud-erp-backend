@@ -26,14 +26,6 @@ public interface WmsAmazonFeign {
 
 
     /**
-     * 直接消费其他出库单
-     * @author Jim
-     */
-    @PostMapping("/feign/amz/otherOutStock/consumer")
-    ApiResult<T> consumerOtherSoOutStock(@RequestBody PlatformOtherOutStockDTO msg);
-
-
-    /**
      * 批量新增未知国家仓库中心代号记录
      */
     @PostMapping("/feign/amz/CfgAmzFulfillmentCenter/batchInsert")

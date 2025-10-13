@@ -39,6 +39,7 @@ public class RocketMqTopic {
      * 推送数据到金蝶
      */
     public static final String SYNC_KINGDEE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_erp_topic";
+    public static final String SYNC_AMAZON_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_amazon_erp_topic";
     /**
      * 推送数据到金蝶
      */
@@ -164,4 +165,9 @@ public class RocketMqTopic {
      *   workflow 同步飞书审批定义
      */
     public static final String DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_approvals_to_workflow_topic";
+
+    /**
+     * OMS 任务编排
+     */
+    public static final String OMS_WORKFLOW_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record_topic";
 }

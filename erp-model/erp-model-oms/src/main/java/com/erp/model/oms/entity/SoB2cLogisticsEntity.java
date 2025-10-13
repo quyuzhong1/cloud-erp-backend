@@ -157,6 +157,11 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
      */
     @TableField("ioss_tax_no")
     private String iossTaxNo;
+    /**
+     * 申报组织ID（sys_accounting_company.id）
+     */
+    @TableField("declare_org_id")
+    private String declareOrgId;
 
     public static final String MAIN_ID = "main_id";
 

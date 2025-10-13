@@ -14,7 +14,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -55,7 +54,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @KingdeeApi(KingdeePushModuleEnum.BD_EMPINFO)
+    @KingdeeApi
     public void executeSysUserConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_USER_INFO.getCode();
@@ -67,7 +66,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_EMPINFO.getCode());
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
@@ -126,7 +125,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
             String forbidStatus = model.getStr("ForbidStatus", "");
             // A启用 B禁用
@@ -189,7 +188,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
             String forbidStatus = model.getStr("ForbidStatus", "");
             // A启用 B禁用
@@ -233,7 +232,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
                 return;

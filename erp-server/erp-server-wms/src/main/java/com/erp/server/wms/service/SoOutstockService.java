@@ -1,10 +1,17 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.*;
-import com.common.business.dto.base.*;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -75,7 +82,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids,Boolean isNeedProcess);
 
     /**
      * 新增并提交
@@ -593,4 +600,18 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return ApiResult<List<BatchResultDTO>>
      */
     BatchResultDTO generateB2bDeclar(String id);
+
+    /**
+     * 根据来源单号查询销售出库单
+     * @param sourceCode 来源单号
+     * @return
+     */
+    SoOutstockEntity getBySourceCode(String sourceCode);
+
+    /**
+     * @param entity
+     */
+    void updateSkuStdCostOutstock(SoOutstockEntity entity);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
 }

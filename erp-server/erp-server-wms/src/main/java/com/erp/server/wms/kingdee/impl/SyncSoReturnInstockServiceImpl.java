@@ -532,7 +532,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         detailViewDto.setUnit(skuVO.getUnitName());
         detailViewDto.setListPrice(skuVO.getRetailPrice());
 
-        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(viewDTO)) {
         	detailViewDto.setCurrencyName(viewDTO.getName());
             detailViewDto.setCurrencyCode(viewDTO.getId());
@@ -707,6 +707,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList()));
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());

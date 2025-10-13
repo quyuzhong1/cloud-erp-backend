@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
+import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,6 +64,11 @@ public class ExportOmsFeignController {
     private SoPriceService soPriceService;
     @Resource
     private SoPriceChangeService soPriceChangeService;
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
+
+    @Resource
+    private ExhibitionOrderService exhibitionOrderService;
 
     @Resource
     private SoReceiptService soReceiptService;
@@ -285,4 +291,30 @@ public class ExportOmsFeignController {
     public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         return soPriceChangeService.exportSoPriceChange(dto);
     }
+
+    @PostMapping("/soMultiChannel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
+            menuCode = "oms:soMultiChannel:paging",
+            tableAlias = "smc"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
+        return soMultiChannelService.paging(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportExhibitionOrder")
+    @WebAdvanceQuery(handler = ExhibitionOrderQueryHandler.class)
+    public PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto) {
+        return exhibitionOrderService.paging(dto);
+    }
+
 }

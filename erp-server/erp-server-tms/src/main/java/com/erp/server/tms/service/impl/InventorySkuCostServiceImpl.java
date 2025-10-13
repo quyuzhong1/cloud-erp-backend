@@ -655,4 +655,22 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             return MathUtil.ZERO;
         }
     }
+
+    @Override
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        // 参数校验
+        if (CollUtil.isEmpty(queryDTO.getSkuIds()) || CollUtil.isEmpty(queryDTO.getWarehouseIds()) || 
+            CharSequenceUtil.isBlank(queryDTO.getOrgId())) {
+            return Collections.emptyList();
+        }
+
+        // 调用Mapper查询数据
+        List<InventorySkuCostDTO.SkuCostCNYDTO> result = baseMapper.getSkuCostInCNY(
+            queryDTO.getSkuIds(), 
+            queryDTO.getWarehouseIds(), 
+            queryDTO.getOrgId()
+        );
+
+        return result != null ? result : Collections.emptyList();
+    }
 }

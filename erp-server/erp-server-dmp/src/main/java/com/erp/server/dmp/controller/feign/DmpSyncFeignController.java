@@ -1,7 +1,10 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpSyncFeignService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +29,8 @@ import java.util.Map;
 public class DmpSyncFeignController {
     @Resource
     private DmpSyncFeignService dmpSyncFeignService;
-
+    @Resource
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
     /**
      * 查询金蝶数据
      * @param paramDTO
@@ -36,5 +40,15 @@ public class DmpSyncFeignController {
     public List<Map<String, Object>> listKingdeeData(@RequestBody @Valid DmpSyncKingdeeDTO.ParamDTO paramDTO){
         List<Map<String, Object>> list = dmpSyncFeignService.listKingdeeData(paramDTO);
         return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
+
+    /**
+     * 无需同步
+     * @param dto
+     * @return
+     */
+    @PostMapping("/dmpOutputTaskRecord/batchNoNeedSyncBySourceCode")
+    public Boolean batchNoNeedSyncBySourceCode(@RequestBody BaseIdsDTO.SourceCodeDTO dto){
+        return dmpOutputTaskRecordService.batchNoNeedSyncBySourceCode(dto.getSourceCodeList() , dto.getRemark());
     }
 }

@@ -1,14 +1,13 @@
 package com.erp.server.scm.handler;
 
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
-import com.erp.server.scm.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 /**
@@ -34,10 +33,41 @@ public class ErpObjectHandler implements MetaObjectHandler {
         this.setFieldValByName("version", MathUtil.ONE, metaObject);
         this.setFieldValByName("createTime", localDateTime, metaObject);
         this.setFieldValByName("updateTime", localDateTime, metaObject);
-        this.setFieldValByName("createUserId", userId, metaObject);
-        this.setFieldValByName("createUserName", userName, metaObject);
-        this.setFieldValByName("updateUserId", userId, metaObject);
-        this.setFieldValByName("updateUserName", userName, metaObject);
+
+        Object createUserId = null;;
+        try {
+            createUserId = metaObject.getValue("createUserId");
+        } catch (Exception e) {
+        }
+        Object createUserName = null;;
+        try {
+            createUserName = metaObject.getValue("createUserName");
+        } catch (Exception e) {
+        }
+
+        Object updateUserId = null;;
+        try {
+            updateUserId = metaObject.getValue("updateUserId");
+        } catch (Exception e) {
+        }
+
+        Object updateUserName = null;;
+        try {
+            updateUserName = metaObject.getValue("updateUserName");
+        } catch (Exception e) {
+        }
+        if (ObjUtil.isEmpty(createUserId)) {
+            this.setFieldValByName("createUserId", userId, metaObject);
+        }
+        if (ObjUtil.isEmpty(createUserName)) {
+            this.setFieldValByName("createUserName", userName, metaObject);
+        }
+        if (ObjUtil.isEmpty(updateUserId)) {
+            this.setFieldValByName("updateUserId", userId, metaObject);
+        }
+        if (ObjUtil.isEmpty(updateUserName)) {
+            this.setFieldValByName("updateUserName", userName, metaObject);
+        }
     }
 
 

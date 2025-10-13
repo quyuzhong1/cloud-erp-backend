@@ -47,6 +47,7 @@
         so.shop_id AS shopId,
         so.remark AS remark,
         so.customer_remark AS customerRemark,
+        so.dict_platform AS dictPlatform,
         sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
@@ -122,6 +123,7 @@
            so.country AS countryId,
            so.remark AS remark,
            so.customer_remark AS customerRemark,
+           so.dict_platform AS dictPlatform,
            sod.id as detailId,
            sod.sku_id AS skuId,
            sod.sku_no AS skuNo,
@@ -294,7 +296,7 @@
         SELECT
             sum(sod.actual_qty) as actualTotalQty,
             sum(sod.plan_qty) as planTotalQty,
-            sum(sod.all_amount_local_currency) as totalTaxAmount
+            CAST(sum(ROUND(((ROUND(sod.price * ((sod.tax_rate / 100) + 1),4)) * sod.exchange_rate),4) * sod.actual_qty)  AS VARCHAR) as totalTaxAmount
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id
         WHERE
@@ -514,5 +516,33 @@
             </foreach>
         </if>
         order by so.actual_delivery_date desc
+    </select>
+
+    <select id="listSoOutstockByExhibitionId"  resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$DownstreamListDTO">
+        SELECT
+            so.ID,
+            so.code,
+            so.approve_status,
+            so.invalid_status,
+            so.approve_time,
+            so.approve_status,
+            so.approve_user_name,
+            so.bill_date,
+            so.remark,
+            so.warehouse_id,
+            so.warehouse_name,
+            sod.ID AS detailId,
+            sod.sku_id,
+            sod.sku_no,
+            sod.actual_qty AS qty,
+            sod.remark AS detailRemark
+        FROM
+            so_outstock so
+                left JOIN so_outstock_detail sod ON so.ID = sod.main_id AND sod.is_deleted = FALSE
+        WHERE
+            so.is_deleted = FALSE
+          AND so.source_id = #{ exhibitionId }
+        ORDER BY
+            so.create_time DESC
     </select>
 </mapper>

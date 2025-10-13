@@ -3,6 +3,8 @@ package com.erp.server.plm.controller.feign;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
+import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.TaskFollowerService;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,9 @@ public class ProjectTaskFeignController {
 
     @Resource
     private TaskFollowerService taskFollowerService;
+
+    @Resource
+    private ProjectPlanService projectPlanService;
 
     /**
      * 更新任务列表负责人名称
@@ -61,4 +66,27 @@ public class ProjectTaskFeignController {
         return taskFollowerService.listByTaskIds(preTaskIds);
     }
 
+    /**
+     * 项目任务审核回调
+     * @author will
+     * @date 2025/9/25 16:16
+     * @param processId
+     * @return void
+     */
+    @PostMapping("/approvalTaskPass")
+    public void approvalTaskPass(@RequestBody String processId){
+         projectTaskService.approvalTaskPass(processId);
+    }
+
+    /**
+     * 项目排期审核回调
+     * @author will
+     * @date 2025/9/25 16:16
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/approvalTaskSchedulePass")
+    public void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto){
+        projectPlanService.processPass(dto);
+    }
 }

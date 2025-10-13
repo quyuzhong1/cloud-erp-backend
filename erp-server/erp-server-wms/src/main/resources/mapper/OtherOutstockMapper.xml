@@ -30,6 +30,9 @@
         <result column="approve_time" property="approveTime" />
         <result column="approve_user_name" property="approveUserName" />
         <result column="approve_user_id" property="approveUserId" />
+        <result column="source_type" property="sourceType" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
@@ -54,7 +57,9 @@
             oo.approve_user_name as approveUserName,
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
-            oo.create_time as createTime
+            oo.create_time as createTime,
+            oo.source_code as sourceCode,
+            ood.remark as detailRemark
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false 
@@ -135,7 +140,9 @@
             oo.approve_user_name as approveUserName,
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
-            oo.create_time as createTime
+            oo.create_time as createTime,
+            oo.source_code as sourceCode,
+            ood.remark as detailRemark
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
@@ -162,11 +169,9 @@
         oo.code,
         oo.approve_status,
         oo.warehouse_name,
-        oo.create_time,
-        oo.process_apply_code
-        from other_outstock oo
-        inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
-        inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
+        oo.create_time
+        FROM other_outstock oo
+        INNER JOIN other_outstock_detail ood on oo.id = ood.main_id AND ood.is_deleted = FALSE
         WHERE oo.is_deleted = FALSE
         AND oo.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
@@ -189,4 +194,43 @@
         ORDER BY oo.create_time desc
     </select>
 
+    <select id="viewAssociatedDocuments" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
+        select
+            oo.id,
+            ood.id as detailId,
+            oo.code,
+            oo.type,
+            oo.out_type as outType,
+            ooc.name as customerName,
+            oo.inventory_direction as inventoryDirection,
+            oo.approve_status as approveStatus,
+            oo.invalid_status as invalidStatus,
+            ood.sku_id as skuId,
+            ood.sku_no as skuNo,
+            oo.bill_date as billDate,
+            ood.actual_qty as actualQty,
+            ood.unit,
+            oo.warehouse_name as warehouseName,
+            ood.warehouse_location as warehouseLocation,
+            oo.process_apply_code as processApplyCode,
+            oo.approve_user_name as approveUserName,
+            oo.approve_time as approveTime,
+            oo.create_user_name as createUserName,
+            oo.create_time as createTime,
+            ood.remark as detailRemark
+        from other_outstock oo
+        left join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
+        left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
+        <where>
+            oo.is_deleted = false
+            and oo.source_type = 'sampleRecipient'
+            <if test="params.id != null and params.id != ''">
+                and oo.source_id = #{params.id}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        order by oo.create_time desc
+    </select>
 </mapper>

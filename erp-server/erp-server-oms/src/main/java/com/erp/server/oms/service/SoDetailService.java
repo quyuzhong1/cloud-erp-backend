@@ -100,6 +100,8 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      **/
     List<SoDetailEntity> listSoDetailByMainId(String id);
 
+    List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList);
+
     /**
      * 根据 主表id 获取到明细
      *

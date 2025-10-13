@@ -55,4 +55,6 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
     List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
 
     DmpInputTaskEntity getByInputIdAndExtendJson(String inputId, String key, String value);
+    
+    void createNewTask(DmpInputTaskEntity dmpInputTaskEntity);
 }

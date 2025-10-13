@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleLedgerFlowMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleLedgerFlowEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sample_ledger_id" property="sampleLedgerId" />
+       <result column="operate_time" property="operateTime" />
+       <result column="bill_date" property="billDate" />
+       <result column="user_id" property="userId" />
+       <result column="user_name" property="userName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="dict_biz_type" property="dictBizType" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="product_name" property="productName" />
+       <result column="use_user_id" property="useUserId" />
+       <result column="use_user_name" property="useUserName" />
+       <result column="qty" property="qty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        sample_ledger_id, operate_time, bill_date, user_id, user_name, dept_id, dept_name, source_code, source_type, source_id, source_detail_id, dict_biz_type, sku_no, sku_id, product_name, use_user_id, use_user_name, qty
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
+        SELECT
+            slf.id,
+            slf.create_user_id,
+            slf.create_user_name,
+            slf.create_time,
+            slf.update_user_id,
+            slf.update_user_name,
+            slf.update_time,
+            slf.version,
+            slf.is_deleted,
+            slf.sample_ledger_id,
+            slf.operate_time,
+            slf.bill_date,
+            slf.user_id,
+            slf.user_name,
+            slf.dept_id,
+            slf.dept_name,
+            slf.source_code,
+            slf.source_type,
+            slf.source_id,
+            slf.source_detail_id,
+            slf.dict_biz_type,
+            slf.sku_no,
+            slf.sku_id,
+            slf.product_name,
+            slf.use_user_id,
+            slf.use_user_name,
+            slf.qty
+        FROM sample_ledger_flow slf
+        WHERE
+        ${params.sqlMap.default}
+        AND slf.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        slf.create_time DESC
+    </select>
+
+    <!-- 分页导出Excel查询 -->
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
+        SELECT
+            slf.id, slf.create_user_id, slf.create_user_name, slf.create_time, slf.update_user_id, slf.update_user_name, slf.update_time, slf.version, slf.is_deleted, slf.sample_ledger_id, slf.operate_time, slf.bill_date, slf.user_id, slf.user_name, slf.dept_id, slf.dept_name, slf.source_code, slf.source_type, slf.source_id, slf.source_detail_id, slf.dict_biz_type, slf.sku_no, slf.sku_id, slf.product_name, slf.use_user_id, slf.use_user_name, slf.qty
+        FROM sample_ledger_flow slf
+        WHERE
+        ${params.sqlMap.default}
+        AND slf.is_deleted = false
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND slf.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        slf.bill_date desc,slf.create_time DESC
+    </select>
+
+    <!-- 根据四个条件查询数量总和 -->
+    <select id="selectTotalQtyByConditions" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(slf.qty), 0)
+        FROM sample_ledger_flow slf
+        WHERE slf.is_deleted = false
+        AND slf.user_id = #{userId}
+        AND slf.use_user_id = #{useUserId}
+        AND slf.sku_no = #{skuNo}
+        AND slf.sku_id = #{skuId}
+    </select>
+
+    <!-- 根据四个条件查询SampleLedger记录 -->
+    <select id="selectSampleLedgerByConditions" resultType="com.erp.model.wms.entity.SampleLedgerEntity">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.sku_id,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty
+        FROM sample_ledger sl
+        WHERE sl.is_deleted = false
+        AND sl.user_id = #{userId}
+        AND sl.use_user_id = #{useUserId}
+        AND sl.sku_no = #{skuNo}
+        AND sl.sku_id = #{skuId}
+        LIMIT 1
+    </select>
+
+    <!-- 根据台账ID查询数量总和 -->
+    <select id="selectTotalQtyByLedgerId" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(slf.qty), 0)
+        FROM sample_ledger_flow slf
+        WHERE slf.is_deleted = false
+        AND slf.sample_ledger_id = #{ledgerId}
+    </select>
+
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
+        SELECT
+            slf.id,
+            slf.create_user_id,
+            slf.create_user_name,
+            slf.create_time,
+            slf.update_user_id,
+            slf.update_user_name,
+            slf.update_time,
+            slf.version,
+            slf.is_deleted,
+            slf.sample_ledger_id,
+            slf.operate_time,
+            slf.bill_date,
+            slf.user_id,
+            slf.user_name,
+            slf.dept_id,
+            slf.dept_name,
+            slf.source_code,
+            slf.source_type,
+            slf.source_id,
+            slf.source_detail_id,
+            slf.dict_biz_type,
+            slf.sku_no,
+            slf.sku_id,
+            slf.product_name,
+            slf.use_user_id,
+            slf.use_user_name,
+            slf.qty
+        FROM sample_ledger_flow slf
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND slf.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        slf.create_time DESC
+    </select>
+
+</mapper>

@@ -153,6 +153,11 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
     }
 
 

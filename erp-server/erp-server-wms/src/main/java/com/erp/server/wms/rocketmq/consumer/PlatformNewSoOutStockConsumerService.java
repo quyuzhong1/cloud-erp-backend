@@ -1,14 +1,16 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignBuilder;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
@@ -16,15 +18,16 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.server.wms.service.InventoryClosedRecordService;
+import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +39,9 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +62,10 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
     private SoOutstockService soOutstockService;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
-
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
     @Override
     public String getBizName() {
         return "平台销售出库单";
@@ -71,7 +79,24 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         if (StringUtils.isBlank(dto.getShopId())){
             ServiceException.runError("【生成亚马逊销售出库单】销售订单：{} 对应店铺或站点不存在", dto.getPlatformCode());
         }
-
+        // 多渠道处理
+        if (dto.hasMultiChannel()){
+            if (StringUtils.isBlank(dto.getMerchantOrderId())) {
+                log.warn("【新中台销售出库单消费】:多渠道订单:商家订单ID为空：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+                return;
+            }
+            // 不存在多渠道订单跳过
+            List<SoMultiChannelEntity> entityList = FeignQuery.create(SoMultiChannelEntity.class)
+                    .eq(SoMultiChannelEntity::getDeliveryCode, dto.getMerchantOrderId())
+                    .list();
+            if (CollectionUtils.isEmpty(entityList)){
+                log.warn("【新中台销售出库单消费】:多渠道订单不存在跳过：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+                return;
+            }
+            //处理多渠道出库
+            handleMultiChannel(dto);
+            return;
+        }
         // 查询销售订单是否存在?
         // 忽略店铺
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
@@ -81,10 +106,8 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
                 SourceTypeEnum.SO_B2C.getCode()
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
-            log.warn("[新中台销售出库单消费]:B2C销售单不存在：单号={}", dto.getPlatformCode());
-            // 恢复待清洗
-            // 发送预警
-            return;
+            log.warn("【新中台销售出库单消费】:B2C销售单不存在：单号={},店铺ID={}", dto.getPlatformCode(), dto.getShopId());
+            ServiceException.runError("【新中台销售出库单消费】B2C销售单不存在：{}, 店铺ID={}", dto.getPlatformCode(), dto.getShopId());
         }
         SoB2cEntity soB2cEntity = soB2cEntityList.stream()
                 .filter(e -> e.getShopId().equalsIgnoreCase(dto.getShopId()))
@@ -101,9 +124,8 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         }
 
         if (null == soB2cEntity) {
-            log.warn("[新中台销售出库单消费]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
-            // 发送预警
-            return;
+            log.warn("【新中台销售出库单消费】:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
+            ServiceException.runError("【新中台销售出库单消费】B2C销售单不存在：{}, 店铺ID={}", dto.getPlatformCode(), dto.getShopId());
         }
 
         // 记录订单数据（独立事务）
@@ -186,5 +208,49 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         // 检查和生成销售出库单
         soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
     }
-
+    private void handleMultiChannel(PlatformSoOutStockDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getMerchantOrderId())){
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】发货单号为空", dto.getPlatformCode());
+            return;
+        }
+        List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
+        //生成销售出库单
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soMultiChannelFeign.getSoOutstockGenerateB2cDTO(dto.getMerchantOrderId());
+        if (Objects.isNull(generateB2cDTO)){
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】出库基础信息不足", dto.getPlatformCode());
+            return;
+        }
+        generateB2cDTO.setThirdCode(dto.getPlatformCode());
+        LinkedList<SoOutstockDetailDTO.AddDTO> detailList1 = new LinkedList<>();
+        generateB2cDTO.getDetailList().forEach(detail -> {
+            PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> e.getMerchantOrderItemId().equals(detail.getSoDetailId())).findFirst().orElse(null);
+            if (Objects.nonNull(platformSoOutStockDetailDTO)) {
+                String platformDetailId = platformSoOutStockDetailDTO.getPlatformDetailId();
+                Integer count = 0;
+                if (CharSequenceUtil.isNotBlank(platformDetailId)){
+                    count = soOutstockDetailService.lambdaQuery().eq(SoOutstockDetailEntity::getPlatformDetailId, platformDetailId).count();
+                }
+                if (count > 0){
+                    log.warn("[销售出库销售消费服务]:当前销售出库单【{}】已存在", dto.getPlatformCode());
+                }else {
+                    detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
+                    detail.setPlatformCode(platformSoOutStockDetailDTO.getPlatformCode());
+                    detail.setPlatformDetailId(platformSoOutStockDetailDTO.getPlatformDetailId());
+                    generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
+                    detailList1.add(detail);
+                }
+            }
+        });
+        if (CollUtil.isEmpty(detailList1)){
+            //没有可以出库的明细
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】无可以出库的明细", dto.getPlatformCode());
+            return;
+        }
+        generateB2cDTO.setDetailList(detailList1);
+        Boolean result = soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+        if (result){
+            //更新多渠道订单生成出库单标识
+            soMultiChannelFeign.updateSoOutstock(dto);
+        }
+    }
 }

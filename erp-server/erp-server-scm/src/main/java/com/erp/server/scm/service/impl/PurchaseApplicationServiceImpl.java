@@ -544,7 +544,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (CollectionUtils.isNotEmpty(defaultSupplierAccountList)) {
                 SupplierAccountEntity supplierAccountEntity = defaultSupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
                 if (Objects.nonNull(supplierAccountEntity)) {
-                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
+                    supplierDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

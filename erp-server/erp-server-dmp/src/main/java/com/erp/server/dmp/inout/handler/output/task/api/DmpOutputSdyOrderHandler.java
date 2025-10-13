@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
@@ -33,6 +34,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoOutstockService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +100,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             List<QueryParam> queryParams = new ArrayList<>();
             queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", platformCodeList));
             request.setQueryParams(queryParams);
-            dmpOutputCreateFactory.doHotfixOutputTask(request);
+//            dmpOutputCreateFactory.doHotfixOutputTask(request);
         }
     }
 
@@ -130,6 +132,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         //如果是亚马逊的优惠额在明细里
         if (PlatformDictEnum.AMAZON.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
             totalDiscount = dmpSoDetailEntities.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if(StringUtils.isNotBlank(dmpSoInfoEntity.getThirdCode()) && dmpSoInfoEntity.getThirdCode().startsWith("S")) {
+            	return result;
+            }
         }
 
 
@@ -781,6 +786,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     				}
     			}
             }
+            
+            shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());
+            shudiyunB2cOrderDTO.setSuite_name(dmpSoDetailEntity.getSuiteName());
+            shudiyunB2cOrderDTO.setSigning_quantity(dmpSoDetailEntity.getSuiteQty());
+            shudiyunB2cOrderDTO.setBatch_no(dmpSoDetailEntity.getPlatformDetailId());
+            shudiyunB2cOrderDTO.setChild_node_no(dmpSoInfoEntity.getWarehouseId());
+            
+            if(shudiyunB2cOrderDTO.getGoods_transaction_quantity() == null || shudiyunB2cOrderDTO.getGoods_transaction_quantity() == 0) {
+            	shudiyunB2cOrderDTO.setGoods_status("已取消");
+            }
+            
             shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
@@ -871,19 +887,83 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         		.collect(Collectors.toList());
         Map<String, Object> wdtSoOutstockMap = new HashMap<>();
         if(CollUtil.isNotEmpty(wdtThirdCodeList)) {
-        	wdtSoOutstockMap = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, wdtThirdCodeList)
-        			.select(DmpSoOutstockDetailEntity::getSrcOrderDetailId).list()
-        			.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
+        	List<DmpSoOutstockDetailEntity> outStockDetailList = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, wdtThirdCodeList).list();
+        	if(CollUtil.isNotEmpty(outStockDetailList)) {
+        		Set<String> finishIds = ApplicationContextUtils.getBean(DmpSoOutstockService.class).lambdaQuery().in(DmpSoOutstockEntity::getId, outStockDetailList.stream().map(DmpSoOutstockDetailEntity::getMainId).collect(Collectors.toList()))
+                		.eq(DmpSoOutstockEntity::getStatus, "110").select(DmpSoOutstockEntity::getId).list().stream().map(DmpSoOutstockEntity::getId).collect(Collectors.toSet());
+                wdtSoOutstockMap = outStockDetailList.stream().filter(o -> finishIds.contains(o.getMainId()))
+                		.collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
+        	}
         }
         cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
+        Set<String> jdSuitShopList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitShop").list()
+        		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
+        Set<String> jdSuitWarehouseList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitWarehouse").list()
+        		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
         for(String changId : changeIds) {
             Map<String, ShudiyunB2cOrderDTO> result = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId) , dmpSoReceiverEntityMap.get(changId) , cacheMap);
             if(!result.isEmpty()) {
+            	List<ShudiyunB2cOrderDTO> jdShopDataList = new ArrayList<>();
                 for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
-                    map.put(r.getKey(), JSON.toJSONString(r.getValue()));
+                    ShudiyunB2cOrderDTO value = r.getValue();
+                    String shopNo = value.getShop_no();
+                    String warehouseId = value.getChild_node_no();
+                    if(jdSuitShopList.contains(shopNo) && jdSuitWarehouseList.contains(warehouseId) && "配货单".equals(value.getTransaction_type()) && StringUtils.isNotBlank(value.getSuite_no())) {
+                    	value.setParent_node_no(r.getKey());
+                    	jdShopDataList.add(value);
+                    }else {
+                    	value.setBatch_no(null);
+                    	value.setSigning_quantity(null);
+                    	value.setChild_node_no(null);
+                        map.put(r.getKey(), JSON.toJSONString(value));
+                    }
+                }
+                if(CollUtil.isNotEmpty(jdShopDataList)) {
+                	Map<String, List<ShudiyunB2cOrderDTO>> platformDetailIdMaps = jdShopDataList.stream().collect(Collectors.groupingBy(ShudiyunB2cOrderDTO::getBatch_no));
+                	Integer total_goods_quantity = platformDetailIdMaps.values().stream().map(p -> p.get(0))
+                			.map(ShudiyunB2cOrderDTO::getSigning_quantity).filter(Objects::nonNull).reduce(Integer::sum).orElse(0);
+                	for(Map.Entry<String, List<ShudiyunB2cOrderDTO>> platformDetailIdMap : platformDetailIdMaps.entrySet()) {
+                		List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = platformDetailIdMap.getValue();
+                		shudiyunB2cOrderDTOList.sort((s1 , s2) -> s1.getParent_node_no().compareTo(s2.getParent_node_no()));
+                		ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = shudiyunB2cOrderDTOList.get(0);
+                		shudiyunB2cOrderDTO.setTotal_goods_quantity(total_goods_quantity);
+                		shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(total_goods_quantity);
+                		Integer signing_quantity = shudiyunB2cOrderDTO.getSigning_quantity();
+						shudiyunB2cOrderDTO.setGoods_transaction_quantity(signing_quantity);
+                		
+                		shudiyunB2cOrderDTO.setGoods_transaction_amount(shudiyunB2cOrderDTOList.stream().map(ShudiyunB2cOrderDTO::getGoods_transaction_amount).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                		shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(shudiyunB2cOrderDTOList.stream().map(ShudiyunB2cOrderDTO::getGoods_discount_deduction_amount).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                		shudiyunB2cOrderDTO.setFreight(shudiyunB2cOrderDTOList.stream().map(ShudiyunB2cOrderDTO::getFreight).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                		shudiyunB2cOrderDTO.setGoods_taxation(shudiyunB2cOrderDTOList.stream().map(ShudiyunB2cOrderDTO::getGoods_taxation).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                		
+                		if(signing_quantity != 0) {
+                			shudiyunB2cOrderDTO.setPrice(shudiyunB2cOrderDTO.getGoods_transaction_amount().divide(new BigDecimal(signing_quantity) , 4 , RoundingMode.HALF_UP));
+                		}else {
+                			shudiyunB2cOrderDTO.setPrice(BigDecimal.ZERO);
+                		}
+                		
+                		String suite_no = shudiyunB2cOrderDTO.getSuite_no();
+                		shudiyunB2cOrderDTO.setSku_code(suite_no);
+                		shudiyunB2cOrderDTO.setMsku_code(suite_no);
+                		shudiyunB2cOrderDTO.setGoods_no(suite_no);
+                		
+                		String suite_name = shudiyunB2cOrderDTO.getSuite_name();
+                		shudiyunB2cOrderDTO.setSku_name(suite_name);
+                		shudiyunB2cOrderDTO.setMsku_name(suite_name);
+                		shudiyunB2cOrderDTO.setGoods_name(suite_name);
+                		
+                		String key = shudiyunB2cOrderDTO.getParent_node_no();
+                		
+                		shudiyunB2cOrderDTO.setBatch_no(null);
+                		shudiyunB2cOrderDTO.setSigning_quantity(null);
+                		shudiyunB2cOrderDTO.setChild_node_no(null);
+                		shudiyunB2cOrderDTO.setParent_node_no(null);
+						map.put(key, JSON.toJSONString(shudiyunB2cOrderDTO));
+                	}
                 }
             }
         }
+        
         return map;
     }
 

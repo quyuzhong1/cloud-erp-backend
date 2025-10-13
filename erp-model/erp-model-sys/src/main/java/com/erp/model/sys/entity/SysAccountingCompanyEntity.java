@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Administrator
@@ -65,6 +66,30 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     @TableField("kingdee_code")
     private String kingdeeCode;
+    
+    /**
+     * 统一社会信用代码
+     */
+    @TableField("usci_code")
+    private String usciCode;
+    
+    /**
+     * 组织职能
+     */
+    @TableField("org_functions")
+    private String orgFunctions;
+    
+    /**
+     * 组织职能名称
+     */
+    @TableField(exist = false)
+    private String orgFunctionNames;
+    
+    /**
+     * 组织职能列表
+     */
+    @TableField(exist = false)
+    private List<String> orgFunctionList;
 
     /**
      * 是否禁用

@@ -987,6 +987,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String supplierId;
         /**
+         * 物流平台类型
+         * AmazonMultiChannel 亚马逊多渠道物流
+         */
+        private String logisticsPlatform;
+        /**
          * 禁用状态
          */
         private Boolean disabled;

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleInitialLedgerMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleInitialLedgerEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="code" property="code" />
+       <result column="user_id" property="userId" />
+       <result column="user_name" property="userName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+       <result column="bill_date" property="billDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+                 approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, user_id, user_name, dept_id, dept_name, bill_date
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
+        SELECT
+            sil.id AS id,
+            sil.approve_status AS approveStatus,
+            sil.approve_user_id AS approveUserId,
+            sil.approve_user_name AS approveUserName,
+            sil.approve_time AS approveTime,
+            sil.invalid_status AS invalidStatus,
+            sil.invalid_remark AS invalidRemark,
+            sil.invalid_time AS invalidTime,
+            sil.code AS code,
+            sil.user_id AS userId,
+            sil.user_name AS userName,
+            sil.dept_id AS deptId,
+            sil.dept_name AS deptName,
+            sil.bill_date AS billDate,
+            sil.create_time AS createTime,
+            sil.create_user_name AS createUserName,
+            sild.sku_no AS skuNo,
+            sild.sku_id AS skuId,
+            sild.product_name AS productName,
+            sild.qty AS qty
+        FROM sample_initial_ledger sil
+        LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND sil.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sil.create_time DESC, sil.id ASC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_initial_ledger where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
+        SELECT
+            sil.id AS id,
+            sil.approve_status AS approveStatus,
+            sil.approve_user_id AS approveUserId,
+            sil.approve_user_name AS approveUserName,
+            sil.approve_time AS approveTime,
+            sil.invalid_status AS invalidStatus,
+            sil.invalid_remark AS invalidRemark,
+            sil.invalid_time AS invalidTime,
+            sil.code AS code,
+            sil.user_id AS userId,
+            sil.user_name AS userName,
+            sil.dept_id AS deptId,
+            sil.dept_name AS deptName,
+            sil.bill_date AS billDate,
+            sil.create_time AS createTime,
+            sil.create_user_name AS createUserName,
+            sild.sku_no AS skuNo,
+            sild.sku_id AS skuId,
+            sild.product_name AS productName,
+            sild.qty AS qty
+        FROM sample_initial_ledger sil
+        LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND sil.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sil.create_time DESC, sil.id ASC
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$TabListDTO">
+        SELECT
+        sil.approve_status AS tabFlag,
+        count(*) AS count
+        FROM  sample_initial_ledger sil
+        WHERE sil.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sil.approve_status
+    </select>
+
+</mapper>
