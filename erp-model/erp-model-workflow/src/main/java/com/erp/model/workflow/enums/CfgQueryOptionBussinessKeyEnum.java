@@ -53,6 +53,7 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单"),
 	SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单"),
 	EXHIBITION_ORDER("exhibitionOrder", "展会订单"),
+	MOLD_INFO("moldInfo", "模具档案"),
 	SAMPLE_RECIPIENT("sampleRecipient","样品领用单"),
 	SAMPLE_BACK_INFO("sampleBackInfo","样品退回单"),
 	SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账"),

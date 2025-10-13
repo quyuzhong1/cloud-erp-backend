@@ -6,6 +6,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.plm.service.MoldInfoService;
 import com.erp.server.plm.service.ProductDetailImagesService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ public class ImportPlmFeignController {
     private ProductDetailImagesService productDetailImagesService;
     @Resource
     private SkuStdCostDetailService skuStdCostDetailService;
+    @Resource
+    private MoldInfoService moldInfoService;
 
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -62,6 +65,16 @@ public class ImportPlmFeignController {
             }
         } catch (Exception e) {
             log.error("【SKU标准成本导入】失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importMoldInfo")
+    public void importMoldInfo(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            moldInfoService.importMoldInfo(dto);
+        } catch (Exception e) {
+            log.error("导入模具档案失败", e);
             updateTask(dto.getTaskId(), e);
         }
     }

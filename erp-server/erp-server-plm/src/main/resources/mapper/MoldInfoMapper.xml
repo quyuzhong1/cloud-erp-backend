@@ -29,7 +29,6 @@
        <result column="project_charge_id" property="projectChargeId" />
        <result column="project_charge_name" property="projectChargeName" />
        <result column="category_id" property="categoryId" />
-       <result column="category_code" property="categoryCode" />
        <result column="type" property="type" />
        <result column="mold_holes" property="moldHoles" />
        <result column="size_unit" property="sizeUnit" />
@@ -50,20 +49,69 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        invalid_status, remark, invalid_remark, approve_status, approve_time, approve_user_id, approve_user_name, code, name, tag, project_code, project_name, charge_id, charge_name, project_charge_id, project_charge_name, category_id, category_code, type, mold_holes, size_unit, product_length, product_width, product_height, materials, cycle, activation_date, supplier_id, supplier_code, supplier_name, tax_price, rate, pay_method_id, payment_condition
+        mi.id AS id,
+mi.create_user_id AS createUserId,
+mi.create_user_name AS createUserName,
+mi.create_time AS createTime,
+mi.update_user_id AS updateUserId,
+mi.update_user_name AS updateUserName,
+mi.update_time AS updateTime,
+mi.version AS version,
+mi.is_deleted AS isDeleted,
+mi.invalid_status AS invalidStatus,
+mi.remark AS remark,
+mi.invalid_remark AS invalidRemark,
+mi.approve_status AS approveStatus,
+mi.approve_time AS approveTime,
+mi.approve_user_id AS approveUserId,
+mi.approve_user_name AS approveUserName,
+mi.code AS code,
+mi.name AS name,
+mi.tag AS tag,
+mi.project_code AS projectCode,
+mi.project_name AS projectName,
+mi.charge_id AS chargeId,
+mi.charge_name AS chargeName,
+mi.project_charge_id AS projectChargeId,
+mi.project_charge_name AS projectChargeName,
+mi.category_id AS categoryId,
+mi.category_code AS categoryCode,
+mi.type AS type,
+mi.mold_holes AS moldHoles,
+mi.size_unit AS sizeUnit,
+mi.product_length AS productLength,
+mi.product_width AS productWidth,
+mi.product_height AS productHeight,
+mi.materials AS materials,
+mi.cycle AS cycle,
+mi.activation_date AS activationDate,
+mi.supplier_id AS supplierId,
+mi.supplier_code AS supplierCode,
+mi.supplier_name AS supplierName,
+mi.tax_price AS taxPrice,
+mi.rate AS rate,
+mi.pay_method_id AS payMethodId,
+mi.payment_condition AS paymentCondition
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListDTO">
-
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM
+        mold_info mi
+        where
+        ${params.sqlMap.default}
+        AND mi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        mi.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
