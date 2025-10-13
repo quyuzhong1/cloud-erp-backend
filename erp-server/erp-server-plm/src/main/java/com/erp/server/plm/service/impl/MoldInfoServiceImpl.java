@@ -132,7 +132,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if(Objects.isNull(category)){
             throw new ServiceException(ApiError.ERROR_95025);
         }
-        String code = docNoGenHelper.generateMouldCode(category.getCode());
+        String code = docNoGenHelper.generateMoldCode(BusinessNoTypeEnum.CODE_MOLD,category.getCode());
         moldInfoEntity.setCode(code);
         boolean save = super.save(moldInfoEntity);
         if(!save) {

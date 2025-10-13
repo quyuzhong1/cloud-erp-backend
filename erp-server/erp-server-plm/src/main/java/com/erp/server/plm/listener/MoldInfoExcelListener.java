@@ -6,6 +6,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
@@ -155,7 +156,7 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
                 excelDTO.setCategoryId(category.getId());
 
                 //生成模具编号
-                String code = docNoGenHelper.generateMouldCode(category.getCode());
+                String code = docNoGenHelper.generateMoldCode(BusinessNoTypeEnum.CODE_MOLD,category.getCode());
                 excelDTO.setCode(code);
             }
         }
