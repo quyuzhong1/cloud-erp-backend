@@ -17,7 +17,6 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -130,7 +129,7 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //给明细id赋值
                 JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
@@ -158,7 +157,7 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             if (isAdd) {
                 //给明细id赋值
                 JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
