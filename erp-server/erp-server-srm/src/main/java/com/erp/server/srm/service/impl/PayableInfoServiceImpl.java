@@ -277,6 +277,9 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        //同步查询金蝶判断应付单是否已审核，已审核则不允许取消确认
+        syncKingdeePayableInfoService.checkCanDisApprove(entity);
+
         //推送金蝶
         syncApproveInfoToKingdee(entity, SyncOperateEnum.OPERATE_DELETE);
 

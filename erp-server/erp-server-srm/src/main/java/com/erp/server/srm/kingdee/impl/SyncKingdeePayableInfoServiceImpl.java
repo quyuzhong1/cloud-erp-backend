@@ -18,6 +18,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -26,7 +27,9 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.srm.entity.*;
+import com.erp.model.srm.entity.PayableDetailEntity;
+import com.erp.model.srm.entity.PayableInfoEntity;
+import com.erp.model.srm.entity.SrmPushMsgEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
@@ -288,4 +291,15 @@ public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfo
         resultMap.put("list", list);
         return resultMap;
 	}
+
+    @Override
+    public void checkCanDisApprove(PayableInfoEntity entity) {
+        KingdeeDTO kingdeeDTO = new KingdeeDTO();
+        kingdeeDTO.setNumber(entity.getCode());
+        kingdeeDTO.setKingdeePushModuleCode("AP_Payable");
+        String codes =  dmpTaskFeign.checkKingdeeSyncApprove(kingdeeDTO);
+        if (CharSequenceUtil.isNotBlank(codes)) {
+            throw new ServiceException("金蝶应付单{}为已审核,不可支持取消",codes);
+        }
+    }
 }
