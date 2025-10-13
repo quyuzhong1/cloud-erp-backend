@@ -349,10 +349,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto);
 
-    WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
-
-    WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
-
     List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
 
     void updateSalesInfo(SoInfoEntity soInfoEntity);
