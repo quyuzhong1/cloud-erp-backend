@@ -427,6 +427,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 提交
      *
      * @param entity
+     * @param isFromDht
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
@@ -435,7 +436,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
-    public BatchResultDTO submit(SoInfoEntity entity) {
+    public BatchResultDTO submit(SoInfoEntity entity, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
@@ -451,7 +452,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 throw new ServiceException(entity.getCode() + " 销售订单 销售单价不能为空或者为零");
             }
         }
-        if(PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
+        if(!isFromDht && PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
             throw new ServiceException("订货单创建的订单无法提审");
         }
         //待审核
@@ -636,7 +637,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity, false);
         return submit.getSuccess();
     }
 
@@ -1506,7 +1507,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity, false);
         return submit.getSuccess();
     }
 
@@ -3669,7 +3670,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity);
+                this.submit(soInfoEntity, true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
@@ -3737,7 +3738,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String id = this.add(addDTO);
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity);
+                this.submit(soInfoEntity, true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
