@@ -301,6 +301,8 @@ public class OtherOutstockDTO implements Serializable {
          * 备注(同步金蝶)
          */
         private String remark;
+
+        private String sourceCode;
     }
 
     @Data
