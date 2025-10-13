@@ -3677,7 +3677,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity, true);
+                this.submit(soInfoEntity, true,true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
@@ -3745,7 +3745,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String id = this.add(addDTO);
             SoInfoEntity soInfoEntity = this.getById(id);
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())){
-                this.submit(soInfoEntity, true);
+                this.submit(soInfoEntity, true,true);
             }
             if(dto.getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
