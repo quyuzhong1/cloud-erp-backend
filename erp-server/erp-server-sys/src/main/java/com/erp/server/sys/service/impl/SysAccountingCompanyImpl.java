@@ -295,4 +295,17 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         }
     }
 
+    @Override
+    public SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId) {
+        if (StringUtils.isBlank(kindgeeId)) {
+            return null;
+        } else {
+            LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysAccountingCompanyEntity::getKingdeeId, kindgeeId);
+            queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+            queryWrapper.last("LIMIT 1");
+            return this.getOne(queryWrapper);
+        }
+    }
+
 }
