@@ -2362,6 +2362,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if(update && CollectionUtils.isNotEmpty(updateList)){
                 //推送金蝶同步任务
                 sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+                //推送到订货通
+                List<String> idList = updateList.stream().map(SoOutstockEntity::getId).distinct().collect(Collectors.toList());
+                List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(idList);
+                Map<String, List<SoOutstockDetailEntity>> stringListMap = CollUtil.isEmpty(soOutstockDetailEntityList) ? soOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+                for (SoOutstockEntity entity : updateList) {
+                    //推送到订货通
+                    if(customerFeign.isSyncDht(entity.getCustomerId())){
+                        syncDhtOutstockService.syncB2bSoOutstockDht(entity,stringListMap.get(entity.getId()), SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    }
+                }
             }
         }
         return batchResultDTOList;
