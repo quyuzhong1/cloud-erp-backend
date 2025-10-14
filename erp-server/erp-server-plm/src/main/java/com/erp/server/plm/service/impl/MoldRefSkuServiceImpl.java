@@ -6,7 +6,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.MoldInfoDTO;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -53,7 +53,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, MoldRefSkuEntity> implements MoldRefSkuService {
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService sysLogService;
     @Autowired
     private WorkflowFeign workflowFeign;
 
