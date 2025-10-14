@@ -303,6 +303,10 @@ public class OtherOutstockDTO implements Serializable {
         private String remark;
 
         private String sourceCode;
+
+        private String sourceType;
+
+        private String sourceId;
     }
 
     @Data
