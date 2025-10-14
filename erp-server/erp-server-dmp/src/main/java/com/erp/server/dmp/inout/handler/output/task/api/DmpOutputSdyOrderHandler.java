@@ -639,6 +639,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 	}
                 }
                 
+                if(StringUtils.isBlank(orderCountryCode)) {
+                	orderCountryCode = shopInfo.getDictCountryCode();
+                	if(StringUtils.isBlank(orderCountryCode)) {
+                		orderCountryCode = customerInfo.getCountryId();
+                	}
+                }
+                
                 orderCountryCode = DmpHandlerUtils.convertCountry(orderCountryCode);
                 countryCode = DmpHandlerUtils.convertCountry(countryCode);
 
