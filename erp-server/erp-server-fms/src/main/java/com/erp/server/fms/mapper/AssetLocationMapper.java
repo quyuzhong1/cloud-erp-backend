@@ -45,6 +45,13 @@ public interface AssetLocationMapper extends BaseMapper<AssetLocationEntity> {
     */
     List<AssetLocationDTO.ListDTO> listExport(@Param("params") AssetLocationDTO.ExportDTO params);
 
+    /**
+    * 导出Excel查询（分页）
+    * @param query
+    * @param params
+    * @return
+    */
+    IPage<AssetLocationDTO.ListDTO> listExport(Page<AssetLocationDTO.ExportDTO> query, @Param("params") AssetLocationDTO.ExportDTO params);
 
     /**
     * 获取状态统计
