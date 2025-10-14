@@ -174,6 +174,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         resultEntity.setApproveTime(deliveryTime);
         resultEntity.setCreated(entity.getPlatformCreateTime());
         resultEntity.setCreateUserName("wangdiantong");
+		resultEntity.setCreateUserId("1977926579534028802");
         resultEntity.setCountry(CHINA.getSite());
         //第三方单据编号
         resultEntity.setThirdCode(itemList.stream().map(DmpSoOutstockDetailEntity::getThirdOrderCode).distinct().collect(Collectors.joining(",")));
