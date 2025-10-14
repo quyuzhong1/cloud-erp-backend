@@ -130,7 +130,7 @@ public class AssetLocationDTO implements Serializable {
         /**
         * 地址
         */
-        private String address;
+            private String address;
 
         /**
         * 详细地址

@@ -313,6 +313,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_THIRD_PROCESS_DEFINITION("EXPORT_THIRD_PROCESS_DEFINITION", "审批定义导出","","",""),
 
     //fms
+    EXPORT_FMS_ASSET_LOCATION("EXPORT_FMS_ASSET_LOCATION","资产位置导出","","",""),
     IMPORT_FMS_ASSET_LOCATION("IMPORT_FMS_ASSET_LOCATION","导入资产位置","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetLocation",""),
 
     DEFAULT("DEFAULT", "默认","","","");

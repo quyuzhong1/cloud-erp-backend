@@ -142,7 +142,16 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
     * @param response
     * @return
     */
-    void exportList(AssetLocationDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(AssetLocationDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 获取资产位置分页数据（用于异步导出）
+     * @author wuht
+     * @date: 2025-10-13
+     * @param dto 分页参数
+     * @return 分页结果
+     */
+    PagingVO<AssetLocationDTO.ListDTO> getAssetLocationPageData(PagingDTO<AssetLocationDTO.ExportDTO> dto);
 
     /**
     * 审核通过回调方法
