@@ -137,6 +137,7 @@ public class ProductDetailShowDTO implements Serializable {
     /**
      * 产品属性
      */
+    private String propertyId;
     private String property;
 
 
