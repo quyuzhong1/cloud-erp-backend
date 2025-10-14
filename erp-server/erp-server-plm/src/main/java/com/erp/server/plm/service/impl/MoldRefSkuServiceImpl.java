@@ -162,7 +162,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         }
         MoldRefSkuEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -235,10 +235,11 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     @Override
     public BatchResultDTO delete(String id) {
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
-        // 只有待提交数据允许删除
-        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
+        // 只有待提交或审核不通过数据支持删除
+        if (!(Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()))) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
+
         // 删除主单数据
         log.info("删除 开始删除模具关联sku主单数据，id：【{}】", id);
         super.removeById(id);
