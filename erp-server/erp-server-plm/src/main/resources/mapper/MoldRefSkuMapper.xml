@@ -18,11 +18,14 @@
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
        <result column="mold_id" property="moldId" />
+       <result column="mold_code" property="moldCode" />
+       <result column="mold_name" property="moldName" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
        <result column="product_name" property="productName" />
        <result column="output_qty" property="outputQty" />
        <result column="sku_qty" property="skuQty" />
+       <result column="code" property="code" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -36,8 +39,30 @@
         update_time,
         version,
         is_deleted,
-        remark, approve_status, approve_time, approve_user_id, approve_user_name, mold_id, sku_id, sku_no, product_name, output_qty, sku_qty
+        remark, approve_status, approve_time, approve_user_id, approve_user_name, mold_id, mold_code, mold_name, sku_id, sku_no, product_name, output_qty, sku_qty, code
     </sql>
 
+    <select id="paging" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from mold_ref_sku where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  mold_ref_sku
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>
