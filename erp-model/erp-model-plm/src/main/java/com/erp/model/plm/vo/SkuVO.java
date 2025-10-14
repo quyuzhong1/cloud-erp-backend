@@ -108,6 +108,10 @@ public class SkuVO implements Serializable {
      * 产品属性
      */
     private String productPropertyId;
+    /**
+     * 产品属性名称
+     */
+    private String productPropertyName;
 
 
     /**

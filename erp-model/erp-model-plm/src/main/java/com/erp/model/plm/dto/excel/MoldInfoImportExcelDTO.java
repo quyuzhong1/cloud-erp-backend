@@ -151,7 +151,7 @@ public class MoldInfoImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*开模周期(自然日)", index = 13)
-    @FieldValid(fieldName = "*开模周期(自然日)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "*开模周期(自然日)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private Integer cycle;
 
     /**

@@ -177,13 +177,13 @@ public enum ModuleTypeEnum {
     CUSTOMER_CREDIT_APPLY("134", "客户授信"),
 
     // ==================== 资产相关模块 ====================
-    ASSET_LOCATION("145", "资产位置"),
-    ASSET_ACCEPTANCE("146", "资产验收单"),
-    ASSET_CARD("147", "资产卡片"),
-    INVENTORY_PLAN("148", "盘点方案"),
-    ASSET_INVENTORY_SHEET("149", "资产盘点表"),
-    INVENTORY_GAIN_LOSS("150", "盘盈盘亏单"),
-    ASSET_DISPOSAL("151", "资产处置单"),
+    ASSET_LOCATION("146", "资产位置"),
+    ASSET_ACCEPTANCE("147", "资产验收单"),
+    ASSET_CARD("148", "资产卡片"),
+    INVENTORY_PLAN("149", "盘点方案"),
+    ASSET_INVENTORY_SHEET("150", "资产盘点表"),
+    INVENTORY_GAIN_LOSS("151", "盘盈盘亏单"),
+    ASSET_DISPOSAL("152", "资产处置单"),
 
 
     ;

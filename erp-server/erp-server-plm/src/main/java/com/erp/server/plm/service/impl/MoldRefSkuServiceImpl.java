@@ -1,14 +1,33 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.*;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.MoldInfoDTO;
+import com.erp.model.plm.dto.excel.MoldRefSkuImportExcelDTO;
+import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.plm.constant.ProductConstant;
+import com.erp.server.plm.listener.MoldInfoExcelListener;
+import com.erp.server.plm.listener.MoldRefSkuExcelListener;
+import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.SysLogService;
 import com.erp.server.plm.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
@@ -23,6 +42,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
@@ -31,8 +51,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -40,14 +58,17 @@ import com.common.core.utils.date.DateUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -66,6 +87,18 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     private WorkflowFeign workflowFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private ProductDetailService productDetailService;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private MoldInfoService moldInfoService;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public PagingVO<MoldRefSkuDTO.ListDTO> paging(PagingDTO<MoldRefSkuDTO.PagingParamDTO> pagingParamDTO) {
@@ -100,7 +133,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
 
     @Override
     public void exportList(MoldRefSkuDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("模具档案导出", EXPORT_PLM_MOLD_INFO.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("模具关联SKU导出", EXPORT_PLM_MOLD_REF_SKU.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -120,8 +153,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         // 记录操作日志
         log.info("提交 开始记录模具关联sku日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具关联sku");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        //operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        sysLogService.addSysLogBySave(msg, "", id, "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -142,8 +174,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具关联sku", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        //operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -157,12 +188,11 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.MOLD_REF_SKU.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -175,6 +205,14 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         }
     }
 
+    private Map<String,Object> getVariablesMap(MoldRefSkuEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_REF_SKU.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -182,15 +220,11 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具关联sku");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        //operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -199,7 +233,6 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -208,18 +241,16 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     public BatchResultDTO delete(String id) {
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_DELETE);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
         log.info("删除 开始删除模具关联sku主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除模具关联sku日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具关联sku");
-        //operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除模具关联sku数据");
+        sysLogService.addSysLogBySave(msg, "", id, "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -244,12 +275,10 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具关联sku");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        //operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        sysLogService.addSysLogBySave(msg, "", id, "");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.MOLD_REF_SKU.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -263,25 +292,10 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
         return Boolean.TRUE;
     }
 
-    @Override
-    public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
-    }
 
-    @Override
-    public MoldRefSkuDTO.ViewDTO view(String id) {
-        MoldRefSkuEntity moldRefSkuEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到模具关联sku数据"));
-        MoldRefSkuDTO.ViewDTO data = BeanMapperUtils.map(MoldRefSkuDTO.ViewDTO.class, moldRefSkuEntity);
-        // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
-        return data;
-    }
     /**
     * 启动流程
     *
@@ -294,11 +308,10 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.MOLD_REF_SKU.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -394,9 +407,152 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     }
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(MoldRefSkuEntity moldRefSkuEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 修改单模产量
+     * @author jack
+     * @date:  2025-10-14
+     * @param dto
+     * @return ApiResult
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateOutputQtyById(MoldInfoDTO.UpdateQty dto) {
+        MoldRefSkuEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
+        // 只有待提交数据允许删除
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, old.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, old.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        MoldRefSkuEntity entity = new MoldRefSkuEntity();
+        BeanMapper.copy(old,entity);
+
+        entity.setOutputQty(dto.getQty());
+        updateById(entity);
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录模具关联SKU日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "模具关联SKU");
+        sysLogService.addSysLogByUpdate(old,entity,String.valueOf(MoldRefSkuEntity.class), old.getId(), "", msg);
+        return true;
     }
+    /**
+     * 修改用量
+     * @author jack
+     * @date:  2025-10-14
+     * @param dto
+     * @return ApiResult
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSkuQtyById(MoldInfoDTO.UpdateQty dto) {
+        MoldRefSkuEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
+        // 只有待提交数据允许删除
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, old.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, old.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        MoldRefSkuEntity entity = new MoldRefSkuEntity();
+        BeanMapper.copy(old,entity);
+
+        entity.setSkuQty(dto.getQty());
+        updateById(entity);
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录模具关联SKU日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "模具关联SKU");
+        sysLogService.addSysLogByUpdate(old,entity,String.valueOf(MoldRefSkuEntity.class), old.getId(), "", msg);
+        return true;
+    }
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入模具关联SKU", IMPORT_PLM_MOLD_REF_SKU.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importMoldRefSku(BaseDTO.ImportDTO dto) {
+        //已审核且未作废的模具关联SKU
+        List<MoldInfoEntity> moldInfoEntities = moldInfoService.lambdaQuery()
+                .eq(MoldInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(MoldInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .eq(MoldInfoEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        Map<String, MoldInfoEntity> moldInfoMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (o1, o2) -> o1));
+
+        //已审核的 ,非资产属性的 SKU
+        List<SkuVO> skuList = productDetailService.searchSku(null);
+        Map<String, SkuVO> skuMap = skuList.stream().filter(e -> StringUtils.isNotBlank(e.getProductPropertyName()) && !Objects.equals(e.getProductPropertyName(), ProductConstant.PRODUCT_PROPERTY_ASSET))
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+
+        //所有模具关联SKU记录
+        List<MoldRefSkuEntity> allList = list();
+        // 生成 moldCode + skuNo 的 Set
+        Set<String> moldCodeSkuNoSet = allList.stream()
+                .map(entity -> entity.getMoldCode() + ":" + entity.getSkuNo())
+                .collect(Collectors.toSet());
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter( e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        MoldRefSkuExcelListener excelListenerUtil = new MoldRefSkuExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldCodeSkuNoSet,skuMap,moldInfoMap);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), MoldRefSkuImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<MoldRefSkuImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "模具关联SKU错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, MoldRefSkuImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void handleImportSuccessList(List<MoldRefSkuImportExcelDTO> successList, List<MoldRefSkuImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        MoldRefSkuServiceImpl bean = ApplicationContextUtils.getBean(MoldRefSkuServiceImpl.class);
+
+        List<MoldRefSkuEntity> moldRefSkuEntities = BeanMapper.copyList(successList, MoldRefSkuEntity.class);
+
+        if(CollUtil.isNotEmpty(moldRefSkuEntities)){
+            bean.saveBatch(moldRefSkuEntities);
+            // 操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
+                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldRefSkuEntity.getMoldCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+            }
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        }
+    }
+
 }

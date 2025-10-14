@@ -81,8 +81,12 @@ public class MoldRefSkuDTO implements Serializable {
         private String  id;
 
         /**
-        * 备注
+        * 编码
         */
+        private String code;
+        /**
+         * 备注
+         */
         private String remark;
 
         /**
