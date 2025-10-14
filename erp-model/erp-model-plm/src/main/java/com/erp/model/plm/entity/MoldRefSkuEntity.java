@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-10-10
+ * @since 2025-10-14
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -56,6 +56,16 @@ public class MoldRefSkuEntity extends BaseEntity<MoldRefSkuEntity> {
     @TableField("mold_id")
     private String moldId;
     /**
+    * 模具编码
+    */
+    @TableField("mold_code")
+    private String moldCode;
+    /**
+    * 模具名称
+    */
+    @TableField("mold_name")
+    private String moldName;
+    /**
     * skuId
     */
     @TableField("sku_id")
@@ -80,6 +90,11 @@ public class MoldRefSkuEntity extends BaseEntity<MoldRefSkuEntity> {
     */
     @TableField("sku_qty")
     private Integer skuQty;
+    /**
+    * code
+    */
+    @TableField("code")
+    private String code;
 
 
     public static final String REMARK = "remark";
@@ -94,6 +109,10 @@ public class MoldRefSkuEntity extends BaseEntity<MoldRefSkuEntity> {
 
     public static final String MOLD_ID = "mold_id";
 
+    public static final String MOLD_CODE = "mold_code";
+
+    public static final String MOLD_NAME = "mold_name";
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
@@ -103,6 +122,8 @@ public class MoldRefSkuEntity extends BaseEntity<MoldRefSkuEntity> {
     public static final String OUTPUT_QTY = "output_qty";
 
     public static final String SKU_QTY = "sku_qty";
+
+    public static final String CODE = "code";
 
     @Override
     public Serializable pkVal() {
