@@ -166,4 +166,14 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId));
 	}
+
+	@Override
+	public void rollbackRedis(String transactionId) {
+		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
+		if(count != null && count > 0) {
+			throw new ServiceException("存在库存交易记录，不允许回滚redis库存transactionId={}" , transactionId);
+		}
+		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
+		inventoryRedisUtil.execute(rollback , rollback.getCode() , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId));
+	}
 }
