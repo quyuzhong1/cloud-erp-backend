@@ -75,6 +75,7 @@ mrs.sku_qty AS skuQty
                 ${item.field} ${item.sort}
             </foreach>
         </if>
+        mrs.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
