@@ -1146,6 +1146,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getWarehouseId, param.getWarehouseId())
                 .eq(WarehouseLocationEntity::getCode, inventory.getWarehouseLocation())
+                .last("LIMIT 1")
         );
         InventoryDTO.LocationInventory locationInventory = new InventoryDTO.LocationInventory();
         locationInventory.setWarehouseLocation(inventory.getWarehouseLocation());
