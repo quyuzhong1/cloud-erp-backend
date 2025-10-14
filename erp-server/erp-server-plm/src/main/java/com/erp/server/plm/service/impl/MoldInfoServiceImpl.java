@@ -898,14 +898,20 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             if(Objects.isNull(skuVO)){
                 throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND,skuNo);
             }
+
             for (String id : ids) {
+                MoldInfoEntity moldInfoEntity = moldMap.get(id);
                 MoldRefSkuEntity moldRefSkuEntity = new MoldRefSkuEntity();
                 moldRefSkuEntity.setMoldId(id);
+                moldRefSkuEntity.setMoldCode(moldInfoEntity.getCode());
+                moldRefSkuEntity.setMoldName(moldInfoEntity.getName());
                 moldRefSkuEntity.setSkuId(skuVO.getSkuId());
                 moldRefSkuEntity.setSkuNo(skuNo);
                 moldRefSkuEntity.setProductName(skuVO.getSkuName());
                 moldRefSkuEntity.setOutputQty(1);
                 moldRefSkuEntity.setSkuQty(1);
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MOLD_REF_SKU);
+                moldRefSkuEntity.setCode(code);
                 moldRefSkuEntities.add(moldRefSkuEntity);
             }
         }

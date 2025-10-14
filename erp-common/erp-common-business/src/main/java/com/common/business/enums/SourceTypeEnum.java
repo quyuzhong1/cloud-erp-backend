@@ -161,6 +161,7 @@ public enum SourceTypeEnum {
     LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
     MOLD_INFO("moldInfo", "模具档案","mold_info"),
+    MOLD_REF_SKU("moldRefSku", "模具关联SKU","mold_ref_sku"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),

@@ -39,14 +39,6 @@ public interface MoldRefSkuMapper extends BaseMapper<MoldRefSkuEntity> {
     List<ApproveStatusQtyDTO> listCount(@Param("params") MoldRefSkuDTO.PagingParamDTO params);
 
     /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<MoldRefSkuDTO.ListDTO> listExport(@Param("params") MoldRefSkuDTO.PagingParamDTO params);
-
-
-    /**
     * 获取状态统计
     * @param searchParam
     * @return

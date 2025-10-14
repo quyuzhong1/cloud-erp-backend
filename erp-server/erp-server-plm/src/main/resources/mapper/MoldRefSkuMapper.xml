@@ -30,29 +30,56 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        remark, approve_status, approve_time, approve_user_id, approve_user_name, mold_id, mold_code, mold_name, sku_id, sku_no, product_name, output_qty, sku_qty, code
+        mrs.id AS id,
+mrs.create_user_id AS createUserId,
+mrs.create_user_name AS createUserName,
+mrs.create_time AS createTime,
+mrs.update_user_id AS updateUserId,
+mrs.update_user_name AS updateUserName,
+mrs.update_time AS updateTime,
+mrs.version AS version,
+mrs.is_deleted AS isDeleted,
+mrs.remark AS remark,
+mrs.approve_status AS approveStatus,
+mrs.approve_time AS approveTime,
+mrs.approve_user_id AS approveUserId,
+mrs.approve_user_name AS approveUserName,
+mrs.mold_id AS moldId,
+mrs.mold_code AS moldCode,
+mrs.mold_name AS moldName,
+mrs.sku_id AS skuId,
+mrs.sku_no AS skuNo,
+mrs.product_name AS productName,
+mrs.output_qty AS outputQty,
+mrs.sku_qty AS skuQty
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$ListDTO">
-
+        SELECT
+        <include refid="Base_Column_List"></include>
+            ,mi.project_code AS projectCode
+            ,mi.project_name AS projectName
+        FROM
+            mold_ref_sku mrs
+        left join mold_info mi on mi.id = mrs.mold_id and mi.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND mrs.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from mold_ref_sku where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,

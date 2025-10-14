@@ -141,6 +141,8 @@ public enum BusinessNoTypeEnum {
     CODE_PYPKD(108, "PYPKD","盘盈盘亏单", BusinessNoConstant.PYPKD),
     CODE_PRODIS(109, "PRODIS","资产处置单", BusinessNoConstant.PRODIS),
 
+    CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
+
     ;
 
 
