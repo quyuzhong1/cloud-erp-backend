@@ -7,8 +7,9 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
 import com.erp.server.plm.mapper.MoldRefSkuMapper;
@@ -59,9 +60,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
 @Slf4j
 @Service
 public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, MoldRefSkuEntity> implements MoldRefSkuService {
-    @Resource
-    private SysLogService sysLogService;
-    @Resource
+    @Autowired
+    private OperateLogService sysLogService;
+    @Autowired
     private WorkflowFeign workflowFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
