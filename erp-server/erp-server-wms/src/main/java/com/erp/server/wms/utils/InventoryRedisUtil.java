@@ -33,9 +33,9 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 
 	private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
 	
-	@Qualifier("inventoryRedissonClient")
+	@Qualifier("inventoryRedisson")
 	@Autowired
-    private RedissonClient inventoryRedissonClient;
+    private RedissonClient inventoryRedisson;
 	
     @Resource
     private RedisTemplate inventoryRedisTemplate;
@@ -51,7 +51,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	
 	public RedissonMultiLock tryLock(List<String> keys) {
 		List<RLock> rLocks = keys.stream()
-                .map(inventoryRedissonClient::getLock)
+                .map(inventoryRedisson::getLock)
                 .collect(Collectors.toList());
 		RedissonMultiLock multiLock = new RedissonMultiLock(rLocks.toArray(new RLock[0]));
 		boolean locked = false;
