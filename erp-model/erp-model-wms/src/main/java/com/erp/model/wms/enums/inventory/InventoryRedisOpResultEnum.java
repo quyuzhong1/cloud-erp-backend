@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public enum InventoryRedisOpResultEnum implements EnumMessage {
 	SUCCESS("0","成功" , null , false),
 	/* com.erp.model.wms.enums.inventory.InventoryRedisOpEnum.OVERRIDE_INVENTORY start */
-	OVERRIDE_INVENTORY_1("1","存在未同步事务" , InventoryRedisOpResultEnum.OVERRIDE_INVENTORY , true),
+	OVERRIDE_1("1","存在未同步事务" , InventoryRedisOpResultEnum.OVERRIDE , true),
 	/* com.erp.model.wms.enums.inventory.InventoryRedisOpEnum.OVERRIDE_INVENTORY end*/
     ;
 
@@ -25,7 +25,7 @@ public enum InventoryRedisOpResultEnum implements EnumMessage {
         this.isRetry = isRetry;
     }
     
-    private static final InventoryRedisOpEnum OVERRIDE_INVENTORY = InventoryRedisOpEnum.OVERRIDE_INVENTORY;
+    private static final InventoryRedisOpEnum OVERRIDE = InventoryRedisOpEnum.OVERRIDE;
     
     /**
      * 类型
@@ -71,6 +71,9 @@ public enum InventoryRedisOpResultEnum implements EnumMessage {
     }
     
     public static InventoryRedisOpResultEnum getByOpAndCode(InventoryRedisOpEnum inventoryRedisOpEnum , String code) {
+    	if(InventoryRedisOpResultEnum.SUCCESS.getCode().equals(code)) {
+    		return InventoryRedisOpResultEnum.SUCCESS;
+    	}
     	return Stream.of(InventoryRedisOpResultEnum.values())
     			.filter(e -> e.getCode().equalsIgnoreCase(code) && e.inventoryRedisOpEnum == inventoryRedisOpEnum)
     			.findFirst()

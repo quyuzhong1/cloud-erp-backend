@@ -2,9 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.redisson.RedissonMultiLock;
@@ -31,7 +32,6 @@ import com.erp.server.wms.service.InventoryHisService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 
 import cn.hutool.core.bean.BeanUtil;
@@ -128,11 +128,42 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void inventoryTransactionToInventoryHis(InventoryTransactionEntity inventoryTransactionEntity) {
-    	com.erp.model.wms.dto.inventory.InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, 
-				com.erp.model.wms.dto.inventory.InventoryTransactionDTO.class);
-		ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).updateInventoryHis(transactionDTO);
-		this.inventoryHisToInventory(inventoryTransactionEntity.getInventoryId());
-    	removeById(inventoryTransactionEntity.getId());
+    public void inventoryTransactionToInventoryHis(String inventoryId , int size) {
+    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId));
+    	if(tryLock != null) {
+    		try {
+				List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
+						.orderByAsc(InventoryTransactionEntity::getCreateTime).last(size > 0 , " limit " + size + " ").list();
+				if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
+					Set<String> transactionIdSet = new HashSet<>();
+					for(InventoryTransactionEntity inventoryTransactionEntity : inventoryTransactionEntityList) {
+						String transactionId = inventoryTransactionEntity.getTransactionId();
+						if(!transactionIdSet.add(transactionId)) {
+							this.commitRedis(inventoryTransactionEntity.getTransactionId());
+						}
+						com.erp.model.wms.dto.inventory.InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, 
+								com.erp.model.wms.dto.inventory.InventoryTransactionDTO.class);
+						ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).updateInventoryHis(transactionDTO);
+					}
+					removeByIds(inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet()));
+					this.inventoryHisToInventory(inventoryId);
+				}
+			} catch (Exception e) {
+				log.error("迁移历史库存失败" , e);
+				throw e;
+			} finally{
+ 				inventoryRedisUtil.unLock(tryLock);
+ 			}
+    	}
     }
+
+	@Override
+	public void commitRedis(String transactionId) {
+		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
+		if(count == null || count == 0) {
+			throw new ServiceException("没有库存交易记录，不允许提交redis库存transactionId={}" , transactionId);
+		}
+		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
+		inventoryRedisUtil.execute(commit , commit.getCode() , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId));
+	}
 }

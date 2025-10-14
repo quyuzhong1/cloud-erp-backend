@@ -21,6 +21,8 @@ import lombok.Getter;
 public enum InventoryRedisOpKeyEnum implements EnumMessage {
 	OVERRIDE("override","重算流水"),
 	CURRENT("current","当前流水"),
+	HISTORY("history","历史库存"),
+	TRANSACTION("transaction","库存交易"),
     ;
 
     InventoryRedisOpKeyEnum(String code, String name) {

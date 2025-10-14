@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -27,11 +29,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InventoryRedisUtil extends AbstractRedisUtil{
 	
-	private static String splitSign = "@@";
+	private static String splitSign = "&&";
 
 	private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
 	
-	@Resource
+	@Qualifier("inventoryRedissonClient")
+	@Autowired
     private RedissonClient inventoryRedissonClient;
 	
     @Resource
@@ -81,6 +84,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		String execute = "";
 		while(i < 3) {
 			execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
+			log.info("redis命令操作{}，入参{}，结果{}" , opName , args ,execute);
 			if(StringUtils.isNotBlank(execute)) {
 				String[] resultSplitList = execute.split(splitSign);
 				if(resultSplitList.length == 1) {
