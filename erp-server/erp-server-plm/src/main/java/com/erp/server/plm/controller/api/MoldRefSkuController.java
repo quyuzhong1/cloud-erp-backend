@@ -3,7 +3,9 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.server.plm.query.MoldRefSkuQueryHandler;
+import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -129,7 +131,6 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<MoldRefSkuEntity> list = moldRefSkuService.lambdaQuery().in(MoldRefSkuEntity::getId, ids).list();
 		Map<String, MoldRefSkuEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldRefSkuEntity::getId, w -> w));
         for (String id : ids) {
@@ -168,7 +169,6 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<MoldRefSkuEntity> list = moldRefSkuService.lambdaQuery().in(MoldRefSkuEntity::getId, ids).list();
 		Map<String, MoldRefSkuEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldRefSkuEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -208,7 +208,6 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<MoldRefSkuEntity> list = moldRefSkuService.lambdaQuery().in(MoldRefSkuEntity::getId, ids).list();
 		Map<String, MoldRefSkuEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldRefSkuEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -247,7 +246,6 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<MoldRefSkuEntity> list = moldRefSkuService.lambdaQuery().in(MoldRefSkuEntity::getId, ids).list();
         Map<String, MoldRefSkuEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldRefSkuEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -269,23 +267,6 @@ public class MoldRefSkuController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-    * 详情
-    * @author jack
-    * @date:  2025-10-14
-    * @param id
-    * @return ApiResult<MoldRefSkuDTO.ViewDTO>>
-    */
-    @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:moldRefSku:view",
-            serviceClass = MoldRefSkuService.class,
-            keyIdName = "id")
-    @LogViewService
-    public ApiResult<MoldRefSkuDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(moldRefSkuService.view(id));
-    }
 
     /**
     * 导出Excel数据
@@ -336,6 +317,44 @@ public class MoldRefSkuController extends BaseController {
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = moldRefSkuService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 修改单模产量
+     * @author jack
+     * @date:  2025-10-14
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateOutputQtyById")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改单模产量")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:moldInfo:updateOutputQtyById",
+            serviceClass = MoldInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateOutputQtyById(@RequestBody @Validated MoldInfoDTO.UpdateQty dto) {
+        Boolean result = moldRefSkuService.updateOutputQtyById(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 修改用量
+     * @author jack
+     * @date:  2025-10-14
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateSkuQtyById")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改用量")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:moldInfo:updateSkuQtyById",
+            serviceClass = MoldInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateSkuQtyById(@RequestBody @Validated MoldInfoDTO.UpdateQty dto) {
+        Boolean result = moldRefSkuService.updateSkuQtyById(dto);
         return result ? success() : failure();
     }
 

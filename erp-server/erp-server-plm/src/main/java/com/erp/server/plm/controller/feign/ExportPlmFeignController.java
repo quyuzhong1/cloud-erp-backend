@@ -55,6 +55,8 @@ public class ExportPlmFeignController {
     private SkuStdCostDetailService skuStdCostDetailService;
     @Resource
     private MoldInfoService moldInfoService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -158,5 +160,10 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
     public PagingVO<MoldInfoDTO.ListDTO> exportMoldInfo(@RequestBody @Validated PagingDTO<MoldInfoDTO.PagingParamDTO> dto){
         return moldInfoService.paging(dto);
+    }
+    @PostMapping("/exportMoldRefSku")
+    @WebAdvanceQuery(handler = MoldRefSkuQueryHandler.class)
+    PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto){
+        return moldRefSkuService.paging(dto);
     }
 }
