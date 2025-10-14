@@ -81,7 +81,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldInfoEntity> implements MoldInfoService {
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService sysLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -869,9 +869,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
 
         // 操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
         for (MoldInfoEntity moldInfoEntity : moldInfoEntities) {
-            sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
+            sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
         }
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
@@ -912,10 +912,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if(CollUtil.isNotEmpty(moldRefSkuEntities)){
             moldRefSkuService.saveBatch(moldRefSkuEntities);
             // 操作日志
-            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
             for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
                 MoldInfoEntity moldInfoEntity = moldMap.get(moldRefSkuEntity.getMoldId());
-                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+                sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
             }
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }

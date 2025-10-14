@@ -3,7 +3,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,10 +12,8 @@ import com.erp.server.plm.mapper.MoldRefSkuMapper;
 import com.erp.server.plm.service.MoldRefSkuService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
@@ -37,7 +35,7 @@ import javax.annotation.Resource;
 @Service
 public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, MoldRefSkuEntity> implements MoldRefSkuService {
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService sysLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
