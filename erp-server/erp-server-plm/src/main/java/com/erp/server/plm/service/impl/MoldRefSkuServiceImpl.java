@@ -8,6 +8,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.MoldInfoDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
