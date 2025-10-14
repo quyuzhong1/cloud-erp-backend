@@ -81,7 +81,6 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -313,6 +312,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = purchasePrice.getCode();
         purchasePrice.setCode(code);
         purchasePrice.setApproveStatus(status);
+        purchasePrice.setRemark(dto.getRemark());
 
         String pricingUserId = dto.getPricingUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
