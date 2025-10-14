@@ -152,7 +152,16 @@ public class PackagePlanController extends BaseController {
     public void batchOrderPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
         packagePlanService.batchOrderPrint(dto.getIds(), response);
     }
-
+    /**
+     * 批量打印交接标签
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchHandoverPrint")
+    public void batchHandoverPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        packagePlanService.batchHandoverPrint(dto.getIds(), response);
+    }
     /**
      * 1.创建大包号
      *

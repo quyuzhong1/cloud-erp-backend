@@ -100,7 +100,7 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
     void listExport(PackagePlanDTO.PagingParamDTO dto);
 
     /**
-     * 批量打印
+     * 批量打印订单标签
      * @param ids
      * @param response
      */
@@ -139,4 +139,11 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      * @param dto
      */
     void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto);
+
+    /**
+     * 批量打印交接标签
+     * @param ids
+     * @param response
+     */
+    void batchHandoverPrint(List<String> ids, HttpServletResponse response);
 }

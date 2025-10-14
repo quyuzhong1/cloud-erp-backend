@@ -1130,8 +1130,47 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         String labelUrl = fileFeign.uploadFileByBase64(pdfBase64);
         log.info("获取交接标签成功，labelUrl地址：{}", labelUrl);
         entity.setHandoverLabelUrl(labelUrl);
+        entity.setIsHandoverDownload(true);
         entity.setTransportNo(response.getBarcode());
         this.updateById(entity);
+    }
+
+    @Override
+    public void batchHandoverPrint(List<String> ids, HttpServletResponse response) {
+        List<PackagePlanEntity> entityList = this.listByIds(ids);
+        List<String> errorCodeList = new ArrayList<>();
+        List<String> base64List = new ArrayList<>();
+        for (PackagePlanEntity entity : entityList) {
+            if(CharSequenceUtil.isBlank(entity.getHandoverLabelUrl())){
+                errorCodeList.add(entity.getCode());
+                continue;
+            }
+            byte[] bytes = fileFeign.downloadFile(entity.getHandoverLabelUrl());
+            base64List.add("data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes));
+        }
+        if(CollectionUtils.isNotEmpty(errorCodeList)){
+            throw new ServiceException("组包计划单批量打印交接标签失败,单号:{}",errorCodeList);
+        }
+        if(CollectionUtils.isNotEmpty(base64List)){
+            try {
+                String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+                // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+                response.setContentType("application/pdf");
+                response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+                BASE64Decoder decoder = new BASE64Decoder();
+                try (OutputStream out = response.getOutputStream()) {
+                    // 将 Base64 编码的字符串解码为字节数组
+                    byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                    // 将字节数组写入到响应输出流中
+                    out.write(pdfBytes);
+                } catch (IOException e) {
+                    log.error("组包计划单批量打印交接标签失败:{}",e.getMessage());
+                }
+            } catch (Exception e) {
+                log.error("组包计划单批量打印交接标签失败>>>>>>>", e);
+                throw new ServiceException(e.getMessage());
+            }
+        }
     }
 
     private String print(String id) {

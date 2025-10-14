@@ -170,18 +170,19 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void getOrderLabel() {
-        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3916460244L))
+        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3893097985L))
                 .width(58)
                 .height(40)
                 .type("png")
                 .build();
-        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request);
+        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN_PRO, request);
         String pdfBase64 = null;
         try {
             pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        System.out.println("===============================");
         System.out.println("data:application/pdf;base64," + pdfBase64);
     }
     @Test
