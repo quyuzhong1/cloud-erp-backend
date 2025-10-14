@@ -119,6 +119,14 @@ public class MoldRefSkuDTO implements Serializable {
         * 模具名称
         */
         private String moldName;
+        /**
+         *
+         */
+        private String projectCode;
+        /**
+         *
+         */
+        private String projectName;
 
         /**
         * skuId

@@ -81,7 +81,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldInfoEntity> implements MoldInfoService {
     @Resource
-    private OperateLogService sysLogService;
+    private SysLogService sysLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -869,9 +869,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
 
         // 操作日志
-        List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         for (MoldInfoEntity moldInfoEntity : moldInfoEntities) {
-            sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
+            sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
         }
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
@@ -897,14 +897,20 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             if(Objects.isNull(skuVO)){
                 throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND,skuNo);
             }
+
             for (String id : ids) {
+                MoldInfoEntity moldInfoEntity = moldMap.get(id);
                 MoldRefSkuEntity moldRefSkuEntity = new MoldRefSkuEntity();
                 moldRefSkuEntity.setMoldId(id);
+                moldRefSkuEntity.setMoldCode(moldInfoEntity.getCode());
+                moldRefSkuEntity.setMoldName(moldInfoEntity.getName());
                 moldRefSkuEntity.setSkuId(skuVO.getSkuId());
                 moldRefSkuEntity.setSkuNo(skuNo);
                 moldRefSkuEntity.setProductName(skuVO.getSkuName());
                 moldRefSkuEntity.setOutputQty(1);
                 moldRefSkuEntity.setSkuQty(1);
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MOLD_REF_SKU);
+                moldRefSkuEntity.setCode(code);
                 moldRefSkuEntities.add(moldRefSkuEntity);
             }
         }
@@ -912,10 +918,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if(CollUtil.isNotEmpty(moldRefSkuEntities)){
             moldRefSkuService.saveBatch(moldRefSkuEntities);
             // 操作日志
-            List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
                 MoldInfoEntity moldInfoEntity = moldMap.get(moldRefSkuEntity.getMoldId());
-                sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
             }
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }

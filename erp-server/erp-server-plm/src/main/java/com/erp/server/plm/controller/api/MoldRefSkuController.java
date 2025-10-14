@@ -1,9 +1,10 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.server.plm.query.MoldRefSkuQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.plm.service.MoldRefSkuService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -51,7 +51,7 @@ public class MoldRefSkuController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:moldRefSku:paging",
-            tableAlias = ""
+            tableAlias = "mrs"
     )
     public ApiResult<List<MoldRefSkuDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(moldRefSkuService.tabList(dto));
@@ -68,8 +68,9 @@ public class MoldRefSkuController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:moldRefSku:paging",
-            tableAlias = ""
+            tableAlias = "mrs"
     )
+    @WebAdvanceQuery(handler = MoldRefSkuQueryHandler.class)
     public ApiResult<PagingVO<MoldRefSkuDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto) {
         return success(moldRefSkuService.paging(dto));
     }
@@ -90,7 +91,6 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<MoldRefSkuEntity> list = moldRefSkuService.lambdaQuery().in(MoldRefSkuEntity::getId, ids).list();
 		Map<String, MoldRefSkuEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldRefSkuEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -299,9 +299,10 @@ public class MoldRefSkuController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:moldRefSku:export",
-            tableAlias = ""
+            tableAlias = "mrs"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具关联sku导出Excel数据")
+    @WebAdvanceQuery(handler = MoldRefSkuQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated MoldRefSkuDTO.PagingParamDTO dto, HttpServletResponse response) {
         moldRefSkuService.exportList(dto, response);
         return success();
