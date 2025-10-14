@@ -97,7 +97,9 @@
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pi.application_category_id,
-        pl.product_property as productProperty
+        pl.product_property as productProperty,
+        pi.property_id,
+        pi.property
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
