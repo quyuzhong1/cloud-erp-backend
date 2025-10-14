@@ -312,7 +312,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = purchasePrice.getCode();
         purchasePrice.setCode(code);
         purchasePrice.setApproveStatus(status);
-        purchasePrice.setRemark(dto.getRemark());
 
         String pricingUserId = dto.getPricingUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
