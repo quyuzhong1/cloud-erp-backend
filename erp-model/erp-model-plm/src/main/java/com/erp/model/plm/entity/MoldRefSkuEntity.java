@@ -34,7 +34,7 @@ public class MoldRefSkuEntity extends BaseEntity<MoldRefSkuEntity> {
     * 审批状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 审批时间
     */

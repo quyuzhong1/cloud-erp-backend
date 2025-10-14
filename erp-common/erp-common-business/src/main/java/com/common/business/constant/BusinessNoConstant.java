@@ -225,6 +225,8 @@ public interface BusinessNoConstant {
     String PYPKD="PYPKD";
     //资产处置单
     String PRODIS="PRODIS";
+    //模具关联SKU
+    String MRS="MRS";
 
 
 
