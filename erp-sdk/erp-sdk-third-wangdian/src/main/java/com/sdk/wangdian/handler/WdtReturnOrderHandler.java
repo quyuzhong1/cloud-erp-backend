@@ -111,6 +111,8 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             dto.setInvalidStatus(false);
             dto.setApproveUserName("wangdiantong");
             dto.setCreateUserName("wangdiantong");
+            dto.setCreateUserId("1977926579534028802");
+            dto.setApproveUserId("1977926579534028802");
             dto.setApproveTime(approveTime);
             //店铺id
             dto.setShopId(orderEntity.getShopId());

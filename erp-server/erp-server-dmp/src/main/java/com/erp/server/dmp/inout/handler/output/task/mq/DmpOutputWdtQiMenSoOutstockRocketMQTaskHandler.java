@@ -21,6 +21,7 @@ public class DmpOutputWdtQiMenSoOutstockRocketMQTaskHandler extends DmpOutputWdt
     	WdtSoOutStockDTO resultEntity = super.initOrderInfoEntity(entity, itemList, cfgOutputId);
     	if(resultEntity != null) {
     		resultEntity.setCreateUserName("qimen");
+			resultEntity.setCreateUserId("1808810116456153089");
     	}
         return resultEntity;
     }

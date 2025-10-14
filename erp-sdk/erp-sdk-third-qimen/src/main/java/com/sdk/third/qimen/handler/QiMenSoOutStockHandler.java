@@ -162,6 +162,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             dto.setApproveTime(outStockTime);
             dto.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
             dto.setCreateUserName("qimen");
+            dto.setCreateUserId("1808810116456153089");
             dto.setCountry(CHINA.getSite());
             //第三方单据编号
             dto.setThirdCode(order.getSrcOrderNo());

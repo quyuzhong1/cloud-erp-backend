@@ -114,6 +114,8 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setInvalidStatus(false);
         resultEntity.setApproveUserName("wangdiantong");
         resultEntity.setCreateUserName("wangdiantong");
+		resultEntity.setCreateUserId("1977926579534028802");
+		resultEntity.setApproveUserId("1977926579534028802");
         resultEntity.setApproveTime(approveTime);
         //店铺id
         resultEntity.setShopId(entity.getShopId());
