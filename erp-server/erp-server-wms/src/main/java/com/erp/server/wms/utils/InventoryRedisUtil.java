@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import com.common.business.utils.AbstractRedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
-import com.erp.model.wms.enums.inventory.InventoryRedisOpResultEnum;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,7 +74,6 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	}
 	
 	public void execute(InventoryRedisOpEnum inventoryRedisOpEnum , Object... args) {
-		InventoryRedisOpResultEnum inventoryRedisOpResultEnum = null;
 		String opName = inventoryRedisOpEnum.getName();
 		int i = 0;
 		String resultCode = "";
@@ -88,13 +86,8 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			if(StringUtils.isNotBlank(execute)) {
 				String[] resultSplitList = execute.split(splitSign);
 				if(resultSplitList.length == 1) {
-					inventoryRedisOpResultEnum = InventoryRedisOpResultEnum.getByOpAndCode(inventoryRedisOpEnum, execute);
-					if(inventoryRedisOpResultEnum == null) {
-						log.error("库存redis操作{} 未知的lua结果： {}" , opName , execute);
-						throw new ServiceException(execute);
-					}
-					resultCode = inventoryRedisOpResultEnum.getCode();
-					resultName = inventoryRedisOpResultEnum.getName();
+					resultCode = execute;
+					resultName = execute;
 				}else if(resultSplitList.length == 2) {
 					resultCode = resultSplitList[0];
 					resultName = resultSplitList[1];
@@ -115,7 +108,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			}
 			i = i + 1;
 		}
-		if(!InventoryRedisOpResultEnum.SUCCESS.getCode().equals(resultCode)) {
+		if(!"0".equals(resultCode)) {
 			log.error("库存redis操作{}结果为：{}，lua原始结果： {}" , opName , resultName , execute);
 			throw new ServiceException(resultName);
 		}
