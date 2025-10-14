@@ -4248,12 +4248,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return Boolean.TRUE;
     }
-    
+
     /**
      * 清除服务、费用类sku的redis缓存
-     * @author will 
+     * @author will
      * @date 2025/8/22 15:12
-     * @param entity 
+     * @param entity
      * @return void
      */
     private void cleanRedisNoInventorySku (ProductDetailEntity entity) {

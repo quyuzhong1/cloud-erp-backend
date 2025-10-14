@@ -900,6 +900,13 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
         Map<String, MoldInfoEntity> moldMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getId, Function.identity(), (o1, o2) -> o1));
 
+        //所有模具关联SKU记录
+        List<MoldRefSkuEntity> allList = moldRefSkuService.list();
+        // 生成 moldCode + skuNo 的 Set
+        Set<String> moldCodeSkuNoSet = allList.stream()
+                .map(entity -> entity.getMoldCode() + ":" + entity.getSkuNo())
+                .collect(Collectors.toSet());
+
         List<MoldRefSkuEntity> moldRefSkuEntities = new ArrayList<>();
         for (String skuNo : skuNos) {
             SkuVO skuVO = skuVOMap.getOrDefault(skuNo, null);
@@ -909,6 +916,12 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
             for (String id : ids) {
                 MoldInfoEntity moldInfoEntity = moldMap.get(id);
+                String key = moldInfoEntity.getCode() + ":" + skuNo;
+                if(moldCodeSkuNoSet.contains(key)){
+                    throw new ServiceException(StrUtil.format("模具编号【{}】和SKU【{}】的关联记录已存在，请勿重复添加",moldInfoEntity.getCode(),skuNo));
+                }else {
+                    moldCodeSkuNoSet.add(key);
+                }
                 MoldRefSkuEntity moldRefSkuEntity = new MoldRefSkuEntity();
                 moldRefSkuEntity.setMoldId(id);
                 moldRefSkuEntity.setMoldCode(moldInfoEntity.getCode());

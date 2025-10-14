@@ -454,7 +454,7 @@ public class MoldInfoController extends BaseController {
             keyIdName = "ids")
     public ApiResult batchRefSku(@RequestBody @Validated MoldInfoDTO.RefSkuDTO dto) {
         Boolean result =moldInfoService.batchRefSku(dto);
-        return result ? success(result) : failure();
+        return result ? success(dto) : failure(dto);
     }
 
 
