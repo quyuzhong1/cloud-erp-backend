@@ -439,7 +439,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                 	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
                 		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
                 		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
-                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getSalesDeptId()).list();
+                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getUseOrgId()).list();
                 		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
                 			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
                 			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
