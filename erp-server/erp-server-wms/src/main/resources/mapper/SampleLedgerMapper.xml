@@ -50,55 +50,40 @@
         sl.product_name AS productName,
         sl.use_user_id AS useUserId,
         sl.use_user_name AS useUserName,
-        <choose>
-            <when test="params.type != null and params.type != '' and params.type != 'exhibition'">
-                COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
-            </when>
-            <otherwise>
-                COALESCE(sl.qty, 0) AS availableQty
-            </otherwise>
-        </choose>
+        COALESCE(sl.qty, 0) - COALESCE(aa.freezeQty, 0) - COALESCE(bb.freezeQty, 0)- COALESCE(cc.freezeQty, 0)  AS availableQty
         FROM
         sample_ledger sl
-        <if test="params.type != null and params.type == 'scrap'">
-            left join (
-            select
-                ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi
-            inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
-                where ssi.is_deleted = false
-                and ssi.invalid_status = false
-                and ssi.approve_status !='approve'
-            <if test="params.childId != null and params.childId != ''">
-                and ssi.id != #{params.childId}
-            </if>
-                GROUP BY ssd.sku_id) as dd on dd.sku_id = sl.sku_id
+        left join (
+        select
+        ssd.sample_ledger_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi
+        inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'scrap' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
         </if>
-        <if test="params.type != null and params.type == 'borrow'">
-            left join (
-            select ssd.sku_id , sum(ssd.borrow_qty) as freezeQty  from  sample_borrow_info ssi
-            inner join sample_borrow_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
-            where ssi.is_deleted = false
-            and ssi.invalid_status = false
-            and ssi.approve_status !='approve'
-            <if test="params.childId != null and params.childId != ''">
-                and ssi.id != #{params.childId}
-            </if>
-            GROUP BY ssd.sku_id
-            ) as dd on dd.sku_id = sl.sku_id
+        GROUP BY ssd.sample_ledger_id) as aa on aa.sample_ledger_id = sl.id
+        left join (
+        select ssd.sample_ledger_id , sum(ssd.borrow_qty) as freezeQty  from  sample_borrow_info ssi
+        inner join sample_borrow_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'borrow' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
         </if>
-        <if test="params.type != null and params.type == 'back'">
-            left join (
-            select ssd.sku_id , sum(ssd.qty) as freezeQty  from  sample_back_info ssi
-            inner join sample_back_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
-            where ssi.is_deleted = false
-            and ssi.invalid_status = false
-            and ssi.approve_status !='approve'
-            <if test="params.childId != null and params.childId != ''">
-                and ssi.id != #{params.childId}
-            </if>
-            GROUP BY ssd.sku_id
-            ) as dd on dd.sku_id = sl.sku_id
+        GROUP BY ssd.sample_ledger_id) as bb on bb.sample_ledger_id = sl.id
+        left join (
+        select ssd.sample_ledger_id , sum(ssd.qty) as freezeQty  from  sample_back_info ssi
+        inner join sample_back_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+        where ssi.is_deleted = false
+        and ssi.invalid_status = false
+        and ssi.approve_status !='approve'
+        <if test="params.type != null and params.type == 'back' and params.childId != null and params.childId != ''">
+            and ssi.id != #{params.childId}
         </if>
+        GROUP BY ssd.sample_ledger_id ) as cc on cc.sample_ledger_id = sl.id
         WHERE
         sl.is_deleted = FALSE
         <if test="params.userId != null and params.userId != ''">
@@ -127,14 +112,8 @@
         </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
-            ORDER BY
-            case
-            when sl.sku_no = #{params.skuNo} THEN 1
-            when sl.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
-            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
-            when sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
-            end, sl.sku_no
         </if>
+        ORDER BY sl.sku_no
     </sql>
 
     <select id="listSkuAvailableQtyByUserId" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">

@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -22,6 +23,7 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -332,7 +334,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
+    public Boolean saveAndAutoApprove(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
@@ -410,7 +412,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
-        saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+        saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         return Boolean.TRUE;
     }
 
@@ -461,7 +463,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         //单据状态
         String documentStatus = "";
-        if (type.equals(ApiModuleTypeEnum.PO_RECONCILIATION.getCode())) {
+        if (type.equals(ApiModuleTypeEnum.PAYABLE_INFO.getCode())) {
             documentStatus = (String) model.get("DOCUMENTSTATUS");
         } else {
             documentStatus = (String) model.get("DocumentStatus");
@@ -748,6 +750,25 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,kingdeeCode);
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    public String checkKingdeeSyncApprove(KingdeeDTO kingdeeDTO) {
+        String name = KingdeePushModuleEnum.getName(kingdeeDTO.getKingdeePushModuleCode());
+        if (CharSequenceUtil.isBlank(name)) {
+            throw new ServiceException("未找到对应的金蝶模块，请检查模块编码是否正确，moduleCode =" + kingdeeDTO.getKingdeePushModuleCode());
+        }
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(kingdeeDTO.getKingdeePushModuleCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", kingdeeDTO.getNumber()));
+        queryFilters.add(String.format("FDOCUMENTSTATUS = '%s'", KingdeeDocStatusEnum.APPROVED.getCode()));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FBillNo";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
+        if (CollectionUtils.isEmpty(queryList)) {
+           return "";
+        }
+        return queryList.stream().map(obj -> obj.get("FBillNo").toString()).distinct().collect(Collectors.joining(","));
     }
 
     /**

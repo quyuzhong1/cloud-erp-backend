@@ -184,4 +184,14 @@ public interface CustomerFeign {
      */
     @PostMapping("feign/customer/updateApproveStatus")
     void updateApproveStatus(CustomerInfoEntity entity);
+
+    /**
+     * 释放同步订货通
+     * @author will
+     * @date 2025/9/23 10:08
+     * @param customerId
+     * @return boolean
+     */
+    @PostMapping("feign/customer/isSyncDht")
+    Boolean isSyncDht(@RequestBody String customerId);
 }

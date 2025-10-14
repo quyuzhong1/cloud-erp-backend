@@ -880,7 +880,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (CollectionUtils.isNotEmpty(defaultBySupplierAccountList)) {
                 SupplierAccountEntity supplierAccountEntity = defaultBySupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
-                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
+                    supplierDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

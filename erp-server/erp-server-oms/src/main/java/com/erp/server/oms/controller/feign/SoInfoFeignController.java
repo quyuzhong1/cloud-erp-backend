@@ -227,4 +227,16 @@ public class SoInfoFeignController extends BaseController {
     public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         soInfoService.updateApproveStatus(updateApprovalStatusDTO);
     }
+
+    /**
+     * 更新平台订单Id
+     * @author will
+     * @date 2025/9/23 12:06
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/updateDhfPlatformOrderId")
+    public Boolean updateDhfPlatformOrderId(@RequestBody @Validated SoInfoDTO.UpdatePlatformOrderIdDTO dto) {
+       return soInfoService.updateDhfPlatformOrderId(dto);
+    }
 }

@@ -50,9 +50,6 @@ public final class SoUtils {
         headMap.put("warehouseOrgName", "库存组织");
         headMap.put("bankServiceFee", "银行手续费");
         headMap.put("shippingFee", "运费金额");
-        headMap.put("receiveAccountName", "收款账号");
-        headMap.put("receiveMethodName", "收款方式");
-        headMap.put("receiveDate", "收款日期");
         headMap.put("tradeTerm", "贸易条款");
         headMap.put("discountAmount", "折扣总额");
         headMap.put("receiverName", "收货人");
@@ -86,6 +83,7 @@ public final class SoUtils {
         headMap.put("amountLocalCurrency", "销售金额（本位币）");
         headMap.put("allAmountLocalCurrency", "价税合计（本位币）");
         headMap.put("allAmountLc", "总价税合计（本位币）");
+        headMap.put("orderAmount", "订单金额");
         headMap.put("receiveAmount", "收款金额");
         headMap.put("detailDiscountAmount", "折扣额");
         headMap.put("taxAmountBefore", "价税合计(折前)");
@@ -172,6 +170,7 @@ public final class SoUtils {
                 data.put("shippingFee", "");
                 data.put("receiveAmount", "");
                 data.put("discountAmount", "");
+                data.put("orderAmount", "");
                 data.put("allAmountLc", "");
                 continue;
             }

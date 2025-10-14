@@ -12,6 +12,8 @@ import com.erp.model.wms.dto.SampleBackDetailDTO;
 import com.erp.model.wms.dto.excel.SampleBackDetailImportExcelDTO;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.server.wms.service.SampleLedgerService;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import cn.hutool.extra.spring.SpringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +32,11 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
     private String backUserId;
     //sku信息
     private Map<String,SkuVO> skuMap ;
+    // 用户列表
+    private List<FindUserDTO> userList;
 
     private SampleLedgerService sampleLedgerService;
+    private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
     /**
      * 错误信息
      */
@@ -41,10 +46,12 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
 
     public SampleBackDetailExcelListener(SampleLedgerService sampleLedgerService,
                                        Map<String,SkuVO> skuMap,
-                                       String backUserId) {
+                                       String backUserId,
+                                       List<FindUserDTO> userList) {
         this.sampleLedgerService = sampleLedgerService;
         this.skuMap = skuMap;
         this.backUserId = backUserId;
+        this.userList = userList;
     }
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -97,17 +104,44 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
 
         //使用方
         String useUserName = excelDTO.getUseUserName();
+        String useUserId;
+        if (StringUtils.isNotBlank(useUserName)) {
+            // 先尝试从普通用户中查找
+            FindUserDTO useUser = userList.stream()
+                .filter(e -> useUserName.equals(e.getUserName()))
+                .findFirst()
+                .orElse(null);
+            
+            if (useUser != null) {
+                useUserId = useUser.getUserId();
+            } else {
+                // 如果普通用户中找不到，查询示例用户
+                useUserId = getSampleUseUserIdByName(useUserName);
+                if (useUserId == null) {
+                    errorMsgList.add("使用方不存在：" + useUserName);
+                }
+            }
+        } else {
+            useUserId = null;
+        }
+
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        if(StringUtils.isNotBlank(addDTO.getSkuId()) && StringUtils.isNotBlank(useUserName)){
+        if(StringUtils.isNotBlank(addDTO.getSkuId()) && StringUtils.isNotBlank(useUserId)){
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
             dto.setUserId(backUserId);
+            dto.setUseUserId(useUserId); // 设置使用方ID
             dto.setSkuIds(Arrays.asList(addDTO.getSkuId()));
             dto.setType(SampleLedgerTypeEnum.BACK.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
             }else {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(addDTO.getSkuId()) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
+                    .filter(e -> e.getSkuId().equals(addDTO.getSkuId()) && 
+                               e.getUserId().equals(backUserId) && 
+                               e.getUseUserId().equals(useUserId))
+                    .findFirst()
+                    .orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
                     errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                 }else {
@@ -151,6 +185,32 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
 
     public List<SampleBackDetailDTO.AddDTO> getSuccessList() {
         return addList;
+    }
+
+    /**
+     * 根据使用方名称查询使用方ID
+     */
+    private String getSampleUseUserIdByName(String useUserName) {
+        if (StringUtils.isBlank(useUserName)) {
+            return null;
+        }
+
+        try {
+            // 调用feign接口查询
+            List<String> nameList = Collections.singletonList(useUserName);
+            com.common.core.controller.vo.ApiResult<List<com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO>> result = 
+                sysUserFeign.getSampleUseUserListByNameList(nameList);
+            
+            if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO user = result.getData().get(0);
+                return user.getId();
+            }
+            
+            return null;
+        } catch (Exception e) {
+            System.err.println("查询使用方ID失败，使用方名称：" + useUserName + "，错误：" + e.getMessage());
+            return null;
+        }
     }
 
 }

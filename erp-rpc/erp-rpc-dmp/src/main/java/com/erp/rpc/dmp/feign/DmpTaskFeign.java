@@ -312,4 +312,19 @@ public interface DmpTaskFeign {
     @PostMapping("feign/pagingOutLatest")
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 
+    /**
+     * 创建推送任务
+     * @param msgList
+     */
+    @PostMapping("feign/batchCreateDmpPushMsg")
+    void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList);
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("feign/checkKingdeeSyncApprove")
+    String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO);
 }

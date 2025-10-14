@@ -290,6 +290,11 @@ public class SoB2cDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        
+        /**
+         * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
+         */
+        private Integer onlyQueryId;
     }
 
     @Data
@@ -1519,7 +1524,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款方式
          */
-        @Size(max = 32, message = "付款方式最大长度不能超过32位")
+//        @Size(max = 32, message = "付款方式最大长度不能超过32位")
         private String dictPayMethod;
 
         /**

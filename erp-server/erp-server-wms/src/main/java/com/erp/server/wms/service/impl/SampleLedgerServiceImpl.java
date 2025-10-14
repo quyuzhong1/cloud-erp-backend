@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -23,6 +24,7 @@ import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -39,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_REPORT;
 
@@ -64,6 +67,9 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -167,7 +173,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         if (pagingDTO == null || pagingDTO.getParams() == null) {
             throw new IllegalArgumentException("pagingDTO and its params must not be null");
         }
-        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize(), false);
+        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         SampleLedgerDTO.SearchDTO params = pagingDTO.getParams();
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
             params.setSkuNo(params.getSkuNos().get(0));
@@ -213,35 +219,36 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * @param records
      */
     private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, List<SampleLedgerDTO.SkuAvailableQtyDTO> records) {
+        // 提取所有记录的SKU并去重
+        List<String> sampleLedgerIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId).distinct().collect(Collectors.toList());
+        List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        // 构造展会订单查询条件并获取冻结库存数量
+        ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
+        dto.setSkuIds(skuIds);
+        dto.setSampleLedgerIds(sampleLedgerIds);
         // 判断查询类型是否为展会类型
         if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())){
-            // 提取所有记录的SKU并去重
-            List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
-
-            // 构造展会订单查询条件并获取冻结库存数量
-            ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
-            dto.setSkuIds(skuIds);
             dto.setChildId(params.getChildId());
-            List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+        }
+        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+        // 如果存在冻结库存数据，则更新可用库存数量
+        if(CollUtil.isNotEmpty(freezeQtyBySkus)){
+            // 将冻结库存数据转换为Map便于快速查找
+            Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSampleLedgerId, Function.identity(),(o1,o2)->o1));
 
-            // 如果存在冻结库存数据，则更新可用库存数量
-            if(CollUtil.isNotEmpty(freezeQtyBySkus)){
-                // 将冻结库存数据转换为Map便于快速查找
-                Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, Function.identity(),(o1,o2)->o1));
-
-                // 遍历所有记录，扣除冻结库存数量
-                for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
-                    ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
-                    if(Objects.nonNull(freezeQtyBySku)){
-                        Integer freezeQty = freezeQtyBySku.getFreezeQty();
-                        if(Objects.nonNull(freezeQty) && freezeQty > 0){
-                            Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
-                            record.setAvailableQty(availableQty - freezeQty);
-                        }
-                        record.setMaxPrice(freezeQtyBySku.getMaxPrice());
-                        record.setMinPrice(freezeQtyBySku.getMinPrice());
-                        record.setAvgPrice(freezeQtyBySku.getAvgPrice());
+            // 遍历所有记录，扣除冻结库存数量
+            for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
+                ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSampleLedgerId(), null);
+                if(Objects.nonNull(freezeQtyBySku)){
+                    Integer freezeQty = freezeQtyBySku.getFreezeQty();
+                    if(Objects.nonNull(freezeQty) && freezeQty > 0){
+                        Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
+                        record.setAvailableQty(availableQty - freezeQty);
                     }
+                    record.setMaxPrice(freezeQtyBySku.getMaxPrice());
+                    record.setMinPrice(freezeQtyBySku.getMinPrice());
+                    record.setAvgPrice(freezeQtyBySku.getAvgPrice());
                 }
             }
         }
@@ -405,9 +412,9 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             return;
         }
 
-        // 提取所有用户ID
+        // 提取所有用户ID（包括userId和useUserId）
         List<String> userIds = records.stream()
-            .map(SampleLedgerDTO.ListDTO::getUserId)
+            .flatMap(record -> Stream.of(record.getUserId(), record.getUseUserId()))
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
@@ -416,33 +423,75 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             return;
         }
 
+        // 提取useUserId列表
+        List<String> useUserIdList = records.stream()
+            .map(SampleLedgerDTO.ListDTO::getUseUserId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
         try {
             // 调用用户服务获取用户信息（包含禁用状态）
             com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
-
             com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> userResult = sysUserFeign.userList(searchDTO);
             
+            // 查询示例用户信息（只查询需要的useUserId）
+            List<BaseIdDTO> byIds = sysDictFeign.getByIds(useUserIdList);
+
+            // 构建用户ID到用户信息的映射
+            Map<String, com.common.business.dto.FindUserDTO> userMap = new HashMap<>();
             if (userResult != null && userResult.isSuccess() && CollUtil.isNotEmpty(userResult.getData())) {
-                // 构建用户ID到用户信息的映射
-                Map<String, com.common.business.dto.FindUserDTO> userMap = userResult.getData().stream()
+                userMap = userResult.getData().stream()
                     .collect(Collectors.toMap(
                         com.common.business.dto.FindUserDTO::getUserId, 
                         Function.identity(),
                         (existing, replacement) -> existing
                     ));
+            }
+            
+            // 构建示例用户ID到用户信息的映射
+            Map<String, BaseIdDTO> sampleUserMap = new HashMap<>();
+            sampleUserMap = byIds.stream()
+                    .collect(Collectors.toMap(
+                            BaseIdDTO::getId,
+                            Function.identity(),
+                            (existing, replacement) -> existing
+                    ));
 
-                // 填充用户禁用状态
-                for (SampleLedgerDTO.ListDTO record : records) {
-                    if (StringUtils.isNotBlank(record.getUserId())) {
-                        com.common.business.dto.FindUserDTO user = userMap.get(record.getUserId());
-                        if (user != null) {
-                            record.setDisabled(user.getDisabled());
+            // 填充用户禁用状态和兜底userName、useUserName
+            for (SampleLedgerDTO.ListDTO record : records) {
+                // 兜底userName
+                if (StrUtil.isBlank(record.getUserName()) && StrUtil.isNotBlank(record.getUserId())) {
+                    com.common.business.dto.FindUserDTO user = userMap.get(record.getUserId());
+                    if (user != null) {
+                        record.setUserName(user.getUserName());
+                    }
+                }
+                
+                // 兜底useUserName
+                if (StrUtil.isBlank(record.getUseUserName()) && StrUtil.isNotBlank(record.getUseUserId())) {
+                    com.common.business.dto.FindUserDTO user = userMap.get(record.getUseUserId());
+                    if (user != null) {
+                        record.setUseUserName(user.getUserName());
+                    } else {
+                        // 如果通过sysUserFeign查不到，尝试通过SampleUseUserFeign查询
+                        BaseIdDTO sampleUser = sampleUserMap.get(record.getUseUserId());
+                        if (sampleUser != null) {
+                            record.setUseUserName(sampleUser.getName());
                         }
+                    }
+                }
+                
+                // 填充用户禁用状态
+                if (StringUtils.isNotBlank(record.getUserId())) {
+                    com.common.business.dto.FindUserDTO user = userMap.get(record.getUserId());
+                    if (user != null) {
+                        record.setDisabled(user.getDisabled());
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("获取用户禁用状态失败，错误：{}", e.getMessage());
+            log.warn("获取用户信息失败，错误：{}", e.getMessage());
         }
     }
 
@@ -564,5 +613,6 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         
         return viewDTO;
     }
+
 
 }

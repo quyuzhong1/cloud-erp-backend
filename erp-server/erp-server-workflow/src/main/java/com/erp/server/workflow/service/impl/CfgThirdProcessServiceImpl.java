@@ -144,8 +144,8 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         CfgThirdProcessEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到ERP审批同步配置数据"));
         CfgThirdProcessDTO.ViewDTO view = baseMapper.getView(id);
         view.getFieldMapList().forEach(cfgProcessFieldMapDTO -> {
-            cfgProcessFieldMapDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getThirdFieldType()).getName());
-            cfgProcessFieldMapDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getSysFieldType()).getName());
+            cfgProcessFieldMapDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(cfgProcessFieldMapDTO.getThirdFieldType()));
+            cfgProcessFieldMapDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(cfgProcessFieldMapDTO.getSysFieldType()));
             //唯一值
             String uniqueCode = CharSequenceUtil.format("{}-{}", CharSequenceUtil.isBlank(cfgProcessFieldMapDTO.getSysParentId()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : cfgProcessFieldMapDTO.getSysParentId(), cfgProcessFieldMapDTO.getSysField());
             cfgProcessFieldMapDTO.setUniqueCode(uniqueCode);

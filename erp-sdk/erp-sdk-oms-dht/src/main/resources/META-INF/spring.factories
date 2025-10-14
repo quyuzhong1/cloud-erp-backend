@@ -1,0 +1,10 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+   com.sdk.oms.dht.service.DhtCommonService,\
+   com.sdk.oms.dht.config.DhtConfig,\
+   com.sdk.oms.dht.service.DhtCustomerService,\
+   com.sdk.oms.dht.service.DhtCustomerAddressService,\
+   com.sdk.oms.dht.service.DhtCurrencyService,\
+   com.sdk.oms.dht.service.DhtCustomerAccountService,\
+   com.sdk.oms.dht.service.DhtReceiptService,\
+   com.sdk.oms.dht.service.DhtOrderService
+

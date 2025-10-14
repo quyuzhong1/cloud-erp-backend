@@ -65,6 +65,13 @@ public interface SampleLedgerFlowMapper extends BaseMapper<SampleLedgerFlowEntit
                                                     @Param("skuId") String skuId);
 
     /**
+     * 根据台账ID查询数量总和
+     * @param ledgerId 台账ID
+     * @return 数量总和
+     */
+    Integer selectTotalQtyByLedgerId(@Param("ledgerId") String ledgerId);
+
+    /**
      * 移动端分页查询
      * @param query 分页参数
      * @param params 查询参数

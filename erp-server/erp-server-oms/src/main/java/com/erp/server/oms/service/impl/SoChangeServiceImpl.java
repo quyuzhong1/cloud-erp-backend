@@ -44,6 +44,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.query.SoChangeQueryHandler;
@@ -62,7 +63,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
@@ -124,6 +124,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private SyncDhtService syncDhtService;
 
     /**
      * 添加销售订单
@@ -179,7 +181,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrency(soInfo.getCurrency());
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
-            soChangeDetailService.addDetailList(id, dto.getDetailList());
+            soChangeDetailService.addDetailList(soChange, dto.getDetailList());
             String content = String.format("新增了一个{%s}-销售变更单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), id, "新增操作");
             return id;
@@ -244,7 +246,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
-            soChangeDetailService.updateDetailList(id, dto.getDetailList());
+            soChangeDetailService.updateDetailList(soChange, dto.getDetailList());
             return id;
         }
         return "";
@@ -906,6 +908,13 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
 
                 soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //订货通同步
+                if(customerInfoService.isSyncDht(obj.getCustomerId())){
+                    SoInfoEntity soInfoEntity = new SoInfoEntity();
+                    soInfoEntity.setId(obj.getSoId());
+                    soInfoEntity.setCode(obj.getCode());
+                    syncDhtService.createSyncSoInfoTaskToDht(soInfoEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+                }
             });
         }
 

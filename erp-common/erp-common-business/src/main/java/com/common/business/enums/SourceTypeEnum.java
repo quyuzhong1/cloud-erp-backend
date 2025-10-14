@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
@@ -106,12 +107,14 @@ public enum SourceTypeEnum {
     SO_INFO_TRANSFER_INFP("soInfoTransferInfo", "B2B销售订单(中转调拨)","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
-    SDY_CUSTOMER_INFO( "sdy_customerInfo", "客户表","customer_info"),
+    CUSTOMER_ADDRESS( "customerAddress", "客户地址表","customer_address"),
+    SDY_CUSTOMER_INFO( "sdy_customerInfo", "数帝云客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
     TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    CUSTOMER_CREDIT_APPLY( "customerCreditApply", "客户授信","customer_credit_apply"),
     SHOP( "shop", "店铺","shop_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
@@ -124,10 +127,12 @@ public enum SourceTypeEnum {
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
     CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
     EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
+
+    SO_RECEIPT("soReceipt", "收款单","so_receipt"),
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
-
+    PAYABLE_INFO( "payableInfo", "应付单","payable_info"),
 
 
     //Kingdee
@@ -153,7 +158,7 @@ public enum SourceTypeEnum {
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
-    LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
+    LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
 
 
@@ -345,5 +350,19 @@ public enum SourceTypeEnum {
     }
     public static List<String> pickingLists() {
         return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
+    }
+
+    public static void main(String[] args) {
+        List<SourceTypeEnum> collect = Arrays.asList(SourceTypeEnum.values()).stream().collect(Collectors.toList());
+        for (SourceTypeEnum e : collect) {
+            String sql = String.format(
+                    "INSERT INTO \"public\".\"dict_basic\" " +
+                            "(\"id\", \"create_user_id\", \"create_user_name\", \"create_time\", \"update_user_id\", \"update_user_name\", \"update_time\", \"version\", \"is_deleted\", \"remark\", \"value\", \"type\", \"name\", \"status\", \"sort\", \"type_name\") " +
+                            "VALUES (snow_next_id(), '', '', NOW(), '', '', NOW(), 0, 'f', '%s(%s)', '%s', 'sourceType', '%s', 't', 0, '来源类型') " +
+                            "ON CONFLICT (\"value\", \"type\") DO NOTHING;",
+                    e.getName(), e.getCode(), e.getCode(), e.getName()
+            );
+            System.out.println(sql);
+        }
     }
 }

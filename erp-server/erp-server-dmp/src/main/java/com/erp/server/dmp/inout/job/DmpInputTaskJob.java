@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.job;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +29,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 
 @Component
 public class DmpInputTaskJob {
@@ -82,6 +85,7 @@ public class DmpInputTaskJob {
 							.in(DmpInputTaskEntity::getId, ids)
 							.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
 							.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+							.eq(DmpInputTaskEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 							.list();
 					List<DmpInputTaskEntity> updateList = new ArrayList<>();
 					if(CollUtil.isNotEmpty(errorList)) {
@@ -143,6 +147,38 @@ public class DmpInputTaskJob {
 				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 				dmpInputFinishRequest.setInputTaskId(id);
 				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			}
+		}
+        return ReturnT.SUCCESS;
+    }
+	
+	@XxlJob("retryDoInputTask")
+    public ReturnT retryDoInputTask(){
+		String jobParam = XxlJobHelper.getJobParam();
+		long offset = 3;
+		List<String> blackCfgInputs = new ArrayList<>();
+		if(StringUtils.isNotBlank(jobParam)) {
+			JSONObject parseObject = JSON.parseObject(jobParam);
+			offset = parseObject.getLong("offset");
+			String blackCfgInputStr = parseObject.getString("blackCfgInputs");
+			if(StringUtils.isNotBlank(blackCfgInputStr)) {
+				blackCfgInputs.addAll(Arrays.asList(blackCfgInputStr.split(",")));
+			}
+		}
+		
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
+			.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+			.lt(DmpInputTaskEntity::getUpdateTime, LocalDateTimeUtil.offset(LocalDateTime.now(), offset*-1, ChronoUnit.HOURS))
+			.in(DmpInputTaskEntity::getTaskType, Arrays.asList(DmpInputTaskTaskTypeEnum.NORMAL.getCode() , DmpInputTaskTaskTypeEnum.HISTORY.getCode()))
+			.notIn(CollUtil.isNotEmpty(blackCfgInputs), DmpInputTaskEntity::getCfgInputId, blackCfgInputs)
+			.last(" and (cfg_input_id,next_level_id) not in (select cfg_input_id,next_level_id from dmp_input_task where is_deleted = false and status in ('init','fds','mongo','dmp')) ")
+			.list();
+		if(CollUtil.isNotEmpty(list)) {
+			Map<String, List<DmpInputTaskEntity>> cfgInputIdNextLevelIdMaps = list.stream().collect(Collectors.groupingBy(c -> c.getCfgInputId() + "_" + c.getNextLevelId()));
+			for(Map.Entry<String, List<DmpInputTaskEntity>> cfgInputIdNextLevelIdMap : cfgInputIdNextLevelIdMaps.entrySet()) {
+				List<DmpInputTaskEntity> value = cfgInputIdNextLevelIdMap.getValue();
+				value.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+				dmpInputTaskService.createNewTask(value.get(0));
 			}
 		}
         return ReturnT.SUCCESS;

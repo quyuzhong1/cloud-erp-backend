@@ -29,21 +29,21 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
     */
     @TableField("business_type")
     private String businessType;
-    /**
-    * 表类型：table=主表,detail=明细表  枚举：DictNoticeRoleOptionTableTypeEnum
-    */
-    @TableField("table_type")
-    private String tableType;
-    /**
-    * 表名
-    */
-    @TableField("table_name")
-    private String tableName;
-    /**
-    * 系统归属
-    */
-    @TableField("sys_classify")
-    private String sysClassify;
+//    /**
+//    * 表类型：table=主表,detail=明细表  枚举：DictNoticeRoleOptionTableTypeEnum
+//    */
+//    @TableField("table_type")
+//    private String tableType;
+//    /**
+//    * 表名
+//    */
+//    @TableField("table_name")
+//    private String tableName;
+//    /**
+//    * 系统归属
+//    */
+//    @TableField("sys_classify")
+//    private String sysClassify;
     /**
     * 类路径
     */
@@ -59,11 +59,11 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
     */
     @TableField("field_name")
     private String fieldName;
-    /**
-    * 关联字段（明细表必填）
-    */
-    @TableField("ref_field")
-    private String refField;
+//    /**
+//    * 关联字段（明细表必填）
+//    */
+//    @TableField("ref_field")
+//    private String refField;
     /**
     * 是否启用
     */
@@ -79,6 +79,17 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
     */
     @TableField("index")
     private Integer index;
+    /**
+     * json(包含select,table,condition,sys_classify )
+     */
+    @TableField("data_json")
+    private String dataJson;
+
+    /**
+     * 是否拓展（ 根据class_path 和 data_json 进行远程调用）
+     */
+    @TableField("is_extend")
+    private Boolean isExtend;
 
 
     public static final String BUSINESS_TYPE = "business_type";

@@ -1,8 +1,16 @@
 package com.erp.server.dmp.inout.job;
 
-import cn.hutool.core.collection.CollUtil;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
+
 import com.alibaba.fastjson.JSON;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
@@ -10,21 +18,25 @@ import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.List;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 创建output相关任务
  */
 @Component
+@Slf4j
 public class DmpOutputCreateJob {
 	@Resource
 	private DmpOutputCreateFactory dmpOutputCreateFactory;
 	
 	@Resource
 	private DmpCfgOutputService dmpCfgOutputService;
+	
+	@Resource
+    private RedisTemplate<String,Object> redisTemplate;
 	
 	/**
 	 * 创建正常任务
@@ -59,6 +71,7 @@ public class DmpOutputCreateJob {
 		List<DmpCfgOutputEntity> list = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getSystemId, systemId)
 				.eq(DmpCfgOutputEntity::getDisabled, false)
+				.eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 				.select(DmpCfgOutputEntity::getId)
 				.list();
 		if(CollUtil.isNotEmpty(list)) {
@@ -73,6 +86,38 @@ public class DmpOutputCreateJob {
 				dmpRequest = new DmpOutputCreateRequest();
 				dmpRequest.setCfgOutputId(id);
 				dmpOutputCreateFactory.createHistoryOutputTask(dmpRequest);
+			}
+		}
+		
+		return ReturnT.SUCCESS;
+	}
+	
+	@XxlJob("createOutputTaskByAppId")
+	public ReturnT createEtlTaskByAppId(){
+		String appId = XxlJobHelper.getJobParam();
+		List<DmpCfgOutputEntity> list = dmpCfgOutputService.lambdaQuery()
+				.eq(DmpCfgOutputEntity::getDisabled, false)
+				.eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())
+				.eq(DmpCfgOutputEntity::getAppId, appId)
+				.list();
+		if(CollUtil.isNotEmpty(list)) {
+			for(DmpCfgOutputEntity l : list) {
+				String flowName = l.getFlowName();
+				String id = l.getId();
+				String redisKey = "dmp:output:create:id:" + id;
+				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
+					try {
+						DmpOutputCreateRequest dmpRequest = new DmpOutputCreateRequest();
+						dmpRequest.setCfgOutputId(id);
+						dmpOutputCreateFactory.createNormalOutputTask(dmpRequest);
+					} catch (Exception e) {
+						log.error("output任务生成错误flowName={}" , flowName , e);
+					} finally {
+						redisTemplate.delete(redisKey);
+					}
+				}else {
+					log.error("output任务生成正在执行中flowName={}" , flowName);
+				}
 			}
 		}
 		

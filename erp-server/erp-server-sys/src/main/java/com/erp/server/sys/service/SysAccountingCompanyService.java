@@ -35,7 +35,7 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
     boolean updateCompanyState(UpdateStateDTO dto);
 
 
-    PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto);
+    PagingVO<SysAccountingCompanyEntity> paging(PagingDTO<CompanyPagingSearchDTO> dto);
 
     boolean batchUpdateCompanyState(BatchStateDTO dto);
 
@@ -92,4 +92,6 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @Date 2023/4/13 12:19
      **/
     SysAccountingCompanyEntity getCompanyByName(String companyName);
+
+    SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId);
 }

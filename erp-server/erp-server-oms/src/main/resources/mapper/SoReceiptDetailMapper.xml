@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoReceiptDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoReceiptDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="source_detail_Id" property="sourceDetailId" />
+       <result column="payment_no" property="paymentNo" />
+       <result column="dict_receipt_method" property="dictReceiptMethod" />
+       <result column="receipt_account" property="receiptAccount" />
+       <result column="receipt_date" property="receiptDate" />
+       <result column="remark" property="remark" />
+       <result column="receipt_amount" property="receiptAmount" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, so_id, so_code, source_detail_Id, payment_no, dict_receipt_method, receipt_account, receipt_date, remark, receipt_amount
+    </sql>
+    <select id="existPaymentNo" resultType="java.lang.String">
+        select srd.payment_no
+        from so_receipt_detail srd
+        inner join so_receipt sr on srd.main_id = sr.id
+        where srd.is_deleted = false
+          and sr.is_deleted = false
+          and sr.invalid_status = false
+          and sr.id != #{id}
+        and srd.payment_no in
+        <foreach collection="paymentNoSet" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+</mapper>

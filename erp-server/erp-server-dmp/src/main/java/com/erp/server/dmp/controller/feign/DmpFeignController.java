@@ -50,6 +50,8 @@ public class DmpFeignController extends BaseController {
     @Resource
     private DmpPullTaskService dmpPullTaskService;
 
+    @Resource
+    private DmpPushMsgService dmpPushMsgService;
 
     @Resource
     private BiOrderInfoService biOrderInfoService;
@@ -350,4 +352,28 @@ public class DmpFeignController extends BaseController {
     public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
        return dmpOutputTaskRecordService.pagingOutLatest(dto);
     }
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("/batchCreateDmpPushMsg")
+    public void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList){
+        if (CollectionUtils.isEmpty(msgList)){
+            return;
+        }
+        dmpPushMsgService.saveBatch(msgList);
+    }
+
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("/checkKingdeeSyncApprove")
+    public String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO){
+        return kingdeeCommonService.checkKingdeeSyncApprove(kingdeeDTO);
+    }
+
 }

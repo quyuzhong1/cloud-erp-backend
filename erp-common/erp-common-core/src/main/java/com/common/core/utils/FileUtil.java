@@ -5,6 +5,7 @@ import cn.hutool.core.codec.Base64;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -365,6 +366,55 @@ public class FileUtil {
             }
         }
     }
+
+    /**
+     * @description: 转换MultipartFile
+     * @author Will
+     * @date: 2024/4/3 15:03
+     * @param filePath
+     * @return MultipartFile
+     */
+    public  static MultipartFile filePathToMultipartFile(String filePath) {
+        try {
+            // 打开 URL 连接
+            URL url = new URL(filePath);
+            URLConnection conn = url.openConnection();
+            // 从连接获取输入流
+            BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
+
+            // 读取输入流中的数据并存储到 ByteArrayOutputStream 中
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            // 关闭输入流
+            inputStream.close();
+
+            // 从 ByteArrayOutputStream 中获取 byte 数组
+            byte[] bytes = outputStream.toByteArray();
+
+            // 关闭 ByteArrayOutputStream
+            outputStream.close();
+
+            // 从文件路径中提取文件名
+            String fileName = "";
+            if (filePath.contains("?")) {
+                fileName = filePath.substring(filePath.lastIndexOf("/")+1,filePath.lastIndexOf("?"));
+            } else {
+                fileName = filePath.substring(filePath.lastIndexOf("/")+1);
+            }
+
+            // 创建 MockMultipartFile 对象
+            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            // 捕获异常并抛出自定义的 ServiceException
+            throw new ServiceException("未能获取文件");
+        }
+    }
+
     /**
      * @description: 转换MultipartFile
      * @author Will
@@ -458,6 +508,8 @@ public class FileUtil {
             throw new ServiceException("文件处理失败: " + e.getMessage());
         }
     }
+
+
 
     /**
      * 处理文件名：无后缀时添加默认后缀
@@ -554,6 +606,94 @@ public class FileUtil {
             return rawName.replaceAll("[\\\\/:*?\"<>|]", "_"); // 替换非法字符
         } catch (URISyntaxException e) {
             return "file_" + DigestUtils.md5Hex(url) + ".xml";
+        }
+    }
+
+
+
+    /**
+     * 订货通根据url下载图片
+     * @author will
+     * @date 2025/10/13 10:55
+     * @param fileUrl
+     * @return MultipartFile
+     */
+    public static MultipartFile dhtFileUrlToMultipartFile(String fileUrl) {
+        try {
+            URL url = new URL(fileUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            // 方法1：从 URL 查询参数中提取 Fn 参数
+            String fileName = extractFileNameFromUrl(fileUrl);
+
+            // 方法2：如果方法1失败，使用默认文件名但确保扩展名正确
+            if (fileName == null || fileName.isEmpty()) {
+                fileName = "file.png"; // 根据实际情况设置默认扩展名
+            }
+
+            // 根据文件扩展名设置 Content-Type
+            String contentType = getContentTypeByFileName(fileName);
+
+            InputStream inputStream = connection.getInputStream();
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+
+            return new MockMultipartFile(
+                    "file",
+                    fileName,
+                    contentType,
+                    new ByteArrayInputStream(bytes)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("文件转换失败", e);
+        }
+    }
+
+    // 从 URL 查询参数中提取文件名
+    private static String extractFileNameFromUrl(String fileUrl) {
+        try {
+            URL url = new URL(fileUrl);
+            String query = url.getQuery();
+            if (query != null) {
+                String[] pairs = query.split("&");
+                for (String pair : pairs) {
+                    int idx = pair.indexOf("=");
+                    if (idx > 0 && "Fn".equals(pair.substring(0, idx))) {
+                        String fileName = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
+                        // 确保文件名有正确的扩展名
+                        if (!fileName.contains(".")) {
+                            // 如果没有扩展名，根据内容或默认添加
+                            fileName += ".png"; // 根据实际情况调整
+                        }
+                        return fileName;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // 根据文件名获取 Content-Type
+    private static String getContentTypeByFileName(String fileName) {
+        String extension = getFileExtension(fileName);
+        return getContentTypeByExtension(extension);
+    }
+
+    private static String getContentTypeByExtension(String extension) {
+        switch (extension) {
+            case "png": return "image/png";
+            case "jpg": case "jpeg": return "image/jpeg";
+            case "gif": return "image/gif";
+            case "bmp": return "image/bmp";
+            case "webp": return "image/webp";
+            case "pdf": return "application/pdf";
+            case "doc": return "application/msword";
+            case "docx": return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "xls": return "application/vnd.ms-excel";
+            case "xlsx": return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            default: return "application/octet-stream";
         }
     }
 }

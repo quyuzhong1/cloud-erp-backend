@@ -813,7 +813,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:49
      */
     @PostMapping("/submitDelivery")
-    @Idempotent
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货")
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());

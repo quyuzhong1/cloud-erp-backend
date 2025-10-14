@@ -393,6 +393,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 result.setPoFollowerName(findUserDTO.getUserName());
             }
         }
+        //供应商工厂地
+        List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(Collections.singletonList(supplierId));
+        //供应商工厂地
+        String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), supplierId)).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
+        result.setPlantAddrNames(plantAddrsNames);
+
+        //产品分类
+        List<BasicCategoryEntity> productCategoryList = FeignQuery.list(BasicCategoryEntity.class);
+        //产品分类名称名称
+        String productCategoryNames = supplier.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,Boolean.TRUE)).collect(Collectors.joining(","));
+        result.setProductCategoryNames(productCategoryNames);
 
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
@@ -1819,7 +1830,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(updateApproveStatusDTO.getThirdApprovalUserId())){
             SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), updateApproveStatusDTO.getThirdApprovalUserId());
             if (Objects.isNull(userByThird)) {
-                throw new ServiceException("第三方用户信息不存在");
+                throw new ServiceException("第三方用户信息不存在,thirdUserId:"+updateApproveStatusDTO.getThirdApprovalUserId());
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
             if (ObjUtil.isEmpty(findUserDTO)) {

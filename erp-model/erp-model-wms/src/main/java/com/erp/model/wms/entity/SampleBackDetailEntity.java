@@ -64,6 +64,11 @@ public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 样品台账id
+    */
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -81,6 +86,8 @@ public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
     public static final String QTY = "qty";
 
     public static final String REMARK = "remark";
+
+    public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
 
     @Override
     public Serializable pkVal() {

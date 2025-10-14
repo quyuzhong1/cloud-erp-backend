@@ -39,8 +39,8 @@ public class SysAccountingCompanyController extends BaseController {
      * 分页列表
      */
     @RequestMapping("/paging")
-    public ApiResult list(@RequestBody @Validated PagingDTO<CompanyPagingSearchDTO> dto) {
-        PagingVO pagingVO = sysAccountingCompanyService.paging(dto);
+    public ApiResult<PagingVO<SysAccountingCompanyEntity>> list(@RequestBody @Validated PagingDTO<CompanyPagingSearchDTO> dto) {
+        PagingVO<SysAccountingCompanyEntity> pagingVO = sysAccountingCompanyService.paging(dto);
         return success(pagingVO);
     }
 
