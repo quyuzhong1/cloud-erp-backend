@@ -928,8 +928,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             // 操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
-                MoldInfoEntity moldInfoEntity = moldMap.get(moldRefSkuEntity.getMoldId());
-                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldRefSkuEntity.getMoldCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
             }
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
