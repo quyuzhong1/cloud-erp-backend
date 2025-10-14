@@ -1,26 +1,42 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.*;
 import com.erp.model.plm.enums.ProductTypeEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.SupplierCategoryEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -28,46 +44,31 @@ import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.MoldInfoExcelListener;
+import com.erp.server.plm.mapper.MoldInfoMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.plm.mapper.MoldInfoMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_MOLD_INFO;
 
 /**
  * <p>
@@ -81,7 +82,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldInfoEntity> implements MoldInfoService {
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService sysLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -869,9 +870,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
 
         // 操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
         for (MoldInfoEntity moldInfoEntity : moldInfoEntities) {
-            sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
+            sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("新增了一个模具【{}】", moldInfoEntity.getCode())).setBusinessId(moldInfoEntity.getId()));
         }
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
@@ -912,10 +913,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if(CollUtil.isNotEmpty(moldRefSkuEntities)){
             moldRefSkuService.saveBatch(moldRefSkuEntities);
             // 操作日志
-            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
             for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
                 MoldInfoEntity moldInfoEntity = moldMap.get(moldRefSkuEntity.getMoldId());
-                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+                sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("模具【{}】关联SKU【{}】", moldInfoEntity.getCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
             }
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
