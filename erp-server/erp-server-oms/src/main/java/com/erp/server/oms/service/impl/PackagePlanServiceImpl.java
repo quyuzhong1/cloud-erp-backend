@@ -50,6 +50,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -80,14 +81,19 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WildberriesSDKService wildberriesSDKService;
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
+    @Lazy
     @Resource
     private ShopInfoService shopInfoService;
+    @Lazy
     @Resource
     private ShopAuthService shopAuthService;
+    @Lazy
     @Resource
     private PackagePlanDetailService packagePlanDetailService;
+    @Lazy
     @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
@@ -256,6 +262,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             CreateSupplyResponse supply = wildberriesSDKService.createSupply(authEntity.getToken(), request);
+            if (CharSequenceUtil.isBlank(supply.getId())){
+                mqResponseDTO.setErrorMsg(supply.getDetail());
+                return mqResponseDTO;
+            }
             String packageNo = supply.getId();
             packagePlanEntity.setPackageNo(packageNo);
             data.put("packagePlanId", packagePlanEntity.getId());
@@ -363,6 +373,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(authEntity.getToken(), packageNo, request);
+            if (CollUtil.isEmpty(addBoxToSupplyResponse.getTrbxIds())){
+                mqResponseDTO.setErrorMsg(addBoxToSupplyResponse.getDetail());
+                return mqResponseDTO;
+            }
             //小包条码
             List<String> trbxIds = addBoxToSupplyResponse.getTrbxIds();
             data.put("barcode", String.join(",", trbxIds));
@@ -475,7 +489,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         try {
             AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
             if (!"204".equals(response.getCode())) {
-                mqResponseDTO.setErrorMsg("添加订单到大包失败");
+                mqResponseDTO.setErrorMsg(response.getCode());
                 return mqResponseDTO;
             }
             //204表示添加成功，只有完成了以上三步，组包预报单的大包交接状态变更为已提交
@@ -1019,6 +1033,10 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
 
     @Override
     public BatchResultDTO addPlan(PackagePlanDTO.SoB2cDTO dto) {
+        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.listBySourceId(dto.getSoId(), WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+        if(CollectionUtils.isNotEmpty(workflowTaskRecordEntities)){
+            return BatchResultDTO.fail(dto.getSoId(), dto.getSoCode(), "该订单已生成组包计划任务");
+        }
         //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceId(dto.getSoId());
@@ -1031,7 +1049,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         map.put("id", dto.getSoId());
         map.put("errorType", SoB2cErrorTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
-        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
             throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
         }
@@ -1053,6 +1071,30 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).collect(Collectors.toList());
         this.lambdaUpdate().in(PackagePlanEntity::getId,mainIds).remove();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        if (CharSequenceUtil.isBlank(id)){
+            return BatchResultDTO.fail(id, id, "组包计划不存在");
+        }
+        this.removeById(id);
+        packagePlanDetailService.removeByMainId(id);
+        return BatchResultDTO.success(id, id, "删除组包计划成功");
+    }
+
+    @Override
+    public List<PackagePlanDTO.LabelDTO> getNoHandoverLabel(List<String> codeList) {
+        return baseMapper.getNoHandoverLabel(codeList);
+    }
+
+    @Override
+    public void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getCode())){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划单");
+        }
+
     }
 
     private String print(String id) {

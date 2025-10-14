@@ -33,4 +33,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      * @param sourceType
      */
     void removeBySourceIdAndSourceType(String sourceId, String sourceType);
+
+    /**
+     * 根据sourceId查询任务记录
+     * @param soId
+     * @return
+     */
+    List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType);
 }

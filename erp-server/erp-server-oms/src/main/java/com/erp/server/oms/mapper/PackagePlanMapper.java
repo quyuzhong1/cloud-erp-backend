@@ -39,4 +39,13 @@ public interface PackagePlanMapper extends BaseMapper<PackagePlanEntity> {
      * @return 分页查询结果
      */
     IPage<PackagePlanDTO.ExportDTO> exportPaging(@Param("query") Page<T> query, @Param("params") PackagePlanDTO.PagingParamDTO params);
+
+    /**
+     * 获取组包计划的交接标签
+     * - 组包状态为：等于已组包
+     * - 交接标签下载：等于未下载
+     * @param codeList
+     * @return
+     */
+    List<PackagePlanDTO.LabelDTO> getNoHandoverLabel(@Param("codeList") List<String> codeList);
 }

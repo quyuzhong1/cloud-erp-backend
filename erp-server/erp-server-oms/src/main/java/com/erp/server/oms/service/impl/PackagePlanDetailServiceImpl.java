@@ -116,6 +116,14 @@ public class PackagePlanDetailServiceImpl extends SuperServiceImpl<PackagePlanDe
         return this.lambdaQuery().in(PackagePlanDetailEntity::getMainId, ids).list();
     }
 
+    @Override
+    public void removeByMainId(String mainId) {
+        if (CharSequenceUtil.isBlank(mainId)){
+            return;
+        }
+        this.lambdaUpdate().in(PackagePlanDetailEntity::getMainId,mainId).remove();
+    }
+
 
     /**
     * 新增修改处理数据

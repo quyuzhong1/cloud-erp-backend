@@ -82,6 +82,16 @@ public class PackagePlanEntity extends BaseEntity<PackagePlanEntity> {
     @TableField("print_order_status")
     private String printOrderStatus;
 
+    /**
+     * 大包运单号
+     */
+    @TableField("transport_no")
+    private String transportNo;
+    /**
+     * 大包交接面单
+     */
+    @TableField("handover_label_url")
+    private String handoverLabelUrl;
 
     public static final String CODE = "code";
 

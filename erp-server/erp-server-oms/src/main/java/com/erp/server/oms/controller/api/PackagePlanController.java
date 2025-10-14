@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -15,9 +16,11 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.erp.model.oms.dto.PackagePlanDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.PackagePlanEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.server.oms.service.PackagePlanService;
@@ -311,5 +314,36 @@ public class PackagePlanController extends BaseController {
             addException("获取跨境运输标签:" + e.getMessage(), soId, errorType, dto);
         }
         return result;
+    }
+
+
+    /**
+     * 批量删除
+     * @author zdy
+     * @date 2024/8/30 14:25
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "删除组包计划")
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = packagePlanService.delete(id);
+            }catch (Exception e){
+                log.error("删除标签管理",e);
+                PackagePlanEntity entity = packagePlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "组包计划不存在, 删除组包计划失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

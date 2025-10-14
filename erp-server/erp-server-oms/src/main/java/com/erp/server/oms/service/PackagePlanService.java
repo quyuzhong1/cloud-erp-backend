@@ -113,5 +113,30 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      */
     BatchResultDTO addPlan(PackagePlanDTO.SoB2cDTO dto);
 
+    /**
+     * 根据订单id删除组包计划
+     * @param id
+     */
     void removeBySoId(String id);
+
+    /**
+     * 删除组包计划
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+    /**
+     * 获取组包计划的交接标签
+     * - 组包状态为：等于已组包
+     * - 交接标签下载：等于未下载
+     * @param codeList
+     * @return
+     */
+    List<PackagePlanDTO.LabelDTO> getNoHandoverLabel(List<String> codeList);
+
+    /**
+     * 下载组包计划的交接标签
+     * @param dto
+     */
+    void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto);
 }

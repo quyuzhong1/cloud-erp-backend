@@ -148,4 +148,14 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     .remove();
         }
     }
+
+    @Override
+    public List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType) {
+        if (CharSequenceUtil.isBlank(soId)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
+                .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                .list();
+    }
 }

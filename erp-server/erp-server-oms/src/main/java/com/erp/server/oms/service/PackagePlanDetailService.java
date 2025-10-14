@@ -52,4 +52,10 @@ public interface PackagePlanDetailService extends SuperService<PackagePlanDetail
      * @return
      */
     List<PackagePlanDetailEntity> getByMainIds(List<String> ids);
+
+    /**
+     * 根据主表id删除明细
+     * @param mainId
+     */
+    void removeByMainId(String mainId);
 }

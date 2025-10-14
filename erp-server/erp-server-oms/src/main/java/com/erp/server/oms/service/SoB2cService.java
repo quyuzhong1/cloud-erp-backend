@@ -1137,4 +1137,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
+
+    BatchResultDTO retryPackagePlan(String soId);
 }

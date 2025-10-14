@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -341,5 +342,46 @@ public class PackagePlanDTO implements Serializable {
         private String shopId;
         private String shopName;
         private String platformCreateTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LabelDTO {
+        /**
+         * 组包计划
+         */
+        private String id;
+        /**
+         * 组包计划单号
+         */
+        private String code;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 大包单号
+         */
+        private String packageNo;
+        /**
+         * 组包状态
+         */
+        private String packageStatus;
+        /**
+         * 组包计划明细id
+         */
+        private String detailId;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 平台code
+         */
+        private String platformCode;
     }
 }
