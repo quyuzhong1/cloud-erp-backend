@@ -44,4 +44,9 @@ public class MoldInfoApproveHandler extends AbstractApproveHandler {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return moldInfoService.approveEnd(approveOne,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }
