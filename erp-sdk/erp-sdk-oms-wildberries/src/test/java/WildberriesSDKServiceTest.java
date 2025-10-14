@@ -58,7 +58,8 @@ public class WildberriesSDKServiceTest {
 //        CreateProductRequest request = CreateProductRequest.builder().build();
 //        List<CreateProductRequest> requestList = Collections.singletonList(request);
 //        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
-        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":15000019,\"value\":[\"Электронная версия\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L096\"]}]}]}]";
+//        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":15000019,\"value\":[\"Электронная версия\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L096\"]}]}]}]";
+        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
         List<CreateProductRequest> requestList = JSONUtil.toList(requestStr, CreateProductRequest.class);
         String response = wildberriesSDKService.createProduct(WildberriesConstant.TOKEN, requestList);
 
@@ -78,6 +79,17 @@ public class WildberriesSDKServiceTest {
         System.out.println(response);
         System.out.println(response.isSuccess());
         System.out.println(response.getMsg());
+    }
+
+    @Test
+    public void listProductError() {
+        ProductErrorRequest request = ProductErrorRequest.builder()
+                .cursor(ProductErrorRequest.Cursor.builder().limit(100).build())
+                .order(ProductErrorRequest.Order.builder().ascending(Boolean.FALSE).build())
+                .build();
+        System.out.println(JSONUtil.toJsonStr(request));
+        String response = wildberriesSDKService.listProductError(WildberriesConstant.TOKEN_PRO, request);
+        System.out.println(response);
     }
     @Test
     public void getOrderList() {
@@ -170,7 +182,7 @@ public class WildberriesSDKServiceTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(pdfBase64);
+        System.out.println("data:application/pdf;base64," + pdfBase64);
     }
     @Test
     public void getCrossOrderLabel() {
@@ -188,5 +200,56 @@ public class WildberriesSDKServiceTest {
 //        }
 //        System.out.println(pdfBase64);
     }
-    
+    @Test
+    public void getSupplyLabel() {
+        String supplyId = "WB-GI-182686515";
+        SupplyLabelResponse supplyLabel = wildberriesSDKService.getSupplyLabel(WildberriesConstant.TOKEN, supplyId);
+        System.out.println(JSONUtil.toJsonStr(supplyLabel));
+        String pdfBase64 = null;
+        try {
+            pdfBase64 = PdfUtil.ImageToPdfBase64(supplyLabel.getFile());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("data:application/pdf;base64," + pdfBase64);
+        //村粗到fastdfs 服务器
+    }
+
+    @Test
+    public void getWarehouse() {
+        String warehouse = wildberriesSDKService.getWarehouse(WildberriesConstant.TOKEN);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+    }
+    @Test
+    public void createWarehouse() {
+        CreateWarehouseRequest request = CreateWarehouseRequest.builder().name("测试仓库").officeId(1).build();
+        String warehouse = wildberriesSDKService.createWarehouse(WildberriesConstant.TOKEN, request);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+        //{"id":8173}
+    }
+    @Test
+    public void updateInventory() {
+        UpdateInventoryRequest request = UpdateInventoryRequest.builder().stocks(Collections.singletonList(UpdateInventoryRequest.Stock.builder().sku("L096").amount(1000).build())).build();
+        String warehouse = wildberriesSDKService.updateInventory(WildberriesConstant.TOKEN, "8173", request);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+        //{"id":8173}
+    }
+    @Test
+    public void getInventory() {
+        GetInventoryRequest request = GetInventoryRequest.builder().skus(Collections.singletonList("L096")).build();
+        String warehouse = wildberriesSDKService.getInventory(WildberriesConstant.TOKEN, "8173", request);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+        //{"id":8173}
+    }
+    @Test
+    public void getOffices() {
+        String warehouse = wildberriesSDKService.getOffices(WildberriesConstant.TOKEN);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+    }
+    @Test
+    public void getOfficeForPass() {
+        String warehouse = wildberriesSDKService.getOfficeForPass(WildberriesConstant.TOKEN);
+        System.out.println(JSONUtil.toJsonStr(warehouse));
+    }
+
 }

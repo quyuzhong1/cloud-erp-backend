@@ -23,6 +23,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -36,6 +37,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.PackagePlanMapper;
 import com.erp.server.oms.service.*;
@@ -110,6 +112,8 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     private MQProducerService mqProducerService;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -642,7 +646,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
             SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
             updateDTO.setMainId(soId);
-            updateDTO.setLogisticsLabelBase64(PdfUtil.ImageToPdfBase64(file));
+            updateDTO.setLogisticsLabelBase64("data:application/pdf;base64," + PdfUtil.ImageToPdfBase64(file));
             dtoList.add(updateDTO);
             soB2cLabelService.saveSoB2cLabel(dtoList);
             data.put("trackNo", trackNo);
@@ -1091,10 +1095,43 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
 
     @Override
     public void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto) {
-        if (CharSequenceUtil.isBlank(dto.getCode())){
+        PackagePlanEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划单");
         }
-
+        String shopId = entity.getShopId();
+        ShopAuthEntity authEntity = shopAuthService.getByShopId(shopId);
+        if (Objects.isNull(authEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权信息");
+        }
+        String packageNo = entity.getPackageNo();
+        if (CharSequenceUtil.isBlank(packageNo)){
+            throw new ServiceException("组包计划单供货单ID不能为空");
+        }
+        String handoverLabelUrl = entity.getHandoverLabelUrl();
+        if (CharSequenceUtil.isNotBlank(handoverLabelUrl)){
+            throw new ServiceException("组包计划单交接标签已存在");
+        }
+        SupplyLabelResponse response = wildberriesSDKService.getSupplyLabel(authEntity.getToken(), packageNo);
+        if (CharSequenceUtil.isNotBlank(response.getMessage())){
+            throw new ServiceException("获取交接标签失败:" + response.getMessage());
+        }
+        if (CharSequenceUtil.isNotBlank(response.getDetail())){
+            throw new ServiceException("获取交接标签失败:" + response.getDetail());
+        }
+        String pdfBase64 = null;
+        try {
+            pdfBase64 = PdfUtil.ImageToPdfBase64(response.getFile());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+//        byte[] bytes = Base64.getDecoder().decode(pdfBase64);
+//        String labelUrl = FastDFSClientUtil.uploadFile(bytes, UUID.randomUUID().toString(), null);
+        String labelUrl = fileFeign.uploadFileByBase64(pdfBase64);
+        log.info("获取交接标签成功，labelUrl地址：{}", labelUrl);
+        entity.setHandoverLabelUrl(labelUrl);
+        entity.setTransportNo(response.getBarcode());
+        this.updateById(entity);
     }
 
     private String print(String id) {

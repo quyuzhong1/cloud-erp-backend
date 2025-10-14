@@ -119,7 +119,7 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderLabelResponse));
                 response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
-                        .base64(PdfUtil.ImageToPdfBase64(orderLabelResponse.getStickers().get(0).getFile())).build();
+                        .base64("data:application/pdf;base64," + PdfUtil.ImageToPdfBase64(orderLabelResponse.getStickers().get(0).getFile())).build();
                 response.success();
                 responses.add(response);
                 return success(responses);

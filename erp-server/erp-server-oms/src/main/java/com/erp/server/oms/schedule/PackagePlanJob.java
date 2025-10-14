@@ -31,7 +31,7 @@ public class PackagePlanJob {
      * @return
      */
 
-    @XxlJob("getHandoverLabel")
+    @XxlJob("getHandoverLabelJob")
     public ReturnT<String> getHandoverLabel() {
         XxlJobHelper.log("获取组包计划的交接标签开始执行");
         //无交接标签 有物流跟踪号 平台是 wildberries 组包状态是已组包
@@ -42,7 +42,11 @@ public class PackagePlanJob {
         XxlJobHelper.log("获取组包计划的交接标签开始执行，需要获取的订单数：{}", list.size());
         list.forEach(item -> {
             XxlJobHelper.log("获取组包计划的交接标签开始执行，订单号：{}", item.getCode());
-            packagePlanService.downloadHandoverLabel(item);
+            try {
+                packagePlanService.downloadHandoverLabel(item);
+            }catch (Exception e){
+                XxlJobHelper.log("获取组包计划的交接标签执行失败，异常：{}", e.getMessage());
+            }
             XxlJobHelper.log("获取组包计划的交接标签完成执行，订单号：{}", item.getCode());
         });
         XxlJobHelper.log("获取组包计划的交接标签执行结束");

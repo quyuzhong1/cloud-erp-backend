@@ -293,8 +293,7 @@ public class PdfUtil {
             }
             // 直接输出到内存流
             document.save(baos);
-            return "data:application/pdf;base64," +
-                    Base64.getEncoder().encodeToString(baos.toByteArray());
+            return Base64.getEncoder().encodeToString(baos.toByteArray());
         }
     }
 }
