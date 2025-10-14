@@ -390,6 +390,11 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
+        Integer count = moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
+        }
+
         // 删除主单数据
         log.info("删除 开始删除模具档案主单数据，id：【{}】", id);
         super.removeById(id);
@@ -409,6 +414,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        Integer count = moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
         }
         log.info("作废 开始修改模具档案状态数据，id：【{}】", id);
         lambdaUpdate().eq(MoldInfoEntity::getId, id)
@@ -434,7 +443,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改模具档案状态，id：【{}】", id);
