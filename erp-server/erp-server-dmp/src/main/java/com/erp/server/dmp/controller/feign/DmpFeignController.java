@@ -363,4 +363,17 @@ public class DmpFeignController extends BaseController {
         }
         dmpPushMsgService.saveBatch(msgList);
     }
+
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("/checkKingdeeSyncApprove")
+    public String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO){
+        return kingdeeCommonService.checkKingdeeSyncApprove(kingdeeDTO);
+    }
+
 }

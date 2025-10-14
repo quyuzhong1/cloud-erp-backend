@@ -318,4 +318,13 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/batchCreateDmpPushMsg")
     void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList);
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("feign/checkKingdeeSyncApprove")
+    String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO);
 }
