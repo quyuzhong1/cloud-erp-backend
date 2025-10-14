@@ -38,23 +38,15 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
 
     
     /**
-     * redis流水重算
-     * @param startDate
-     * @param inventoryId
-     */
-    void overrideInventoryFlow(LocalDate startDate, String inventoryId , boolean overrideDbFlow);
-    
-    /**
      * 最新历史库存同步即时库存
      * @param inventoryId
      */
     void inventoryHisToInventory(String inventoryId);
     
     
-    
     /**
      * 库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
      * @param inventoryTransactionEntityList
      */
-    void inventoryTransactionToInventoryHis(List<InventoryTransactionEntity> inventoryTransactionEntityList);
+    void inventoryTransactionToInventoryHis(InventoryTransactionEntity inventoryTransactionEntity);
 }

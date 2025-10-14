@@ -167,6 +167,7 @@ public class RedisConfig {
      * 定义redission分布式锁客户端bean
      * @return
      */
+    @Primary
     @Bean
     public RedissonClient redisson()  {
         Config config = new Config();

@@ -2,16 +2,12 @@ package com.erp.server.wms.service.impl;
 
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.redisson.RedissonMultiLock;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,8 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryTransactionMapper, InventoryTransactionEntity> implements InventoryTransactionService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private TransactionFlowService transactionFlowService;
     @Autowired
     private InventoryHisService inventoryHisService;
     @Autowired
@@ -126,31 +120,6 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     // TODO 验证数据 & 数据赋值
     }
 
-    @Transactional(rollbackFor = Exception.class)
-	@Override
-	public void overrideInventoryFlow(LocalDate startDate, String inventoryId, boolean overrideDbFlow) {
-    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, inventoryId));
-    	if(tryLock != null) {
-    		try {
-				List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
-						.orderByAsc(InventoryTransactionEntity::getCreateTime).list();
-				this.inventoryTransactionToInventoryHis(inventoryTransactionEntityList);
-				if(overrideDbFlow) {
-					transactionFlowService.overrideInventoryFlow(startDate, inventoryId, "");
-					this.inventoryHisToInventory(inventoryId);
-				}
-				inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE_INVENTORY , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
-			}catch (Exception e) {
-				log.error("库存重算失败" , e);
-				throw e;
-			} finally{
-				inventoryRedisUtil.unLock(tryLock);
-			}
-    	}else {
-    		throw new ServiceException("库存重算获取锁失败，请求超时");
-    	}
-	}
-    
     @Override
     public void inventoryHisToInventory(String inventoryId) {
     	InventoryHisEntity inventoryHisEntity = inventoryHisService.findLastInventory(inventoryId, LocalDate.now());
@@ -159,18 +128,11 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void inventoryTransactionToInventoryHis(List<InventoryTransactionEntity> inventoryTransactionEntityList) {
-    	if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
-    		Map<String, List<InventoryTransactionEntity>> inventoryIdMaps = inventoryTransactionEntityList.stream().collect(Collectors.groupingBy(InventoryTransactionEntity::getInventoryId));
-    		for(Map.Entry<String, List<InventoryTransactionEntity>> inventoryIdMap : inventoryIdMaps.entrySet()) {
-    			for(InventoryTransactionEntity inventoryTransactionEntity : inventoryIdMap.getValue()) {
-        			com.erp.model.wms.dto.inventory.InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, 
-        					com.erp.model.wms.dto.inventory.InventoryTransactionDTO.class);
-    				ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).updateInventoryHis(transactionDTO);
-        		}
-        		this.inventoryHisToInventory(inventoryIdMap.getKey());
-    		}
-    		removeByIds(inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet()));
-    	}
+    public void inventoryTransactionToInventoryHis(InventoryTransactionEntity inventoryTransactionEntity) {
+    	com.erp.model.wms.dto.inventory.InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, 
+				com.erp.model.wms.dto.inventory.InventoryTransactionDTO.class);
+		ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).updateInventoryHis(transactionDTO);
+		this.inventoryHisToInventory(inventoryTransactionEntity.getInventoryId());
+    	removeById(inventoryTransactionEntity.getId());
     }
 }
