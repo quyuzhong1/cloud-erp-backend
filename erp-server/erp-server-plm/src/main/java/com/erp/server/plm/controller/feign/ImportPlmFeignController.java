@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.MoldRefSkuService;
 import com.erp.server.plm.service.ProductDetailImagesService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,8 @@ public class ImportPlmFeignController {
     private SkuStdCostDetailService skuStdCostDetailService;
     @Resource
     private MoldInfoService moldInfoService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
 
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -73,6 +76,16 @@ public class ImportPlmFeignController {
     public void importMoldInfo(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             moldInfoService.importMoldInfo(dto);
+        } catch (Exception e) {
+            log.error("导入模具档案失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importMoldRefSku")
+    public void importMoldRefSku(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            moldRefSkuService.importMoldRefSku(dto);
         } catch (Exception e) {
             log.error("导入模具档案失败", e);
             updateTask(dto.getTaskId(), e);

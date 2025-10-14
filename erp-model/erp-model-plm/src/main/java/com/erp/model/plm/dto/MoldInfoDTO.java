@@ -707,5 +707,25 @@ public class MoldInfoDTO implements Serializable {
         private List<String> skuNos;
     }
 
+    /**
+     * 修改数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateQty  {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * *单模产量
+         */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 1, message = "数量必须大于0")
+        private Integer qty;
+    }
+
 
 }
