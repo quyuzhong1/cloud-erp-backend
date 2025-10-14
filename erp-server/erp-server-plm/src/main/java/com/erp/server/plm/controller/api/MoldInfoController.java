@@ -452,9 +452,9 @@ public class MoldInfoController extends BaseController {
             menuCode = "plm:moldInfo:batchRefSku",
             serviceClass = MoldInfoService.class,
             keyIdName = "ids")
-    public ApiResult<Object> batchRefSku(@RequestBody @Validated MoldInfoDTO.RefSkuDTO dto) {
+    public ApiResult batchRefSku(@RequestBody @Validated MoldInfoDTO.RefSkuDTO dto) {
         Boolean result =moldInfoService.batchRefSku(dto);
-        return result ? success() : failure();
+        return result ? success(result) : failure();
     }
 
 
