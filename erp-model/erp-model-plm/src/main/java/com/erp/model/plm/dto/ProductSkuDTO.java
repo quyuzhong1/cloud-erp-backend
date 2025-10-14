@@ -114,6 +114,7 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 产品 属性
      */
     private List<String> propertyList;
+    private List<String> notPropertyList;
 
 
     /**
