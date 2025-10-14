@@ -13,4 +13,14 @@
         LIKE CONCAT('%', #{customerName}::text, '%')
         ORDER BY ca.is_default DESC
     </select>
+
+    <select id="listAllByMainIds" resultType="com.erp.model.oms.entity.CustomerAddressEntity">
+        SELECT ca.*
+        FROM
+            customer_address ca
+        WHERE ca.main_id IN
+        <foreach item="item" index="index" collection="mainIds" open="(" close=")" separator=",">
+               #{item}
+        </foreach>
+    </select>
 </mapper>

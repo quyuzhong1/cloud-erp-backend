@@ -19,6 +19,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,33 @@ import java.util.Map;
 public class CustomerDTO implements Serializable {
 
 
+    /**
+     * 第三方客户账户信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdCustomerAccountDTO{
+        /**
+         * 客户id
+         */
+        private String id;
+
+        /**
+         * 账户余额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 返利账户余额
+         */
+        private BigDecimal rebateAmount;
+
+        /**
+         * 授信账户余额
+         */
+        private BigDecimal creditAmount;
+
+    }
     /**
      * 分页参数
      */
@@ -286,6 +314,14 @@ public class CustomerDTO implements Serializable {
          *
          */
         private Boolean disabled;
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
     }
     /**
      * 远程搜索

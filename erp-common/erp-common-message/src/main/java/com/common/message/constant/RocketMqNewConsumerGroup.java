@@ -199,4 +199,14 @@ public class RocketMqNewConsumerGroup {
      * 新中台飞书对接
      */
     public static final String DMP_FS_INSTANCES_TO_WORKFLOW_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_group";
+
+    /**
+     * restcloudb2b订单
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_group";
+
+    /**
+     * 新中台平台收款单
+     */
+    public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_group";
 }

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoReceiptMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoReceiptEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="third_code" property="thirdCode" />
+       <result column="customer_id" property="customerId" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="currency" property="currency" />
+       <result column="is_posted" property="isPosted" />
+       <result column="posted_account" property="postedAccount" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_id" property="sourceId" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, third_code, customer_id, approve_status, currency, is_posted, posted_account, source_type, source_code, source_id, approve_time, approve_user_id, approve_user_name, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.SoReceiptDTO$ListDTO">
+        select sr.id,
+               srd.id as detailId,
+               sr.code,
+               sr.third_code as thirdCode,
+               sr.customer_id as customerId,
+               ci.name as customerName,
+               sr.approve_status as approveStatus,
+               sr.receipt_amount as totalReceiptAmount,
+               sr.currency,
+               srd.so_code as soCode,
+        GREATEST(si.order_amount -si.discount_amount - COALESCE((
+        select sum(red2.receipt_amount) from so_receipt re2
+        inner join so_receipt_detail red2 on re2.id = red2.main_id
+        where re2.is_deleted = false
+        and red2.is_deleted = false and re2.approve_status = 'approve'
+        and red2.so_id = si.id
+        ),0) - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0)  as remainReceiptAmount,
+            srd.receipt_amount as receiptAmount,
+        sr.receipt_account as receiptAccount,
+        sr.receipt_date as receiptDate,
+        sr.dict_receipt_method as dictReceiptMethod,
+        sr.is_posted as isPosted,
+        sr.posted_account as postedAccount,
+        sr.source_type as sourceType,
+        sr.approve_time as approveTime,
+        sr.approve_user_name as approveUserName,
+        sr.update_time as updateTime,
+        sr.create_user_name as createUserName,
+        sr.update_user_name as updateUserName,
+        srd.remark
+        from so_receipt sr
+        left join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        left join customer_info ci on ci.id = sr.customer_id and ci.is_deleted = false
+        left join so_info si on srd.so_id = si.id and si.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and  sr.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by sr.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from so_receipt where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.oms.dto.SoReceiptDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.oms.dto.SoReceiptDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  so_receipt sr
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="listSoReceiptBySoCode" resultType="com.erp.model.oms.dto.SoReceiptDTO$SoInfoAndReceiptDTO">
+        select si.id as soId,
+               si.code as soCode,
+               si.sales_org_id as salesOrgId,
+               si.approve_status as approveStatus,
+               si.receive_account as receiptAccount,
+        GREATEST(si.order_amount -si.discount_amount - COALESCE((
+        select sum(red.receipt_amount) from so_receipt re
+        inner join so_receipt_detail red on re.id = red.main_id
+        where re.is_deleted = false
+        and red.is_deleted = false and re.approve_status = 'approve'
+        and red.so_id = si.id
+        ),0)- si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiptAmount
+               from
+                     so_info si
+        where si.is_deleted = false
+          and si.invalid_status = false
+          and si.customer_id = #{params.customerId}
+        <if test="params != null and params.soCode != null and params.soCode != ''">
+            and si.code  ILIKE concat('%',#{params.soCode}::text,'%')
+        </if>
+        <if test="params.soCodeList !=null and params.soCodeList.size>0">
+            AND si.code IN
+            <foreach collection="params.soCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+order by si.create_time desc
+    </select>
+    <select id="queryAmountBySoIds" resultType="com.erp.model.oms.dto.SoReceiptDTO$AmountDTO">
+        select srd.so_code,
+               srd.so_id,
+            sum(srd.receipt_amount) as receiptAmount
+        from so_receipt sr
+                 inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        where sr.is_deleted = false
+          and sr.approve_status = 'approve'
+        and srd.so_id in
+        <foreach collection="soIds" item="soId" open="(" separator="," close=")">
+            #{soId}
+        </foreach>
+        group by srd.so_code,srd.so_id
+    </select>
+    <select id="getSoViewDTO" resultType="com.erp.model.oms.dto.SoReceiptDTO$SoViewDTO">
+        select sr.id,
+               srd.id as detailId,
+               sr.code,
+               srd.receipt_amount as receiptAmount,
+               sr.receipt_date as receiptDate,
+               sr.dict_receipt_method as dictReceiptMethod,
+               sr.receipt_account as receiptAccount,
+               srd.payment_no as paymentNo,
+               sr.approve_status as approveStatus,
+               srd.remark
+        from so_receipt sr
+                 inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        where sr.is_deleted = false
+          and srd.so_id = #{soId}
+    </select>
+
+</mapper>

@@ -309,6 +309,13 @@ public interface SysUserFeign {
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
 
     /**
+     * 根据金蝶id查询组织信息
+     *
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByKindgeeId")
+    SysAccountingCompanyEntity getCompanyByKindgeeId(@RequestBody String KindgeeId);
+
+    /**
      * 根据公司名称查询公司信息
      *
      * @param orgName 公司名称

@@ -116,7 +116,6 @@ public class DmpInputTaskJob {
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
 				.and(d -> d.isNull(DmpInputTaskEntity::getNextExecTime).or().le(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now()))
-				.eq(DmpInputTaskEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
 				.orderByAsc(DmpInputTaskEntity::getUpdateTime)
 				.last(dmpInputTaskTaskTypeEnum != DmpInputTaskTaskTypeEnum.COMPENSATE , " limit " + size)

@@ -439,4 +439,40 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         and m.is_deleted = false and s.is_deleted = false
         ORDER BY s.id, s.create_time desc LIMIT 1
     </select>
+
+    <!-- 获取最后一条拉取记录 -->
+    <select id="getLastPullRecord" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$LastPullDTO">
+        WITH RankedTasks AS (
+            SELECT
+                dit.start_time,
+                dit.end_time,
+                dit.create_time as lastSyncTime,
+                dit.status,
+                dci.bill_type,
+                dbs.code as platform,
+                ROW_NUMBER() OVER (
+            PARTITION BY dci.bill_type, dbs.code
+            ORDER BY dit.create_time DESC
+        ) as rn
+            FROM dmp_input_task dit
+                     INNER JOIN dmp_cfg_input dci
+                                ON dit.cfg_input_id = dci.id
+                                    AND dci.is_deleted = false
+                     INNER JOIN dmp_basic_system dbs
+                                ON dci.system_id = dbs.id
+                                    AND dbs.is_deleted = false
+            WHERE dit.is_deleted = false
+        )
+        SELECT
+            start_time,
+            end_time,
+            lastSyncTime,
+            status,
+            bill_type,
+            platform
+        FROM RankedTasks
+        WHERE rn = 1
+          AND bill_type = #{params.billType}
+          AND platform = #{params.platform};
+    </select>
 </mapper>

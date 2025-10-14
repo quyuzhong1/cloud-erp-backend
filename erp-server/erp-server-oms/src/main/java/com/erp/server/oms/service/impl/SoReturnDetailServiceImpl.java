@@ -399,9 +399,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
             //平台sku
-            if(StringUtils.isBlank(addDetailView.getPlatformSkuNo())){
+            if(StringUtils.isBlank(addDetailView.getCustomerSkuNo())){
                 SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(addDetailView.getSkuNo())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
-                addDetailView.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+                addDetailView.setCustomerSkuNo(productSkuInfoDTO.getPlatformSkuNo());
             }
         }
         return list;
@@ -451,7 +451,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         for (SkuMappingDTO.ProductSkuInfoDTO productSku : productSkuInfoList) {
             SoDetailDTO.AddDetailView detailView = new SoDetailDTO.AddDetailView();
             detailView.setSkuId(productSku.getSkuId());
-            detailView.setPlatformSkuNo(productSku.getPlatformSkuNo());
+            detailView.setCustomerSkuNo(productSku.getPlatformSkuNo());
             detailView.setCustomerId(productSku.getCustomerId());
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(productSku.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             detailView.setProductName(productDetailEntity.getName());
@@ -475,7 +475,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
         //过滤对应的平台sku
         addDetailViews.stream().forEach(r ->{
-            boolean isPresent = dto.getPlatformSkuNoList().stream().anyMatch(v -> v.equals(r.getPlatformSkuNo()));
+            boolean isPresent = dto.getPlatformSkuNoList().stream().anyMatch(v -> v.equals(r.getCustomerSkuNo()));
             if(isPresent){
                 noBomList.add(r);
             }
@@ -527,7 +527,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                                 addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                                 addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
                                 String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-                                addChildDetailView.setPlatformSkuNo(platformSkuNo);
+                                addChildDetailView.setCustomerSkuNo(platformSkuNo);
                                 addChildDetailView.setReturnReasonDictName(addDetailView.getReturnReasonDictName());
                                 addChildDetailView.setReturnReasonDict(addDetailView.getReturnReasonDict());
                                 addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());

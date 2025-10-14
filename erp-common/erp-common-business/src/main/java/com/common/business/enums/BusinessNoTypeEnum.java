@@ -121,6 +121,8 @@ public enum BusinessNoTypeEnum {
     CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC),
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
+    CODE_SKD(92, "SKD","收款单", BusinessNoConstant.SKD),
+    CODE_KHSX(93, "KHSX","客户授信", BusinessNoConstant.KHSX),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
     CODE_YPZF(97, "YPZF","样品作废单", BusinessNoConstant.YPZF),

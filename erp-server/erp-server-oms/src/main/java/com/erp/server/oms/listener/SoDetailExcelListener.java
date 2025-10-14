@@ -162,7 +162,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
         addDTO.setCustomerPO(soDetailImportExcelDTO.getCustomerPO());
         addDTO.setToCountry(soDetailImportExcelDTO.getToCountry());
-        addDTO.setPlatformSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
+        addDTO.setCustomerSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
         successList.add(addDTO);
     }
 

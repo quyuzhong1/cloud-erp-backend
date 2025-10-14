@@ -808,4 +808,53 @@
         </if>
     </select>
 
+    <!-- b2b平台分页列表 -->
+    <select id="b2bPlatformPaging" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
+        SELECT
+            sm.id,
+            li.remark,
+            sm.shop_id,
+            li.id AS listingId,
+            si.name AS shopName,
+            sm.dict_platform,
+            sm.platform_name,
+            sm.product_sku_id,
+            sm.product_sku_no,
+            li.platform_sku_no,
+            li.platform_sku_name AS platformProductName,
+            li.match_result,
+            li.product_image_url,
+            case when li.platform = 'AliExpress' then li.platform_sku_id else li.product_spec end as product_spec,
+            li.product_packing,
+            li.platform_update_time,
+            li.platform_spu_no,
+            li.platform_spu_name,
+            li.platform_fn_sku,
+            li.create_time as systemCreateTime,
+            li.source_type as sourceType,
+            li.platform_status as platformStatus,
+            li.platform_parent_spu_no as platformParentSpuNo,
+            sm.update_user_name,
+            sm.create_user_name,
+            sm.effective_time,
+            sm.expire_time,
+            sm.update_time,
+            ci.seller_name
+        FROM sku_mapping sm
+        LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
+        LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and   sm.is_deleted=FALSE AND sm.is_expire = FALSE
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY li.platform_sku_no,sm.create_time DESC
+    </select>
+
 </mapper>

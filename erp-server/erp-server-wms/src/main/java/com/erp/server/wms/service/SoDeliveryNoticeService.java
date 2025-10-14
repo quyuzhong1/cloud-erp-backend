@@ -338,4 +338,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
     WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+    /**
+     * 更新发货通知单状态
+     * @author will
+     * @date 2025/8/29 17:43
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto);
 }

@@ -8,7 +8,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -39,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -536,7 +534,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
 		paramDTO.setShopIdList(shopIds);
-		paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 		paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		paramDTO.setIsExpire(false);
 		// 查询ListingInfo和skuMapping的关系

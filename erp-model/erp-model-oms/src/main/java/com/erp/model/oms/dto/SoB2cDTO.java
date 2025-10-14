@@ -1524,7 +1524,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款方式
          */
-        @Size(max = 32, message = "付款方式最大长度不能超过32位")
+//        @Size(max = 32, message = "付款方式最大长度不能超过32位")
         private String dictPayMethod;
 
         /**

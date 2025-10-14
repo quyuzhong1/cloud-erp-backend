@@ -49,6 +49,7 @@ public enum KingdeePushModuleEnum {
     STK_TRANSFERIN("STK_TRANSFERIN","分步式调入单"),
     STK_TRANSFEROUT("STK_TRANSFEROUT","分步式调出单"),
     AP_PAYABLE("AP_Payable","应付单"),
+    BD_RATE("BD_Rate","汇率"),
 
 
 
@@ -70,4 +71,12 @@ public enum KingdeePushModuleEnum {
         this.name = name;
     }
 
+    public static String getName(String code) {
+        for (KingdeePushModuleEnum state : KingdeePushModuleEnum.values()) {
+            if (code.equals(state.getCode())) {
+                return state.getName();
+            }
+        }
+        return "";
+    }
 }

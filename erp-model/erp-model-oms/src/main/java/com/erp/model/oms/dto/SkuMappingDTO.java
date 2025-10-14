@@ -87,7 +87,7 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform", "warehouse","customer"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform","b2bPlatform", "warehouse","customer"}, message = "类型有误")
         private String type;
 
 
@@ -308,7 +308,6 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 店铺
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
@@ -611,6 +610,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String matchResultStr;
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
          * 更新人名称
@@ -1733,5 +1736,25 @@ public class SkuMappingDTO implements Serializable {
          * 标签文件名称
          */
         private String labelFileName;
+    }
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncSkuDTO {
+        /**
+         * 开始时间
+         */
+        @NotNull(message = "开始时间不能为空")
+        private LocalDateTime startTime;
+
+        /**
+         * 结束时间
+         */
+        @NotNull(message = "结束时间不能为空")
+        private LocalDateTime endTime;
     }
 }

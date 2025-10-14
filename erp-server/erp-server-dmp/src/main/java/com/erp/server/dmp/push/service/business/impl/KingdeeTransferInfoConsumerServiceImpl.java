@@ -13,7 +13,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -146,7 +145,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //新增数据
-             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils , json, param,type);
+             kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils , json, param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -168,7 +167,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
         }
     }
 

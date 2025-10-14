@@ -235,7 +235,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         paramDTO.setShopIdList(shopIdList);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         List<String> platformSkuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getPlatformSku).distinct().collect(Collectors.toList());
         paramDTO.setPlatformSkuNoList(platformSkuList);
         List<String> platformSpuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getThirdDetailId).distinct().collect(Collectors.toList());
