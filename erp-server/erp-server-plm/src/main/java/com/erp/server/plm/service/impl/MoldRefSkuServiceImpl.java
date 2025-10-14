@@ -14,7 +14,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.excel.MoldRefSkuImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -26,8 +26,8 @@ import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.MoldInfoExcelListener;
 import com.erp.server.plm.listener.MoldRefSkuExcelListener;
 import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.SysLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
 import com.erp.server.plm.mapper.MoldRefSkuMapper;
@@ -40,7 +40,6 @@ import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -52,9 +51,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
@@ -81,7 +77,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, MoldRefSkuEntity> implements MoldRefSkuService {
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService sysLogService;
     @Resource
     private WorkflowFeign workflowFeign;
     @Resource
@@ -546,9 +542,9 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         if(CollUtil.isNotEmpty(moldRefSkuEntities)){
             bean.saveBatch(moldRefSkuEntities);
             // 操作日志
-            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            List<OperateLogEntity> sysLogEntityList = new LinkedList<>();
             for (MoldRefSkuEntity moldRefSkuEntity : moldRefSkuEntities) {
-                sysLogEntityList.add(new SysLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldRefSkuEntity.getMoldCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
+                sysLogEntityList.add(new OperateLogEntity().setContent(StrUtil.format("新增模具【{}】关联SKU【{}】", moldRefSkuEntity.getMoldCode(),moldRefSkuEntity.getSkuNo())).setBusinessId(moldRefSkuEntity.getId()));
             }
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
