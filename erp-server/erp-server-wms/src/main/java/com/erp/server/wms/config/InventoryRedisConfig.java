@@ -1,11 +1,17 @@
 package com.erp.server.wms.config;
 
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.ClusterServersConfig;
+import org.redisson.config.Config;
+import org.redisson.config.SingleServerConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +30,7 @@ import org.springframework.util.StringUtils;
 
 import com.common.business.config.FastJson2JsonRedisSerializer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -117,4 +124,33 @@ public class InventoryRedisConfig {
         return template;
     }
 
+    /**
+     * 定义redission分布式锁客户端bean
+     * @return
+     */
+    @Bean
+    public RedissonClient inventoryRedisson()  {
+        Config config = new Config();
+        List<RedisNode> redisNodes =  inventoryRedisConfigProperties.getNodesInfoList();
+        if(1 == redisNodes.size()) {
+            //单机
+            SingleServerConfig singleServerConfig = config.useSingleServer();
+            singleServerConfig.setAddress(CharSequenceUtil.format("redis://{}:{}",redisNodes.get(0).getHost(),redisNodes.get(0).getPort()))
+                    .setDatabase(inventoryRedisConfigProperties.getDbIndex()).setConnectionMinimumIdleSize(10);
+            if(CharSequenceUtil.isNotEmpty(inventoryRedisConfigProperties.getPassword())) {
+                singleServerConfig.setPassword(inventoryRedisConfigProperties.getPassword());
+            }
+        } else {
+            //集群，需包含从节点，为保证高可用，Cluster模式一个主节点有一个从节点，一般为三主三从（Cluster集群的投票容错机制要求至少半数节点认为某个节点挂了，该节点才算是挂了，当只有两个节点时是无法进行投票的，所以说至少需要3个节点）
+            ClusterServersConfig clusterServersConfig = config.useClusterServers();
+            clusterServersConfig.setScanInterval(5000);
+            if(CharSequenceUtil.isNotEmpty(inventoryRedisConfigProperties.getPassword())) {
+                clusterServersConfig.setPassword(inventoryRedisConfigProperties.getPassword());
+            }
+            redisNodes.stream().forEach(redisNode -> clusterServersConfig.addNodeAddress(CharSequenceUtil.format("redis://{}:{}",redisNode.getHost(),redisNode.getPort())));
+        }
+        //看门狗的锁续期时间，默认30s，这里配置成15s
+        config.setLockWatchdogTimeout(15000);
+        return Redisson.create(config);
+    }
 }

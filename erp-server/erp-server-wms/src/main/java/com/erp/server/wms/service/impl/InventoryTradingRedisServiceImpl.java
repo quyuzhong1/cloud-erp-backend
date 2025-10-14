@@ -517,7 +517,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * 更新库存历史
      * @param transactionDTO    库存交易信息
      */
-    private void updateInventoryHis(InventoryTransactionDTO transactionDTO) {
+    public void updateInventoryHis(InventoryTransactionDTO transactionDTO) {
         if(null == transactionDTO.getInventoryId()) {
             ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
