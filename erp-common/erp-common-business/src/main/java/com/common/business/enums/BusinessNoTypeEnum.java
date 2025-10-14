@@ -102,7 +102,7 @@ public enum BusinessNoTypeEnum {
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
     CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     CODE_YHBG(75, "YHBG","要货申请变更单",BusinessNoConstant.YHBG),
-    CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
+    CODE_MOLD(90, "MJ","模具管理",BusinessNoConstant.MJ),
     CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
     CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),
@@ -132,6 +132,14 @@ public enum BusinessNoTypeEnum {
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
     CODE_SKD(92, "SKD","收款单", BusinessNoConstant.SKD),
     CODE_KHSX(93, "KHSX","客户授信", BusinessNoConstant.KHSX),
+
+    CODE_ZCWZ(103, "ZCWZ","资产位置", BusinessNoConstant.ZCWZ),
+    CODE_YSD(104, "YSD","资产验收单", BusinessNoConstant.YSD),
+    CODE_ZCKP(105, "ZCKP","资产卡片", BusinessNoConstant.ZCKP),
+    CODE_PDFA(106, "PDFA","盘点方案", BusinessNoConstant.PDFA),
+    CODE_ZCPDB(107, "ZCPDB","资产盘点表", BusinessNoConstant.ZCPDB),
+    CODE_PYPKD(108, "PYPKD","盘盈盘亏单", BusinessNoConstant.PYPKD),
+    CODE_PRODIS(109, "PRODIS","资产处置单", BusinessNoConstant.PRODIS),
 
     ;
 

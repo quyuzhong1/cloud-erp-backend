@@ -160,7 +160,7 @@ public enum SourceTypeEnum {
 
     LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
-
+    MOLD_INFO("moldInfo", "模具档案","mold_info"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -281,6 +281,16 @@ public enum SourceTypeEnum {
 
 
 
+
+
+    //FMS
+    ASSET_LOCATION("assetLocation", "资产位置","asset_location"),
+    ASSET_ACCEPTANCE("assetAcceptance", "资产验收单","asset_acceptance"),
+    ASSET_CARD("assetCard", "资产卡片","asset_card"),
+    INVENTORY_PLAN("inventoryPlan", "盘点方案","inventory_plan"),
+    ASSET_INVENTORY_SHEET("assetInventorySheet", "资产盘点表","asset_inventory_sheet"),
+    INVENTORY_GAIN_LOSS("inventoryGainLoss", "盘盈盘亏单","inventory_gain_loss"),
+    ASSET_DISPOSAL("assetDisposal", "资产处置单","asset_disposal"),
 
 
     //售后申请

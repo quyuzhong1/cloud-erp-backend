@@ -1,0 +1,146 @@
+package com.erp.model.fms.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 资产处置单实物明细表请求响应实体
+ * </p>
+ *
+ * @author wuht
+ * @since 2025-10-11
+*/
+@Data
+@NoArgsConstructor
+public class AssetDisposalPhysicalDetailDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 来源明细ID
+        */
+        private String sourceDetailId;
+
+        /**
+        * 主表ID
+        */
+        private String mainId;
+
+        /**
+        * 资产编码
+        */
+        private String assetCode;
+
+        /**
+        * 资产位置ID
+        */
+        private String assetLocationId;
+
+        /**
+        * 资产位置名称
+        */
+        private String assetLocationName;
+
+        /**
+        * 数量
+        */
+        private Integer qty;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 来源明细ID
+        */
+        @NotBlank(message = "来源明细ID不能为空")
+        @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
+        private String sourceDetailId;
+
+        /**
+        * 主表ID
+        */
+        @NotBlank(message = "主表ID不能为空")
+        @Size(max = 19,message = "主表ID最大长度不能超过19位")
+        private String mainId;
+
+        /**
+        * 资产编码
+        */
+        @NotBlank(message = "资产编码不能为空")
+        @Size(max = 50,message = "资产编码最大长度不能超过50位")
+        private String assetCode;
+
+        /**
+        * 资产位置ID
+        */
+        @NotBlank(message = "资产位置ID不能为空")
+        @Size(max = 19,message = "资产位置ID最大长度不能超过19位")
+        private String assetLocationId;
+
+        /**
+        * 资产位置名称
+        */
+        @NotBlank(message = "资产位置名称不能为空")
+        @Size(max = 100,message = "资产位置名称最大长度不能超过100位")
+        private String assetLocationName;
+
+        /**
+        * 数量
+        */
+        @NotNull(message = "数量不能为空")
+        private Integer qty;
+
+
+    }
+
+
+}

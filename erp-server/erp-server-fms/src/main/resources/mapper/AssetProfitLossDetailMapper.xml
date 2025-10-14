@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.fms.mapper.AssetProfitLossDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.fms.entity.AssetProfitLossDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="main_id" property="mainId" />
+       <result column="asset_category" property="assetCategory" />
+       <result column="card_id" property="cardId" />
+       <result column="card_detail_id" property="cardDetailId" />
+       <result column="card_code" property="cardCode" />
+       <result column="asset_id" property="assetId" />
+       <result column="asset_name" property="assetName" />
+       <result column="asset_code" property="assetCode" />
+       <result column="unit" property="unit" />
+       <result column="book_qty" property="bookQty" />
+       <result column="actual_qty" property="actualQty" />
+       <result column="diff_qty" property="diffQty" />
+       <result column="book_location" property="bookLocation" />
+       <result column="actual_location" property="actualLocation" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        source_detail_id, main_id, asset_category, card_id, card_detail_id, card_code, asset_id, asset_name, asset_code, unit, book_qty, actual_qty, diff_qty, book_location, actual_location
+    </sql>
+
+
+</mapper>

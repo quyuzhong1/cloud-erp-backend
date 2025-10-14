@@ -615,6 +615,9 @@ public enum ApiError implements Serializable {
     ERROR_95291(95291,"审核中不支持上传"),
 
     ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
+    ERROR_EXIST_SKU(95293,"SKU【{}】已存在,不允许反审核"),
+    ERROR_MOLD_NOT_EXIST(95294,"模具档案不存在"),
+    ERROR_95294(95294,"只允许选择已审核的模具档案批量关联SKU"),
 
 
     /**

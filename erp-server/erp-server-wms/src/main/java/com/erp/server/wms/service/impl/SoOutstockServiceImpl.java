@@ -2439,7 +2439,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //推送到订货通
                 List<String> idList = updateList.stream().map(SoOutstockEntity::getId).distinct().collect(Collectors.toList());
                 List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(idList);
-                Map<String, List<SoOutstockDetailEntity>> stringListMap = CollUtil.isEmpty(soOutstockDetailEntityList) ? soOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+                Map<String, List<SoOutstockDetailEntity>> stringListMap = CollUtil.isEmpty(soOutstockDetailEntityList) ? new HashMap<>() : soOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
                 for (SoOutstockEntity entity : updateList) {
                     //推送到订货通
                     if(customerFeign.isSyncDht(entity.getCustomerId())){
