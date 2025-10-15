@@ -42,7 +42,7 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/fms/product_query";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/query_warehouse";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {

@@ -200,4 +200,10 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台收款单
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_group";
+
+    /**
+     * restcloud平台仓库
+     */
+    public static final String RESTCLOUD_PLATFORM_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_warehouse_to_wms_group";
+
 }

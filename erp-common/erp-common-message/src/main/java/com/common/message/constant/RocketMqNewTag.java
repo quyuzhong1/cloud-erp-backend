@@ -203,4 +203,10 @@ public class RocketMqNewTag {
      * restcloud收款单
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_tag";
+
+    /**
+     * 新中台平台仓库
+     */
+    public static final String RESTCLOUD_PLATFORM_WAREHOUSE_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_warehouse_to_wms_tag";
+
 }
