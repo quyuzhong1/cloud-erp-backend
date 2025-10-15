@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.DictCredentialDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 供应商资质字典表 服务类
@@ -24,4 +26,5 @@ public interface DictCredentialService extends SuperService<DictCredentialEntity
     BaseResultDTO.AddDTO add(DictCredentialDTO.AddDTO dto);
 
 
+    List<DictCredentialDTO.ListDTO> listAll();
 }
