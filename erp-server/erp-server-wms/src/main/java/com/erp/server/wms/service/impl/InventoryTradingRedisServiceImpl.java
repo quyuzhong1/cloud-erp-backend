@@ -3,12 +3,9 @@ package com.erp.server.wms.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +20,6 @@ import org.springframework.util.CollectionUtils;
 
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -45,12 +41,12 @@ import com.erp.server.wms.service.InventoryClosedRecordService;
 import com.erp.server.wms.service.InventoryHisService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTradingService;
+import com.erp.server.wms.service.InventoryTransactionService;
 import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.VirtualInventoryService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.base.Stopwatch;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -82,6 +78,9 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
+    
+    @Resource
+    private InventoryTransactionService inventoryTransactionService;
 
     @Override
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
@@ -113,6 +112,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             for (InventoryTransactionDTO transactionDTO : transactionList) {
                 this.doTransaction(transactionDTO,approveType.equals(InventoryTradingService.APPROVE));
             }
+            //5.5-新增库存流水
+            this.addInventoryTransaction(transactionList , approveType);
             // 6-反审核时，批量删除交易记录
             if(approveType.equals(InventoryTradingService.UNAPPROVE)){
                 List<String> ids = this.getTransactionFlowIds(transactionList);
@@ -130,7 +131,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         }
     }
 
-    /**
+	/**
      * 处理库存交易
      * @param transactionDTO 库存交易信息
      * @param isApprove     是否审批
@@ -516,6 +517,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         transactionFlowEntity.setOperationMode("approve");
 
         transactionFlowService.save(transactionFlowEntity);
+        transactionDTO.setId(transactionFlowEntity.getId());
     }
 
     /**
@@ -548,5 +550,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
 
     }
 
+    private void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
+    	inventoryTransactionService.addInventoryTransaction(transactionList, approveType);
+	}
 
 }

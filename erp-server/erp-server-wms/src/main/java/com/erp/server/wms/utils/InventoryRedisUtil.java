@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InventoryRedisUtil extends AbstractRedisUtil{
 	
-	private static String splitSign = "&&";
+	public static String splitSign = "&&";
+	public static String atSign = "@@";
 
 	private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
 	

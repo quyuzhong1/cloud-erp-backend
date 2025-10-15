@@ -3,20 +3,30 @@ package com.erp.server.wms.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.RedissonMultiLock;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
@@ -24,15 +34,19 @@ import com.erp.model.wms.entity.InventoryTransactionEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
+import com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter;
 import com.erp.server.wms.mapper.InventoryTransactionMapper;
 import com.erp.server.wms.service.InventoryHisService;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.InventoryTradingService;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 /**
  * <p>
@@ -53,6 +67,8 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private InventoryRedisUtil inventoryRedisUtil;
     @Autowired
     private TransactionFlowService transactionFlowService;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -82,7 +98,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 							throw new ServiceException("未更新到库存流水，库存flowId={}" , flowId);
 						}
 						//4、更新单据日期之后流水的结余库存
-						this.updateInventoryTransaction(transactionDTO, false);
+						this.updateInventoryTransaction(transactionDTO, inventoryTransactionEntity.getOperationMode().equals(InventoryTradingService.APPROVE));
 					}
 					//5、更新最新历史库存到即时库存
 					this.inventoryHisToInventory(inventoryId);
@@ -91,31 +107,144 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 				}
 			} catch (Exception e) {
 				log.error("迁移历史库存失败" , e);
+				sendFeishuMsg(inventoryId, e);
 				throw e;
 			} finally{
  				inventoryRedisUtil.unLock(tryLock);
  			}
     	}
     }
+    
+    private void sendFeishuMsg(String inventoryId , Exception e) {
+    	WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("预警消息");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTitle("迁移历史库存失败");
+        warnMsgInfo.setTableName("inventory_transaction");
+        warnMsgInfo.setTableId(inventoryId);
+        warnMsgInfo.setKeyInfo(e.getMessage());
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+    
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
+    	if(CollUtil.isEmpty(transactionList)) {
+    		ServiceException.runError("库存流水不能为空");
+    	}
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getId()))) {
+    		ServiceException.runError("库存流水id不能为空");
+    	}
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getInventoryId()))) {
+    		ServiceException.runError("即时库存id不能为空");
+    	}
+    	Set<String> flowIds = transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toSet());
+		List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.listByIds(flowIds);
+		if(transactionFlowEntityList.size() != flowIds.size()) {
+			ServiceException.runError("库存流水缺少");
+		}
+		String transactionId = "";
+		String transactionType = "";
+		boolean inGlobalTransaction = RootContext.inGlobalTransaction();
+		if(inGlobalTransaction) {
+			transactionId = RootContext.getXID();
+			transactionType = "global";
+		}else {
+			transactionId = MDC.get("traceId");
+			if(StringUtils.isBlank(transactionId)) {
+				transactionId = transactionFlowEntityList.get(0).getId();
+				MDC.put("traceId", transactionId);
+			}
+			transactionType = "local";
+		}
+		
+		this.tryRedis(transactionId , transactionList);
+		
+		List<InventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
+		for(TransactionFlowEntity transactionFlowEntity : transactionFlowEntityList) {
+			InventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, InventoryTransactionEntity.class, 
+					InventoryTransactionEntity.FIELD_ID,
+					InventoryTransactionEntity.CREATE_TIME,
+					InventoryTransactionEntity.UPDATE_TIME,
+					InventoryTransactionEntity.FIELD_VERSION,
+					InventoryTransactionEntity.IS_DELETED,
+					InventoryTransactionEntity.UPDATE_USER_ID,
+					InventoryTransactionEntity.UPDATE_USER_NAME
+					);
+			inventoryTransactionEntity.setFlowId(transactionFlowEntity.getId());
+			inventoryTransactionEntity.setTransactionId(transactionId);
+			inventoryTransactionEntity.setTransactionType(transactionType);
+			inventoryTransactionEntity.setOperationMode(approveType);
+			inventoryTransactionEntityList.add(inventoryTransactionEntity);
+		}
+		this.saveBatch(inventoryTransactionEntityList);
+		InventoryTransactionSynchronizationAdapter.register(transactionId);
+	}
 
+    @Override
+    public void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList) {
+    	Map<String, List<InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(InventoryTransactionDTO::getInventoryId));
+    	List<String> transactionRedisParam = new ArrayList<>();
+    	for(Map.Entry<String, List<InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
+    		List<InventoryTransactionDTO> value = inventoryIdMap.getValue();
+    		Integer totalQty = value.stream().map(InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
+    		if(totalQty != 0) {
+    			StringBuilder sb = new StringBuilder();
+    			InventoryTransactionDTO transactionDTO = value.get(0);
+    			sb.append(transactionDTO.getInventoryId());
+    			sb.append(InventoryRedisUtil.atSign);
+    			sb.append(totalQty);
+    			if(!transactionDTO.isAllowNegativeInventory()) {
+    				sb.append(InventoryRedisUtil.atSign);
+    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
+                            , transactionDTO.getSkuNo()
+                            , transactionDTO.getWarehouseName()
+                            , transactionDTO.getWarehouseLocationName()
+                            , transactionDTO.getInventoryStatusName()
+                            , "ss1ss"
+                            , totalQty
+                            , "ss2ss"));
+    			}
+    			transactionRedisParam.add(sb.toString());
+    		}
+    	}
+    	if(CollUtil.isNotEmpty(transactionRedisParam)) {
+    		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
+    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
+    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
+    				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+    	}
+    }
+    
 	@Override
 	public void commitRedis(String transactionId) {
+		if(StringUtils.isBlank(transactionId)) {
+			log.error("提交redis库存事务transactionId不能为空");
+			throw new ServiceException("提交redis库存事务transactionId不能为空");
+		}
 		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
 		if(count == null || count == 0) {
 			throw new ServiceException("没有库存交易记录，不允许提交redis库存transactionId={}" , transactionId);
 		}
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
-		inventoryRedisUtil.execute(commit , commit.getCode() , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId));
+		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, transactionId));
 	}
 
 	@Override
 	public void rollbackRedis(String transactionId) {
+		if(StringUtils.isBlank(transactionId)) {
+			log.error("回滚redis库存事务transactionId不能为空");
+			throw new ServiceException("回滚redis库存事务transactionId不能为空");
+		}
 		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
 		if(count != null && count > 0) {
 			throw new ServiceException("存在库存交易记录，不允许回滚redis库存transactionId={}" , transactionId);
 		}
 		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
-		inventoryRedisUtil.execute(rollback , rollback.getCode() , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId));
+		inventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, transactionId));
 	}
 	
 	/**

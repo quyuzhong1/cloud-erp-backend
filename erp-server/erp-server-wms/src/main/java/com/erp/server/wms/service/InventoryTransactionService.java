@@ -1,5 +1,8 @@
 package com.erp.server.wms.service;
+import java.util.List;
+
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
 
 /**
@@ -20,6 +23,20 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
     void inventoryTransactionToInventoryHis(String inventoryId , int size);
     
     /**
+     * 新增库存交易
+     * @param transactionList
+     * @param approveType
+     */
+    void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType);
+    
+    /**
+     * 冻结redis库存
+     * @param transactionId
+     * @param transactionList
+     */
+    void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList);
+    
+    /**
      * 提交redis库存
      * @param transactionId
      */
@@ -30,4 +47,5 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * @param transactionId
      */
     void rollbackRedis(String transactionId);
+    
 }

@@ -91,6 +91,11 @@ public class InventoryTransactionEntity extends BaseEntity<InventoryTransactionE
     @TableField("transaction_type")
     private String transactionType;
 
+    /**
+     * 操作类型
+     */
+    @TableField("operation_mode")
+    private String operationMode;
 
     public static final String INVENTORY_ID = "inventory_id";
 
