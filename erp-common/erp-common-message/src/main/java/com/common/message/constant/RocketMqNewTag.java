@@ -201,12 +201,7 @@ public class RocketMqNewTag {
      * 新中台飞书审批实例详情对接
      */
     public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_tag";
-    
-    /**
-     * restcloud平台商品
-     */
-    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_tag";
-    
+
     /**
      * restcloudb2b订单
      */
