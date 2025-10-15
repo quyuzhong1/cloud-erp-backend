@@ -27,10 +27,6 @@ import java.util.Map;
 public class WildberriesSDKService {
 
     public WildberriesResponse checkToken(String token) {
-        if (CharSequenceUtil.isNotBlank(WildberriesConstant.SANDBOX)){
-            //沙箱环境默认返回成功
-            return new WildberriesResponse();
-        }
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
         String url = WildberriesConstant.GET_SHOP_CHECK_PING;
         Map<String, String> headerMap = new HashMap<>();

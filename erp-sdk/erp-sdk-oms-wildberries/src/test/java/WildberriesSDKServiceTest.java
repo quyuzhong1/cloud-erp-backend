@@ -57,9 +57,10 @@ public class WildberriesSDKServiceTest {
     public void createProduct() {
 //        CreateProductRequest request = CreateProductRequest.builder().build();
 //        List<CreateProductRequest> requestList = Collections.singletonList(request);
+        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
 //        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
 //        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":15000019,\"value\":[\"Электронная версия\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L096\"]}]}]}]";
-        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
+//        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
         List<CreateProductRequest> requestList = JSONUtil.toList(requestStr, CreateProductRequest.class);
         String response = wildberriesSDKService.createProduct(WildberriesConstant.TOKEN, requestList);
 
@@ -88,7 +89,7 @@ public class WildberriesSDKServiceTest {
                 .order(ProductErrorRequest.Order.builder().ascending(Boolean.FALSE).build())
                 .build();
         System.out.println(JSONUtil.toJsonStr(request));
-        String response = wildberriesSDKService.listProductError(WildberriesConstant.TOKEN_PRO, request);
+        String response = wildberriesSDKService.listProductError(WildberriesConstant.TOKEN, request);
         System.out.println(response);
     }
     @Test
@@ -175,7 +176,7 @@ public class WildberriesSDKServiceTest {
                 .height(40)
                 .type("png")
                 .build();
-        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN_PRO, request);
+        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request);
         String pdfBase64 = null;
         try {
             pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
