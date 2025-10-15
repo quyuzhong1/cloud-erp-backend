@@ -31,6 +31,7 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.DictCredentialEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -400,8 +401,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     attachList.addAll(processJsonElement(element));
                 }
             }
-            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
-
+//            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+            List<DictCredentialEntity> disabledList = FeignQuery.create(DictCredentialEntity.class).eq(DictCredentialEntity::getDisabled, false).list();
             for (Map<String,Object> attachMap : attachList) {
                 Map<String, Object> detailAttachMap = new HashMap<>();
 
@@ -409,7 +410,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
                         filter(req -> CharSequenceUtil.equals(fieldName,req.getName()))
-                        .map(DictBasicEntity::getValue)
+                        .map(DictCredentialEntity::getCode)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
