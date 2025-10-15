@@ -1172,7 +1172,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 .distinct()
                 .collect(Collectors.toList());
         List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(mergedList);
-        long count = skuVOList.stream().map(SkuVO::getPropertyId).count();
+        long count = skuVOList.stream().map(SkuVO::getPropertyId).distinct().count();
         if(count > 1){
             throw new ServiceException("只允许添加相同产品属性组合成组合品");
         }
