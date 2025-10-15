@@ -234,6 +234,7 @@
             sod.is_reissue AS isReissue,
             sod.is_close AS isClose,
             sod.platform_sku_no AS platformSkuNo,
+        sod.customer_sku_no AS customerSkuNo,
             sod.frozen_qty as frozenQty,
             sod.to_country as toCountry,
         fdp.id as partitionId,
