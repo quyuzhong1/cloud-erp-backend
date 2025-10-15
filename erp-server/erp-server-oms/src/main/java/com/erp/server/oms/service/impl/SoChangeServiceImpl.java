@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -917,7 +918,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
                 //订货通同步
                 SoInfoEntity soInfoEntity = soInfoMap.get(obj.getSoId());
-                if(customerInfoService.isSyncDht(soInfoEntity.getCustomerId())){
+                if((customerInfoService.isSyncDht(soInfoEntity.getCustomerId()) || CharSequenceUtil.equals(soInfoEntity.getDictPlatform() ,PlatformDictEnum.DHT.getCode()))){
                     syncDhtService.createSyncSoInfoTaskToDht(soInfoEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
             });
