@@ -1,6 +1,8 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.DictCredentialEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.scm.dto.DictCredentialDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,17 +56,23 @@ public class DictCredentialController extends BaseController {
     }
 
     /**
-     *
-     * @return
+     * 列表查询
+     * @author jack
+     * @date:  2025-10-15
+     * @return ApiResult<DictCredentialDTO.ListDTO>
      */
     @GetMapping("/list")
-    public ApiResult<List<DictCredentialEntity>> list() {
+    public ApiResult<List<DictCredentialDTO.ListDTO>> list() {
         List<DictCredentialEntity> list = dictCredentialService.lambdaQuery()
                 .eq(DictCredentialEntity::getDisabled, false)
                 .orderByAsc(DictCredentialEntity::getSort)
                 .orderByDesc(DictCredentialEntity::getCreateTime)
                 .list();
-        return success(list);
+        List<DictCredentialDTO.ListDTO> listDTOS =new ArrayList<>();
+        if(CollUtil.isNotEmpty(listDTOS)){
+            listDTOS = BeanMapper.copyList(list, DictCredentialDTO.ListDTO.class);
+        }
+        return success(listDTOS);
     }
 
 }
