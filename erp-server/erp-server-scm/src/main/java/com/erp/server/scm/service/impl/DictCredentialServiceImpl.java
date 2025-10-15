@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -63,6 +64,20 @@ public class DictCredentialServiceImpl extends SuperServiceImpl<DictCredentialMa
             throw new ServiceException("供应商资质字典单保存失败");
         }
         return new BaseResultDTO.AddDTO(dictCredentialEntity.getId(), code);
+    }
+
+    @Override
+    public List<DictCredentialDTO.ListDTO> listAll() {
+        List<DictCredentialEntity> list = lambdaQuery()
+                .eq(DictCredentialEntity::getDisabled, false)
+                .orderByAsc(DictCredentialEntity::getSort)
+                .orderByDesc(DictCredentialEntity::getCreateTime)
+                .list();
+        List<DictCredentialDTO.ListDTO> listDTOS = new ArrayList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            listDTOS = BeanMapper.copyList(list, DictCredentialDTO.ListDTO.class);
+        }
+        return listDTOS;
     }
 
 }

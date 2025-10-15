@@ -63,16 +63,7 @@ public class DictCredentialController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<DictCredentialDTO.ListDTO>> list() {
-        List<DictCredentialEntity> list = dictCredentialService.lambdaQuery()
-                .eq(DictCredentialEntity::getDisabled, false)
-                .orderByAsc(DictCredentialEntity::getSort)
-                .orderByDesc(DictCredentialEntity::getCreateTime)
-                .list();
-        List<DictCredentialDTO.ListDTO> listDTOS =new ArrayList<>();
-        if(CollUtil.isNotEmpty(listDTOS)){
-            listDTOS = BeanMapper.copyList(list, DictCredentialDTO.ListDTO.class);
-        }
-        return success(listDTOS);
+        return success(dictCredentialService.listAll());
     }
 
 }
