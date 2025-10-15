@@ -76,30 +76,30 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	public void execute(InventoryRedisOpEnum inventoryRedisOpEnum , Object... args) {
 		String opName = inventoryRedisOpEnum.getName();
 		int i = 0;
-		String resultCode = "";
-		String resultName = "";
+		String result = "";
 		boolean isRetry = false;
 		String execute = "";
 		while(i < 3) {
 			execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
-			log.info("redis命令操作{}，入参{}，结果{}" , opName , args ,execute);
+			log.info("库存redis操作{}，入参{}，结果{}" , opName , args ,execute);
+			long sleepTime = 1000L;
 			if(StringUtils.isNotBlank(execute)) {
 				String[] resultSplitList = execute.split(splitSign);
 				if(resultSplitList.length == 1) {
-					resultCode = execute;
-					resultName = execute;
+					result = execute;
 				}else if(resultSplitList.length == 2) {
-					resultCode = resultSplitList[0];
-					resultName = resultSplitList[1];
-				}else if(resultSplitList.length == 3) {
-					resultCode = resultSplitList[0];
-					resultName = resultSplitList[1];
-					isRetry = Boolean.valueOf(resultSplitList[2]);
+					isRetry = true;
+					result = resultSplitList[0];
+					try {
+						sleepTime = Long.parseLong(resultSplitList[1]);
+					} catch (NumberFormatException e) {
+						log.error("库存redis操作{}，转换重试时间失败{}" , opName , execute);
+					}
 				}
 			}
 			if(isRetry) {
 				try {
-					Thread.sleep(500);
+					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
@@ -108,9 +108,9 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			}
 			i = i + 1;
 		}
-		if(!"0".equals(resultCode)) {
-			log.error("库存redis操作{}结果为：{}，lua原始结果： {}" , opName , resultName , execute);
-			throw new ServiceException(resultName);
+		if(!"0".equals(result)) {
+			log.error("库存redis操作{}，结果为：{}，lua原始结果： {}" , opName , result , execute);
+			throw new ServiceException(result);
 		}
 	}
 }

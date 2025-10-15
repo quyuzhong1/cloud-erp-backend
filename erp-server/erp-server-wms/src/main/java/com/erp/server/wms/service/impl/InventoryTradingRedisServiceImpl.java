@@ -107,8 +107,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             this.checkAllowTransactionList(transactionList);
             //校验虚拟仓库存
             this.checkVirtualInventoryList(transactionList);
-            // 检查库存是否充足
-            this.checkInventoryList(transactionList);
             // 4-检查每日库存是否充足
 //            this.checkInventoryHisList(transactionList);
             // 5-处理库存更新逻辑
@@ -138,17 +136,12 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * @param isApprove     是否审批
      */
     public void doTransaction(InventoryTransactionDTO transactionDTO, boolean isApprove) {
-        this.checkInventoryList(Collections.singletonList(transactionDTO));
-        // 更新库存
-        this.updateInventory(transactionDTO);
-        // 更新库存历史
-//        this.updateInventoryHis(transactionDTO);
+        // 设置库存id
+        this.setInventoryId(transactionDTO);
         // 保存当前审批的交易记录
         if(isApprove){
             this.saveCurrTransactionFlow(transactionDTO);
         }
-        // 更新库存交易记录 剩余库存
-        this.updateInventoryTransaction(transactionDTO,isApprove);
     }
 
     /**
@@ -404,14 +397,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
     }
 
     /**
-     * 检查所有库存交易，库存是否充足
-     * @param transactionList   交易记录列表
-     */
-    private void checkInventoryList(List<InventoryTransactionDTO> transactionList) {
-        
-    }
-
-    /**
      * 检查所有库存交易，每日库存是否充足
      * @param transactionList   交易记录列表
      */
@@ -423,36 +408,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         if(errList.length() > 0) {
             ServiceException.runError(errList.toString());
         }
-    }
-
-    /**
-     * 检查库存是否充足
-     * @param transactionDTO    库存交易信息
-     */
-    private String checkInventory(InventoryTransactionDTO transactionDTO) {
-        int inventoryQty = 0;
-
-        if(transactionDTO.isAllowNegativeInventory()) {
-            return "";
-        }
-
-        if(null != transactionDTO.getInventoryId()) {
-            InventoryEntity inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
-            inventoryQty = (null == inventoryEntity ? 0 : inventoryEntity.getQty());
-
-        }
-        if(inventoryQty + transactionDTO.getQty() < 0) {
-            return CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
-                    , transactionDTO.getSkuNo()
-                    , transactionDTO.getWarehouseName()
-                    , transactionDTO.getWarehouseLocationName()
-                    , transactionDTO.getInventoryStatusName()
-                    , inventoryQty
-                    , transactionDTO.getQty()
-                    , -(inventoryQty + transactionDTO.getQty())
-            );
-        }
-        return "";
     }
 
     /**
@@ -492,7 +447,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * 更新库存
      * @param transactionDTO    库存交易信息
      */
-    private void updateInventory(InventoryTransactionDTO transactionDTO) {
+    private void setInventoryId(InventoryTransactionDTO transactionDTO) {
         InventoryEntity inventoryEntity;
         if(null != transactionDTO.getInventoryId()) {
             inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
@@ -511,145 +466,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             transactionDTO.setInventoryId(inventoryEntity.getId());
         }
 
-    }
-
-    /**
-     * 更新库存历史
-     * @param transactionDTO    库存交易信息
-     */
-    public void updateInventoryHis(InventoryTransactionDTO transactionDTO) {
-        if(null == transactionDTO.getInventoryId()) {
-            ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
-                    transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
-        }
-
-        // 查询当天历史库存
-        saveInventoryCurrentday(transactionDTO);
-
-        // 更新当天之后的历史库存
-        LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.setSql("qty = qty + " + transactionDTO.getQty())
-                .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
-                .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
-                .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
-                //条件
-                .eq(InventoryHisEntity::getInfoId, transactionDTO.getInventoryId())
-                .gt(InventoryHisEntity::getBillDate, transactionDTO.getBillDate());
-
-        inventoryHisService.update(wrapper);
-    }
-
-    /**
-     * 保存当天历史库存
-     * @param transactionDTO    库存交易信息
-     */
-    private void saveInventoryCurrentday(InventoryTransactionDTO transactionDTO) {
-        InventoryHisEntity inventoryHis = this.queryInventoryHisLast(transactionDTO.getInventoryId(), transactionDTO.getBillDate(),true);
-
-        if(null == inventoryHis) {
-            // 查询当天以前的库存
-            inventoryHis = this.queryInventoryHisLast(transactionDTO.getInventoryId(), transactionDTO.getBillDate(),false);
-            int inventoryQty = (null == inventoryHis) ? 0 : inventoryHis.getQty();
-
-            inventoryHis = new InventoryHisEntity();
-            inventoryHis.setInfoId(transactionDTO.getInventoryId());
-            inventoryHis.setBillDate(transactionDTO.getBillDate());
-            inventoryHis.setQty(inventoryQty+ transactionDTO.getQty());
-            inventoryHis.setCreateUserId(transactionDTO.getUserId());
-            inventoryHis.setCreateUserName(transactionDTO.getUserName());
-            inventoryHis.setCreateTime(LocalDateTime.now());
-            inventoryHis.setUpdateUserId(transactionDTO.getUserId());
-            inventoryHis.setUpdateUserName(transactionDTO.getUserName());
-            inventoryHis.setUpdateTime(LocalDateTime.now());
-
-            inventoryHisService.save(inventoryHis);
-        }else {
-            // 更新当天历史库存
-            LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
-            wrapper.setSql("qty = qty + " + transactionDTO.getQty())
-                    .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
-                    .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
-                    .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
-                    //条件
-                    .eq(InventoryHisEntity::getId, inventoryHis.getId());
-
-            inventoryHisService.update(wrapper);
-        }
-    }
-
-    /**
-     * 查询库存历史
-     * @param inventoryId   库存id
-     * @param billDate      交易日期
-     * @param isOnlyCurrBillDate   是否只查询当天的历史
-     * @return  库存历史
-     */
-    private InventoryHisEntity queryInventoryHisLast(String inventoryId, LocalDate billDate, boolean isOnlyCurrBillDate) {
-        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper
-                .eq(InventoryHisEntity::getInfoId, inventoryId)
-                .orderByDesc(InventoryHisEntity::getBillDate)
-                .orderByDesc(InventoryHisEntity::getId)
-                .last("limit 1");
-        if(isOnlyCurrBillDate) {
-            queryWrapper.eq(InventoryHisEntity::getBillDate, billDate);
-        }else{
-            queryWrapper.lt(InventoryHisEntity::getBillDate, billDate);
-        }
-        return inventoryHisService.getOne(queryWrapper);
-
-    }
-
-    /**
-     * 更新库存交易 的库存数量
-     * @param transactionDTO    库存交易信息
-     * @param isApprove     是否审批
-     */
-    private void updateInventoryTransaction(InventoryTransactionDTO transactionDTO,boolean isApprove) {
-        if(null == transactionDTO.getInventoryId()) {
-            ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
-                    transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
-        }
-        // 日期大于当前单据日期的流水更新
-        LambdaUpdateWrapper<TransactionFlowEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
-                .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
-                //条件
-                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
-                .gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
-        transactionFlowService.update(wrapper);
-
-        if(!isApprove) {
-            // 反审核如果当天存在晚于当前流水创建的流水,需要进行流水重算
-            LambdaUpdateWrapper<TransactionFlowEntity> wrapperToday = new LambdaUpdateWrapper<>();
-            wrapperToday.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
-                    .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
-                    //条件
-                    .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
-                    .eq(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate())
-                    .gt(TransactionFlowEntity::getId, transactionDTO.getId());
-            transactionFlowService.update(wrapperToday);
-        }
-    }
-
-    /**
-     * 获取最后一次交易记录的剩余库存数量
-     * @param transactionDTO   交易记录
-     * @return  最后一次交易记录的剩余库存数量
-     */
-    private int getLastTransactionInventoryQty(InventoryTransactionDTO transactionDTO) {
-        int initInventoryQty = 0;
-        LambdaQueryWrapper<TransactionFlowEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper
-                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
-                .le(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate())
-                .eq(TransactionFlowEntity::getIsUnapproved, false)
-                .orderByDesc(TransactionFlowEntity::getBillDate)
-                .orderByDesc(TransactionFlowEntity::getId)
-                .last("limit 1");
-
-        TransactionFlowEntity transactionFlow =transactionFlowService.getOne(queryWrapper);
-        return null == transactionFlow ? initInventoryQty : transactionFlow.getCurInventoryQty();
     }
 
     /**
@@ -685,7 +501,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
 
         // 交易数量
         transactionFlowEntity.setQty(transactionDTO.getQty());
-        transactionFlowEntity.setCurInventoryQty(getLastTransactionInventoryQty(transactionDTO)+transactionDTO.getQty());
 
         // 交易人员信息
         transactionFlowEntity.setCreateUserId(transactionDTO.getUserId());
