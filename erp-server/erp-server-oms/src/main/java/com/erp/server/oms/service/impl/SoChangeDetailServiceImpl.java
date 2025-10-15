@@ -202,6 +202,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             soChangeDetail.setSkuNo(skuNo);
+            soChangeDetail.setPlatformSkuNo(item.getPlatformSkuNo());
             addList.add(soChangeDetail);
         }
         this.saveBatch(addList);
@@ -319,6 +320,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 String skuId = item.getSkuId();
                 view.setSkuId(skuId);
                 view.setSkuNo(item.getSkuNo());
+                view.setPlatformSkuNo(item.getPlatformSkuNo());
                 view.setSoDetailId(item.getId());
                 SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 String unit = "";
@@ -402,6 +404,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String skuId = item.getSkuId();
             view.setSkuId(skuId);
             view.setSkuNo(item.getSkuNo());
+            view.setPlatformSkuNo(item.getPlatformSkuNo());
             view.setSoDetailId(item.getId());
 
             //即时库存
