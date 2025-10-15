@@ -18,10 +18,9 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * @author liuruipeng
@@ -42,11 +41,12 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/query_warehouse";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/detail_inbound_order";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
+        body.put("orderNo","IN81571-20250929-000006");
         String timestamp = String.valueOf(new Date().getTime());
         String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
         Map<String,String> headerMap = new HashMap<>();
@@ -58,11 +58,57 @@ public class ImlService {
         System.out.println(bodyStr);
     }
 
+//    public static void main(String[] args) {
+//        ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
+//                .needCustomerAudit("N")
+//                .platformOrderNo("TESTFHD20251015001")
+//                .bizType("TOC")
+//                .destWarehouseCode("ceshi")
+//                .customsType("SEPARATE_TAX")
+//                .inboundType("DIRECT")
+//                .logisticsCode("IML-RU")
+//                .expectedDate(new Date().getTime())
+//                .direct( ImlCreateInboundReq.DirectDTO.builder()
+//                        .trackingNumber("123456987")
+//                        .build())
+//                .boxs(Arrays.asList(
+//                        ImlCreateInboundReq.BoxsDTO.builder()
+//                                .boxNo("BOX001")
+//                                .boxLength(new BigDecimal("1.1"))
+//                                .boxWidth(new BigDecimal("1.1"))
+//                                .boxHeight(new BigDecimal("1.1"))
+//                                .boxWeight(new BigDecimal("1.1"))
+//                                .boxDetails(Arrays.asList(
+//                                        ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO.builder()
+//                                                .skuCode("HXPENG-TESTTEST")
+//                                                .quantity(1)
+//                                                .build()
+//                                ))
+//                                .build()
+//                ))
+//                .attachments(Arrays.asList(
+//                        ImlCreateInboundReq.AttachmentsDTO.builder()
+//                                .fileName("test.pdf")
+//                                .fileType("pdf")
+//                                .fileData("OTHER")
+//                                .build()
+//                ))
+//                .build();
+//        String timestamp = String.valueOf(new Date().getTime());
+//        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(imlCreateInboundReq));
+//        Map<String,String> headerMap = new HashMap<>();
+//        headerMap.put("x-app-id",APP_ID);
+//        headerMap.put("x-app-sign",appSign);
+//        headerMap.put("x-request-time",timestamp);
+//        headerMap.put("x-request-token",REQUEST_TOKEN);
+//        String bodyStr = OkHttpUtils.doPostJson(API_URL,JSONObject.toJSONString(imlCreateInboundReq), headerMap);
+//        System.out.println(bodyStr);
+//    }
     /**
      * 获取仓库列表
      */
     public ImlBaseResp<String> getWarehouse(){
-        Map<String, String> headerMap = ImlUtils.buildHearderMap(new HashMap<>());
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(new HashMap<>()));
         String path = "open-sdk/oms/query_warehouse";
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,new HashMap<>(), headerMap);
         return ImlUtils.parseToImlResp(bodyStr, String.class);
@@ -72,63 +118,45 @@ public class ImlService {
      * 获取物流产品
      */
     public ImlBaseResp<List<ImlLogisticChannelResp>> getShippingMethod(){
-        Map<String, String> headerMap = ImlUtils.buildHearderMap(new HashMap<>());
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(new HashMap<>()));
         String path = "open-sdk/fms/product_query";
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,new HashMap<>(), headerMap);
         return ImlUtils.parseToImlResp(bodyStr, new TypeReference<ImlBaseResp<List<ImlLogisticChannelResp>>>() {});
     }
 
     /**
-     * 获取入库单
-     */
-    public ImlResponse<List<ImlReceiptResp>> getReceiptBatch(@Valid ImlGetReceiptReq imlGetReceiptReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIPT,imlGetReceiptReq);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {}.getType());
-    }
-
-    /**
      * 创建入库单
      */
-    public ImlResponse<String> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_INBOUND,imlGetReceiptReq);
-        ImlResponse<String> respDto = JSON.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
-        //处理返回值
-        if (StringUtil.isNotBlank(respDto.getData())) {
-            respDto.setData(JSON.parseObject(respDto.getData()).getString(RECEIVING_CODE));
-        }
-        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
-            respDto.setData(respDto.getReceivingCode());
-        }
+    public ImlBaseResp<ImlInboundResp> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
+
+        String path = "open-sdk/oms/create_inbound_order";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlGetReceiptReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlGetReceiptReq), headerMap);
+        ImlBaseResp<ImlInboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlInboundResp.class);
         return respDto;
     }
 
     /**
      * 编辑入库单
      */
-    public ImlResponse<String> editInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_EDIT_INBOUND,imlGetReceiptReq);
-        ImlResponse<String> respDto = JSON.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
-        //处理返回值
-        if (StringUtil.isNotBlank(respDto.getData())) {
-            respDto.setData(JSON.parseObject(respDto.getData()).getString(RECEIVING_CODE));
-        }
-        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
-            respDto.setData(respDto.getReceivingCode());
-        }
-        if(StringUtils.isNotBlank(respDto.getMessage()) && respDto.getMessage().contains("不可编辑")){
-            respDto.setAsk("Success");
-            respDto.setData(imlGetReceiptReq.getReceivingCode());
-        }
+    public ImlBaseResp<ImlInboundResp> editInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
+        String path = "open-sdk/oms/edit_inbound_order";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlGetReceiptReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlGetReceiptReq), headerMap);
+        ImlBaseResp<ImlInboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlInboundResp.class);
         return respDto;
     }
     /**
      * 取消入库单
      */
-    public ImlResponse<String> cancelInboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String receivingCode){
-        Map<String,Object> paramsMap = new HashMap<>();
-        paramsMap.put(RECEIVING_CODE,receivingCode);
-        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_INBOUND,paramsMap);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
+    public ImlBaseResp<String> cancelInboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String receivingCode){
+        String path = "open-sdk/oms/cancel_inbound_order";
+        Map<String,Object> bodyMap = new HashMap<>();
+        bodyMap.put("orderNo",receivingCode);
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(bodyMap));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(bodyMap), headerMap);
+        ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        return respDto;
     }
 
 

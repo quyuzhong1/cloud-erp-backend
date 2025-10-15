@@ -1,11 +1,15 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FileUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
@@ -13,17 +17,22 @@ import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
+import com.sdk.wms.iml.dto.response.ImlInboundResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
+import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -52,20 +61,123 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        ImlCreateInboundReq imlCreateInboundReq =  this.buildInboundDto(createInboundReq);
+        ImlBaseResp<ImlInboundResp> imlInboundRespImlBaseResp = imlService.createInboundBill(imlCreateInboundReq);
+        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
+            return failure(imlInboundRespImlBaseResp.getMessage());
+        }
+        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
+    }
 
-        return null;
+    private ImlCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+
+        if(StringUtils.isBlank(createInboundReq.getFileBase64())){
+            throw new ServiceException("入库单附件不能为空");
+        }
+
+        ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
+                .needCustomerAudit("N")
+                .platformOrderNo(createInboundReq.getReferenceNo())
+                .bizType("TOC")
+                .destWarehouseCode(createInboundReq.getWarehouseCode())
+                .customsType(createInboundReq.getDeclareType().equals("Y")?"SEPARATE_TAX":createInboundReq.getDeclareType().equals("N")?"NO_TAX":"")
+                .inboundType(createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())?"DIRECT":createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())?"TRANSIT":"")
+                .expectedDate(createInboundReq.getEtaDate().atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli())
+                .attachments(Arrays.asList(
+                        ImlCreateInboundReq.AttachmentsDTO.builder()
+                                .fileName(createInboundReq.getFileName())
+                                .fileType(FileUtil.getFileSuffix(createInboundReq.getFileName()))
+                                .fileData(createInboundReq.getFileBase64())
+                                .build()
+                ))
+                .build();
+        if(StringUtils.isNotBlank(createInboundReq.getReceivingCode())){
+            imlCreateInboundReq.setCode(createInboundReq.getReceivingCode());
+        }
+        if(createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())){
+            imlCreateInboundReq.setDirect(
+                    ImlCreateInboundReq.DirectDTO.builder()
+                            .trackingNumber(createInboundReq.getTrackingNumber())
+                            .build()
+            );
+        }else if (createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())){
+            imlCreateInboundReq.setLogisticsCode(createInboundReq.getSmCode());
+            imlCreateInboundReq.setTransit(
+                    ImlCreateInboundReq.TransitDTO.builder()
+                            .transitWarehouseCode(createInboundReq.getTransitWarehouseCode())
+                            .deliveryType(createInboundReq.getIncomeType().equals(OverseasDeliveryModeEnum.SELF_DELIVERY.getCode())?"DELIVERY":createInboundReq.getIncomeType().equals(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())?"COLLECT":"")
+                            .collectAddress(
+                                    ImlCreateInboundReq.TransitDTO.CollectAddressDTO.builder()
+                                            .countryCode(createInboundReq.getCollect().getCollectCountryCode())
+                                            .postcode(createInboundReq.getCollect().getCollectZipcode())
+                                            .province(createInboundReq.getCollect().getCollectStateId())
+                                            .city(createInboundReq.getCollect().getCollectCityId())
+                                            .county(createInboundReq.getCollect().getCollectAreaId())
+                                            .street(createInboundReq.getCollect().getCollectStreet())
+                                            .contacter(createInboundReq.getCollect().getContacterName())
+                                            .contactPhone(createInboundReq.getCollect().getContactPhone())
+                                            .build()
+                            )
+                            .build()
+            );
+        }
+        //明细
+        List<ImlCreateInboundReq.BoxsDTO> boxs = new ArrayList<>();
+        List<ThirdWarehouseCreateInboundReq.Item> items = createInboundReq.getItems();
+        //根据箱号排序
+        items.sort(Comparator.comparing(ThirdWarehouseCreateInboundReq.Item::getBoxNo));
+        // 使用 LinkedHashMap 保证分组后的 Key 顺序
+        Map<Integer, List<ThirdWarehouseCreateInboundReq.Item>> itemMap = items.stream()
+                .collect(Collectors.groupingBy(
+                        ThirdWarehouseCreateInboundReq.Item::getBoxNo,
+                        LinkedHashMap::new,  // 指定有序 Map 实现
+                        Collectors.toList()
+                ));
+        itemMap.forEach((boxNo,itemList) -> {
+            ImlCreateInboundReq.BoxsDTO boxListDTO = new ImlCreateInboundReq.BoxsDTO();
+            ThirdWarehouseCreateInboundReq.Item firstItem = itemList.get(0);
+            if(firstItem.getWeightUnit().equals(UnitEnum.WeightUnitEnum.KG.code)){
+                boxListDTO.setBoxWeight(firstItem.getPackageWeight().multiply(new BigDecimal(1000)));
+            }else{
+                boxListDTO.setBoxWeight(firstItem.getPackageWeight());
+            }
+            boxListDTO.setBoxLength(firstItem.getBoxLength());
+            boxListDTO.setBoxWidth(firstItem.getBoxWidth());
+            boxListDTO.setBoxHeight(firstItem.getBoxHeight());
+            List<ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO> skuVosDTOS = new ArrayList<>();
+            for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
+                ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO skuVosDTO = new ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO();
+                skuVosDTO.setSkuCode(item.getProductSku());
+                skuVosDTO.setQuantity(item.getQuantity());
+                skuVosDTO.setIsInsurance("N");
+                skuVosDTOS.add(skuVosDTO);
+            }
+            boxListDTO.setBoxDetails(skuVosDTOS);
+            boxs.add(boxListDTO);
+        });
+        imlCreateInboundReq.setBoxs(boxs);
+        return imlCreateInboundReq;
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-
-        return null;
+        ImlCreateInboundReq imlCreateInboundReq =  this.buildInboundDto(createInboundReq);
+        ImlBaseResp<ImlInboundResp> imlInboundRespImlBaseResp = imlService.editInboundBill(imlCreateInboundReq);
+        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
+            return failure(imlInboundRespImlBaseResp.getMessage());
+        }
+        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-
-        return null;
+        ImlBaseResp<String> resp = imlService.cancelInboundBill(cancelInboundReq.getReceivingCode());
+        if(!isSuccess(resp.getCode())){
+            return failure(resp.getMessage());
+        }
+        return success();
     }
 
     @Override

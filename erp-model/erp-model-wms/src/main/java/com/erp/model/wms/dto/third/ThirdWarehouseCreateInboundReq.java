@@ -44,6 +44,11 @@ public class ThirdWarehouseCreateInboundReq {
      * file base64
      */
     private String fileBase64;
+
+    /**
+     * file
+     */
+    private String fileName;
     /**
      * 交货方式 （自送，揽收）
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}

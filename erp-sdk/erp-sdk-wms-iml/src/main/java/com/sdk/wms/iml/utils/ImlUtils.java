@@ -45,7 +45,7 @@ public class ImlUtils {
         return response;
     }
 
-    public static Map<String, String> buildHearderMap(Map<String,Object> body) {
+    public static Map<String, String> buildHearderMap(String body) {
         String appId = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appId"));
         String appSecret = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appSecret"));
         String appToken = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appToken"));
@@ -53,7 +53,7 @@ public class ImlUtils {
             throw new ServiceException("获取不到授权值，正确授权值为：appId,appSecret,appToken");
         }
         String timestamp = String.valueOf(new Date().getTime());
-        String appSign = Md5Util.md5(appSecret + timestamp + JSONObject.toJSONString(body));
+        String appSign = Md5Util.md5(appSecret + timestamp + body);
         Map<String,String> headerMap = new HashMap<>();
         headerMap.put("x-app-id",appId);
         headerMap.put("x-app-sign",appSign);
