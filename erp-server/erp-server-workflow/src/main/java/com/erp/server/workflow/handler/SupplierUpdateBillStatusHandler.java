@@ -410,7 +410,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
                         filter(req -> CharSequenceUtil.equals(fieldName,req.getName()))
-                        .map(DictCredentialEntity::getCode)
+                        .map(DictCredentialEntity::getId)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {

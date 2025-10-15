@@ -43,7 +43,7 @@ public class DictCredentialServiceImpl extends SuperServiceImpl<DictCredentialMa
     @Override
     public BaseResultDTO.AddDTO add(DictCredentialDTO.AddDTO addDTO) {
         DictCredentialEntity dictCredentialEntity = new DictCredentialEntity();
-        dictCredentialEntity.setName(addDTO.getName());
+        dictCredentialEntity.setName(StrUtil.trim(addDTO.getName()));
 
         //校验名称是否已存在
         Integer count = this.lambdaQuery()
