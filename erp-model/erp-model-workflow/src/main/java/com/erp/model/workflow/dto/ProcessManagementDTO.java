@@ -1146,11 +1146,17 @@ public class ProcessManagementDTO {
          */
         private String bpmnXml;
 
-        public ProcessResultDTO(List<TaskResultDTO> tasks, String bpmnXml, String processInstanceId, String processDefinitionId) {
+        /**
+         * 流程是否已完成
+         */
+        private boolean completed;
+
+        public ProcessResultDTO(List<TaskResultDTO> tasks, String bpmnXml, String processInstanceId, String processDefinitionId,boolean completed) {
             this.curTaskList = tasks;
             this.bpmnXml = bpmnXml;
             this.processInstanceId = processInstanceId;
             this.processDefinitionId = processDefinitionId;
+            this.completed = completed;
         }
     }
 

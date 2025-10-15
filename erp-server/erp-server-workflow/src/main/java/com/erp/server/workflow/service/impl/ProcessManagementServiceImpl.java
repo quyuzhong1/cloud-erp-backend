@@ -1049,26 +1049,51 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public ProcessManagementDTO.ProcessResultDTO progress(ProcessManagementDTO.ProgressDTO dto) {
-        // Get the process definition ID from the process instance ID
-        String processDefinitionId = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(dto.getProcessInstanceId())
-                .singleResult()
-                .getProcessDefinitionId();
-        // Get the BPMN model instance
-        BpmnModelInstance bpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
-        // Convert the BpmnModelInstance to a XML string
-        String bpmnXml = Bpmn.convertToString(bpmnModelInstance);
-        // 返回当前任务
-        List<Task> taskList = taskService.createTaskQuery()
-                .processInstanceId(dto.getProcessInstanceId())
-                .active()
-                .list();
-        ActivityInstance activityInstance = runtimeService.getActivityInstance(dto.getProcessInstanceId());
-        List<ProcessManagementDTO.TaskResultDTO> tasks = new ArrayList<>(taskList.size());
-        if(!CollectionUtils.isEmpty(taskList)){
-            tasks = taskList.stream().map(task -> new ProcessManagementDTO.TaskResultDTO(task.getId(), task.getName(), task.getTaskDefinitionKey())).collect(Collectors.toList());
+        String processDefinitionId;
+        String processInstanceId = dto.getProcessInstanceId();
+        boolean isCompleted = false;
+
+        // 查询流程定义ID
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+
+        if (processInstance != null) {
+            processDefinitionId = processInstance.getProcessDefinitionId();
+        } else {
+            HistoricProcessInstance historicInstance = historyService.createHistoricProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+
+            if (historicInstance == null) {
+                throw new RuntimeException("未找到流程实例: " + processInstanceId);
+            }
+
+            processDefinitionId = historicInstance.getProcessDefinitionId();
+            isCompleted = true;
         }
-        return new ProcessManagementDTO.ProcessResultDTO(tasks, bpmnXml, activityInstance.getProcessInstanceId(), activityInstance.getProcessDefinitionId());
+
+        // 获取 BPMN XML
+        BpmnModelInstance bpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
+        String bpmnXml = Bpmn.convertToString(bpmnModelInstance);
+
+        // 查询任务（仅运行中的流程）
+        List<ProcessManagementDTO.TaskResultDTO> tasks = new ArrayList<>();
+        if (!isCompleted) {
+            List<Task> taskList = taskService.createTaskQuery()
+                    .processInstanceId(processInstanceId)
+                    .active()
+                    .list();
+
+            if (!CollectionUtils.isEmpty(taskList)) {
+                tasks = taskList.stream()
+                        .map(task -> new ProcessManagementDTO.TaskResultDTO(
+                                task.getId(), task.getName(), task.getTaskDefinitionKey()))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        return new ProcessManagementDTO.ProcessResultDTO(tasks, bpmnXml, processInstanceId, processDefinitionId, isCompleted);
     }
 
     @Override
