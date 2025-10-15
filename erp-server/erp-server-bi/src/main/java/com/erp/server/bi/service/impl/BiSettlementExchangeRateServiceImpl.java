@@ -329,6 +329,27 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
                 .findFirst().orElse(null);
     }
 
+    @Override
+    public void syncLastestRateToDht() {
+        List<BiSettlementExchangeRateEntity> list = this.list();
+        //过滤掉目标币别不是cny的数据和状态不是已审核
+        list = list.stream().filter(v->v.getTargetCurrencyCode().equals(CurrencyEnum.CNY.getCurrencyCode())
+                && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
+        //source_currency_code相同 取settlement_date_begin 最大的一条
+        Map<String, BiSettlementExchangeRateEntity> map = list.stream().collect(Collectors.toMap(BiSettlementExchangeRateEntity::getSourceCurrencyCode, v -> v, (v1, v2) -> {
+            if (v1.getSettlementDateBegin().isAfter(v2.getSettlementDateBegin())) {
+                return v1;
+            } else {
+                return v2;
+            }
+        }));
+        list = new ArrayList<>(map.values());
+        log.warn("同步最新汇率到订货通，list=【{}】", JSONUtil.toJsonStr(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            createSyncDhtMsg(list);
+        }
+    }
+
     // 构建DmpPushMsgEntity
     private DmpPushMsgEntity buildDmpPushMsgEntity(BiSettlementExchangeRateEntity biSettlementExchangeRateEntity) {
         DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();

@@ -70,6 +70,7 @@
         sr.approve_time as approveTime,
         sr.approve_user_name as approveUserName,
         sr.update_time as updateTime,
+        sr.create_time as createTime,
         sr.create_user_name as createUserName,
         sr.update_user_name as updateUserName,
         srd.remark

@@ -191,9 +191,9 @@ public class SkuMappingController extends BaseController {
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2b的sku对照表")
-    @PostMapping("/exportB2bPlatformSku")
+    @PostMapping("/exportB2bPlatformSyncSku")
     @WebAdvanceQuery
-    public ApiResult exportB2bPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto) {
+    public ApiResult exportB2bPlatformSyncSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto) {
         Boolean result = skuMappingService.exportB2bPlatformSku(dto);
         return result ? success() : failure();
     }
