@@ -4,6 +4,9 @@ package com.erp.server.wms.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +48,7 @@ import com.erp.server.wms.utils.InventoryRedisUtil;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
@@ -119,7 +123,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("预警消息");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle("迁移历史库存失败");
+        warnMsgInfo.setTitle("迁移redis历史库存失败");
         warnMsgInfo.setTableName("inventory_transaction");
         warnMsgInfo.setTableId(inventoryId);
         warnMsgInfo.setKeyInfo(e.getMessage());
@@ -394,4 +398,37 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
             transactionFlowService.update(wrapperToday);
         }
     }
+
+    private static final Map<String, Date> rollbackTimeMap = new HashMap<>();
+    
+	@Override
+	public void inventoryCheckRollback(int timeout) {
+		Collection<String> keys = inventoryRedisUtil.keys(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
+		if(CollUtil.isNotEmpty(keys)) {
+			Set<String> transactions = keys.stream().map(k -> {
+				String[] split = k.split(":");
+				return split[split.length - 1];
+			}).collect(Collectors.toSet());
+			Set<String> dbTransactions = lambdaQuery().in(InventoryTransactionEntity::getId, transactions)
+					.select(InventoryTransactionEntity::getId).list()
+					.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet());
+			transactions.removeIf(dbTransactions::contains);
+			if(CollUtil.isNotEmpty(transactions)) {
+				transactions.forEach(t -> {
+					Date date = rollbackTimeMap.get(t);
+					if(date == null) {
+						rollbackTimeMap.put(t, new Date());
+					}else {
+						if(DateUtil.offsetSecond(date, timeout).after(new Date())) {
+							try {
+								this.rollbackRedis(t);
+							} catch (Exception e) {
+								log.error("检查redis自动回滚执行失败：{}" , t , e);
+							}
+						}
+					}
+				});
+			}
+		}
+	}
 }

@@ -59,4 +59,21 @@ public class InventoryTransactionJob {
         return ReturnT.SUCCESS;
     }
 
+    @XxlJob("inventoryCheckRollback")
+    public ReturnT inventoryCheckRollback() {
+        int timeout = 1800;
+        String jobParam = XxlJobHelper.getJobParam();
+        if(StringUtils.isNotBlank(jobParam)) {
+        	try {
+				JSONObject parseObject = JSON.parseObject(jobParam);
+				timeout = parseObject.getIntValue("timeout");
+			} catch (Exception e) {
+				log.error("inventoryCheckRollback转换参数失败");
+			}
+        }
+        
+        inventoryTransactionService.inventoryCheckRollback(timeout);
+        
+        return ReturnT.SUCCESS;
+    }
 }

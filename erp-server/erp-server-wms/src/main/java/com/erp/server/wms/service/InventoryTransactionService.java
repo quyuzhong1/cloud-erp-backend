@@ -48,4 +48,9 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      */
     void rollbackRedis(String transactionId);
     
+    /**
+     * 检查库存是否长时间未回滚
+     */
+    void inventoryCheckRollback(int timeout);
+    
 }
