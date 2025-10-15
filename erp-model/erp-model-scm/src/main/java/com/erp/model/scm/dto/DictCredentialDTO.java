@@ -129,7 +129,6 @@ public class DictCredentialDTO implements Serializable {
          */
         private Integer sort;
 
-
     }
 
 
