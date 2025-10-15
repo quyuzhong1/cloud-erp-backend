@@ -60,6 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -467,10 +468,12 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        //生成SKU
-        String id = genSku(entity);
-        //SKU审核通过
-        skuSubmitApprove(id);
+        if(Objects.equals(approveStatus, ApproveStatusEnum.APPROVE)) {
+            //生成SKU
+            String id = genSku(entity);
+            //SKU审核通过
+            skuSubmitApprove(id);
+        }
         return Boolean.TRUE;
     }
 
@@ -495,6 +498,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productInfoDTO.setSaleMethod(SaleMethodEnum.GOODS.getName());
         productInfoDTO.setGrade("");
         productInfoDTO.setGradeId("");
+        productInfoDTO.setEntrustedDevelopCost(BigDecimal.ZERO);
 
         //产品属性默认资产
         BasicDictEntity basicDictEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), ProductConstant.PRODUCT_PROPERTY_ASSET);
@@ -529,6 +533,18 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
         //成本信息
         ProductCostDTO productCostDTO = new ProductCostDTO();
+        productCostDTO.setTargetTaxCost(BigDecimal.ZERO);
+        productCostDTO.setTargetNoTaxCost(BigDecimal.ZERO);
+        productCostDTO.setActualTaxCost(BigDecimal.ZERO);
+        productCostDTO.setActualNoTaxCost(BigDecimal.ZERO);
+        productCostDTO.setRetailPrice(BigDecimal.ZERO);
+        productCostDTO.setTargetGpm(BigDecimal.ZERO);
+        productCostDTO.setActualGpmCny(BigDecimal.ZERO);
+        productCostDTO.setActualGpmUsd(BigDecimal.ZERO);
+        productCostDTO.setProjectApprovalCost(BigDecimal.ZERO);
+        productCostDTO.setMassCost(BigDecimal.ZERO);
+        productCostDTO.setProjectCost(BigDecimal.ZERO);
+        productCostDTO.setTaxRate(BigDecimal.ZERO);
         productNoSpecDTO.setProductCostDTO(productCostDTO);
         //采购信息信息
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
@@ -537,6 +553,13 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
         productSaleDTO.setSaleState(SaleStateEnum.NOT_SALE.getCode());
         productSaleDTO.setIsMarketable(0);
+        productSaleDTO.setYearSaleQty(0L);
+        productSaleDTO.setYearSaleAmount(BigDecimal.ZERO);
+        productSaleDTO.setMonthSaleQty(0L);
+        productSaleDTO.setMonthSaleAmount(BigDecimal.ZERO);
+        productSaleDTO.setIsFinishedImg(2);
+        productSaleDTO.setIsFinishedVideo(2);
+        productSaleDTO.setTargetSalesQty(BigDecimal.ZERO);
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
         //物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
