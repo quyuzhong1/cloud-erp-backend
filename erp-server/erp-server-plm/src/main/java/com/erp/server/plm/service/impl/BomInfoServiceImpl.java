@@ -1167,6 +1167,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 
         }
+        //校验是否产品属性是否相同
+        List<String> mergedList = Stream.concat(skuIds.stream(), childrenSkuIdList.stream())
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(mergedList);
+        long count = skuVOList.stream().map(SkuVO::getPropertyId).count();
+        if(count > 1){
+            throw new ServiceException("只允许添加相同产品属性组合成组合品");
+        }
     }
 
     /**
