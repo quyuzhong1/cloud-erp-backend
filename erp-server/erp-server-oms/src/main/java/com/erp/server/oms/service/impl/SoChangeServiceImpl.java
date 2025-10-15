@@ -63,6 +63,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
@@ -901,6 +902,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
             //更新销售表数据
             soChangeDetailService.handleDb(list);
+
+            //获取销售订单信息
+            List<String> soIdList = list.stream().map(SoChangeEntity::getSoId).distinct().collect(Collectors.toList());
+            List<SoInfoEntity> soInfoList = soInfoService.listByIds(soIdList);
+            Map<String, SoInfoEntity> soInfoMap = CollUtil.isEmpty(soInfoList) ? new HashMap<>() : soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
+
             //审核通过发送金蝶
             list.forEach(obj -> {
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -909,10 +916,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
                 soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
                 //订货通同步
-                if(customerInfoService.isSyncDht(obj.getCustomerId())){
-                    SoInfoEntity soInfoEntity = new SoInfoEntity();
-                    soInfoEntity.setId(obj.getSoId());
-                    soInfoEntity.setCode(obj.getCode());
+                SoInfoEntity soInfoEntity = soInfoMap.get(obj.getSoId());
+                if(customerInfoService.isSyncDht(soInfoEntity.getCustomerId())){
                     syncDhtService.createSyncSoInfoTaskToDht(soInfoEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
             });
