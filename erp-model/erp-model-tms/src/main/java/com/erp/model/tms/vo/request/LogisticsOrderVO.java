@@ -95,6 +95,12 @@ public class LogisticsOrderVO implements Serializable {
      * 平台订单号
      */
     private String platformCode;
+
+    /**
+     * 平台
+     */
+    private String dictPlatform;
+
     /**
      * 包裹号【虾皮下单使用】
      */

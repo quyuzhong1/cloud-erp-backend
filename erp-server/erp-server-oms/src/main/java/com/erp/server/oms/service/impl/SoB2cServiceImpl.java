@@ -2017,7 +2017,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setOrderId(id);
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String logisticsPlatform = auth.getLogisticsPlatform();
-        result.setSalesPlatform(logisticsPlatform);
         Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
         String shopId = entity.getShopId();
         //扩展字段
