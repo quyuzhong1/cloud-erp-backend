@@ -2409,41 +2409,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
             updateLingXingOrder(entity, list);
         }
-
+        String operate = "提交发货";
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
          */
         if (isApi) {
-            try {
-                //下出库单命令
-                soB2cService.thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
-            } catch (Exception e) {
-                log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
-                SoB2cErrorEntity soB2cErrorEntity = soB2cErrorService.getByMainIdAndType(entity.getId(),SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                BatchResultDTO batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-                if(Objects.nonNull(soB2cErrorEntity)){
-                    Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(soB2cErrorEntity.getId()));
-                    Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
-                    if(rulePromptWordEntityMap.containsKey(soB2cErrorEntity.getId())){
-                        RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(soB2cErrorEntity.getId());
-                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : soB2cErrorEntity.getMessage(),rulePromptWordEntity.getSolution()));
-                    }
-                }
-                return batchResultDTO;
-            }
+            //发货状态
+            //异步处理
+            soB2cService.asyncThirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
+            operate = "异步提交发货";
         } else {
             //生成发货单
             generateSoB2cDeliveryBill(entity, list, logisticsEntity, warehouseManageType);
+            //删除异常订单信息
+            soB2cErrorService.removeAllTypeErrorOrder(id);
+            this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         }
-        this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
-        //删除异常订单信息
-        soB2cErrorService.removeAllTypeErrorOrder(id);
 
         //操作日志
-        String msg = "B2C销售订单【{}】提交发货";
+        String msg = "B2C销售订单【{}】" + operate;
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), operate);
     }
 
     private void updatePlatformStatus(SoB2cEntity entity, String status) {
@@ -2813,7 +2800,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultList;
     }
 
-
+    @Async("omsErpExecutor")
+    public void asyncThirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, SoB2cLogisticsEntity logisticsEntity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
+        try {
+            //下出库单命令
+            soB2cService.thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasProviderWarehouse, detailList, newChannelId);
+            //删除异常订单信息
+            soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
+            this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        } catch (Exception e) {
+            log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+            addError.setParamJson("");
+            addError.setReturnJson("");
+            addError.setMainId(entity.getId());
+            addError.setMessage(e.getMessage());
+            soB2cErrorService.add(addError);
+        }
+    }
     /**
      * 第三方仓下出库单
      *
@@ -2992,6 +2997,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApiResult<String> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq);
         log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String shippingOrderNo = apiResult.getData();
+        if (StringUtils.isNotBlank(shippingOrderNo)) {
+            this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
+                    eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
+        }
         //上传面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel() && PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())){
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
@@ -3006,10 +3015,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException("推送面单失败{}",uploadOrderLabelResponse.getMsg());
             }
         }
-        if (StringUtils.isNotBlank(shippingOrderNo)) {
-            this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
-                    eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
-        }
+
         soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
         soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         String msg = CharSequenceUtil.format("创建海外仓出库单成功，单号【{}】", shippingOrderNo);
@@ -3022,8 +3028,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //如果已存在发货单，不处理
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())){
-            log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
-            return ApiResult.success(entity.getShippingOrderNo());
+            if (CharSequenceUtil.isBlank(entity.getShippingOrderNo())){
+                //获取三方仓已生成的发货单id
+                ThirdWarehouseQueryOutboundReq queryOutboundReq = new ThirdWarehouseQueryOutboundReq();
+                queryOutboundReq.setErpOrderCode(thirdWarehouseDeliveryEntity.getCode());
+                queryOutboundReq.setThirdWarehouseProvideCode(createOutboundReq.getThirdWarehouseProvideCode());
+                queryOutboundReq.setAuthId(createOutboundReq.getAuthId());
+                ApiResult<String> stringApiResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
+                if (stringApiResult.isSuccess()){
+                    return ApiResult.success(stringApiResult.getData());
+                }
+            }else {
+                log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
+                return ApiResult.success(entity.getShippingOrderNo());
+            }
         }
         String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
         createOutboundReq.setReferenceNo(code);
