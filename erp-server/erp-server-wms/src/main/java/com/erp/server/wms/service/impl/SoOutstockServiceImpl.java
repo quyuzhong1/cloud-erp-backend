@@ -4171,6 +4171,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //清空销售订单的出库时间
             this.handleSoOutDate(removeList);
+
+            //删除推送到订货通
+            for (SoOutstockEntity entity : list) {
+                if(customerFeign.isSyncDht(entity.getCustomerId())){
+                    syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+                }
+            }
         }else {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
