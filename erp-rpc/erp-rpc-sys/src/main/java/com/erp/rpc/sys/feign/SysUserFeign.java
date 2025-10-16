@@ -110,6 +110,15 @@ public interface SysUserFeign {
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
+     * 根据用户ID获取用户完整登录信息（包含权限和菜单）
+     * @param userId 用户ID
+     * @param userType 用户类型
+     * @return 用户信息（包含permissionList和leftMenuList）
+     */
+    @PostMapping("feign/user/getUserLoginInfo")
+    ApiResult<SysUserDTO> getUserLoginInfo(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
+
+    /**
      * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")

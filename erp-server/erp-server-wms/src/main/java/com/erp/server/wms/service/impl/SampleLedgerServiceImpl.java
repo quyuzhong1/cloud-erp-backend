@@ -541,8 +541,15 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
                 .eq(SampleLedgerEntity::getIsDeleted, false)
         );
 
-        // 获取用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 获取用户信息（包含禁用状态）
+        com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
+        com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> userResult = sysUserFeign.userList(searchDTO);
+        
+        List<FindUserDTO> userList = new ArrayList<>();
+        if (userResult != null && userResult.isSuccess() && userResult.getData() != null) {
+            userList = userResult.getData();
+        }
+        
         Map<String, FindUserDTO> userMap = userList.stream()
             .collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
 

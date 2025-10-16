@@ -1,8 +1,10 @@
 package com.erp.model.sys.dto;
 
+import com.erp.model.sys.vo.SysMenuVO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -58,6 +60,16 @@ public class SsoLoginResponseDTO implements Serializable {
     private String signSessionId;
 
     /**
+     * 权限列表（菜单权限编码）
+     */
+    private List<String> permissionList;
+
+    /**
+     * 左侧菜单列表
+     */
+    private List<SysMenuVO> leftMenuList;
+
+    /**
      * 创建成功响应
      */
     public static SsoLoginResponseDTO success(String token, String userId, String appId, String[] pathList, String signSessionId) {
@@ -68,6 +80,23 @@ public class SsoLoginResponseDTO implements Serializable {
         response.setAppId(appId);
         response.setPathList(pathList);
         response.setSignSessionId(signSessionId);
+        return response;
+    }
+
+    /**
+     * 创建成功响应（包含权限和菜单）
+     */
+    public static SsoLoginResponseDTO success(String token, String userId, String appId, String[] pathList, 
+                                              String signSessionId, List<String> permissionList, List<SysMenuVO> leftMenuList) {
+        SsoLoginResponseDTO response = new SsoLoginResponseDTO();
+        response.setSuccess(true);
+        response.setToken(token);
+        response.setUserId(userId);
+        response.setAppId(appId);
+        response.setPathList(pathList);
+        response.setSignSessionId(signSessionId);
+        response.setPermissionList(permissionList);
+        response.setLeftMenuList(leftMenuList);
         return response;
     }
 
