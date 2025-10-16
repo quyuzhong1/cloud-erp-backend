@@ -32,6 +32,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import org.springframework.beans.BeanUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
@@ -1063,7 +1064,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public SampleRecipientDTO.ViewDTO view(String id) {
         SampleRecipientEntity sampleRecipientEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品领用单数据"));
-        SampleRecipientDTO.ViewDTO data = BeanMapperUtils.map(SampleRecipientDTO.ViewDTO.class, sampleRecipientEntity);
+        SampleRecipientDTO.ViewDTO data = new SampleRecipientDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleRecipientEntity, data);
         data.setApproveStatus(sampleRecipientEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);

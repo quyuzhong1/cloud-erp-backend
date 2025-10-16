@@ -49,6 +49,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
@@ -721,7 +722,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     @Override
     public SampleReturnInfoDTO.ViewDTO view(String id) {
         SampleReturnInfoEntity sampleReturnInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品归还单数据"));
-        SampleReturnInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleReturnInfoDTO.ViewDTO.class, sampleReturnInfoEntity);
+        SampleReturnInfoDTO.ViewDTO data = new SampleReturnInfoDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleReturnInfoEntity, data);
         data.setApproveStatus(sampleReturnInfoEntity.getApproveStatus().getStatus());
         // 数据填充处理
         fillOne(data);

@@ -26,6 +26,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import org.springframework.beans.BeanUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
@@ -904,7 +905,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Override
     public SampleBorrowInfoDTO.ViewDTO view(String id) {
         SampleBorrowInfoEntity sampleBorrowInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品借用单数据"));
-        SampleBorrowInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleBorrowInfoDTO.ViewDTO.class, sampleBorrowInfoEntity);
+        SampleBorrowInfoDTO.ViewDTO data = new SampleBorrowInfoDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleBorrowInfoEntity, data);
         data.setApproveStatus(sampleBorrowInfoEntity.getApproveStatus().getStatus());
         // 数据填充处理
         fillOne(data);

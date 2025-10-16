@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -523,7 +524,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单");
         }
-        BeanMapperUtils.copy(entity, viewDTO);
+        BeanUtils.copyProperties(entity, viewDTO);
 
         viewDTO.setApproveStatus(entity.getApproveStatus().getCode());
         // 设置明细列表到ViewDTO中

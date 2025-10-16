@@ -73,6 +73,7 @@ import java.io.File;
 import org.springframework.transaction.annotation.Propagation;
 import org.apache.commons.lang3.StringUtils;
 import com.common.core.enums.ApiError;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -476,7 +477,8 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Override
     public SampleInitialLedgerDTO.ViewDTO view(String id) {
         SampleInitialLedgerEntity sampleInitialLedgerEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品期初台账数据"));
-        SampleInitialLedgerDTO.ViewDTO data = BeanMapperUtils.map(SampleInitialLedgerDTO.ViewDTO.class, sampleInitialLedgerEntity);
+        SampleInitialLedgerDTO.ViewDTO data = new SampleInitialLedgerDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleInitialLedgerEntity, data);
         data.setApproveStatus(sampleInitialLedgerEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
