@@ -18,18 +18,20 @@ for _, v in ipairs(value) do
             if i == 0 then
                 uqty = sku;
             else
+                local a = 0;
                 local flag = 0;
                 for s in string.gmatch(sku, '([^' .. delimiter .. ']+)') do
-                    if flag == 0 and s == transaction then
+                    if a == 0 and s == transaction then
                         flag = 1;
                     else
                         if type == 'commit' and flag == 1 then
                             uqty = uqty + s;
                         end
                     end
+                    a = a + 1;
                 end
                 if flag == 0 then
-                    uvalue = uvalue .. sku .. split;
+                    uvalue = uvalue .. split .. sku;
                 end
             end
             i = i + 1;

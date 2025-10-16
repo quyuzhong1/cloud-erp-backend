@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -19,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.RedissonMultiLock;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -73,11 +76,15 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private TransactionFlowService transactionFlowService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    @Qualifier("transactionIdToInventoryHisPool")
+    private ExecutorService transactionIdToInventoryHisPool;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void inventoryTransactionToInventoryHis(String inventoryId , int size) {
-    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId));
+    public void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis) {
+    	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
+		RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , waitTime);
     	if(tryLock != null) {
     		try {
 				List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
@@ -87,7 +94,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					for(InventoryTransactionEntity inventoryTransactionEntity : inventoryTransactionEntityList) {
 						//1、补偿提交redis库存
 						String transactionId = inventoryTransactionEntity.getTransactionId();
-						if(transactionIdSet.add(transactionId)) {
+						if(commitRedis && transactionIdSet.add(transactionId)) {
 							this.commitRedis(inventoryTransactionEntity.getTransactionId());
 						}
 						//2、更新历史库存
@@ -116,6 +123,27 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			} finally{
  				inventoryRedisUtil.unLock(tryLock);
  			}
+    	}else {
+    		log.error("redis库存交易正在迁移中：{}" , key);
+    	}
+    
+    }
+    
+    @Override
+    public void transactionIdToInventoryHis(String transactionId) {
+    	List<InventoryTransactionEntity> list = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId)
+            	.last(" group by inventory_id ")
+            	.select(InventoryTransactionEntity::getInventoryId)
+            	.list();
+    	if(CollUtil.isNotEmpty(list)) {
+    		for(InventoryTransactionEntity l : list) {
+    			String inventoryId = l.getInventoryId();
+    			try {
+					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 1, false);
+				} catch (Exception e) {
+					log.error("即时迁移redis库存失败：{}" , inventoryId);
+				}
+    		}
     	}
     }
     
@@ -167,15 +195,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
 		for(TransactionFlowEntity transactionFlowEntity : transactionFlowEntityList) {
-			InventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, InventoryTransactionEntity.class, 
-					InventoryTransactionEntity.FIELD_ID,
-					InventoryTransactionEntity.CREATE_TIME,
-					InventoryTransactionEntity.UPDATE_TIME,
-					InventoryTransactionEntity.FIELD_VERSION,
-					InventoryTransactionEntity.IS_DELETED,
-					InventoryTransactionEntity.UPDATE_USER_ID,
-					InventoryTransactionEntity.UPDATE_USER_NAME
-					);
+			InventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, InventoryTransactionEntity.class);
+			inventoryTransactionEntity.setId(null);
+			LocalDateTime now = LocalDateTime.now();
+			inventoryTransactionEntity.setCreateTime(now);
+			inventoryTransactionEntity.setUpdateTime(now);
+			inventoryTransactionEntity.setCreateUserId(null);
+			inventoryTransactionEntity.setCreateUserName(null);
+			inventoryTransactionEntity.setUpdateUserId(null);
+			inventoryTransactionEntity.setUpdateUserName(null);
+			inventoryTransactionEntity.setVersion(null);
+			inventoryTransactionEntity.setIsDeleted(null);
 			inventoryTransactionEntity.setFlowId(transactionFlowEntity.getId());
 			inventoryTransactionEntity.setTransactionId(transactionId);
 			inventoryTransactionEntity.setTransactionType(transactionType);
@@ -241,6 +271,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
 				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+		transactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(InventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
 	}
 
 	@Override

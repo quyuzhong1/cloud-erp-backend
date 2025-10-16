@@ -49,14 +49,22 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		return this.tryLock(Arrays.asList(key));
 	}
 	
+	public RedissonMultiLock tryLock(String key , long waitTime) {
+		return this.tryLock(Arrays.asList(key) , waitTime);
+	}
+	
 	public RedissonMultiLock tryLock(List<String> keys) {
+		return this.tryLock(keys, 30);
+	}
+	
+	public RedissonMultiLock tryLock(List<String> keys , long waitTime) {
 		List<RLock> rLocks = keys.stream()
                 .map(inventoryRedisson::getLock)
                 .collect(Collectors.toList());
 		RedissonMultiLock multiLock = new RedissonMultiLock(rLocks.toArray(new RLock[0]));
 		boolean locked = false;
     	try {
-			locked = multiLock.tryLock(30, TimeUnit.SECONDS);
+			locked = multiLock.tryLock(waitTime, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			log.error("库存重算获取锁失败" , e);
 			Thread.currentThread().interrupt();

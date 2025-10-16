@@ -53,7 +53,7 @@ public class InventoryTransactionJob {
         	String inventoryId = l.getInventoryId();
         	MDC.put("traceId", inventoryId);
 			try {
-				inventoryTransactionService.inventoryTransactionToInventoryHis(inventoryId, inventorySize);
+				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId, inventorySize , 30 , true);
 			} catch (Exception e) {
 				log.error("自动迁移redis库存失败：{}" , inventoryId);
 			}finally {
