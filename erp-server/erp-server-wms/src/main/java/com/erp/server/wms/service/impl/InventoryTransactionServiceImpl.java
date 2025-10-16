@@ -95,7 +95,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 						//1、补偿提交redis库存
 						String transactionId = inventoryTransactionEntity.getTransactionId();
 						if(commitRedis && transactionIdSet.add(transactionId)) {
-							this.commitRedis(inventoryTransactionEntity.getTransactionId());
+							this.commitRedis(inventoryTransactionEntity.getTransactionId() , false);
 						}
 						//2、更新历史库存
 						InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, InventoryTransactionDTO.class);
@@ -259,7 +259,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     }
     
 	@Override
-	public void commitRedis(String transactionId) {
+	public void commitRedis(String transactionId , boolean toDoHis) {
 		if(StringUtils.isBlank(transactionId)) {
 			log.error("提交redis库存事务transactionId不能为空");
 			throw new ServiceException("提交redis库存事务transactionId不能为空");
@@ -271,7 +271,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
 				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
-		transactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(InventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
+		if(toDoHis) {
+			transactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(InventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
+		}
 	}
 
 	@Override

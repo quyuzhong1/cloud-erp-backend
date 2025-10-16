@@ -22,7 +22,7 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 	public void afterCompletion(int status) {
 		InventoryTransactionService bean = ApplicationContextUtils.getBean(InventoryTransactionService.class);
 		if (status == STATUS_COMMITTED) {
-			bean.commitRedis(transactionId);
+			bean.commitRedis(transactionId , true);
 		}else {
 			bean.rollbackRedis(transactionId);
 		}

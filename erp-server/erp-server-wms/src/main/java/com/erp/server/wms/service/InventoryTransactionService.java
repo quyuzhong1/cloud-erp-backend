@@ -46,7 +46,7 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * 提交redis库存
      * @param transactionId
      */
-    void commitRedis(String transactionId);
+    void commitRedis(String transactionId , boolean toDoHis);
     
     /**
      * 回滚redis库存
