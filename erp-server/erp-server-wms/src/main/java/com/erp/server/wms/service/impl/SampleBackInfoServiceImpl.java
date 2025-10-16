@@ -1460,7 +1460,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         searchParam.setPermissionSql(dto.getPermissionSql());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 使用一个SQL查询获取所有状态的统计数量
-        List<SampleBackInfoDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+        List<SampleBackInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
 
         // 移动端特殊处理：合并待提交和不通过
         List<SampleBackInfoDTO.TabListDTO> appList = new ArrayList<>();

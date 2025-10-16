@@ -122,19 +122,39 @@ public class SsoServiceImpl implements SsoService {
                 // 7. 获取权限路径列表
                 String[] pathList = getPathList(appId);
                 
-                // 8. 生成JWT Token（带权限路径列表）
-                SysUserDTO userDTO = new SysUserDTO();
-                userDTO.setUid(userId);
-                FindUserDTO userByUserId = sysUserFeign.getUserByUserId(userId);
-                BeanUtils.copyProperties(userByUserId,userDTO);
-                //先生成一个token
+                // 8. 获取用户完整登录信息（包含权限和菜单）
+                SysUserDTO sysUserById = sysUserFeign.getSysUserById(userId);
+                SysUserDTO userDTO;
+                ApiResult<SysUserDTO> userLoginInfoResult = sysUserFeign.getUserLoginInfo(
+                    new SysFeignDTO.UserLoginInfoDTO(userId, sysUserById.getUserType())
+                );
+                
+                if (userLoginInfoResult != null && userLoginInfoResult.isSuccess() && userLoginInfoResult.getData() != null) {
+                    userDTO = userLoginInfoResult.getData();
+                } else {
+                    // 如果获取失败，使用基本用户信息
+                    userDTO = new SysUserDTO();
+                    userDTO.setUid(userId);
+                    FindUserDTO userByUserId = sysUserFeign.getUserByUserId(userId);
+                    BeanUtils.copyProperties(userByUserId, userDTO);
+                }
+                
+                // 9. 生成JWT Token（带权限路径列表）
                 String token = IdUtils.fastUUID();
                 userDTO.setToken(token);
                 authTokenService.refreshToken(userDTO, authJwtProperties.getExpire());
                 String jwtToken = JwtUtils.generateToken(userDTO, authJwtProperties.getSecret(), authJwtProperties.getExpire(), pathList);
                 
-                // 9. 返回成功响应，包含signSessionId
-                return SsoLoginResponseDTO.success(jwtToken, userId, appId, pathList, sessionId);
+                // 10. 返回成功响应，包含signSessionId、permissionList和leftMenuList
+                return SsoLoginResponseDTO.success(
+                    jwtToken, 
+                    userId, 
+                    appId, 
+                    pathList, 
+                    sessionId,
+                    userDTO.getPermissionList(),
+                    userDTO.getLeftMenuList()
+                );
                 
             } catch (ServiceException e) {
                 throw e;
