@@ -1,31 +1,32 @@
 package com.erp.server.fms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.fms.service.AssetAcceptService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.AssetAcceptDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.server.fms.handler.AssetAcceptQueryHandler;
+import com.erp.server.fms.service.AssetAcceptService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 资产验收表
@@ -101,6 +102,7 @@ public class AssetAcceptController extends BaseController {
             menuCode = "fms:assetAccept:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
     public ApiResult<PagingVO<AssetAcceptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetAcceptDTO.PagingParamDTO> dto) {
         return success(assetAcceptService.paging(dto));
     }
@@ -271,7 +273,6 @@ public class AssetAcceptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetAcceptEntity> list = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, ids).list();
 		Map<String, AssetAcceptEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetAcceptEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -309,7 +310,6 @@ public class AssetAcceptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetAcceptEntity> list = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, ids).list();
 		Map<String, AssetAcceptEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetAcceptEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -348,7 +348,6 @@ public class AssetAcceptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<AssetAcceptEntity> list = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, ids).list();
         Map<String, AssetAcceptEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetAcceptEntity::getId, w -> w));
         for (String id : dto.getIds()) {

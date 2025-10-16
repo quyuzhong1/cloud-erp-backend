@@ -43,6 +43,11 @@ public class AssetAcceptDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 类型名臣
+          */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;
@@ -192,6 +197,36 @@ public class AssetAcceptDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 验收人员中文名称（多个用逗号分隔）
+         */
+        private String acceptPersonNames;
+
+        /**
+         * 资产卡片关联状态名称
+         */
+        private String assetCardStatusName;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 验收数量
+         */
+        private Integer acceptQty;
+
+        /**
+         * 资产卡片关联状态
+         */
+        private String assetCardStatus;
     }
 
     /**
@@ -312,6 +347,15 @@ public class AssetAcceptDTO implements Serializable {
         */
         private String acceptDesc;
 
+        /**
+         * 验收人员列表
+         */
+        private List<AssetAcceptPersonDTO.ViewDTO> personList;
+
+        /**
+         * 验收明细列表
+         */
+        private List<AssetAcceptDetailDTO.ViewDTO> detailList;
 
     }
 
@@ -448,6 +492,25 @@ public class AssetAcceptDTO implements Serializable {
         @Size(max = 500,message = "验收说明最大长度不能超过500位")
         private String acceptDesc;
 
+        /**
+         * 验收人员列表
+         */
+        private List<AssetAcceptPersonDTO.AddDTO> personList;
+
+        /**
+         * 验收明细列表
+         */
+        private List<AssetAcceptDetailDTO.AddDTO> detailList;
+
+        /**
+         * 附件URL列表
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称列表
+         */
+        private List<String> attachmentNameList;
 
     }
 

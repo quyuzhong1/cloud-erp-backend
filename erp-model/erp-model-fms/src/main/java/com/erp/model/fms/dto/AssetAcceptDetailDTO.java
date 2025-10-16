@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import com.erp.model.fms.enums.AssetCardStatusEnum;
 
 /**
  * <p>
@@ -183,6 +184,14 @@ public class AssetAcceptDetailDTO implements Serializable {
         @NotBlank(message = "资产卡片关联状态（已生成、未生成）不能为空")
         @Size(max = 20,message = "资产卡片关联状态（已生成、未生成）最大长度不能超过20位")
         private String assetCardStatus;
+
+        /**
+         * 获取资产卡片关联状态枚举
+         * @return 枚举
+         */
+        public AssetCardStatusEnum getAssetCardStatusEnum() {
+            return AssetCardStatusEnum.getByStatus(this.assetCardStatus);
+        }
 
         /**
         * 待验收数量
