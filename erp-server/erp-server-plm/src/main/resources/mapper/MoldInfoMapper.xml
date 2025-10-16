@@ -132,17 +132,17 @@ mi.payment_condition AS paymentCondition
         GROUP BY approve_status
     </select>
 
-    <select id="searchMold" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListApproveDTO">
+    <select id="searchMold" resultType="com.erp.model.plm.dto.MoldInfoDTO$SearchMoldDTO">
         select
             id,code,name
         from mold_info
         where
             is_deleted = false
         and invalid_status = false
-        <if test=" approveStatus != null and approveStatus != ''">
+        <if test="params.approveStatus != null and params.approveStatus != ''">
             AND approve_status =#{approveStatus}
         </if>
-        <if test="searchKeyword != null and searchKeyword!=''">
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND
             (
             code ILIKE concat('%',#{searchKeyword}::text,'%')

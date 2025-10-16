@@ -3,11 +3,9 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
-import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +20,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.plm.service.MoldInfoService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -458,15 +455,15 @@ public class MoldInfoController extends BaseController {
     }
 
     /**
-     * 模糊搜索 （已审核 未作废）
+     * 模糊搜索 （未作废）
      * @author jack
      * @date: 2025-10-16
-     * @param searchKeyword
+     * @param searchDTO
      * @return ApiResult<List<MoldInfoDTO.ListApproveDTO>>
      */
-    @GetMapping("/searchMold")
-    public ApiResult<List<MoldInfoDTO.ListApproveDTO>> searchMold(@RequestParam("searchKeyword") String searchKeyword) {
-        return success(moldInfoService.searchMold(searchKeyword));
+    @PostMapping("/searchMold")
+    public ApiResult<List<MoldInfoDTO.SearchMoldDTO>> searchMold(@RequestBody MoldInfoDTO.SearchDTO searchDTO) {
+        return success(moldInfoService.searchMold(searchDTO));
     }
 
 }
