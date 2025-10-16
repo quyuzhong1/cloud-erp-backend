@@ -592,7 +592,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
         			errorFlag = true;
         		}
-                if(!shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId())) {
+                if(!shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId()) && !"ALL".equals(customerInfoEntity.getCountryId())) {
                     errorFlag = true;
                 }
         		if(errorFlag) {

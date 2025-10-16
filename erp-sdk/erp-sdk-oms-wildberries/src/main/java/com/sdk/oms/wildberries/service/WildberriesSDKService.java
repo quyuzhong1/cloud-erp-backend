@@ -122,6 +122,18 @@ public class WildberriesSDKService {
         return bodyStr;
     }
 
+    public String getTagList(String token) {
+        log.error("接口请求：{}", JSONUtil.toJsonStr(token));
+        String url = WildberriesConstant.GET_LIST_TAG;
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", token);
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("locale", "zh");
+        Map<String, Object> paramMap = new HashMap<>();
+        String bodyStr = OkHttpUtils.doGet(url, paramMap, headerMap);
+        log.error("接口返回：{}", bodyStr);
+        return bodyStr;
+    }
     public OrderResponse getOrderNewList(String token, OrderRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
         String url = WildberriesConstant.GET_ORDERS_NEW;

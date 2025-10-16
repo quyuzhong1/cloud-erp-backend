@@ -1,6 +1,5 @@
 package com.sdk.oms.wildberries.dto;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -18,6 +17,7 @@ import java.util.List;
 public class OrderStatusResponse extends BaseResponse{
     private List<OrderStatus> orders;
 
+    @Data
     public static class OrderStatus{
         private Long id;
         private String supplierStatus;

@@ -50,17 +50,13 @@ public class WildberriesSDKServiceTest {
     public void getProductCharacteristic() {
         String response = wildberriesSDKService.getProductCharacteristic(WildberriesConstant.TOKEN, 397);
 //        {"data":[{"charcID":15000019,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Электронная версия","required":false,"unitName":"","maxCount":0,"popular":false,"charcType":1},{"charcID":15001137,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Дата регистрации сертификата/декларации","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":15001650,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"ИКПУ","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":88952,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Вес товара с упаковкой (г)","required":false,"unitName":"г","maxCount":0,"popular":false,"charcType":4},{"charcID":90673,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Ширина предмета","required":false,"unitName":"см","maxCount":0,"popular":false,"charcType":4},{"charcID":189099,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Год выпуска","required":false,"unitName":"","maxCount":3,"popular":false,"charcType":1},{"charcID":378533,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Комплектация","required":false,"unitName":"","maxCount":12,"popular":false,"charcType":1},{"charcID":14177453,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"SKU","required":false,"unitName":"","maxCount":0,"popular":false,"charcType":1},{"charcID":18269,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Вид бумаги","required":false,"unitName":"","maxCount":3,"popular":false,"charcType":1},{"charcID":239573,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"ISBN","required":false,"unitName":"","maxCount":3,"popular":false,"charcType":1},{"charcID":90630,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Высота предмета","required":false,"unitName":"см","maxCount":0,"popular":false,"charcType":4},{"charcID":14177451,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Страна производства","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":15001135,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Номер декларации соответствия","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":15001405,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Ставка НДС","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":15001706,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Код упаковки","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":19717,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Возрастные ограничения","required":false,"unitName":"","maxCount":3,"popular":false,"charcType":1},{"charcID":62431,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Жанры/тематика","required":false,"unitName":"","maxCount":3,"popular":false,"charcType":1},{"charcID":90702,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Количество предметов в упаковке (шт.)","required":false,"unitName":"шт.","maxCount":0,"popular":false,"charcType":4},{"charcID":15001136,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Номер сертификата соответствия","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1},{"charcID":15001138,"subjectName":"Журналы","subjectID":397,"parentName":"","name":"Дата окончания действия сертификата/декларации","required":false,"unitName":"","maxCount":1,"popular":false,"charcType":1}],"error":false,"errorText":"","additionalErrors":null}
-
     }
 
     @Test
     public void createProduct() {
 //        CreateProductRequest request = CreateProductRequest.builder().build();
 //        List<CreateProductRequest> requestList = Collections.singletonList(request);
-        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
-//        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
-//        String requestStr = "[{\"subjectID\":397,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":15000019,\"value\":[\"Электронная версия\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L096\"]}]}]}]";
-//        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"88005553535\"]}]}]}]";
+        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L01\"]}]}]}]";
         List<CreateProductRequest> requestList = JSONUtil.toList(requestStr, CreateProductRequest.class);
         String response = wildberriesSDKService.createProduct(WildberriesConstant.TOKEN, requestList);
 
@@ -71,15 +67,12 @@ public class WildberriesSDKServiceTest {
         SkuRequest skuRequest = SkuRequest.builder()
                 .settings(SkuRequest.Setting.builder()
                         .cursor(SkuRequest.Cursor.builder().limit(100).build())
-                        .filter(SkuRequest.Filter.builder().withPhoto(1).build())
+                        .filter(SkuRequest.Filter.builder().withPhoto(-1).build())
                         .sort(SkuRequest.Sort.builder().ascending(Boolean.FALSE).build())
                         .build())
                 .build();
         System.out.println(JSONUtil.toJsonStr(skuRequest));
-        SkuResponse response = wildberriesSDKService.getSkuList(WildberriesConstant.TOKEN, skuRequest);
-        System.out.println(response);
-        System.out.println(response.isSuccess());
-        System.out.println(response.getMsg());
+        wildberriesSDKService.getSkuList(WildberriesConstant.TOKEN, skuRequest);
     }
 
     @Test
@@ -93,42 +86,43 @@ public class WildberriesSDKServiceTest {
         System.out.println(response);
     }
     @Test
+    public void getTagList() {
+        String response = wildberriesSDKService.getTagList(WildberriesConstant.TOKEN);
+//        System.out.println(response);
+    }
+
+    @Test
     public void getOrderList() {
         Calendar specifiedTime = Calendar.getInstance();
-        specifiedTime.set(2025, Calendar.SEPTEMBER, 01, 0, 0, 0);
+        specifiedTime.set(2025, Calendar.OCTOBER, 01, 0, 0, 0);
         long dateFrom = specifiedTime.getTimeInMillis() / 1000;
-        System.out.println("dateFrom："+ dateFrom);
+        System.out.println("dateFrom："+ dateFrom);//1759248000
 
-        specifiedTime.set(2025, Calendar.SEPTEMBER, 25, 0, 0, 0);
+        specifiedTime.set(2025, Calendar.OCTOBER, 31, 0, 0, 0);
         long dateTo = specifiedTime.getTimeInMillis() / 1000;
+        System.out.println("dateTo："+ dateTo);//1761840000
 
-        OrderRequest orderRequest = OrderRequest.builder().limit(100).next(0L).dateFrom(dateFrom).dateTo(dateTo).build();
+        OrderRequest orderRequest = OrderRequest.builder().limit(100).next(4017309858L).dateFrom(dateFrom).dateTo(dateTo).build();
         System.out.println(JSONUtil.toJsonStr(orderRequest));
-        OrderResponse response = wildberriesSDKService.getOrderList(WildberriesConstant.TOKEN, orderRequest);
-        System.out.println(response);
-        System.out.println(response.isSuccess());
-        System.out.println(response.getMsg());
+        wildberriesSDKService.getOrderList(WildberriesConstant.TOKEN, orderRequest);
     }
     @Test
     public void getOrderNewList() {
         Calendar specifiedTime = Calendar.getInstance();
-        specifiedTime.set(2025, Calendar.SEPTEMBER, 01, 0, 0, 0);
+        specifiedTime.set(2025, Calendar.NOVEMBER, 01, 0, 0, 0);
         long dateFrom = specifiedTime.getTimeInMillis() / 1000;
         System.out.println("dateFrom："+ dateFrom);
 
-        specifiedTime.set(2025, Calendar.SEPTEMBER, 25, 0, 0, 0);
+        specifiedTime.set(2025, Calendar.NOVEMBER, 25, 0, 0, 0);
         long dateTo = specifiedTime.getTimeInMillis() / 1000;
 
         OrderRequest orderRequest = OrderRequest.builder().limit(100).next(0L).dateFrom(dateFrom).dateTo(dateTo).build();
         System.out.println(JSONUtil.toJsonStr(orderRequest));
-        OrderResponse response = wildberriesSDKService.getOrderNewList(WildberriesConstant.TOKEN, orderRequest);
-        System.out.println(response);
-        System.out.println(response.isSuccess());
-        System.out.println(response.getMsg());
+        wildberriesSDKService.getOrderNewList(WildberriesConstant.TOKEN, orderRequest);
     }
     @Test
     public void getOrderStatus() {
-        OrderStatusRequest request = OrderStatusRequest.builder().orders(Arrays.asList(3893097985L,3876478927L,3916460244L)).build();
+        OrderStatusRequest request = OrderStatusRequest.builder().orders(Arrays.asList(8224L)).build();
         OrderStatusResponse orderStatus = wildberriesSDKService.getOrderStatus(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(orderStatus));
     }
@@ -137,7 +131,7 @@ public class WildberriesSDKServiceTest {
         List<CreateOrderRequest.Order> orders = new ArrayList<>();
         CreateOrderRequest.Order order = CreateOrderRequest.Order.builder().build();
         order.setAmount(1);
-        order.setSku("L096");
+        order.setSku("2850");
         orders.add(order);
         CreateOrderRequest request = CreateOrderRequest.builder().orders(orders).build();
         String supply = wildberriesSDKService.createOrder(WildberriesConstant.TOKEN, request);
@@ -231,14 +225,14 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void updateInventory() {
-        UpdateInventoryRequest request = UpdateInventoryRequest.builder().stocks(Collections.singletonList(UpdateInventoryRequest.Stock.builder().sku("L096").amount(1000).build())).build();
+        UpdateInventoryRequest request = UpdateInventoryRequest.builder().stocks(Collections.singletonList(UpdateInventoryRequest.Stock.builder().sku("88005553535").amount(1000).build())).build();
         String warehouse = wildberriesSDKService.updateInventory(WildberriesConstant.TOKEN, "8173", request);
         System.out.println(JSONUtil.toJsonStr(warehouse));
         //{"id":8173}
     }
     @Test
     public void getInventory() {
-        GetInventoryRequest request = GetInventoryRequest.builder().skus(Collections.singletonList("L096")).build();
+        GetInventoryRequest request = GetInventoryRequest.builder().skus(Collections.singletonList("88005553535")).build();
         String warehouse = wildberriesSDKService.getInventory(WildberriesConstant.TOKEN, "8173", request);
         System.out.println(JSONUtil.toJsonStr(warehouse));
         //{"id":8173}

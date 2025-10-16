@@ -4,21 +4,16 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.wildberries.dto.GeoResponse;
-import com.sdk.oms.wildberries.dto.WildberriesResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -47,7 +42,8 @@ public class GeoService {
             String query = String.format("q=%s,%s",
                     URLEncoder.encode(String.valueOf(latitude), "UTF-8"),
                     URLEncoder.encode(String.valueOf(longitude), "UTF-8"));
-            String requestUrl = BASE_URL + "?" + query + "&key=" + API_KEY + "&language=zh&pretty=1";
+            String requestUrl = BASE_URL + "?" + query + "&key=" + API_KEY + "&language=ru&pretty=1";
+            System.out.println("requestUrl:" + requestUrl);
             // 发送HTTP请求
             URL url = new URL(requestUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
