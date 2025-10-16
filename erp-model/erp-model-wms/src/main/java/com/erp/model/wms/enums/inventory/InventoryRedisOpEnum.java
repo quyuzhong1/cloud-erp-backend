@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -93,7 +94,7 @@ public enum InventoryRedisOpEnum implements EnumMessage {
         	        	defaultRedisScript.setResultType(String.class);
 						File file = null;
 						try {
-							file = new ClassPathResource("lua/" + v.luaScript).getFile();
+							file = ApplicationContextUtils.getApplicationContext().getResource("classpath:lua/" + v.luaScript).getFile();
 						} catch (IOException e) {
 							throw new RuntimeException("获取lua脚本文件失败" + v.luaScript, e);
 						}
