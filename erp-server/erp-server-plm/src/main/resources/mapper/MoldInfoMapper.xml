@@ -138,7 +138,7 @@ mi.payment_condition AS paymentCondition
         from mold_info
         where
             is_deleted = false
-        and disabled = false
+        and invalid_status = false
         <if test=" approveStatus != null and approveStatus != ''">
             AND approve_status =#{approveStatus}
         </if>

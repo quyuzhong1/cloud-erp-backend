@@ -22,4 +22,7 @@ public interface ImportPlmFeign {
     @PostMapping("/feign/import/importMoldRefSku")
     void importMoldRefSku(@RequestBody BaseDTO.ImportTypeDTO dto);
 
+    @PostMapping("/feign/import/importCfgMoldReturn")
+    void importCfgMoldReturn(@RequestBody BaseDTO.ImportTypeDTO dto);
+
 }

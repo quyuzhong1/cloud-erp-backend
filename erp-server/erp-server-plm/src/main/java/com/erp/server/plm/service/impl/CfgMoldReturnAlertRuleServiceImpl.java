@@ -4,19 +4,29 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DisabledEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertDetailDTO;
+import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertDetailEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.CfgMoldReturnExcelListener;
 import com.erp.server.plm.service.*;
 import com.common.business.annotation.DistributeLocker;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
@@ -24,18 +34,25 @@ import com.erp.server.plm.mapper.CfgMoldReturnAlertRuleMapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_CFG_MOLD_RETURN;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -56,6 +73,10 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     private MoldInfoService moldInfoService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -323,7 +344,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         if (Objects.equals(DisabledEnum.DISABLED.getCode(), entity.getDisabled())) {
             throw new ServiceException(ApiError.ERROR_DISABLE_FAIL);
         }
-        CfgMoldReturnAlertRuleService bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleService.class);
+        CfgMoldReturnAlertRuleServiceImpl bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleServiceImpl.class);
         bean.changeDisable(entity);
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
     }
@@ -336,7 +357,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         if (Objects.equals(DisabledEnum.ENABLE.getCode(), entity.getDisabled())) {
             throw new ServiceException(ApiError.ERROR_ENABLE_FAIL);
         }
-        CfgMoldReturnAlertRuleService bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleService.class);
+        CfgMoldReturnAlertRuleServiceImpl bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleServiceImpl.class);
         bean.changeDisable(entity);
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
     }
@@ -367,6 +388,143 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入模具返还策略", IMPORT_PLM_CFG_MOLD_RETURN.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importCfgMoldReturn(BaseDTO.ImportDTO dto) {
+        //已审核且未作废的模具关联SKU
+        List<MoldInfoEntity> moldInfoEntities = moldInfoService.lambdaQuery()
+                .eq(MoldInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(MoldInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .eq(MoldInfoEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        Map<String, MoldInfoEntity> moldInfoMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (o1, o2) -> o1));
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        CfgMoldReturnExcelListener excelListenerUtil = new CfgMoldReturnExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldInfoMap);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), CfgMoldReturnImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<CfgMoldReturnImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            //排序
+            List<CfgMoldReturnImportExcelDTO> sortedErrorList = errorList.stream()
+                    .sorted(Comparator.comparing(CfgMoldReturnImportExcelDTO::getMoldCode))
+                    .collect(Collectors.toList());
+            String fileName = "模具返还策略错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, CfgMoldReturnImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+
+    }
+
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<CfgMoldReturnImportExcelDTO> successList, List<CfgMoldReturnImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        CfgMoldReturnAlertRuleServiceImpl bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleServiceImpl.class);
+
+        //判断detailList中returnQtyLimit字段是否存在值相同的数据
+        Set<Integer> returnQtyLimitSet = new HashSet<>();
+        //
+        List<String> moldIdList = successList.stream().map(CfgMoldReturnImportExcelDTO::getMoldId).distinct().collect(Collectors.toList());
+        List<CfgMoldReturnAlertRuleEntity> oldList = bean.lambdaQuery()
+                .in(CfgMoldReturnAlertRuleEntity::getMoldId, moldIdList)
+                .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+
+        Map<String, CfgMoldReturnAlertRuleEntity> oldMap = oldList.stream().collect(Collectors.toMap(CfgMoldReturnAlertRuleEntity::getMoldId, Function.identity(), (o1, o2) -> o1));
+
+//        List<CfgMoldReturnAlertDetailEntity> oldDetaiList = cfgMoldReturnAlertDetailService.lambdaQuery().in(CfgMoldReturnAlertDetailEntity::getMainId, moldIdList).list();
+//        Map<String, List<CfgMoldReturnAlertDetailEntity>> oldDetaiMap = oldDetaiList.stream().collect(Collectors.groupingBy(CfgMoldReturnAlertDetailEntity::getMainId));
+
+        List<String> errorMsgList = new ArrayList<>();
+        errorMsgList.add("模具策略已存在");
+        String errorMsg1 = FieldValidUtil.getMsgSort(errorMsgList);
+
+        errorMsgList.clear();
+        errorMsgList.add("返还数量上限不能存在相同的数据");
+        String errorMsg2 = FieldValidUtil.getMsgSort(errorMsgList);
+
+        //按模具分组
+        Map<String, List<CfgMoldReturnImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(CfgMoldReturnImportExcelDTO::getMoldId));
+        for (Map.Entry<String, List<CfgMoldReturnImportExcelDTO>> entry : collect.entrySet()) {
+            String moldId = entry.getKey();
+            List<CfgMoldReturnImportExcelDTO> value = entry.getValue();
+            CfgMoldReturnImportExcelDTO importMainDTO = value.get(0);
+            //备注
+            String remark = value.stream().filter(e -> StringUtils.isNotBlank(e.getMainRemark())).map(CfgMoldReturnImportExcelDTO::getMainRemark).findFirst().orElse("");
+
+            CfgMoldReturnAlertRuleEntity old = oldMap.getOrDefault(moldId, null);
+            if(Objects.nonNull(old)){
+                value.forEach(e -> {
+                    e.setErrorMsg(errorMsg1);
+                    errorList2.add(e);
+                });
+                errorList2.addAll(value);
+            }else {
+                // 新增
+                List<CfgMoldReturnAlertDetailDTO.AddDTO> detailList = new ArrayList<>();
+
+                for (CfgMoldReturnImportExcelDTO detail : value) {
+                    if (!returnQtyLimitSet.add(detail.getReturnQtyLimit())) {
+                        detail.setErrorMsg(errorMsg2);
+                        errorList2.add(detail);
+                    }else {
+                        CfgMoldReturnAlertDetailDTO.AddDTO detailDto = new CfgMoldReturnAlertDetailDTO.AddDTO();
+                        BeanMapper.copy(detail, detailDto);
+                        detailList.add(detailDto);
+                    }
+                }
+
+                if(CollUtil.isNotEmpty(detailList)){
+                    CfgMoldReturnAlertRuleDTO.AddDTO addDTO = new CfgMoldReturnAlertRuleDTO.AddDTO();
+                    BeanMapper.copy(importMainDTO, addDTO);
+                    addDTO.setRemark(remark);
+
+                    addDTO.setDetailList(detailList);
+                    bean.add(addDTO);
+                }
+                //清除set
+                returnQtyLimitSet.clear();
+            }
+        }
     }
 }
