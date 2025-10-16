@@ -58,4 +58,6 @@ public interface ExportPlmFeign {
     PagingVO<MoldInfoDTO.ListDTO> exportMoldInfo(@RequestBody @Validated PagingDTO<MoldInfoDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportMoldRefSku")
     PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportCfgMoldReturn")
+    PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto);
 }

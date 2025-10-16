@@ -731,5 +731,21 @@ public class MoldInfoDTO implements Serializable {
         private Integer qty;
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListApproveDTO{
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        private String  code;
+
+        private String  name;
+    }
+
 
 }

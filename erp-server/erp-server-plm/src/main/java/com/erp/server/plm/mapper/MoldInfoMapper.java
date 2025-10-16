@@ -52,4 +52,6 @@ public interface MoldInfoMapper extends BaseMapper<MoldInfoEntity> {
     * @return
     */
     List<MoldInfoDTO.TabListDTO> tabList(@Param("params") MoldInfoDTO.PagingParamDTO searchParam);
+
+    List<MoldInfoDTO.ListApproveDTO> searchMold(@Param("searchKeyword")String searchKeyword, @Param("approveStatus") String approveStatus);
 }

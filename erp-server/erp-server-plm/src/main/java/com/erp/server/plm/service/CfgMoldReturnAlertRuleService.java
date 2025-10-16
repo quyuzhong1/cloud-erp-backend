@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.List;
@@ -53,4 +54,8 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
     BatchResultDTO enable(String id);
 
     BatchResultDTO changeDisable(CfgMoldReturnAlertRuleEntity entity);
+
+    void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
 }

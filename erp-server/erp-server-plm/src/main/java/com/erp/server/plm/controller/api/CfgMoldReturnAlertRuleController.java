@@ -5,12 +5,16 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogViewService;
-import com.erp.model.plm.dto.MoldInfoDTO;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.server.plm.query.CfgMoldReturnAlertRuleQueryHandler;
+import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -307,5 +311,57 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
             }
         }
         return result.getSuccess()? success(result) : failure(result);
+    }
+
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-10-16
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:moldInfo:export",
+            tableAlias = "mi"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还策略导出Excel数据")
+    @WebAdvanceQuery(handler = CfgMoldReturnAlertRuleQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated CfgMoldReturnAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response) {
+        cfgMoldReturnAlertRuleService.exportList(dto, response);
+        return success();
+    }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-10-16
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还策略下载模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/cfgMoldReturnTemplate.xlsx";
+        String standardExcelName = "cfgMoldReturnTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
+    /**
+     *  导入
+     * @author jack
+     * @date:  2025-10-16
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入模具返还策略")
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = cfgMoldReturnAlertRuleService.importFile(dto);
+        return result ? success() : failure();
     }
 }

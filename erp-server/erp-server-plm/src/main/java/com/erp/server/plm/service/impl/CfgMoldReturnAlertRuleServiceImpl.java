@@ -6,48 +6,36 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertDetailDTO;
-import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertDetailEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
-import com.erp.model.plm.entity.MoldRefSkuEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SampleBorrowDetailDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.server.plm.mapper.CfgMoldReturnAlertRuleMapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_CFG_MOLD_RETURN;
 
 /**
  * <p>
@@ -66,6 +54,8 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     private CfgMoldReturnAlertDetailService cfgMoldReturnAlertDetailService;
     @Resource
     private MoldInfoService moldInfoService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -83,7 +73,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】模具编号为【{}】的返还策略", UserContext.getDefaultLoginUser().getUserName(), "模具返还策略", cfgMoldReturnAlertRuleEntity.getMoldCode());
+        String msg = StrUtil.format("新增了一个模具返还策略【{}】",cfgMoldReturnAlertRuleEntity.getMoldCode());
         operateLogService.addSysLogBySave(msg, "", cfgMoldReturnAlertRuleEntity.getId(), "");
 
         // 新增明细
@@ -249,6 +239,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         for (CfgMoldReturnAlertRuleDTO.ListDTO data : list) {
             data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
         }
     }
 
@@ -269,6 +260,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
 
         data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
 
         List<CfgMoldReturnAlertDetailEntity> list = cfgMoldReturnAlertDetailService.lambdaQuery()
                 .eq(CfgMoldReturnAlertDetailEntity::getMainId, data.getId())
@@ -363,8 +355,18 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .update();
         // 禁用 日志数据
         log.info("启用/禁用  开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】模具编码为【{}】的【{}】单据{}操作", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具返还策略", entity.getDisabled() ? "启用" : "禁用");
+        String msg = StrUtil.format("{}了一个模具返还策略【{}】",entity.getDisabled() ? "启用" : "禁用", entity.getMoldCode());
         operateLogService.addSysLogBySave(msg, "", id, "");
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
+    }
+
+    @Override
+    public void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("模具返还策略导出", EXPORT_PLM_CFG_MOLD_RETURN.getCode(), param);
+    }
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        return null;
     }
 }

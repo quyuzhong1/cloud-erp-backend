@@ -419,7 +419,7 @@ public class MoldInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具档案下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/moldInfoTemplate.xlsx";
+        String standardPath = "classpath:excel/moldTemplate.xlsx";
         String standardExcelName = "moldInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
@@ -457,5 +457,16 @@ public class MoldInfoController extends BaseController {
         return result ? success(dto) : failure(dto);
     }
 
+    /**
+     * 模糊搜索 （已审核 未作废）
+     * @author jack
+     * @date: 2025-10-16
+     * @param searchKeyword
+     * @return ApiResult<List<MoldInfoDTO.ListApproveDTO>>
+     */
+    @GetMapping("/searchMold")
+    public ApiResult<List<MoldInfoDTO.ListApproveDTO>> searchMold(@RequestParam("searchKeyword") String searchKeyword) {
+        return success(moldInfoService.searchMold(searchKeyword));
+    }
 
 }

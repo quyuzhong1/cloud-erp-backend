@@ -132,4 +132,29 @@ mi.payment_condition AS paymentCondition
         GROUP BY approve_status
     </select>
 
+    <select id="searchMold" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListApproveDTO">
+        select
+            id,code,name
+        from mold_info
+        where
+            is_deleted = false
+        and disabled = false
+        <if test=" approveStatus != null and approveStatus != ''">
+            AND approve_status =#{approveStatus}
+        </if>
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            code ILIKE concat('%',#{searchKeyword}::text,'%')
+            OR
+            name ILIKE concat('%',#{searchKeyword}::text,'%')
+            )
+            ORDER BY
+            case when code ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            when code ILIKE concat('%',#{searchKeyword}::text) THEN 2
+            when code ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            end , code
+        </if>
+    </select>
+
 </mapper>
