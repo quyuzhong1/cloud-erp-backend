@@ -898,9 +898,6 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         for (Map.Entry<String, List<CfgProcessFieldMapEntity>> entry : readListMap.entrySet()) {
             String feishuWidgetId = entry.getKey();
             List<CfgProcessFieldMapEntity> relevantFieldMaps = entry.getValue();
-
-            Object feishuOriginalValue = feishuIdValueMap.get(feishuWidgetId);
-
             //如果key值是默认值则需要循环所有的映射
             if ("default".equals(feishuWidgetId)) {
                 for (CfgProcessFieldMapEntity fieldMap : relevantFieldMaps) {
@@ -921,19 +918,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 }
                 continue;
             }
-
-            // 我们通过检查 relevantFieldMaps 中第一个实体的 isDetailField 和 sysParentId 来判断
-            boolean isDetailListParent = relevantFieldMaps.get(0).getIsDetailField() &&
-                    CharSequenceUtil.isNotBlank(relevantFieldMaps.get(0).getSysParentId());
-
-            if (feishuOriginalValue instanceof List && isDetailListParent) {
-                // 如果是明细列表，调用专门处理明细列表的方法
-                // 注意：这里feishuOriginalValue是List，且其内部的Map的key是飞书的子控件ID
-                processDetailListFeishuToSys(finalResultMap, (List<Map<String, Object>>) feishuOriginalValue, relevantFieldMaps, valueMapsByFieldMapId);
-            } else {
-                // 如果是普通字段（非明细列表），调用处理单个字段的方法
-                processSingleField(finalResultMap, feishuOriginalValue, relevantFieldMaps, valueMapsByFieldMapId);
-            }
+            Object feiShuOriginalValue = feishuIdValueMap.get(feishuWidgetId);
+            //非默认配置处理
+            processDetailListFeiShuToSys(finalResultMap, feiShuOriginalValue, relevantFieldMaps, valueMapsByFieldMapId);
         }
         return finalResultMap;
     }
@@ -1090,52 +1077,60 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * 处理明细列表类型的数据，将飞书明细行转换为系统明细行。
      *
      * @param finalResultMap      最终结果 Map。
-     * @param feishuDetailRows    飞书明细行数据（List<Map<String, Object>>，子Map的key是飞书子控件ID）。
+     * @param feiShuOriginalValue    飞书明细行数据（List<Map<String, Object>>，子Map的key是飞书子控件ID）。
      * @param detailFieldMaps     针对该明细列表的所有子字段的映射配置。
      * @param valueMapsByFieldMapId 值映射配置。
      */
-    private void processDetailListFeishuToSys(Map<String, Object> finalResultMap,
-                                              List<Map<String, Object>> feishuDetailRows,
+    private void processDetailListFeiShuToSys(Map<String, Object> finalResultMap,
+                                              Object feiShuOriginalValue,
                                               List<CfgProcessFieldMapEntity> detailFieldMaps,
                                               Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
-        if (feishuDetailRows == null || feishuDetailRows.isEmpty()) {
+        //1、feiShuOriginalValue为空时
+        if (ObjUtil.isEmpty(feiShuOriginalValue)) {
+
             return;
         }
+        // 我们通过检查 relevantFieldMaps 中第一个实体的 isDetailField 和 sysParentId 来判断
+        boolean isDetailListParent = detailFieldMaps.get(0).getIsDetailField() &&
+                CharSequenceUtil.isNotBlank(detailFieldMaps.get(0).getSysParentId());
 
-        // 将明细字段配置按其第三方ID（子控件ID）分组，便于在行内查找
-        // 这里的 key 是 thirdFieldId，也就是飞书明细行中子控件的 ID
-        Map<String, List<CfgProcessFieldMapEntity>> detailConfigsBySubWidgetId = detailFieldMaps.stream()
-                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
+        //2、当本次处理类型为集合时
+        if (feiShuOriginalValue instanceof List && isDetailListParent) {
+            List<Map<String, Object>> feiShuOriginalValueList = (List<Map<String, Object>>)feiShuOriginalValue;
+            // 这里的 key 是 thirdFieldId，也就是飞书明细行中子控件的 ID
+            Map<String, List<CfgProcessFieldMapEntity>> detailConfigsBySubWidgetId = detailFieldMaps.stream()
+                    .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
 
-        List<Map<String, Object>> mappedRows = new ArrayList<>();
+            List<Map<String, Object>> mappedRows = new ArrayList<>();
 
-        for (Map<String, Object> feishuRow : feishuDetailRows) { // 遍历飞书的每一行明细数据
-            Map<String, Object> mappedRow = new HashMap<>(); // 转换后的一行系统明细数据
+            for (Map<String, Object> feishuRow : feiShuOriginalValueList) { // 遍历飞书的每一行明细数据
+                Map<String, Object> mappedRow = new HashMap<>(); // 转换后的一行系统明细数据
 
-            for (Map.Entry<String, Object> feishuCell : feishuRow.entrySet()) {
-                String feishuSubWidgetId = feishuCell.getKey(); // 明细行中飞书子控件的 ID
-                Object feishuCellValue = feishuCell.getValue(); // 明细行中飞书子控件的值
+                for (Map.Entry<String, Object> feishuCell : feishuRow.entrySet()) {
+                    String feishuSubWidgetId = feishuCell.getKey(); // 明细行中飞书子控件的 ID
+                    Object feishuCellValue = feishuCell.getValue(); // 明细行中飞书子控件的值
 
-                // 找到子控件的字段映射配置
-                List<CfgProcessFieldMapEntity> cellFieldMaps = detailConfigsBySubWidgetId.get(feishuSubWidgetId);
-                if (cellFieldMaps != null && !cellFieldMaps.isEmpty()) {
-                    // 递归调用 processSingleField 处理明细行中的每个子字段
-                    // 目标 Map 是 mappedRow
-                    processSingleField(mappedRow, feishuCellValue, cellFieldMaps, valueMapsByFieldMapId);
+                    // 找到子控件的字段映射配置
+                    List<CfgProcessFieldMapEntity> cellFieldMaps = detailConfigsBySubWidgetId.get(feishuSubWidgetId);
+                    if (cellFieldMaps != null && !cellFieldMaps.isEmpty()) {
+                        // 递归调用 processSingleField 处理明细行中的每个子字段
+                        // 目标 Map 是 mappedRow
+                        processSingleField(mappedRow, feishuCellValue, cellFieldMaps, valueMapsByFieldMapId);
+                    }
+                }
+                if (!mappedRow.isEmpty()) {
+                    mappedRows.add(mappedRow);
                 }
             }
-            if (!mappedRow.isEmpty()) {
-                mappedRows.add(mappedRow);
-            }
-        }
-
-        // 明细列表在目标系统的字段名 (sysParentId)
-        if (!mappedRows.isEmpty() && !detailFieldMaps.isEmpty()) {
-            String sysParentId = detailFieldMaps.get(0).getSysParentId();
-            if (CharSequenceUtil.isNotBlank(sysParentId)) {
+            // 明细列表在目标系统的字段名 (sysParentId)
+            if (!mappedRows.isEmpty()) {
+                String sysParentId = detailFieldMaps.get(0).getSysParentId();
                 finalResultMap.put(sysParentId, mappedRows);
             }
+            return;
         }
+        //3、当feiShuOriginalValue为单个对象时
+        processSingleField(finalResultMap, feiShuOriginalValue, detailFieldMaps, valueMapsByFieldMapId);
     }
 
     public static LocalDateTime convertRFC3339ToLocalDateTime(String rfc3339Date) {

@@ -141,10 +141,22 @@ public class ApproveTaskDetailDTO implements Serializable {
         private String id;
 
         /**
+         * 数大臣字段编码
+         */
+        @NotBlank(message = "数大臣字段编码不能为空")
+        private String sysField;
+
+        /**
          * 数大臣字段值
          */
         @NotBlank(message = "数大臣字段值不能为空")
         private String sysFieldValue;
+
+        /**
+         * 数大臣所属表编码
+         */
+        @NotBlank(message = "数大臣所属表编码不能为空")
+        private String sysParentId;
 
     }
 
