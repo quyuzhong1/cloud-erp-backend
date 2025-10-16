@@ -1,7 +1,9 @@
 package com.erp.model.wms.enums.inventory;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.EnumMap;
 import java.util.stream.Stream;
 
@@ -10,7 +12,6 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.BusinessCommonConstants;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -92,13 +93,19 @@ public enum InventoryRedisOpEnum implements EnumMessage {
         	    	for(InventoryRedisOpEnum v : values) {
         	    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
         	        	defaultRedisScript.setResultType(String.class);
-						File file = null;
+        	        	StringBuilder sb = new StringBuilder();
 						try {
-							file = ApplicationContextUtils.getApplicationContext().getResource("classpath:lua/" + v.luaScript).getFile();
-						} catch (IOException e) {
+							InputStream inputStream = new ClassPathResource("lua/" + v.luaScript).getInputStream();
+							BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+							String line;
+				            while ((line = reader.readLine()) != null) {
+				            	sb.append(line);
+				            	sb.append("\n");
+				            }
+						} catch (Exception e) {
 							throw new RuntimeException("获取lua脚本文件失败" + v.luaScript, e);
 						}
-						defaultRedisScript.setScriptText(FileUtil.readUtf8String(file));
+						defaultRedisScript.setScriptText(sb.toString());
         	        	opRedisScript.put(v, defaultRedisScript);
         	    	}
     			}
