@@ -1121,7 +1121,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 谷仓有入库流水忽略时间校验
         if (Objects.nonNull(mainEntity.getReceiveTime())
                 && dto.getDownloadTime().isBefore(mainEntity.getReceiveTime())
-                && !PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())) {
+                && !PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())
+                && !PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())) {
             return ApiResult.success();
         }
         //更新入库状态
@@ -1181,10 +1182,21 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtil.isBlank(detailId)) {
                     continue;
                 }
-                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())
-                 ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
+                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 按流水ID判断已存在
                     if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId()))){
+                        continue;
+                    }
+                }else if(PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
+                    // 先执行流水ID判断
+                    if (receivedEntityList.stream().anyMatch(e ->
+                            e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId())
+                    )) {
+                        continue;
+                    }
+                    // 再执行key判断
+                    String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
+                    if (receivedEntityMap.containsKey(key)) {
                         continue;
                     }
                 } else {
@@ -1193,6 +1205,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         continue;
                     }
                 }
+
+
                 updateDetailEntityMap.put(detailId, detailEntity);
                 changeFlag = true;
                 OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
