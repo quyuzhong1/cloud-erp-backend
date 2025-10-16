@@ -412,8 +412,11 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     public BatchResultDTO invalid(String id, String remark) {
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+        if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98005);
         }
         Integer count = moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count();
         if(count > 0){
@@ -644,7 +647,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
         //分类
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
-        Map<String, String> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName));
+        Map<String, BasicCategoryEntity> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, Function.identity()));
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
@@ -664,7 +667,12 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         //模具标识
         data.setTagName(MoldInfoTagEnum.getName(data.getTag()));
         // 分类名称
-        data.setCategoryName(categoryMap.getOrDefault(data.getCategoryId(),""));
+        BasicCategoryEntity basicCategoryEntity = categoryMap.getOrDefault(data.getCategoryId(), null);
+        if(Objects.nonNull(basicCategoryEntity)){
+            data.setCategoryCode(basicCategoryEntity.getCode());
+            data.setCategoryName(basicCategoryEntity.getName());
+        }
+
         //付款条件
 //            String paymentConditionName = paymentConditionList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCode(), data.getPaymentCondition())).findFirst()
 //                    .flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
