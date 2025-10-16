@@ -128,6 +128,7 @@ public enum ApiError implements Serializable {
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{}未找到"),
     ERROR_HAS_EXIST(1068,"{}已存在"),
+    ERROR_1069(1069,"只有已禁用数据支持删除"),
 
 
 
