@@ -22,7 +22,7 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 	public void afterCompletion(int status) {
 		InventoryTransactionService bean = ApplicationContextUtils.getBean(InventoryTransactionService.class);
 		if (status == STATUS_COMMITTED) {
-			bean.commitRedis(transactionId);
+			bean.commitRedis(transactionId , true);
 		}else {
 			bean.rollbackRedis(transactionId);
 		}
@@ -34,7 +34,11 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 		}
 		InventoryTransactionSynchronizationAdapter synchronization = new InventoryTransactionSynchronizationAdapter();
 		synchronization.setTransactionId(transactionId);
-		TransactionSynchronizationManager.registerSynchronization(synchronization);
+		if(TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(synchronization);
+		}else {
+			synchronization.afterCompletion(STATUS_COMMITTED);
+		}
 	}
 	
 	public void doXa(String transactionId , Integer status) {
