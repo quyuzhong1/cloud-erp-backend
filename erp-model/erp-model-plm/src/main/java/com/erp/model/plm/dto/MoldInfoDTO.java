@@ -388,6 +388,7 @@ public class MoldInfoDTO implements Serializable {
         * 模具分类
         */
         private String categoryId;
+        private String categoryCode;
         private String categoryName;
 
 
@@ -729,6 +730,22 @@ public class MoldInfoDTO implements Serializable {
         @NotNull(message = "数量不能为空")
         @Min(value = 1, message = "数量必须大于0")
         private Integer qty;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListApproveDTO{
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        private String  code;
+
+        private String  name;
     }
 
 

@@ -65,6 +65,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_MOLD_INFO("IMPORT_PLM_MOLD_INFO", "模具档案导入","com.erp.rpc.plm.feign.ImportPlmFeign","importMoldInfo",""),
     EXPORT_PLM_MOLD_REF_SKU("EXPORT_PLM_MOLD_REF_SKU", "模具关联SKU导出","","",""),
     IMPORT_PLM_MOLD_REF_SKU("IMPORT_PLM_MOLD_REF_SKU", "模具关联SKU导入","com.erp.rpc.plm.feign.ImportPlmFeign","importMoldRefSku",""),
+    EXPORT_PLM_CFG_MOLD_RETURN("EXPORT_PLM_CFG_MOLD_RETURN", "模具返还策略导出","","",""),
+    IMPORT_PLM_CFG_MOLD_RETURN("IMPORT_PLM_CFG_MOLD_RETURN", "模具返还策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldReturn",""),
 
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
