@@ -7,11 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -314,6 +313,28 @@ public class MoldRefSkuDTO implements Serializable {
         @NotNull(message = "sku用量不能为空")
         private Integer skuQty;
 
+    }
+
+    /**
+     * 模糊搜索
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchMoldRefSkuDTO extends ListDTO {
+
+    }
+    /**
+     * 模糊搜索参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        /**
+         * 模糊搜索参数
+         */
+        private String searchKeyword;
+
+        private String approveStatus;
     }
 
 

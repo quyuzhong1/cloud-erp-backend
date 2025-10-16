@@ -44,4 +44,6 @@ public interface MoldRefSkuMapper extends BaseMapper<MoldRefSkuEntity> {
     * @return
     */
     List<MoldRefSkuDTO.TabListDTO> tabList(@Param("params") MoldRefSkuDTO.PagingParamDTO searchParam);
+
+    List<MoldRefSkuDTO.SearchMoldRefSkuDTO> searchMoldRefSku(@Param("params") MoldRefSkuDTO.SearchDTO searchDTO);
 }

@@ -1,4 +1,5 @@
 package com.erp.server.plm.mapper;
+import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -53,5 +54,5 @@ public interface MoldInfoMapper extends BaseMapper<MoldInfoEntity> {
     */
     List<MoldInfoDTO.TabListDTO> tabList(@Param("params") MoldInfoDTO.PagingParamDTO searchParam);
 
-    List<MoldInfoDTO.ListApproveDTO> searchMold(@Param("searchKeyword")String searchKeyword, @Param("approveStatus") String approveStatus);
+    List<MoldInfoDTO.SearchMoldDTO> searchMold(@Param("params") MoldInfoDTO.SearchDTO searchDTO);
 }
