@@ -51,7 +51,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.SkuStdCostDTO;
-import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
@@ -1407,6 +1406,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //清空销售订单的出库时间
             this.handleSoOutDate(list);
+
+            //删除推送到订货通
+            for (SoOutstockEntity entity : list) {
+                if(customerFeign.isSyncDht(entity.getCustomerId())){
+                    syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+                }
+            }
         }
         return result;
     }
