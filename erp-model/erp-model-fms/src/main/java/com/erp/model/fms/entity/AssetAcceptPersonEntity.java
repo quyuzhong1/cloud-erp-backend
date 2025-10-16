@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.fms.enums.PersonTypeEnum;
 
 
 /**
@@ -53,6 +54,14 @@ public class AssetAcceptPersonEntity extends BaseEntity<AssetAcceptPersonEntity>
     public static final String USER_ID = "user_id";
 
     public static final String USER_NAME = "user_name";
+
+    /**
+     * 获取人员类型枚举
+     * @return 枚举
+     */
+    public PersonTypeEnum getPersonTypeEnum() {
+        return PersonTypeEnum.getByCode(this.personType);
+    }
 
     @Override
     public Serializable pkVal() {

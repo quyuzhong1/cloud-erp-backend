@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.commons.math3.util.Pair;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
@@ -22,7 +23,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.fms.dto.AssetAcceptPersonDTO;
+import com.erp.model.fms.dto.AssetAcceptDetailDTO;
 import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.model.fms.entity.AssetAcceptPersonEntity;
+import com.erp.model.fms.entity.AssetAcceptDetailEntity;
+import com.erp.model.fms.enums.AssetCardStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -30,19 +36,25 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetAcceptMapper;
 import com.erp.server.fms.service.AssetAcceptService;
 import com.erp.server.fms.service.OperateLogService;
+import com.erp.server.fms.service.AssetAcceptPersonService;
+import com.erp.server.fms.service.AssetAcceptDetailService;
+import com.erp.server.fms.service.AttachmentService;
+import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.fms.dto.AttachmentDTO;
+import com.baomidou.mybatisplus.annotation.TableName;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.Arrays;
 /**
  * <p>
  * 资产验收表 服务实现类
@@ -60,6 +72,12 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private AssetAcceptPersonService assetAcceptPersonService;
+    @Autowired
+    private AssetAcceptDetailService assetAcceptDetailService;
+    @Autowired
+    private AttachmentService attachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -80,12 +98,101 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             throw new ServiceException("资产验收单保存失败");
         }
 
+        // 保存验收人员数据
+        if (CollUtil.isNotEmpty(addDTO.getPersonList())) {
+            List<AssetAcceptPersonEntity> personEntities = new ArrayList<>();
+            for (AssetAcceptPersonDTO.AddDTO personDTO : addDTO.getPersonList()) {
+                AssetAcceptPersonEntity personEntity = new AssetAcceptPersonEntity();
+                personEntity.setAssetAcceptId(assetAcceptEntity.getId());
+                personEntity.setPersonType(personDTO.getPersonType());
+                personEntity.setUserId(personDTO.getUserId());
+                personEntity.setUserName(personDTO.getUserName());
+                personEntities.add(personEntity);
+            }
+            
+            if (CollUtil.isNotEmpty(personEntities)) {
+                boolean personSaveResult = assetAcceptPersonService.saveBatch(personEntities);
+                if (!personSaveResult) {
+                    throw new ServiceException("资产验收人员保存失败");
+                }
+                log.info("资产验收人员保存成功，共保存{}条人员", personEntities.size());
+            }
+        }
+
+        // 保存验收明细数据
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
+            List<AssetAcceptDetailEntity> detailEntities = new ArrayList<>();
+            for (AssetAcceptDetailDTO.AddDTO detailDTO : addDTO.getDetailList()) {
+                AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
+                detailEntity.setMainId(assetAcceptEntity.getId());
+                detailEntity.setSourceDetailId(detailDTO.getSourceDetailId());
+                detailEntity.setSkuId(detailDTO.getSkuId());
+                detailEntity.setProductName(detailDTO.getProductName());
+                detailEntity.setAcceptQty(detailDTO.getAcceptQty());
+                // 设置资产卡片关联状态，如果为空则默认为"未生成"
+                String assetCardStatus = StringUtils.isNotBlank(detailDTO.getAssetCardStatus()) 
+                    ? detailDTO.getAssetCardStatus() 
+                    : AssetCardStatusEnum.NOT_GENERATED.getStatus();
+                detailEntity.setAssetCardStatus(assetCardStatus);
+                detailEntity.setPendingQty(detailDTO.getPendingQty());
+                detailEntity.setAcceptedQty(detailDTO.getAcceptedQty());
+                detailEntity.setAcceptableQty(detailDTO.getAcceptableQty());
+                detailEntity.setAssetLocationId(detailDTO.getAssetLocationId());
+                detailEntity.setUseDeptName(detailDTO.getUseDeptName());
+                detailEntity.setUseDeptId(detailDTO.getUseDeptId());
+                detailEntity.setCostType(detailDTO.getCostType());
+                detailEntity.setRemark(detailDTO.getRemark());
+                detailEntities.add(detailEntity);
+            }
+            
+            if (CollUtil.isNotEmpty(detailEntities)) {
+                boolean detailSaveResult = assetAcceptDetailService.saveBatch(detailEntities);
+                if (!detailSaveResult) {
+                    throw new ServiceException("资产验收明细保存失败");
+                }
+                log.info("资产验收明细保存成功，共保存{}条明细", detailEntities.size());
+            }
+        }
+
+        // 保存附件
+        addAttachment(addDTO, assetAcceptEntity);
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产验收单" , assetAcceptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), assetAcceptEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetAcceptEntity.getId(), code);
+    }
+
+    /**
+     * 添加附件信息
+     * @param addDTO 包含附件URL和名称列表的数据传输对象
+     * @param assetAcceptEntity 资产验收实体
+     */
+    private void addAttachment(AssetAcceptDTO.AddDTO addDTO, AssetAcceptEntity assetAcceptEntity) {
+        //附件集合
+        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
+        //附件名
+        List<String> attachmentNameList = addDTO.getAttachmentNameList();
+        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollUtil.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<AssetAcceptEntity> entityClass = AssetAcceptEntity.class;
+            TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                AttachmentEntity attachment = new AttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(assetAcceptEntity.getId());
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if (CollUtil.isNotEmpty(batchAttachmentList)) {
+                attachmentService.saveBatch(batchAttachmentList);
+                log.info("资产验收单附件保存成功，共保存{}个附件", batchAttachmentList.size());
+            }
+        }
     }
 
     /**
@@ -110,7 +217,254 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if(!save) {
             throw new ServiceException("资产验收单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 修改验收人员数据（增量更新）
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getPersonList())) {
+            // 查询已存在的人员数据
+            List<AssetAcceptPersonEntity> existingPersons = assetAcceptPersonService.lambdaQuery()
+                .eq(AssetAcceptPersonEntity::getAssetAcceptId, addOrUpdateDTO.getId())
+                .list();
+
+            // 构建已存在人员的Map，key为personType，value为人员实体
+            Map<String, AssetAcceptPersonEntity> existingPersonMap = existingPersons.stream()
+                .collect(Collectors.toMap(AssetAcceptPersonEntity::getPersonType, item -> item));
+
+            // 处理人员数据：新增、更新、删除
+            List<AssetAcceptPersonEntity> toSavePersons = new ArrayList<>();
+            List<String> toDeletePersons = new ArrayList<>();
+            Set<String> processedPersonTypes = new HashSet<>();
+
+            for (AssetAcceptPersonDTO.AddDTO personDTO : addOrUpdateDTO.getPersonList()) {
+                String personType = personDTO.getPersonType();
+                processedPersonTypes.add(personType);
+
+                AssetAcceptPersonEntity existingPerson = existingPersonMap.get(personType);
+
+                if (existingPerson != null) {
+                    // 更新已存在的人员
+                    existingPerson.setUserId(personDTO.getUserId());
+                    existingPerson.setUserName(personDTO.getUserName());
+                    toSavePersons.add(existingPerson);
+                } else {
+                    // 新增人员
+                    AssetAcceptPersonEntity newPerson = new AssetAcceptPersonEntity();
+                    newPerson.setAssetAcceptId(addOrUpdateDTO.getId());
+                    newPerson.setPersonType(personType);
+                    newPerson.setUserId(personDTO.getUserId());
+                    newPerson.setUserName(personDTO.getUserName());
+                    toSavePersons.add(newPerson);
+                }
+            }
+
+            // 找出需要删除的人员（在新列表中不存在的）
+            for (AssetAcceptPersonEntity existingPerson : existingPersons) {
+                if (!processedPersonTypes.contains(existingPerson.getPersonType())) {
+                    toDeletePersons.add(existingPerson.getId());
+                }
+            }
+
+            // 执行删除操作
+            if (!toDeletePersons.isEmpty()) {
+                // 查询要删除的人员信息用于日志记录
+                List<AssetAcceptPersonEntity> deletePersons = existingPersons.stream()
+                    .filter(person -> toDeletePersons.contains(person.getId()))
+                    .collect(Collectors.toList());
+
+                boolean deleteResult = assetAcceptPersonService.lambdaUpdate()
+                    .in(AssetAcceptPersonEntity::getId, toDeletePersons)
+                    .remove();
+
+                if (!deleteResult) {
+                    log.warn("删除资产验收人员数据失败，ids：{}", toDeletePersons);
+                } else {
+                    // 添加删除日志
+                    List<Pair<String, String>> deletePairList = deletePersons.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getPersonType()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("删除验收人员【%s】", ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), deletePairList, "编辑操作");
+                    log.info("删除资产验收人员数据成功，共删除{}条人员", toDeletePersons.size());
+                }
+            }
+
+            // 执行保存/更新操作
+            if (!toSavePersons.isEmpty()) {
+                // 分离新增和更新的人员
+                List<AssetAcceptPersonEntity> addPersonList = toSavePersons.stream()
+                    .filter(e -> StringUtils.isBlank(e.getId()))
+                    .collect(Collectors.toList());
+                List<AssetAcceptPersonEntity> updatePersonList = toSavePersons.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getId()))
+                    .collect(Collectors.toList());
+
+                boolean saveResult = assetAcceptPersonService.saveOrUpdateBatch(toSavePersons);
+                if (!saveResult) {
+                    throw new ServiceException("资产验收人员保存失败");
+                }
+
+                // 添加新增日志
+                if (CollUtil.isNotEmpty(addPersonList)) {
+                    List<Pair<String, String>> addPairList = addPersonList.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getPersonType()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("添加验收人员【%s】", ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), addPairList, "编辑操作");
+                }
+
+                // 添加更新日志
+                if (CollUtil.isNotEmpty(updatePersonList)) {
+                    for (AssetAcceptPersonEntity updatePerson : updatePersonList) {
+                        AssetAcceptPersonEntity oldPerson = existingPersons.stream()
+                            .filter(e -> Objects.equals(e.getId(), updatePerson.getId()))
+                            .findFirst()
+                            .orElse(null);
+                        if (Objects.nonNull(oldPerson)) {
+                            operateLogService.addModuleOperateLogByObj(oldPerson, updatePerson, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), addOrUpdateDTO.getId(), String.format("编辑验收人员【%s】", oldPerson.getPersonType()));
+                        }
+                    }
+                }
+
+                log.info("资产验收人员保存成功，共保存{}条人员", toSavePersons.size());
+            }
+        }
+
+        // 修改验收明细数据（增量更新）
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            // 查询已存在的明细数据
+            List<AssetAcceptDetailEntity> existingDetails = assetAcceptDetailService.lambdaQuery()
+                .eq(AssetAcceptDetailEntity::getMainId, addOrUpdateDTO.getId())
+                .list();
+
+            // 构建已存在明细的Map，key为sourceDetailId，value为明细实体
+            Map<String, AssetAcceptDetailEntity> existingDetailMap = existingDetails.stream()
+                .collect(Collectors.toMap(AssetAcceptDetailEntity::getSourceDetailId, item -> item));
+
+            // 处理明细数据：新增、更新、删除
+            List<AssetAcceptDetailEntity> toSaveDetails = new ArrayList<>();
+            List<String> toDeleteDetails = new ArrayList<>();
+            Set<String> processedSourceDetailIds = new HashSet<>();
+
+            for (AssetAcceptDetailDTO.AddDTO detailDTO : addOrUpdateDTO.getDetailList()) {
+                String sourceDetailId = detailDTO.getSourceDetailId();
+                processedSourceDetailIds.add(sourceDetailId);
+
+                AssetAcceptDetailEntity existingDetail = existingDetailMap.get(sourceDetailId);
+
+                if (existingDetail != null) {
+                    // 更新已存在的明细
+                    existingDetail.setSkuId(detailDTO.getSkuId());
+                    existingDetail.setProductName(detailDTO.getProductName());
+                    existingDetail.setAcceptQty(detailDTO.getAcceptQty());
+                    // 设置资产卡片关联状态，如果为空则保持原值或默认为"未生成"
+                    String assetCardStatus = StringUtils.isNotBlank(detailDTO.getAssetCardStatus()) 
+                        ? detailDTO.getAssetCardStatus() 
+                        : (StringUtils.isNotBlank(existingDetail.getAssetCardStatus()) 
+                            ? existingDetail.getAssetCardStatus() 
+                            : AssetCardStatusEnum.NOT_GENERATED.getStatus());
+                    existingDetail.setAssetCardStatus(assetCardStatus);
+                    existingDetail.setPendingQty(detailDTO.getPendingQty());
+                    existingDetail.setAcceptedQty(detailDTO.getAcceptedQty());
+                    existingDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    existingDetail.setAssetLocationId(detailDTO.getAssetLocationId());
+                    existingDetail.setUseDeptName(detailDTO.getUseDeptName());
+                    existingDetail.setUseDeptId(detailDTO.getUseDeptId());
+                    existingDetail.setCostType(detailDTO.getCostType());
+                    existingDetail.setRemark(detailDTO.getRemark());
+                    toSaveDetails.add(existingDetail);
+                } else {
+                    // 新增明细
+                    AssetAcceptDetailEntity newDetail = new AssetAcceptDetailEntity();
+                    newDetail.setMainId(addOrUpdateDTO.getId());
+                    newDetail.setSourceDetailId(sourceDetailId);
+                    newDetail.setSkuId(detailDTO.getSkuId());
+                    newDetail.setProductName(detailDTO.getProductName());
+                    newDetail.setAcceptQty(detailDTO.getAcceptQty());
+                    // 设置资产卡片关联状态，如果为空则默认为"未生成"
+                    String assetCardStatus = StringUtils.isNotBlank(detailDTO.getAssetCardStatus()) 
+                        ? detailDTO.getAssetCardStatus() 
+                        : AssetCardStatusEnum.NOT_GENERATED.getStatus();
+                    newDetail.setAssetCardStatus(assetCardStatus);
+                    newDetail.setPendingQty(detailDTO.getPendingQty());
+                    newDetail.setAcceptedQty(detailDTO.getAcceptedQty());
+                    newDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    newDetail.setAssetLocationId(detailDTO.getAssetLocationId());
+                    newDetail.setUseDeptName(detailDTO.getUseDeptName());
+                    newDetail.setUseDeptId(detailDTO.getUseDeptId());
+                    newDetail.setCostType(detailDTO.getCostType());
+                    newDetail.setRemark(detailDTO.getRemark());
+                    toSaveDetails.add(newDetail);
+                }
+            }
+
+            // 找出需要删除的明细（在新列表中不存在的）
+            for (AssetAcceptDetailEntity existingDetail : existingDetails) {
+                if (!processedSourceDetailIds.contains(existingDetail.getSourceDetailId())) {
+                    toDeleteDetails.add(existingDetail.getId());
+                }
+            }
+
+            // 执行删除操作
+            if (!toDeleteDetails.isEmpty()) {
+                // 查询要删除的明细信息用于日志记录
+                List<AssetAcceptDetailEntity> deleteDetails = existingDetails.stream()
+                    .filter(detail -> toDeleteDetails.contains(detail.getId()))
+                    .collect(Collectors.toList());
+
+                boolean deleteResult = assetAcceptDetailService.lambdaUpdate()
+                    .in(AssetAcceptDetailEntity::getId, toDeleteDetails)
+                    .remove();
+
+                if (!deleteResult) {
+                    log.warn("删除资产验收明细数据失败，ids：{}", toDeleteDetails);
+                } else {
+                    // 添加删除日志
+                    List<Pair<String, String>> deletePairList = deleteDetails.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuId()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("删除验收明细【%s】", ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), deletePairList, "编辑操作");
+                    log.info("删除资产验收明细数据成功，共删除{}条明细", toDeleteDetails.size());
+                }
+            }
+
+            // 执行保存/更新操作
+            if (!toSaveDetails.isEmpty()) {
+                // 分离新增和更新的明细
+                List<AssetAcceptDetailEntity> addDetailList = toSaveDetails.stream()
+                    .filter(e -> StringUtils.isBlank(e.getId()))
+                    .collect(Collectors.toList());
+                List<AssetAcceptDetailEntity> updateDetailList = toSaveDetails.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getId()))
+                    .collect(Collectors.toList());
+
+                boolean saveResult = assetAcceptDetailService.saveOrUpdateBatch(toSaveDetails);
+                if (!saveResult) {
+                    throw new ServiceException("资产验收明细保存失败");
+                }
+
+                // 添加新增日志
+                if (CollUtil.isNotEmpty(addDetailList)) {
+                    List<Pair<String, String>> addPairList = addDetailList.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuId()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("添加验收明细【%s】", ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), addPairList, "编辑操作");
+                }
+
+                // 添加更新日志
+                if (CollUtil.isNotEmpty(updateDetailList)) {
+                    for (AssetAcceptDetailEntity updateDetail : updateDetailList) {
+                        AssetAcceptDetailEntity oldDetail = existingDetails.stream()
+                            .filter(e -> Objects.equals(e.getId(), updateDetail.getId()))
+                            .findFirst()
+                            .orElse(null);
+                        if (Objects.nonNull(oldDetail)) {
+                            operateLogService.addModuleOperateLogByObj(oldDetail, updateDetail, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), addOrUpdateDTO.getId(), String.format("编辑验收明细【%s】", oldDetail.getSkuId()));
+                        }
+                    }
+                }
+
+                log.info("资产验收明细保存成功，共保存{}条明细", toSaveDetails.size());
+            }
+        }
+
+        // 更新附件
+        updateAttachment(addOrUpdateDTO, old);
 
         // 记录主单操作日志
             log.info("编辑 开始记录资产验收单日志数据，单号：【{}】", assetAcceptEntity.getCode());
@@ -119,6 +473,57 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         return Boolean.TRUE;
     }
 
+    /**
+     * 更新附件信息
+     * @param addOrUpdateDTO 包含附件URL和名称列表的更新数据传输对象
+     * @param old 旧的资产验收信息实体，用于获取业务ID
+     */
+    private void updateAttachment(AssetAcceptDTO.UpdateDTO addOrUpdateDTO, AssetAcceptEntity old) {
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
+        if (CollUtil.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 处理删除的数据
+                List<AttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(remove)){
+                    attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                    log.info("资产验收单删除附件成功，共删除{}个附件", remove.size());
+                }
+            }
+
+            //处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream()
+                    .map(AttachmentDTO.UpdateDTO::getAttachUrl)
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(attachmentUrlList)) {
+                Class<AssetAcceptEntity> entityClass = AssetAcceptEntity.class;
+                TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+                //获取到表名
+                String type = tableName.value();
+
+                List<AttachmentEntity> batchAttachmentList = new ArrayList<>();
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if(!oldUrlList.contains(attachmentUrlList.get(i))){
+                        AttachmentEntity addAttachment = new AttachmentEntity();
+                        addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                        addAttachment.setAttachName(attachmentNameList.get(i));
+                        addAttachment.setBusinessId(old.getId());
+                        addAttachment.setType(type);
+                        batchAttachmentList.add(addAttachment);
+                    }
+                }
+
+                if(CollUtil.isNotEmpty(batchAttachmentList)){
+                    attachmentService.saveBatch(batchAttachmentList);
+                    log.info("资产验收单新增附件成功，共新增{}个附件", batchAttachmentList.size());
+                }
+            }
+        }
+    }
 
     @Override
     public PagingVO<AssetAcceptDTO.ListDTO> paging(PagingDTO<AssetAcceptDTO.PagingParamDTO> pagingParamDTO) {
@@ -137,18 +542,42 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     public List<AssetAcceptDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetAcceptDTO.PagingParamDTO searchParam = new AssetAcceptDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        
+        // 使用一个SQL查询获取所有状态的统计数量
         List<AssetAcceptDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
+        
+        // 设置tabFlagName
+        list.stream().forEach(e -> {
+            e.setTabFlagName(ApproveStatusEnum.getTableName(e.getTabFlag()));
+        }); 
+        
+        // 获取状态列表，确保所有状态都存在
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetAcceptDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        
+        // 不存在的状态赋值为0
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetAcceptDTO.TabListDTO(status, 0));
-        }
+                AssetAcceptDTO.TabListDTO newTab = new AssetAcceptDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
+                list.add(newTab);
+            }
         });
-        list.add(new AssetAcceptDTO.TabListDTO("all", list.stream().mapToInt(AssetAcceptDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        
+        // 按照指定顺序排序：待提交、审核中、已审核、不通过
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approve", "reject");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
+        // 计算合计数量并添加"全部"标签
+        int totalCount = list.stream().mapToInt(AssetAcceptDTO.TabListDTO::getCount).sum();
+        AssetAcceptDTO.TabListDTO allTab = new AssetAcceptDTO.TabListDTO("all", "全部", totalCount);
+        list.add(0, allTab); // 添加到第一位
+        
         return list;
     }
 
@@ -272,7 +701,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -288,7 +716,17 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+        
+        // 检查是否已经下推资产卡片，如果已经下推则不允许反审核
+        List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+            .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
+            .eq(AssetAcceptDetailEntity::getAssetCardStatus, AssetCardStatusEnum.GENERATED.getStatus())
+            .list();
+        
+        if (CollUtil.isNotEmpty(detailList)) {
+            throw new ServiceException("该验收单已生成资产卡片，不允许反审核");
+        }
+        
         return true;
     }
 
@@ -300,7 +738,35 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+        // 删除验收人员数据
+        boolean personDeleteResult = assetAcceptPersonService.lambdaUpdate()
+            .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
+            .remove();
+
+        if (!personDeleteResult) {
+            log.warn("删除资产验收人员数据失败，id：{}", id);
+        } else {
+            log.info("删除资产验收人员数据成功，id：{}", id);
+        }
+
+        // 删除验收明细数据
+        boolean detailDeleteResult = assetAcceptDetailService.lambdaUpdate()
+            .eq(AssetAcceptDetailEntity::getMainId, id)
+            .remove();
+
+        if (!detailDeleteResult) {
+            log.warn("删除资产验收明细数据失败，id：{}", id);
+        } else {
+            log.info("删除资产验收明细数据成功，id：{}", id);
+        }
+
+        // 删除附件
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            attachmentService.deleteByUrlList(urlList);
+            log.info("删除资产验收单附件成功，共删除{}个附件", urlList.size());
+        }
 
         // 删除主单数据
         log.info("删除 开始删除资产验收单主单数据，id：【{}】", id);
@@ -319,7 +785,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     public BatchResultDTO invalid(String id, String remark) {
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改资产验收单状态数据，id：【{}】", id);
@@ -383,7 +849,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         AssetAcceptDTO.ViewDTO data = BeanMapperUtils.map(AssetAcceptDTO.ViewDTO.class, assetAcceptEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -411,6 +876,39 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        String id = data.getId();
+        // 查询验收人员数据
+        List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
+                .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
+                .list();
+
+        if (CollUtil.isNotEmpty(personList)) {
+            List<AssetAcceptPersonDTO.ViewDTO> personViewList = personList.stream()
+                    .map(person -> {
+                        AssetAcceptPersonDTO.ViewDTO personView = new AssetAcceptPersonDTO.ViewDTO();
+                        BeanMapperUtils.copy(person, personView);
+                        return personView;
+                    })
+                    .collect(Collectors.toList());
+            data.setPersonList(personViewList);
+        }
+
+        // 查询验收明细数据
+        List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+                .eq(AssetAcceptDetailEntity::getMainId, id)
+                .list();
+
+        if (CollUtil.isNotEmpty(detailList)) {
+            List<AssetAcceptDetailDTO.ViewDTO> detailViewList = detailList.stream()
+                    .map(detail -> {
+                        AssetAcceptDetailDTO.ViewDTO detailView = new AssetAcceptDetailDTO.ViewDTO();
+                        BeanMapperUtils.copy(detail, detailView);
+                        return detailView;
+                    })
+                    .collect(Collectors.toList());
+            data.setDetailList(detailViewList);
+        }
+
     }
 
     /**
@@ -462,11 +960,45 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
            return;
         }
 
+        // 获取所有验收单ID
+        List<String> assetAcceptIds = list.stream().map(AssetAcceptDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        
+        // 查询验收人员信息
+        Map<String, String> acceptPersonMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(assetAcceptIds)) {
+            List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
+                .in(AssetAcceptPersonEntity::getAssetAcceptId, assetAcceptIds)
+                .list();
+            
+            // 按验收单ID分组，拼接人员姓名
+            Map<String, List<AssetAcceptPersonEntity>> personGroupMap = personList.stream()
+                .collect(Collectors.groupingBy(AssetAcceptPersonEntity::getAssetAcceptId));
+            
+            for (Map.Entry<String, List<AssetAcceptPersonEntity>> entry : personGroupMap.entrySet()) {
+                String personNames = entry.getValue().stream()
+                    .map(AssetAcceptPersonEntity::getUserName)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining("，"));
+                acceptPersonMap.put(entry.getKey(), personNames);
+            }
+        }
+
         // 属性赋值
         for(AssetAcceptDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            
+            // 设置验收人员中文名称
+            String acceptPersonNames = acceptPersonMap.get(data.getId());
+            data.setAcceptPersonNames(acceptPersonNames);
+            
+            // 设置来源类型为"采购收货"（资产验收单创建的卡片）
+            if (StringUtils.isBlank(data.getSourceType())) {
+                data.setSourceType("采购收货");
+            }
+            
+            // 设置资产卡片关联状态名称（使用枚举）
+            data.setAssetCardStatusName(AssetCardStatusEnum.getName(data.getAssetCardStatus()));
         }
     }
     /**
