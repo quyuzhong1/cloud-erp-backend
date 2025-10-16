@@ -149,7 +149,21 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
         return BeanMapper.copyList(list, WmsAttachmentDTO.UpdateDTO.class);
 
     }
+    @Override
+    public List<WmsAttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds,String type) {
+        if (CollectionUtils.isEmpty(businessIds)){
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(WmsAttachmentEntity::getBusinessId, businessIds);
+        queryWrapper.eq(WmsAttachmentEntity::getType, type);
+        List<WmsAttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, WmsAttachmentDTO.UpdateDTO.class);
 
+    }
 
     /**
      * 删除附件信息

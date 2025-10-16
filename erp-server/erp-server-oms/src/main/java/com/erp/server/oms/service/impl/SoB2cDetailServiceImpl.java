@@ -643,7 +643,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(dictPlatform);
         paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSpuNoList(platformSpuList);
         paramDTO.setPlatformSkuIdList(platformSkuIdList);
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());

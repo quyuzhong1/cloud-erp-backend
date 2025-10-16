@@ -65,7 +65,16 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      */
     List<WmsAttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds);
 
-    
+    /**
+     * 根据业务表id和type获取附件信息
+     * @author will
+     * @date 2025/8/29 18:49
+     * @param businessIds
+     * @param type
+     * @return List<UpdateDTO>
+     */
+    List<WmsAttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds,String type);
+
     /**
      * 删除附件信息
      * @author yl

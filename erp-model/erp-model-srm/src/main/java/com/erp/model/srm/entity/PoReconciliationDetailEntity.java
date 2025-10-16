@@ -218,6 +218,12 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("kingdee_detail_id")
     private String KingdeeDetailId;
 
+    /**
+     * 应付单类型
+     */
+    @TableField(exist = false)
+    private String payableType;
+
     public static final String SUPPLIER_ID = "supplier_id";
 
     public static final String SUPPLIER_NAME = "supplier_name";

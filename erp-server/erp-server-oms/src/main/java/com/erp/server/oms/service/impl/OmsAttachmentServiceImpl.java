@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
@@ -15,6 +16,7 @@ import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -37,7 +39,7 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
     @Resource
     private FileFeign filefeign;
     @Override
-    public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
+    public void batchSaveOrUpdate(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
             List<OmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
@@ -56,6 +58,38 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             this.saveBatch(addList);
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveOrUpdate(List<AttachDTO> attachDTOS, String type) {
+        List<OmsAttachmentEntity> omsAttachmentList = new ArrayList<>();
+        for (AttachDTO attachDTO : attachDTOS) {
+            OmsAttachmentEntity entity = new OmsAttachmentEntity();
+            entity.setAttachUrl(attachDTO.getAttachUrl());
+            entity.setAttachName(attachDTO.getAttachName());
+            entity.setType(type);
+            entity.setBusinessId(attachDTO.getBusinessId());
+            omsAttachmentList.add(entity);
+        }
+        List<String> businessIdList = omsAttachmentList.stream().map(OmsAttachmentEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<OmsAttachmentEntity> oldList = lambdaQuery().in(OmsAttachmentEntity::getBusinessId,businessIdList)
+                .eq(OmsAttachmentEntity::getType,type)
+                .list();
+        List<OmsAttachmentEntity> deleteList = oldList.stream().filter(old -> omsAttachmentList.stream().noneMatch(obj -> obj.getBusinessId().equals(old.getBusinessId()) && obj.getAttachUrl().equals(old.getAttachUrl()))).collect(Collectors.toList());
+        for (OmsAttachmentEntity omsAttachmentEntity : omsAttachmentList) {
+            OmsAttachmentEntity attachmentEntity = oldList.stream().filter(old -> old.getBusinessId().equals(omsAttachmentEntity.getBusinessId()) && old.getAttachUrl().equals(omsAttachmentEntity.getAttachUrl())).findFirst().orElse(null);
+            if (ObjUtil.isNotEmpty(attachmentEntity)) {
+                omsAttachmentEntity.setId(attachmentEntity.getId());
+            }
+        }
+        this.saveOrUpdateBatch(omsAttachmentList);
+        if(CollUtil.isNotEmpty(deleteList)) {
+            List<String> urlList = deleteList.stream().map(OmsAttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            //批量删除fastdfs 数据
+            filefeign.deleteBatchFile(urlList);
+            this.removeByIds(deleteList.stream().map(OmsAttachmentEntity::getId).collect(Collectors.toList()));
+        }
     }
 
     @Override
@@ -195,5 +229,16 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             return Collections.emptyList();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    @Override
+    public List<OmsAttachmentEntity> listByBusinessIdsAndType(List<String> businessIds, String type) {
+        if (CollectionUtils.isNotEmpty(businessIds) && StringUtils.isNotBlank(type)) {
+            LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(OmsAttachmentEntity::getBusinessId, businessIds);
+            queryWrapper.eq(OmsAttachmentEntity::getType, type);
+            return this.list(queryWrapper);
+        }
+        return Collections.emptyList();
     }
 }

@@ -41,6 +41,8 @@
             sdn.warehouse_name AS warehouseName,
             sdn.warehouse_org_id AS warehouseOrgId,
             sdn.warehouse_org_name AS warehouseOrgName,
+            sdn.is_allow_outstock as isAllowOutstock,
+            sdn.remark,
             sdnd.sku_id AS skuId,
             sdnd.sku_no AS skuNo,
             sdnd.delivery_qty AS deliveryQty,
@@ -94,6 +96,10 @@
         <if test="params.deliveryStatus != null">
             and sdn.delivery_status = #{params.deliveryStatus}
         </if>
+        <if test="params.isAllowOutstock != null">
+            and sdn.is_allow_outstock = #{params.isAllowOutstock}
+        </if>
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -113,6 +119,7 @@
         sdn.delivery_status AS deliveryStatus,
         sdn.warehouse_org_id AS warehouseOrgId,
         sdn.warehouse_org_name AS warehouseOrgName,
+        sdn.is_allow_outstock as isAllowOutstock,
         sdnd.sku_id AS skuId,
         sdnd.sku_no AS skuNo,
         sdnd.delivery_qty AS deliveryQty,

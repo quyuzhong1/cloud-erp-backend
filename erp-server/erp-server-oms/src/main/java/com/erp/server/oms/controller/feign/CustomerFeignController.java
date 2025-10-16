@@ -235,4 +235,16 @@ public class CustomerFeignController extends BaseController {
     public void updateApproveStatus(CustomerInfoEntity entity) {
         customerInfoService.updateApproveStatus(entity);
     }
+
+    /**
+     * 释放同步订货通
+     * @author will
+     * @date 2025/9/23 10:09
+     * @param customerId
+     * @return Boolean
+     */
+    @PostMapping("/isSyncDht")
+    public Boolean isSyncDht(@RequestBody String customerId) {
+      return customerInfoService.isSyncDht(customerId);
+    }
 }

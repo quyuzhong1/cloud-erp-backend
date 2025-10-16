@@ -22,7 +22,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -34,7 +33,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.PoReconciliationDetailImportExcelDTO;
@@ -51,18 +49,13 @@ import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
 import com.erp.server.srm.listener.PoReconciliationDetailExcelListener;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
-import com.erp.server.srm.service.AttachmentService;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.PoReconciliationDetailScmService;
-import com.erp.server.srm.service.PoReconciliationScmService;
+import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -87,7 +80,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PO_RECONCILIATION_DETAIL;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
 
 /**
  * <p>
@@ -127,9 +121,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private SyncKingdeePoReconciliationService syncKingdeePoReconciliationService;
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
+    private PayableInfoService payableInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -604,8 +596,14 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
                 .update();
 
-        //推送金蝶
-        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
+        //明细
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(id));
+        if (CollUtil.isEmpty(poReconciliationDetailList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
+        }
+        //添加应付单
+        payableInfoService.generatePayableInfo(entity,poReconciliationDetailList);
+
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
@@ -634,8 +632,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId,"")
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName,"")
                 .update();
-        //推送金蝶
-        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DELETE);
+
+        //反审核并且删除应付单
+        payableInfoService.deleteBySourceId(id);
+
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
@@ -818,29 +818,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         String type = tableName.value();
         //保存附件
         attachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
-    }
-
-    /**
-     * 推送金蝶
-     * @author will
-     * @date 2025/4/22 16:34
-     * @param entity
-     * @param syncOperateEnum
-     * @return void
-     */
-    private void syncApproveInfoToKingdee(PoReconciliationEntity entity, SyncOperateEnum syncOperateEnum) {
-
-        //直接调拨单明细
-        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(entity.getId()));
-        //服务sku
-        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
-                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
-        poReconciliationDetailList = CollUtil.isNotEmpty(poReconciliationDetailList) ? poReconciliationDetailList.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
-        //删除或者非服务sku不为空时推金蝶
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperateEnum.getCode()) || CollUtil.isNotEmpty(poReconciliationDetailList)){
-            syncKingdeePoReconciliationService.syncDataToKingdee(entity,poReconciliationDetailList, syncOperateEnum.getCode());
-        }
     }
 
     /**
