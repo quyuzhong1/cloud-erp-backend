@@ -56,7 +56,7 @@ public class WildberriesSDKServiceTest {
     public void createProduct() {
 //        CreateProductRequest request = CreateProductRequest.builder().build();
 //        List<CreateProductRequest> requestList = Collections.singletonList(request);
-        String requestStr = "[{\"subjectID\":105,\"variants\":[{\"vendorCode\":\"АртикулПродавца\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L01\"]}]}]}]";
+        String requestStr = "[{\"subjectID\":30,\"variants\":[{\"vendorCode\":\"L096\",\"wholesale\":{\"enabled\":true,\"quantum\":211},\"title\":\"Наименование товара\",\"description\":\"Описание товара\",\"brand\":\"Бренд\",\"dimensions\":{\"length\":12,\"width\":7,\"height\":5,\"weightBrutto\":1.242},\"characteristics\":[{\"id\":12,\"value\":[\"Turkish flag\"]},{\"id\":25471,\"value\":1200},{\"id\":14177449,\"value\":[\"red\"]}],\"sizes\":[{\"techSize\":\"S\",\"wbSize\":\"42\",\"price\":5000,\"skus\":[\"L01\"]}]}]}]";
         List<CreateProductRequest> requestList = JSONUtil.toList(requestStr, CreateProductRequest.class);
         String response = wildberriesSDKService.createProduct(WildberriesConstant.TOKEN, requestList);
 
@@ -131,7 +131,7 @@ public class WildberriesSDKServiceTest {
         List<CreateOrderRequest.Order> orders = new ArrayList<>();
         CreateOrderRequest.Order order = CreateOrderRequest.Order.builder().build();
         order.setAmount(1);
-        order.setSku("2850");
+        order.setSku("88005553535");
         orders.add(order);
         CreateOrderRequest request = CreateOrderRequest.builder().orders(orders).build();
         String supply = wildberriesSDKService.createOrder(WildberriesConstant.TOKEN, request);

@@ -1,4 +1,4 @@
-package com.erp.server.oms.rocketmq.consumer.restcloud;
+package com.erp.server.oms.rocketmq.consumer;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.message.constant.RocketMqNewConsumerGroup;
@@ -23,13 +23,13 @@ import javax.annotation.Resource;
 selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_ORDER_TO_OMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_ORDER_TO_OMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
-public class RestcloudPlatformOrderConsumerService extends AbstractRestCloudPlatformConsumerHandler {
+public class NewPlatformRestCloudOrderConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 	@Resource
 	private PlatformOrderConsumerService platformOrderConsumerService;
 
 	@Override
 	public String getBizName() {
-		return "销售平台订单";
+		return "restCloud销售平台订单";
 	}
 	
     @Override
