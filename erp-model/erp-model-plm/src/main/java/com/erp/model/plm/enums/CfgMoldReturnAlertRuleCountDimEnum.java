@@ -54,4 +54,15 @@ public enum CfgMoldReturnAlertRuleCountDimEnum implements EnumMessage {
         }
         return "";
     }
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (CfgMoldReturnAlertRuleCountDimEnum statusEnum : CfgMoldReturnAlertRuleCountDimEnum.values()) {
+            if (name.equals(statusEnum.getName())) {
+                return statusEnum.getCode();
+            }
+        }
+        return "";
+    }
 }

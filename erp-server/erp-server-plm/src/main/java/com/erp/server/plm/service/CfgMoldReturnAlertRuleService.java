@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -58,4 +59,8 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
     void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importCfgMoldReturn(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<CfgMoldReturnImportExcelDTO> successList, List<CfgMoldReturnImportExcelDTO> errorList2, String importType);
 }
