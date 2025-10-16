@@ -16,11 +16,17 @@ import com.erp.model.wms.entity.InventoryTransactionEntity;
 public interface InventoryTransactionService extends SuperService<InventoryTransactionEntity> {
 
     /**
-     * 库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
+     * 库存id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
      * @param inventoryId
      * @param size
      */
-    void inventoryTransactionToInventoryHis(String inventoryId , int size);
+    void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis);
+    
+    /**
+     * 事务id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
+     * @param inventoryId
+     */
+    void transactionIdToInventoryHis(String transactionId);
     
     /**
      * 新增库存交易
