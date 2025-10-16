@@ -3,6 +3,7 @@ package com.erp.server.oms.schedule;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -49,7 +50,7 @@ public class HistoryReceiptJob {
         List<SoInfoEntity> soInfoEntityList = soInfoService.list();
         List<SoReceiptEntity> soReceiptEntityList = new ArrayList<>();
         List<SoReceiptDetailEntity> soReceiptDetailEntities = new ArrayList<>();
-        soInfoEntityList = soInfoEntityList.stream().filter(v->v.getReceiveAmount().compareTo(BigDecimal.ZERO)> 0 ).collect(Collectors.toList());
+        soInfoEntityList = soInfoEntityList.stream().filter(v->v.getReceiveAmount().compareTo(BigDecimal.ZERO)> 0 && v.getApproveStatus().equals(BillApproveStatusEnum.APPROVE) ).collect(Collectors.toList());
         for (SoInfoEntity soInfoEntity : soInfoEntityList) {
             SoReceiptEntity soReceiptEntity = new SoReceiptEntity();
             String idStr = IdWorker.getIdStr();
