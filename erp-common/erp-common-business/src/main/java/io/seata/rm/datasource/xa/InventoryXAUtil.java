@@ -1,5 +1,6 @@
 package io.seata.rm.datasource.xa;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -30,6 +31,8 @@ public class InventoryXAUtil {
 			Class<?> forName = Class.forName("com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter");
 			Method method = forName.getMethod("doXa", String.class , Integer.class);
 			method.invoke(forName.newInstance(), transactionId , status);
+		}catch(InvocationTargetException e1) {
+			log.error("处理全局事务提交库存失败transactionId={}，status={}" , transactionId , status , e1.getTargetException());
 		} catch (Exception e) {
 			log.error("处理全局事务提交库存失败transactionId={}，status={}" , transactionId , status , e);
 		}
