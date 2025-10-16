@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.CfgMoldReturnAlertRuleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="remark" property="remark" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="mold_id" property="moldId" />
+       <result column="mold_code" property="moldCode" />
+       <result column="mold_name" property="moldName" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="start_date" property="startDate" />
+       <result column="end_date" property="endDate" />
+       <result column="count_dim" property="countDim" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        cmr.id AS id,
+cmr.create_user_id AS createUserId,
+cmr.create_user_name AS createUserName,
+cmr.create_time AS createTime,
+cmr.update_user_id AS updateUserId,
+cmr.update_user_name AS updateUserName,
+cmr.update_time AS updateTime,
+cmr.version AS version,
+cmr.is_deleted AS isDeleted,
+cmr.disabled AS disabled,
+cmr.invalid_status AS invalidStatus,
+cmr.remark AS remark,
+cmr.invalid_remark AS invalidRemark,
+cmr.mold_id AS moldId,
+cmr.mold_code AS moldCode,
+cmr.mold_name AS moldName,
+cmr.supplier_id AS supplierId,
+cmr.supplier_code AS supplierCode,
+cmr.supplier_name AS supplierName,
+cmr.start_date AS startDate,
+cmr.end_date AS endDate,
+cmr.count_dim AS countDim
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        count(*)  AS count
+        FROM  cfg_mold_return_alert_rule
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+            ,
+            cmrd.id AS detailId,
+            cmrd.return_qty_limit AS returnQtyLimit,
+            cmrd.return_price as returnPrice,
+            cmrd.remark AS detailRemark
+        FROM
+        cfg_mold_return_alert_rule cmr
+        left join cfg_mold_return_alert_detail cmrd on cmr.id = cmrd.main_id and cmrd.is_deleted = FALSE
+        where
+        ${params.sqlMap.default}
+        AND cmr.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cmr.create_time desc,
+        cmrd.returnQtyLimit asc
+    </select>
+
+
+</mapper>

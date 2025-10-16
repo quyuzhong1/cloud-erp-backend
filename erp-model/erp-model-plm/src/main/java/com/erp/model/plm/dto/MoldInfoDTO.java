@@ -65,6 +65,10 @@ public class MoldInfoDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**

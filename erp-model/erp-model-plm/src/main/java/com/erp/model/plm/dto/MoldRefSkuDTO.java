@@ -64,8 +64,10 @@ public class MoldRefSkuDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
-
-        private List<String> ids;
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
