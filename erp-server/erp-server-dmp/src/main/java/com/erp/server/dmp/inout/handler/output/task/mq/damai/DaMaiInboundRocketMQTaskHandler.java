@@ -105,6 +105,7 @@ public class DaMaiInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 		receiving.setThirdId(dmpThirdInboundEntity.getSourceCode());
 		receivingDataList.add(receiving);
 		platformInboundDTO.setReceivingStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
+		platformInboundDTO.setHasReceivedData(true);
 		platformInboundDTO.setReceivingDataList(receivingDataList);
 
 		this.groupBySku(platformInboundDTO);
