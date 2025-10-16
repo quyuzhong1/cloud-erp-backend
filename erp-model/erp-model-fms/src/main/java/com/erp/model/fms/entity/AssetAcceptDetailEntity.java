@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.fms.enums.AssetCardStatusEnum;
 
 
 /**
@@ -59,6 +60,14 @@ public class AssetAcceptDetailEntity extends BaseEntity<AssetAcceptDetailEntity>
     */
     @TableField("asset_card_status")
     private String assetCardStatus;
+
+    /**
+     * 获取资产卡片关联状态枚举
+     * @return 枚举
+     */
+    public AssetCardStatusEnum getAssetCardStatusEnum() {
+        return AssetCardStatusEnum.getByStatus(this.assetCardStatus);
+    }
     /**
     * 待验收数量
     */

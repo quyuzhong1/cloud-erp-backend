@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import com.erp.model.fms.enums.PersonTypeEnum;
 
 /**
  * <p>
@@ -116,6 +117,13 @@ public class AssetAcceptPersonDTO implements Serializable {
         @Size(max = 50,message = "人员姓名最大长度不能超过50位")
         private String userName;
 
+        /**
+         * 获取人员类型枚举
+         * @return 枚举
+         */
+        public PersonTypeEnum getPersonTypeEnum() {
+            return PersonTypeEnum.getByCode(this.personType);
+        }
 
     }
 
