@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
@@ -737,7 +736,7 @@ public class MoldInfoDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ListApproveDTO{
+    public static class SearchMoldDTO {
         /**
          * 主键id
          */
@@ -747,6 +746,21 @@ public class MoldInfoDTO implements Serializable {
 
         private String  name;
     }
+
+    /**
+     * 模糊搜索参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        /**
+         * 模糊搜索参数
+         */
+        private String searchKeyword;
+
+        private String approveStatus;
+    }
+
 
 
 }

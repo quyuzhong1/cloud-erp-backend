@@ -916,8 +916,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     }
 
     @Override
-    public List<MoldInfoDTO.ListApproveDTO> searchMold(String searchKeyword) {
-        return baseMapper.searchMold(searchKeyword, ApproveStatusEnum.APPROVE.getStatus());
+    public List<MoldInfoDTO.SearchMoldDTO> searchMold(MoldInfoDTO.SearchDTO searchDTO) {
+        return baseMapper.searchMold(searchDTO);
     }
 
     @Override

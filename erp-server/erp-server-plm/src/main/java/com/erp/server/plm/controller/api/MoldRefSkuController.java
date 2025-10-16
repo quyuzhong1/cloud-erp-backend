@@ -12,7 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -356,6 +355,18 @@ public class MoldRefSkuController extends BaseController {
     public ApiResult<?> updateSkuQtyById(@RequestBody @Validated MoldInfoDTO.UpdateQty dto) {
         Boolean result = moldRefSkuService.updateSkuQtyById(dto);
         return result ? success() : failure();
+    }
+
+    /**
+     * 模糊搜索
+     * @author jack
+     * @date: 2025-10-16
+     * @param searchDTO
+     * @return ApiResult<List<MoldRefSkuDTO.searchMoldRefSkuDTO>>
+     */
+    @PostMapping("/searchMoldRefSku")
+    public ApiResult<List<MoldRefSkuDTO.SearchMoldRefSkuDTO>> searchMoldRefSku(@RequestBody MoldRefSkuDTO.SearchDTO searchDTO) {
+        return success(moldRefSkuService.searchMoldRefSku(searchDTO));
     }
 
 

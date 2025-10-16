@@ -458,6 +458,17 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     }
 
     @Override
+    public List<MoldRefSkuDTO.SearchMoldRefSkuDTO> searchMoldRefSku(MoldRefSkuDTO.SearchDTO searchDTO) {
+        List<MoldRefSkuDTO.SearchMoldRefSkuDTO> list = baseMapper.searchMoldRefSku(searchDTO);
+        // 属性赋值
+        for(MoldRefSkuDTO.SearchMoldRefSkuDTO data : list) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        }
+        return list;
+    }
+
+
+    @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         downloadTaskFeign.saveImportTask("导入模具关联SKU", IMPORT_PLM_MOLD_REF_SKU.getCode(), dto);

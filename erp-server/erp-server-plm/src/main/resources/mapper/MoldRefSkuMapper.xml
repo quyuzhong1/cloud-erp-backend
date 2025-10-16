@@ -94,4 +94,27 @@ mrs.sku_qty AS skuQty
         GROUP BY approve_status
     </select>
 
+    <select id="searchMoldRefSku" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$SearchMoldRefSkuDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        ,mi.project_code AS projectCode
+        ,mi.project_name AS projectName
+        FROM
+        mold_ref_sku mrs
+        inner join mold_info mi on mi.id = mrs.mold_id and mi.is_deleted = FALSE
+        WHERE
+            mrs.is_deleted = FALSE
+        <if test="params.approveStatus != null and params.approveStatus != ''">
+            and mrs.approve_status = #{params.approveStatus}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and  (mrs.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') or  mrs.product_name ILIKE concat('%',#{searchKeyword}::text,'%') )
+            ORDER BY
+            case when sku_no ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            when sku_no ILIKE concat('%',#{searchKeyword}::text) THEN 2
+            when sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            end , sku_no
+        </if>
+    </select>
+
 </mapper>

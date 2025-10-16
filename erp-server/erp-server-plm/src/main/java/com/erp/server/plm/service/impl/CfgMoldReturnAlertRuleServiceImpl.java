@@ -84,6 +84,14 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity = new CfgMoldReturnAlertRuleEntity();
         BeanMapperUtils.copy(addDTO, cfgMoldReturnAlertRuleEntity);
 
+        Integer count = lambdaQuery()
+                .eq(CfgMoldReturnAlertRuleEntity::getMoldId, cfgMoldReturnAlertRuleEntity.getMoldId())
+                .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
+                .count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldReturnAlertRuleEntity.getMoldCode());
+        }
+
         // 数据处理
         handleData(cfgMoldReturnAlertRuleEntity);
 
@@ -127,6 +135,15 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具返还策略"));
         CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity = BeanMapperUtils.map(CfgMoldReturnAlertRuleEntity.class, addOrUpdateDTO);
+
+        Integer count = lambdaQuery()
+                .eq(CfgMoldReturnAlertRuleEntity::getMoldId, cfgMoldReturnAlertRuleEntity.getMoldId())
+                .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
+                .ne(CfgMoldReturnAlertRuleEntity::getId, cfgMoldReturnAlertRuleEntity.getId())
+                .count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldReturnAlertRuleEntity.getMoldCode());
+        }
 
         // 数据处理
         handleData(cfgMoldReturnAlertRuleEntity);

@@ -110,4 +110,6 @@ public interface MoldRefSkuService extends SuperService<MoldRefSkuEntity> {
     Boolean updateOutputQtyById(MoldInfoDTO.UpdateQty dto);
 
     Boolean updateSkuQtyById(MoldInfoDTO.UpdateQty dto);
+
+    List<MoldRefSkuDTO.SearchMoldRefSkuDTO> searchMoldRefSku(MoldRefSkuDTO.SearchDTO searchDTO);
 }
