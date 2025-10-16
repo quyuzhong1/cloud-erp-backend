@@ -52,6 +52,7 @@ import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -388,7 +389,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 			resultMap.put("sub_platform_name", sub_platform_code);
 		}
 		resultMap.put("shop_code", entity.getCode());
-		resultMap.put("shop_site", entity.getCountryId());
+		String countryId = entity.getCountryId();
+		resultMap.put("shop_site", countryId);
 		resultMap.put("shop_name", entity.getName());
 		resultMap.put("currency_code", entity.getTradeCurrency());
 		resultMap.put("settlement_currency_code", entity.getCurrency());
@@ -422,6 +424,33 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		}else {
 			resultMap.put("status", entity.getApproveStatus().getName());
 		}
+		
+		resultMap.put("country_code", countryId);
+		if(StringUtils.isNotBlank(countryId)) {
+			DictCountryEntity dictCountryEntity = FeignQuery.getById(DictCountryEntity.class, countryId);
+			if(dictCountryEntity != null) {
+				resultMap.put("country_name", dictCountryEntity.getNameCn());
+				String regionCode = dictCountryEntity.getRegionCode();
+				resultMap.put("region_code", regionCode);
+				if(StringUtils.isNotBlank(regionCode)) {
+					DictGlobalAreaEntity dictGlobalAreaEntity = FeignQuery.getById(DictGlobalAreaEntity.class, regionCode);
+					if(dictGlobalAreaEntity != null) {
+						resultMap.put("region_name", dictGlobalAreaEntity.getRegionName());
+					}
+				}
+				
+			}
+		}
+		String salesDeptId = entity.getSalesDeptId();
+		if(StringUtils.isNotBlank(salesDeptId) && StringUtils.isNotBlank(useOrgId)) {
+			List<KingdeeDepartmentEntity> kingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class)
+					.eq(KingdeeDepartmentEntity::getErpDeptId, salesDeptId).eq(KingdeeDepartmentEntity::getUseOrgId, useOrgId).list();
+			if(CollUtil.isNotEmpty(kingdeeDepartmentEntityList)) {
+				resultMap.put("department_code", kingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+				resultMap.put("department_name", kingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+			}
+		}
+		
 		return resultMap;
 	}
 }

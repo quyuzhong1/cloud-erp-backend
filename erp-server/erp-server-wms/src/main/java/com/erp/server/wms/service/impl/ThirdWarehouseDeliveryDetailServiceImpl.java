@@ -1,10 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.server.wms.mapper.ThirdWarehouseDeliveryDetailMapper;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
 import io.seata.common.util.StringUtils;
@@ -48,5 +50,13 @@ public class ThirdWarehouseDeliveryDetailServiceImpl extends SuperServiceImpl<Th
         lambdaUpdate()
                 .in(ThirdWarehouseDeliveryDetailEntity::getMainId,mainIds)
                 .remove();
+    }
+
+    @Override
+    public List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWaitShipByWarehouseIds(warehouseIds);
     }
 }
