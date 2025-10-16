@@ -26,7 +26,7 @@ public class InventoryXAUtil {
 			if(!"erp-wms".equals(SERVICE_NAME)) {
 				return;
 			}
-			transactionId = xaXid.getGlobalXid();
+			transactionId = xaXid.getGlobalXid().replace(":", "_");
 			Class<?> forName = Class.forName("com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter");
 			Method method = forName.getMethod("doXa", String.class , Integer.class);
 			method.invoke(forName.newInstance(), transactionId , status);

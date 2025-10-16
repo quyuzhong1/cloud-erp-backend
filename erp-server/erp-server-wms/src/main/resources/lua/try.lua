@@ -38,19 +38,16 @@ for param in string.gmatch(params, '([^' .. split .. ']+)') do
     end
     local currentkey = (current .. paramlist[1]);
     local currentvalue = redis.call('get' , currentkey);
-    local newcurrentvalue = '';
     if currentvalue == 0 or currentvalue == false then
         redis.call('set' , currentkey , '0');
         currentvalue = '0';
     end
-    newcurrentvalue = (newcurrentvalue .. currentvalue);
     local d = 0;
     local currentqty = 0;
     for cv in string.gmatch(currentvalue, '([^' .. split .. ']+)') do
         if d == 0 then
             currentqty = cv;
         else
-            newcurrentvalue = (newcurrentvalue .. cv);
             local e = 0;
             local eflag = 0;
             for cs in string.gmatch(cv, '([^' .. delimiter .. ']+)') do
@@ -76,7 +73,7 @@ for param in string.gmatch(params, '([^' .. split .. ']+)') do
         errormsg = (errormsg .. string.gsub(kcbu, 'ss2ss', -updateqty));
     end
     b = b + 1;
-    newcurrentvaluearr[b] = {paramlist[1] , currentkey , (newcurrentvalue .. split .. transaction .. delimiter .. oqty)};
+    newcurrentvaluearr[b] = {paramlist[1] , currentkey , (currentvalue .. split .. transaction .. delimiter .. oqty)};
 end
 if errorflag == 1 then
     return errormsg .. '&&1000';

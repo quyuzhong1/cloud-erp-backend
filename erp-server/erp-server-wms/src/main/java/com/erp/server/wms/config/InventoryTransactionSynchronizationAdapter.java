@@ -6,6 +6,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.common.business.utils.ApplicationContextUtils;
 import com.erp.server.wms.service.InventoryTransactionService;
 
+import io.seata.core.context.RootContext;
+
 public class InventoryTransactionSynchronizationAdapter extends TransactionSynchronizationAdapter{
 	/**
 	 * 事务id
@@ -27,6 +29,9 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 	}
 	
 	public static void register(String transactionId) {
+		if(RootContext.inGlobalTransaction()) {
+			return;
+		}
 		InventoryTransactionSynchronizationAdapter synchronization = new InventoryTransactionSynchronizationAdapter();
 		synchronization.setTransactionId(transactionId);
 		TransactionSynchronizationManager.registerSynchronization(synchronization);

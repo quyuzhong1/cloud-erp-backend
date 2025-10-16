@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
@@ -50,10 +51,13 @@ public class InventoryTransactionJob {
         	.list();
         for(InventoryTransactionEntity l : list) {
         	String inventoryId = l.getInventoryId();
+        	MDC.put("traceId", inventoryId);
 			try {
 				inventoryTransactionService.inventoryTransactionToInventoryHis(inventoryId, inventorySize);
 			} catch (Exception e) {
 				log.error("自动迁移redis库存失败：{}" , inventoryId);
+			}finally {
+				MDC.remove("traceId");
 			}
         }
         return ReturnT.SUCCESS;

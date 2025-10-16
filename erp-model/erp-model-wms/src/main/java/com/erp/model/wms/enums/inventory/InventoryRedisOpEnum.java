@@ -74,15 +74,17 @@ public enum InventoryRedisOpEnum implements EnumMessage {
     }
     
     public static DefaultRedisScript<String> getDefaultRedisScript(InventoryRedisOpEnum inventoryRedisOpEnum){
+    	if(BusinessCommonConstants.hasProfile("dev")) {
+    		String luaBasePath = ClassLoader.getSystemResource("").getPath().split("/target/classes")[0] + "/src/main/resources/lua/";
+    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
+        	defaultRedisScript.setResultType(String.class);
+        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + inventoryRedisOpEnum.getLuaScript()));
+        	return defaultRedisScript;
+    	}
     	if(opRedisScript == null) {
     		synchronized (InventoryRedisOpEnum.class) {
     			if(opRedisScript == null) {
-    				String luaBasePath = "";
-        	    	if(!BusinessCommonConstants.hasProfile("dev")) {
-        	    		luaBasePath = ClassLoader.getSystemResource("").getPath().split("/target/classes")[0] + "/src/main/resources/lua/";
-        	    	}else {
-        	    		luaBasePath = ClassLoader.getSystemResource("").getPath() + "/lua/";
-        	    	}
+    				String luaBasePath = ClassLoader.getSystemResource("").getPath() + "/lua/";
         	    	opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
         	    	InventoryRedisOpEnum[] values = InventoryRedisOpEnum.values();
         	    	for(InventoryRedisOpEnum v : values) {

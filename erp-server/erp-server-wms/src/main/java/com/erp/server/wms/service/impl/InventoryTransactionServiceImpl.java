@@ -92,20 +92,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 						}
 						//2、更新历史库存
 						InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, InventoryTransactionDTO.class);
+						transactionDTO.setId(inventoryTransactionEntity.getFlowId());
 						transactionDTO.setUserId(inventoryTransactionEntity.getUpdateUserId());
 						transactionDTO.setUserName(inventoryTransactionEntity.getUpdateUserName());
 						this.updateInventoryHis(transactionDTO);
 						//3、更新流水的结余库存
 						int lastTransactionInventoryQty = this.getLastTransactionInventoryQty(transactionDTO);
 						String flowId = inventoryTransactionEntity.getFlowId();
-						boolean updateFlow = transactionFlowService.lambdaUpdate().set(TransactionFlowEntity::getCurInventoryQty, lastTransactionInventoryQty + transactionDTO.getQty())
+						transactionFlowService.lambdaUpdate().set(TransactionFlowEntity::getCurInventoryQty, lastTransactionInventoryQty + transactionDTO.getQty())
 									.eq(TransactionFlowEntity::getId, flowId).update();
-						boolean isApprove = inventoryTransactionEntity.getOperationMode().equals(InventoryTradingService.APPROVE);
-						if(isApprove && !updateFlow) {
-							throw new ServiceException("未更新到库存流水，库存flowId={}" , flowId);
-						}
 						//4、更新单据日期之后流水的结余库存
-						this.updateInventoryTransaction(transactionDTO, isApprove);
+						this.updateInventoryTransaction(transactionDTO, inventoryTransactionEntity.getOperationMode().equals(InventoryTradingService.APPROVE));
 					}
 					//5、更新最新历史库存到即时库存
 					this.inventoryHisToInventory(inventoryId);
@@ -155,7 +152,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		String transactionType = "";
 		boolean inGlobalTransaction = RootContext.inGlobalTransaction();
 		if(inGlobalTransaction) {
-			transactionId = RootContext.getXID();
+			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
 			transactionId = MDC.get("traceId");
@@ -183,6 +180,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			inventoryTransactionEntity.setTransactionId(transactionId);
 			inventoryTransactionEntity.setTransactionType(transactionType);
 			inventoryTransactionEntity.setOperationMode(approveType);
+			if(!InventoryTradingService.APPROVE.equals(approveType)) {
+				inventoryTransactionEntity.setQty(inventoryTransactionEntity.getQty() * -1);
+			}
 			inventoryTransactionEntityList.add(inventoryTransactionEntity);
 		}
 		this.saveBatch(inventoryTransactionEntityList);
@@ -191,6 +191,10 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 
     @Override
     public void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList) {
+    	if(StringUtils.isBlank(transactionId)) {
+			log.error("冻结redis库存事务transactionId不能为空");
+			throw new ServiceException("冻结redis库存事务transactionId不能为空");
+		}
     	Map<String, List<InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(InventoryTransactionDTO::getInventoryId));
     	List<String> transactionRedisParam = new ArrayList<>();
     	for(Map.Entry<String, List<InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
@@ -362,6 +366,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
                 .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
                 .le(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate())
                 .eq(TransactionFlowEntity::getIsUnapproved, false)
+                .ne(TransactionFlowEntity::getId, transactionDTO.getId())
                 .orderByDesc(TransactionFlowEntity::getBillDate)
                 .orderByDesc(TransactionFlowEntity::getId)
                 .last("limit 1");
