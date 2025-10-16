@@ -34,7 +34,11 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 		}
 		InventoryTransactionSynchronizationAdapter synchronization = new InventoryTransactionSynchronizationAdapter();
 		synchronization.setTransactionId(transactionId);
-		TransactionSynchronizationManager.registerSynchronization(synchronization);
+		if(TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(synchronization);
+		}else {
+			synchronization.afterCompletion(STATUS_COMMITTED);
+		}
 	}
 	
 	public void doXa(String transactionId , Integer status) {
