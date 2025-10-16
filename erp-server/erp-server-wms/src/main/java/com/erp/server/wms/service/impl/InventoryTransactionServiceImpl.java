@@ -236,7 +236,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
 		if(count == null || count == 0) {
-			throw new ServiceException("没有库存交易记录，不允许提交redis库存transactionId={}" , transactionId);
+			return;
 		}
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
