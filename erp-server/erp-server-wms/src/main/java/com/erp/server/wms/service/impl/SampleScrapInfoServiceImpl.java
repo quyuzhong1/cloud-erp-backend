@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
@@ -734,7 +735,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity sampleScrapInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品报废单数据"));
 
         // 将实体映射为ViewDTO对象
-        SampleScrapInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleScrapInfoDTO.ViewDTO.class, sampleScrapInfoEntity);
+        SampleScrapInfoDTO.ViewDTO data = new SampleScrapInfoDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleScrapInfoEntity, data);
         data.setApproveStatus(sampleScrapInfoEntity.getApproveStatus().getStatus());
 
         // 填充额外展示所需的数据

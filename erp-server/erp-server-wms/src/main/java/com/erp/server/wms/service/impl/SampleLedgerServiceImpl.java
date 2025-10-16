@@ -18,6 +18,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
@@ -616,7 +617,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         }
         
         SampleLedgerDTO.ViewDTO viewDTO = new SampleLedgerDTO.ViewDTO();
-        BeanMapperUtils.copy(entity, viewDTO);
+        BeanUtils.copyProperties(entity, viewDTO);
         
         return viewDTO;
     }
