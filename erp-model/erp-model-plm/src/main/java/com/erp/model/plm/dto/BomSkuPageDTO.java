@@ -35,6 +35,10 @@ public class BomSkuPageDTO implements Serializable {
          * 类目id
          */
         private List<String> categoryIdList;
+        /**
+         * 产品属性
+         */
+        private List<String> notPropertyList;
     }
 
     @Data

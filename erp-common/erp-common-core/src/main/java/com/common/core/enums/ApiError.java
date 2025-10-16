@@ -136,6 +136,7 @@ public enum ApiError implements Serializable {
 
     ERROR_NOT_FOUND(1067,"{}未找到"),
     ERROR_HAS_EXIST(1068,"{}已存在"),
+    ERROR_1069(1069,"只有已禁用数据支持删除"),
 
 
 

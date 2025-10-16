@@ -166,6 +166,12 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.notPropertyList !=null and params.notPropertyList.size>0">
+                and pi.property_id in
+                <foreach collection="params.notPropertyList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
         order by pbi.id desc
     </select>
