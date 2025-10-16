@@ -8,6 +8,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -205,6 +206,36 @@ public class SampleLedgerDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+        * 创建人id
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 修改人id
+        */
+        private String updateUserId;
+
+        /**
+        * 修改人名称
+        */
+        private String updateUserName;
+
+        /**
+        * 更新时间
+        */
+        private LocalDateTime updateTime;
 
         /**
         * 归属用户ID
