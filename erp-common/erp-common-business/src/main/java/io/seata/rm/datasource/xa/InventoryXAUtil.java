@@ -2,22 +2,15 @@ package io.seata.rm.datasource.xa;
 
 import java.lang.reflect.Method;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 
+import cn.hutool.extra.spring.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 
-@Component
 @Slf4j
 public class InventoryXAUtil {
-	
-	public static String name;
-	
-	@Value("${spring.application.name}")
-    public void setName(String name) {
-		InventoryXAUtil.name = name;
-    }
+	private InventoryXAUtil() {}
+	private static final String SERVICE_NAME = SpringUtil.getProperty("spring.application.name");
 	
 	public static void xaCommit(XAXid xaXid) {
 		doXa(xaXid, TransactionSynchronization.STATUS_COMMITTED);
@@ -30,7 +23,7 @@ public class InventoryXAUtil {
 	private static void doXa(XAXid xaXid , Integer status) {
 		String transactionId = "";
 		try {
-			if(!"erp-wms".equals(name)) {
+			if(!"erp-wms".equals(SERVICE_NAME)) {
 				return;
 			}
 			transactionId = xaXid.getGlobalXid();

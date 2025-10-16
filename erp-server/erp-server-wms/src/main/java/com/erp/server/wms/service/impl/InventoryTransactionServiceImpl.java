@@ -87,22 +87,25 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					for(InventoryTransactionEntity inventoryTransactionEntity : inventoryTransactionEntityList) {
 						//1、补偿提交redis库存
 						String transactionId = inventoryTransactionEntity.getTransactionId();
-						if(!transactionIdSet.add(transactionId)) {
+						if(transactionIdSet.add(transactionId)) {
 							this.commitRedis(inventoryTransactionEntity.getTransactionId());
 						}
 						//2、更新历史库存
 						InventoryTransactionDTO transactionDTO = BeanUtil.copyProperties(inventoryTransactionEntity, InventoryTransactionDTO.class);
+						transactionDTO.setUserId(inventoryTransactionEntity.getUpdateUserId());
+						transactionDTO.setUserName(inventoryTransactionEntity.getUpdateUserName());
 						this.updateInventoryHis(transactionDTO);
 						//3、更新流水的结余库存
 						int lastTransactionInventoryQty = this.getLastTransactionInventoryQty(transactionDTO);
 						String flowId = inventoryTransactionEntity.getFlowId();
 						boolean updateFlow = transactionFlowService.lambdaUpdate().set(TransactionFlowEntity::getCurInventoryQty, lastTransactionInventoryQty + transactionDTO.getQty())
 									.eq(TransactionFlowEntity::getId, flowId).update();
-						if(!updateFlow) {
+						boolean isApprove = inventoryTransactionEntity.getOperationMode().equals(InventoryTradingService.APPROVE);
+						if(isApprove && !updateFlow) {
 							throw new ServiceException("未更新到库存流水，库存flowId={}" , flowId);
 						}
 						//4、更新单据日期之后流水的结余库存
-						this.updateInventoryTransaction(transactionDTO, inventoryTransactionEntity.getOperationMode().equals(InventoryTradingService.APPROVE));
+						this.updateInventoryTransaction(transactionDTO, isApprove);
 					}
 					//5、更新最新历史库存到即时库存
 					this.inventoryHisToInventory(inventoryId);
@@ -233,7 +236,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
-				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, transactionId));
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
 	}
 
 	@Override
@@ -248,7 +251,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
 		inventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
-				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, transactionId));
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
 	}
 	
 	/**

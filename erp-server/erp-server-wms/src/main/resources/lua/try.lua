@@ -58,8 +58,9 @@ for param in string.gmatch(params, '([^' .. split .. ']+)') do
                     eflag = 1;
                 end
                 if e > 0 then
-                    if cs < 0 or eflag == 1 then
-                        currentqty = currentqty + cs;
+                    local ncs = tonumber(cs);
+                    if ncs < 0 or eflag == 1 then
+                        currentqty = currentqty + ncs;
                     end 
                 end
                 e = e + 1;

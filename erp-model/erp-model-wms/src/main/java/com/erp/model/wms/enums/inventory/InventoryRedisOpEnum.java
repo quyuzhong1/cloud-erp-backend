@@ -3,9 +3,11 @@ package com.erp.model.wms.enums.inventory;
 import java.util.EnumMap;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -32,18 +34,7 @@ public enum InventoryRedisOpEnum implements EnumMessage {
         this.luaScript = luaScript;
     }
     
-    private static EnumMap<InventoryRedisOpEnum, DefaultRedisScript<String>> opRedisScript;
-    static {
-    	String luaBasePath = ClassLoader.getSystemResource("").getPath().replace("erp-model/erp-model-wms", "erp-server/erp-server-wms") + "/lua/";
-    	opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
-    	InventoryRedisOpEnum[] values = InventoryRedisOpEnum.values();
-    	for(InventoryRedisOpEnum v : values) {
-    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
-        	defaultRedisScript.setResultType(String.class);
-        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + v.luaScript));
-        	opRedisScript.put(v, defaultRedisScript);
-    	}
-    }
+    private static volatile EnumMap<InventoryRedisOpEnum, DefaultRedisScript<String>> opRedisScript = null;
     /**
      * 类型
      */
@@ -83,6 +74,26 @@ public enum InventoryRedisOpEnum implements EnumMessage {
     }
     
     public static DefaultRedisScript<String> getDefaultRedisScript(InventoryRedisOpEnum inventoryRedisOpEnum){
+    	if(opRedisScript == null) {
+    		synchronized (InventoryRedisOpEnum.class) {
+    			if(opRedisScript == null) {
+    				String luaBasePath = "";
+        	    	if(!BusinessCommonConstants.hasProfile("dev")) {
+        	    		luaBasePath = ClassLoader.getSystemResource("").getPath().split("/target/classes")[0] + "/src/main/resources/lua/";
+        	    	}else {
+        	    		luaBasePath = ClassLoader.getSystemResource("").getPath() + "/lua/";
+        	    	}
+        	    	opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
+        	    	InventoryRedisOpEnum[] values = InventoryRedisOpEnum.values();
+        	    	for(InventoryRedisOpEnum v : values) {
+        	    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
+        	        	defaultRedisScript.setResultType(String.class);
+        	        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + v.luaScript));
+        	        	opRedisScript.put(v, defaultRedisScript);
+        	    	}
+    			}
+			}
+    	}
     	return opRedisScript.get(inventoryRedisOpEnum);
     }
     
