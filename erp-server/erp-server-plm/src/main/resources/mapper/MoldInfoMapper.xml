@@ -139,7 +139,7 @@ mi.payment_condition AS paymentCondition
         where
             is_deleted = false
         and invalid_status = false
-        <if test="params.approveStatus != null and params.approveStatus != ''">
+        <if test=" approveStatus != null and approveStatus != ''">
             AND approve_status =#{approveStatus}
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
