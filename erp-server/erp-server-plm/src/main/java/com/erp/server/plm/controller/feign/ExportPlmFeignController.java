@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
@@ -57,6 +58,8 @@ public class ExportPlmFeignController {
     private MoldInfoService moldInfoService;
     @Resource
     private MoldRefSkuService moldRefSkuService;
+    @Resource
+    private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -163,7 +166,13 @@ public class ExportPlmFeignController {
     }
     @PostMapping("/exportMoldRefSku")
     @WebAdvanceQuery(handler = MoldRefSkuQueryHandler.class)
-    PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto){
+    public PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto){
         return moldRefSkuService.paging(dto);
+    }
+
+    @PostMapping("/exportCfgMoldReturn")
+    @WebAdvanceQuery(handler = CfgMoldReturnAlertRuleQueryHandler.class)
+    public PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto) {
+        return cfgMoldReturnAlertRuleService.paging(dto);
     }
 }

@@ -89,6 +89,7 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
          * 策略状态
          */
         private Boolean disabled;
+        private String disabledName;
 
         /**
          * 是否作废

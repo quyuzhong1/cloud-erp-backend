@@ -908,6 +908,11 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     }
 
     @Override
+    public List<MoldInfoDTO.ListApproveDTO> searchMold(String searchKeyword) {
+        return baseMapper.searchMold(searchKeyword, ApproveStatusEnum.APPROVE.getStatus());
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchRefSku(MoldInfoDTO.RefSkuDTO dto) {
         List<String> skuNos = dto.getSkuNos();
