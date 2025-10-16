@@ -854,7 +854,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //需要自动入库的子件入库单
             List<PoInstockEntity> poInstockEntityList = this.listByIds(poInstockIds);
             List<PoInstockDetailEntity> poInstockDetailEntityList = poInstockDetailService.listByMainIds(poInstockIds);
-            List<PoInstockEntity> needInstockList = new ArrayList<>();
             for (PoInstockEntity entity : poInstockEntityList){
                 List<PoInstockDetailEntity> detailEntityList = poInstockDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(entity.getId())).collect(Collectors.toList());
                 //明细是否都在符合条件的自动审核订单中
@@ -864,19 +863,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     log.error(CharSequenceUtil.format("采购入库单【{}】中SKU【{}】没有可入库记录",entity.getCode(), String.join(",",skuNoList)));
                     continue;
                 }
-                needInstockList.add(entity);
+                //自动提交审核
+                if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+                    //提交
+                    this.submit(Collections.singletonList(entity.getId()));
+                    //审核
+                    this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
+                    continue;
+                } else {
+                    //审核
+                    this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
+                }
             }
-            if (CollectionUtils.isNotEmpty(needInstockList)){
-                updateInventoryTransCore(needInstockList);
-                List<String> ids = needInstockList.stream().map(PoInstockEntity::getId).distinct().collect(Collectors.toList());
-                //更新审核状态
-                updateApproveStatus(ids,ApproveStatusEnum.APPROVE.getStatus());
-                //审核通过发送金蝶
-                sendPushTask(needInstockList,SyncOperateEnum.OPERATE_APPROVE.getCode());
-                //修改采购收货单入库状态
-                warehouseReceiveService.updateReceiveInStockStatus(needInstockList);
-            }
-
         }
     }
 
