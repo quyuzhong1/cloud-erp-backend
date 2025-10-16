@@ -388,6 +388,7 @@ public class MoldInfoDTO implements Serializable {
         * 模具分类
         */
         private String categoryId;
+        private String categoryCode;
         private String categoryName;
 
 
