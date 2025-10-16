@@ -1,9 +1,11 @@
 package com.erp.model.wms.enums.inventory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
@@ -84,13 +86,18 @@ public enum InventoryRedisOpEnum implements EnumMessage {
     	if(opRedisScript == null) {
     		synchronized (InventoryRedisOpEnum.class) {
     			if(opRedisScript == null) {
-    				String luaBasePath = ClassLoader.getSystemResource("").getPath() + "/lua/";
         	    	opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
         	    	InventoryRedisOpEnum[] values = InventoryRedisOpEnum.values();
         	    	for(InventoryRedisOpEnum v : values) {
         	    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
         	        	defaultRedisScript.setResultType(String.class);
-        	        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + v.luaScript));
+						File file = null;
+						try {
+							file = new ClassPathResource("lua/" + v.luaScript).getFile();
+						} catch (IOException e) {
+							throw new RuntimeException("获取lua脚本文件失败" + v.luaScript, e);
+						}
+						defaultRedisScript.setScriptText(FileUtil.readUtf8String(file));
         	        	opRedisScript.put(v, defaultRedisScript);
         	    	}
     			}
