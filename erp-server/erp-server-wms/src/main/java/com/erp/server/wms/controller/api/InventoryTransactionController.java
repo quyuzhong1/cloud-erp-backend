@@ -71,7 +71,7 @@ public class InventoryTransactionController extends BaseController {
     			RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
              	if(tryLock != null) {
              		try {
-         				inventoryTransactionService.inventoryTransactionToInventoryHis(id , -1);
+         				inventoryTransactionService.inventoryIdToInventoryHis(id , -1 , 30 , true);
          				inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , inventoryService.getById(id).getQty().toString());
          				result.put(id, "成功");
          			}catch (Exception e) {
