@@ -139,7 +139,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		for(InventoryTransactionEntity l : list) {
     			String inventoryId = l.getInventoryId();
     			try {
-					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 1, false);
+					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 3, false);
 				} catch (Exception e) {
 					log.error("即时迁移redis库存失败：{}" , inventoryId);
 				}
