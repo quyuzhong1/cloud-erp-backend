@@ -1,0 +1,566 @@
+package com.erp.model.plm.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import com.common.business.dto.base.SortDTO;
+import java.util.List;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
+
+/**
+ * <p>
+ * 请求响应实体
+ * </p>
+ *
+ * @author wtr
+ * @since 2025-10-16
+*/
+@Data
+@NoArgsConstructor
+public class AssetPurchaseOrderDTO implements Serializable {
+
+
+     /**
+     * 状态统计
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class TabListDTO {
+
+         /**
+         * 类型
+         */
+         private String tabFlag;
+
+         /**
+         * 数量
+         */
+         private Integer count;
+
+     }
+     /**
+     * 分页列表查询参数
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
+
+     }
+    /**
+    * 分页列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 资产采购单号
+        */
+        private String code;
+
+        /**
+        * 审核人id
+        */
+        private String approveUserId;
+
+        /**
+        * 审核人名称
+        */
+        private String approveUserName;
+
+        /**
+        * 审核时间
+        */
+        private LocalDateTime approveUserTime;
+
+        /**
+        * 单据状态
+        */
+        private String approveStatus;
+
+        /**
+        * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
+        */
+        private String contractStampStatus;
+
+        /**
+        * 单据类型
+        */
+        private String orderType;
+
+        /**
+        * 来源订单id
+        */
+        private String sourceId;
+
+        /**
+        * 来源订单号
+        */
+        private String sourceCode;
+
+        /**
+        * 来源订单类型
+        */
+        private String sourceType;
+
+        /**
+        * 采购日期
+        */
+        private LocalDate purchaseDate;
+
+        /**
+        * 采购员id
+        */
+        private String purchaseUserId;
+
+        /**
+        * 采购员名称
+        */
+        private String purchaseUserName;
+
+        /**
+        * 采购部门id
+        */
+        private String purchaseDeptId;
+
+        /**
+        * 采购部门名称
+        */
+        private String purchaseDeptName;
+
+        /**
+        * 采购组织id
+        */
+        private String purchaseOrgId;
+
+        /**
+        * 采购组织名称
+        */
+        private String purchaseOrgName;
+
+        /**
+        * 作废状态（false未作废，true已作废）
+        */
+        private Boolean invalidStatus;
+
+        /**
+        * 作废时间
+        */
+        private LocalDateTime invalidTime;
+
+        /**
+        * 作废原因
+        */
+        private String invalidRemark;
+
+
+        /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+        /**
+        * 作废状态名称
+        */
+        private String invalidStatusName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+         * 单据类型名称
+         */
+        private String orderTypeName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 是否结束验收
+         */
+        private Boolean isEndReceive;
+
+        /**
+         * 结束验收时间
+         */
+        private LocalDateTime endReceiveTime;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 采购数量
+         */
+        private BigDecimal purchaseQty;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 待验收数量
+         */
+        private BigDecimal unAcceptQty;
+
+        /**
+         * 已验收数量
+         */
+        private BigDecimal acceptQty;
+
+
+    }
+
+    /**
+    * 导出Excel
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+        * 勾选的id集合
+        */
+        private List<String> ids;
+    }
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 资产采购单号
+        */
+        private String code;
+
+        /**
+        * 审核人id
+        */
+        private String approveUserId;
+
+        /**
+        * 审核人名称
+        */
+        private String approveUserName;
+
+        /**
+        * 审核时间
+        */
+        private LocalDateTime approveUserTime;
+
+        /**
+        * 单据状态
+        */
+        private String approveStatus;
+
+        /**
+        * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
+        */
+        private String contractStampStatus;
+
+        /**
+        * 单据类型
+        */
+        private String orderType;
+
+        /**
+        * 来源订单id
+        */
+        private String sourceId;
+
+        /**
+        * 来源订单号
+        */
+        private String sourceCode;
+
+        /**
+        * 来源订单类型
+        */
+        private String sourceType;
+
+        /**
+        * 采购日期
+        */
+        private LocalDate purchaseDate;
+
+        /**
+        * 采购员id
+        */
+        private String purchaseUserId;
+
+        /**
+        * 采购员名称
+        */
+        private String purchaseUserName;
+
+        /**
+        * 采购部门id
+        */
+        private String purchaseDeptId;
+
+        /**
+        * 采购部门名称
+        */
+        private String purchaseDeptName;
+
+        /**
+        * 采购组织id
+        */
+        private String purchaseOrgId;
+
+        /**
+        * 采购组织名称
+        */
+        private String purchaseOrgName;
+
+        /**
+        * 作废状态（false未作废，true已作废）
+        */
+        private Boolean invalidStatus;
+
+        /**
+        * 作废时间
+        */
+        private LocalDateTime invalidTime;
+
+        /**
+        * 作废原因
+        */
+        private String invalidRemark;
+
+        /**
+         * 供应商信息
+         */
+        private AssetPurchaseOrderSupplierDTO.ViewDTO assetPurchaseOrderSupplierDTO;
+
+        /**
+         * 产品明细
+         */
+        private List<AssetPurchaseOrderDetailDTO.ViewDTO>  assetPurchaseOrderDetailDTOList;
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+        /**
+         * 供应商信息
+         */
+        @Valid
+        @NotNull(message = "供应商信息不能为空")
+        private AssetPurchaseOrderSupplierDTO.AddDTO assetPurchaseOrderSupplierDTO;
+
+        /**
+         *
+         */
+        @Valid
+        @NotNull(message = "资产采购订单明细信息不能为空")
+        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderSupplierDTOList;
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 供应商信息
+         */
+        @Valid
+        @NotNull(message = "供应商信息不能为空")
+        private AssetPurchaseOrderSupplierDTO.UpdateDTO assetPurchaseOrderSupplierDTO;
+
+        /**
+         *
+         */
+        @Valid
+        @NotNull(message = "资产采购订单明细信息不能为空")
+        private List<AssetPurchaseOrderDetailDTO.UpdateDTO> assetPurchaseOrderSupplierDTOList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 审核时间
+        */
+        private LocalDateTime approveUserTime;
+
+        /**
+        * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
+        */
+        @NotBlank(message = "合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成不能为空")
+        @Size(max = 255,message = "合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成最大长度不能超过255位")
+        private String contractStampStatus;
+
+        /**
+        * 单据类型
+        */
+        @NotBlank(message = "单据类型不能为空")
+        @Size(max = 255,message = "单据类型最大长度不能超过255位")
+        private String orderType;
+
+        /**
+        * 来源订单id
+        */
+        private String sourceId;
+
+        /**
+        * 来源订单号
+        */
+        private String sourceCode;
+
+        /**
+        * 来源订单类型
+        */
+        private String sourceType;
+
+        /**
+        * 采购日期
+        */
+        private LocalDate purchaseDate;
+
+        /**
+        * 采购员id
+        */
+        private String purchaseUserId;
+
+        /**
+        * 采购员名称
+        */
+        private String purchaseUserName;
+
+        /**
+        * 采购部门id
+        */
+        private String purchaseDeptId;
+
+        /**
+        * 采购部门名称
+        */
+        private String purchaseDeptName;
+
+        /**
+        * 采购组织id
+        */
+        @NotBlank(message = "采购组织id不能为空")
+        @Size(max = 255,message = "采购组织id最大长度不能超过255位")
+        private String purchaseOrgId;
+
+        /**
+        * 采购组织名称
+        */
+        @NotBlank(message = "采购组织名称不能为空")
+        @Size(max = 255,message = "采购组织名称最大长度不能超过255位")
+        private String purchaseOrgName;
+
+        /**
+        * 作废时间
+        */
+        private LocalDateTime invalidTime;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<AssetNoticeDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+
+}
