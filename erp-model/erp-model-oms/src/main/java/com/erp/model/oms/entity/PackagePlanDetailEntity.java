@@ -52,12 +52,12 @@ public class PackagePlanDetailEntity extends BaseEntity<PackagePlanDetailEntity>
     /**
     * 物流跟踪号
     */
-    @TableField("track_no")
+    @TableField(exist = false)
     private String trackNo;
     /**
     * 运输单号
     */
-    @TableField("transport_no")
+    @TableField(exist = false)
     private String transportNo;
 
     /**

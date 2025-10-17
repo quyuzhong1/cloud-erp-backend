@@ -2022,7 +2022,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private BatchResultDTO getWildberrisLogistics(SoB2cEntity entity, Boolean isDelivery) {
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
         if(CollectionUtils.isNotEmpty(workflowTaskRecordEntities)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "该订单已生成组包计划任务");
+            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+            addTaskDTO.setSourceId(entity.getId());
+            addTaskDTO.setSourceCode(entity.getCode());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
+            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "重试获取物流信息");
         }
         //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();

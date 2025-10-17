@@ -492,7 +492,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
-            if (!"204".equals(response.getCode())) {
+            if (Objects.nonNull(response) && !"204".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg(response.getCode());
                 return mqResponseDTO;
             }
@@ -627,7 +627,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             OrderLabelResponse response = wildberriesSDKService.getOrderLabel(authEntity.getToken(), request);
-            if (!"200".equals(response.getCode())) {
+            if (CharSequenceUtil.isNotBlank(response.getDetail())) {
                 mqResponseDTO.setErrorMsg("获取订单标签失败:" + JSONUtil.toJsonStr(response));
                 return mqResponseDTO;
             }
