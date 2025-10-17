@@ -226,13 +226,15 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
      */
     private void handleData(CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity) {
         MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(cfgMoldReturnAlertRuleEntity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
-
+        //结束日期不能小于开始日期
+        if (cfgMoldReturnAlertRuleEntity.getEndDate().isBefore(cfgMoldReturnAlertRuleEntity.getStartDate())) {
+            throw new ServiceException(ApiError.ERROR_92008);
+        }
         cfgMoldReturnAlertRuleEntity.setMoldCode(moldInfoEntity.getCode());
         cfgMoldReturnAlertRuleEntity.setMoldName(moldInfoEntity.getName());
         cfgMoldReturnAlertRuleEntity.setSupplierId(moldInfoEntity.getSupplierId());
         cfgMoldReturnAlertRuleEntity.setSupplierCode(moldInfoEntity.getSupplierCode());
         cfgMoldReturnAlertRuleEntity.setSupplierName(moldInfoEntity.getSupplierName());
-
     }
 
     @Override
