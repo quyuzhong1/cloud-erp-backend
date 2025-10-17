@@ -236,7 +236,12 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
                     detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
                     detail.setPlatformCode(platformSoOutStockDetailDTO.getPlatformCode());
                     detail.setPlatformDetailId(platformSoOutStockDetailDTO.getPlatformDetailId());
-                    generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
+                    LocalDate localDate = platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime();
+                    if (Objects.isNull(localDate)){
+                        throw new ServiceException("当前销售出库单【{}】发货日期为空", dto.getPlatformCode());
+                    }
+                    generateB2cDTO.setActualDeliveryDate(localDate.atStartOfDay());
+                    generateB2cDTO.setBillDate(localDate);
                     detailList1.add(detail);
                 }
             }

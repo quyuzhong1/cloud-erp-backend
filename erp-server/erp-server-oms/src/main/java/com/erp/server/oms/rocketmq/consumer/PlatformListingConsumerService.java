@@ -1,7 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -11,7 +10,6 @@ import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -40,7 +38,6 @@ import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -143,12 +140,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
             //上传图片到文件服务器
             if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
-                MultipartFile multipartFile = FileUtil.dhtFileUrlToMultipartFile(entity.getProductImageUrl());
-                String fileUrl = fileFeign.uploadFile(multipartFile);
-                entity.setProductImageUrl(fileUrl);
-                if (ObjUtil.isNotEmpty(oldEntity)) {
-                    oldEntity.setProductImageUrl(fileUrl);
-                }
+                entity.setProductImageUrl(entity.getProductImageUrl());
             }
 
             if (null == oldEntity) {

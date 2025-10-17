@@ -146,7 +146,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             inputDataMap = gson.fromJson(jsonStr, mapType);
         } catch (Exception e) {
             log.error("Failed to parse inputData JSON for workflowTaskRecordEntity id: {}", entity.getId(), e);
-            String msg = StrUtil.format("traceId: 【{}】，Failed to parse inputData JSON for workflowTaskRecordEntity id: 【{}】，e :{}",traceId,entity.getId(),e);
+            String msg = StrUtil.format("traceId: 【{}】，Failed to parse inputData JSON for workflowTaskRecordEntity id: 【{}】，e :{}",traceId,entity.getId(),e.getMessage());
             markAsFailed(entity,msg);
             return Boolean.FALSE;
         }
@@ -170,7 +170,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             mqResponseDTO = FeignQuery.invoke(WorkflowTaskRecordDTO.MqResponseDTO.class, controller, methodName, Arrays.asList(dto));
         } catch (Exception e) {
             log.error("Feign invoke failed for workflowTaskRecordEntity id: {}", entity.getId(), e);
-            String msg = StrUtil.format("traceId: 【{}】，Feign invoke failed for workflowTaskRecordEntity id: {}，e :{}",traceId, entity.getId(),e);
+            String msg = StrUtil.format("traceId: 【{}】，Feign invoke failed for workflowTaskRecordEntity id: {}，e :{}",traceId, entity.getId(),e.getMessage());
             markAsFailed(entity,msg);
             return Boolean.FALSE;
         }

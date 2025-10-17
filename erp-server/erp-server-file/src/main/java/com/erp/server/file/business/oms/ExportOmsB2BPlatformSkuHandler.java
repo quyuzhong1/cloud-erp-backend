@@ -41,6 +41,6 @@ public class ExportOmsB2BPlatformSkuHandler extends AbstractPageFileEventHandler
 
     @Override
     public String getExcelPath() {
-        return "excel/oms/B2BPlatformSkuMapping.xlsx";
+        return "excel/oms/B2bPlatformSkuMapping.xlsx";
     }
 }

@@ -103,4 +103,6 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return BigDecimal
      */
     BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode);
+
+    void syncLastestRateToDht();
 }

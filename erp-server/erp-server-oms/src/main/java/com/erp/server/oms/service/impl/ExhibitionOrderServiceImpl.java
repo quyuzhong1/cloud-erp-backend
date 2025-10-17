@@ -1575,6 +1575,17 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+
+        BigDecimal zeroFlag = BigDecimal.ZERO;
+        List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }
+        //这个是 单价为空的集合
+        List<ExhibitionOrderDetailEntity> isNullPriceList = detailList.stream().filter(s -> !s.getIsGift() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(isNullPriceList)) {
+            throw new ServiceException(entity.getCode() + "销售单价不能为空或者为零");
+        }
         return;
     }
 
