@@ -116,7 +116,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleBorrowInfoDisApprove")
-    public ApiResult<List<BatchResultDTO>> sampleBorrowInfoDisApprove(@Valid BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sampleBorrowInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
         return sampleFeign.sampleBorrowInfoDisApprove(dto);
     }
 
@@ -188,7 +188,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleRecipientDisApprove")
-    public ApiResult<List<BatchResultDTO>> sampleRecipientDisApprove(@Valid BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sampleRecipientDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
         return sampleFeign.sampleRecipientDisApprove(dto);
     }
 
@@ -275,7 +275,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleBackInfoDisApprove")
-    public ApiResult<List<BatchResultDTO>> sampleBackInfoDisApprove(@Valid BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sampleBackInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
         return sampleFeign.sampleBackInfoDisApprove(dto);
     }
 
@@ -342,7 +342,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleReturnInfoDisApprove")
-    public ApiResult<List<BatchResultDTO>> sampleReturnInfoDisApprove(@Valid BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sampleReturnInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
         return sampleFeign.sampleReturnInfoDisApprove(dto);
     }
 
@@ -409,7 +409,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleScrapInfoDisApprove")
-    public ApiResult<List<BatchResultDTO>> sampleScrapInfoDisApprove(@Valid BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sampleScrapInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
         return sampleFeign.sampleScrapInfoDisApprove(dto);
     }
 
