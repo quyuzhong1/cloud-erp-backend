@@ -883,8 +883,8 @@
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
         pd.unit_name,
-        pi.property_id,
-        pi.property
+        pi.property_id as propertyId,
+        pi.property as propertyName
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE

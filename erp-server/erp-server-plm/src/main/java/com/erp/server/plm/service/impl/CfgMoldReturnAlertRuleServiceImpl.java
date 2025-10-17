@@ -517,7 +517,6 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                     e.setErrorMsg(errorMsg1);
                     errorList2.add(e);
                 });
-                errorList2.addAll(value);
             }else {
                 // 新增
                 List<CfgMoldReturnAlertDetailDTO.AddDTO> detailList = new ArrayList<>();
