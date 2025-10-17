@@ -866,13 +866,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //自动提交审核
                 if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
                     //提交
-                    this.submit(Collections.singletonList(entity.getId()));
+                    Boolean submit = this.submit(Collections.singletonList(entity.getId()));
+                    if (!submit) {
+                        throw new ServiceException(ApiError.ERROR_1042,"子件入库单");
+                    }
                     //审核
-                    this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
-                    continue;
-                } else {
-                    //审核
-                    this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
+                    entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+                }
+                BatchResultDTO approve = this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
+                if (!approve.getSuccess()) {
+                    throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"子件入库单");
                 }
             }
         }
