@@ -407,6 +407,7 @@ public class AssetAcceptController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产验收表导出Excel数据")
+    @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated AssetAcceptDTO.ExportDTO dto, HttpServletResponse response) {
         // 异步导出任务
         downloadTaskFeign.saveDownloadTask("资产验收表导出", FileTaskEventEnum.EXPORT_FMS_ASSET_ACCEPT_REPORT.getCode(), dto);
