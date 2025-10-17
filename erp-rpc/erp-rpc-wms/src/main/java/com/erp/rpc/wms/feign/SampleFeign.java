@@ -78,7 +78,7 @@ public interface SampleFeign {
      * 样品借用单审核不通过
      */
     @PostMapping("/sampleBorrowInfo/disApprove")
-    ApiResult<List<BatchResultDTO>> sampleBorrowInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleBorrowInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品借用单删除
@@ -164,7 +164,7 @@ public interface SampleFeign {
      * 样品领用单审核不通过
      */
     @PostMapping("/sampleRecipient/disApprove")
-    ApiResult<List<BatchResultDTO>> sampleRecipientDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleRecipientDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品领用单删除
@@ -268,7 +268,7 @@ public interface SampleFeign {
      * 样品退回单审核不通过
      */
     @PostMapping("/sampleBackInfo/disApprove")
-    ApiResult<List<BatchResultDTO>> sampleBackInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleBackInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品退回单删除
@@ -348,7 +348,7 @@ public interface SampleFeign {
      * 样品归还单审核不通过
      */
     @PostMapping("/sampleReturnInfo/disApprove")
-    ApiResult<List<BatchResultDTO>> sampleReturnInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleReturnInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品归还单删除
@@ -428,7 +428,7 @@ public interface SampleFeign {
      * 样品报废单审核不通过
      */
     @PostMapping("/sampleScrapInfo/disApprove")
-    ApiResult<List<BatchResultDTO>> sampleScrapInfoDisApprove(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleScrapInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 
     /**
      * 样品报废单删除
