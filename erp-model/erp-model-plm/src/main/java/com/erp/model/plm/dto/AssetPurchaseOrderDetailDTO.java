@@ -1,0 +1,267 @@
+package com.erp.model.plm.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+import javax.validation.constraints.Digits;
+
+/**
+ * <p>
+ * 请求响应实体
+ * </p>
+ *
+ * @author wtr
+ * @since 2025-10-16
+*/
+@Data
+@NoArgsConstructor
+public class AssetPurchaseOrderDetailDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 资产采购单单头id
+        */
+        private String mainId;
+
+        /**
+        * 资产id
+        */
+        private String assetId;
+
+        /**
+        * 资产编码
+        */
+        private String assetCode;
+
+        /**
+        * 资产名称
+        */
+        private String assetName;
+
+        /**
+        * 含税单价
+        */
+        private BigDecimal taxPrice;
+
+        /**
+        * 币种
+        */
+        private String currency;
+
+        /**
+        * 币种符号
+        */
+        private String currencySymbol;
+
+        /**
+        * 税率
+        */
+        private BigDecimal taxRate;
+
+        /**
+        * 采购数量
+        */
+        private BigDecimal purchaseQty;
+
+        /**
+        * 价税合计
+        */
+        private BigDecimal totalAmount;
+
+        /**
+        * 计划交期
+        */
+        private LocalDate planDeliveryDate;
+
+        /**
+        * 是否加急
+        */
+        private Boolean isUrgent;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 金蝶明细id
+        */
+        private String kingdeeDetailId;
+
+        /**
+        * 是否结束收货
+        */
+        private Boolean isEndReceive;
+
+        /**
+        * 结束验收时间
+        */
+        private LocalDateTime endReceiveTime;
+
+        /**
+        * 来源明细id
+        */
+        private String sourceDetailId;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 资产采购单单头id
+        */
+        @NotBlank(message = "资产采购单单头id不能为空")
+        private String mainId;
+
+        /**
+        * 资产id
+        */
+        @NotBlank(message = "资产id不能为空")
+        private String assetId;
+
+        /**
+        * 资产编码
+        */
+        @NotBlank(message = "资产编码不能为空")
+        private String assetCode;
+
+        /**
+        * 资产名称
+        */
+        @NotBlank(message = "资产名称不能为空")
+        private String assetName;
+
+        /**
+        * 含税单价
+        */
+        @NotNull(message = "含税单价不能为空")
+        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal taxPrice;
+
+        /**
+        * 币种
+        */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
+
+        /**
+        * 币种符号
+        */
+        @NotBlank(message = "币种符号不能为空")
+        private String currencySymbol;
+
+        /**
+        * 税率
+        */
+        @NotNull(message = "税率不能为空")
+        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal taxRate;
+
+        /**
+        * 采购数量
+        */
+        @NotNull(message = "采购数量不能为空")
+        @Digits(integer = 12, fraction = 4, message = "采购数量整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal purchaseQty;
+
+        /**
+        * 价税合计
+        */
+        @NotNull(message = "价税合计不能为空")
+        @Digits(integer = 12, fraction = 4, message = "价税合计整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal totalAmount;
+
+        /**
+        * 计划交期
+        */
+        private LocalDate planDeliveryDate;
+
+        /**
+        * 是否加急
+        */
+        @NotNull(message = "是否加急不能为空")
+        private Boolean isUrgent;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 金蝶明细id
+        */
+        @NotBlank(message = "金蝶明细id不能为空")
+        private String kingdeeDetailId;
+
+        /**
+        * 是否结束收货
+        */
+        @NotNull(message = "是否结束收货不能为空")
+        private Boolean isEndReceive;
+
+        /**
+        * 结束验收时间
+        */
+        private LocalDateTime endReceiveTime;
+
+        /**
+        * 来源明细id
+        */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+
+    }
+
+
+}
