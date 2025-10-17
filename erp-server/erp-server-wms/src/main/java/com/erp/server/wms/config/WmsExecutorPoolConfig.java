@@ -135,9 +135,9 @@ public class WmsExecutorPoolConfig {
     
     @Bean(name = "transactionIdToInventoryHisPool")
     public ExecutorService transactionIdToInventoryHisPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(20, 50,
+        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
                 30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(1000));
+                new LinkedBlockingQueue<>(10000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
