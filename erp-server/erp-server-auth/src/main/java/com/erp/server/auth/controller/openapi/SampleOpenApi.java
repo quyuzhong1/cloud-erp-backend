@@ -150,6 +150,11 @@ public class SampleOpenApi {
         return sampleFeign.sampleBorrowInfoDropDown(dto);
     }
 
+    @OpenApi("sampleBorrowInfoListSku")
+    public ApiResult<PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> sampleBorrowInfoListSku(@Valid PagingDTO<SampleBorrowInfoDTO.SearchDTO> dto) {
+        return sampleFeign.sampleBorrowInfoListSku(dto);
+    }
+
     // ==================== 样品领用单相关接口 ====================
 
     @OpenApi("sampleRecipientAdd")

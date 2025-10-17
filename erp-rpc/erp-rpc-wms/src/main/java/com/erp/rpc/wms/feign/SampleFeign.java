@@ -116,6 +116,12 @@ public interface SampleFeign {
     @PostMapping("/sampleBorrowInfo/drop/down")
     ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> sampleBorrowInfoDropDown(@RequestBody SampleBorrowInfoDTO.SelectDTO dto);
 
+    /**
+     * 样品借用单查询SKU
+     */
+    @PostMapping("/feign/sampleBorrowInfo/listSku")
+    ApiResult<PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> sampleBorrowInfoListSku(@RequestBody PagingDTO<SampleBorrowInfoDTO.SearchDTO> dto);
+
     // ==================== 样品领用单相关接口 ====================
 
     /**
