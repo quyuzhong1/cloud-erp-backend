@@ -474,6 +474,22 @@ public class SampleRecipientDTO implements Serializable {
         private List<ProductDTO>detailList;
 
 
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废状态(false:有效,true:已作废)
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+
     }
 
     /**

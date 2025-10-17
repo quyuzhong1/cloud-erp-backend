@@ -72,7 +72,7 @@ public interface SampleFeign {
      * 样品借用单审核通过
      */
     @PostMapping("/sampleBorrowInfo/approve")
-    ApiResult<List<BatchResultDTO>> sampleBorrowInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleBorrowInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
 
     /**
      * 样品借用单审核不通过
@@ -158,7 +158,7 @@ public interface SampleFeign {
      * 样品领用单审核通过
      */
     @PostMapping("/sampleRecipient/approve")
-    ApiResult<List<BatchResultDTO>> sampleRecipientApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleRecipientApprove(@RequestBody @Valid BaseApproveParamDTO dto);
 
     /**
      * 样品领用单审核不通过
@@ -262,7 +262,7 @@ public interface SampleFeign {
      * 样品退回单审核通过
      */
     @PostMapping("/sampleBackInfo/approve")
-    ApiResult<List<BatchResultDTO>> sampleBackInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleBackInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
 
     /**
      * 样品退回单审核不通过
@@ -342,7 +342,7 @@ public interface SampleFeign {
      * 样品归还单审核通过
      */
     @PostMapping("/sampleReturnInfo/approve")
-    ApiResult<List<BatchResultDTO>> sampleReturnInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleReturnInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
 
     /**
      * 样品归还单审核不通过
@@ -422,7 +422,7 @@ public interface SampleFeign {
      * 样品报废单审核通过
      */
     @PostMapping("/sampleScrapInfo/approve")
-    ApiResult<List<BatchResultDTO>> sampleScrapInfoApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+    ApiResult<List<BatchResultDTO>> sampleScrapInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
 
     /**
      * 样品报废单审核不通过

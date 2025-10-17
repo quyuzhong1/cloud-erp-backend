@@ -403,6 +403,16 @@ public class SampleBackInfoDTO implements Serializable {
          */
         private List<String> attachmentUrlList;
 
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
 
     }
 
