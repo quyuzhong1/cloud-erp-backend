@@ -8,11 +8,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -519,5 +518,109 @@ public class AssetAcceptDTO implements Serializable {
 
     }
 
+    /**
+     * 添加明细查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDetailQueryDTO {
+
+        /**
+         * 资产验收单ID（编辑时传入）
+         */
+        private String assetAcceptId;
+
+        /**
+         * SKU搜索条件（支持多个，用换行分隔）
+         */
+        private String searchKeyword;
+
+    }
+
+    /**
+     * 添加明细查询结果项
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDetailItemDTO {
+
+        /**
+         * 是否已选中
+         */
+        private Boolean selected = false;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 待验收数量
+         */
+        private Integer pendingAcceptQty;
+
+        /**
+         * 已验收数量
+         */
+        private Integer acceptedQty;
+
+        /**
+         * 可验收数量
+         */
+        private Integer availableAcceptQty;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 模具编码（如果来源于模具采购订单）
+         */
+        private String moldCode;
+
+        /**
+         * 模具名称（如果来源于模具采购订单）
+         */
+        private String moldName;
+    }
+
+    /**
+     * 添加明细查询结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDetailResultDTO {
+
+        /**
+         * 是否为模具采购订单下推
+         */
+        private Boolean isFromMoldPurchaseOrder = false;
+
+        /**
+         * 模具采购订单编号
+         */
+        private String moldPurchaseOrderCode;
+
+        /**
+         * 明细列表
+         */
+        private List<AddDetailItemDTO> detailList;
+    }
 
 }
