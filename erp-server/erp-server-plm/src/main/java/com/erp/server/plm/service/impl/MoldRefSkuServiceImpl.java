@@ -487,7 +487,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
 
         //已审核的 ,非资产属性的 SKU
         List<SkuVO> skuList = productDetailService.searchSku(null);
-        Map<String, SkuVO> skuMap = skuList.stream().filter(e -> StringUtils.isNotBlank(e.getPropertyName()) && !Objects.equals(e.getPropertyName(), ProductConstant.PRODUCT_PROPERTY_ASSET))
+        Map<String, SkuVO> skuMap = skuList.stream().filter(e -> !Objects.equals(e.getPropertyName(), ProductConstant.PRODUCT_PROPERTY_ASSET))
                 .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (o1, o2) -> o1));
 
         //所有模具关联SKU记录
