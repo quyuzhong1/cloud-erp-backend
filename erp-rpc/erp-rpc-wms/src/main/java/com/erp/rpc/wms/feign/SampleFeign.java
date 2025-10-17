@@ -119,7 +119,7 @@ public interface SampleFeign {
     /**
      * 样品借用单查询SKU
      */
-    @PostMapping("/feign/sampleBorrowInfo/listSku")
+    @PostMapping("/sampleBorrowInfo/listSku")
     ApiResult<PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> sampleBorrowInfoListSku(@RequestBody PagingDTO<SampleBorrowInfoDTO.SearchDTO> dto);
 
     // ==================== 样品领用单相关接口 ====================
