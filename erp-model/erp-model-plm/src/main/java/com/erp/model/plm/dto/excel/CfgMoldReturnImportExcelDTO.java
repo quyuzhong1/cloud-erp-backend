@@ -62,8 +62,8 @@ public class CfgMoldReturnImportExcelDTO implements Serializable {
      * 开始日期
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*开始日期", index = 3)
-    @FieldValid(fieldName = "*开始日期",isNotBlank = true)
+    @ExcelProperty(value = "开始日期", index = 3)
+    @FieldValid(fieldName = "开始日期")
     private String startDateStr;
     @ExcelIgnore
     private LocalDate startDate;
@@ -73,8 +73,8 @@ public class CfgMoldReturnImportExcelDTO implements Serializable {
      * 结束日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*结束日期", index = 4)
-    @FieldValid(fieldName = "*结束日期",isNotBlank = true)
+    @ExcelProperty(value = "结束日期", index = 4)
+    @FieldValid(fieldName = "结束日期")
     private String endDateStr;
     @ExcelIgnore
     private LocalDate endDate;

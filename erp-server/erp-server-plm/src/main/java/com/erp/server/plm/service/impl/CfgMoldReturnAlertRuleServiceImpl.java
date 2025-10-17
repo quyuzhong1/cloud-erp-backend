@@ -145,6 +145,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
             throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldReturnAlertRuleEntity.getMoldCode());
         }
 
+        cfgMoldReturnAlertRuleEntity.setMoldId(old.getMoldId());
         // 数据处理
         handleData(cfgMoldReturnAlertRuleEntity);
 
@@ -224,17 +225,17 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     /**
      * 新增修改处理数据
      */
-    private void handleData(CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity) {
-        MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(cfgMoldReturnAlertRuleEntity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
+    private void handleData(CfgMoldReturnAlertRuleEntity entity) {
+        MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(entity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         //结束日期不能小于开始日期
-        if (cfgMoldReturnAlertRuleEntity.getEndDate().isBefore(cfgMoldReturnAlertRuleEntity.getStartDate())) {
+        if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
             throw new ServiceException(ApiError.ERROR_92008);
         }
-        cfgMoldReturnAlertRuleEntity.setMoldCode(moldInfoEntity.getCode());
-        cfgMoldReturnAlertRuleEntity.setMoldName(moldInfoEntity.getName());
-        cfgMoldReturnAlertRuleEntity.setSupplierId(moldInfoEntity.getSupplierId());
-        cfgMoldReturnAlertRuleEntity.setSupplierCode(moldInfoEntity.getSupplierCode());
-        cfgMoldReturnAlertRuleEntity.setSupplierName(moldInfoEntity.getSupplierName());
+        entity.setMoldCode(moldInfoEntity.getCode());
+        entity.setMoldName(moldInfoEntity.getName());
+        entity.setSupplierId(moldInfoEntity.getSupplierId());
+        entity.setSupplierCode(moldInfoEntity.getSupplierCode());
+        entity.setSupplierName(moldInfoEntity.getSupplierName());
     }
 
     @Override
@@ -339,9 +340,9 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
         CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
-        // 只有禁用数据才能作废
-        if (Objects.equals(DisabledEnum.ENABLE.getCode(), entity.getDisabled())) {
-            throw new ServiceException(ApiError.ERROR_1069);
+        // 未作废允许作废
+        if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
+            throw new ServiceException(ApiError.ERROR_98012);
         }
         log.info("作废 开始修改模具返还策略状态数据，id：【{}】", id);
         lambdaUpdate().eq(CfgMoldReturnAlertRuleEntity::getId, id)

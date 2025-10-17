@@ -1,5 +1,6 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -78,12 +79,12 @@ public class CfgMoldReturnAlertRuleEntity extends BaseEntity<CfgMoldReturnAlertR
     /**
     * 开始日期
     */
-    @TableField("start_date")
+    @TableField(value = "start_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate startDate;
     /**
     * 结束日期
     */
-    @TableField("end_date")
+    @TableField(value = "end_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate endDate;
     /**
     * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldReturnAlertRuleCountDimEnum
