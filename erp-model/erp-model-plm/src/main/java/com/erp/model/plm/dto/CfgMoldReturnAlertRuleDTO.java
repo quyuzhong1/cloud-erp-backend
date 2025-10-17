@@ -298,6 +298,12 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 模具id
+         */
+        @NotBlank(message = "模具id不能为空")
+        private String moldId;
+
+        /**
          * 明细
          */
         @NotEmpty(message = "明细不能为空" )
@@ -341,11 +347,6 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
-        /**
-        * 模具id
-        */
-        @NotBlank(message = "模具id不能为空")
-        private String moldId;
 
         /**
         * 开始日期
