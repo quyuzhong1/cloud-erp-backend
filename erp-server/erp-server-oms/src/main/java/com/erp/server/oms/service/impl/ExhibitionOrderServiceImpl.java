@@ -190,7 +190,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String id = IdWorker.getIdStr();
         exhibitionOrderEntity.setId(id);
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZHXS);
         exhibitionOrderEntity.setCode(code);
 
         //明细
@@ -1815,7 +1815,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String mainId = IdWorker.getIdStr();
                 addSo.setId(mainId);
                 // 生成单号
-                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZHXS);
                 addSo.setCode(code);
 
                 //领用人
