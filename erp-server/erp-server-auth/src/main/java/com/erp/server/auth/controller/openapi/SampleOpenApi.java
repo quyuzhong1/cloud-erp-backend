@@ -461,7 +461,7 @@ public class SampleOpenApi {
     }
 
     @OpenApi("sampleLedgerFlowList")
-    public ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(PermissionsDTO param) {
+    public ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> param) {
         return sampleFeign.sampleLedgerFlowList(param);
     }
 

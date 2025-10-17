@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -490,7 +491,7 @@ public interface SampleFeign {
      * 样品台账流程列表
      */
     @PostMapping("/sampleLedger/flowList")
-    ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(@RequestBody PermissionsDTO param);
+    ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(@RequestBody @Validated PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> param);
 
     /**
      * 样品台账流程详情
