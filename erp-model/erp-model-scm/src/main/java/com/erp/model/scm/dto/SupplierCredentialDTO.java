@@ -278,6 +278,11 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 名称
          */
+        @Size(max = 64,message = "最大64字符")
+        private String code;
+        /**
+         * 名称
+         */
         @Size(max = 50,message = "最大50字符")
         private String name;
 
