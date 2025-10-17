@@ -577,19 +577,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         
         // 全部标签
         SampleLedgerDTO.TabListDTO allItem = new SampleLedgerDTO.TabListDTO();
-        allItem.setStatus("all");
+        allItem.setTabFlag("all");
+        allItem.setTabFlagName("全部");
         allItem.setCount(allLedgers.size());
         appList.add(allItem);
         
         // 启用标签
         SampleLedgerDTO.TabListDTO enabledItem = new SampleLedgerDTO.TabListDTO();
-        enabledItem.setStatus("enabled");
+        enabledItem.setTabFlag("enabled");
+        enabledItem.setTabFlagName("启用");
         enabledItem.setCount(enabledCount);
         appList.add(enabledItem);
         
         // 禁用标签
         SampleLedgerDTO.TabListDTO disabledItem = new SampleLedgerDTO.TabListDTO();
-        disabledItem.setStatus("disabled");
+        disabledItem.setTabFlag("disabled");
+        disabledItem.setTabFlagName("禁用");
         disabledItem.setCount(disabledCount);
         appList.add(disabledItem);
 

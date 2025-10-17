@@ -36,9 +36,14 @@ public class SampleLedgerDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 状态
+         * 类型
          */
-        private String status;
+        private String tabFlag;
+
+        /**
+         * 名称
+         */
+        private String tabFlagName;
 
         /**
          * 数量
