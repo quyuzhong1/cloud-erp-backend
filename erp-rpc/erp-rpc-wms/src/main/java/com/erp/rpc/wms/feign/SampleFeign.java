@@ -491,7 +491,7 @@ public interface SampleFeign {
      * 样品台账流程列表
      */
     @PostMapping("/sampleLedger/flowList")
-    ApiResult<List<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(@RequestBody @Validated PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> param);
+    ApiResult<PagingVO<SampleLedgerFlowDTO.ListDTO>> sampleLedgerFlowList(@RequestBody @Validated PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> param);
 
     /**
      * 样品台账流程详情
