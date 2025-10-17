@@ -227,6 +227,11 @@ public class AssetAcceptDTO implements Serializable {
          * 资产卡片关联状态
          */
         private String assetCardStatus;
+
+        /**
+         * 明细ID
+         */
+        private String detailId;
     }
 
     /**
