@@ -152,4 +152,13 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetAcceptEntity entity);
 
+    /**
+    * 转资产卡片
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @return
+    */
+    BatchResultDTO transferToAssetCard(String id);
+
 }
