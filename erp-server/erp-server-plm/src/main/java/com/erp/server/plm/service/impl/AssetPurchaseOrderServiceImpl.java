@@ -5,6 +5,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -49,6 +50,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * <p>
  *  服务实现类
@@ -90,7 +93,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , assetPurchaseOrderEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, assetPurchaseOrderEntity.getId(), "新增操作");
+        operateLogService.addSysLogBySave(msg, null, assetPurchaseOrderEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetPurchaseOrderEntity.getId(), code);
@@ -124,7 +127,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseOrderEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseOrderEntity.getCode(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, assetPurchaseOrderEntity, null, assetPurchaseOrderEntity.getId(), msg);
+        operateLogService.addSysLogByUpdate(old, assetPurchaseOrderEntity, null, assetPurchaseOrderEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 
@@ -202,7 +205,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         log.info("提交 开始记录日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addSysLogBySave(msg, null, entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -245,7 +248,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "", approveType.getName(), dto.getComment());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addSysLogBySave(msg, null, entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -292,7 +295,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addSysLogBySave(msg, null, entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -321,7 +324,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除数据");
+        operateLogService.addSysLogBySave(msg, null, entity.getCode(), "删除数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -344,7 +347,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "", remark);
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addSysLogBySave(msg, null, entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -370,7 +373,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addSysLogBySave(msg, null, entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
@@ -378,6 +381,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public AssetPurchaseOrderDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
     }
 
     @Override
@@ -391,6 +399,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
+        return null;
     }
 
     @Override
