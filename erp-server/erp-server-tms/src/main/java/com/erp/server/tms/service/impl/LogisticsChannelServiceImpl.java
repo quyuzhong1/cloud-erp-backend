@@ -698,6 +698,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(platform)
                     && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(platform)
                     && !LogisticsPlatformEnum.CAINIAO.getCode().equals(platform)
+                    && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(platform)
                     && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }

@@ -17,5 +17,5 @@ public class AddOrderToSupplyRequest {
      * 箱子数量
      */
     private String supplyId;
-    private String orderId;
+    private Long orderId;
 }

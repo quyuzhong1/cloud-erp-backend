@@ -81,6 +81,8 @@ public interface ExportOmsFeign {
     PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/soMultiChannel")
     PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/packagePlan")
+    PagingVO<PackagePlanDTO.ExportDTO> exportPackagePlan(@RequestBody PagingDTO<PackagePlanDTO.PagingParamDTO> dto);
 
     /**
      * b2b平台sku对照表信息导出

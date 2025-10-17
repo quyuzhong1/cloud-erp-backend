@@ -1548,4 +1548,18 @@ SELECT DISTINCT so.* FROM so_b2c so
             #{item}
         </foreach>
     </select>
+    <select id="packagePlanPreview" resultType="com.erp.model.oms.dto.PackagePlanDTO$SoB2cDTO">
+        SELECT
+            id as soId,
+            code as soCode,
+            platform_code as platformCode,
+            shop_id as shopId,
+            platform_order_create_time as platformCreateTime
+        FROM so_b2c
+        WHERE is_deleted = false and invalid_status = false
+                and id in
+        <foreach collection="soIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

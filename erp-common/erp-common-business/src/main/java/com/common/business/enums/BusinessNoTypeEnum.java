@@ -142,6 +142,7 @@ public enum BusinessNoTypeEnum {
     CODE_PRODIS(109, "PRODIS","资产处置单", BusinessNoConstant.PRODIS),
 
     CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
+    CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
 
     ;
 

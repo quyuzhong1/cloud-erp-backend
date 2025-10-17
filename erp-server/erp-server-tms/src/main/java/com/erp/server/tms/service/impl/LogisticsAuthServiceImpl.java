@@ -399,9 +399,12 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)  || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.PackagePlanMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.PackagePlanEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="shop_id" property="shopId" />
+       <result column="package_no" property="packageNo" />
+       <result column="package_status" property="packageStatus" />
+       <result column="is_handover_download" property="isHandoverDownload" />
+       <result column="box_num" property="boxNum" />
+       <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
+       <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
+       <result column="print_handover_status" property="printHandoverStatus" />
+       <result column="print_order_status" property="printOrderStatus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, dict_platform, shop_id, package_no, package_status, is_handover_download, box_num, delivery_warehouse_id, delivery_warehouse_name, print_handover_status, print_order_status
+    </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.PackagePlanDTO$PagingViewDTO">
+        SELECT
+        pp.id as id,
+        pp.code as code,
+        pp.dict_platform as dictPlatform,
+        pp.shop_id as shopId,
+        pp.package_no as packageNo,
+        pp.package_status as packageStatus,
+        pp.is_handover_download as isHandoverDownload,
+        pp.box_num as boxNum,
+        pp.delivery_warehouse_id as deliveryWarehouseId,
+        pp.delivery_warehouse_name as deliveryWarehouseName,
+        pp.print_handover_status as printHandoverStatus,
+        pp.print_order_status as printOrderStatus,
+        pp.create_time as createTime,
+        pp.create_user_name as createUserName
+        FROM package_plan pp
+        LEFT JOIN package_plan_detail ppd on ppd.main_id = pp.id and ppd.is_deleted=FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and pp.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC
+    </select>
+    <select id="exportPaging" resultType="com.erp.model.oms.dto.PackagePlanDTO$ExportDTO">
+        SELECT
+        pp.id as id,
+        pp.code as code,
+        pp.dict_platform as dictPlatform,
+        pp.shop_id as shopId,
+        pp.package_no as packageNo,
+        pp.package_status as packageStatus,
+        pp.is_handover_download as isHandoverDownload,
+        pp.box_num as boxNum,
+        pp.delivery_warehouse_id as deliveryWarehouseId,
+        pp.delivery_warehouse_name as deliveryWarehouseName,
+        pp.print_handover_status as printHandoverStatus,
+        pp.print_order_status as printOrderStatus,
+        pp.create_time as createTime,
+        pp.create_user_name as createUserName,
+        ppd.so_code as soCode,
+        ppd.so_id as soId,
+        ppd.logistics_channel_id as logisticsChannelId,
+        ppd.logistics_channel_name as logisticsChannelName,
+        ppd.track_no as trackNo,
+        ppd.transport_no as transportNo,
+        ppd.barcode as barcode
+        FROM package_plan pp
+        LEFT JOIN package_plan_detail ppd on ppd.main_id = pp.id and ppd.is_deleted=FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and pp.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC
+    </select>
+    <select id="getNoHandoverLabel" resultType="com.erp.model.oms.dto.PackagePlanDTO$LabelDTO">
+        SELECT
+            pp.id,
+            pp.code,
+            pp.dict_platform,
+            pp.shop_id,
+            pp.package_no,
+            pp.package_status,
+            ppd.id as detailId,
+            ppd.so_id,
+            ppd.platform_code
+        FROM package_plan pp
+        LEFT JOIN package_plan_detail ppd on pp.id = ppd.main_id and ppd.is_deleted= false
+        where pp.is_deleted= false
+        and pp.handover_label_url = ''
+        and pp.is_handover_download= false
+        and pp.package_status='already'
+        and pp.code in
+        <foreach collection="codeList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        order by pp.create_time DESC
+    </select>
+
+
+</mapper>
