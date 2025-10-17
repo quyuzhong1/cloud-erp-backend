@@ -125,10 +125,10 @@ public enum BusinessNoTypeEnum {
     CODE_KHSX(93, "KHSX","客户授信", BusinessNoConstant.KHSX),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
-    CODE_YPZF(97, "YPZF","样品作废单", BusinessNoConstant.YPZF),
+    CODE_YPZF(97, "YPBF","样品作废单", BusinessNoConstant.YPBF),
     CODE_YPJY(98, "YPJY","样品借用单", BusinessNoConstant.YPJY),
     CODE_YPGH(99, "YPGH","样品归还单", BusinessNoConstant.YPGH),
-    CODE_ZHDD(100, "ZHDD","展会订单", BusinessNoConstant.ZHDD),
+    CODE_ZHXS(100, "ZHXS","展会订单", BusinessNoConstant.ZHXS),
     CODE_YPTH(101, "YPTH","样品退回单", BusinessNoConstant.YPTH),
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
 
