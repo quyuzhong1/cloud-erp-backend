@@ -145,6 +145,11 @@ public class SampleOpenApi {
         return sampleFeign.sampleBorrowInfoView(id);
     }
 
+    @OpenApi("sampleBorrowInfoDropDown")
+    public ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> sampleBorrowInfoDropDown(SampleBorrowInfoDTO.SelectDTO dto) {
+        return sampleFeign.sampleBorrowInfoDropDown(dto);
+    }
+
     // ==================== 样品领用单相关接口 ====================
 
     @OpenApi("sampleRecipientAdd")
