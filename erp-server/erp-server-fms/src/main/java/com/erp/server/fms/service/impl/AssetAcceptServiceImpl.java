@@ -39,8 +39,11 @@ import com.erp.server.fms.service.OperateLogService;
 import com.erp.server.fms.service.AssetAcceptPersonService;
 import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.AttachmentService;
+import com.erp.server.fms.service.AssetCardService;
 import com.erp.model.fms.entity.AttachmentEntity;
 import com.erp.model.fms.dto.AttachmentDTO;
+import com.erp.model.fms.dto.AssetCardDTO;
+import com.erp.model.fms.entity.AssetCardEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,6 +82,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private AssetAcceptDetailService assetAcceptDetailService;
     @Autowired
     private AttachmentService attachmentService;
+    @Autowired
+    private AssetCardService assetCardService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -982,6 +988,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 acceptPersonMap.put(entry.getKey(), personNames);
             }
         }
+        
 
         // 属性赋值
         for(AssetAcceptDTO.ListDTO data : list) {
@@ -1010,6 +1017,97 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
+    }
+
+    /**
+    * 转资产卡片
+    * @author wuht
+    * @date: 2025-10-11
+    * @param detailId 明细ID
+    * @return
+    */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO transferToAssetCard(String detailId) {
+        // 获取验收明细
+        AssetAcceptDetailEntity detail = assetAcceptDetailService.getByIdOpt(detailId).orElseThrow(() -> new ServiceException("资产验收明细不存在"));
+        
+        // 验证明细状态：只有待生成状态的明细才能下推
+        if (AssetCardStatusEnum.GENERATED.getStatus().equals(detail.getAssetCardStatus())) {
+            throw new ServiceException("只有已审核且资产卡片关联状态为待生成的数据才能下推!");
+        }
+        
+        // 获取主表信息
+        AssetAcceptEntity assetAcceptEntity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("资产验收单不存在"));
+        
+        // 验证状态：只有已审核的资产验收单才能转资产卡片
+        if (!ApproveStatusEnum.APPROVE.equals(assetAcceptEntity.getApproveStatus())) {
+            throw new ServiceException("只有已审核的资产验收单才能转资产卡片");
+        }
+        
+        // 生成资产卡片
+        List<String> generatedCardIds = new ArrayList<>();
+        LocalDate currentDate = LocalDate.now();
+        
+        // 根据数量拆分生成资产卡片
+        Integer acceptQty = detail.getAcceptQty();
+        for (int i = 0; i < acceptQty; i++) {
+            AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
+            BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardAddDTO);
+            generatedCardIds.add(cardResult.getId());
+        }
+        
+        // 更新明细状态为已生成
+        detail.setAssetCardStatus(AssetCardStatusEnum.GENERATED.getStatus());
+        assetAcceptDetailService.updateById(detail);
+        
+        log.info("资产验收明细{}转资产卡片成功，生成{}张资产卡片", detailId, generatedCardIds.size());
+        return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成" + generatedCardIds.size() + "张资产卡片");
+    }
+    
+    /**
+     * 根据验收明细构建资产卡片
+     */
+    private AssetCardDTO.AddDTO buildAssetCardFromAcceptDetail(AssetAcceptEntity acceptEntity, AssetAcceptDetailEntity detail, LocalDate currentDate) {
+        AssetCardDTO.AddDTO cardDTO = new AssetCardDTO.AddDTO();
+        
+        // 基础信息映射
+        cardDTO.setSourceCode(acceptEntity.getCode()); // 来源单号
+        cardDTO.setSourceType("资产验收单"); // 卡片来源
+        cardDTO.setSourceId(acceptEntity.getId()); // 来源ID
+        cardDTO.setOrgId(acceptEntity.getAcceptOrgId()); // 资产组织 = 验收组织
+        cardDTO.setOrgName(acceptEntity.getAcceptOrgName()); // 资产组织名称
+        cardDTO.setUnit("PCS"); // 计量单位默认值
+        cardDTO.setType("机器设备"); // 资产类别默认值
+        cardDTO.setStatus("正常使用"); // 资产状态默认值
+        cardDTO.setChangeMethod("购入"); // 变动方式默认值
+        cardDTO.setName(detail.getProductName()); // 资产名称 = 产品名称
+        cardDTO.setStartUseDate(currentDate); // 开始使用日期 = 操作日期
+        cardDTO.setQty(1); // 数量 = 1（每个明细项拆分为多个卡片）
+        cardDTO.setAssetCode(""); // 资产编码（由编码规则生成）
+        cardDTO.setDisposalStatus(""); // 处置情况默认值
+        cardDTO.setRemark(""); // 备注默认值
+        
+        // 实物信息映射
+        cardDTO.setAssetLocationId(detail.getAssetLocationId()); // 资产位置
+        cardDTO.setRemark(detail.getRemark()); // 备注
+        
+        return cardDTO;
+    }
+
+    /**
+    * 获取资产验收表分页数据（用于异步导出）
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto 分页参数
+    * @return
+    */
+    @Override
+    public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
+        // 调用现有的分页查询方法
+        PagingVO<AssetAcceptDTO.ListDTO> result = paging(dto);
+        return result;
     }
 
     /**

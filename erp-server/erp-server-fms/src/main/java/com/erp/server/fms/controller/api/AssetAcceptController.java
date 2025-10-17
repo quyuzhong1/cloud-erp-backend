@@ -17,6 +17,8 @@ import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.service.AssetAcceptService;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,9 @@ public class AssetAcceptController extends BaseController {
 
     @Resource
     private AssetAcceptService assetAcceptService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 新增
@@ -402,8 +407,49 @@ public class AssetAcceptController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产验收表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetAcceptDTO.ExportDTO dto, HttpServletResponse response) {
-        assetAcceptService.exportList(dto, response);
+    @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetAcceptDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("资产验收表导出", FileTaskEventEnum.EXPORT_FMS_ASSET_ACCEPT_REPORT.getCode(), dto);
+        return success(true);
+    }
+
+    /**
+    * 转资产卡片
+    * @author wuht
+    * @date:  2025-10-11
+    * @param dto 包含明细ID列表
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/transferToAssetCard")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "fms:assetAccept:transferToAssetCard",
+            serviceClass = AssetAcceptService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "资产验收表转资产卡片")
+    public ApiResult<List<BatchResultDTO>> transferToAssetCard(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<AssetAcceptEntity> list = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, ids).list();
+        Map<String, AssetAcceptEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetAcceptEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO transferResult;
+            try {
+                transferResult = assetAcceptService.transferToAssetCard(id);
+            } catch (Exception e) {
+                log.error("资产验收单转资产卡片失败", e);
+                AssetAcceptEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    transferResult = BatchResultDTO.fail(id, id, "资产验收单不存在, 转资产卡片失败");
+                    resultDTOS.add(transferResult);
+                    continue;
+                }
+                transferResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(transferResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
