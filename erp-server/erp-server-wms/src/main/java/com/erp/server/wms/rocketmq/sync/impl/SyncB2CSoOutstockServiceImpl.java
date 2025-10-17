@@ -290,6 +290,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setLogisticsChannelId(channel.getId());
         soOutstock.setLogisticsChannelCode(channel.getCode());
         soOutstock.setLogisticsChannelName(channel.getName());
+        soOutstock.setCarrierId(channel.getMainId());
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
