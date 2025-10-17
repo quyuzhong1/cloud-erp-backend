@@ -227,7 +227,11 @@ public interface BusinessNoConstant {
     String PRODIS="PRODIS";
     //模具关联SKU
     String MRS="MRS";
-
-
+    //资产通知单
+    String MPL="MPL";
+    //资产采购单
+    String MPO="MPO";
+    //资产采购变更单
+    String MPOCC="MPOCC";
 
 }

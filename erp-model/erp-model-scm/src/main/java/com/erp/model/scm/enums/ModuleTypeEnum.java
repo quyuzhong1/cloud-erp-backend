@@ -176,8 +176,9 @@ public enum ModuleTypeEnum {
     ASSET_INVENTORY_SHEET("150", "资产盘点表"),
     INVENTORY_GAIN_LOSS("151", "盘盈盘亏单"),
     ASSET_DISPOSAL("152", "资产处置单"),
-
-    
+    ASSET_NOTICE("153","资产通知单"),
+    ASSET_PURCHASE_ORDER("154","资产采购单"),
+    ASSET_PURCHASE_CHANGE("155","资产采购变更单")
     ;
 
 
