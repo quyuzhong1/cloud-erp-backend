@@ -1067,6 +1067,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientDTO.ViewDTO data = new SampleRecipientDTO.ViewDTO();
         BeanUtils.copyProperties(sampleRecipientEntity, data);
         data.setApproveStatus(sampleRecipientEntity.getApproveStatus().getCode());
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         // 数据填充处理
         fillOne(data);
         // 查询明细数据

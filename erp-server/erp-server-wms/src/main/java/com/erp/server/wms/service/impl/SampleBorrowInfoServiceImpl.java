@@ -908,6 +908,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         SampleBorrowInfoDTO.ViewDTO data = new SampleBorrowInfoDTO.ViewDTO();
         BeanUtils.copyProperties(sampleBorrowInfoEntity, data);
         data.setApproveStatus(sampleBorrowInfoEntity.getApproveStatus().getStatus());
+
         // 数据填充处理
         fillOne(data);
 
@@ -925,7 +926,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1, o2)-> o1));
 
-        // 计算每个明细项中SKU的实际可用数量
+        // 获取当前日期，用于计算归还周期
+        LocalDate now = LocalDate.now();
+        LocalDate estimatedReturnDate = sampleBorrowInfoEntity.getEstimatedReturnDate();
+        
+        // 计算每个明细项中SKU的实际可用数量以及归还信息
         detailDTOList.forEach(detailDTO -> {
             String sampleLedgerId = detailDTO.getSampleLedgerId();
             SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
@@ -934,6 +939,34 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 detailDTO.setUseUserId(sampleLedger.getUseUserId());
                 detailDTO.setUseUserName(sampleLedger.getUseUserName());
             }
+            
+            // 计算已归还数量 = 借用数量 - 待归还数量
+            Integer borrowQty = detailDTO.getBorrowQty() != null ? detailDTO.getBorrowQty() : 0;
+            Integer waitReturnQty = detailDTO.getWaitReturnQty() != null ? detailDTO.getWaitReturnQty() : 0;
+            detailDTO.setReturnQty(borrowQty - waitReturnQty);
+            
+            // 计算归还周期
+            String returnPeriod = "";
+            if(waitReturnQty == 0){
+                returnPeriod = "完成归还";
+            }else {
+                // 若"待归还数量＞0"，则根据N判断，N = 预计退回日期 - 当天日期
+                if(Objects.nonNull(estimatedReturnDate)){
+                    long between = ChronoUnit.DAYS.between(now, estimatedReturnDate);
+                    if(between > 60){
+                        returnPeriod = "2个月以上";
+                    }else if(between > 30){
+                        returnPeriod = "2个月内";
+                    }else if(between > 0){
+                        returnPeriod = "1个月内";
+                    }else if(between == 0){
+                        returnPeriod = "0天后超期";
+                    }else {
+                        returnPeriod = "已超期" + Math.abs(between) + "天";
+                    }
+                }
+            }
+            detailDTO.setReturnPeriod(returnPeriod);
         });
         // 设置明细列表到主数据对象中
         data.setDetailList(detailDTOList);
