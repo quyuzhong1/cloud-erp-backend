@@ -54,7 +54,7 @@ public class AssetPurchaseOrderSupplierServiceImpl extends SuperServiceImpl<Asse
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , assetPurchaseOrderSupplierEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, assetPurchaseOrderSupplierEntity.getId(), "新增操作");
+        operateLogService.addSysLogBySave(msg, null, assetPurchaseOrderSupplierEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetPurchaseOrderSupplierEntity.getId(), assetPurchaseOrderSupplierEntity.getId());
@@ -84,7 +84,7 @@ public class AssetPurchaseOrderSupplierServiceImpl extends SuperServiceImpl<Asse
             log.info("编辑 开始记录日志数据，id：【{}】", assetPurchaseOrderSupplierEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseOrderSupplierEntity.getId(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, assetPurchaseOrderSupplierEntity, null, assetPurchaseOrderSupplierEntity.getId(), msg);
+        operateLogService.addSysLogByUpdate(old, assetPurchaseOrderSupplierEntity, null, assetPurchaseOrderSupplierEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 

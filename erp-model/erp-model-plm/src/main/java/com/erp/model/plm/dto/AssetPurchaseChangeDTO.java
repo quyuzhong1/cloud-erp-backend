@@ -168,7 +168,7 @@ public class AssetPurchaseChangeDTO implements Serializable {
         /**
         * 作废状态（false未作废，true已作废）
         */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
         * 作废时间

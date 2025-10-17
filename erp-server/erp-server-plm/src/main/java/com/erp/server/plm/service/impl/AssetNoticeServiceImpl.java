@@ -8,6 +8,7 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PoTableFlagEnum;
@@ -59,6 +60,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * <p>
  *  服务实现类
@@ -106,7 +109,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
-        assetNoticeDetailService.add(addDTO.getDetailList(),assetNoticeEntity.getId());
+        assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
         return new BaseResultDTO.AddDTO(assetNoticeEntity.getId(), code);
     }
 
@@ -382,6 +385,16 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile file, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO invalid(AssetNoticeEntity entity, String remark) {
+        return null;
     }
 
     @Override
