@@ -1097,6 +1097,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     }
 
     /**
+    * 获取资产验收表分页数据（用于异步导出）
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto 分页参数
+    * @return
+    */
+    @Override
+    public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
+        // 调用现有的分页查询方法
+        PagingVO<AssetAcceptDTO.ListDTO> result = paging(dto);
+        return result;
+    }
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(AssetAcceptEntity assetAcceptEntity) {

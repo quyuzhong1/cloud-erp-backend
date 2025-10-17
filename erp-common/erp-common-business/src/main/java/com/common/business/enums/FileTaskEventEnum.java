@@ -318,6 +318,7 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     //fms
     EXPORT_FMS_ASSET_LOCATION("EXPORT_FMS_ASSET_LOCATION","资产位置导出","","",""),
+    EXPORT_FMS_ASSET_ACCEPT_REPORT("EXPORT_FMS_ASSET_ACCEPT_REPORT","资产验收表导出","","",""),
     IMPORT_FMS_ASSET_LOCATION("IMPORT_FMS_ASSET_LOCATION","导入资产位置","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetLocation",""),
 
     DEFAULT("DEFAULT", "默认","","","");

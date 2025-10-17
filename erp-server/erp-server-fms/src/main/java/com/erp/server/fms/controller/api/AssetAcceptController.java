@@ -17,6 +17,8 @@ import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.service.AssetAcceptService;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,9 @@ public class AssetAcceptController extends BaseController {
 
     @Resource
     private AssetAcceptService assetAcceptService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 新增
@@ -402,8 +407,10 @@ public class AssetAcceptController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产验收表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetAcceptDTO.ExportDTO dto, HttpServletResponse response) {
-        assetAcceptService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetAcceptDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("资产验收表导出", FileTaskEventEnum.EXPORT_FMS_ASSET_ACCEPT_REPORT.getCode(), dto);
+        return success(true);
     }
 
     /**
