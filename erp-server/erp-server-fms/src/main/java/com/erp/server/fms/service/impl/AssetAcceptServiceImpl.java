@@ -1081,12 +1081,12 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Override
     public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
         // 调用现有的分页查询方法
-        List<AssetAcceptDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
-        if(CollUtil.isEmpty(pageData)) {
-            return new PagingVO<>(new ArrayList<>());
+        IPage<AssetAcceptDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>();
         }
         // 数据处理
-        fillList(pageData);
+        fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
