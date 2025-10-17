@@ -115,7 +115,7 @@ public class AssetPurchaseChangeEntity extends BaseEntity<AssetPurchaseChangeEnt
     * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
     /**
     * 作废时间
     */
