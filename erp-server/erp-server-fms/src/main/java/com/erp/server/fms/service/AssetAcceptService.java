@@ -134,15 +134,6 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     */
     BatchResultDTO cancelProcess(String id);
 
-    /**
-    * 导出Excel
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(AssetAcceptDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -169,5 +160,14 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     * @return
     */
     PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto);
+
+    /**
+    * 查询添加明细
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto 查询参数
+    * @return
+    */
+    AssetAcceptDTO.AddDetailResultDTO queryAddDetail(AssetAcceptDTO.AddDetailQueryDTO dto);
 
 }

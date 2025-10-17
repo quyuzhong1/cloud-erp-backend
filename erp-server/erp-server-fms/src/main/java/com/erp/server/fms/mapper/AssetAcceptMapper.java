@@ -43,7 +43,7 @@ public interface AssetAcceptMapper extends BaseMapper<AssetAcceptEntity> {
     * @param params
     * @return
     */
-    List<AssetAcceptDTO.ListDTO> listExport(@Param("params") AssetAcceptDTO.ExportDTO params);
+    IPage<AssetAcceptDTO.ListDTO> listExport(@Param("params") AssetAcceptDTO.ExportDTO params);
 
 
     /**
