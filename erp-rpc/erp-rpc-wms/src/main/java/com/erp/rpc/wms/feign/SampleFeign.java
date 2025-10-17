@@ -110,6 +110,12 @@ public interface SampleFeign {
     @GetMapping("/sampleBorrowInfo/view")
     ApiResult<SampleBorrowInfoDTO.ViewDTO> sampleBorrowInfoView(@RequestParam("id") String id);
 
+    /**
+     * 样品借用单编号下拉
+     */
+    @PostMapping("/sampleBorrowInfo/drop/down")
+    ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> sampleBorrowInfoDropDown(@RequestBody SampleBorrowInfoDTO.SelectDTO dto);
+
     // ==================== 样品领用单相关接口 ====================
 
     /**
