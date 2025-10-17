@@ -107,6 +107,24 @@ public class ImlService {
     /**
      * 获取仓库列表
      */
+    public ImlBaseResp<String> getProduct(Map<String,Object> body){
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(new HashMap<>()));
+        String path = "open-sdk/mms/new_query_sku_list";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(body), headerMap);
+        return ImlUtils.parseToImlResp(bodyStr, String.class);
+    }
+    /**
+     * 获取仓库列表
+     */
+    public ImlBaseResp<String> getInventory(Map<String,Object> body){
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(new HashMap<>()));
+        String path = "open-sdk/oms/new_stock_total_query";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(body), headerMap);
+        return ImlUtils.parseToImlResp(bodyStr, String.class);
+    }
+    /**
+     * 获取仓库列表
+     */
     public ImlBaseResp<String> getWarehouse(){
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(new HashMap<>()));
         String path = "open-sdk/oms/query_warehouse";
@@ -163,24 +181,44 @@ public class ImlService {
     /**
      * 创建出库单
      */
-    public ImlResponse<String> createOutboundBill(@Valid ImlCreateOutboundReq imlCreateOutboundReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_ORDER,imlCreateOutboundReq);
-        ImlResponse<String> respDto = JSON.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
-        //处理返回值
-        if(StringUtil.isNotBlank(respDto.getOrderCode())){
-            respDto.setData(respDto.getOrderCode());
-        }
+    public ImlBaseResp<ImlOutboundResp> createOutboundBill(@Valid ImlCreateOutboundReq imlCreateOutboundReq){
+        String path = "open-sdk/oms/create_outbound_order";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
+        ImlBaseResp<ImlOutboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlOutboundResp.class);
         return respDto;
     }
 
     /**
      * 取消出库单
      */
-    public ImlResponse<String> cancelOutboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String orderCode,String reason){
-        Map<String,Object> paramsMap = new HashMap<>();
-        paramsMap.put("order_code",orderCode);
-        paramsMap.put("reason",reason);
-        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_ORDER,paramsMap);
-        return JSON.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
+    public ImlBaseResp<String> cancelOutboundBill(@Valid ImlCancelOutboundReq imlCancelOutboundReq){
+        String path = "open-sdk/oms/cancel_outbound_order";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCancelOutboundReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCancelOutboundReq), headerMap);
+        ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        return respDto;
+    }
+
+
+    /**
+     * 上传面单
+     */
+    public ImlBaseResp<String> uploadOrderLabel(ImlUploadLabelReq imlCreateOutboundReq){
+        String path = "open-sdk/oms/upload_label_info";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
+        ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        return respDto;
+    }
+    /**
+     * 上传交接文件
+     */
+    public ImlBaseResp<String> uploadFile(ImlUploadFileReq imlCreateOutboundReq){
+        String path = "open-sdk/oms/upload_delivery_receipt_file";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
+        ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        return respDto;
     }
 }

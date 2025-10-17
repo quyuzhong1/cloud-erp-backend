@@ -11,19 +11,15 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
-import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.iml.dto.ImlBaseResp;
-import com.sdk.wms.iml.dto.request.ImlBaseRequest;
-import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
-import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
+import com.sdk.wms.iml.dto.request.*;
 import com.sdk.wms.iml.dto.response.ImlInboundResp;
-import com.sdk.wms.iml.dto.response.ImlResponse;
-import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
+import com.sdk.wms.iml.dto.response.ImlOutboundResp;
 import com.sdk.wms.iml.service.ImlService;
-import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -187,29 +183,71 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(ThirdWarehouseUploadFileReq uploadFileReq) {
-        return ApiResult.error("功能未开发");
+        return success(new ThirdWarehouseUploadFileResponse());
     }
 
     @Override
     protected ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
-        return ApiResult.error("功能未开发");
+        if(CollectionUtils.isEmpty(uploadFileReq.getFileUrlList())){
+            return failure("面单文件不能为空");
+        }
+        ImlUploadLabelReq imlUploadLabelReq = new ImlUploadLabelReq();
+        imlUploadLabelReq.setOrderNo(uploadFileReq.getOrderCode());
+        imlUploadLabelReq.setLabelFilePath(uploadFileReq.getFileUrlList().get(0));
+        ImlBaseResp<String> resp = imlService.uploadOrderLabel(imlUploadLabelReq);
+        if(!isSuccess(resp.getCode())){
+            return failure(resp.getMessage());
+        }
+        return success(ThirdWarehouseUploadOrderLabelResponse.builder()
+                .orderCode(uploadFileReq.getOrderCode())
+                .build());
     }
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        ImlCreateOutboundReq imlCreateOutboundReq =  this.buildOutboundDto(createOutboundReq);
+        ImlBaseResp<ImlOutboundResp> imlInboundRespImlBaseResp = imlService.createOutboundBill(imlCreateOutboundReq);
+        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
+            return failure(imlInboundRespImlBaseResp.getMessage());
+        }
+        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
+    }
+
+    private ImlCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        List<ImlCreateOutboundReq.DetailListDTO> detailListDTOS = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item -> {
+            ImlCreateOutboundReq.DetailListDTO detailListDTO = new ImlCreateOutboundReq.DetailListDTO();
+            detailListDTO.setSkuBarcode(item.getProductSku());
+            detailListDTO.setSkuCount(item.getQuantity());
+            detailListDTOS.add(detailListDTO);
+        });
+        ImlCreateOutboundReq imlCreateOutboundReq = ImlCreateOutboundReq.builder()
+                .platformOrderNo(createOutboundReq.getReferenceNo())
+                .ecPlatformOrderNo(createOutboundReq.getPlatformCode())
+                .logisticsCode(createOutboundReq.getShippingMethod())
+                .bizType("TOC")
+                .warehouseCode(createOutboundReq.getWarehouseCode())
+                .trackNumber(createOutboundReq.getTrackingNo())
+                .buyerCountry(createOutboundReq.getReceiverInfo().getCountryCode())
+                .buyerProvince(createOutboundReq.getReceiverInfo().getProvince())
+                .buyerCity(createOutboundReq.getReceiverInfo().getCity())
+                .buyerAddress(createOutboundReq.getReceiverInfo().getAddress1()+createOutboundReq.getReceiverInfo().getAddress2()+createOutboundReq.getReceiverInfo().getAddress3())
+                .buyerName(createOutboundReq.getReceiverInfo().getName())
+                .buyerPhone(createOutboundReq.getReceiverInfo().getPhone())
+                .buyerEmail(createOutboundReq.getReceiverInfo().getEmail())
+                .buyerPostcode(createOutboundReq.getReceiverInfo().getZipCode())
+                .detailList(detailListDTOS)
+                .build();
+        return imlCreateOutboundReq;
+
     }
 
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        ImlResponse<String> response = imlService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
-        if(Objects.isNull(response.getCancelStatus())){
-            return failure(response.getMessage());
-        }
-        if(response.getCancelStatus().equals(1)){
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
-        }
-        if(response.getCancelStatus().equals(3)){
+        ImlCancelOutboundReq imlCancelOutboundReq = ImlCancelOutboundReq.builder().build();
+        imlCancelOutboundReq.setOrderNo(cancelOutboundReq.getOrderCode());
+        ImlBaseResp<String> response = imlService.cancelOutboundBill(imlCancelOutboundReq);
+        if(!isSuccess(response.getCode())){
             return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
@@ -227,4 +265,6 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public boolean isSuccess(Integer code){
         return code.equals(0);
     }
+
+    protected abstract ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@Valid ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq);
 }
