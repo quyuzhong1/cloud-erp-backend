@@ -1,5 +1,8 @@
 package com.common.business.utils;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class StringUtil {
@@ -79,4 +82,31 @@ public class StringUtil {
     public static String upperCaseFirst(String name) {
         return name.substring(0, 1).toUpperCase() + name.substring(1, name.length());
     }
+    
+    /**
+     * 拼接日志
+     * @param type
+     * @param args
+     * @return
+     */
+    public static String appendLogMsg(String type , Object... args) {
+    	if(type == null) {
+    		type = "null";
+    	}
+    	String msg = "类型=[" + type + "],";
+		if(args != null && args.length > 0) {
+			msg = msg + Stream.of(args).map(a -> a == null ? "[null]" : ("[" + a.toString() + "]")).collect(Collectors.joining(","));
+		}
+		return msg;
+	}
+    
+    public static void main(String[] args) {
+    	System.out.println(appendLogMsg(null));
+    	System.out.println(appendLogMsg(null , null));
+    	System.out.println(appendLogMsg(null , 1 , null));
+    	System.out.println(appendLogMsg(null , null , 2));
+    	System.out.println(appendLogMsg(null , 1 , null , 2));
+    	System.out.println(appendLogMsg(null , 1 , 2));
+    	System.out.println(appendLogMsg("a" , 1 , 2));
+	}
 }
