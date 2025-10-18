@@ -20,7 +20,7 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * @param inventoryId
      * @param size
      */
-    void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis);
+    void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId);
     
     /**
      * 仅内部调用
@@ -30,7 +30,7 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * @param inventoryId
      * @param size
      */
-    void innerInventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis);
+    void innerInventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId);
     
     /**
      * 事务id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
