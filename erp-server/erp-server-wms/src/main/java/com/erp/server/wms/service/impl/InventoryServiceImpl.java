@@ -1387,8 +1387,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+//    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public InventoryEntity getInventory(InventoryTransactionDTO transactionDTO) {
         LambdaQueryWrapper<InventoryEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(InventoryEntity::getSkuId, transactionDTO.getSkuId())

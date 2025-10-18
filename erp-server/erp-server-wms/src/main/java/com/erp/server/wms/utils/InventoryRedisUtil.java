@@ -19,6 +19,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
 import com.common.business.utils.AbstractRedisUtil;
+import com.common.business.utils.StringUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 
@@ -84,6 +85,8 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	
 	public void execute(InventoryRedisOpEnum inventoryRedisOpEnum , Object... args) {
 		String opName = inventoryRedisOpEnum.getName();
+		String logMsg = StringUtil.appendLogMsg("InventoryRedisUtil的execute操作：" + opName , args);
+    	log.info("{}开始" , logMsg);
 		int i = 0;
 		String result = "";
 		boolean isRetry = false;
@@ -121,5 +124,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			log.error("库存redis操作{}，结果为：{}，lua原始结果： {}" , opName , result , execute);
 			throw new ServiceException(result);
 		}
+    	log.info("{}结束" , logMsg);
 	}
+	
 }
