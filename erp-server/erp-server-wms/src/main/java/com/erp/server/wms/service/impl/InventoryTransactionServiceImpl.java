@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,19 +82,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private ExecutorService transactionIdToInventoryHisPool;
 
     @Override
-    public void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis) {
-    	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , size , waitTime , commitRedis);
+    public void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId) {
+    	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , size , waitTime , transactionId);
     	log.info("{}开始" , logMsg);
     	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
 		RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , waitTime);
     	if(tryLock != null) {
     		try {
-    			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId, size, waitTime, commitRedis);
+    			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId, size, waitTime, transactionId);
     		} catch (Exception e) {
     			log.error("{}失败" , logMsg , e);
-    			if(commitRedis) {
-    				sendFeishuMsg(inventoryId, e);
-    			}
+    			sendFeishuMsg(inventoryId, e);
     			throw e;
     		} finally{
     			inventoryRedisUtil.unLock(tryLock);
@@ -108,15 +105,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void innerInventoryIdToInventoryHis(String inventoryId , int size , long waitTime , boolean commitRedis) {
+    public void innerInventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId) {
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
 				.orderByAsc(InventoryTransactionEntity::getCreateTime).last(size > 0 , " limit " + size + " ").list();
 		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
 			//1、补偿提交redis库存
-			if(commitRedis) {
-				Set<String> transactionIdSet = inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getTransactionId).collect(Collectors.toSet());
-				transactionIdSet.forEach(transactionId -> this.commitRedis(transactionId , false));
-			}
+			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
+					.map(InventoryTransactionEntity::getTransactionId)
+					.filter(t -> !t.equals(transactionId))
+					.collect(Collectors.toSet());
+			transactionIdSet.forEach(t -> this.commitRedis(t , false));
+			
 			Integer allTotalQty = 0;
 			//合并单据日期统一处理
 			Map<LocalDate, List<InventoryTransactionEntity>> billDateEntityMaps = inventoryTransactionEntityList.stream().collect(Collectors.groupingBy(InventoryTransactionEntity::getBillDate));
@@ -156,7 +155,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     			String forLogMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis循环", transactionId , inventoryId);
     			log.info("{}开始" , forLogMsg);
     			try {
-					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 3, false);
+					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 3, transactionId);
 				} catch (Exception e) {
 					log.error("{}失败" , forLogMsg , e);
 				}
@@ -490,7 +489,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					if(date == null) {
 						rollbackTimeMap.put(t, new Date());
 					}else {
-						if(DateUtil.offsetSecond(date, timeout).after(new Date())) {
+						if(new Date().after(DateUtil.offsetSecond(date, timeout))) {
 							try {
 								this.rollbackRedis(t);
 							} catch (Exception e) {
