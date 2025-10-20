@@ -46,7 +46,7 @@ public class ImlService {
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
-        body.put("orderNo","IN81571-20250929-000006");
+        body.put("orderNo","IN80565-20251020-000001");
         String timestamp = String.valueOf(new Date().getTime());
         String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
         Map<String,String> headerMap = new HashMap<>();

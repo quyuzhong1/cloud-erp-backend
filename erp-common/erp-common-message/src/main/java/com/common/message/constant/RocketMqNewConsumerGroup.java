@@ -215,4 +215,10 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_PLATFORM_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_warehouse_to_wms_group";
 
+    /**
+     * 新中台平台入库
+     */
+    public static final String RESTCLOUD_PLATFORM_INBOUND_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inbound_to_wms_group";
+
+
 }

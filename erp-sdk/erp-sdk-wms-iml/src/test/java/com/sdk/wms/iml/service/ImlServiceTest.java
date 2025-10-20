@@ -1,20 +1,25 @@
 package com.sdk.wms.iml.service;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.utils.FileUtil;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.sdk.wms.iml.dto.ImlBaseResp;
-import com.sdk.wms.iml.dto.request.ImlCancelOutboundReq;
-import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
-import com.sdk.wms.iml.dto.request.ImlUploadFileReq;
-import com.sdk.wms.iml.dto.request.ImlUploadLabelReq;
+import com.sdk.wms.iml.dto.request.*;
+import com.sdk.wms.iml.dto.response.ImlInboundResp;
 import com.sdk.wms.iml.dto.response.ImlOutboundResp;
+import io.seata.common.util.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,6 +122,50 @@ public class ImlServiceTest {
         ImlCancelOutboundReq imlCancelOutboundReq = new ImlCancelOutboundReq();
         imlCancelOutboundReq.setOrderNo("OT80565-20251017-000006");
         ImlBaseResp<String> resp = imlService.cancelOutboundBill(imlCancelOutboundReq);
+        System.out.println(JSONObject.toJSONString(resp));
+    }
+
+
+    @Test
+    public void createInboundBill() {
+        ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
+                .needCustomerAudit("N")
+                .platformOrderNo("FHD12456")
+                .bizType("TOC")
+                .destWarehouseCode("ceshi")
+                .customsType("SEPARATE_TAX")
+                .inboundType("DIRECT")
+                .expectedDate(LocalDateTimeUtil.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                .attachments(Arrays.asList(
+                        ImlCreateInboundReq.AttachmentsDTO.builder()
+                                .fileName("测试")
+                                .fileType("xlxs")
+                                .fileData("ceshi")
+                                .build()
+                ))
+                .boxs(Arrays.asList(
+                        ImlCreateInboundReq.BoxsDTO.builder()
+                                .boxNo("ceshi11324")
+                                .boxWeight(new BigDecimal(1.5))
+                                .boxLength(new BigDecimal(1.5))
+                                .boxWidth(new BigDecimal(1.5))
+                                .boxHeight(new BigDecimal(1.5))
+                                .boxDetails(Arrays.asList(
+                                        ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO.builder()
+                                                .skuBarcode("ceshiB0540-80D")
+                                                .quantity(1)
+                                                .build()
+                                ))
+                                .build()
+                ))
+                .build();
+        imlCreateInboundReq.setDirect(
+                ImlCreateInboundReq.DirectDTO.builder()
+                        .trackingNumber("测试1249")
+                        .build()
+        );
+
+        ImlBaseResp<ImlInboundResp>  resp = imlService.createInboundBill(imlCreateInboundReq);
         System.out.println(JSONObject.toJSONString(resp));
     }
 }
