@@ -330,7 +330,7 @@ public class MoldRefSkuDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
         /**
-         * 磨具id
+         * 模具id
          */
         private String moldId;
         /**
