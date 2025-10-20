@@ -290,13 +290,12 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
      * @param id
      * @return ApiResult<BatchResultDTO>
      */
-    @PostMapping("/changeDisable")
+    @GetMapping("/changeDisable")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:cfgMoldReturnAlertRule:disabled",
             serviceClass = CfgMoldReturnAlertRuleService.class,
             keyIdName = "id")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具返还策略启用/禁用")
     public ApiResult<BatchResultDTO> changeDisable(@RequestParam("id") String id) {
         CfgMoldReturnAlertRuleEntity entity = cfgMoldReturnAlertRuleService.lambdaQuery().eq(CfgMoldReturnAlertRuleEntity::getId, id).one();
         BatchResultDTO result;

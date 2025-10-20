@@ -452,5 +452,21 @@ public class AssetAcceptController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+    * 添加明细查询
+    * @author wuht
+    * @date:  2025-10-11
+    * @param dto 查询参数
+    * @return ApiResult<AssetAcceptDTO.AddDetailResultDTO>
+    */
+    @PostMapping("/queryAddDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "fms:assetAccept:addDetail",
+            serviceClass = AssetAcceptService.class,
+            keyIdName = "assetAcceptId")
+    public ApiResult<AssetAcceptDTO.AddDetailResultDTO> queryAddDetail(@RequestBody @Validated AssetAcceptDTO.AddDetailQueryDTO dto) {
+        return success(assetAcceptService.queryAddDetail(dto));
+    }
 
 }

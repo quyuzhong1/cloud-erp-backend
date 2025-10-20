@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.fms.dto.*;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -22,9 +23,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.fms.dto.AssetAcceptPersonDTO;
-import com.erp.model.fms.dto.AssetAcceptDetailDTO;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
@@ -41,8 +39,6 @@ import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.AttachmentService;
 import com.erp.server.fms.service.AssetCardService;
 import com.erp.model.fms.entity.AttachmentEntity;
-import com.erp.model.fms.dto.AttachmentDTO;
-import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.entity.AssetCardEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -587,27 +583,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         return list;
     }
 
-    @Override
-    public void exportList(AssetAcceptDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetAcceptDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetAccept.xlsx";
-        String name = "资产验收单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1106,8 +1081,152 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Override
     public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
         // 调用现有的分页查询方法
-        PagingVO<AssetAcceptDTO.ListDTO> result = paging(dto);
+        IPage<AssetAcceptDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>();
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+    * 查询添加明细
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto 查询参数
+    * @return
+    */
+    @Override
+    public AssetAcceptDTO.AddDetailResultDTO queryAddDetail(AssetAcceptDTO.AddDetailQueryDTO dto) {
+        AssetAcceptDTO.AddDetailResultDTO result = new AssetAcceptDTO.AddDetailResultDTO();
+        List<AssetAcceptDTO.AddDetailItemDTO> detailList = new ArrayList<>();
+        
+        // 如果有资产验收单ID，说明是编辑模式
+        if (StringUtils.isNotBlank(dto.getAssetAcceptId())) {
+            AssetAcceptEntity assetAccept = getByIdOpt(dto.getAssetAcceptId())
+                .orElseThrow(() -> new ServiceException("资产验收单不存在"));
+            
+            // 判断是否为模具采购订单下推
+            if ("模具采购订单".equals(assetAccept.getSourceType())) {
+                result.setIsFromMoldPurchaseOrder(true);
+                result.setMoldPurchaseOrderCode(assetAccept.getSourceCode());
+                
+                // 查询模具采购订单的明细范围
+                detailList = queryMoldPurchaseOrderDetails(assetAccept.getSourceId(), dto);
+                
+                // 查询已有的验收明细，标记为已选中
+                List<AssetAcceptDetailEntity> existingDetails = assetAcceptDetailService.lambdaQuery()
+                    .eq(AssetAcceptDetailEntity::getMainId, dto.getAssetAcceptId())
+                    .eq(AssetAcceptDetailEntity::getIsDeleted, false)
+                    .list();
+                
+                Set<String> existingSkuNos = existingDetails.stream()
+                    .map(AssetAcceptDetailEntity::getSkuNo)
+                    .collect(Collectors.toSet());
+                
+                // 标记已选中的明细
+                for (AssetAcceptDTO.AddDetailItemDTO item : detailList) {
+                    if (existingSkuNos.contains(item.getSkuNo())) {
+                        item.setSelected(true);
+                    }
+                }
+            } else {
+                // 手动新增，查询资产SKU
+                detailList = queryAssetSkuDetails(dto);
+            }
+        } else {
+            // 新增模式，查询资产SKU
+            detailList = queryAssetSkuDetails(dto);
+        }
+        
+        result.setDetailList(detailList);
         return result;
+    }
+
+    /**
+    * 查询模具采购订单明细
+    * @author wuht
+    * @date: 2025-10-11
+    * @param moldPurchaseOrderId 模具采购订单ID
+    * @param queryDTO 查询参数
+    * @return
+    */
+    private List<AssetAcceptDTO.AddDetailItemDTO> queryMoldPurchaseOrderDetails(String moldPurchaseOrderId, AssetAcceptDTO.AddDetailQueryDTO queryDTO) {
+        // TODO: 这里需要调用模具采购订单的接口或查询模具采购订单明细
+        // 暂时返回空列表，实际实现时需要根据模具采购订单的明细数据来构建
+        List<AssetAcceptDTO.AddDetailItemDTO> detailList = new ArrayList<>();
+        
+        // 示例实现（需要根据实际的数据结构调整）
+        /*
+        // 查询模具采购订单明细
+        List<MoldPurchaseOrderDetailEntity> moldDetails = moldPurchaseOrderDetailService.lambdaQuery()
+            .eq(MoldPurchaseOrderDetailEntity::getMainId, moldPurchaseOrderId)
+            .eq(MoldPurchaseOrderDetailEntity::getIsDeleted, false)
+            .list();
+        
+        for (MoldPurchaseOrderDetailEntity moldDetail : moldDetails) {
+            AssetAcceptDTO.AddDetailItemDTO item = new AssetAcceptDTO.AddDetailItemDTO();
+            item.setSkuNo(moldDetail.getSkuNo());
+            item.setProductName(moldDetail.getProductName());
+            item.setMoldCode(moldDetail.getMoldCode());
+            item.setMoldName(moldDetail.getMoldName());
+            item.setPurchaseQty(moldDetail.getPurchaseQty());
+            item.setPendingAcceptQty(moldDetail.getPendingAcceptQty());
+            item.setAcceptedQty(moldDetail.getAcceptedQty());
+            item.setAvailableAcceptQty(moldDetail.getAvailableAcceptQty());
+            item.setIsUrgent(moldDetail.getIsUrgent());
+            item.setRemark(moldDetail.getRemark());
+            detailList.add(item);
+        }
+        */
+        
+        return detailList;
+    }
+
+    /**
+    * 查询资产SKU明细
+    * @author wuht
+    * @date: 2025-10-11
+    * @param queryDTO 查询参数
+    * @return
+    */
+    private List<AssetAcceptDTO.AddDetailItemDTO> queryAssetSkuDetails(AssetAcceptDTO.AddDetailQueryDTO queryDTO) {
+        List<AssetAcceptDTO.AddDetailItemDTO> detailList = new ArrayList<>();
+        
+        // TODO: 这里需要查询PLM系统的产品信息，过滤出资产SKU
+        // 暂时返回空列表，实际实现时需要：
+        // 1. 根据SKU搜索条件查询产品
+        // 2. 过滤出资产类型的SKU（非资产SKU排除）
+        // 3. 构建返回数据
+        
+        /*
+        // 示例实现（需要根据实际的数据结构调整）
+        if (StringUtils.isNotBlank(queryDTO.getSearchKeyword())) {
+            String[] skuNos = queryDTO.getSearchKeyword().split("\\n");
+            
+            for (String skuNo : skuNos) {
+                skuNo = skuNo.trim();
+                if (StringUtils.isBlank(skuNo)) continue;
+                
+                // 查询产品信息
+                ProductSkuEntity productSku = productSkuService.lambdaQuery()
+                    .eq(ProductSkuEntity::getSkuNo, skuNo)
+                    .eq(ProductSkuEntity::getIsDeleted, false)
+                    .one();
+                
+                if (productSku != null && "资产".equals(productSku.getProductType())) {
+                    AssetAcceptDTO.AddDetailItemDTO item = new AssetAcceptDTO.AddDetailItemDTO();
+                    item.setSkuNo(productSku.getSkuNo());
+                    item.setProductName(productSku.getProductName());
+                    item.setAvailableAcceptQty(0); // 根据业务需求设置
+                    detailList.add(item);
+                }
+            }
+        }
+        */
+        
+        return detailList;
     }
 
     /**
