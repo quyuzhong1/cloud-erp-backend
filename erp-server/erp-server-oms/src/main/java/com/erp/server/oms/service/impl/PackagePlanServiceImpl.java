@@ -1234,7 +1234,8 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         return addDTOList;
     }
 
-    private PackagePlanEntity getBySoId(String soId) {
+    @Override
+    public PackagePlanEntity getBySoId(String soId) {
         if (CharSequenceUtil.isBlank(soId)) {
             return null;
         }
