@@ -1,12 +1,10 @@
 package com.erp.server.plm.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
-import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
+import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
 import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
-import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -62,5 +60,5 @@ public interface CfgMoldAlertRuleService extends SuperService<CfgMoldAlertRuleEn
 
     void importCfgMoldAlert(BaseDTO.ImportDTO dto);
 
-    void handleImportSuccessList(List<CfgMoldReturnImportExcelDTO> successList, List<CfgMoldReturnImportExcelDTO> errorList2, String importType);
+    void handleImportSuccessList(List<CfgMoldAlertImportExcelDTO> successList, List<CfgMoldAlertImportExcelDTO> errorList2, String importType);
 }

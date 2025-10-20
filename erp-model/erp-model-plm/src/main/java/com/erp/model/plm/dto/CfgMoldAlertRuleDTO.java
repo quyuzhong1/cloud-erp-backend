@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,11 +43,13 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         * 是否禁用
         */
         private Boolean disabled;
+        private String disabledName;
 
         /**
         * 是否作废
         */
         private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * 备注
@@ -114,9 +117,10 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         private LocalDate endDate;
 
         /**
-        * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量
+        * 预警标准
         */
         private String countDim;
+        private String countDimName;
 
 
     }
@@ -338,7 +342,7 @@ public class CfgMoldAlertRuleDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class PagingParamDTO implements Serializable {
+    public static class PagingParamDTO  extends SortDTO {
 
         /**
          * 页面高级查询

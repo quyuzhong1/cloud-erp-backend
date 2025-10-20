@@ -76,8 +76,6 @@ public class CfgMoldAlertRuleController extends BaseController {
         return success();
     }
 
-
-
     /**
      * 获取状态统计
      * @return
@@ -142,7 +140,7 @@ public class CfgMoldAlertRuleController extends BaseController {
             menuCode = "plm:cfgMoldAlertRule:delete",
             serviceClass = CfgMoldAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "模具返还策略删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "模具预警策略删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -153,10 +151,10 @@ public class CfgMoldAlertRuleController extends BaseController {
             try {
                 deleteResult = cfgMoldAlertRuleService.delete(id);
             }catch (Exception e){
-                log.error("模具返还策略删除失败",e);
+                log.error("模具预警策略删除失败",e);
                 CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "模具返还策略不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "模具预警策略不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -179,7 +177,7 @@ public class CfgMoldAlertRuleController extends BaseController {
             menuCode = "plm:cfgMoldAlertRule:invalid",
             serviceClass = CfgMoldAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.INVALID, desc = "模具返还策略作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "模具预警策略作废")
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -190,10 +188,10 @@ public class CfgMoldAlertRuleController extends BaseController {
             try {
                 invalidResult = cfgMoldAlertRuleService.invalid(id,dto.getRemark());
             }catch (Exception e){
-                log.error("模具返还策略作废失败",e);
+                log.error("模具预警策略作废失败",e);
                 CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "模具返还策略不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "模具预警策略不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
@@ -217,7 +215,7 @@ public class CfgMoldAlertRuleController extends BaseController {
             menuCode = "plm:cfgMoldAlertRule:disabled",
             serviceClass = CfgMoldAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具返还策略禁用")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "模具预警策略禁用")
     public ApiResult<List<BatchResultDTO>> batchDisabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -228,10 +226,10 @@ public class CfgMoldAlertRuleController extends BaseController {
             try {
                 result = cfgMoldAlertRuleService.disabled(id);
             }catch (Exception e){
-                log.error("模具返还策略禁用失败",e);
+                log.error("模具预警策略禁用失败",e);
                 CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 禁用失败");
+                    result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 禁用失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -254,7 +252,7 @@ public class CfgMoldAlertRuleController extends BaseController {
             menuCode = "plm:cfgMoldAlertRule:disabled",
             serviceClass = CfgMoldAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具返还策略启用")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "模具预警策略启用")
     public ApiResult<List<BatchResultDTO>> batchEnable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -265,10 +263,10 @@ public class CfgMoldAlertRuleController extends BaseController {
             try {
                 result = cfgMoldAlertRuleService.enable(id);
             }catch (Exception e){
-                log.error("模具返还策略启用失败",e);
+                log.error("模具预警策略启用失败",e);
                 CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 启用失败");
+                    result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 启用失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -298,9 +296,9 @@ public class CfgMoldAlertRuleController extends BaseController {
         try {
             result = cfgMoldAlertRuleService.changeDisable(entity);
         }catch (Exception e){
-            log.error("模具返还策略启用失败",e);
+            log.error("模具预警策略启用失败",e);
             if (ObjectUtil.isEmpty(entity)) {
-                result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 启用失败");
+                result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 启用失败");
             }else {
                 result = BatchResultDTO.fail(entity.getId(), entity.getMoldCode(), e.getMessage());
             }
@@ -323,7 +321,7 @@ public class CfgMoldAlertRuleController extends BaseController {
             menuCode = "plm:moldInfo:export",
             tableAlias = "mi"
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还策略导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具预警策略导出Excel数据")
     @WebAdvanceQuery(handler = CfgMoldAlertRuleQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgMoldAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgMoldAlertRuleService.exportList(dto, response);
@@ -337,11 +335,11 @@ public class CfgMoldAlertRuleController extends BaseController {
      * @param response
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还策略下载模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具预警策略下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/cfgMoldReturnTemplate.xlsx";
-        String standardExcelName = "cfgMoldReturnTemplate.xlsx";
+        String standardPath = "classpath:excel/cfgMoldAlertTemplate.xlsx";
+        String standardExcelName = "cfgMoldAlertTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
     }
@@ -353,7 +351,7 @@ public class CfgMoldAlertRuleController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入模具返还策略")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入模具预警策略")
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = cfgMoldAlertRuleService.importFile(dto);

@@ -416,7 +416,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importCfgMoldReturn(BaseDTO.ImportDTO dto) {
-        //已审核且未作废的模具关联SKU
+        //已审核且未作废的模具
         List<MoldInfoEntity> moldInfoEntities = moldInfoService.lambdaQuery()
                 .eq(MoldInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
                 .eq(MoldInfoEntity::getInvalidStatus, Boolean.FALSE)
