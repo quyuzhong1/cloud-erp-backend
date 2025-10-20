@@ -102,7 +102,7 @@ public class CfgMoldAlertRuleEntity extends BaseEntity<CfgMoldAlertRuleEntity> {
     @TableField("end_date")
     private LocalDate endDate;
     /**
-    * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldAlertRuleCountDimEnum
+    * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldReturnAlertRuleCountDimEnum
     */
     @TableField("count_dim")
     private String countDim;
