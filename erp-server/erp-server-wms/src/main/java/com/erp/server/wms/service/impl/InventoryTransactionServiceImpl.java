@@ -82,14 +82,18 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private ExecutorService transactionIdToInventoryHisPool;
 
     @Override
-    public void inventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId) {
-    	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , size , waitTime , transactionId);
+    public void inventoryIdToInventoryHis(String inventoryId  , String transactionId) {
+    	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , transactionId);
     	log.info("{}开始" , logMsg);
     	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
-		RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , waitTime);
+		long waitTime = 30;
+		if(StringUtils.isNotBlank(transactionId)) {
+			waitTime = 3;
+		}
+    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , waitTime);
     	if(tryLock != null) {
     		try {
-    			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId, size, waitTime, transactionId);
+    			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);
     		} catch (Exception e) {
     			log.error("{}失败" , logMsg , e);
     			sendFeishuMsg(inventoryId, e);
@@ -99,15 +103,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		}
     	}else {
     		log.error("{}正在迁移中" , logMsg);
+    		ServiceException.runError(logMsg + "正在迁移中");
     	}
     	log.info("{}结束" , logMsg);
     }
     
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void innerInventoryIdToInventoryHis(String inventoryId , int size , long waitTime , String transactionId) {
+    public void innerInventoryIdToInventoryHis(String inventoryId , String transactionId) {
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
-				.orderByAsc(InventoryTransactionEntity::getCreateTime).last(size > 0 , " limit " + size + " ").list();
+				.orderByAsc(InventoryTransactionEntity::getCreateTime).list();
 		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
 			//1、补偿提交redis库存
 			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
@@ -155,7 +160,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     			String forLogMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis循环", transactionId , inventoryId);
     			log.info("{}开始" , forLogMsg);
     			try {
-					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId, -1, 3, transactionId);
+					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId , transactionId);
 				} catch (Exception e) {
 					log.error("{}失败" , forLogMsg , e);
 				}

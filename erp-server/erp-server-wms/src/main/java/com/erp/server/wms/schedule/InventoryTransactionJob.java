@@ -34,13 +34,11 @@ public class InventoryTransactionJob {
     @XxlJob("inventoryTransactionToInventoryHis")
     public ReturnT inventoryTransactionToInventoryHis() {
         int transactionSize = 100;
-        int inventorySize = 100;
         String jobParam = XxlJobHelper.getJobParam();
         if(StringUtils.isNotBlank(jobParam)) {
         	try {
 				JSONObject parseObject = JSON.parseObject(jobParam);
 				transactionSize = parseObject.getIntValue("transactionSize");
-				inventorySize = parseObject.getIntValue("inventorySize");
 			} catch (Exception e) {
 				log.error("inventoryTransactionToInventoryHis转换参数失败");
 			}
@@ -53,7 +51,7 @@ public class InventoryTransactionJob {
         	String inventoryId = l.getInventoryId();
         	MDC.put("traceId", inventoryId);
 			try {
-				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId, inventorySize , 30 , "");
+				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId , "");
 			} catch (Exception e) {
 				log.error("自动迁移redis库存失败：{}" , inventoryId);
 			}finally {

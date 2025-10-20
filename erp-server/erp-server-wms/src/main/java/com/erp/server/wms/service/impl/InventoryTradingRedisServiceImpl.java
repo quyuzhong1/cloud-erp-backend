@@ -121,6 +121,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             }
 
         } catch (Exception e) {
+        	log.error("redis库存交易失败：" , e);
             throw new RuntimeException(e);
         } finally {
             stopwatch.stop();
