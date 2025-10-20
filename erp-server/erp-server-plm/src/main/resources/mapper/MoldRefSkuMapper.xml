@@ -108,14 +108,14 @@ mrs.sku_qty AS skuQty
             and mrs.approve_status = #{params.approveStatus}
         </if>
         <if test="params.moldId != null and params.moldId != ''">
-            and mrs.mold_id = #{moldId}
+            and mrs.mold_id = #{params.moldId}
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and  (mrs.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') or  mrs.product_name ILIKE concat('%',#{searchKeyword}::text,'%') )
+            and  (mrs.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%') or  mrs.product_name ILIKE concat('%',#{params.searchKeyword}::text,'%') )
             ORDER BY
-            case when sku_no ILIKE concat(#{searchKeyword}::text,'%') THEN 1
-            when sku_no ILIKE concat('%',#{searchKeyword}::text) THEN 2
-            when sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            case when sku_no ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when sku_no ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
             end , sku_no
         </if>
     </select>
