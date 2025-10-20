@@ -198,10 +198,11 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                     map.put(nextEntity.getIndex() ,nextEntity);
                     workflowTaskRecordService.updateById(nextEntity);
                 }
+                entity.setRetryCount(entity.getRetryCount() + plus);
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.TRUE;
             }
-            entity.setRetryCount(entity.getRetryCount() + plus);
-            workflowTaskRecordService.updateById(entity);
-            return Boolean.TRUE;
+
         }
     }
 

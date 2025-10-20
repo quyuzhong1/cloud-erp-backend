@@ -910,30 +910,28 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 .update();
 
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
-        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
-        addTaskDTO.setSourceId(entity.getId());
-        addTaskDTO.setSourceCode(entity.getCode());
-        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
-        addTaskDTO.setTraceId(MDC.get("traceId"));
-
-        Map<String, Object> map = new HashMap<>();
         if(CollUtil.isNotEmpty(list)){
+            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+            addTaskDTO.setSourceId(entity.getId());
+            addTaskDTO.setSourceCode(entity.getCode());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
+            addTaskDTO.setTraceId(MDC.get("traceId"));
+
+            Map<String, Object> map = new HashMap<>();
             map.put("soId", list.get(0).getId());
-        }
-        map.put("exhibitionOrderId", entity.getId());
-        addTaskDTO.setFirstNodeInputData(map);
+            map.put("exhibitionOrderId", entity.getId());
+            addTaskDTO.setFirstNodeInputData(map);
 
-        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
-        if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+                throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            }
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
         }
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-        }
-
-
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
