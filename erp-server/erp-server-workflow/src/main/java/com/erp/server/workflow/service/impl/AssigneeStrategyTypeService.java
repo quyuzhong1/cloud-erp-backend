@@ -144,4 +144,16 @@ public class AssigneeStrategyTypeService {
         String dqeOwnerId = (String) variablesMap.getOrDefault("dqeOwnerId","");
         return   CharSequenceUtil.isNotBlank(dqeOwnerId) ? Arrays.asList(dqeOwnerId.split(",")) : Collections.emptyList();
     }
+
+    /**
+     * 表单内联系人
+     * @param value 参数
+     * @return 审批人
+     */
+    public List<String> formInternalContactAssignee(CamundaDTO.StrategyParamDTO value) {
+        String assignee = value.getPropertiesDTO().getAssignee();
+        Map<String, Object> variablesMap = value.getVariablesMap();
+        String orDefault = (String) variablesMap.getOrDefault(assignee, "");
+        return CharSequenceUtil.isNotBlank(orDefault) ? Arrays.asList(orDefault.split(",")) : Collections.emptyList();
+    }
 }
