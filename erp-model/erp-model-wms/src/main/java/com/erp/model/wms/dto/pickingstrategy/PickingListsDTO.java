@@ -303,6 +303,10 @@ public class PickingListsDTO {
          */
         private String warehouseLocation;
         /**
+         * 推荐仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 明细来源Id
          */
         private String sourceDetailId;
