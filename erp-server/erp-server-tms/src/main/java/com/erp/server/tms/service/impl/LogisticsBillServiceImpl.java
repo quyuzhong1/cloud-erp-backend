@@ -516,6 +516,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 shipmentId(dto.getShipmentId()).
                 deliveryNo(dto.getOrderCode()).
                 platformCode(dto.getPlatformCode()).
+                dictPlatform(dto.getSalesPlatform()).
                 packageNumber(dto.getPackageNumber()).
                 packageId(dto.getPackageId()).
                 country(country).

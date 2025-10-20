@@ -2,7 +2,11 @@ package com.erp.server.wms.mapper;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ThirdWarehouseDeliveryDetailMapper extends BaseMapper<ThirdWarehouseDeliveryDetailEntity> {
 
+    List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(@Param("warehouseIds") List<String> warehouseIds);
 }

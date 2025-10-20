@@ -92,7 +92,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                         break;
                     } else {
                         log.warn("节点处理超时，触发远程调用，index={}, sourceId={}", i, mqDTO.getSourceId());
-                        success = remoteInvoke(map, entity, i, 0); // 超时重试
+                        success = remoteInvoke(map, entity, i, 1); // 超时重试
                     }
                     break;
                 case PENDING:

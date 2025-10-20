@@ -71,7 +71,7 @@ public class PlatformProductDTO extends UniqueDto {
     /**
      * 类型 platform 平台  warehouse 仓库
      */
-    private String type = "b2c_platform";
+    private String type = "platform";
 
     /**
      * 平台最后修改时间
