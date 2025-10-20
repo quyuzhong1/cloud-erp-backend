@@ -58,10 +58,11 @@
             al.create_time AS createTime,
             al.create_user_name AS createUserName
         FROM asset_location al
-        WHERE 1=1
+        WHERE
+        ${params.sqlMap.default}
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            AND ${params.permissionSql}
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -94,10 +95,8 @@
             al.create_time AS createTime,
             al.create_user_name AS createUserName
         FROM asset_location al
-        WHERE 1=1
-        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
-            AND ${params.sqlMap.default}
-        </if>
+        WHERE
+        ${params.sqlMap.default}
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size > 0">
             AND al.id in
@@ -107,7 +106,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            AND ${params.permissionSql}
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
