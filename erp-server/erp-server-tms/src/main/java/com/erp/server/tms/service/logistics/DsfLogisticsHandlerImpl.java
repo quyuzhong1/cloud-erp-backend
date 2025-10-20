@@ -369,9 +369,9 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
-                response.failure(LogisticsPlatformEnum.DSF.getName(), String.join(",", labelRequest.getRequestNo()), responseMsg.getMsg());
+                response.failure(LogisticsPlatformEnum.DSF.getName(), String.join(",", labelRequest.getRequestNo()), responseMsg.getErrors().get(0).getErrorMsg());
                 responses.add(response);
-                return failure(responses);
+                return failure(response.getMessage(),responses);
             } else {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),

@@ -151,7 +151,7 @@ public class DmpInputTaskJob {
 		}
         return ReturnT.SUCCESS;
     }
-	
+
 	@XxlJob("retryDoInputTask")
     public ReturnT retryDoInputTask(){
 		String jobParam = XxlJobHelper.getJobParam();
@@ -165,7 +165,7 @@ public class DmpInputTaskJob {
 				blackCfgInputs.addAll(Arrays.asList(blackCfgInputStr.split(",")));
 			}
 		}
-		
+
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
 			.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 			.lt(DmpInputTaskEntity::getUpdateTime, LocalDateTimeUtil.offset(LocalDateTime.now(), offset*-1, ChronoUnit.HOURS))

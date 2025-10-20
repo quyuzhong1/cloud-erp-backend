@@ -226,6 +226,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode());
             }else if(LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.AMAZON.getCode());
+            }else if(LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.WILDBERRIES.getCode());
             }else{
                 throw new ServiceException("不支持的平台，请联系IT处理");
             }
@@ -237,7 +239,10 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         ShopAuthEntity shopAuthEntity = null;
         //美客多校验账号店铺是否存在授权
-        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
+        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
 
             String shopAccount = authMap.get("shopAccount");
             if (CharSequenceUtil.isBlank(shopAccount)) {
@@ -257,6 +262,14 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 throw new ServiceException("未找到【{}】平台店铺授权信息",LogisticsPlatformEnum.getDescByCode(logisticsPlatform));
             }
             shopAuthEntity = authEntityList.stream().filter(e -> shopInfoEntity.getId().equals(e.getShopId())).findFirst().orElse(null);
+        }
+        if (Objects.isNull(shopAuthEntity)){
+            shopAuthEntity = result.getData().get(0);
+        }
+        if (LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopeeId());
+            authMap.put("token",shopAuthEntity.getAccessToken());
+            return authMap;
         }
         //根据主店铺获取子店铺token
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -287,9 +300,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("请先完成中台授权后再执行物流授权");
-        }
-        if (Objects.isNull(shopAuthEntity)){
-            shopAuthEntity = result.getData().get(0);
         }
         if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopeeId());
@@ -389,9 +399,12 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)  || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {

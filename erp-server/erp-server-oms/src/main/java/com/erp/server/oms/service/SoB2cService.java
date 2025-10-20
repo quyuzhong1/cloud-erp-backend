@@ -1130,4 +1130,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soMultiChannelEntity
      */
     void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
+
+    /**
+     * 生成组包计划预览
+     * @param soIds
+     * @return
+     */
+    List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
+
+    BatchResultDTO retryPackagePlan(String soId);
 }

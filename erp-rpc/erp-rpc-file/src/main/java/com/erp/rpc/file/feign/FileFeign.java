@@ -57,4 +57,7 @@ public interface FileFeign {
      */
     @GetMapping("/feign/file/getInputStream/{fileId}")
     Response getInputStream(@PathVariable("fileId") String fileId);
+
+    @PostMapping(value = "/feign/file/uploadFileByBase64")
+    String uploadFileByBase64(@RequestParam("base64Str")String base64Str);
 }

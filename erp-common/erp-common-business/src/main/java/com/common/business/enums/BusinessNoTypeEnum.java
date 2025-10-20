@@ -131,6 +131,7 @@ public enum BusinessNoTypeEnum {
     CODE_ZHDD(100, "ZHDD","展会订单", BusinessNoConstant.ZHDD),
     CODE_YPTH(101, "YPTH","样品退回单", BusinessNoConstant.YPTH),
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
+    CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
 
     ;
 
