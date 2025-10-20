@@ -187,6 +187,9 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             if(StringUtils.isNotBlank(errorMsg)){
                 entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
                 entity.setLastError(errorMsg);
+                entity.setRetryCount(entity.getRetryCount() + plus);
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.FALSE;
             }else {
                 entity.setStatus(WorkflowTaskRecordStatusEnum.SUCCESS.getCode());
                 entity.setLastError("");
@@ -195,10 +198,11 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                     map.put(nextEntity.getIndex() ,nextEntity);
                     workflowTaskRecordService.updateById(nextEntity);
                 }
+                entity.setRetryCount(entity.getRetryCount() + plus);
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.TRUE;
             }
-            entity.setRetryCount(entity.getRetryCount() + plus);
-            workflowTaskRecordService.updateById(entity);
-            return Boolean.TRUE;
+
         }
     }
 
