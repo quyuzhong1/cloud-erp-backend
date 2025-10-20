@@ -522,4 +522,13 @@ public class CustomerInfoController extends BaseController {
     public ApiResult<VirtualWarehouseDTO.VwDTO> getVirtualWarehouseByCustomerId(@RequestBody @Validated CustomerDTO.VirtualDTO dto) {
         return success(customerInfoService.getVirtualWarehouseByCustomerId(dto));
     }
+
+    /**
+     * 查询第三方客户余额
+     **/
+    @PostMapping("/getThirdCustomerAccount")
+    public ApiResult<CustomerDTO.ThirdCustomerAccountDTO> getThirdCustomerAccount(@RequestBody @Validated BaseIdDTO dto) {
+        return success(customerInfoService.getThirdCustomerAccount(dto));
+    }
+
 }

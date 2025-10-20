@@ -202,7 +202,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            packingTaskDetailEntity.setFnSku(soDetailEntity.getPlatformSkuNo());
+            packingTaskDetailEntity.setFnSku(soDetailEntity.getCustomerSkuNo());
             if( null != soDeliveryNoticeDetailEntity){
                 packingTaskDetailEntity.setDeliveryQty(soDeliveryNoticeDetailEntity.getPickingQty());
             }else{

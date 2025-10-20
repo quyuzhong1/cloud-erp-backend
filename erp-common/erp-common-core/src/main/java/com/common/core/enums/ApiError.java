@@ -96,6 +96,8 @@ public enum ApiError implements Serializable {
     ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
     ERROR_DATA_DELETE(1046, "数据删除失败"),
+    ERROR_DATA_APPROVE(1046, "数据审核失败"),
+    ERROR_DATA_DISAPPROVE(1046, "数据反审核失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -1346,10 +1348,8 @@ public enum ApiError implements Serializable {
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
 
-
-
-
-
+    ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
+    ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
 
 
     /**

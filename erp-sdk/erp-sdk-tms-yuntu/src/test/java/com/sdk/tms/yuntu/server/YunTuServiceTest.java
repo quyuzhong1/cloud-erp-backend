@@ -25,6 +25,11 @@ public class YunTuServiceTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public YunTuServiceTest(){
+        //生产
+        authMap.put("clientId","CNH1896658");
+        authMap.put("clientSecret","58d89eba9f63431f9883de6800bd98df");
+        authMap.put("url","http://oms.api.yunexpress.com");
+
         //测试
         authMap.put("clientId","ITC0893791");
         authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
@@ -40,8 +45,8 @@ public class YunTuServiceTest {
     @Test
     public void createOrder() {
         YunTuCreateOrderRequest request = YunTuCreateOrderRequest.builder()
-                .customerOrderNumber("1736938321835200541")
-                .shippingMethodCode("THPHR")
+                .customerOrderNumber("ceshi123456")
+                .shippingMethodCode("HKTHZXR-RMB")
                 .iossCode("IOSS0690112210251452600")
                 .height(1)
                 .length(1)
@@ -50,16 +55,19 @@ public class YunTuServiceTest {
                 .returnOption(false)
                 .tariffPrepay(false)
                 .insuranceOption(0)
-                .sourceCode("API")
+                .sourceCode("soB2c")
                 .packageCount(1)
                 .weight(new BigDecimal("12"))
+                .platform(YunTuCreateOrderRequest.Platform.builder()
+                        .platformCode("Shopify")
+                        .platformName("Shopify")
+                        .build())
                 .receiver(YunTuCreateOrderRequest.Receiver.builder()
-                        .countryCode("BR")
-                        .firstName("xin")
-                        .lastName("ming")
+                        .countryCode("JP")
+                        .firstName("海斗 園田")
                         .company("test")
-                        .state("California")
-                        .zip("93932")
+                        .state("Hyōgo")
+                        .zip("658-0022")
                         .phone("5869098233")
                         .houseNumber("1")
                         .email("12345@qq.com")
@@ -78,12 +86,13 @@ public class YunTuServiceTest {
                         .phone("58690982363")
                         .build())
                 .parcels(Arrays.asList(YunTuCreateOrderRequest.Parcels.builder()
-                        .eName("shangpin1")
+                        .eName("Phone Holder")
                         .quantity(1)
-                        .unitPrice(new BigDecimal("123"))
-                        .unitWeight(new BigDecimal("321"))
-                        .cName(" 商 品 1")
-                        .sku("sku1001")
+                                .hsCode("9620009000")
+                        .unitPrice(new BigDecimal("4.9672"))
+                        .unitWeight(new BigDecimal("0.134"))
+                        .cName("三脚架")
+                        .sku("M065")
                         .remark(" 商 品")
                         .invoiceRemark("ceshi 1 pcs")
                         .build()))
@@ -140,7 +149,7 @@ public class YunTuServiceTest {
     public void cancelOrder() {
         YunTuCancelOrderRequest request = YunTuCancelOrderRequest.builder()
                 .orderType(2)
-                .orderNumber("1736938321835200514")
+                .orderNumber("ceshi123")
                 .build();
         YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request,authMap);
         System.out.println(response);

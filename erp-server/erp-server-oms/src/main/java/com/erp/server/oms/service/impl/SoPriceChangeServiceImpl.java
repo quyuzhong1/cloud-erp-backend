@@ -144,7 +144,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, changeEntity.getId());
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, changeEntity.getId());
 
         //添加价格变更明细
         soPriceChangeDetailService.addPriceChangeDetail(changeEntity.getId(), dto.getSoPriceChangeDetailList());
@@ -283,7 +283,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
         //修改明细
         soPriceChangeDetailService.updatePriceChangeDetail(id, dto.getSoPriceChangeDetailList());
         return id;

@@ -1,9 +1,12 @@
 package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -21,7 +24,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_app_client")
+@TableName(value = "cfg_app_client", autoResultMap = true)
 public class CfgAppClientEntity extends BaseEntity<CfgAppClientEntity> {
 
     /**
@@ -59,6 +62,11 @@ public class CfgAppClientEntity extends BaseEntity<CfgAppClientEntity> {
     */
     @TableField("redirect_url")
     private String redirectUrl;
+    /**
+     * 扩展字段的 数据+值
+     */
+    @TableField(value = "extend_data", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> extendData;
 
 
     public static final String PLATFORM_TYPE = "platform_type";

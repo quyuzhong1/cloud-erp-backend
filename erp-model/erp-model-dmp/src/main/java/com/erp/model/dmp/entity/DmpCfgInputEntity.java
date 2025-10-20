@@ -74,6 +74,12 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
      */
     @TableField("bill_type")
     private String billType;
+
+    /**
+     * 执行系统:默认:dmp
+     */
+    @TableField("exec_system")
+    private String execSystem;
     
     public static final String SYSTEM_ID = "system_id";
 

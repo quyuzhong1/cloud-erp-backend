@@ -111,6 +111,7 @@ public class DmpInputCompensateCreateHandler extends DmpInputBaseCreateHandler{
 				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.COMPENSATE.getCode());
 				dmpInputTaskEntity.setExecTimeout(dmpCfgInputCompensateEntity.getExecTimeout());
 				dmpInputTaskEntity.setExtendJson(dmpCfgInputCompensateEntity.getExtendJson());
+				dmpInputTaskEntity.setExecSystem(dmpCfgInputEntity.getExecSystem());
 				
 				dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			}

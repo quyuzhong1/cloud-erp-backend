@@ -6,12 +6,18 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -20,22 +26,14 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdWarehouseMapper;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.ThirdWarehouseDTO;
-
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -132,7 +130,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
 
     @Override
     public PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdWarehouseDTO.SelectDTO> dto) {
-        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())) {
+        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())|| PlatformDictEnum.DHT.getCode().equals(dto.getParams().getSysType())) {
             Page query = new Page(dto.getCurrPage(), dto.getPageSize());
             IPage<ThirdWarehouseDTO.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
             if (CollUtil.isEmpty(pageData.getRecords())) {

@@ -34,8 +34,10 @@ import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.oms.dto.*;
@@ -67,9 +69,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
@@ -186,7 +185,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("下载模板类型不能为空");
         }
         //平台
-        String platform = RuleTypeEnum.PLATFORM.getCode();
+        String platform = RuleTypeEnum.B2C_PLATFORM.getCode();
         //库存
         String warehouse = RuleTypeEnum.WAREHOUSE.getCode();
         String customer = RuleTypeEnum.CUSTOMER.getCode();
@@ -237,7 +236,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("导入类型不能为空");
         }
         //平台
-        String platform = RuleTypeEnum.PLATFORM.getCode();
+        String platform = RuleTypeEnum.B2C_PLATFORM.getCode();
         //库存
         String warehouse = RuleTypeEnum.WAREHOUSE.getCode();
         //客户
@@ -333,13 +332,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        params.setType(RuleTypeEnum.PLATFORM.getCode());
+        params.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         IPage pageData = baseMapper.paging(query, params);
         List<SkuMappingDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        fillDb(list);
+        fillDb(list,Boolean.FALSE);
         return new PagingVO<>(pageData);
 
     }
@@ -354,7 +353,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      */
     @Override
     public Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_PLATFORM_SKU.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("b2c平台sku对照列表", EXPORT_OMS_PLATFORM_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -528,7 +527,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setProductSkuNo(skuVOList.get(0).getSkuNo());
         addSkuMaping.setProductSkuId(productSkuId);
         addSkuMaping.setListingId(listing.getId());
-        addSkuMaping.setType(RuleTypeEnum.PLATFORM);
+        addSkuMaping.setType(skuMapping.getType());
         addSkuMaping.setIsExpire(Boolean.FALSE);
         addSkuMaping.setEffectiveTime(dto.getEffectiveTime());
         addSkuMaping.setExpireTime(dto.getEffectiveTime().plusYears(100));
@@ -1029,7 +1028,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return Collections.emptyList();
         }
         List<SkuMappingDTO.SkuDTO> list = baseMapper.listByPlatformSkuNoList(platformSkuNoList);
-        String platformCode = RuleTypeEnum.PLATFORM.getCode();
+        String platformCode = RuleTypeEnum.B2C_PLATFORM.getCode();
         for (SkuMappingDTO.SkuDTO item : list) {
             String type = item.getType();
             String platformSkuNo = item.getPlatformSkuNo();
@@ -1213,7 +1212,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * @author yl
      * @date 2023-06-29 19:15
      */
-    private void fillDb(List<SkuMappingDTO.PagingViewDTO> list) {
+    private void fillDb(List<SkuMappingDTO.PagingViewDTO> list,Boolean isFastdfsUrl) {
         List<String> mainIds = list.stream().map(SkuMappingDTO.PagingViewDTO::getId).collect(Collectors.toList());
         Map<String, List<SkuMappingExtendDTO.ListDTO>> extendMap =  skuMappingExtendService.mapByMainIds(mainIds, false);
 
@@ -1250,6 +1249,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
             //平台状态
             item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
+
+            //是否是飞书链接
+            if (isFastdfsUrl && CharSequenceUtil.isNotBlank(item.getProductImageUrl())) {
+                item.setProductImageUrl(FastDFSClientUtil.publicUrl + item.getProductImageUrl());
+            }
         }
     }
 
@@ -1355,7 +1359,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 销售平台
-        if (RuleTypeEnum.PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
+        if (RuleTypeEnum.B2C_PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
@@ -1602,10 +1606,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
+        dto.getParams().setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
-        fillDb(page.getRecords());
+        fillDb(page.getRecords(),Boolean.FALSE);
         return new PagingVO<>(page);
     }
 
@@ -1628,7 +1632,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(dictPlatform);
         paramDTO.setShopIdList(shopIdList);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 
         // 亚马逊订单来源spu为空
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dictPlatform)){
@@ -1691,7 +1695,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 					log.warn("sku映射产品为空，不推送：{}" , skuMappingEntity.getId());
 					continue;
 				}
-				if(RuleTypeEnum.PLATFORM != skuMappingEntity.getType()) {
+				if(RuleTypeEnum.B2C_PLATFORM != skuMappingEntity.getType()) {
 					log.warn("sku映射类型不为平台，不推送：{}" , skuMappingEntity.getId());
 					continue;
 				}
@@ -2261,6 +2265,66 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             this.syncProductToWarehouse(syncList);
         }
         return batchResultDTOList;
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.PagingViewDTO> b2bPlatformPaging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        SkuMappingDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        params.setType(RuleTypeEnum.B2B_PLATFORM.getCode());
+        IPage<SkuMappingDTO.PagingViewDTO> pageData = baseMapper.b2bPlatformPaging(query, params);
+        List<SkuMappingDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        fillDb(list,Boolean.TRUE);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public DmpPushTaskDTO.LastPullDTO viewB2bPlatformSyncSku() {
+        //查询B2B平台映射关系的dmp推送情况
+        DmpPushTaskDTO.LastPullDTO lastPullRecord = dmpInoutTaskFeign.getLastPullRecord(new DmpPushTaskDTO.LastPullParamDTO(PlatformDictEnum.DHT.getCode(), BusinessTypeEnum.LISTING_INFO.getCode()));
+        if (ObjectUtil.isNotEmpty(lastPullRecord)) {
+            lastPullRecord.setPlatform(PlatformDictEnum.DHT.getCode());
+            lastPullRecord.setPlatformName(PlatformDictEnum.DHT.getName());
+            lastPullRecord.setStatusName(DmpInputTaskStatusEnum.getName(lastPullRecord.getStatus()));
+        } else {
+            lastPullRecord = new DmpPushTaskDTO.LastPullDTO();
+            lastPullRecord.setPlatform(PlatformDictEnum.DHT.getCode());
+            lastPullRecord.setPlatformName(PlatformDictEnum.DHT.getName());
+        }
+        return lastPullRecord;
+    }
+
+    @Override
+    public Boolean b2bPlatformSyncSku(SkuMappingDTO.SyncSkuDTO syncSkuDTO) {
+        //时间校验
+        if (syncSkuDTO.getEndTime().isBefore(syncSkuDTO.getStartTime()) || syncSkuDTO.getEndTime().isEqual(syncSkuDTO.getStartTime())) {
+            throw new ServiceException("结束时间必须大于开始时间");
+        }
+        //添加快速任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(PlatformDictEnum.DHT.getCode());
+        dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dto.setStartTime(syncSkuDTO.getStartTime());
+        dto.setEndTime(syncSkuDTO.getEndTime());
+        dto.setBillType(BusinessTypeEnum.LISTING_INFO.getCode());
+        dto.setNextLevelId("");
+        try {
+            dmpInoutTaskFeign.doInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportB2bPlatformSku(SkuMappingDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("b2b平台sku对照列表", EXPORT_OMS_B2B_PLATFORM_SKU.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {

@@ -59,6 +59,13 @@ public interface ThirdWarehouseService {
     ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId);
 
     /**
+     *  查询出库单
+     * @param queryOutboundReq
+     * @param authId
+     * @return
+     */
+    ApiResult<String> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId);
+    /**
      * 运费试算
      */
     ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId);

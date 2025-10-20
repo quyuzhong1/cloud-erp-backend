@@ -190,7 +190,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String id = IdWorker.getIdStr();
         exhibitionOrderEntity.setId(id);
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZHXS);
         exhibitionOrderEntity.setCode(code);
 
         //明细
@@ -255,7 +255,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         // 保存附件
         TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSave(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
+        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
 
         return new BaseResultDTO.AddDTO(id, code);
     }
@@ -473,7 +473,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         // 保存附件
         TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSave(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), id);
+        omsAttachmentService.batchSaveOrUpdate(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), id);
 
         return Boolean.TRUE;
     }
@@ -1146,7 +1146,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         SoInfoEntity soInfoEntity = soInfoService.getById(soId);
         try {
-            soInfoService.submit(soInfoEntity,Boolean.FALSE);
+            soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
         }catch (Exception e) {
             log.error("B2B订单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
@@ -1814,7 +1814,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String mainId = IdWorker.getIdStr();
                 addSo.setId(mainId);
                 // 生成单号
-                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZHXS);
                 addSo.setCode(code);
 
                 //领用人

@@ -248,6 +248,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
      */
      @TableField("check_type")
      private String checkType;
+     /**
+      * 军区id
+      */
+     @TableField("partition_id")
+     private String partitionId;
+     
 
     public static final String CODE = "code";
 

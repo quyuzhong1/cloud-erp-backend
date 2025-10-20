@@ -348,6 +348,57 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String sourceType;
 
 
+    /**
+     * 订单金额
+     */
+    @TableField("order_amount")
+    private BigDecimal orderAmount;
+
+    /**
+     * 平台订单Id
+     */
+    @TableField("platform_order_id")
+    private String platformOrderId;
+    /**
+     * 平台订单编号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
+    /**
+     * 平台更新时间
+     */
+    @TableField("platform_update_time")
+    private LocalDateTime platformUpdateTime;
+
+    /**
+     * 平台创建时间
+     */
+    @TableField("platform_create_time")
+    private LocalDateTime platformCreateTime;
+
+    /**
+     * 账户抵扣金额
+     */
+    @TableField("account_deduct_amount")
+    private BigDecimal accountDeductAmount;
+    /**
+     * 返利抵扣金额
+     */
+    @TableField("rebate_deduct_amount")
+    private BigDecimal rebateDeductAmount;
+    /**
+     * 授信抵扣金额
+     */
+    @TableField("credit_deduct_amount")
+    private BigDecimal creditDeductAmount;
+
+    /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
