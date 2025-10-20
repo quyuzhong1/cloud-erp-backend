@@ -45,10 +45,12 @@ public class AssigneeStrategyService {
         assigneeStrategyMap.put("somebody", value -> assigneeStrategyTypeService.somebodyAssignee(value));
         //指定人-表达式
         assigneeStrategyMap.put("somebody_exp", value -> assigneeStrategyTypeService.somebodyExpAssignee(value));
-        //指定角色
-        assigneeStrategyMap.put("designated_role", value -> assigneeStrategyTypeService.designatedRoleAssignee(value));
-        //DQE负责人
-        assigneeStrategyMap.put("dqe_owner", value -> assigneeStrategyTypeService.dqeOwnerAssignee(value));
+//        //指定角色
+//        assigneeStrategyMap.put("designated_role", value -> assigneeStrategyTypeService.designatedRoleAssignee(value));
+//        //DQE负责人
+//        assigneeStrategyMap.put("dqe_owner", value -> assigneeStrategyTypeService.dqeOwnerAssignee(value));
+        //表单内联系人
+        assigneeStrategyMap.put("formInternalContact", value -> assigneeStrategyTypeService.formInternalContactAssignee(value));
 
     }
     public List<String> getResult(CamundaDTO.PropertiesDTO propertiesDTO, String startUserId, String candidateUsers, Map<String, Object> variables) {
