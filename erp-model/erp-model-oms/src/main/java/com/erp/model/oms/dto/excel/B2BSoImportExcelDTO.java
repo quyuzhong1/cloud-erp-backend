@@ -333,25 +333,25 @@ public class B2BSoImportExcelDTO {
     private String isReissue;
 
 
-    /**
-     * 是否关闭
-     */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "是否关闭", index = 37)
-    @FieldValid(fieldName = "是否关闭",isNotBlank = true,fieldValues = "是,否")
-    private String isClose;
+//    /**
+//     * 是否关闭
+//     */
+//    @ColumnWidth(10)
+//    @ExcelProperty(value = "是否关闭", index = 37)
+//    @FieldValid(fieldName = "是否关闭",isNotBlank = true,fieldValues = "是,否")
+//    private String isClose;
     /**
      * 客户PO号
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "客户PO号", index = 38)
+    @ExcelProperty(value = "客户PO号", index = 37)
     @FieldValid(fieldName = "客户PO号",maxLength = 30)
     private String customerPO;
     /**
      * 目的地
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "目的地", index = 39)
+    @ExcelProperty(value = "目的地", index = 38)
     @FieldValid(fieldName = "目的地",maxLength = 100)
     private String toCountry;
 
@@ -359,7 +359,7 @@ public class B2BSoImportExcelDTO {
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 40)
+    @ExcelProperty(value = "备注", index = 39)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String detailRemark;
 
@@ -369,7 +369,7 @@ public class B2BSoImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 41)
+    @ExcelProperty(value = "错误数据", index = 40)
     private String errorMsg;
 
 
