@@ -4415,8 +4415,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String isReissueStr = item.getIsReissue();
                 addDetail.setIsReissue("是".equals(isReissueStr));
                 //是否关闭
-                String isCloseStr = item.getIsClose();
-                addDetail.setIsClose("是".equals(isCloseStr));
+//                String isCloseStr = item.getIsClose();
+                addDetail.setIsClose(false);
                 //客户PO号
                 addDetail.setCustomerPO(item.getCustomerPO());
                 addDetail.setToCountry(item.getToCountry());
