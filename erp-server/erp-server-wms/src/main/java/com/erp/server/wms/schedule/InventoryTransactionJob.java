@@ -1,6 +1,9 @@
 package com.erp.server.wms.schedule;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -16,6 +19,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -77,5 +81,11 @@ public class InventoryTransactionJob {
         inventoryTransactionService.inventoryCheckRollback(timeout);
         
         return ReturnT.SUCCESS;
+    }
+    
+    @XxlJob("inventoryCheckSame")
+    public ReturnT inventoryCheckSame() {
+    	inventoryTransactionService.queryInventoryCheckSame();
+    	return ReturnT.SUCCESS;
     }
 }
