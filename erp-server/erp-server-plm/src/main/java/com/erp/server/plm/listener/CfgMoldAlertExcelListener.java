@@ -3,24 +3,17 @@ package com.erp.server.plm.listener;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
-import com.erp.model.plm.enums.MoldInfoTagEnum;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
-import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,14 +25,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author jack
- * @Classname CfgMoldReturnExcelListener
+ * @Classname CfgMoldAlertExcelListener
  * @Date 2025-10-16
  */
-public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldReturnImportExcelDTO> {
+public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAlertImportExcelDTO> {
 
     private static final int BATCH_COUNT = 1000;
 
@@ -55,7 +47,7 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
     //模具
     private Map<String, MoldInfoEntity> moldInfoMap;
 
-    private final CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService = SpringUtil.getBean(CfgMoldReturnAlertRuleService.class);
+    private final CfgMoldAlertRuleService cfgMoldAlertRuleService = SpringUtil.getBean(CfgMoldAlertRuleService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
@@ -63,15 +55,15 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
      * 错误信息
      */
     @Getter
-    private List<CfgMoldReturnImportExcelDTO> errorList = new ArrayList<>();
+    private List<CfgMoldAlertImportExcelDTO> errorList = new ArrayList<>();
 
     @Getter
-    private List<CfgMoldReturnImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
+    private List<CfgMoldAlertImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    public CfgMoldReturnExcelListener(String taskId,
-                                      String importType,
-                                      Integer importCount,
-                                      Map<String, MoldInfoEntity> moldInfoMap) {
+    public CfgMoldAlertExcelListener(String taskId,
+                                     String importType,
+                                     Integer importCount,
+                                     Map<String, MoldInfoEntity> moldInfoMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
@@ -92,7 +84,7 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(CfgMoldReturnImportExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(CfgMoldAlertImportExcelDTO excelDTO, AnalysisContext analysisContext) {
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
@@ -181,8 +173,8 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
             try {
-                List<CfgMoldReturnImportExcelDTO> errorList2 = new ArrayList<>();
-                cfgMoldReturnAlertRuleService.handleImportSuccessList(successList, errorList2,importType);
+                List<CfgMoldAlertImportExcelDTO> errorList2 = new ArrayList<>();
+                cfgMoldAlertRuleService.handleImportSuccessList(successList, errorList2,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -202,8 +194,8 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()){
             try {
-                List<CfgMoldReturnImportExcelDTO> errorList2 = new ArrayList<>();
-                cfgMoldReturnAlertRuleService.handleImportSuccessList(successList, errorList2,importType);
+                List<CfgMoldAlertImportExcelDTO> errorList2 = new ArrayList<>();
+                cfgMoldAlertRuleService.handleImportSuccessList(successList, errorList2,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
