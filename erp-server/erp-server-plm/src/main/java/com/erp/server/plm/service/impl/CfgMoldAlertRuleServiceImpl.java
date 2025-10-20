@@ -131,6 +131,7 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         Integer count = lambdaQuery()
                 .eq(CfgMoldAlertRuleEntity::getMoldId, cfgMoldAlertRuleEntity.getMoldId())
                 .eq(CfgMoldAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
+                .ne(CfgMoldAlertRuleEntity::getId, cfgMoldAlertRuleEntity.getId())
                 .count();
         if(count > 0){
             throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldAlertRuleEntity.getMoldCode());
