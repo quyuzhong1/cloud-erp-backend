@@ -13,9 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-10-20 10:27:11
  */
 public enum CfgMoldAlertRuleCountDimEnum implements EnumMessage {
-	PURCHASEORDER("purchaseOrder", "以采购下单数量"),
-	WAREHOUSERECEIVE("warehouseReceive", "以采购收货数量"),
-	POINSTOCK("poInstock", "以采购入库数量"),
+
     ;
     /**
      * 类型
