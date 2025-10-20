@@ -23,16 +23,16 @@ import com.erp.model.sys.entity.SysDepartmentThirdEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
+import com.erp.model.workflow.dto.CfgSystemFieldMappingDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
-import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
+import com.erp.model.workflow.entity.CfgSystemFieldMappingEntity;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.sys.feign.SysDepartmentThirdFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.service.CfgQueryOptionService;
+import com.erp.server.workflow.service.CfgSystemFieldMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +48,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -71,6 +72,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     private SysDepartmentThirdFeign sysDepartmentThirdFeign;
     @Autowired
     private CfgQueryOptionService cfgQueryOptionService;
+
+    @Resource
+    private CfgSystemFieldMappingService cfgSystemFieldMappingService;
 
     @Override
     public JSONArray assembleForm(JSONArray formArray, Map<String, Object> variablesMap,
@@ -759,9 +763,15 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
 
     /**
-     * 主方法：提取和处理表单数据
+     * 根据映射关系生成数据MAP
+     * @author will
+     * @date 2025/10/16 19:12
+     * @param formArray
+     * @param fieldMaps
+     * @param valueMaps
+     * @return Map<String,Object>
      */
-    public Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMaps, List<CfgProcessValueMapEntity> valueMaps) {
+    public Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMaps, List<CfgProcessValueMapEntity> valueMaps,String sourceType) {
         // 第一步：将飞书结构转为控件id和值的映射
         Map<String, Object> feishuIdValueMap = convertToIdValueMap(formArray);
 
@@ -774,8 +784,13 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         Map<String, List<CfgProcessValueMapEntity>> collect = valueMaps.stream().collect(Collectors.groupingBy(CfgProcessValueMapEntity::getFieldMapId));
 
+        //查询需要转换字段值的配置
+        List<CfgSystemFieldMappingDTO.FieldMappingParamDTO> paramList = fieldMaps.stream().map(obj -> new CfgSystemFieldMappingDTO.FieldMappingParamDTO(CfgQueryOptionUseTypeEnum.ALL_DATA.getCode(),sourceType,obj.getSysField(), obj.getSysParentId())).collect(Collectors.toList());
+        List<CfgSystemFieldMappingEntity> cfgSystemFieldMappingList = cfgSystemFieldMappingService.listSystemFieldMapping(paramList);
+        Map<String, CfgSystemFieldMappingEntity> mappingMap = CollUtil.isEmpty(cfgSystemFieldMappingList) ? new HashMap<>() : cfgSystemFieldMappingList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}", obj.getSysParentId(), obj.getBusinessField()), Function.identity()));
+
         // 第二步：根据字段映射和值映射转换为系统映射
-        return processMapping(feishuIdValueMap, groupedFieldMaps, collect);
+        return processMapping(feishuIdValueMap, groupedFieldMaps, collect,mappingMap);
     }
 
     /**
@@ -887,12 +902,26 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
     }
 
+
+    /**
+     * 字段映射
+     * @author will
+     * @date 2025/10/16 18:28
+     * @param feishuIdValueMap 飞书字段MAP
+     * @param groupedFieldMaps ERP配置MAP
+     * @param valueMapsByFieldMapId 选项值映射MAP
+     * @return Map<String,Object>
+     */
     public Map<String, Object> processMapping(
             Map<String, Object> feishuIdValueMap,
             Map<String, List<CfgProcessFieldMapEntity>> groupedFieldMaps,
-            Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
+            Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId,
+            Map<String, CfgSystemFieldMappingEntity> mappingMap) {
 
         Map<String, Object> finalResultMap = new HashMap<>();
+        //feign接口查询结果集
+        Map<String,List<Object>> feginResultMap = new HashMap<>();
+
         //排序
         Map<String, List<CfgProcessFieldMapEntity>> readListMap = reorderMap(groupedFieldMaps);
         for (Map.Entry<String, List<CfgProcessFieldMapEntity>> entry : readListMap.entrySet()) {
@@ -915,14 +944,48 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     } else {
                         finalResultMap.put(fieldMap.getSysField(),fieldMap.getDefaultValue());
                     }
+                    //字段远程接口值转换
+                    putMappingResultMap(feginResultMap,finalResultMap,mappingMap,fieldMap.getSysParentId(),fieldMap.getSysField(),fieldMap.getDefaultValue());
                 }
                 continue;
             }
             Object feiShuOriginalValue = feishuIdValueMap.get(feishuWidgetId);
             //非默认配置处理
-            processDetailListFeiShuToSys(finalResultMap, feiShuOriginalValue, relevantFieldMaps, valueMapsByFieldMapId);
+            processDetailListFeiShuToSys(feginResultMap,finalResultMap, feiShuOriginalValue, relevantFieldMaps, valueMapsByFieldMapId,mappingMap);
         }
         return finalResultMap;
+    }
+
+    /**
+     * 字段远程接口值转换
+     * @author will
+     * @date 2025/10/20 11:53
+     * @param finalResultMap
+     * @param mappingMap
+     * @param sysParentId
+     * @param sysField
+     * @param value
+     * @return void
+     */
+    private void putMappingResultMap(Map<String,List<Object>> feginResultMap,Map<String, Object> finalResultMap,
+                                     Map<String, CfgSystemFieldMappingEntity> mappingMap,String sysParentId,String sysField,String value) {
+        CfgSystemFieldMappingEntity mappingEntity = mappingMap.get(CharSequenceUtil.format("{}-{}", sysParentId, sysField));
+        if (ObjUtil.isEmpty(mappingEntity)) {
+            return;
+        }
+        List<Object> feignData = feginResultMap.get(CharSequenceUtil.format("{}-{}-{}", mappingEntity.getFeignPath(), mappingEntity.getFeignMethod(), mappingEntity.getFeignParam()));
+        if (ObjUtil.isEmpty(feignData)) {
+            feignData = cfgSystemFieldMappingService.listFeignQueryData(mappingEntity);
+            if (ObjUtil.isEmpty(feignData)) {
+                return;
+            }
+            //接口查询结果添加到fegin查询结果集中
+            feginResultMap.put(CharSequenceUtil.format("{}-{}-{}", mappingEntity.getFeignPath(), mappingEntity.getFeignMethod(), mappingEntity.getFeignParam()),feignData);
+        }
+        String targetFieldValue = feignData.stream().filter(obj -> CharSequenceUtil.equals(ObjUtil.defaultIfNull(JSONUtil.parseObj(obj).get(mappingEntity.getSourceDisplayField()),"").toString(), value))
+                .map(obj -> ObjUtil.defaultIfNull(JSONUtil.parseObj(obj).get(mappingEntity.getSourceField()),"").toString())
+                .findFirst().orElse("");
+        finalResultMap.put(mappingEntity.getTargetField(),targetFieldValue);
     }
 
     /**
@@ -952,10 +1015,11 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * @param fieldMaps           与当前字段相关的映射规则列表。
      * @param valueMapsByFieldMapId 预处理过的值映射集。
      */
-    private void processSingleField(Map<String, Object> currentResultMap,
+    private void processSingleField(Map<String,List<Object>> feginResultMap,Map<String, Object> currentResultMap,
                                     Object feishuOriginalValue,
                                     List<CfgProcessFieldMapEntity> fieldMaps,
-                                    Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
+                                    Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId,
+                                    Map<String, CfgSystemFieldMappingEntity> mappingMap) {
 
         for (CfgProcessFieldMapEntity fieldMap : fieldMaps) {
             // 获取目标系统字段名
@@ -982,6 +1046,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             } else {
                 currentResultMap.put(sysField, mappedValue);
             }
+            //字段远程接口值转换
+            putMappingResultMap(feginResultMap,currentResultMap,mappingMap,fieldMap.getSysParentId(),fieldMap.getSysField(),fieldMap.getDefaultValue());
         }
     }
 
@@ -1081,13 +1147,13 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * @param detailFieldMaps     针对该明细列表的所有子字段的映射配置。
      * @param valueMapsByFieldMapId 值映射配置。
      */
-    private void processDetailListFeiShuToSys(Map<String, Object> finalResultMap,
+    private void processDetailListFeiShuToSys(Map<String,List<Object>> feginResultMap,Map<String, Object> finalResultMap,
                                               Object feiShuOriginalValue,
                                               List<CfgProcessFieldMapEntity> detailFieldMaps,
-                                              Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
-        //1、feiShuOriginalValue为空时
+                                              Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId,
+                                              Map<String, CfgSystemFieldMappingEntity> mappingMap) {
+        //1、feiShuOriginalValue为空时返回
         if (ObjUtil.isEmpty(feiShuOriginalValue)) {
-
             return;
         }
         // 我们通过检查 relevantFieldMaps 中第一个实体的 isDetailField 和 sysParentId 来判断
@@ -1115,7 +1181,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     if (cellFieldMaps != null && !cellFieldMaps.isEmpty()) {
                         // 递归调用 processSingleField 处理明细行中的每个子字段
                         // 目标 Map 是 mappedRow
-                        processSingleField(mappedRow, feishuCellValue, cellFieldMaps, valueMapsByFieldMapId);
+                        processSingleField(feginResultMap,mappedRow, feishuCellValue, cellFieldMaps, valueMapsByFieldMapId,mappingMap);
                     }
                 }
                 if (!mappedRow.isEmpty()) {
@@ -1130,7 +1196,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             return;
         }
         //3、当feiShuOriginalValue为单个对象时
-        processSingleField(finalResultMap, feiShuOriginalValue, detailFieldMaps, valueMapsByFieldMapId);
+        processSingleField(feginResultMap,finalResultMap, feiShuOriginalValue, detailFieldMaps, valueMapsByFieldMapId,mappingMap);
     }
 
     public static LocalDateTime convertRFC3339ToLocalDateTime(String rfc3339Date) {
@@ -1506,7 +1572,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * @param variablesMap
      * @param fieldMapList
      * @return
-     */
+     *//*
     public List<ApproveTaskDetailDTO.AddDTO> generatePullDetailDTO(
             JSONArray formArray,
             Map<String, Object> variablesMap,
@@ -1639,9 +1705,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         return detailList;
     }
 
-    /**
+    *//**
      * 处理字段并生成DTO
-     */
+     *//*
     private void buildFieldForDTO(
             JSONObject formField,
             String fieldType,
@@ -1656,143 +1722,6 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         String fieldName = formField.getStr("name");
 
         try {
-            // 处理金额字段
-            if ("amount".equals(fieldType)) {
-                // 金额字段需要处理货币单位和金额值
-                Object thirdValue = formField.get("value");
-                String thirdCurrency = "CNY";
-
-                try {
-                    JSONObject ext = formField.getJSONObject("ext");
-                    if (ext != null) {
-                        thirdCurrency = ext.getStr("currency", "CNY");
-                    }
-                } catch (Exception e) {
-                    System.err.println("获取金额字段货币单位失败: " + e.getMessage());
-                }
-
-                // 排序字段映射，确保顺序一致
-                fieldMapEntities.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
-
-                if (fieldMapEntities.size() >= 2) {
-                    // 获取货币和金额的映射
-                    CfgProcessFieldMapEntity currencyObj = fieldMapEntities.get(0);
-                    CfgProcessFieldMapEntity valueObj = fieldMapEntities.get(1);
-
-                    // 获取系统字段名
-                    String currencyField = currencyObj.getSysField();
-                    String valueField = valueObj.getSysField();
-
-                    // 获取系统值
-                    Object sysCurrencyObj = dataMap.get(currencyField);
-                    Object sysValueObj = dataMap.get(valueField);
-
-                    String sysCurrency = sysCurrencyObj != null ? sysCurrencyObj.toString() : "";
-                    String sysValue = sysValueObj != null ? sysValueObj.toString() : "0";
-
-                    // 创建货币单位DTO
-                    ApproveTaskDetailDTO.AddDTO currencyDTO = BeanUtil.copyProperties(currencyObj, ApproveTaskDetailDTO.AddDTO.class);
-                    currencyDTO.setSysFieldValue(sysCurrency);
-                    currencyDTO.setThirdFieldValue(thirdCurrency);
-                    if (rowIndex != null) {
-                        currencyDTO.setIndex(rowIndex);
-                        currencyDTO.setEntityName(entityName);
-                        currencyDTO.setEntityCode(entityCode);
-                    }
-
-                    // 创建金额值DTO
-                    ApproveTaskDetailDTO.AddDTO valueDTO = BeanUtil.copyProperties(valueObj, ApproveTaskDetailDTO.AddDTO.class);
-                    valueDTO.setSysFieldValue(sysValue);
-                    valueDTO.setThirdFieldValue(thirdValue != null ? thirdValue.toString() : "0");
-                    if (rowIndex != null) {
-                        valueDTO.setIndex(rowIndex);
-                        valueDTO.setEntityName(entityName);
-                        valueDTO.setEntityCode(entityCode);
-                    }
-
-                    detailList.add(currencyDTO);
-                    detailList.add(valueDTO);
-                    System.out.println("添加金额字段DTO: 货币=" + thirdCurrency + ", 金额=" + thirdValue);
-                }
-                return;
-            }
-
-            // 处理部门字段
-            if ("department".equals(fieldType)) {
-                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
-
-                // 获取系统值
-                String sysField = fieldMap.getSysField();
-                Object sysValue = dataMap.get(sysField);
-
-                // 提取部门ID
-                String thirdValue = "";
-                try {
-                    JSONArray deptValues = formField.getJSONArray("value");
-                    if (deptValues != null && !deptValues.isEmpty()) {
-                        JSONObject dept = deptValues.getJSONObject(0);
-                        if (dept != null) {
-                            thirdValue = dept.getStr("open_id");
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("获取部门字段值失败: " + e.getMessage());
-                }
-
-                // 创建DTO
-                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
-                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
-                dto.setThirdFieldValue(thirdValue);
-                if (rowIndex != null) {
-                    dto.setIndex(rowIndex);
-                    dto.setEntityName(entityName);
-                    dto.setEntityCode(entityCode);
-                }
-
-                detailList.add(dto);
-                System.out.println("添加部门字段DTO: " + thirdValue);
-                return;
-            }
-
-            // 处理联系人字段
-            if ("contact".equals(fieldType)) {
-                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
-
-                // 获取系统值
-                String sysField = fieldMap.getSysField();
-                Object sysValue = dataMap.get(sysField);
-
-                // 提取联系人ID
-                String thirdValue = "";
-                try {
-                    JSONArray contactValues = formField.getJSONArray("value");
-                    if (contactValues != null && !contactValues.isEmpty()) {
-                        thirdValue = contactValues.getStr(0);
-                    } else {
-                        // 如果没有value，尝试获取open_ids
-                        JSONArray openIds = formField.getJSONArray("open_ids");
-                        if (openIds != null && !openIds.isEmpty()) {
-                            thirdValue = openIds.getStr(0);
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("获取联系人字段值失败: " + e.getMessage());
-                }
-
-                // 创建DTO
-                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
-                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
-                dto.setThirdFieldValue(thirdValue);
-                if (rowIndex != null) {
-                    dto.setIndex(rowIndex);
-                    dto.setEntityName(entityName);
-                    dto.setEntityCode(entityCode);
-                }
-
-                detailList.add(dto);
-                System.out.println("添加联系人字段DTO: " + thirdValue);
-                return;
-            }
 
             // 处理附件和图片字段
             if ("attachmentV2".equals(fieldType) || "image".equals(fieldType)) {
@@ -1912,10 +1841,620 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             System.err.println("处理字段时出错: " + fieldId + " (" + fieldName + "), 类型: " + fieldType);
             e.printStackTrace();
         }
-    }
+    }*/
 
     @Override
     public ProcessSourcePlatformEnum getEventType() {
         return ProcessSourcePlatformEnum.FS;
     }
+
+    /**
+     * 拉取产生的三方生成查询记录
+     * @param formArray 飞书表单数据
+     * @param variablesMap ERP变量映射
+     * @param fieldMapList 字段映射配置
+     * @return 三方生成查询明细列表
+     */
+    public List<ApproveTaskDetailDTO.AddDTO> generatePullDetailDTO(
+            JSONArray formArray,
+            Map<String, Object> variablesMap,
+            List<CfgProcessFieldMapEntity> fieldMapList) {
+
+        // 创建结果列表
+        List<ApproveTaskDetailDTO.AddDTO> detailList = new ArrayList<>();
+
+        // 按照不同维度分组字段映射
+        Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId = fieldMapList.stream()
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
+
+        // 按系统字段分组，用于查找ERP未映射字段
+        Map<String, List<CfgProcessFieldMapEntity>> fieldMapBySysField = fieldMapList.stream()
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getSysField));
+
+        // 按父级ID分组明细字段映射
+        Map<String, List<CfgProcessFieldMapEntity>> detailFieldMapByParentId = fieldMapList.stream()
+                .filter(map -> map.getIsDetailField() != null && map.getIsDetailField())
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdParentId));
+
+        // 打印调试信息
+        System.out.println("表单字段数量: " + formArray.size());
+        System.out.println("字段映射数量: " + fieldMapList.size());
+
+        // 1. 处理飞书表头字段（有映射和无映射的）
+        processHeaderFields(formArray, fieldMapByThirdFieldId, variablesMap, detailList);
+
+        // 2. 处理飞书明细字段（有映射和无映射的）
+        processDetailFields(formArray, detailFieldMapByParentId, fieldMapByThirdFieldId, variablesMap, detailList);
+
+        // 3. 处理ERP未映射到飞书的表头字段
+        processUnmappedERPHeaderFields(fieldMapList, fieldMapByThirdFieldId, variablesMap, detailList);
+
+        // 4. 处理ERP未映射到飞书的明细字段
+        processUnmappedERPDetailFields(fieldMapList, formArray, variablesMap, detailList);
+
+        // 5. 添加默认值字段
+        addDefaultValueFields(fieldMapByThirdFieldId, detailList);
+
+        System.out.println("最终生成的DTO数量: " + detailList.size());
+        return detailList;
+    }
+
+    /**
+     * 处理飞书表头字段（有映射和无映射的）
+     */
+    private void processHeaderFields(JSONArray formArray,
+                                     Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                     Map<String, Object> variablesMap,
+                                     List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject formField = formArray.getJSONObject(i);
+            String fieldType = formField.getStr("type");
+
+            // 跳过明细字段，后面单独处理
+            if ("fieldList".equals(fieldType)) {
+                continue;
+            }
+
+            String fieldId = formField.getStr("id");
+            String fieldName = formField.getStr("name");
+
+            System.out.println("处理表头字段: " + fieldId + " (" + fieldName + "), 类型: " + fieldType);
+
+            // 获取字段映射配置
+            List<CfgProcessFieldMapEntity> fieldMapEntities = fieldMapByThirdFieldId.get(fieldId);
+
+            if (fieldMapEntities != null && !fieldMapEntities.isEmpty()) {
+                // 有映射的字段 - 飞书映射到ERP的表头字段
+                for (CfgProcessFieldMapEntity fieldMap : fieldMapEntities) {
+                    if (fieldMap.getIsDetailField() != null && fieldMap.getIsDetailField()) {
+                        continue; // 跳过明细字段映射
+                    }
+                    buildMappedHeaderFieldDTO(formField, fieldMap, variablesMap, detailList);
+                }
+            } else {
+                // 无映射的字段 - 飞书未映射到ERP的表头字段
+                buildUnmappedHeaderFieldDTO(formField, detailList);
+            }
+        }
+    }
+
+    /**
+     * 处理飞书明细字段（有映射和无映射的）
+     */
+    private void processDetailFields(JSONArray formArray,
+                                     Map<String, List<CfgProcessFieldMapEntity>> detailFieldMapByParentId,
+                                     Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                     Map<String, Object> variablesMap,
+                                     List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject formField = formArray.getJSONObject(i);
+            String fieldType = formField.getStr("type");
+
+            if (!"fieldList".equals(fieldType)) {
+                continue;
+            }
+
+            String fieldId = formField.getStr("id");
+            String fieldName = formField.getStr("name");
+
+            System.out.println("处理明细字段: " + fieldId + " (" + fieldName + ")");
+
+            // 获取明细数据
+            JSONArray detailRows = formField.getJSONArray("value");
+            if (detailRows == null || detailRows.isEmpty()) {
+                System.out.println("明细表格数据为空: " + fieldId);
+                // 即使没有数据，也要处理ERP未映射的明细结构
+                processEmptyDetailStructure(fieldId, fieldName, detailFieldMapByParentId, variablesMap, detailList);
+                continue;
+            }
+
+            // 获取该明细控件对应的字段映射
+            List<CfgProcessFieldMapEntity> parentMappings = detailFieldMapByParentId.get(fieldId);
+
+            // 处理每一行明细数据
+            for (int j = 0; j < detailRows.size(); j++) {
+                JSONArray rowFields = detailRows.getJSONArray(j);
+
+                // 处理有映射的明细字段
+                if (parentMappings != null && !parentMappings.isEmpty()) {
+                    processMappedDetailRow(rowFields, parentMappings, fieldMapByThirdFieldId,
+                            variablesMap, detailList, j, fieldName, fieldId);
+                }
+
+                // 处理无映射的明细字段（飞书明细中未映射到ERP的字段）
+                processUnmappedDetailRow(rowFields, parentMappings, fieldMapByThirdFieldId,
+                        detailList, j, fieldName, fieldId);
+            }
+
+            // 处理ERP未映射到飞书的整个明细（为空的情况）
+            processUnmappedERPDetailForParent(fieldId, fieldName, parentMappings,
+                    detailRows.size(), variablesMap, detailList);
+        }
+    }
+
+    /**
+     * 处理有映射的明细行
+     */
+    private void processMappedDetailRow(JSONArray rowFields,
+                                        List<CfgProcessFieldMapEntity> parentMappings,
+                                        Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                        Map<String, Object> variablesMap,
+                                        List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                        int rowIndex, String entityName, String parentId) {
+
+        // 按子字段ID分组映射
+        Map<String, List<CfgProcessFieldMapEntity>> childMappingsByFieldId = parentMappings.stream()
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
+
+        // 获取系统父级ID（用于entityCode）
+        String sysParentId = parentMappings.get(0).getSysParentId();
+
+        for (int k = 0; k < rowFields.size(); k++) {
+            JSONObject detailField = rowFields.getJSONObject(k);
+            String detailFieldId = detailField.getStr("id");
+
+            List<CfgProcessFieldMapEntity> fieldMappings = childMappingsByFieldId.get(detailFieldId);
+            if (fieldMappings != null && !fieldMappings.isEmpty()) {
+                // 有映射的明细字段
+                for (CfgProcessFieldMapEntity fieldMap : fieldMappings) {
+                    buildMappedDetailFieldDTO(detailField, fieldMap, variablesMap,
+                            detailList, rowIndex, entityName, sysParentId);
+                }
+            }
+        }
+    }
+
+    /**
+     * 处理无映射的明细行（飞书明细中未映射到ERP的字段）
+     */
+    private void processUnmappedDetailRow(JSONArray rowFields,
+                                          List<CfgProcessFieldMapEntity> parentMappings,
+                                          Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                          List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                          int rowIndex, String entityName, String parentId) {
+
+        // 获取已映射的字段ID集合
+        Set<String> mappedFieldIds = new HashSet<>();
+        if (parentMappings != null) {
+            mappedFieldIds = parentMappings.stream()
+                    .map(CfgProcessFieldMapEntity::getThirdFieldId)
+                    .collect(Collectors.toSet());
+        }
+
+        for (int k = 0; k < rowFields.size(); k++) {
+            JSONObject detailField = rowFields.getJSONObject(k);
+            String detailFieldId = detailField.getStr("id");
+
+            // 如果这个字段没有被映射，则创建无映射的DTO
+            if (!mappedFieldIds.contains(detailFieldId)) {
+                buildUnmappedDetailFieldDTO(detailField, detailList, rowIndex, entityName, parentId);
+            }
+        }
+    }
+
+    /**
+     * 处理ERP未映射到飞书的表头字段
+     */
+    private void processUnmappedERPHeaderFields(List<CfgProcessFieldMapEntity> fieldMapList,
+                                                Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                                Map<String, Object> variablesMap,
+                                                List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        // 收集所有飞书字段ID
+        Set<String> allThirdFieldIds = fieldMapByThirdFieldId.keySet();
+
+        // 找出ERP有但飞书没有的表头字段
+        for (CfgProcessFieldMapEntity fieldMap : fieldMapList) {
+            // 跳过明细字段和默认值字段
+            if ((fieldMap.getIsDetailField() != null && fieldMap.getIsDetailField()) ||
+                    "default".equals(fieldMap.getThirdFieldId())) {
+                continue;
+            }
+
+            // 如果这个系统字段没有对应的飞书字段映射
+            if (!allThirdFieldIds.contains(fieldMap.getThirdFieldId())) {
+                buildERPUnmappedHeaderFieldDTO(fieldMap, variablesMap, detailList);
+            }
+        }
+    }
+
+    /**
+     * 处理ERP未映射到飞书的明细字段
+     */
+    private void processUnmappedERPDetailFields(List<CfgProcessFieldMapEntity> fieldMapList,
+                                                JSONArray formArray,
+                                                Map<String, Object> variablesMap,
+                                                List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        // 收集所有飞书明细父级ID
+        Set<String> allDetailParentIds = new HashSet<>();
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject formField = formArray.getJSONObject(i);
+            if ("fieldList".equals(formField.getStr("type"))) {
+                allDetailParentIds.add(formField.getStr("id"));
+            }
+        }
+
+        // 按系统父级ID分组ERP明细字段
+        Map<String, List<CfgProcessFieldMapEntity>> erpDetailFieldsByParent = fieldMapList.stream()
+                .filter(map -> map.getIsDetailField() != null && map.getIsDetailField() &&
+                        map.getSysParentId() != null && !"main".equals(map.getSysParentId()))
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getSysParentId));
+
+        // 处理每个ERP明细表
+        for (Map.Entry<String, List<CfgProcessFieldMapEntity>> entry : erpDetailFieldsByParent.entrySet()) {
+            String sysParentId = entry.getKey();
+            List<CfgProcessFieldMapEntity> detailMappings = entry.getValue();
+
+            // 检查这个ERP明细表是否有对应的飞书明细映射
+            boolean hasFeishuMapping = detailMappings.stream()
+                    .anyMatch(map -> map.getThirdParentId() != null &&
+                            allDetailParentIds.contains(map.getThirdParentId()));
+
+            if (!hasFeishuMapping) {
+                // ERP未映射到飞书的整个明细
+                buildERPUnmappedCompleteDetail(detailMappings, variablesMap, detailList, sysParentId);
+            } else {
+                // ERP映射到飞书的明细但部分字段未映射
+                buildERPUnmappedPartialDetail(detailMappings, variablesMap, detailList, sysParentId, allDetailParentIds);
+            }
+        }
+    }
+
+    /**
+     * 处理空的明细结构
+     */
+    private void processEmptyDetailStructure(String fieldId, String fieldName,
+                                             Map<String, List<CfgProcessFieldMapEntity>> detailFieldMapByParentId,
+                                             Map<String, Object> variablesMap,
+                                             List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        List<CfgProcessFieldMapEntity> parentMappings = detailFieldMapByParentId.get(fieldId);
+        if (parentMappings != null && !parentMappings.isEmpty()) {
+            String sysParentId = parentMappings.get(0).getSysParentId();
+            // 为ERP映射的明细生成空行
+            for (CfgProcessFieldMapEntity fieldMap : parentMappings) {
+                buildMappedDetailFieldDTO(null, fieldMap, variablesMap, detailList,
+                        0, fieldName, sysParentId);
+            }
+        }
+    }
+
+    /**
+     * 处理ERP未映射到飞书的整个明细
+     */
+    private void processUnmappedERPDetailForParent(String fieldId, String fieldName,
+                                                   List<CfgProcessFieldMapEntity> parentMappings,
+                                                   int rowCount,
+                                                   Map<String, Object> variablesMap,
+                                                   List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        if (parentMappings == null || parentMappings.isEmpty()) {
+            return;
+        }
+
+        String sysParentId = parentMappings.get(0).getSysParentId();
+
+        // 为每一行生成ERP未映射的字段
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            for (CfgProcessFieldMapEntity fieldMap : parentMappings) {
+                // 这里生成ERP有但飞书没有的明细字段
+                buildERPUnmappedDetailFieldDTO(fieldMap, variablesMap, detailList,
+                        rowIndex, fieldName, sysParentId);
+            }
+        }
+    }
+
+// ========== DTO构建方法 ==========
+
+    /**
+     * 构建有映射的表头字段DTO
+     */
+    private void buildMappedHeaderFieldDTO(JSONObject formField,
+                                           CfgProcessFieldMapEntity fieldMap,
+                                           Map<String, Object> variablesMap,
+                                           List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        ApproveTaskDetailDTO.AddDTO dto = createBaseDTO(formField, fieldMap, variablesMap);
+        dto.setEntityCode("main");
+        detailList.add(dto);
+    }
+
+    /**
+     * 构建无映射的飞书表头字段DTO
+     */
+    private void buildUnmappedHeaderFieldDTO(JSONObject formField,
+                                             List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        ApproveTaskDetailDTO.AddDTO dto = new ApproveTaskDetailDTO.AddDTO();
+        dto.setThirdField(formField.getStr("name"));
+        dto.setThirdFieldType(formField.getStr("type"));
+        dto.setThirdFieldValue(extractFieldValue(formField));
+        dto.setThirdFieldRequired(false); // 无映射时设为false
+        dto.setSysField("");
+        dto.setSysFieldType("");
+        dto.setSysFieldValue("");
+        dto.setSysFieldRequired(false);
+        dto.setEntityCode("main");
+
+        detailList.add(dto);
+        System.out.println("添加无映射表头字段DTO: " + formField.getStr("name"));
+    }
+
+    /**
+     * 构建有映射的明细字段DTO
+     */
+    private void buildMappedDetailFieldDTO(JSONObject detailField,
+                                           CfgProcessFieldMapEntity fieldMap,
+                                           Map<String, Object> variablesMap,
+                                           List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                           int rowIndex, String entityName, String sysParentId) {
+
+        ApproveTaskDetailDTO.AddDTO dto = createBaseDTO(detailField, fieldMap, variablesMap);
+        dto.setIndex(rowIndex);
+        dto.setEntityName(entityName);
+        dto.setEntityCode(sysParentId);
+        detailList.add(dto);
+    }
+
+    /**
+     * 构建无映射的飞书明细字段DTO
+     */
+    private void buildUnmappedDetailFieldDTO(JSONObject detailField,
+                                             List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                             int rowIndex, String entityName, String parentId) {
+
+        if (detailField == null) return;
+
+        ApproveTaskDetailDTO.AddDTO dto = new ApproveTaskDetailDTO.AddDTO();
+        dto.setThirdField(detailField.getStr("name"));
+        dto.setThirdFieldType(detailField.getStr("type"));
+        dto.setThirdFieldValue(extractFieldValue(detailField));
+        dto.setThirdFieldRequired(false);
+        dto.setSysField("");
+        dto.setSysFieldType("");
+        dto.setSysFieldValue("");
+        dto.setSysFieldRequired(false);
+        dto.setIndex(rowIndex);
+        dto.setEntityName(entityName);
+        dto.setEntityCode(parentId); // 使用飞书父级ID作为entityCode
+
+        detailList.add(dto);
+        System.out.println("添加无映射明细字段DTO: " + detailField.getStr("name") + ", 行号: " + rowIndex);
+    }
+
+    /**
+     * 构建ERP未映射的表头字段DTO
+     */
+    private void buildERPUnmappedHeaderFieldDTO(CfgProcessFieldMapEntity fieldMap,
+                                                Map<String, Object> variablesMap,
+                                                List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+        dto.setThirdField("");
+        dto.setThirdFieldType("");
+        dto.setThirdFieldValue("");
+        dto.setThirdFieldRequired(false);
+
+        // 设置系统字段值
+        String sysFieldValue = getSysFieldValue(fieldMap.getSysField(), variablesMap, fieldMap.getDefaultValue());
+        dto.setSysFieldValue(sysFieldValue);
+        dto.setEntityCode("main");
+
+        detailList.add(dto);
+        System.out.println("添加ERP未映射表头字段DTO: " + fieldMap.getSysField());
+    }
+
+    /**
+     * 构建ERP未映射的完整明细
+     */
+    private void buildERPUnmappedCompleteDetail(List<CfgProcessFieldMapEntity> detailMappings,
+                                                Map<String, Object> variablesMap,
+                                                List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                                String sysParentId) {
+
+        // 生成一行空数据
+        for (CfgProcessFieldMapEntity fieldMap : detailMappings) {
+            ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            dto.setThirdField("");
+            dto.setThirdFieldType("");
+            dto.setThirdFieldValue("");
+            dto.setThirdFieldRequired(false);
+
+            String sysFieldValue = getSysFieldValue(fieldMap.getSysField(), variablesMap, fieldMap.getDefaultValue());
+            dto.setSysFieldValue(sysFieldValue);
+            dto.setIndex(0);
+            dto.setEntityCode(sysParentId);
+            dto.setEntityName("未映射明细");
+
+            detailList.add(dto);
+        }
+        System.out.println("添加ERP未映射完整明细: " + sysParentId);
+    }
+
+    /**
+     * 构建ERP未映射的部分明细字段
+     */
+    private void buildERPUnmappedPartialDetail(List<CfgProcessFieldMapEntity> detailMappings,
+                                               Map<String, Object> variablesMap,
+                                               List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                               String sysParentId,
+                                               Set<String> allDetailParentIds) {
+
+        // 这里需要根据实际情况确定行号，简化处理为第0行
+        for (CfgProcessFieldMapEntity fieldMap : detailMappings) {
+            // 如果这个字段没有对应的飞书父级ID映射
+            if (fieldMap.getThirdParentId() == null ||
+                    !allDetailParentIds.contains(fieldMap.getThirdParentId())) {
+
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setThirdField("");
+                dto.setThirdFieldType("");
+                dto.setThirdFieldValue("");
+                dto.setThirdFieldRequired(false);
+
+                String sysFieldValue = getSysFieldValue(fieldMap.getSysField(), variablesMap, fieldMap.getDefaultValue());
+                dto.setSysFieldValue(sysFieldValue);
+                dto.setIndex(0);
+                dto.setEntityCode(sysParentId);
+                dto.setEntityName("部分未映射明细");
+
+                detailList.add(dto);
+            }
+        }
+    }
+
+    /**
+     * 构建ERP未映射的明细字段DTO
+     */
+    private void buildERPUnmappedDetailFieldDTO(CfgProcessFieldMapEntity fieldMap,
+                                                Map<String, Object> variablesMap,
+                                                List<ApproveTaskDetailDTO.AddDTO> detailList,
+                                                int rowIndex, String entityName, String sysParentId) {
+
+        ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+        dto.setThirdField("");
+        dto.setThirdFieldType("");
+        dto.setThirdFieldValue("");
+        dto.setThirdFieldRequired(false);
+
+        String sysFieldValue = getSysFieldValue(fieldMap.getSysField(), variablesMap, fieldMap.getDefaultValue());
+        dto.setSysFieldValue(sysFieldValue);
+        dto.setIndex(rowIndex);
+        dto.setEntityName(entityName);
+        dto.setEntityCode(sysParentId);
+
+        detailList.add(dto);
+    }
+
+    /**
+     * 创建基础DTO（处理字段值提取）
+     */
+    private ApproveTaskDetailDTO.AddDTO createBaseDTO(JSONObject formField,
+                                                      CfgProcessFieldMapEntity fieldMap,
+                                                      Map<String, Object> variablesMap) {
+
+        ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+
+        // 设置飞书字段值
+        if (formField != null) {
+            dto.setThirdFieldValue(extractFieldValue(formField));
+        } else {
+            dto.setThirdFieldValue("");
+        }
+
+        // 设置系统字段值
+        String sysFieldValue = getSysFieldValue(fieldMap.getSysField(), variablesMap, fieldMap.getDefaultValue());
+        dto.setSysFieldValue(sysFieldValue);
+
+        return dto;
+    }
+
+    /**
+     * 提取字段值（处理不同类型字段）
+     */
+    private String extractFieldValue(JSONObject formField) {
+        if (formField == null) return "";
+
+        String fieldType = formField.getStr("type");
+        Object value = formField.get("value");
+
+        if (value == null) return "";
+
+        try {
+            if ("attachmentV2".equals(fieldType) || "image".equals(fieldType)) {
+                // 处理附件字段
+                JSONArray fileValues = formField.getJSONArray("value");
+                if (fileValues != null && !fileValues.isEmpty()) {
+                    return fileValues.getStr(0);
+                }
+            } else if ("checkboxV2".equals(fieldType)) {
+                // 处理多选框字段
+                JSONArray checkboxValues = formField.getJSONArray("value");
+                if (checkboxValues != null) {
+                    List<String> values = new ArrayList<>();
+                    for (int i = 0; i < checkboxValues.size(); i++) {
+                        values.add(checkboxValues.getStr(i));
+                    }
+                    return String.join(",", values);
+                }
+            } else {
+                // 处理其他字段
+                return value.toString();
+            }
+        } catch (Exception e) {
+            System.err.println("提取字段值失败: " + formField.getStr("name") + ", 类型: " + fieldType);
+            e.printStackTrace();
+        }
+
+        return value.toString();
+    }
+
+    /**
+     * 获取系统字段值
+     */
+    private String getSysFieldValue(String sysField, Map<String, Object> variablesMap, String defaultValue) {
+        if (variablesMap != null && variablesMap.containsKey(sysField)) {
+            Object value = variablesMap.get(sysField);
+            return value != null ? value.toString() : "";
+        }
+        return defaultValue != null ? defaultValue : "";
+    }
+
+    /**
+     * 添加默认值字段
+     */
+    private void addDefaultValueFields(Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId,
+                                       List<ApproveTaskDetailDTO.AddDTO> detailList) {
+
+        List<CfgProcessFieldMapEntity> defaultList = fieldMapByThirdFieldId.get("default");
+        if (CollUtil.isNotEmpty(defaultList)) {
+            List<ApproveTaskDetailDTO.AddDTO> addDefaultList = new ArrayList<>();
+            for (CfgProcessFieldMapEntity fieldMapEntity : defaultList) {
+                if (CharSequenceUtil.equals(fieldMapEntity.getSysParentId(), "main")) {
+                    ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.toBean(fieldMapEntity, ApproveTaskDetailDTO.AddDTO.class);
+                    addDTO.setSysFieldValue(fieldMapEntity.getDefaultValue());
+                    addDTO.setEntityCode(fieldMapEntity.getSysParentId());
+                    addDefaultList.add(addDTO);
+                } else {
+                    List<Integer> indexList = detailList.stream()
+                            .filter(obj -> CharSequenceUtil.equals(obj.getEntityCode(), fieldMapEntity.getSysParentId()))
+                            .map(ApproveTaskDetailDTO.AddDTO::getIndex)
+                            .distinct()
+                            .collect(Collectors.toList());
+                    for (Integer index : indexList) {
+                        ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.toBean(fieldMapEntity, ApproveTaskDetailDTO.AddDTO.class);
+                        addDTO.setSysFieldValue(fieldMapEntity.getDefaultValue());
+                        addDTO.setEntityCode(fieldMapEntity.getSysParentId());
+                        addDTO.setIndex(index);
+                        addDefaultList.add(addDTO);
+                    }
+                }
+            }
+            detailList.addAll(addDefaultList);
+        }
+    }
+
 }

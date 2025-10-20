@@ -129,7 +129,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
 
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
