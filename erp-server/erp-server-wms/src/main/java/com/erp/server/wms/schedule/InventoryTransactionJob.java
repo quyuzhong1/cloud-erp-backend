@@ -85,7 +85,17 @@ public class InventoryTransactionJob {
     
     @XxlJob("inventoryCheckSame")
     public ReturnT inventoryCheckSame() {
-    	inventoryTransactionService.queryInventoryCheckSame();
+    	 int warnSize = 100;
+         String jobParam = XxlJobHelper.getJobParam();
+         if(StringUtils.isNotBlank(jobParam)) {
+         	try {
+ 				JSONObject parseObject = JSON.parseObject(jobParam);
+ 				warnSize = parseObject.getIntValue("warnSize");
+ 			} catch (Exception e) {
+ 				log.error("inventoryCheckRollback转换参数失败");
+ 			}
+         }
+    	inventoryTransactionService.queryInventoryCheckSame(warnSize);
     	return ReturnT.SUCCESS;
     }
 }
