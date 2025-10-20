@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.CfgMoldAlertRuleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.CfgMoldAlertRuleEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="remark" property="remark" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="mold_id" property="moldId" />
+       <result column="mold_code" property="moldCode" />
+       <result column="mold_name" property="moldName" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="life_qty" property="lifeQty" />
+       <result column="alert_life_qty" property="alertLifeQty" />
+       <result column="alert_life_rate" property="alertLifeRate" />
+       <result column="start_date" property="startDate" />
+       <result column="end_date" property="endDate" />
+       <result column="count_dim" property="countDim" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        disabled, invalid_status, remark, invalid_remark, mold_id, mold_code, mold_name, supplier_id, supplier_code, supplier_name, life_qty, alert_life_qty, alert_life_rate, start_date, end_date, count_dim
+    </sql>
+
+
+</mapper>
