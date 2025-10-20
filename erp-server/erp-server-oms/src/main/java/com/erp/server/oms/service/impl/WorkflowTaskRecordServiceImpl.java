@@ -101,12 +101,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     @Override
     public List<WorkflowTaskRecordEntity> listErrorTask() {
-        return baseMapper.listErrorTask();
+        return baseMapper.listErrorTask("");
     }
 
     @Override
-    public void WorkflowTaskRecordRetryJob() {
-        List<WorkflowTaskRecordEntity> list = baseMapper.listErrorTask();
+    public void WorkflowTaskRecordRetryJob(String id) {
+        List<WorkflowTaskRecordEntity> list = baseMapper.listErrorTask(id);
         if (CollectionUtil.isEmpty(list)) {
             return ;
         }

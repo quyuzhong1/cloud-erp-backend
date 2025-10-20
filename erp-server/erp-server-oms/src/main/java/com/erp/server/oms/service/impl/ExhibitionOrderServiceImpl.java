@@ -1083,7 +1083,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         Map<String, Object> data = dto.getData();
         //校验data是否为空
         if (ObjectUtil.isEmpty(data)) {
-            mqResponseDTO.setErrorMsg("data为空");
+            mqResponseDTO.setErrorMsg("data为·   -空");
             return mqResponseDTO;
         }
         // 校验exhibitionOrderId是否存在且非空
@@ -1574,6 +1574,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+
+        BigDecimal zeroFlag = BigDecimal.ZERO;
+        List<ExhibitionOrderDetailEntity> list = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
+        //这个是 单价为空的集合
+        List<ExhibitionOrderDetailEntity> isNullPriceList = list.stream().filter(s -> !s.getIsGift()  && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(isNullPriceList)) {
+            throw new ServiceException(entity.getCode() + " 销售单价不能为空或者为零");
         }
         return;
     }
