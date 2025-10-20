@@ -38,7 +38,7 @@ public enum InventoryRedisOpEnum implements EnumMessage {
         this.luaScript = luaScript;
     }
     
-    private static volatile EnumMap<InventoryRedisOpEnum, DefaultRedisScript<String>> opRedisScript = null;
+    private static volatile EnumMap<InventoryRedisOpEnum, DefaultRedisScript<String>> opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
     /**
      * 类型
      */
@@ -78,21 +78,20 @@ public enum InventoryRedisOpEnum implements EnumMessage {
     }
     
     public static DefaultRedisScript<String> getDefaultRedisScript(InventoryRedisOpEnum inventoryRedisOpEnum){
-    	if(BusinessCommonConstants.hasProfile("dev")) {
-    		String luaBasePath = ClassLoader.getSystemResource("").getPath().split("/target/classes")[0] + "/src/main/resources/lua/";
-    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
-        	defaultRedisScript.setResultType(String.class);
-        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + inventoryRedisOpEnum.getLuaScript()));
-        	return defaultRedisScript;
-    	}
-    	if(opRedisScript == null) {
+//    	if(BusinessCommonConstants.hasProfile("dev")) {
+//    		String luaBasePath = ClassLoader.getSystemResource("").getPath().split("/target/classes")[0] + "/src/main/resources/lua/";
+//    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
+//        	defaultRedisScript.setResultType(String.class);
+//        	defaultRedisScript.setScriptText(FileUtil.readUtf8String(luaBasePath + inventoryRedisOpEnum.getLuaScript()));
+//        	return defaultRedisScript;
+//    	}
+    	if(opRedisScript.get(inventoryRedisOpEnum) == null) {
     		synchronized (InventoryRedisOpEnum.class) {
-    			if(opRedisScript == null) {
-        	    	opRedisScript = new EnumMap<>(InventoryRedisOpEnum.class);
+    			if(opRedisScript.get(inventoryRedisOpEnum) == null) {
         	    	InventoryRedisOpEnum[] values = InventoryRedisOpEnum.values();
         	    	for(InventoryRedisOpEnum v : values) {
         	    		DefaultRedisScript<String> defaultRedisScript = new DefaultRedisScript<>();
-        	        	defaultRedisScript.setResultType(String.class);
+        	    		defaultRedisScript.setResultType(String.class);
         	        	StringBuilder sb = new StringBuilder();
 						try {
 							InputStream inputStream = new ClassPathResource("lua/" + v.luaScript).getInputStream();

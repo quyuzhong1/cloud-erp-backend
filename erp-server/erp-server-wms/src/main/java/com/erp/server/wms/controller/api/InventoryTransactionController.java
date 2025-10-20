@@ -15,16 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTransactionService;
+import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 
 import cn.hutool.core.collection.CollUtil;
@@ -50,6 +53,9 @@ public class InventoryTransactionController extends BaseController {
     
     @Autowired
     private InventoryService inventoryService;
+    
+    @Autowired
+    private TransactionFlowService transactionFlowService;
 
     /**
      * 新增
@@ -71,12 +77,31 @@ public class InventoryTransactionController extends BaseController {
     			RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
              	if(tryLock != null) {
              		try {
-         				inventoryTransactionService.inventoryIdToInventoryHis(id , -1 , 30 , "");
-         				inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , inventoryService.getById(id).getQty().toString());
-         				result.put(id, "成功");
+             			int i = 0;
+             			while(i < 3) {
+             				try {
+								inventoryTransactionService.inventoryIdToInventoryHis(id , "");
+								Integer qty = 0;
+								QueryWrapper<TransactionFlowEntity> queryWrapper = new QueryWrapper<>();
+								queryWrapper.eq("inventory_id", id);
+								queryWrapper.groupBy("inventory_id");
+								queryWrapper.select(" sum(qty) qty ");
+								List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.list(queryWrapper);
+								if(CollUtil.isNotEmpty(transactionFlowEntityList)) {
+									qty = transactionFlowEntityList.get(0).getQty();
+								}
+								inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , qty.toString());
+								result.put(id, "成功");
+								break;
+							} catch (Exception e) {
+								log.error("{}库存重算第{}次失败" , id , i , e);
+								result.put(id, "失败");
+							}
+             				i = i + 1;
+             			}
          			}catch (Exception e) {
          				result.put(id, "失败");
-         				log.error("{}库存重算失败" , id , e);
+         				log.error("{}库存重算最终失败" , id , e);
          			} finally{
          				inventoryRedisUtil.unLock(tryLock);
          			}
