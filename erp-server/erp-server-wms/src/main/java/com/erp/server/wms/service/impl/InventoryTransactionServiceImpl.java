@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -55,6 +56,7 @@ import com.erp.server.wms.utils.InventoryRedisUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +86,118 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private ExecutorService transactionIdToInventoryHisPool;
 
     @Override
+	public Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds){
+    	Map<String , Boolean> result = new HashMap<>();
+    	List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(inventoryIds);
+    	if(CollUtil.isNotEmpty(checkInventoryList)) {
+    		List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(checkInventoryList.size());
+    		for(CheckInventoryDTO dto : checkInventoryList) {
+    			String inventoryId = dto.getInventoryId();
+    			result.put(inventoryId, Boolean.FALSE);
+    			futureList.add(transactionIdToInventoryHisPool.submit(() -> {
+    				String logMsg = StringUtil.appendLogMsg("overrideDbInventory循环", inventoryId);
+    				log.info("{}开始" , logMsg);
+    				try {
+    					Pair<String, Boolean> overrideDb = ApplicationContextUtils.getBean(InventoryTransactionService.class).overrideDb(startDate , inventoryId);
+    					log.info("{}结束" , logMsg);
+						return overrideDb;
+					} catch (Exception e) {
+						log.error("{}失败" , logMsg , e);
+					}
+    				return Pair.of(inventoryId, Boolean.FALSE);
+    			}));
+    		}
+    		for(Future<Pair<String, Boolean>> future : futureList) {
+    			try {
+    				Pair<String, Boolean> pair = future.get();
+					result.put(pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+					log.error("overrideDbInventory获取结果失败" , e);
+				}
+    		}
+    	}
+    	return result;
+	}
+    
+    @Transactional(rollbackFor = Exception.class)
+    public Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId){
+    	transactionFlowService.overrideInventoryFlow(startDate, inventoryId, "");
+		this.inventoryHisToInventory(inventoryId);
+		return Pair.of(inventoryId, Boolean.TRUE);
+    }
+
+	@Override
+	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds) {
+		Map<String , Boolean> result = new HashMap<>();
+		List<CheckInventoryDTO> redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
+		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+			List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(redisCheckInventoryList.size());
+			for(CheckInventoryDTO dto : redisCheckInventoryList) {
+				String inventoryId = dto.getInventoryId();
+				futureList.add(transactionIdToInventoryHisPool.submit(() -> {
+					String logMsg = StringUtil.appendLogMsg("overrideRedisInventory循环", inventoryId);
+    				log.info("{}开始" , logMsg);
+    				try {
+    					return overrideRedis(inventoryId);
+					} catch (Exception e) {
+						log.error("{}失败" , logMsg , e);
+					}
+    				log.info("{}结束" , logMsg);
+    				return Pair.of(inventoryId, Boolean.FALSE);
+				}));
+			}
+			for(Future<Pair<String, Boolean>> future : futureList) {
+    			try {
+    				Pair<String, Boolean> pair = future.get();
+					result.put(pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+					log.error("overrideRedisInventory获取结果失败" , e);
+				}
+    		}
+		}
+		return result;
+	}
+	
+	private Pair<String, Boolean> overrideRedis(String id){
+		Pair<String, Boolean> of = Pair.of(id, Boolean.TRUE);
+		 RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
+		 if(tryLock != null) {
+			 try {
+				 int i = 0;
+				 while(i < 3) {
+					 try {
+						 this.inventoryIdToInventoryHis(id , "");
+						 Integer qty = 0;
+						 QueryWrapper<TransactionFlowEntity> queryWrapper = new QueryWrapper<>();
+						 queryWrapper.eq("inventory_id", id);
+						 queryWrapper.groupBy("inventory_id");
+						 queryWrapper.select(" sum(qty) qty ");
+						 List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.list(queryWrapper);
+						 if(CollUtil.isNotEmpty(transactionFlowEntityList)) {
+							 qty = transactionFlowEntityList.get(0).getQty();
+						 }
+						 inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , qty.toString());
+						 break;
+					 } catch (Exception e) {
+						 log.error("{}库存重算第{}次失败" , id , i , e);
+						 of = Pair.of(id, Boolean.FALSE);
+					 }
+					 i = i + 1;
+				 }
+			 }catch (Exception e) {
+				 log.error("{}库存重算最终失败" , id , e);
+				 of = Pair.of(id, Boolean.FALSE);
+			 } finally{
+				 inventoryRedisUtil.unLock(tryLock);
+			 }
+		 }else {
+			 log.error("{}库存重算获取锁失败" , id);
+			 of = Pair.of(id, Boolean.FALSE);
+		 }
+		return of;
+	}
+    
+    @Override
     public void inventoryIdToInventoryHis(String inventoryId  , String transactionId) {
     	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , transactionId);
     	log.info("{}开始" , logMsg);
@@ -98,7 +212,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);
     		} catch (Exception e) {
     			log.error("{}失败" , logMsg , e);
-    			sendFeishuMsg(inventoryId, e);
+    			sendFeishuMsg("迁移redis历史库存失败" , inventoryId, e.getMessage());
     			throw e;
     		} finally{
     			inventoryRedisUtil.unLock(tryLock);
@@ -172,14 +286,14 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	log.info("{}结束" , logMsg);
     }
     
-    private void sendFeishuMsg(String inventoryId , Exception e) {
+    private void sendFeishuMsg(String title , String tableId , String keyInfo) {
     	WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("预警消息");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle("迁移redis历史库存失败");
+        warnMsgInfo.setTitle(title);
         warnMsgInfo.setTableName("inventory_transaction");
-        warnMsgInfo.setTableId(inventoryId);
-        warnMsgInfo.setKeyInfo(e.getMessage());
+        warnMsgInfo.setTableId(tableId);
+        warnMsgInfo.setKeyInfo(keyInfo);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
@@ -511,13 +625,32 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 	}
 
 	@Override
-	public void queryInventoryCheckSame() {
-    	this.checkDbInventorySame();
-    	this.checkRedisInventorySame();
+	public void queryInventoryCheckSame(Integer warnSize) {
+		List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(null);
+		if(CollUtil.isNotEmpty(checkInventoryList)) {
+            sendFeishuMsg("数据库库存不一致", "", checkInventoryList.stream().map(CheckInventoryDTO::toString).collect(Collectors.joining("\n")));
+    	}
+    	List<CheckInventoryDTO> redisCheckInventoryList = this.checkRedisInventorySame(null);
+    	if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+    		int size = redisCheckInventoryList.size();
+    		String message = redisCheckInventoryList.stream().map(CheckInventoryDTO::redisToString).collect(Collectors.joining("\n"));
+    		log.error("redis和数据库库存不一致：{}" , message);
+    		if(size > warnSize) {
+    			message = "大量redis和数据库库存不一致，不一致数量：" + size + "大于告警数据：" + warnSize;
+        	}
+    		sendFeishuMsg("redis和数据库库存不一致", "", message);
+    	}
 	}
 	
-	private void checkDbInventorySame() {
+	private List<CheckInventoryDTO> checkDbInventorySame(List<String> inventoryIds) {
 		List<CheckInventoryDTO> checkInventoryList = new ArrayList<>();
+		if(CollUtil.isNotEmpty(inventoryIds)) {
+			for(String inventoryId : inventoryIds) {
+				CheckInventoryDTO checkInventoryDTO = new CheckInventoryDTO();
+				checkInventoryDTO.setInventoryId(inventoryId);
+				checkInventoryList.add(checkInventoryDTO);
+			}
+		}
     	int i = 0;
     	while(i < 3) {
     		checkInventoryList = baseMapper.queryDbInventoryCheckSame(checkInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
@@ -528,55 +661,22 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		}
     		i = i + 1;
     	}
-    	if(CollUtil.isNotEmpty(checkInventoryList)) {
-    		WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-            warnMsgInfo.setBizName("预警消息");
-            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-            warnMsgInfo.setTitle("数据库库存不一致");
-            warnMsgInfo.setTableName("inventory_transaction");
-            warnMsgInfo.setTableId("");
-            warnMsgInfo.setKeyInfo(checkInventoryList.stream().map(CheckInventoryDTO::toString).collect(Collectors.joining("\n")));
-            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-            mqProducerService.sendWarnMsg(warnMsgInfo);
-    	}
+    	return checkInventoryList;
 	}
 	
-	private void checkRedisInventorySame() {
+	private List<CheckInventoryDTO> checkRedisInventorySame(List<String> inventoryIds) {
 		Integer pageSize = 1000;
-    	List<CheckInventoryDTO> redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , null);
+    	List<CheckInventoryDTO> redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , inventoryIds);
 		
 		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
-			int size = redisCheckInventoryList.size();
-			if(size > pageSize) {
-				WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-	            warnMsgInfo.setBizName("错误消息");
-	            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-	            warnMsgInfo.setTitle("redis和数据库库存不一致");
-	            warnMsgInfo.setTableName("inventory_transaction");
-	            warnMsgInfo.setTableId("");
-	            warnMsgInfo.setKeyInfo("大量redis和数据库库存不一致，不一致数量：" + size);
-	            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	            mqProducerService.sendWarnMsg(warnMsgInfo);
-			}else {
-				int j = 0;
-				while(j < 3) {
-					redisCheckInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
-					redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , redisCheckInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
-					j = j + 1;
-				}
-				if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
-					WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-		            warnMsgInfo.setBizName("预警消息");
-		            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-		            warnMsgInfo.setTitle("redis和数据库库存不一致");
-		            warnMsgInfo.setTableName("inventory_transaction");
-		            warnMsgInfo.setTableId("");
-		            warnMsgInfo.setKeyInfo(redisCheckInventoryList.stream().map(CheckInventoryDTO::redisToString).collect(Collectors.joining("\n")));
-		            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-		            mqProducerService.sendWarnMsg(warnMsgInfo);
-				}
+			int i = 0;
+			while(i < 3) {
+				redisCheckInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
+				redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , redisCheckInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
+				i = i + 1;
 			}
 		}
+		return redisCheckInventoryList;
 	}
 	
 	private List<CheckInventoryDTO> inventoryCheckRedisSame(Integer pageSize , List<String> inventoryIds){
@@ -615,4 +715,5 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	}
     	return redisCheckInventoryList;
 	}
+
 }
