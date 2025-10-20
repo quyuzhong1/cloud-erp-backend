@@ -229,6 +229,10 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
 
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
 
     private AliexpressAuthDTO buildAuthDTO(String shopId,String ownerCode) {
         AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();

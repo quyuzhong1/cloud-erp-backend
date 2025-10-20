@@ -266,5 +266,23 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return code.equals(0);
     }
 
-    protected abstract ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@Valid ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq);
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        ImlUploadFileReq imlUploadLabelReq = ImlUploadFileReq.builder()
+                .platformCustomerCode(uploadHandoverFileReq.getOwnerCode())
+                .fileNumber(uploadHandoverFileReq.getFileName())
+                .fileName(uploadHandoverFileReq.getFileName())
+                .filePath(uploadHandoverFileReq.getFileUrl())
+                .type(uploadHandoverFileReq.getDictPlatform())
+                .orderList( Arrays.asList(
+                        ImlUploadFileReq.OrderListDTO.builder()
+                                .orderNo(uploadHandoverFileReq.getOrderCode())
+                                .build()
+                ))
+                .build();
+        ImlBaseResp<String> resp = imlService.uploadFile(imlUploadLabelReq);
+
+        return null;
+    }
+
 }

@@ -21,4 +21,24 @@ import javax.validation.constraints.NotBlank;
 public class ThirdWarehouseUploadHandoverFileReq extends ThirdWarehouseAuth{
 
     private String orderCode;
+
+    /**
+     * 货主编码
+     */
+    private String ownerCode;
+
+    /**
+     * 文件名称
+     */
+    private String fileName;
+
+    /**
+     * 文件路径
+     */
+    private String fileUrl;
+
+    /**
+     * 平台
+     */
+    private String dictPlatform;
 }

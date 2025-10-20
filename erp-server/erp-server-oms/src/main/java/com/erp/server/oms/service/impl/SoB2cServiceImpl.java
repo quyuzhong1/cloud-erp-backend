@@ -88,6 +88,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
+import com.erp.model.tms.enums.LogisticsHandoverDocTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -2954,6 +2955,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //通过订单处理规则处理参数
         Map<String, Object> map = this.getRuleOrderHandleMap(entity, logisticsChannelId, receiver);
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
+
+        //查询配置是否推送面单
+        if(StringUtils.isNotBlank(channelEntity.getHandoverDocType())){
+            if(LogisticsHandoverDocTypeEnum.HANDOVER_PACKAGE.getCode().equals(channelEntity.getHandoverDocType())){
+
+            }
+        }
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
             String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();

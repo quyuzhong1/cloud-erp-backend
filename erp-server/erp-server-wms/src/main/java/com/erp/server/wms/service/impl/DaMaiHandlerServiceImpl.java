@@ -282,6 +282,10 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build();
         return daMaiCreateOrderRequest;
     }
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
 
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
