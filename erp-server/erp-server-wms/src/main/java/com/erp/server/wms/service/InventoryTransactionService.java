@@ -69,4 +69,9 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      */
     void inventoryCheckRollback(int timeout);
     
+    /**
+     * 检查库存交易一致性
+     */
+    void queryInventoryCheckSame();
+    
 }

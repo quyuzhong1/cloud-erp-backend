@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.InventoryTransactionEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
+import com.erp.model.wms.entity.InventoryTransactionEntity;
 
 
 /**
@@ -15,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface InventoryTransactionMapper extends BaseMapper<InventoryTransactionEntity> {
-
+	List<CheckInventoryDTO> queryDbInventoryCheckSame(@Param("ids")List<String> ids);
 }

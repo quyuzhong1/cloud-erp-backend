@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -34,6 +35,7 @@ import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
@@ -506,5 +508,111 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 				});
 			}
 		}
+	}
+
+	@Override
+	public void queryInventoryCheckSame() {
+    	this.checkDbInventorySame();
+    	this.checkRedisInventorySame();
+	}
+	
+	private void checkDbInventorySame() {
+		List<CheckInventoryDTO> checkInventoryList = new ArrayList<>();
+    	int i = 0;
+    	while(i < 3) {
+    		checkInventoryList = baseMapper.queryDbInventoryCheckSame(checkInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
+    		if(CollUtil.isEmpty(checkInventoryList)) {
+    			break;
+    		}else {
+    			checkInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
+    		}
+    		i = i + 1;
+    	}
+    	if(CollUtil.isNotEmpty(checkInventoryList)) {
+    		WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("预警消息");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+            warnMsgInfo.setTitle("数据库库存不一致");
+            warnMsgInfo.setTableName("inventory_transaction");
+            warnMsgInfo.setTableId("");
+            warnMsgInfo.setKeyInfo(checkInventoryList.stream().map(CheckInventoryDTO::toString).collect(Collectors.joining("\n")));
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            mqProducerService.sendWarnMsg(warnMsgInfo);
+    	}
+	}
+	
+	private void checkRedisInventorySame() {
+		Integer pageSize = 1000;
+    	List<CheckInventoryDTO> redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , null);
+		
+		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+			int size = redisCheckInventoryList.size();
+			if(size > pageSize) {
+				WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+	            warnMsgInfo.setBizName("错误消息");
+	            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+	            warnMsgInfo.setTitle("redis和数据库库存不一致");
+	            warnMsgInfo.setTableName("inventory_transaction");
+	            warnMsgInfo.setTableId("");
+	            warnMsgInfo.setKeyInfo("大量redis和数据库库存不一致，不一致数量：" + size);
+	            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+	            mqProducerService.sendWarnMsg(warnMsgInfo);
+			}else {
+				int j = 0;
+				while(j < 3) {
+					redisCheckInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
+					redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , redisCheckInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
+					j = j + 1;
+				}
+				if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+					WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+		            warnMsgInfo.setBizName("预警消息");
+		            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+		            warnMsgInfo.setTitle("redis和数据库库存不一致");
+		            warnMsgInfo.setTableName("inventory_transaction");
+		            warnMsgInfo.setTableId("");
+		            warnMsgInfo.setKeyInfo(redisCheckInventoryList.stream().map(CheckInventoryDTO::redisToString).collect(Collectors.joining("\n")));
+		            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+		            mqProducerService.sendWarnMsg(warnMsgInfo);
+				}
+			}
+		}
+	}
+	
+	private List<CheckInventoryDTO> inventoryCheckRedisSame(Integer pageSize , List<String> inventoryIds){
+		List<CheckInventoryDTO> redisCheckInventoryList = new ArrayList<>();
+    	String lastInventoryId = "0";
+    	while(true) {
+    		QueryWrapper<TransactionFlowEntity> queryWrapper = new QueryWrapper<>();
+    		queryWrapper.select(" inventory_id,sum(qty) qty ");
+    		if(CollUtil.isNotEmpty(inventoryIds)) {
+    			queryWrapper.in("inventory_id", inventoryIds);
+    		}
+    		queryWrapper.gt("inventory_id", lastInventoryId);
+			queryWrapper.groupBy("inventory_id");
+			queryWrapper.last(" order by inventory_id limit " + pageSize + " ");
+			List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.list(queryWrapper);
+			if(CollUtil.isEmpty(transactionFlowEntityList)) {
+				break;
+			}
+			transactionFlowEntityList.forEach(t -> {
+				Integer redisQty = 0;
+				String inventoryId = t.getInventoryId();
+				Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
+				if(redisQtyObj != null) {
+					redisQty = Integer.valueOf(redisQtyObj.toString().split(InventoryRedisUtil.splitSign)[0]);
+				}
+				Integer flowSumQty = t.getQty();
+				if(flowSumQty.compareTo(redisQty) != 0) {
+					CheckInventoryDTO dto = new CheckInventoryDTO();
+					dto.setInventoryId(inventoryId);
+					dto.setInventoryQty(redisQty);
+					dto.setFlowSumQty(flowSumQty);
+					redisCheckInventoryList.add(dto);
+				}
+			});
+			lastInventoryId = transactionFlowEntityList.get(transactionFlowEntityList.size() - 1).getInventoryId();
+    	}
+    	return redisCheckInventoryList;
 	}
 }
