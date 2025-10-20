@@ -1053,7 +1053,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         detailEntity.setIsChange(IsConstant.NO);
         productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
-
+        if (CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId())){
+            ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
+            if (Objects.nonNull(oldEntity) && !oldEntity.getChargeId().equals(productSkuBaseInfoDTO.getChargeId())){
+                addChargeLog(oldEntity.getChargeId(), productSkuBaseInfoDTO.getChargeId(), oldEntity.getId(), oldEntity.getProductId(),oldEntity.getSkuNo());
+            }
+        }
         return detailEntity.getId();
     }
 
@@ -4455,7 +4460,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                 //发送消息
                 handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
-
+                //记录日志
+                entityList.forEach(oldEntity -> {
+                    if (!Objects.equals(oldEntity.getChargeId(),dto.getValues().toString())){
+                        addChargeLog(oldEntity.getChargeId(), dto.getValues().toString(), oldEntity.getId(), oldEntity.getProductId(),oldEntity.getSkuNo());
+                    }
+                });
             }
             if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
                 productInfoService.lambdaUpdate()
