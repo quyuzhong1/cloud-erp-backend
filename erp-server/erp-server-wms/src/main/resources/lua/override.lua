@@ -10,7 +10,7 @@ else
         i = i + 1;
     end
     if i > 1 then
-        return '存在未提交流水&&1000'
+        return '存在未提交流水'
     else
         redis.call('set', key, qty);
     end
