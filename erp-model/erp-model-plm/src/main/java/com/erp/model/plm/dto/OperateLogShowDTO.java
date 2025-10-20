@@ -90,4 +90,5 @@ public class OperateLogShowDTO implements Serializable {
         @NotEmpty(message = "产品id不能为空")
         private List<String> ids;
     }
+
 }

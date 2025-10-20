@@ -1375,6 +1375,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        Boolean needUpdateDeliveryNotice = false;
+        if (!soInfo.getSalesOrgId().equals(dto.getSalesOrgId()) || !soInfo.getSellerId().equals(dto.getSellerId()) || !soInfo.getSalesDeptId().equals(dto.getSalesDeptId())) {
+            //销售组织和销售部门销售员变更校验,是否存在已审核发货通知单
+            List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeFeign.listDeliveryNoticeBySoIds(Collections.singletonList(soInfo.getId()));
+            if (CollUtil.isNotEmpty(soDeliveryNoticeEntities)){
+                long count = soDeliveryNoticeEntities.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus())).count();
+                if(count > 0) {
+                    throw new ServiceException("下游发货单通知单已审核通过，不允许修改");
+                }
+                needUpdateDeliveryNotice = true;
+            }
+        }
         //已审核不能编辑
         if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
             throw new ServiceException(ApiError.ERROR_92017);

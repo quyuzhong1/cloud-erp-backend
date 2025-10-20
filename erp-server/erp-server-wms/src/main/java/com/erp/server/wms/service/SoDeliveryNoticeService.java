@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -336,6 +337,10 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return Map<String, SoDeliveryNoticeEntity>
      */
     Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
+
+    List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
+
+    void updateSalesInfo(SoInfoEntity soInfoEntity);
 
     WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
