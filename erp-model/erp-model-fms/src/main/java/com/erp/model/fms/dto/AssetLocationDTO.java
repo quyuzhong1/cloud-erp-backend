@@ -285,16 +285,10 @@ public class AssetLocationDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 是否禁用
-        */
-        @NotNull(message = "是否禁用不能为空")
-        private Boolean disabled;
 
         /**
         * 位置描述
         */
-        @NotBlank(message = "位置描述不能为空")
         @Size(max = 50,message = "位置描述最大长度不能超过50位")
         private String description;
 
@@ -308,14 +302,12 @@ public class AssetLocationDTO implements Serializable {
         /**
         * 详细地址
         */
-        @NotBlank(message = "详细地址不能为空")
         @Size(max = 200,message = "详细地址最大长度不能超过200位")
         private String detailedAddress;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
