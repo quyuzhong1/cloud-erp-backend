@@ -586,7 +586,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             SoReceiptDetailEntity soReceiptDetailEntity = soReceiptDetailEntityList.stream().filter(v -> v.getId().equals(update.getDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单明细数据"));
             SoReceiptEntity soReceiptEntity = soReceiptEntityList.stream().filter(v -> v.getId().equals(soReceiptDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                continue;
+                throw new ServiceException("收款单状态不允许修改");
             }
             SoReceiptDTO.UpdateDTO updateDTO = new SoReceiptDTO.UpdateDTO();
             updateDTO.setId(update.getId());
@@ -615,7 +615,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         for (SoReceiptDetailEntity deleteDetailEntity : deleteDetailList) {
             SoReceiptEntity soReceiptEntity = handleDelEntityList.stream().filter(v -> v.getId().equals(deleteDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                continue;
+                throw new ServiceException("收款单状态不允许删除");
             }
             this.deleteByDetail(soReceiptEntity,deleteDetailEntity);
         }
