@@ -107,6 +107,9 @@ mrs.sku_qty AS skuQty
         <if test="params.approveStatus != null and params.approveStatus != ''">
             and mrs.approve_status = #{params.approveStatus}
         </if>
+        <if test="params.moldId != null and params.moldId != ''">
+            and mrs.mold_id = #{moldId}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and  (mrs.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') or  mrs.product_name ILIKE concat('%',#{searchKeyword}::text,'%') )
             ORDER BY
