@@ -162,12 +162,43 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto);
 
     /**
-    * 查询添加明细
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto 查询参数
-    * @return
-    */
+     * 查询添加明细
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 查询参数
+     * @return
+     */
     AssetAcceptDTO.AddDetailResultDTO queryAddDetail(AssetAcceptDTO.AddDetailQueryDTO dto);
+
+    /**
+     * 导入Excel数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     * @return
+     */
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    /**
+     * 导入资产验收表
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     */
+    void importAssetAccept(BaseDTO.ImportDTO dto);
+
+    /**
+     * 处理导入成功的数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param successList 成功数据列表
+     * @param errorNoList 错误序号列表
+     * @param errorList2 错误数据列表
+     * @param importType 导入类型
+     */
+    void handleImportSuccessList(List<com.erp.model.fms.dto.excel.AssetAcceptExcelDTO> successList, 
+                                List<String> errorNoList, 
+                                List<com.erp.model.fms.dto.excel.AssetAcceptExcelDTO> errorList2, 
+                                String importType);
 
 }

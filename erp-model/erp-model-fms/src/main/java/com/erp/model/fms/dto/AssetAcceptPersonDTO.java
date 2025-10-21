@@ -92,7 +92,6 @@ public class AssetAcceptPersonDTO implements Serializable {
         /**
         * 资产验收ID
         */
-        @NotBlank(message = "资产验收ID不能为空")
         @Size(max = 19,message = "资产验收ID最大长度不能超过19位")
         private String assetAcceptId;
 
