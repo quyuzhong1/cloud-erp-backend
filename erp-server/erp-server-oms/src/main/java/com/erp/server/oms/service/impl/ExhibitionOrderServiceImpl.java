@@ -910,30 +910,40 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 .update();
 
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
-        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
-        addTaskDTO.setSourceId(entity.getId());
-        addTaskDTO.setSourceCode(entity.getCode());
-        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
-        addTaskDTO.setTraceId(MDC.get("traceId"));
-
-        Map<String, Object> map = new HashMap<>();
         if(CollUtil.isNotEmpty(list)){
+            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+            addTaskDTO.setSourceId(entity.getId());
+            addTaskDTO.setSourceCode(entity.getCode());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
+            addTaskDTO.setTraceId(MDC.get("traceId"));
+
+            Map<String, Object> map = new HashMap<>();
             map.put("soId", list.get(0).getId());
-        }
-        map.put("exhibitionOrderId", entity.getId());
-        addTaskDTO.setFirstNodeInputData(map);
+            map.put("exhibitionOrderId", entity.getId());
+            addTaskDTO.setFirstNodeInputData(map);
 
-        List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
-        if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-        }
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            if(CollUtil.isEmpty(workflowTaskRecordEntities)){
+                throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            }
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
         }
 
-
+        // 记录台账流水（反审核）
+        try {
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildExhibitionOrderFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (flowDTO != null) {
+                sampleLedgerFeign.addSampleLedgerFlow(flowDTO);
+                log.info("展会订单反审核台账流水记录成功，单据编号：{}", entity.getCode());
+            }
+        } catch (Exception e) {
+            log.error("展会订单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("展会订单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
@@ -1063,6 +1073,22 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
+
+        // 记录台账流水
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            try {
+                SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildExhibitionOrderFlow(entity.getId(), entity.getCode(), approveType);
+                if (flowDTO != null) {
+                    sampleLedgerFeign.addSampleLedgerFlow(flowDTO);
+                    log.info("展会订单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                }
+            } catch (Exception e) {
+                log.error("展会订单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("展会订单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            }
+        }
+
         return Boolean.TRUE;
     }
 
@@ -1083,7 +1109,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         Map<String, Object> data = dto.getData();
         //校验data是否为空
         if (ObjectUtil.isEmpty(data)) {
-            mqResponseDTO.setErrorMsg("data为空");
+            mqResponseDTO.setErrorMsg("data为·   -空");
             return mqResponseDTO;
         }
         // 校验exhibitionOrderId是否存在且非空
@@ -1575,6 +1601,17 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        if(customerInfoService.isSyncDht(entity.getCustomerId())){
+            throw new ServiceException("不支持订货通客户做展会订单");
+        }
+        BigDecimal zeroFlag = BigDecimal.ZERO;
+        List<ExhibitionOrderDetailEntity> list = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
+        //这个是 单价为空的集合
+        List<ExhibitionOrderDetailEntity> isNullPriceList = list.stream().filter(s -> !s.getIsGift()  && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(isNullPriceList)) {
+            throw new ServiceException(entity.getCode() + "销售单价不能为空或者为零");
         }
         return;
     }
@@ -2225,6 +2262,106 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
         }
         return resultList;
+    }
+
+    /**
+     * 构建展会订单台账流水数据
+     * @param sourceId 展会订单ID
+     * @param sourceCode 展会订单编号
+     * @param approveType 审核类型
+     * @return 台账流水数据
+     */
+    private SampleLedgerFlowDTO.AddFlowDTO buildExhibitionOrderFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取展会订单主表信息
+            ExhibitionOrderEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取展会订单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取展会订单明细
+            List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery()
+                    .eq(ExhibitionOrderDetailEntity::getMainId, sourceId)
+                    .list();
+
+            if (CollUtil.isEmpty(detailList)) {
+                log.warn("展会订单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (ExhibitionOrderDetailEntity detail : detailList) {
+                // 计算数量：审核为-X，反审核为+X
+                Integer qty = calculateExhibitionOrderQty(detail.getQty(), approveType);
+
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 查询部门名称
+            String deptName = "";
+            if (StrUtil.isNotBlank(entity.getSalesDeptId())) {
+                try {
+                    List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Collections.singletonList(entity.getSalesDeptId()));
+                    if (CollUtil.isNotEmpty(deptList)) {
+                        deptName = deptList.get(0).getName();
+                    }
+                } catch (Exception e) {
+                    log.warn("查询部门名称失败，部门ID：{}，错误：{}", entity.getSalesDeptId(), e.getMessage());
+                }
+            }
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getBillDate());
+            flowDTO.setSourceName("展会订单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            // 使用方：领用人
+            flowDTO.setUserId(entity.getRecipientUserId());
+            flowDTO.setUserName(entity.getRecipientUserName());
+            // 归属人：领用人
+            flowDTO.setUseUserId(entity.getRecipientUserId());
+            flowDTO.setUseUserName(entity.getRecipientUserName());
+            // 归属部门：领用人关联的领用部门
+            flowDTO.setDeptId(entity.getSalesDeptId());
+            flowDTO.setDeptName(deptName);
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建展会订单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为-X，反审核为+X
+     */
+    private Integer calculateExhibitionOrderQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return -originalQty; // 审核：-X（减少库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return originalQty; // 反审核：+X（增加库存）
+        }
+
+        return 0;
     }
 
 

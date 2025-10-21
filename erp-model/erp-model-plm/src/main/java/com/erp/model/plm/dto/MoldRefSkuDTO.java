@@ -330,10 +330,16 @@ public class MoldRefSkuDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
         /**
-         * 模糊搜索参数
+         * 模具id
+         */
+        private String moldId;
+        /**
+         * 模糊搜索参数 （skuNo 或 产品名称）
          */
         private String searchKeyword;
-
+        /**
+         * waitSubmit.待提交 approveIng.审核中 reject.审核不通过 approve.已审核
+         */
         private String approveStatus;
     }
 

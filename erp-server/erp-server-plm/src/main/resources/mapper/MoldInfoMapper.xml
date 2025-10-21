@@ -140,19 +140,19 @@ mi.payment_condition AS paymentCondition
             is_deleted = false
         and invalid_status = false
         <if test="params.approveStatus != null and params.approveStatus != ''">
-            AND approve_status =#{approveStatus}
+            AND approve_status =#{params.approveStatus}
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND
             (
-            code ILIKE concat('%',#{searchKeyword}::text,'%')
+            code ILIKE concat('%',#{params.searchKeyword}::text,'%')
             OR
-            name ILIKE concat('%',#{searchKeyword}::text,'%')
+            name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             )
             ORDER BY
-            case when code ILIKE concat(#{searchKeyword}::text,'%') THEN 1
-            when code ILIKE concat('%',#{searchKeyword}::text) THEN 2
-            when code ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            case when code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
             end , code
         </if>
     </select>

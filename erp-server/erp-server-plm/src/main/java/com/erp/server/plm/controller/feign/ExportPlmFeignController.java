@@ -60,6 +60,10 @@ public class ExportPlmFeignController {
     private MoldRefSkuService moldRefSkuService;
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+    @Resource
+    private CfgMoldAlertRuleService cfgMoldAlertRuleService;
+    @Resource
+    private AssetNoticeService assetNoticeService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -174,5 +178,17 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = CfgMoldReturnAlertRuleQueryHandler.class)
     public PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto) {
         return cfgMoldReturnAlertRuleService.paging(dto);
+    }
+
+    @PostMapping("/exportCfgMoldAlert")
+    @WebAdvanceQuery(handler = CfgMoldAlertRuleQueryHandler.class)
+    public PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto) {
+        return cfgMoldAlertRuleService.paging(dto);
+    }
+
+    @PostMapping("/exportAssetNotice")
+    @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
+    public PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto) {
+        return assetNoticeService.paging(dto);
     }
 }

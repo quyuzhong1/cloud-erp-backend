@@ -218,5 +218,46 @@ public class InventoryTransactionDTO implements Serializable {
 
     }
 
+    /**
+     * 新增
+     */
+     @Data
+     @NoArgsConstructor
+     public static class CheckInventoryDTO {
+    	 /**
+    	 * 库存id
+    	 */
+    	private String inventoryId;
+    	
+    	/**
+    	 * 即时库存
+    	 */
+    	private Integer inventoryQty;
+    	
+    	/**
+    	 * 流水合计
+    	 */
+    	private Integer flowSumQty;
+    	
+    	/**
+    	 * 每日库存
+    	 */
+    	private Integer hisQty;
+    	
+    	/**
+    	 * 流水结存
+    	 */
+    	private Integer lastFlowQty;
 
+		@Override
+		public String toString() {
+			return "[库存id=" + inventoryId + ", 即时库存=" + inventoryQty + ", 流水合计="
+					+ flowSumQty + ", 每日库存=" + hisQty + ", 流水结存=" + lastFlowQty + "]";
+		}
+		
+		public String redisToString() {
+			return "[库存id=" + inventoryId + ", 即时库存=" + inventoryQty + ", 流水合计="
+					+ flowSumQty + "]";
+		}
+     }
 }

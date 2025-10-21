@@ -59,6 +59,7 @@
             al.create_user_name AS createUserName
         FROM asset_location al
         WHERE
+        ${params.sqlMap.default}
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

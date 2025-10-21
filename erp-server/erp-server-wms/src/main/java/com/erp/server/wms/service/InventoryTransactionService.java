@@ -1,9 +1,13 @@
 package com.erp.server.wms.service;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
+
+import cn.hutool.core.lang.Pair;
 
 /**
  * <p>
@@ -15,7 +19,13 @@ import com.erp.model.wms.entity.InventoryTransactionEntity;
  */
 public interface InventoryTransactionService extends SuperService<InventoryTransactionEntity> {
 
-    /**
+	Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds);
+	
+	Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId);
+	
+	Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds);
+	
+	/**
      * 库存id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
      * @param inventoryId
      * @param size
@@ -68,5 +78,10 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * 检查库存是否长时间未回滚
      */
     void inventoryCheckRollback(int timeout);
+    
+    /**
+     * 检查库存交易一致性
+     */
+    void queryInventoryCheckSame(Integer warnSize);
     
 }

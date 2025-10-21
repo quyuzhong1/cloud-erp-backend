@@ -25,4 +25,7 @@ public interface ImportPlmFeign {
     @PostMapping("/feign/import/importCfgMoldReturn")
     void importCfgMoldReturn(@RequestBody BaseDTO.ImportTypeDTO dto);
 
+    @PostMapping("/feign/import/importAssetNotice")
+    void importAssetNotice(@RequestBody BaseDTO.ImportTypeDTO dto);
+
 }

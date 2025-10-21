@@ -1,7 +1,10 @@
 package com.erp.server.fms.handler;
 
 import com.common.business.query.AbstractQueryHandler;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class AssetLocationQueryHandler  extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {

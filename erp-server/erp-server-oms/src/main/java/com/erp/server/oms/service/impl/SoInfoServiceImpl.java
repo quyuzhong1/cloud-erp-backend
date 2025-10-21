@@ -1375,12 +1375,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        //已审核不能编辑
-        if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
-            throw new ServiceException(ApiError.ERROR_92017);
-        }
-        List<SoReceiptEntity> existReceipt = soReceiptService.listBySoId(id);
-
         Boolean needUpdateDeliveryNotice = false;
         if (!soInfo.getSalesOrgId().equals(dto.getSalesOrgId()) || !soInfo.getSellerId().equals(dto.getSellerId()) || !soInfo.getSalesDeptId().equals(dto.getSalesDeptId())) {
             //销售组织和销售部门销售员变更校验,是否存在已审核发货通知单
@@ -1393,6 +1387,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 needUpdateDeliveryNotice = true;
             }
         }
+        //已审核不能编辑
+        if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
+            throw new ServiceException(ApiError.ERROR_92017);
+        }
+        List<SoReceiptEntity> existReceipt = soReceiptService.listBySoId(id);
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
             String oldCustomerId = soInfo.getCustomerId();
@@ -4416,8 +4415,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String isReissueStr = item.getIsReissue();
                 addDetail.setIsReissue("是".equals(isReissueStr));
                 //是否关闭
-                String isCloseStr = item.getIsClose();
-                addDetail.setIsClose("是".equals(isCloseStr));
+//                String isCloseStr = item.getIsClose();
+                addDetail.setIsClose(false);
                 //客户PO号
                 addDetail.setCustomerPO(item.getCustomerPO());
                 addDetail.setToCountry(item.getToCountry());

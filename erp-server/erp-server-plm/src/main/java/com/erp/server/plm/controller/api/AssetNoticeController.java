@@ -1,10 +1,12 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.scm.dto.ExcelImportDTO;
+import com.erp.server.plm.query.AssetNoticeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import javax.annotation.Resource;
@@ -107,8 +109,9 @@ public class AssetNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:assetNotice:paging",
-            tableAlias = ""
+            tableAlias = "an"
     )
+    @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
     public ApiResult<PagingVO<AssetNoticeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto) {
         return success(assetNoticeService.paging(dto));
     }
@@ -416,7 +419,7 @@ public class AssetNoticeController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产通知单模板")
     @GetMapping("/exportTemplate")
     public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/xxx.xlsx";
+        String path = "classpath:excel/assetNoticeTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

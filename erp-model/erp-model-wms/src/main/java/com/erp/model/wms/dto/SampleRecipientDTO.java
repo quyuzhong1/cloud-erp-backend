@@ -368,6 +368,20 @@ public class SampleRecipientDTO implements Serializable {
         */
         private String approveStatus;
 
+        /**
+        * 审批时间
+        */
+        private LocalDateTime approveTime;
+
+        /**
+        * 审批人ID
+        */
+        private String approveUserId;
+
+        /**
+        * 审批人姓名
+        */
+        private String approveUserName;
 
         /**
         * 样品领用单号
