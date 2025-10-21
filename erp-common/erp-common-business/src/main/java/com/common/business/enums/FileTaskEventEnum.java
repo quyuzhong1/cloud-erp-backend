@@ -87,7 +87,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_FULLY_MANAGED("EXPORT_OMS_FULLY_MANAGED","全托管销售订单","","",""),
     EXPORT_OMS_SO_B2C_DECLARE("EXPORT_OMS_SO_B2C_DECLARE","申报信息","","",""),
     EXPORT_OMS_SO_B2C_PRODUCT_SALES("EXPORT_OMS_SO_B2C_PRODUCT_SALES","产品销售统计","","",""),
-    EXPORT_OMS_PLATFORM_SKU("EXPORT_OMS_PLATFORM_SKU","sku对照列表","","",""),
+    EXPORT_OMS_PLATFORM_SKU("EXPORT_OMS_PLATFORM_SKU","b2c平台sku对照列表","","",""),
     EXPORT_OMS_WAREHOUSE_SKU("EXPORT_OMS_WAREHOUSE_SKU","sku对照列表","","",""),
     EXPORT_OMS_LISTING_PUSH("EXPORT_OMS_LISTING_PUSH","sku对照表推送记录","","",""),
     EXPORT_OMS_CUSTOMER_SKU("EXPORT_OMS_CUSTOMER_SKU","客户sku对照列表","","",""),
