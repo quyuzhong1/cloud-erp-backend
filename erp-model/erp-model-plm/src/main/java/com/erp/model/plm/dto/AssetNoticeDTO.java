@@ -172,6 +172,11 @@ public class AssetNoticeDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
         * 创建人名称
         */
         private String createUserName;
