@@ -21,6 +21,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
+import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -165,9 +166,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 提取所有SKU编号，用于后续查询可用数量
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
-        //校验可用数量是否足够
-        checkDetailQty("" , scrapUserId, skuIds, sampleScrapDetailEntities);
-
         sampleScrapDetailService.saveBatch(sampleScrapDetailEntities);
 
         //附件
@@ -189,36 +187,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             throw new ServiceException(ApiError.ERROR_9029);
         }
         sampleScrapInfoEntity.setScrapDeptName(deptByIds.get(0).getName());
-    }
-
-    private void checkDetailQty(String id , String scrapUserId, List<String> skuIds, List<SampleScrapDetailEntity> sampleScrapDetailEntities) {
-        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-        dto.setUserId(scrapUserId);
-        dto.setSkuIds(skuIds);
-        dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
-        dto.setChildId(id);
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
-
-        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
-        sampleScrapDetailEntities.forEach(detailDTO -> {
-            String sampleLedgerId = detailDTO.getSampleLedgerId();
-            SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
-            if(Objects.nonNull(sampleLedger)){
-                Integer availableQty = Objects.isNull(sampleLedger.getAvailableQty()) ? 0 : sampleLedger.getAvailableQty() ;
-                Integer scrapQty  = Objects.isNull(detailDTO.getScrapQty()) ? 0 : detailDTO.getScrapQty() ;
-                if(scrapQty.compareTo(availableQty) > 0){
-                    throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
-                }
-
-                //防止明细里还有重复
-                sampleLedger.setAvailableQty(availableQty - scrapQty);
-                sampleLedgerMap.put(sampleLedgerId,sampleLedger);
-            }else {
-                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
-            }
-        });
     }
 
     /**
@@ -323,9 +291,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 提取所有SKU编号，用于后续查询可用数量
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
-        //校验可用数量是否足够
-        checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuIds, sampleScrapDetailEntities);
-
         if(CollUtil.isNotEmpty(oldList)){
             List<String> detailIds = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             // 处理删除的数据
@@ -917,7 +882,45 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        validateQty(entity);
+    }
+    /**
+     * 校验报废明细中的数量是否符合台账中的可用数量。
+     * <p>
+     * 该方法会根据传入的报废主表信息，查询其对应的所有明细记录，并针对每一条明细，
+     * 查询对应SKU在指定用户下的借用台账数量，确保报废数量不超过台账中可使用的数量。
+     * 若发现任一明细的报废数量超过台账数量，则抛出业务异常。
+     *
+     * @param entity 报废主表实体对象，用于获取报废申请人ID、主表ID等信息
+     */
+    private void validateQty(SampleScrapInfoEntity entity) {
+        List<SampleScrapDetailEntity> detailList = sampleScrapDetailService.lambdaQuery().eq(SampleScrapDetailEntity::getMainId, entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        // 为每个明细查询对应的台账数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getScrapUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.SCRAP.getCode());
+        searchDTO.setChildId(entity.getId());
+        searchDTO.setSkuIds(skuIds);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        Map<String, Integer> ledgerMap = ledgerList.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, SampleLedgerDTO.SkuAvailableQtyDTO::getLedgerQty, (o1, o2) -> o1));
+        // 校验每个明细的退回数量（需要按明细查询台账，因为每个明细的使用方不同）
+        for (SampleScrapDetailEntity detail : detailList) {
+            Integer scrapQty = detail.getScrapQty();
+            if (scrapQty == null || scrapQty <= 0) {
+                continue; // 跳过无效数量
+            }
+            Integer ledgerQty = ledgerMap.getOrDefault(detail.getSampleLedgerId(), 0);
+            if (scrapQty > ledgerQty) {
+                throw new ServiceException(StrUtil.format("SKU【{}】报废数量【{}】不能大于台账数量【{}】",
+                        detail.getSkuNo(), scrapQty, ledgerQty));
+            }
+            //防止明细里还有重复
+            ledgerMap.put(detail.getSampleLedgerId(),ledgerQty - scrapQty);
+        }
     }
 
 
@@ -1096,14 +1099,14 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                     if (Objects.isNull(skuAvailableQtyDTO)) {
                         errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
                     } else {
-                        Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty();
+                        Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
                         Integer scrapQty = Objects.isNull(importDTO.getScrapQty()) ? 0 : Integer.valueOf(importDTO.getScrapQty());
-                        if (scrapQty.compareTo(availableQty) > 0) {
+                        if (scrapQty.compareTo(ledgerQty) > 0) {
                             errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "报废") + "；";
                         } else {
                             importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             //防止超量借用
-                            skuAvailableQtyDTO.setAvailableQty(availableQty - scrapQty);
+                            skuAvailableQtyDTO.setLedgerQty(ledgerQty - scrapQty);
                         }
                     }
                 }

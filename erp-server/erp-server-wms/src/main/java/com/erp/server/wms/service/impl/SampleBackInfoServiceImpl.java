@@ -944,14 +944,14 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         }
         
         // 校验明细SKU退回数量是否小于等于台账数量
-        validateSampleBackQty(entity);
+        validateQty(entity);
     }
     
     /**
      * 校验样品退回数量
      * @param entity 样品退回单实体
      */
-    private void validateSampleBackQty(SampleBackInfoEntity entity) {
+    private void validateQty(SampleBackInfoEntity entity) {
         // 获取样品退回单明细
         List<SampleBackDetailEntity> detailList = sampleBackDetailService.list(
             new LambdaQueryWrapper<SampleBackDetailEntity>()
@@ -961,43 +961,31 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-        
+
+        List<String> skuIds = detailList.stream().map(SampleBackDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
+        // 为每个明细查询对应的台账数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
+        searchDTO.setChildId(entity.getId()); // 排除当前单据
+        searchDTO.setSkuIds(skuIds); // 查询SKU
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        Map<String, Integer> ledgerMap = ledgerList.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, SampleLedgerDTO.SkuAvailableQtyDTO::getLedgerQty, (o1, o2) -> o1));
+
         // 校验每个明细的退回数量（需要按明细查询台账，因为每个明细的使用方不同）
         for (SampleBackDetailEntity detail : detailList) {
-            String skuId = detail.getSkuId();
-            String useUserId = detail.getUseUserId();
             Integer backQty = detail.getQty();
-            
             if (backQty == null || backQty <= 0) {
                 continue; // 跳过无效数量
             }
-            
-            // 为每个明细查询对应的台账数量
-            SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-            searchDTO.setUserId(entity.getUserId());
-            searchDTO.setUseUserId(useUserId); // 设置使用方ID
-            searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
-            searchDTO.setChildId(entity.getId()); // 排除当前单据
-            searchDTO.setSkuIds(Arrays.asList(skuId)); // 只查询当前SKU
-            
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-            
-            // 计算该SKU的可用数量
-            Integer ledgerQty = 0;
-            if (CollUtil.isNotEmpty(ledgerList)) {
-                for (SampleLedgerDTO.SkuAvailableQtyDTO dto : ledgerList) {
-                    if (skuId.equals(dto.getSkuId()) && 
-                        entity.getUserId().equals(dto.getUserId()) && 
-                        useUserId.equals(dto.getUseUserId())) {
-                        ledgerQty += (dto.getAvailableQty() != null ? dto.getAvailableQty() : 0);
-                    }
-                }
-            }
-            
+            Integer ledgerQty = ledgerMap.getOrDefault(detail.getSampleLedgerId(), 0);
             if (backQty > ledgerQty) {
                 throw new ServiceException(StrUtil.format("SKU【{}】退回数量【{}】不能大于台账数量【{}】", 
                     detail.getSkuNo(), backQty, ledgerQty));
             }
+            //防止明细里还有重复
+            ledgerMap.put(detail.getSampleLedgerId(),ledgerQty - backQty);
         }
     }
 
