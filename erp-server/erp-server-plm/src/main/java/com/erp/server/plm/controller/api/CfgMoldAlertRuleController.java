@@ -7,7 +7,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
 import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
+import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.erp.server.plm.query.CfgMoldAlertRuleQueryHandler;
+import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -203,20 +205,20 @@ public class CfgMoldAlertRuleController extends BaseController {
     }
 
     /**
-     * 禁用
+     * 启用禁用
      * @author jack
      * @date:  2025-10-16
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @PostMapping("/disabled")
+    @PostMapping("/updateStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:cfgMoldAlertRule:disabled",
+            menuCode = "plm:cfgMoldAlertRule:updateStatus",
             serviceClass = CfgMoldAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具预警策略禁用")
-    public ApiResult<List<BatchResultDTO>> batchDisabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<CfgMoldAlertRuleEntity> list = cfgMoldAlertRuleService.lambdaQuery().in(CfgMoldAlertRuleEntity::getId, ids).list();
@@ -224,12 +226,12 @@ public class CfgMoldAlertRuleController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = cfgMoldAlertRuleService.disabled(id);
+                result = cfgMoldAlertRuleService.updateStatus(id,dto.getDisabled());
             }catch (Exception e){
-                log.error("模具预警策略禁用失败",e);
+                log.error("模具预警策略启用/禁用失败",e);
                 CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 禁用失败");
+                    result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 启用/禁用失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -238,72 +240,6 @@ public class CfgMoldAlertRuleController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-    /**
-     * 启用
-     * @author jack
-     * @date:  2025-10-16
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/enable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:cfgMoldAlertRule:disabled",
-            serviceClass = CfgMoldAlertRuleService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具预警策略启用")
-    public ApiResult<List<BatchResultDTO>> batchEnable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<CfgMoldAlertRuleEntity> list = cfgMoldAlertRuleService.lambdaQuery().in(CfgMoldAlertRuleEntity::getId, ids).list();
-        Map<String, CfgMoldAlertRuleEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgMoldAlertRuleEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = cfgMoldAlertRuleService.enable(id);
-            }catch (Exception e){
-                log.error("模具预警策略启用失败",e);
-                CfgMoldAlertRuleEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 启用失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getMoldCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 启用/禁用
-     * @author jack
-     * @date:  2025-10-16
-     * @param id
-     * @return ApiResult<BatchResultDTO>
-     */
-    @GetMapping("/changeDisable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:cfgMoldAlertRule:disabled",
-            serviceClass = CfgMoldAlertRuleService.class,
-            keyIdName = "id")
-    public ApiResult<BatchResultDTO> changeDisable(@RequestParam("id") String id) {
-        CfgMoldAlertRuleEntity entity = cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getId, id).one();
-        BatchResultDTO result;
-        try {
-            result = cfgMoldAlertRuleService.changeDisable(entity);
-        }catch (Exception e){
-            log.error("模具预警策略启用失败",e);
-            if (ObjectUtil.isEmpty(entity)) {
-                result = BatchResultDTO.fail(id, id, "模具预警策略不存在, 启用失败");
-            }else {
-                result = BatchResultDTO.fail(entity.getId(), entity.getMoldCode(), e.getMessage());
-            }
-        }
-        return result.getSuccess()? success(result) : failure(result);
     }
 
 

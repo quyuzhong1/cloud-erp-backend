@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -48,12 +49,6 @@ public interface CfgMoldAlertRuleService extends SuperService<CfgMoldAlertRuleEn
 
     BatchResultDTO invalid(String id, String remark);
 
-    BatchResultDTO disabled(String id);
-
-    BatchResultDTO enable(String id);
-
-    BatchResultDTO changeDisable(CfgMoldAlertRuleEntity entity);
-
     void exportList(CfgMoldAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
@@ -61,4 +56,6 @@ public interface CfgMoldAlertRuleService extends SuperService<CfgMoldAlertRuleEn
     void importCfgMoldAlert(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<CfgMoldAlertImportExcelDTO> successList, List<CfgMoldAlertImportExcelDTO> errorList2, String importType);
+
+    BatchResultDTO updateStatus(String id, @NotNull(message = "禁用状态不能为空") Boolean disabled);
 }
