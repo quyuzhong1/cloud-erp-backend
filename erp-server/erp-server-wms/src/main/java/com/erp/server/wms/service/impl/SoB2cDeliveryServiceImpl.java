@@ -543,7 +543,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", deliveryEntityList.stream().map(SoB2cDeliveryEntity::getCode).distinct().collect(Collectors.toList())));
         }
         //查询产品信息
         List<String> skuIds = deliveryDetailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
