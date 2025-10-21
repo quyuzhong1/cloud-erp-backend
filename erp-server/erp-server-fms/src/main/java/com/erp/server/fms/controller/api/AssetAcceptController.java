@@ -15,9 +15,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.service.AssetAcceptService;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.common.business.enums.FileTaskEventEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -453,12 +453,12 @@ public class AssetAcceptController extends BaseController {
     }
 
     /**
-    * 添加明细查询
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto 查询参数
-    * @return ApiResult<AssetAcceptDTO.AddDetailResultDTO>
-    */
+     * 添加明细查询
+     * @author wuht
+     * @date:  2025-10-11
+     * @param dto 查询参数
+     * @return ApiResult<AssetAcceptDTO.AddDetailResultDTO>
+     */
     @PostMapping("/queryAddDetail")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -467,6 +467,21 @@ public class AssetAcceptController extends BaseController {
             keyIdName = "assetAcceptId")
     public ApiResult<AssetAcceptDTO.AddDetailResultDTO> queryAddDetail(@RequestBody @Validated AssetAcceptDTO.AddDetailQueryDTO dto) {
         return success(assetAcceptService.queryAddDetail(dto));
+    }
+
+    /**
+     * 导入Excel数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "资产验收表导入Excel数据")
+    public ApiResult<Boolean> importExcel(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        // 异步导入任务
+        assetAcceptService.importExcel(dto);
+        return success(true);
     }
 
 }

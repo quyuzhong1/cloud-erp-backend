@@ -46,7 +46,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.apache.commons.lang3.StringUtils;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.fms.dto.excel.AssetAcceptExcelDTO;
+import com.erp.model.fms.enums.PersonTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.server.fms.listener.AssetAcceptExcelListener;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -80,6 +95,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private AttachmentService attachmentService;
     @Autowired
     private AssetCardService assetCardService;
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1235,4 +1254,174 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private void handleData(AssetAcceptEntity assetAcceptEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    /**
+     * 导入Excel数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     * @return
+     */
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("资产验收表导入", FileTaskEventEnum.IMPORT_FMS_ASSET_ACCEPT.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入资产验收表
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetAccept(BaseDTO.ImportDTO dto) {
+        AssetAcceptExcelListener excelListenerUtil = new AssetAcceptExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetAcceptExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetAcceptExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "资产验收表错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetAcceptExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 处理导入成功的数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param successList 成功数据列表
+     * @param errorNoList 错误序号列表
+     * @param errorList2 错误数据列表
+     * @param importType 导入类型
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void handleImportSuccessList(List<AssetAcceptExcelDTO> successList, 
+                                       List<String> errorNoList, 
+                                       List<AssetAcceptExcelDTO> errorList2, 
+                                       String importType) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        if (StringUtils.isBlank(importType)){
+            //给个默认值
+            importType = ImportTypeEnum.ADD.getCode();
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getSerialNumber()) && !errorNoList.contains(e.getSerialNumber())).collect(Collectors.toList());
+
+            // 全部返回到错误列表
+            List<AssetAcceptExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getSerialNumber()) || errorNoList.contains(e.getSerialNumber())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        AssetAcceptServiceImpl bean = ApplicationContextUtils.getBean(AssetAcceptServiceImpl.class);
+
+        // 按序号分组
+        Map<String, List<AssetAcceptExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(AssetAcceptExcelDTO::getSerialNumber));
+        for (Map.Entry<String, List<AssetAcceptExcelDTO>> entry : collect.entrySet()) {
+            List<AssetAcceptExcelDTO> value = entry.getValue();
+            AssetAcceptExcelDTO importMainDTO = value.get(0);
+            AssetAcceptDTO.AddDTO addDTO = new AssetAcceptDTO.AddDTO();
+            BeanMapperUtils.copy(importMainDTO, addDTO);
+            
+            // 设置验收日期
+            addDTO.setAcceptDate(importMainDTO.getAcceptDate());
+            addDTO.setPurchaseCode(importMainDTO.getPurchaseCode());
+            addDTO.setIsNeedSeal(importMainDTO.getIsNeedSeal());
+            addDTO.setAcceptOrgId(importMainDTO.getAcceptOrgId());
+            addDTO.setAcceptOrgName(importMainDTO.getAcceptOrgName());
+            addDTO.setAcceptUserId(importMainDTO.getAcceptUserId());
+            addDTO.setAcceptUserName(importMainDTO.getAcceptUserName());
+            addDTO.setAcceptDeptId(importMainDTO.getAcceptDeptId());
+            addDTO.setAcceptDeptName(importMainDTO.getAcceptDeptName());
+            addDTO.setAcceptDesc(importMainDTO.getAcceptDesc());
+
+            // 构建验收人员列表
+            List<AssetAcceptPersonDTO.AddDTO> personList = new ArrayList<>();
+            if (StringUtils.isNotBlank(importMainDTO.getPurchaseDevId())) {
+                AssetAcceptPersonDTO.AddDTO person = new AssetAcceptPersonDTO.AddDTO();
+                person.setPersonType(PersonTypeEnum.PURCHASE_DEV.getCode());
+                person.setUserId(importMainDTO.getPurchaseDevId());
+                person.setUserName(importMainDTO.getPurchaseDevName());
+                personList.add(person);
+            }
+            if (StringUtils.isNotBlank(importMainDTO.getQualityEngineerId())) {
+                AssetAcceptPersonDTO.AddDTO person = new AssetAcceptPersonDTO.AddDTO();
+                person.setPersonType(PersonTypeEnum.QUALITY_ENGINEER.getCode());
+                person.setUserId(importMainDTO.getQualityEngineerId());
+                person.setUserName(importMainDTO.getQualityEngineerName());
+                personList.add(person);
+            }
+            if (StringUtils.isNotBlank(importMainDTO.getStructureEngineerId())) {
+                AssetAcceptPersonDTO.AddDTO person = new AssetAcceptPersonDTO.AddDTO();
+                person.setPersonType(PersonTypeEnum.STRUCTURE_ENGINEER.getCode());
+                person.setUserId(importMainDTO.getStructureEngineerId());
+                person.setUserName(importMainDTO.getStructureEngineerName());
+                personList.add(person);
+            }
+            if (StringUtils.isNotBlank(importMainDTO.getProductManagerId())) {
+                AssetAcceptPersonDTO.AddDTO person = new AssetAcceptPersonDTO.AddDTO();
+                person.setPersonType(PersonTypeEnum.PRODUCT_MANAGER.getCode());
+                person.setUserId(importMainDTO.getProductManagerId());
+                person.setUserName(importMainDTO.getProductManagerName());
+                personList.add(person);
+            }
+            if (StringUtils.isNotBlank(importMainDTO.getProjectManagerId())) {
+                AssetAcceptPersonDTO.AddDTO person = new AssetAcceptPersonDTO.AddDTO();
+                person.setPersonType(PersonTypeEnum.PROJECT_MANAGER.getCode());
+                person.setUserId(importMainDTO.getProjectManagerId());
+                person.setUserName(importMainDTO.getProjectManagerName());
+                personList.add(person);
+            }
+            addDTO.setPersonList(personList);
+
+            // 构建验收明细列表
+            List<AssetAcceptDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (AssetAcceptExcelDTO importDTO : value) {
+                AssetAcceptDetailDTO.AddDTO detailDTO = new AssetAcceptDetailDTO.AddDTO();
+                detailDTO.setSkuId(importDTO.getSkuId());
+                detailDTO.setProductName(importDTO.getProductName());
+                detailDTO.setAcceptQty(importDTO.getAcceptQty());
+                detailDTO.setAssetCardStatus(AssetCardStatusEnum.NOT_GENERATED.getStatus());
+                detailDTO.setPendingQty(0);
+                detailDTO.setAcceptedQty(0);
+                detailDTO.setAcceptableQty(importDTO.getAcceptQty());
+                detailDTO.setAssetLocationId(importDTO.getAssetLocationId());
+                detailDTO.setUseDeptName(importDTO.getUseDeptName());
+                detailDTO.setUseDeptId(importDTO.getUseDeptId());
+                detailDTO.setCostType(importDTO.getCostType());
+                detailDTO.setRemark(importDTO.getRemark());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+
+            if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                bean.add(addDTO);
+            }
+        }
+    }
+
 }
