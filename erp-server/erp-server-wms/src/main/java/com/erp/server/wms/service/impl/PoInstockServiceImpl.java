@@ -827,14 +827,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 }
                 //应入库数量
                 int stockInQty = poDetailEntity.getStockInQty() * quantity;
-                PoInstockDetailEntity poInstockDetailEntity = childPoInstockDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(subcontractOrderDetailEntity.getSkuId())
+                List<PoInstockDetailEntity> poInstockDetailEntityList = childPoInstockDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(subcontractOrderDetailEntity.getSkuId())
                         && CharSequenceUtil.isNotBlank(e.getPurchaseOrderDetailId()) && e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())
-                        && e.getStockInQty() == stockInQty).findFirst().orElse(null);
+                        && e.getStockInQty() == stockInQty).collect(Collectors.toList());
                 //记录要入库的委外订单
-                if (Objects.isNull(poInstockDetailEntity)){
+                if (CollUtil.isEmpty(poInstockDetailEntityList)) {
                     log.error(CharSequenceUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单明细"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
                     continue;
                 }
+                for (PoInstockDetailEntity poInstockDetailEntity : poInstockDetailEntityList){
                 //入库单状态检查
                 PoInstockEntity poInstockEntity1 = childPoInstockList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(poInstockDetailEntity.getMainId())).findFirst().orElse(null);
                 if (Objects.isNull(poInstockEntity1)){
@@ -846,6 +847,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     continue;
                 }
                 needApproveDetailList.add(poInstockDetailEntity);
+                }
             }
         }
         if (CollectionUtils.isNotEmpty(needApproveDetailList)){
@@ -854,7 +856,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //需要自动入库的子件入库单
             List<PoInstockEntity> poInstockEntityList = this.listByIds(poInstockIds);
             List<PoInstockDetailEntity> poInstockDetailEntityList = poInstockDetailService.listByMainIds(poInstockIds);
-            List<PoInstockEntity> needInstockList = new ArrayList<>();
             for (PoInstockEntity entity : poInstockEntityList){
                 List<PoInstockDetailEntity> detailEntityList = poInstockDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(entity.getId())).collect(Collectors.toList());
                 //明细是否都在符合条件的自动审核订单中
@@ -864,19 +865,21 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     log.error(CharSequenceUtil.format("采购入库单【{}】中SKU【{}】没有可入库记录",entity.getCode(), String.join(",",skuNoList)));
                     continue;
                 }
-                needInstockList.add(entity);
+                //自动提交审核
+                if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+                    //提交
+                    Boolean submit = this.submit(Collections.singletonList(entity.getId()));
+                    if (!submit) {
+                        throw new ServiceException(ApiError.ERROR_1042,"子件入库单");
+                    }
+                    //审核
+                    entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+                }
+                BatchResultDTO approve = this.approve(entity, ApproveTypeEnum.PASS.getStatus(), "系统自动审核", false);
+                if (!approve.getSuccess()) {
+                    throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"子件入库单");
+                }
             }
-            if (CollectionUtils.isNotEmpty(needInstockList)){
-                updateInventoryTransCore(needInstockList);
-                List<String> ids = needInstockList.stream().map(PoInstockEntity::getId).distinct().collect(Collectors.toList());
-                //更新审核状态
-                updateApproveStatus(ids,ApproveStatusEnum.APPROVE.getStatus());
-                //审核通过发送金蝶
-                sendPushTask(needInstockList,SyncOperateEnum.OPERATE_APPROVE.getCode());
-                //修改采购收货单入库状态
-                warehouseReceiveService.updateReceiveInStockStatus(needInstockList);
-            }
-
         }
     }
 
