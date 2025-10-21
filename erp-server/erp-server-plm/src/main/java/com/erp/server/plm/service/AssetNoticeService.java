@@ -5,9 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetNoticeDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -101,6 +99,10 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
     * @return
     */
     BatchResultDTO approve(ApproveOneDTO dto);
+
+    List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> idList);
+
+    Boolean generatePurchaseOrder(List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO> dtoList);
 
     /**
     * 反审核

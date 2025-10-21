@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -9,26 +10,26 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.plm.dto.AssetNoticeDetailDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.AssetNoticeExcelListener;
 import com.erp.server.plm.mapper.AssetNoticeDetailMapper;
 import com.erp.server.plm.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -45,7 +46,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.AssetNoticeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -97,6 +97,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
 
     @Autowired
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Autowired
     private AssetNoticeDetailMapper assetNoticeDetailMapper;
 
     @Autowired
@@ -110,6 +113,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -271,6 +277,249 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    @Override
+    public List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> idList) {
+        List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrderDTOS = new ArrayList<>();
+        List<AssetNoticeDetailEntity> assetNoticeDetailEntityList = assetNoticeDetailService.listByIds(idList);
+        if (assetNoticeDetailEntityList.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95298);
+        }
+        //可以生成采购订单的明细（未生成、部分生成）
+        List<AssetNoticeDetailEntity> collect = assetNoticeDetailEntityList.stream()
+                .filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)) {
+            throw new ServiceException(ApiError.ERROR_95299);
+        }
+
+        for (AssetNoticeDetailEntity assetNoticeDetailEntity : collect) {
+            AssetNoticeDTO.ViewGeneratePurchaseOrderDTO viewGeneratePurchaseOrderDTO = new AssetNoticeDTO.ViewGeneratePurchaseOrderDTO();
+
+            AssetNoticeEntity assetNoticeEntity = this.getById(assetNoticeDetailEntity.getMainId());
+            //主表数据
+            if (Objects.isNull(assetNoticeEntity)) {
+                throw new ServiceException(ApiError.ERROR_95297);
+            }
+            BeanUtils.copyProperties(assetNoticeDetailEntity,viewGeneratePurchaseOrderDTO);
+
+            //获取公司信息
+            SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(assetNoticeDetailEntity.getPurchaseOrgId());
+            if (Objects.isNull(companyEntity)) {
+                throw new ServiceException(ApiError.ERROR_9014);
+            }
+            viewGeneratePurchaseOrderDTO.setPurchaseOrgName(companyEntity.getCompanyName());
+
+            //获取sku最小起订量和采购交期
+            LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ProductDetailEntity::getSkuNo,assetNoticeDetailEntity.getAssetCode())
+                    .eq(ProductDetailEntity::getIsDeleted,Boolean.FALSE);
+            ProductDetailEntity productDetailEntity = productDetailService.getOne(queryWrapper);
+            ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(productDetailEntity.getId());
+            viewGeneratePurchaseOrderDTO.setMoq(productPurchaseEntity.getMoq());
+            viewGeneratePurchaseOrderDTO.setDeliveryDay(productPurchaseEntity.getDeliveryCycle());
+
+            //关联待采购数量
+            LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+            lambdaQueryWrapper.eq(AssetPurchaseOrderDetailEntity::getSourceDetailId,assetNoticeDetailEntity.getId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE);
+            List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.list(lambdaQueryWrapper);
+            BigDecimal totalPurchaseQty = list.stream()
+                    .map(AssetPurchaseOrderDetailEntity::getPurchaseQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            viewGeneratePurchaseOrderDTO.setApplyQty(assetNoticeDetailEntity.getApplyQty());
+            viewGeneratePurchaseOrderDTO.setWaitQty(assetNoticeDetailEntity.getApplyQty().subtract(totalPurchaseQty));
+
+            viewGeneratePurchaseOrderDTO.setAssetNoticeDetailId(assetNoticeDetailEntity.getId());
+            viewGeneratePurchaseOrderDTO.setCode(assetNoticeEntity.getCode());
+            viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliverDate());
+
+            viewGeneratePurchaseOrderDTOS.add(viewGeneratePurchaseOrderDTO);
+        }
+
+        return viewGeneratePurchaseOrderDTOS;
+    }
+
+    @Override
+    public Boolean generatePurchaseOrder(List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO> dtoList) {
+        List<String> ids = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getId).collect(Collectors.toList());
+        //主表数据
+        List<AssetNoticeEntity> mainList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(mainList)) {
+            throw new ServiceException(ApiError.ERROR_95297);
+        }
+        //已审核数据才能生成采购单
+        long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus().getCode())).count();
+        if (statusCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95299);
+        }
+        //模具信息
+        List<String> assetIds = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetId).collect(Collectors.toList());
+        List<MoldInfoEntity> moldInfoEntities = moldInfoService.listByIds(assetIds);
+        if (CollectionUtils.isEmpty(moldInfoEntities)) {
+            throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+        }
+
+        log.info("生成采购订单 ids= {}",ids);
+
+        //设置采购订单生成类型
+        List<AssetNoticeDetailEntity> detailList = setCreatePoType(dtoList, mainList);
+
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = new AssetPurchaseOrderEntity();
+        assetPurchaseOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPO));
+        assetPurchaseOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);//默认待审核
+        assetPurchaseOrderEntity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
+        assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+
+        //供应商默认联系人
+        List<String> supplierIds = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
+        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS = supplierFeign.listDefaultBySupplierIdList(supplierIds);
+
+        //采购订单新增数据
+        List<AssetPurchaseOrderDTO.AddDTO> resultList = new ArrayList<>();
+
+        //主表数据按供应商和采购组织分组
+        Map<String, List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO>> collect = dtoList.stream()
+                .collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat("|").concat(obj.getPurchaseOrgId())));
+
+        for (Map.Entry<String, List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO>> entry : collect.entrySet()) {
+            List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO> value = entry.getValue();
+            //采购订单主表数据
+            AssetPurchaseOrderDTO.AddDTO addDTO = new AssetPurchaseOrderDTO.AddDTO();
+            AssetNoticeEntity entity = mainList.stream().filter(obj -> obj.getId().equals(value.get(0).getId())).findFirst().orElse(null);
+            if (org.springframework.util.ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
+            addDTO.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+            addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
+            addDTO.setPurchaseOrgName(value.get(0).getPurchaseOrgName());
+            addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
+            addDTO.setPurchaseUserName(value.get(0).getPurchaseUserId());
+            addDTO.setPurchaseDate(LocalDate.now());
+
+            //采购订单供应商信息
+            AssetPurchaseOrderSupplierDTO.AddDTO supplierDTO = new AssetPurchaseOrderSupplierDTO.AddDTO();
+            supplierDTO.setSupplierId(value.get(0).getSupplierId());
+
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.stream()
+                    .filter(obj -> obj.getSupplierEntity().getId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+            SupplierContactEntity defaultSupplierContact = supplierDefaultDTO.getSupplierContactEntity();
+            SupplierAccountEntity defaultSupplierAccount = supplierDefaultDTO.getAccountEntity();
+
+            if (Objects.nonNull(defaultSupplierContact)) {
+                //付款条件
+                supplierDTO.setPaymentCondition(supplierDefaultDTO.getSupplierEntity().getPaymentCondition());
+                supplierDTO.setPaymentConditionName(supplierDefaultDTO.getSupplierEntity().getPaymentCompanyName());
+                //结算方式
+                supplierDTO.setPayMethodId(supplierDefaultDTO.getSupplierEntity().getPayMethodId());
+                //结算币种
+                supplierDTO.setPayCurrency(supplierDefaultDTO.getSupplierEntity().getPayCurrency());
+                //联系人名称
+                supplierDTO.setContactName(defaultSupplierContact.getPerson());
+                //联系电话
+                supplierDTO.setContactTelNumber(defaultSupplierContact.getTelNumber());
+            }
+
+            //供应商默认账户
+            if (Objects.nonNull(defaultSupplierAccount)) {
+                supplierDTO.setBankName(defaultSupplierAccount.getBankName());
+                supplierDTO.setBankAccount(defaultSupplierAccount.getBankAccount());
+                supplierDTO.setPayee(defaultSupplierAccount.getPayee());
+            }
+
+            addDTO.setAssetPurchaseOrderSupplierDTO(supplierDTO);
+
+            //采购订单明细信息
+            List<AssetPurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
+            for (AssetNoticeDTO.ListGeneratePurchaseOrderDTO generatePurchaseOrderDTO : value) {
+
+                AssetPurchaseOrderDetailDTO.AddDTO addDetailDTO = new AssetPurchaseOrderDetailDTO.AddDTO();
+                //采购申请对应明细信息
+                MoldInfoEntity moldInfoEntity = moldInfoEntities.stream().filter(obj -> obj.getId().equals(generatePurchaseOrderDTO.getAssetId())).findFirst().orElse(null);
+                if (org.springframework.util.ObjectUtils.isEmpty(moldInfoEntity)) {
+                    throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+                }
+                addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
+                addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
+                addDetailDTO.setPlanDeliveryDate(generatePurchaseOrderDTO.getPlanDeliveryDate());
+                addDetailDTO.setAssetId(moldInfoEntity.getId());
+                addDetailDTO.setAssetCode(moldInfoEntity.getCode());
+                addDetailDTO.setAssetName(moldInfoEntity.getName());
+                addDetailDTO.setTaxPrice(generatePurchaseOrderDTO.getTaxPrice());
+                //采购数量
+                addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getApplyQty());
+                //采购金额
+                addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
+                addDetailDTO.setTaxRate(generatePurchaseOrderDTO.getTaxRate());
+                addDetailDTO.setMainId(generatePurchaseOrderDTO.getId());
+                addDetailDTO.setRemark(generatePurchaseOrderDTO.getRemark());
+                addDetailDTO.setIsUrgent(Boolean.FALSE);
+                addDetailDTO.setIsEndReceive(Boolean.FALSE);
+                addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
+                details.add(addDetailDTO);
+            }
+            addDTO.setAssetPurchaseOrderDetailDTO(details);
+            resultList.add(addDTO);
+        }
+        //新增采购订单
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            resultList.forEach(obj -> assetPurchaseOrderService.add(obj));
+        }
+
+        //更新申请明细生成状态
+        assetNoticeDetailService.saveOrUpdateBatch(detailList);
+        return Boolean.TRUE;
+    }
+
+    private List<AssetNoticeDetailEntity> setCreatePoType(List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO> list,List<AssetNoticeEntity> mainList) {
+        List<String> detailIds = list.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetNoticeDetailId).distinct().collect(Collectors.toList());
+
+        //明细数据
+        List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.listByIds(detailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_95298);
+        }
+
+        // 不允许下推的申请单明细id集合
+        List<AssetNoticeDetailEntity> prohibitDetails = Lists.newArrayList();
+        Map<String, AssetNoticeEntity> detailMainMap = Maps.newHashMap();
+        for (AssetNoticeDetailEntity detail : detailList) {
+            //已采购数量
+            BigDecimal purchaseQty = BigDecimal.ZERO;
+
+            //本次采购数量
+            BigDecimal thisPurchaseQty = list.stream()
+                    .filter(obj -> obj.getAssetNoticeDetailId().equals(detail.getId()))
+                    .map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getApplyQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            AssetNoticeEntity entity = mainList.stream().filter(obj -> obj.getId().equals(detail.getMainId())).findFirst().orElse(null);
+            detailMainMap.put(detail.getId(), entity);
+
+            //申请数量
+            BigDecimal applyQty = detail.getApplyQty();
+            if (thisPurchaseQty.compareTo(applyQty.subtract(purchaseQty)) > 0) {
+                // 不允许下推
+                prohibitDetails.add(detail);
+            } else if (thisPurchaseQty.compareTo(applyQty.subtract(purchaseQty)) == 0) {
+                detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
+            } else {
+                detail.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
+            }
+        }
+
+        if(CollUtil.isNotEmpty(prohibitDetails)) {
+            StringBuilder errMsg = new StringBuilder("");
+            List<String> prohibitDetailIds = prohibitDetails.stream().map(AssetNoticeDetailEntity::getId).distinct().collect(Collectors.toList());
+            Map<String, Object> exceptionDataMap = new HashMap<>();
+            exceptionDataMap.put("assetNoticeDetailIds", prohibitDetailIds);
+            prohibitDetails.stream().forEach(detail->{
+                AssetNoticeEntity entity = detailMainMap.get(detail.getId());
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_95300.msg,entity.getCode(),detail.getAssetCode())).append("</br>");
+            });
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_95300.code,errMsg.toString(), exceptionDataMap));
+        }
+        return  detailList;
     }
 
     /**

@@ -1,11 +1,18 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.entity.AssetPurchaseOrderSupplierEntity;
+import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
+import com.erp.model.plm.enums.PurchaseStateEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.enums.ContractStampStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
+import com.erp.server.plm.service.AssetPurchaseOrderSupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,11 +22,11 @@ import com.erp.server.plm.service.AssetPurchaseOrderService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,22 +37,14 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-
 import javax.servlet.http.HttpServletResponse;
-import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -63,10 +62,19 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchaseOrderMapper, AssetPurchaseOrderEntity> implements AssetPurchaseOrderService {
+
+    @Autowired
+    private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
+
+    @Autowired
+    private AssetPurchaseOrderSupplierService assetPurchaseOrderSupplierService;
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
     @Autowired
     private WorkflowFeign workflowFeign;
 
@@ -80,22 +88,31 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 数据处理
         handleData(assetPurchaseOrderEntity);
 
-        log.info("开始新增");
+        log.info("资产采购单开始新增");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPO);
         assetPurchaseOrderEntity.setCode(code);
-        boolean save = super.save(assetPurchaseOrderEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+
+        boolean savePurchaseOrder = super.save(assetPurchaseOrderEntity);
+        if(!savePurchaseOrder) {
+            throw new ServiceException("资产采购单保存失败");
         }
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
+        BeanMapperUtils.copy(addDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
 
+        //处理供应商数据
+        handleSupplierData(assetPurchaseOrderSupplierEntity);
+        assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
+
+        boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
+        if(!savePurchaseSupplier) {
+            throw new ServiceException("资产采购单供应商信息报错失败");
+        }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , assetPurchaseOrderEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, assetPurchaseOrderEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购单" , assetPurchaseOrderEntity.getCode());
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "新增操作");
+        // 新增明细
+        assetPurchaseOrderDetailService.add(addDTO.getAssetPurchaseOrderDetailDTO(),assetPurchaseOrderEntity.getId());
         return new BaseResultDTO.AddDTO(assetPurchaseOrderEntity.getId(), code);
     }
 
@@ -512,6 +529,27 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     * 新增修改处理数据
     */
     private void handleData(AssetPurchaseOrderEntity assetPurchaseOrderEntity) {
-    // TODO 验证数据 & 数据赋值
+        assetPurchaseOrderEntity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
+        //默认资产采购单
+        assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+        assetPurchaseOrderEntity.setInvalidStatus(Boolean.FALSE);
+    }
+
+    private void handleSupplierData(AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity) {
+        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getSupplierId())) {
+            throw new ServiceException("供应商id不允许为空");
+        }
+
+        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayMethodId())) {
+            throw new ServiceException("结算方式不允许为空");
+        }
+
+        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPaymentCondition())) {
+            throw new ServiceException("付款条件不允许为空");
+        }
+
+        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayee())) {
+            throw new ServiceException("账户名称不允许为空");
+        }
     }
 }

@@ -26,8 +26,6 @@ import javax.validation.constraints.Digits;
 public class AssetPurchaseOrderDetailDTO implements Serializable {
 
 
-
-
     /**
     * 详情
     */
@@ -239,7 +237,6 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         /**
         * 金蝶明细id
         */
-        @NotBlank(message = "金蝶明细id不能为空")
         private String kingdeeDetailId;
 
         /**
@@ -258,7 +255,6 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         */
         @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
-
 
     }
 

@@ -2,6 +2,9 @@ package com.erp.model.plm.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
