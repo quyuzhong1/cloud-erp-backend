@@ -17,6 +17,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +74,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void pullFsInstancesDetails(String data) {
         JSONObject jsonObject = JSONUtil.parseObj(data);
         String approvalCode = jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode());
