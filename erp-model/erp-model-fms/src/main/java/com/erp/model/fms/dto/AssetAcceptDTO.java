@@ -397,21 +397,18 @@ public class AssetAcceptDTO implements Serializable {
         /**
         * 来源单号
         */
-        @NotBlank(message = "来源单号不能为空")
         @Size(max = 100,message = "来源单号最大长度不能超过100位")
         private String sourceCode;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
         @Size(max = 200,message = "来源类型最大长度不能超过200位")
         private String sourceType;
 
         /**
         * 来源ID
         */
-        @NotBlank(message = "来源ID不能为空")
         @Size(max = 19,message = "来源ID最大长度不能超过19位")
         private String sourceId;
 
