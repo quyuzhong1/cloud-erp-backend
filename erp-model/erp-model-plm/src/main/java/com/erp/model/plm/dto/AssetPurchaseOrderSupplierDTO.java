@@ -131,7 +131,6 @@ public class AssetPurchaseOrderSupplierDTO implements Serializable {
         /**
         * 资产采购单id
         */
-        @NotBlank(message = "资产采购单id不能为空")
         private String assetPurchaseOrderId;
 
         /**

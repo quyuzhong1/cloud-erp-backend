@@ -16,6 +16,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
+import org.apache.xpath.operations.Bool;
+
 import java.util.Map;
 
 /**
@@ -81,7 +83,7 @@ public class AssetNoticeDTO implements Serializable {
         private String  id;
 
         /**
-        * 项目编号
+        * 单号
         */
         private String code;
 
@@ -172,6 +174,21 @@ public class AssetNoticeDTO implements Serializable {
         private String createUserName;
 
         /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
          * 采购单关联状态
          */
         private String createPoType;
@@ -190,6 +207,16 @@ public class AssetNoticeDTO implements Serializable {
          * 供应商名称
          */
         private String supplierName;
+
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliverDate;
+
+        /**
+         * 申请数量
+         */
+        private BigDecimal applyQty;
 
         /**
          * 待采购数量
@@ -228,7 +255,7 @@ public class AssetNoticeDTO implements Serializable {
         private String  id;
 
         /**
-        * 项目编号
+        * 单号
         */
         private String code;
 
@@ -297,7 +324,10 @@ public class AssetNoticeDTO implements Serializable {
         */
         private Boolean invalidStatus;
 
-
+        /**
+         * 资产通知单明细
+         */
+        private List<AssetNoticeDetailDTO.ViewDTO> assetNoticeDetailDTOList;
     }
 
     /**
@@ -362,6 +392,11 @@ public class AssetNoticeDTO implements Serializable {
         private String applyDeptName;
 
         /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+
+        /**
         * 作废原因
         */
         private String invalidReason;
@@ -379,6 +414,7 @@ public class AssetNoticeDTO implements Serializable {
         /**
         * 申请日期
         */
+        @NotNull(message = "申请日期不能为空")
         private LocalDate applyDate;
 
 
