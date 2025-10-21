@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.List;
 
@@ -50,12 +51,6 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
 
     BatchResultDTO invalid(String id, String remark);
 
-    BatchResultDTO disabled(String id);
-
-    BatchResultDTO enable(String id);
-
-    BatchResultDTO changeDisable(CfgMoldReturnAlertRuleEntity entity);
-
     void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
@@ -63,4 +58,6 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
     void importCfgMoldReturn(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<CfgMoldReturnImportExcelDTO> successList, List<CfgMoldReturnImportExcelDTO> errorList2, String importType);
+
+    BatchResultDTO updateStatus(String id, Boolean disabled);
 }
