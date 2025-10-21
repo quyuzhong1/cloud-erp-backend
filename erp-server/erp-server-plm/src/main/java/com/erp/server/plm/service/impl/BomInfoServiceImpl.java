@@ -55,6 +55,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.BomInfoExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
@@ -1167,14 +1168,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 
         }
-        //校验是否产品属性是否相同
-        List<String> mergedList = Stream.concat(skuIds.stream(), childrenSkuIdList.stream())
-                .distinct()
-                .collect(Collectors.toList());
-        List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(mergedList);
-        long count = skuVOList.stream().map(SkuVO::getPropertyId).distinct().count();
-        if(count > 1){
-            throw new ServiceException("只允许添加相同产品属性组合成组合品");
+        //校验是否子件产品属性是否相同
+        List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(childrenSkuIdList);
+        SkuVO skuVO = skuVOList.stream().filter(e -> e.getPropertyName().equals(ProductConstant.PRODUCT_PROPERTY_ASSET)).findFirst().orElse(null);
+        if(Objects.nonNull(skuVO)){
+            long count = skuVOList.stream().map(SkuVO::getPropertyId).distinct().count();
+            if(count > 1){
+                throw new ServiceException("只允许添加相同产品属性组合成组合品");
+            }
         }
     }
 
