@@ -592,6 +592,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private void handleData(AssetNoticeEntity assetNoticeEntity) {
         //状态默认待提交
         assetNoticeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        assetNoticeEntity.setInvalidStatus(Boolean.FALSE);
         //采购员
         if (StringUtils.isNotBlank(assetNoticeEntity.getApplyUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getApplyUserId());
