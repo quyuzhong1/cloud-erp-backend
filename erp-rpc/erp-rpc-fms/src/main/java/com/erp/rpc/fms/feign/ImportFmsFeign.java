@@ -17,5 +17,8 @@ public interface ImportFmsFeign {
     @PostMapping("/feign/import/assetLocation")
     void importAssetLocation(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/assetAccept")
+    void importAssetAccept(@RequestBody BaseDTO.ImportDTO dto);
+
 }
 

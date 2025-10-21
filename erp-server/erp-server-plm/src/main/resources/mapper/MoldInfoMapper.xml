@@ -134,7 +134,9 @@ mi.payment_condition AS paymentCondition
 
     <select id="searchMold" resultType="com.erp.model.plm.dto.MoldInfoDTO$SearchMoldDTO">
         select
-            id,code,name
+            id,code,name,tag ,supplier_id AS supplierId,
+        supplier_code AS supplierCode,
+        supplier_name AS supplierName
         from mold_info
         where
             is_deleted = false

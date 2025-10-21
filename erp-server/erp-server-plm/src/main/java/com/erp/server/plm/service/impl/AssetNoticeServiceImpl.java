@@ -11,12 +11,19 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
-import com.erp.model.plm.entity.AssetNoticeDetailEntity;
-import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.AssetApproveStatusEnum;
+import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.AssetNoticeExcelListener;
@@ -25,7 +32,6 @@ import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.entity.AssetNoticeEntity;
 import com.erp.server.plm.mapper.AssetNoticeMapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -34,6 +40,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,12 +51,13 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -78,6 +86,15 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private MoldInfoService moldInfoService;
+
+    @Autowired
+    private ProductDetailService productDetailService;
+
+    @Autowired
+    private ProductPurchaseService productPurchaseService;
+
+    @Autowired
+    private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
 
     @Autowired
     private AssetNoticeDetailMapper assetNoticeDetailMapper;
@@ -174,12 +191,15 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetNoticeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        for (AssetNoticeDTO.TabListDTO tabListDTO : list) {
+            tabListDTO.setTabFlagName(ApproveStatusEnum.getName(tabListDTO.getTabFlag()));
+        }
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetNoticeDTO.TabListDTO(status, 0));
+            list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new AssetNoticeDTO.TabListDTO("all", list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
+        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
@@ -572,6 +592,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private void handleData(AssetNoticeEntity assetNoticeEntity) {
         //状态默认待提交
         assetNoticeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        assetNoticeEntity.setInvalidStatus(Boolean.FALSE);
         //采购员
         if (StringUtils.isNotBlank(assetNoticeEntity.getApplyUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getApplyUserId());
