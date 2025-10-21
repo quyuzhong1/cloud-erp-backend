@@ -119,6 +119,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         handleData(sampleReturnInfoEntity);
 
         log.info("开始新增样品归还单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品归还单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPGH);
         sampleReturnInfoEntity.setCode(code);

@@ -131,6 +131,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         handleData(sampleBorrowInfoEntity);
 
         log.info("开始新增样品借用单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品借用单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPJY);
         sampleBorrowInfoEntity.setCode(code);

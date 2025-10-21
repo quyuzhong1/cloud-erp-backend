@@ -176,6 +176,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         validateUsageScope(sampleRecipientEntity);
 
         log.info("开始新增样品领用单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);
         sampleRecipientEntity.setCode(code);
