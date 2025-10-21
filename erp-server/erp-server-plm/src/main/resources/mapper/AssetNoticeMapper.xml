@@ -63,6 +63,8 @@
             an.create_user_id AS createUserId,
             an.create_user_name AS creatUserName,
             an.create_time AS createTime,
+            an.approve_status as approveStatus,
+            an.invalid_status as invalidStatus,
             and1.create_po_type as createPoType
         FROM
             asset_notice an
