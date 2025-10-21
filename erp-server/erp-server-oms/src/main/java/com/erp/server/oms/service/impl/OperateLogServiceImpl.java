@@ -383,6 +383,19 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         return this.save(entity);
     }
 
+    @Override
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation,FindUserDTO findUserDTO) {
+        OperateLogEntity entity = new OperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation)
+                .setCreateUserId(findUserDTO.getUserId())
+                .setCreateUserName(findUserDTO.getUserName())
+                .setUpdateUserId(findUserDTO.getUserId())
+                .setUpdateUserName(findUserDTO.getUserName());
+        return this.save(entity);
+    }
 
     @Override
     public Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation) {
