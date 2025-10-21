@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -177,7 +178,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	List<String> currencyList = new ArrayList<>();
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getPayCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList);
+        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         	Map<String, String> currencyMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(listByCurrency)) {
         		currencyMap = listByCurrency.stream().collect(Collectors.toMap(ViewDTO::getId, ViewDTO::getName));
