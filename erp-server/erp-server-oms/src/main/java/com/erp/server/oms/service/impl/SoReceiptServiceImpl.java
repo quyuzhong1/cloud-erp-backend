@@ -950,6 +950,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setSalesOrgId(dto.getErpSaleOrgId());
             addOrUpdateDTO.setRemark(dto.getRemark());
             addOrUpdateDTO.setThirdCode(dto.getCode());
+            addOrUpdateDTO.setReceiptAmount(dto.getAmount());
             addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
             addOrUpdateDTO.setIsFromPlatform(true);
             addOrUpdateDTO.setCustomerId(dto.getErpCustomerId());
@@ -998,6 +999,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setReceiptDate(dto.getReceiptDate());
             addDTO.setDictReceiptMethod(dto.getErpReceiptMethod());
             addDTO.setReceiptAccount(dto.getErpReceiptAccountId());
+            addDTO.setReceiptAmount(dto.getAmount());
             addDTO.setSalesOrgId(dto.getErpSaleOrgId());
             addDTO.setRemark(dto.getRemark());
             addDTO.setThirdCode(dto.getCode());

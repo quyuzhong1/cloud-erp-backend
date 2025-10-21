@@ -75,6 +75,10 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
         request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
+        request.setPlatform(YunTuCreateOrderRequest.Platform.builder()
+                        .platformName(logisticsOrderVO.getDictPlatform())
+                        .platformCode(logisticsOrderVO.getDictPlatform())
+                .build());
         ValidatorUtil.validateEntity(request);
         String iossCode = request.getIossCode();
         if(!logisticsOrderVO.getLogisticsChannelEntity().getIsIossPrepay()){

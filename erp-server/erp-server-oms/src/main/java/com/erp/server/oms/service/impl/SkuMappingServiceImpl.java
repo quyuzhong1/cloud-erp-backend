@@ -1251,7 +1251,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
 
             //是否是飞书链接
-            if (isFastdfsUrl) {
+            if (isFastdfsUrl && CharSequenceUtil.isNotBlank(item.getProductImageUrl())) {
                 item.setProductImageUrl(FastDFSClientUtil.publicUrl + item.getProductImageUrl());
             }
         }

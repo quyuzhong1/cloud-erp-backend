@@ -636,6 +636,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 客户SKU
          */
+        private String customerSkuNo;
+
+        /**
+         * 平台sku
+         */
         private String platformSkuNo;
 
         /**
