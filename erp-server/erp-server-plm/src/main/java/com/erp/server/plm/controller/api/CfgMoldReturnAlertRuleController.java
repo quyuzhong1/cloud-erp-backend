@@ -209,20 +209,20 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
     }
 
     /**
-     * 禁用
+     * 启用禁用
      * @author jack
      * @date:  2025-10-16
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @PostMapping("/disabled")
+    @PostMapping("/updateStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:cfgMoldReturnAlertRule:disabled",
+            menuCode = "plm:cfgMoldReturnAlertRule:updateStatus",
             serviceClass = CfgMoldReturnAlertRuleService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具返还策略禁用")
-    public ApiResult<List<BatchResultDTO>> batchDisabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<CfgMoldReturnAlertRuleEntity> list = cfgMoldReturnAlertRuleService.lambdaQuery().in(CfgMoldReturnAlertRuleEntity::getId, ids).list();
@@ -230,12 +230,12 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = cfgMoldReturnAlertRuleService.disabled(id);
+                result = cfgMoldReturnAlertRuleService.updateStatus(id,dto.getDisabled());
             }catch (Exception e){
-                log.error("模具返还策略禁用失败",e);
+                log.error("模具返还策略启用/禁用失败",e);
                 CfgMoldReturnAlertRuleEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 禁用失败");
+                    result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 启用/禁用失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -245,73 +245,6 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-    /**
-     * 启用
-     * @author jack
-     * @date:  2025-10-16
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/enable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:cfgMoldReturnAlertRule:disabled",
-            serviceClass = CfgMoldReturnAlertRuleService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具返还策略启用")
-    public ApiResult<List<BatchResultDTO>> batchEnable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<CfgMoldReturnAlertRuleEntity> list = cfgMoldReturnAlertRuleService.lambdaQuery().in(CfgMoldReturnAlertRuleEntity::getId, ids).list();
-        Map<String, CfgMoldReturnAlertRuleEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgMoldReturnAlertRuleEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = cfgMoldReturnAlertRuleService.enable(id);
-            }catch (Exception e){
-                log.error("模具返还策略启用失败",e);
-                CfgMoldReturnAlertRuleEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 启用失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getMoldCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 启用/禁用
-     * @author jack
-     * @date:  2025-10-16
-     * @param id
-     * @return ApiResult<BatchResultDTO>
-     */
-    @GetMapping("/changeDisable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:cfgMoldReturnAlertRule:disabled",
-            serviceClass = CfgMoldReturnAlertRuleService.class,
-            keyIdName = "id")
-    public ApiResult<BatchResultDTO> changeDisable(@RequestParam("id") String id) {
-        CfgMoldReturnAlertRuleEntity entity = cfgMoldReturnAlertRuleService.lambdaQuery().eq(CfgMoldReturnAlertRuleEntity::getId, id).one();
-        BatchResultDTO result;
-        try {
-            result = cfgMoldReturnAlertRuleService.changeDisable(entity);
-        }catch (Exception e){
-            log.error("模具返还策略启用失败",e);
-            if (ObjectUtil.isEmpty(entity)) {
-                result = BatchResultDTO.fail(id, id, "模具返还策略不存在, 启用失败");
-            }else {
-                result = BatchResultDTO.fail(entity.getId(), entity.getMoldCode(), e.getMessage());
-            }
-        }
-        return result.getSuccess()? success(result) : failure(result);
-    }
-
 
     /**
      * 导出Excel数据

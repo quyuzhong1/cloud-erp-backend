@@ -918,7 +918,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
     @Override
     public List<MoldInfoDTO.SearchMoldDTO> searchMold(MoldInfoDTO.SearchDTO searchDTO) {
-        return baseMapper.searchMold(searchDTO);
+        List<MoldInfoDTO.SearchMoldDTO> list = baseMapper.searchMold(searchDTO);
+        //模具标识
+        list.forEach(e ->e.setTagName(MoldInfoTagEnum.getName(e.getTag())));
+        return list;
     }
 
     @Override
