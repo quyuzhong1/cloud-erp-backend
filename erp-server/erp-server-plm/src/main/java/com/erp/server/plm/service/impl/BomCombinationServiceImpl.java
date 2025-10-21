@@ -484,12 +484,18 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productInfoDTO.setCategoryId(productInfoEntity.getCategoryId());
         productInfoDTO.setSaleMethod(productInfoEntity.getSaleMethod());
 
-        //产品属性默认填自研发
-        BasicDictEntity basicDictEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), ProductConstant.PRODUCT_PROPERTY_DEFAULT);
+        String property = ProductConstant.PRODUCT_PROPERTY_DEFAULT;
+        //资产
+        if(productInfoEntity.getProperty().equals( ProductConstant.PRODUCT_PROPERTY_ASSET)){
+            property = ProductConstant.PRODUCT_PROPERTY_ASSET;
+        }
+        //资产属性默认设置资产。其余产品属性默认填自研发
+        BasicDictEntity basicDictEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), property);
         if (ObjectUtils.isNotEmpty(basicDictEntity)) {
-            productInfoDTO.setProperty(ProductConstant.PRODUCT_PROPERTY_DEFAULT);
+            productInfoDTO.setProperty(basicDictEntity.getName());
             productInfoDTO.setPropertyId(basicDictEntity.getId());
         }
+
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();

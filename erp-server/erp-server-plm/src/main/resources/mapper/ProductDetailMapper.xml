@@ -939,7 +939,7 @@
         pd.sku_no,
         pd.name AS skuName,
         pi.property_id,
-        pi.property
+        pi.property as propertyName
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
