@@ -552,7 +552,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
-
+        List<String> warehouseIds = list.stream().map(PickingListsEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByWarehouseIds(warehouseIds);
         //波次列表信息
         List<String> sourceIdList = list.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
         List<WaveListDTO.WaveDeliveryDTO> waveDeliveryList = waveListService.listByDeliverIds(sourceIdList);
@@ -579,6 +580,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isEmpty(viewDTO.getWarehouseLocation())) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
+            //库位名称
+            locationEntityList.stream()
+                    .filter(req -> req.getWarehouseId().equals(pickingLists.getWarehouseId()))
+                    .filter(req -> req.getCode().equals(viewDTO.getWarehouseLocation()))
+                    .findFirst()
+                    .ifPresent(locationEntity -> {
+                        viewDTO.setWarehouseLocationName(locationEntity.getName());
+                    });
             if (isAddWave){
                 //波次信息
                 WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
@@ -607,14 +616,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return printPickingViewList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
                         .thenComparing((s1, s2) -> {
-                            if (CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && !CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            if (CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && !CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return 1;
-                            } else if (!CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            } else if (!CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return -1;
-                            } else if (CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            } else if (CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return 0;
                             } else {
-                                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+                                return s1.getWarehouseLocationName().compareTo(s2.getWarehouseLocationName());
                             }
                         }))
                 .collect(Collectors.toList());
