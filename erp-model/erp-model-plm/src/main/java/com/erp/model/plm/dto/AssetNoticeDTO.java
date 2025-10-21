@@ -9,11 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import org.apache.xpath.operations.Bool;
@@ -45,6 +43,11 @@ public class AssetNoticeDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -421,4 +424,241 @@ public class AssetNoticeDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListGeneratePurchaseOrderDTO{
+
+        /**
+         * 采购通知单id
+         */
+        private String id;
+
+        /**
+         * 资产通知单明细id
+         */
+        private String assetNoticeDetailId;
+
+        /**
+         * 资产通知单号
+         */
+        private String code;
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织id不能为空")
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织
+         */
+        @NotBlank(message = "采购组织名称不能为空")
+        private String purchaseOrgName;
+
+        /**
+         * 最小起订量
+         */
+        private Integer moq;
+
+        /**
+         * 采购交期（天）
+         */
+        private BigDecimal deliveryDay;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        @NotBlank(message = "币种符号不能为空")
+        private String currencySymbol;
+
+        /**
+         * 采购数量
+         */
+        @NotNull(message = "采购数量不能为空")
+        private BigDecimal applyQty;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 一级供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * 一级供应商名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        private String supplierName;
+
+        /**
+         * 计划交期
+         */
+        @NotNull(message = "计划交期不能为空")
+        private LocalDate planDeliveryDate;
+
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseOrderDTO {
+
+        /**
+         * 资产通知单id
+         */
+        private String id;
+
+        /**
+         * 资产通知单明细id
+         */
+        private String assetNoticeDetailId;
+
+        /**
+         * 资产通知单号
+         */
+        private String code;
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 最小起订量
+         */
+        private Integer moq;
+
+        /**
+         * 采购交期（天）
+         */
+        private BigDecimal deliveryDay;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 申请数量
+         */
+        private BigDecimal applyQty;
+
+        /**
+         * 待采购数量
+         */
+        private BigDecimal waitQty;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 一级供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 一级供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+    }
 }
