@@ -60,6 +60,7 @@
         FROM asset_location al
         WHERE
         ${params.sqlMap.default}
+        AND al.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -98,6 +99,7 @@
         WHERE
         ${params.sqlMap.default}
         <!--勾选的id集合-->
+        AND al.is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
             AND al.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
