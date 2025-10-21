@@ -144,7 +144,8 @@
         sod.virtual_warehouse_id as virtualWarehouseId,
            sod.warehouse_location AS warehouseLocation,
            sod.remark AS detailRemark,
-           COALESCE(si.partition_id, sbr.partition_id) as partitionId
+           COALESCE(si.partition_id, sbr.partition_id) as partitionId,
+        sod.customer_po as customerPO
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         LEFT JOIN so_info si ON so.so_id = si.id

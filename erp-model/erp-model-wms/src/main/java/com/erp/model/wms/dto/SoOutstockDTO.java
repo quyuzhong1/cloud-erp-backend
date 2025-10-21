@@ -435,6 +435,10 @@ public class SoOutstockDTO implements Serializable {
          * 军区名称
          */
         private String partitionName;
+        /**
+         * 客户采购订单号
+         */
+        private String customerPO;
     }
 
     /**·
