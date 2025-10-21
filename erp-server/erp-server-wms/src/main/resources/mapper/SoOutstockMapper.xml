@@ -140,7 +140,8 @@
            sod.source_detail_id AS sourceDetailId,
         sod.virtual_warehouse_id as virtualWarehouseId,
            sod.warehouse_location AS warehouseLocation,
-           sod.remark AS detailRemark
+           sod.remark AS detailRemark,
+        sod.customer_po as customerPO
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         WHERE
