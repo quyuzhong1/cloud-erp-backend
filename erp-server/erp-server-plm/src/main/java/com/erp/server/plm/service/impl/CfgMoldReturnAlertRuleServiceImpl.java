@@ -356,47 +356,19 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.INVALID);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO disabled(String id) {
-        CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
-        // 只有启用数据才能禁用
-        if (Objects.equals(DisabledEnum.DISABLED.getCode(), entity.getDisabled())) {
-            throw new ServiceException(ApiError.ERROR_DISABLE_FAIL);
-        }
-        CfgMoldReturnAlertRuleServiceImpl bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleServiceImpl.class);
-        bean.changeDisable(entity);
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO enable(String id) {
+    public BatchResultDTO updateStatus(String id, Boolean disabled) {
         CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
-        // 只有禁用数据才能启用
-        if (Objects.equals(DisabledEnum.ENABLE.getCode(), entity.getDisabled())) {
-            throw new ServiceException(ApiError.ERROR_ENABLE_FAIL);
-        }
-        CfgMoldReturnAlertRuleServiceImpl bean = ApplicationContextUtils.getBean(CfgMoldReturnAlertRuleServiceImpl.class);
-        bean.changeDisable(entity);
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
-    }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO changeDisable(CfgMoldReturnAlertRuleEntity entity) {
-        if (Objects.isNull(entity)) {
-            throw new ServiceException("未找到模具返还策略数据");
-        }
-        String id = entity.getId();
-        Boolean disabled = entity.getDisabled() ? Boolean.FALSE : Boolean.TRUE;
         log.info("启用/禁用 开始修改模具返还策略状态数据，id：【{}】", id);
         lambdaUpdate().eq(CfgMoldReturnAlertRuleEntity::getId, id)
                 .set(CfgMoldReturnAlertRuleEntity::getDisabled, disabled)
                 .update();
         // 禁用 日志数据
         log.info("启用/禁用  开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("{}了一个模具返还策略【{}】",entity.getDisabled() ? "启用" : "禁用", entity.getMoldCode());
+        String msg = StrUtil.format("{}了一个模具返还策略【{}】",disabled ? "禁用" : "启用", entity.getMoldCode());
         operateLogService.addSysLogBySave(msg, "", id, "");
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
     }
