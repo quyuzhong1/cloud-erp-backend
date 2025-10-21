@@ -63,6 +63,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
@@ -1045,6 +1046,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
+        ProductDetailEntity oldEntity = CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId()) ? this.getById(productSkuBaseInfoDTO.getId()) : null;
         //校验sku必填项
         ProductDetailDTO detailDTO = new ProductDetailDTO();
         BeanMapper.copy(productSkuBaseInfoDTO, detailDTO);
@@ -1054,7 +1056,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
         if (CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId())){
-            ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
             if (Objects.nonNull(oldEntity) && !oldEntity.getChargeId().equals(productSkuBaseInfoDTO.getChargeId())){
                 addChargeLog(oldEntity.getChargeId(), productSkuBaseInfoDTO.getChargeId(), oldEntity.getId(), oldEntity.getProductId(),oldEntity.getSkuNo());
             }
@@ -3899,7 +3900,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             FindUserDTO findUserDTO = findUserDTOS.stream().filter(e -> chargeId.equals(e.getUserId())).findFirst().orElse(null);
             String userName = findUserDTO != null ? findUserDTO.getUserName() : "";
             //根据level组装部门名称中间使用>
-            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
+            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId()) && !ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(e.getSuperiorType())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
             deptName = CharSequenceUtil.isNotBlank(deptName) ? deptName : "无部门";
             sb.append(String.format("%s[%s]", userName, deptName));
         }
