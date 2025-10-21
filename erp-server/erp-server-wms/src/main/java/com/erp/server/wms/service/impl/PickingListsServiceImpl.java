@@ -1054,69 +1054,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     }
                 }
             }
-//            else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())){
-//                List<String> noticeDetailIds = details.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
-//                List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = noticeDetailEntities.stream().filter(v -> noticeDetailIds.contains(v.getId())).collect(Collectors.toList());
-//                for (PickingDetailEntity detail : details){
-//                    SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL));
-//                    SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
-//                    String customerPO = soDetailEntity.getCustomerPO();
-//                    String toCountry = soDetailEntity.getToCountry();
-//                    String pickRemark = soDetailEntity.getPickRemark();
-//                    //查询sku是否存在子SKU
-//                    List<BomChildrenSkuDTO> sonSkuList = null;
-//                    if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
-//                        sonSkuList = bomChildrenSkuDTOS.stream()
-//                                .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
-//                                        && req.getBomVersion().equals(soDeliveryNoticeDetailEntity.getBomVersion())
-//                                        && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-//                                ).collect(Collectors.toList());
-//                    }else {
-//                        sonSkuList = bomChildrenSkuDTOS.stream()
-//                                .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
-//                                        && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-//                                ).collect(Collectors.toList());
-//                        //如果记录不为空 则 取最大bom版本
-//                        if (!CollectionUtils.isEmpty(sonSkuList)){
-//                            BomChildrenSkuDTO bomChildrenSkuDTO = sonSkuList.stream().max(Comparator.comparing(BomChildrenSkuDTO::getBomVersion)).orElse(null);
-//                            String bomVersion = Objects.nonNull(bomChildrenSkuDTO) ? bomChildrenSkuDTO.getBomVersion(): "";
-//                            sonSkuList = sonSkuList.stream().filter(e -> Objects.equals(bomVersion,e.getBomVersion())).collect(Collectors.toList());
-//                        }
-//                    }
-//                    if(CollectionUtils.isEmpty(sonSkuList)){
-//                        PickingListsDTO.PrintSkuView combinationPrintDetailView = new PickingListsDTO.PrintSkuView();
-//                        //匹配sku信息
-//                        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
-//                        //sku产品名称
-//                        String skuName = skuVO.getSkuName();
-//                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,toCountry, pickRemark);
-//                        if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
-//                            combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
-//                        }
-//                        combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
-//                        combinationPrintDetailView.setIsCombination(Boolean.FALSE);
-//                        printSkuSingleViewList.add(combinationPrintDetailView);
-//                    }else {
-//                        BomChildrenSkuDTO bomChildrenSkuDTO = sonSkuList.stream().filter(e -> e.getSkuId().equals(detail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
-//                        PickingListsDTO.PrintSkuView combinationPrintDetailView = new PickingListsDTO.PrintSkuView();
-//                        //匹配sku信息
-//                        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
-//                        //sku产品名称
-//                        String skuName = skuVO.getSkuName();
-//                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,toCountry, pickRemark);
-//                        if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
-//                            combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
-//                        }
-//                        combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
-//                        combinationPrintDetailView.setIsCombination(Boolean.TRUE);
-//                        combinationPrintDetailView.setParentSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
-//                        combinationPrintDetailView.setParentSkuQty(soDeliveryNoticeDetailEntity.getPickingQty());
-//                        combinationPrintDetailView.setChildSkuNo(detail.getSkuNo());
-//                        combinationPrintDetailView.setChildSkuQty(detail.getQty());
-//                        printSkuCombinationViewList.add(combinationPrintDetailView);
-//                    }
-//                }
-//            }
             //单品组合品排序 - 先按PO号分组
             //- 同PO号的SKU按仓位升序排序
             //- 仓位一样时按SKU编码排序
