@@ -132,6 +132,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         handleData(sampleBackInfoEntity);
 
         log.info("开始新增样品退回单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品退回单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
         sampleBackInfoEntity.setCode(code);
