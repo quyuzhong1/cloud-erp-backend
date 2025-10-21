@@ -12,6 +12,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -195,10 +196,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetNoticeDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
+            list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new AssetNoticeDTO.TabListDTO("all", BaseStatusEnum.getName("all") ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
+        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
@@ -591,6 +592,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private void handleData(AssetNoticeEntity assetNoticeEntity) {
         //状态默认待提交
         assetNoticeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        assetNoticeEntity.setInvalidStatus(Boolean.FALSE);
         //采购员
         if (StringUtils.isNotBlank(assetNoticeEntity.getApplyUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getApplyUserId());
