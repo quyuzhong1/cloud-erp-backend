@@ -147,7 +147,6 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 来源明细ID
         */
-        @NotBlank(message = "来源明细ID不能为空")
         @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
         private String sourceDetailId;
 
@@ -168,7 +167,6 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
         @Size(max = 200,message = "产品名称最大长度不能超过200位")
         private String productName;
 
@@ -233,7 +231,7 @@ public class AssetAcceptDetailDTO implements Serializable {
         private String useDeptId;
 
         /**
-        * 费用项目
+        * 费用项目 dict/drop/down?costType
         */
         @NotBlank(message = "费用项目不能为空")
         @Size(max = 50,message = "费用项目最大长度不能超过50位")
