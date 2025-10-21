@@ -42,7 +42,7 @@
             dga.subregion_name,
             dc.disabled
         FROM dict_country dc LEFT JOIN dict_global_area dga
-         ON dc.subregion_code = dga.id
+         ON dc.region_code = dga.id
         WHERE dc.is_deleted = FALSE
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
           and (dc.id ILIKE concat('%',#{params.searchKeyword}::text,'%')  or dc.name_cn ILIKE concat('%',#{params.searchKeyword}::text,'%')  or dc.name_en ILIKE concat('%',#{params.searchKeyword}::text,'%'))

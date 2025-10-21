@@ -546,7 +546,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", deliveryEntityList.stream().map(SoB2cDeliveryEntity::getCode).distinct().collect(Collectors.toList())));
         }
         //查询产品信息
         List<String> skuIds = deliveryDetailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -554,6 +554,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = new ArrayList<>();
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(pickingIds)){
+            throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
+        }
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
         List<String> warehouseIds = list.stream().map(PickingListsEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByWarehouseIds(warehouseIds);
@@ -584,13 +587,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
             //库位名称
-            locationEntityList.stream()
+            WarehouseLocationEntity locationEntity = locationEntityList.stream()
                     .filter(req -> req.getWarehouseId().equals(pickingLists.getWarehouseId()))
                     .filter(req -> req.getCode().equals(viewDTO.getWarehouseLocation()))
-                    .findFirst()
-                    .ifPresent(locationEntity -> {
-                        viewDTO.setWarehouseLocationName(locationEntity.getName());
-                    });
+                    .findFirst().orElse(null);
+            viewDTO.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
             if (isAddWave){
                 //波次信息
                 WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
