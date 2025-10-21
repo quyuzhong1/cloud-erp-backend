@@ -752,6 +752,21 @@ public class MoldInfoDTO implements Serializable {
         private String tag;
 
         private String tagName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 供应商
+         */
+        private String supplierName;
     }
 
     /**
