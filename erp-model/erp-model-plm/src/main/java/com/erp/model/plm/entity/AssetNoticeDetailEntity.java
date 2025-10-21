@@ -27,7 +27,7 @@ import com.common.business.enums.ApproveStatusEnum;
 public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity> {
 
     /**
-    * 项目编号
+    * 资产通知单头id
     */
     @TableField("main_id")
     private String mainId;
@@ -76,6 +76,12 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 采购订单生成状态（0未生成，1部分生成，2已生成）
+     */
+    @TableField("create_po_type")
+    private String createPoType;
 
 
     public static final String MAIN_ID = "main_id";
