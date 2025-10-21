@@ -230,9 +230,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         }
 
-        List<String> skuIds = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        checkDetailQty("",exhibitionOrderEntity.getRecipientUserId(), skuIds, exhibitionOrderDetailEntities);
-
         // 金额折扣处理
         handleDetailAmount(exhibitionOrderEntity.getIsTax(), exhibitionOrderEntity.getDiscountAmount(), exhibitionOrderDetailEntities);
         for (int i = 0; i < exhibitionOrderDetailEntities.size(); i++) {
@@ -258,48 +255,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
 
         return new BaseResultDTO.AddDTO(id, code);
-    }
-
-    /**
-     * 校验展会订单明细中每个SKU的数量是否超过样品台账中的可用数量。
-     * <p>
-     * 该方法会根据用户ID和SKU列表查询样品台账中的可用数量，并与订单明细中的数量进行比较，
-     * 如果订单明细中的数量超过可用数量，则抛出异常。
-     * 同时，为防止明细中存在重复的SKU，每处理一个明细项后会更新对应SKU的剩余可用数量。
-     *
-     * @param id 订单ID，用于查询条件中的子ID
-     * @param recipientUserId 接收用户ID，用于查询该用户下的样品台账数据
-     * @param skuIds SKU列表，用于限定查询的SKU范围
-     * @param exhibitionOrderDetailEntities 展会订单明细实体列表，包含每个SKU的申请数量和台账ID等信息
-     */
-    private void checkDetailQty(String id , String recipientUserId, List<String> skuIds, List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities) {
-        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-        dto.setUserId(recipientUserId);
-        dto.setSkuIds(skuIds);
-        dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-        dto.setChildId(id);
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
-        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
-
-        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
-        exhibitionOrderDetailEntities.forEach(detailDTO -> {
-            String sampleLedgerId = detailDTO.getSampleLedgerId();
-            SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
-            if(Objects.nonNull(sampleLedger)){
-                Integer availableQty = Objects.isNull(sampleLedger.getAvailableQty()) ? 0 : sampleLedger.getAvailableQty() ;
-                Integer qty  = Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty() ;
-                if(qty.compareTo(availableQty) > 0){
-                    throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"展会");
-                }
-
-                //防止明细里还有重复
-                sampleLedger.setAvailableQty(availableQty - qty);
-                sampleLedgerMap.put(sampleLedgerId,sampleLedger);
-            }else {
-                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"展会");
-            }
-        });
     }
 
 
@@ -423,9 +378,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 }
             }
         }
-
-        List<String> skuIds = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        checkDetailQty(exhibitionOrderEntity.getId(),exhibitionOrderEntity.getRecipientUserId(), skuIds, exhibitionOrderDetailEntities);
 
         // 金额折扣处理
         handleDetailAmount(exhibitionOrderEntity.getIsTax(), exhibitionOrderEntity.getDiscountAmount(), exhibitionOrderDetailEntities);
@@ -1584,7 +1536,38 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (CollectionUtils.isNotEmpty(isNullPriceList)) {
             throw new ServiceException(entity.getCode() + "销售单价不能为空或者为零");
         }
-        return;
+
+        validateQty(entity);
+    }
+
+    private void validateQty(ExhibitionOrderEntity entity) {
+        List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(ExhibitionOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        // 为每个明细查询对应的台账数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getRecipientUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
+        searchDTO.setChildId(entity.getId());
+        searchDTO.setSkuIds(skuIds);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerFeign.listLedgerByUserId(searchDTO);
+        Map<String, Integer> ledgerMap = ledgerList.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, SampleLedgerDTO.SkuAvailableQtyDTO::getLedgerQty, (o1, o2) -> o1));
+        // 校验每个明细的退回数量（需要按明细查询台账，因为每个明细的使用方不同）
+        for (ExhibitionOrderDetailEntity detail : detailList) {
+            Integer qty = detail.getQty();
+            if (qty == null || qty <= 0) {
+                continue; // 跳过无效数量
+            }
+            Integer ledgerQty = ledgerMap.getOrDefault(detail.getSampleLedgerId(), 0);
+            if (qty > ledgerQty) {
+                throw new ServiceException(StrUtil.format("SKU【{}】销售数量【{}】不能大于台账数量【{}】",
+                        detail.getSkuNo(), qty, ledgerQty));
+            }
+            //防止明细里还有重复
+            ledgerMap.put(detail.getSampleLedgerId(),ledgerQty - qty);
+        }
     }
 
     /**
@@ -2124,15 +2107,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                         if(Objects.isNull(skuAvailableQtyDTO)){
                             msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                         }else {
-                            Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
-                            if(qty.compareTo(availableQty) > 0){
-                                msgList.add(CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg,addDetail.getSkuNo(),"展会"));
-                            }else {
-                                //防止明细里还有重复
-                                skuAvailableQtyDTO.setAvailableQty(availableQty - qty);
-
-                                addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
-                            }
+                            addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                         }
                     }else {
                         msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);

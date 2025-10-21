@@ -148,17 +148,11 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
             errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
         }else {
             Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
-            if(addDTO.getQty().compareTo(availableQty) > 0){
-                msgList.add(CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg,addDTO.getSkuNo(),"展会"));
-            }else {
-                //防止明细里还有重复
-                skuAvailableQtyDTO.setAvailableQty(availableQty - addDTO.getQty());
 
-                addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
-                addDTO.setUseUserId(skuAvailableQtyDTO.getUseUserId());
-                addDTO.setUseUserName(skuAvailableQtyDTO.getUseUserName());
-                addDTO.setAvailableQty(availableQty - addDTO.getQty());
-            }
+            addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
+            addDTO.setUseUserId(skuAvailableQtyDTO.getUseUserId());
+            addDTO.setUseUserName(skuAvailableQtyDTO.getUseUserName());
+            addDTO.setAvailableQty(availableQty);
         }
 
         //存在错误数据则直接返回
