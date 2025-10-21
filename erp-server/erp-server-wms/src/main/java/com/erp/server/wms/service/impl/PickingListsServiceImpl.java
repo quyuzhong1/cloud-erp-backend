@@ -485,13 +485,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                     }
                     //库位名称
-                    locationEntityList.stream()
+                    WarehouseLocationEntity locationEntity = locationEntityList.stream()
                             .filter(req -> req.getWarehouseId().equals(printSkuSingleView.getWarehouseId()))
                             .filter(req -> req.getCode().equals(printSkuSingleView.getWarehouseLocation()))
-                            .findFirst()
-                            .ifPresent(locationEntity -> {
-                                printSkuSingleView.setWarehouseLocationName(locationEntity.getName());
-                            });
+                            .findFirst().orElse(null);
+                    printSkuSingleView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     printSkuSingleView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
                     printSkuSingleView.setIsCombination(Boolean.FALSE);
                     printSkuSingleView.setGroupName(customerPO + "-" + toCountry);
@@ -509,13 +507,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                     }
                     //库位名称
-                    locationEntityList.stream()
+                    WarehouseLocationEntity locationEntity = locationEntityList.stream()
                             .filter(req -> req.getWarehouseId().equals(combinationPrintDetailView.getWarehouseId()))
                             .filter(req -> req.getCode().equals(combinationPrintDetailView.getWarehouseLocation()))
-                            .findFirst()
-                            .ifPresent(locationEntity -> {
-                                combinationPrintDetailView.setWarehouseLocationName(locationEntity.getName());
-                            });
+                            .findFirst().orElse(null);
+                    combinationPrintDetailView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
                     combinationPrintDetailView.setIsCombination(Boolean.TRUE);
                     combinationPrintDetailView.setParentSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
@@ -891,13 +887,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                     }
                     //库位名称
-                    locationEntityList.stream()
+                    WarehouseLocationEntity locationEntity = locationEntityList.stream()
                             .filter(req -> req.getWarehouseId().equals(printSkuSingleView.getWarehouseId()))
                             .filter(req -> req.getCode().equals(printSkuSingleView.getWarehouseLocation()))
-                            .findFirst()
-                            .ifPresent(locationEntity -> {
-                                printSkuSingleView.setWarehouseLocationName(locationEntity.getName());
-                            });
+                            .findFirst().orElse(null);
+                    printSkuSingleView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     printSkuSingleView.setThirdSku("");
                     if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                         printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
@@ -917,13 +911,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                     }
                     //库位名称
-                    locationEntityList.stream()
+                    WarehouseLocationEntity locationEntity = locationEntityList.stream()
                             .filter(req -> req.getWarehouseId().equals(combinationPrintDetailView.getWarehouseId()))
                             .filter(req -> req.getCode().equals(combinationPrintDetailView.getWarehouseLocation()))
-                            .findFirst()
-                            .ifPresent(locationEntity -> {
-                                combinationPrintDetailView.setWarehouseLocationName(locationEntity.getName());
-                            });
+                            .findFirst().orElse(null);
+                    combinationPrintDetailView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     combinationPrintDetailView.setThirdSku("");
                     if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                         combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
