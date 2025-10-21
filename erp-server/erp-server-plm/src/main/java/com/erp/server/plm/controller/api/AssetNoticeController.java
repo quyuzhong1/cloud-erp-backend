@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import com.erp.model.plm.entity.AssetNoticeEntity;
 
 /**
- * 
+ *
  *
  * @author wtr
  * @since 2025-10-16
@@ -223,6 +223,38 @@ public class AssetNoticeController extends BaseController {
             resultDTOS.add(approveResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推采购单弹窗显示
+     * @author
+     * @date:
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/viewGeneratePurchaseOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id,create_user_id",
+            menuCode = "plm:assetNotice:viewGeneratePurchaseOrder",
+            serviceClass = AssetNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> list = assetNoticeService.viewGeneratePurchaseOrder(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 生成资产采购单
+     * @author
+     * @date:
+     * @param dtoList
+     * @return ApiResult
+     */
+    @PostMapping("/generatePurchaseOrder")
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成资产采购单")
+    public ApiResult<Object> generatePurchaseOrder(@RequestBody @Validated List<AssetNoticeDTO.ListGeneratePurchaseOrderDTO> dtoList) {
+        Boolean flag = assetNoticeService.generatePurchaseOrder(dtoList);
+        return flag == true ? success() : failure();
     }
 
     /**
