@@ -229,7 +229,6 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "province",  source = "receiverInfo.province"),
             @Mapping(target = "city",  source = "receiverInfo.city"),
             @Mapping(target = "district",  source = "receiverInfo.district"),
-            @Mapping(target = "isInsurance",  constant = "1"),
             @Mapping(target = "address1",  source = "receiverInfo.address1"),
             @Mapping(target = "address2",  source = "receiverInfo.address2"),
             @Mapping(target = "address3",  source = "receiverInfo.address3"),
