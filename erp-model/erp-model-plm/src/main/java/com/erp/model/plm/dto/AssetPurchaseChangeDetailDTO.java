@@ -159,21 +159,18 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         * 资产id
         */
         @NotBlank(message = "资产id不能为空")
-        @Size(max = 255,message = "资产id最大长度不能超过255位")
         private String assetId;
 
         /**
         * 资产编码
         */
         @NotBlank(message = "资产编码不能为空")
-        @Size(max = 255,message = "资产编码最大长度不能超过255位")
         private String assetCode;
 
         /**
         * 资产名称
         */
         @NotBlank(message = "资产名称不能为空")
-        @Size(max = 255,message = "资产名称最大长度不能超过255位")
         private String assetName;
 
         /**

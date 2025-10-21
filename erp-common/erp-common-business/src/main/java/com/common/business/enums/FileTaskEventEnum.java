@@ -70,6 +70,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_CFG_MOLD_ALERT("EXPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导出","","",""),
     IMPORT_PLM_CFG_MOLD_ALERT("IMPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldReturn",""),
 
+    EXPORT_PLM_ASSET_NOTICE("EXPORT_PLM_ASSET_NOTICE","资产通知单导出","","",""),
+    IMPORT_PLM_ASSET_NOTICE("IMPORT_PLM_ASSET_NOTICE","资产通知单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetNotice",""),
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
     EXPORT_OMS_SO_CHANGE("EXPORT_OMS_SO_CHANGE","销售变更单列表","","",""),
@@ -78,14 +80,13 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_SO_RETURN("EXPORT_OMS_SO_RETURN","销售退货订单","","",""),
     EXPORT_OMS_SO_B2C_RETURN("EXPORT_OMS_SO_B2C_RETURN","b2c销售退货订单","","",""),
     EXPORT_OMS_SO("EXPORT_OMS_SO","B2B销售订单","","",""),
-    EXPORT_OMS_SO_RECEIPT("EXPORT_OMS_SO_RECEIPT","收款单","","",""),
     EXPORT_OMS_SO_B2C_ABNORMAL("EXPORT_OMS_SO_B2C_ABNORMAL","B2C异常销售订单","","",""),
     EXPORT_OMS_SO_B2C_ABNORMAL_POOLS("EXPORT_OMS_SO_B2C_ABNORMAL_POOLS","B2C异常订单错误池","","",""),
     EXPORT_OMS_SO_B2C("EXPORT_OMS_SO_B2C","B2C销售订单","","",""),
     EXPORT_OMS_FULLY_MANAGED("EXPORT_OMS_FULLY_MANAGED","全托管销售订单","","",""),
     EXPORT_OMS_SO_B2C_DECLARE("EXPORT_OMS_SO_B2C_DECLARE","申报信息","","",""),
     EXPORT_OMS_SO_B2C_PRODUCT_SALES("EXPORT_OMS_SO_B2C_PRODUCT_SALES","产品销售统计","","",""),
-    EXPORT_OMS_PLATFORM_SKU("EXPORT_OMS_PLATFORM_SKU","b2c平台sku对照列表","","",""),
+    EXPORT_OMS_PLATFORM_SKU("EXPORT_OMS_PLATFORM_SKU","sku对照列表","","",""),
     EXPORT_OMS_WAREHOUSE_SKU("EXPORT_OMS_WAREHOUSE_SKU","sku对照列表","","",""),
     EXPORT_OMS_LISTING_PUSH("EXPORT_OMS_LISTING_PUSH","sku对照表推送记录","","",""),
     EXPORT_OMS_CUSTOMER_SKU("EXPORT_OMS_CUSTOMER_SKU","客户sku对照列表","","",""),
@@ -95,7 +96,6 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
-    EXPORT_OMS_B2B_PLATFORM_SKU("EXPORT_OMS_B2B_PLATFORM_SKU","b2b平台sku对照列表","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
 
     EXPORT_OMS_EXHIBITION_ORDER("EXPORT_OMS_EXHIBITION_ORDER", "展会订单导出","","",""),

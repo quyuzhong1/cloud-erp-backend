@@ -615,8 +615,9 @@ public enum ApiError implements Serializable {
     ERROR_MOLD_NOT_EXIST(95294,"模具档案不存在"),
     ERROR_95294(95294,"只允许选择已审核的模具档案批量关联SKU"),
     ERROR_MOLD_REF_SKU_EXIST(95295,"模具档案已存在关联SKU"),
-
-
+    ERROR_95296(95296,"只有未生成资产采购订单的通知单单才能反审核"),
+    ERROR_95297(95296,"未找到资产通知单"),
+    ERROR_95298(95296,"未找到资产通知单明细"),
     /**
      * TMS 错误
      * 从96000 开始

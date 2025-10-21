@@ -38,5 +38,23 @@
         main_id, asset_id, asset_code, asset_name, tag, is_urgent, plan_deliver_date, apply_qty, purchase_org_id, remark
     </sql>
 
-
+    <select id="searchMoldRefSkuByAssetId" resultType="com.erp.model.plm.dto.AssetNoticeDetailDTO$AssetDetailRefSkuDTO">
+        SELECT
+            mi.id as assetId,
+            mi.code as assetCode,
+            mi.name as assetName,
+            mi.project_code AS projectCode,
+            mi.project_name AS projectName,
+            mrs.sku_id as skuId,
+            mrs.sku_no as skuNo,
+            mrs.product_name as productName,
+            mrs.sku_qty as skuQty
+        FROM
+            mold_ref_sku mrs
+            LEFT JOIN mold_info mi ON mi.ID = mrs.mold_id
+            AND mi.is_deleted = FALSE
+        WHERE
+            mrs.is_deleted = FALSE
+            and mi.id = #{assetId}
+    </select>
 </mapper>

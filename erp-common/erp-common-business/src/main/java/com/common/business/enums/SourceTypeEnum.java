@@ -162,6 +162,9 @@ public enum SourceTypeEnum {
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
     MOLD_INFO("moldInfo", "模具档案","mold_info"),
     MOLD_REF_SKU("moldRefSku", "模具关联SKU","mold_ref_sku"),
+    ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
+    ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
+    ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
