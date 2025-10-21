@@ -1,31 +1,34 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
-import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
+import com.erp.model.plm.entity.AssetNoticeDetailEntity;
+import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.enums.MoldInfoTagEnum;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PoTableFlagEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.service.AssetNoticeDetailService;
+import com.erp.server.plm.listener.AssetNoticeExcelListener;
+import com.erp.server.plm.mapper.AssetNoticeDetailMapper;
+import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.AssetNoticeEntity;
 import com.erp.server.plm.mapper.AssetNoticeMapper;
-import com.erp.server.plm.service.AssetNoticeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -41,26 +44,19 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_NOTICE;
 
 /**
  * <p>
@@ -73,16 +69,30 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, AssetNoticeEntity> implements AssetNoticeService {
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private AssetNoticeDetailService assetNoticeDetailService;
+
+    @Autowired
+    private MoldInfoService moldInfoService;
+
+    @Autowired
+    private AssetNoticeDetailMapper assetNoticeDetailMapper;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
     @Autowired
     private WorkflowFeign workflowFeign;
+
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -96,7 +106,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         log.info("开始新增资产通知单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL);
         assetNoticeEntity.setCode(code);
         boolean save = super.save(assetNoticeEntity);
@@ -105,10 +114,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , assetNoticeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产通知单" , assetNoticeEntity.getCode());
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        // 新增明细
         assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
         return new BaseResultDTO.AddDTO(assetNoticeEntity.getId(), code);
     }
@@ -135,12 +143,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(!save) {
             throw new ServiceException("保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        assetNoticeDetailService.update(addOrUpdateDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "资产通知单");
         operateLogService.addSysLogByUpdate(old, assetNoticeEntity, null, assetNoticeEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
@@ -180,24 +186,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Override
     public void exportList(AssetNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetNoticeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetNotice.xlsx";
-        String name = "导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        downloadTaskFeign.saveDownloadTask("资产通知单导出", EXPORT_PLM_ASSET_NOTICE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -212,14 +201,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         log.info("提交 开始修改状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, "", id, "");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), id, "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -260,9 +247,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单", approveType.getName(), dto.getComment());
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -276,8 +262,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_NOTICE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -298,18 +283,22 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
+        BatchResultDTO batchResultDTO = new BatchResultDTO();
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
+        List<AssetNoticeDetailEntity> assetNoticeDetailEntityList = assetNoticeDetailService.list(new LambdaQueryWrapper<AssetNoticeDetailEntity>().eq(AssetNoticeDetailEntity::getMainId, id));
+        long createCount = assetNoticeDetailEntityList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
+        if (createCount > 0) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        }
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -326,19 +315,18 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     public BatchResultDTO delete(String id) {
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
-        // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        // 只有待提交并且未作废数据支持删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_98009);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
+        assetNoticeDetailService.removeById(id,null);
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -354,7 +342,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改状态，id：【{}】", id);
@@ -362,13 +349,11 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -388,13 +373,75 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     }
 
     @Override
-    public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile file, HttpServletResponse response) {
-        return null;
+    public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //查询所有审核通过的模具
+        LambdaQueryWrapper<MoldInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(MoldInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
+                .eq(MoldInfoEntity::getIsDeleted,Boolean.FALSE)
+                .eq(MoldInfoEntity::getInvalidStatus,Boolean.FALSE);
+        List<MoldInfoEntity> moldList = moldInfoService.list(lambdaQueryWrapper);
+        //查询所有启用核算公司
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(moldList,userList,deptList,companyList);
+
+        try {
+            EasyExcelFactory.read(excelFile.getInputStream(), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！",e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<AssetNoticeImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        AssetNoticeDetailDTO.ImportDTO importDTO = new AssetNoticeDetailDTO.ImportDTO();
+        //导入数据处理
+        List<AssetNoticeDetailDTO.MoldImportDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<AssetNoticeImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "资产通知单错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetNoticeImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
     @Override
+    @Transactional
     public BatchResultDTO invalid(AssetNoticeEntity entity, String remark) {
-        return null;
+        super.getByIdOpt(entity.getId()).orElseThrow(() -> new ServiceException("未找到资产通知单"));
+
+        // 待提交或审核不通过并且未作废允许作废
+        if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+
+        log.info("作废 开始修改资产通知单状态数据，id：【{}】", entity.getId());
+        lambdaUpdate().eq(AssetNoticeEntity::getId, entity.getId())
+                .set(AssetNoticeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(AssetNoticeEntity::getInvalidReason, remark)
+                .update();
+
+        log.info("作废 开始记录操作日志，id：【{}】", entity.getId());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单", remark);
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override
@@ -403,23 +450,40 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         AssetNoticeDTO.ViewDTO data = BeanMapperUtils.map(AssetNoticeDTO.ViewDTO.class, assetNoticeEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        LambdaQueryWrapper<AssetNoticeDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AssetNoticeDetailEntity::getMainId,id);
+        List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.list(queryWrapper);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_95298);
+        }
+        List<AssetNoticeDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetNoticeDetailDTO.ViewDTO.class, detailList);
+        fillViewList(dtoList);
+        data.setAssetNoticeDetailDTOList(dtoList);
         return data;
+    }
+
+    public void fillViewList(List<AssetNoticeDetailDTO.ViewDTO> dtoList){
+
+        for (AssetNoticeDetailDTO.ViewDTO detailDTO : dtoList) {
+            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS = assetNoticeDetailMapper.searchMoldRefSkuByAssetId(detailDTO.getAssetId());
+            detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
+            detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
+        }
+
+
     }
     /**
     * 启动流程
-    *
     * @param entity
     * @return void
-    * @Date 2023/7/4 10:07
+    * @Date
     **/
 
     public void startProcess(AssetNoticeEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.MOULD_INFO.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -432,6 +496,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+
     }
 
     /**
@@ -487,7 +552,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         for(AssetNoticeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setCreatePoTypeName(CreatePoTypeEnum.getName(data.getCreatePoType()));
         }
     }
     /**
@@ -519,5 +584,74 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             assetNoticeEntity.setApplyDeptName(purchaseUser.getDepartmentName());
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        // 按 serialNumber 分组
+        Map<String, List<AssetNoticeDetailDTO.MoldImportDTO>> groupedBySerialNumber = successList.stream()
+                .collect(Collectors.groupingBy(AssetNoticeDetailDTO.MoldImportDTO::getSerialNumber));
+
+        try {
+            for (Map.Entry<String, List<AssetNoticeDetailDTO.MoldImportDTO>> entry : groupedBySerialNumber.entrySet()) {
+                String serialNumber = entry.getKey();
+                List<AssetNoticeDetailDTO.MoldImportDTO> moldImportDTOList = entry.getValue();
+
+                if (CollectionUtils.isEmpty(moldImportDTOList)) {
+                    continue;
+                }
+
+                // 取第一个元素作为主表数据
+                AssetNoticeDetailDTO.MoldImportDTO firstMoldImportDTO = moldImportDTOList.get(0);
+                AssetNoticeEntity entity = new AssetNoticeEntity();
+                entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
+                entity.setApplyDate(firstMoldImportDTO.getApplyDate());
+                entity.setApplyUserId(firstMoldImportDTO.getApplyUserId());
+                entity.setApplyUserName(firstMoldImportDTO.getApplyUserName());
+                entity.setApplyDeptId(firstMoldImportDTO.getApplyDeptId());
+                entity.setApplyDeptName(firstMoldImportDTO.getApplyDeptName());
+                entity.setInvalidStatus(Boolean.FALSE);
+                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+
+                // 保存主表
+                boolean save = super.save(entity);
+                if (!save) {
+                    throw new ServiceException("资产通知单单头导入保存失败");
+                }
+
+                // 处理明细数据
+                List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
+                for (AssetNoticeDetailDTO.MoldImportDTO moldImportDTO : moldImportDTOList) {
+                    List<AssetNoticeDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList = moldImportDTO.getMoldDetailImportDTOList();
+                    for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
+                        AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
+                        BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
+                        assetNoticeDetailEntity.setMainId(entity.getId()); // 关联主表ID
+                        assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+                        assetNoticeDetailEntities.add(assetNoticeDetailEntity);
+                    }
+                }
+
+                // 批量保存明细
+                boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
+                if (!saveDetail) {
+                    throw new ServiceException("资产通知单明细导入保存失败");
+                }
+
+                // 记录操作日志
+                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
+                        UserContext.getDefaultLoginUser().getUserName(),
+                        "资产通知单",
+                        entity.getCode());
+                operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "新增操作");
+            }
+        } catch (Exception e) {
+            throw new ServiceException("资产通知单导入保存失败", e);
+        }
     }
 }

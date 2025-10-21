@@ -3,8 +3,6 @@ import com.erp.model.plm.entity.AssetNoticeDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-
 import java.util.List;
 
 /**
@@ -35,8 +33,7 @@ public interface AssetNoticeDetailService extends SuperService<AssetNoticeDetail
     */
     Boolean update(AssetNoticeDetailDTO.UpdateDTO dto);
 
-    void add(List<AssetNoticeDetailDTO.AddDTO> detailList, String purchaseOrderId);
+    void add(List<AssetNoticeDetailDTO.AddDTO> detailList, String assetNoticeId);
 
-
-
+    void update(List<AssetNoticeDetailDTO.UpdateDTO> detailList, String assetNoticeId);
 }

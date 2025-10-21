@@ -1,8 +1,11 @@
 package com.erp.server.plm.mapper;
+import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.entity.AssetNoticeDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AssetNoticeDetailMapper extends BaseMapper<AssetNoticeDetailEntity> {
 
+    List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(String assetId);
 }

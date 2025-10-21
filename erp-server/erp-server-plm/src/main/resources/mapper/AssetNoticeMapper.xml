@@ -43,7 +43,56 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.AssetNoticeDTO$ListDTO">
-
+        SELECT
+            an.ID AS ID,
+            an.code AS code,
+            and1.asset_id AS assetId,
+            and1.asset_code AS assetCode,
+            and1.asset_name AS assetName,
+            mi.supplier_id AS supplierId,
+            mi.supplier_code AS supplierCode,
+            mi.supplier_name AS supplierName,
+            and1.plan_deliver_date AS planDeliverDate,
+            and1.apply_qty AS applyQty,
+            ( and1.apply_qty - SUM ( apod.purchase_qty ) ) AS waitQty,
+            SUM ( apod.purchase_qty ) AS realPurchaseQty,
+            an.approve_user_id AS approveUserId,
+            an.approve_user_name AS approveUserName,
+            an.approve_time AS approveTime,
+            an.apply_user_id AS applyUserId,
+            an.create_user_id AS createUserId,
+            an.create_user_name AS creatUserName,
+            an.create_time AS createTime,
+            and1.create_po_type as createPoType
+        FROM
+            asset_notice an
+            LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
+            LEFT JOIN mold_info mi ON mi.id = and1.asset_id and mi.is_deleted = false
+            LEFT JOIN asset_purchase_order_detail apod ON apod.source_detail_id = and1.id AND apod.is_deleted = false
+            LEFT JOIN asset_purchase_order apo ON apo.id = apod.main_id AND apo.approve_status = 'approve' and apo.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and an.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            an.ID,
+            an.code,
+            and1.asset_id,
+            and1.asset_code,
+            and1.asset_name,
+            mi.supplier_id,
+            mi.supplier_code,
+            mi.supplier_name,
+            and1.plan_deliver_date,
+            and1.apply_qty,
+            and1.create_po_type
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

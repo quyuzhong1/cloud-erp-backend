@@ -27,7 +27,7 @@ import com.common.business.enums.ApproveStatusEnum;
 public class AssetNoticeEntity extends BaseEntity<AssetNoticeEntity> {
 
     /**
-    * 项目编号
+    * 单号
     */
     @TableField("code")
     private String code;
@@ -89,10 +89,10 @@ public class AssetNoticeEntity extends BaseEntity<AssetNoticeEntity> {
     /**
     * 申请日期
     */
-    @TableField("apply_date")
+    @TableField(value = "apply_date")
     private LocalDate applyDate;
     /**
-    * 是否作废
+    * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
     private Boolean invalidStatus;
