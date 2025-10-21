@@ -745,6 +745,13 @@ public class MoldInfoDTO implements Serializable {
         private String  code;
 
         private String  name;
+
+        /**
+         * 模具标识：first =首套模,copy =复制模
+         */
+        private String tag;
+
+        private String tagName;
     }
 
     /**
