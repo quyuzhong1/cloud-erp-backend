@@ -13,6 +13,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,6 +92,21 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     @Override
     public Boolean endReceive(List<String> idList, String remark, Boolean b) {
         return null;
+    }
+
+    @Override
+    public void add(List<AssetPurchaseOrderDetailDTO.AddDTO> detailList, String assetPurchaseOrderId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.AddDTO addDTO : detailList) {
+            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
+            BeanMapperUtils.copy(addDTO, assetPurchaseOrderDetailEntity);
+            assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
+            detailEntityList.add(assetPurchaseOrderDetailEntity);
+        }
+        super.saveBatch(detailEntityList);
     }
 
 

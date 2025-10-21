@@ -431,7 +431,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @Valid
         @NotNull(message = "资产采购订单明细信息不能为空")
-        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderSupplierDTOList;
+        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderDetailDTO;
     }
 
     /**
@@ -476,7 +476,6 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
         */
         @NotBlank(message = "合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成不能为空")
-        @Size(max = 255,message = "合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成最大长度不能超过255位")
         private String contractStampStatus;
 
         /**
@@ -530,14 +529,12 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 采购组织id
         */
         @NotBlank(message = "采购组织id不能为空")
-        @Size(max = 255,message = "采购组织id最大长度不能超过255位")
         private String purchaseOrgId;
 
         /**
         * 采购组织名称
         */
         @NotBlank(message = "采购组织名称不能为空")
-        @Size(max = 255,message = "采购组织名称最大长度不能超过255位")
         private String purchaseOrgName;
 
         /**
