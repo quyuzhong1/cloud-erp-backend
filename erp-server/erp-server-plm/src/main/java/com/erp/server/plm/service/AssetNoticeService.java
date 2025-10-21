@@ -152,4 +152,5 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
 
     BatchResultDTO invalid(AssetNoticeEntity entity,String remark);
 
+    void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList);
 }
