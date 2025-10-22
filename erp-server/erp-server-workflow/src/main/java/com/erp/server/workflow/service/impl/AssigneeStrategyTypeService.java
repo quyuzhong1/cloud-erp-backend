@@ -152,8 +152,76 @@ public class AssigneeStrategyTypeService {
      */
     public List<String> formInternalContactAssignee(CamundaDTO.StrategyParamDTO value) {
         String assignee = value.getPropertiesDTO().getAssignee();
+        if (CharSequenceUtil.isBlank(assignee)) {
+            return Collections.emptyList();
+        }
+        
         Map<String, Object> variablesMap = value.getVariablesMap();
-        String orDefault = (String) variablesMap.getOrDefault(assignee, "");
-        return CharSequenceUtil.isNotBlank(orDefault) ? Arrays.asList(orDefault.split(",")) : Collections.emptyList();
+        // assignee可能是多个字段名，用逗号分割，如："userId,useUserId"
+        String[] fieldNames = assignee.split(",");
+        List<String> contactUserIds = new ArrayList<>();
+        
+        // 第一步：获取所有联系人的userId
+        for (String fieldName : fieldNames) {
+            String fieldValue = (String) variablesMap.getOrDefault(fieldName.trim(), "");
+            if (CharSequenceUtil.isNotBlank(fieldValue)) {
+                // 每个字段的值也可能是逗号分割的多个用户ID
+                String[] userIds = fieldValue.split(",");
+                for (String userId : userIds) {
+                    if (CharSequenceUtil.isNotBlank(userId.trim())) {
+                        contactUserIds.add(userId.trim());
+                    }
+                }
+            }
+        }
+        
+        if (CollectionUtils.isEmpty(contactUserIds)) {
+            return Collections.emptyList();
+        }
+        
+        // 第二步：根据审批类型判断返回联系人自己还是联系人上级
+        String approveType = value.getPropertiesDTO().getApproveType();
+        DictBasicEnum approveTypeEnum = DictBasicEnum.getByCode(approveType);
+        
+        // 如果为空或为联系人自己，默认返回联系人自己
+        if (approveTypeEnum == null || DictBasicEnum.CONTACT_SELF.equals(approveTypeEnum)) {
+            return contactUserIds;
+        }
+        
+        // 如果是联系人上级，查询联系人的上级
+        if (DictBasicEnum.CONTACT_SUPERIOR.equals(approveTypeEnum)) {
+            List<String> superiorUserIds = new ArrayList<>();
+            // 查询所有联系人的上级
+            List<UserSuperiorDTO> superList = sysUserFeign.listSuperiorByUserIds(contactUserIds);
+            if (CollectionUtils.isEmpty(superList)) {
+                return Collections.emptyList();
+            }
+            
+            // 获取每个联系人的直属上级
+            for (String contactUserId : contactUserIds) {
+                String superiorUserId = superList.stream()
+                    .filter(superior -> contactUserId.equals(superior.getCurrentUserId()))
+                    // 获取直属上级（level最小的）
+                    .min(Comparator.comparing(UserSuperiorDTO::getLevel))
+                    .map(UserSuperiorDTO::getUserId)
+                    // 如果找不到直属上级，取最高级别的上级
+                    .orElseGet(() -> 
+                        superList.stream()
+                            .filter(superior -> contactUserId.equals(superior.getCurrentUserId()))
+                            .max(Comparator.comparing(UserSuperiorDTO::getLevel))
+                            .map(UserSuperiorDTO::getUserId)
+                            .orElse(null)
+                    );
+                
+                if (CharSequenceUtil.isNotBlank(superiorUserId)) {
+                    superiorUserIds.add(superiorUserId);
+                }
+            }
+            
+            return superiorUserIds;
+        }
+        
+        // 其他情况默认返回联系人自己
+        return contactUserIds;
     }
 }
