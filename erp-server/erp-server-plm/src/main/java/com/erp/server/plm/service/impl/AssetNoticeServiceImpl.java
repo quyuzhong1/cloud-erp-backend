@@ -355,11 +355,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             throw new ServiceException(ApiError.ERROR_95299);
         }
 
-        //模具信息
-        List<String> assetIds = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetId).collect(Collectors.toList());
-        List<MoldInfoEntity> moldInfoEntities = moldInfoService.listByIds(assetIds);
-        if (CollectionUtils.isEmpty(moldInfoEntities)) {
-            throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+        //sku信息
+        List<String> assetCodeList = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetCode).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.getByIdList(assetCodeList);
+
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95107);
         }
 
         log.info("生成采购订单 ids= {}",ids);
@@ -443,15 +444,15 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 lambdaQueryWrapper.eq(AssetPurchaseOrderDetailEntity::getSourceDetailId,generatePurchaseOrderDTO.getAssetNoticeDetailId())
                         .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE);
 
-                MoldInfoEntity moldInfoEntity = moldInfoEntities.stream().filter(obj -> obj.getId().equals(generatePurchaseOrderDTO.getAssetId())).findFirst().orElse(null);
-                if (org.springframework.util.ObjectUtils.isEmpty(moldInfoEntity)) {
-                    throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+                ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(generatePurchaseOrderDTO.getAssetCode())).findFirst().orElse(null);
+                if (org.springframework.util.ObjectUtils.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_95107);
                 }
 
                 BeanUtils.copyProperties(generatePurchaseOrderDTO,addDetailDTO);
-                addDetailDTO.setAssetId(moldInfoEntity.getId());
-                addDetailDTO.setAssetCode(moldInfoEntity.getCode());
-                addDetailDTO.setAssetName(moldInfoEntity.getName());
+                addDetailDTO.setAssetId(productDetailEntity.getId());
+                addDetailDTO.setAssetCode(productDetailEntity.getSkuNo());
+                addDetailDTO.setAssetName(productDetailEntity.getName());
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getApplyQty());
                 //采购金额
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
@@ -822,12 +823,17 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        List<String> collect = list.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleInfo = supplierFeign.getSupplierSimpleInfo(collect);
         // 属性赋值
         for(AssetNoticeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setCreatePoTypeName(CreatePoTypeEnum.getName(data.getCreatePoType()));
+            if (StringUtils.isNotBlank(data.getSupplierId())) {
+                SupplierDTO.SupplierSimpleDTO supplierSimpleDTO = supplierSimpleInfo.get(data.getSupplierId());
+                data.setSupplierName(StringUtils.isNotBlank(supplierSimpleDTO.getName()) ? supplierSimpleDTO.getName() : null);
+            }
         }
     }
     /**
