@@ -432,6 +432,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
 
         //TODO 待加审核流程
+        if(isNeedProcess){
+            startProcess(entity);
+        }
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("提交了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "提交操作");

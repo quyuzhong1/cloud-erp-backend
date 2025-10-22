@@ -1,12 +1,12 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,6 +14,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -25,6 +27,7 @@ import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -60,6 +63,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -80,6 +84,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.csource.common.MyException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -198,6 +203,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private FileTemplateFeign fileTemplateFeign;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -564,35 +571,68 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids,Boolean isNeedProcess) {
-        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
+    public BatchResultDTO submit(SoDeliveryNoticeEntity entity,Boolean isNeedProcess) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-
         //未作废、待提交、审核不通过才可以提交
-        long count = soDeliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
-        ).count();
-
-        if (count != soDeliveryNoticeEntityList.size()) {
+        if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        //TODO 待加审核流程
         if(isNeedProcess){
-
+            startProcess(entity);
         }
         //操作日志
-        List<Pair<String, String>> pairList = soDeliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个发货通知单【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "提交操作");
+        operateLogService.addModuleOperateLog(String.format("提交了一个发货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),entity.getId(), "提交操作");
 
         //更新审核状态
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
-                .in(SoDeliveryNoticeEntity::getId, ids)
+                .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
+
+    /**
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Author will
+     * @Date 2025/10/22 12:07
+     **/
+
+    public void startProcess(SoDeliveryNoticeEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(entity.getSellerId());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/10/22 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoDeliveryNoticeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.lambdaQuery().eq(SoDeliveryNoticeDetailEntity::getMainId,entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        return variablesMap;
+    }
+
 
     @Override
     public Boolean addAndSubmit(SoDeliveryNoticeDTO.Add dto) {
@@ -600,7 +640,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Collections.singletonList(id),Boolean.TRUE);
+        SoDeliveryNoticeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -609,7 +654,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Collections.singletonList(dto.getId()),Boolean.TRUE);
+        SoDeliveryNoticeEntity entity = this.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -630,14 +680,53 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 throw new ServiceException("{已装箱+全部称重}才能审核通过");
             }
         }
+        //调用审核流程
+        approveProcess(entity, new ApproveOneDTO(entity.getId(), type, comment));
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
 
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+
+    /**
+     * 审核流程调用
+     * @author will
+     * @date 2025/10/22 16:23
+     * @param entity
+     * @param dto
+     * @return void
+     */
+    private void approveProcess(SoDeliveryNoticeEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeEntity entity) {
+        //意见
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
             List<SoDeliveryNoticeChangeEntity> soDeliveryNoticeChangeEntities = soDeliveryNoticeChangeService.listNoApproveByNoticeId(entity.getId());
             if(CollectionUtils.isNotEmpty(soDeliveryNoticeChangeEntities)){
                 throw new ServiceException("存在未审核的变更单，无法审核通知单");
             }
-            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
-
 
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
@@ -662,9 +751,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -2337,7 +2424,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         try {
-            submit(Arrays.asList(soDeliveryNoticeEntity.getId()), Boolean.FALSE);
+            SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(soDeliveryNoticeEntity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
+            }
+            submit(entity, Boolean.FALSE);
         }catch (Exception e) {
             log.error("发货通知单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());

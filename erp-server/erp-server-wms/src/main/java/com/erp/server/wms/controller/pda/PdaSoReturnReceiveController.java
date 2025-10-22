@@ -9,13 +9,12 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -144,6 +143,7 @@ public class PdaSoReturnReceiveController extends BaseController {
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = soReturnReceiveService.submit(dto.getIds());
+
         return flag == true ? success() : failure();
     }
 
