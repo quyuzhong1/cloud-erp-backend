@@ -534,11 +534,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      * @param inventoryId
      */
     private void inventoryHisToInventory(String inventoryId) {
-    	InventoryHisEntity inventoryHisEntity = inventoryHisService.findLastInventory(inventoryId, LocalDate.now());
     	int qty = 0;
-    	if(inventoryHisEntity != null) {
-    		qty = inventoryHisEntity.getQty();
+    	List<InventoryHisEntity> hisList = inventoryHisService.lambdaQuery()
+    			.eq(InventoryHisEntity::getInfoId, inventoryId)
+    			.orderByDesc(InventoryHisEntity::getBillDate)
+    			.last("limit 1")
+    			.list();
+    	if(CollUtil.isNotEmpty(hisList)) {
+    		qty = hisList.get(0).getQty();
     	}
+    	
 		inventoryService.lambdaUpdate().set(InventoryEntity::getQty, qty).eq(InventoryEntity::getId, inventoryId).update();
     }
     
