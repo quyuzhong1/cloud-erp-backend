@@ -158,22 +158,30 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
      */
     private void handleData(CfgMoldAlertRuleEntity entity) {
         MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(entity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
+        if(!moldInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+            throw new ServiceException(ApiError.ERROR_MOLD_NOT_APPROVE);
+        }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
             throw new ServiceException(ApiError.ERROR_92008);
         }
 
+        //校验寿命数量必须大于预警寿命（数量）
+        if(entity.getLifeQty() < entity.getAlertLifeQty()){
+            throw new ServiceException(ApiError.ERROR_95302);
+        }
+
         //寿命数量、预警寿命（数量）、预警寿命（%）都有值时，修改寿命数量，则计算预警寿命（数量）=寿命数量*预警寿命（%）；若至少存在一个字段值为空，则不做自动计算
-        if (Objects.nonNull(entity.getAlertLifeRate())) {
-            BigDecimal alertLifeRate = entity.getAlertLifeRate().divide(new BigDecimal(100));
-            BigDecimal lifeQty = new BigDecimal(entity.getLifeQty());
-            Integer alertLifeQty = lifeQty.multiply(alertLifeRate).setScale(0, BigDecimal.ROUND_DOWN).intValue();
-            entity.setAlertLifeQty(alertLifeQty);
-        }else if(Objects.nonNull(entity.getAlertLifeQty()) && Objects.isNull(entity.getAlertLifeRate())){
+        if(Objects.isNull(entity.getAlertLifeRate())){
             BigDecimal lifeQty = new BigDecimal(entity.getLifeQty());
             BigDecimal alertLifeQty = new BigDecimal(entity.getAlertLifeQty());
             BigDecimal alertLifeRate = alertLifeQty.divide(lifeQty, 6).multiply(new BigDecimal(100));
             entity.setAlertLifeRate(alertLifeRate);
+        }else if (Objects.isNull(entity.getAlertLifeQty()) && Objects.nonNull(entity.getAlertLifeRate())) {
+            BigDecimal alertLifeRate = entity.getAlertLifeRate().divide(new BigDecimal(100));
+            BigDecimal lifeQty = new BigDecimal(entity.getLifeQty());
+            Integer alertLifeQty = lifeQty.multiply(alertLifeRate).setScale(0, BigDecimal.ROUND_DOWN).intValue();
+            entity.setAlertLifeQty(alertLifeQty);
         }
 
         entity.setMoldCode(moldInfoEntity.getCode());
