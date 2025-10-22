@@ -411,6 +411,27 @@ public class ProductDetailDTO implements Serializable {
          * 状态
          */
         private  Integer status;
+
+        /**
+         * 模具id
+         */
+        private String moldId;
+        /**
+         * 模具编码
+         */
+        private String moldCode;
+        /**
+         * 模具名称
+         */
+        private String moldName;
+        /**
+         * 模具标识
+         */
+        private String tag;
+        /**
+         * 模具标识名称
+         */
+        private String tagName;
     }
     @Data
     @NoArgsConstructor

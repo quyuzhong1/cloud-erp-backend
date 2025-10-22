@@ -334,6 +334,10 @@ public class MoldRefSkuDTO implements Serializable {
          */
         private String moldId;
         /**
+         * 模具编码
+         */
+        private String moldCode;
+        /**
          * 模糊搜索参数 （skuNo 或 产品名称）
          */
         private String searchKeyword;
