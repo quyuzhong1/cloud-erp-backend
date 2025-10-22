@@ -9,6 +9,7 @@ import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.dto.request.*;
+import com.sdk.wms.iml.dto.response.ImlCalculateFeeResp;
 import com.sdk.wms.iml.dto.response.ImlInboundResp;
 import com.sdk.wms.iml.dto.response.ImlOutboundResp;
 import io.seata.common.util.StringUtils;
@@ -87,6 +88,41 @@ public class ImlServiceTest {
         ImlBaseResp<String> resp = imlService.uploadFile(imlUploadLabelReq);
         System.out.println(JSONObject.toJSONString(resp));
     }
+
+
+    @Test
+    public void calculateFee() {
+        ImlCalculateFeeReq imlCalculateFeeReq = ImlCalculateFeeReq.builder()
+                .orderType("OUTBOUND")
+                .bizType("TOC")
+                .transportProductCode("IML-RU")
+                .orderBoxes( Arrays.asList(
+                        ImlCalculateFeeReq.OrderBoxesDTO.builder()
+                                .length(new BigDecimal(10))
+                                .width(new BigDecimal(10))
+                                .height(new BigDecimal(10))
+                                .weight(new BigDecimal(1))
+                                .build()
+                ))
+                .skus( Arrays.asList(
+                        ImlCalculateFeeReq.SkusDTO.builder()
+                                .skuBarcode("ceshiB0540-80D")
+                                .build()
+                ))
+                .address( ImlCalculateFeeReq.AddressDTO.builder()
+                        .country("RU")
+                        .province("state")
+                        .city("for")
+                        .county("county")
+                        .address("address")
+                        .postcode("123456")
+                        .build()
+                )
+                .build();
+        ImlBaseResp<ImlCalculateFeeResp> resp = imlService.calculateFee(imlCalculateFeeReq);
+        System.out.println(JSONObject.toJSONString(resp));
+    }
+
 
     @Test
     public void createOutboundBill() {

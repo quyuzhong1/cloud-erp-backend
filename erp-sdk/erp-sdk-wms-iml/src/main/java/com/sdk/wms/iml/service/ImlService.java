@@ -1,9 +1,11 @@
 package com.sdk.wms.iml.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.Md5Util;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.iml.constants.ImlConstants;
@@ -150,7 +152,9 @@ public class ImlService {
         String path = "open-sdk/oms/create_inbound_order";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlGetReceiptReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlGetReceiptReq), headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlGetReceiptReq));
         ImlBaseResp<ImlInboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlInboundResp.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
 
@@ -161,7 +165,9 @@ public class ImlService {
         String path = "open-sdk/oms/edit_inbound_order";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlGetReceiptReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlGetReceiptReq), headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlGetReceiptReq));
         ImlBaseResp<ImlInboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlInboundResp.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
     /**
@@ -172,8 +178,10 @@ public class ImlService {
         Map<String,Object> bodyMap = new HashMap<>();
         bodyMap.put("orderNo",receivingCode);
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(bodyMap));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(bodyMap));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(bodyMap), headerMap);
         ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
 
@@ -184,8 +192,10 @@ public class ImlService {
     public ImlBaseResp<ImlOutboundResp> createOutboundBill(@Valid ImlCreateOutboundReq imlCreateOutboundReq){
         String path = "open-sdk/oms/create_outbound_order";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlCreateOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
         ImlBaseResp<ImlOutboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlOutboundResp.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
 
@@ -195,8 +205,10 @@ public class ImlService {
     public ImlBaseResp<String> cancelOutboundBill(@Valid ImlCancelOutboundReq imlCancelOutboundReq){
         String path = "open-sdk/oms/cancel_outbound_order";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCancelOutboundReq));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlCancelOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCancelOutboundReq), headerMap);
         ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
 
@@ -207,8 +219,10 @@ public class ImlService {
     public ImlBaseResp<String> uploadOrderLabel(ImlUploadLabelReq imlCreateOutboundReq){
         String path = "open-sdk/oms/upload_label_info";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlCreateOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
         ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
     /**
@@ -217,8 +231,21 @@ public class ImlService {
     public ImlBaseResp<String> uploadFile(ImlUploadFileReq imlCreateOutboundReq){
         String path = "open-sdk/oms/upload_delivery_receipt_file";
         Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlCreateOutboundReq));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlCreateOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlCreateOutboundReq), headerMap);
         ImlBaseResp<String> respDto = ImlUtils.parseToImlResp(bodyStr, String.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        return respDto;
+    }
+
+    /**
+     * 运费试算
+     */
+    public ImlBaseResp<ImlCalculateFeeResp> calculateFee(ImlCalculateFeeReq imlReq){
+        String path = "open-sdk/fms/check_fee";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlReq), headerMap);
+        ImlBaseResp<ImlCalculateFeeResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlCalculateFeeResp.class);
         return respDto;
     }
 }
