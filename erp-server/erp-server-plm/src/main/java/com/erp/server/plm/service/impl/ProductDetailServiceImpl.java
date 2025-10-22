@@ -316,6 +316,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private MoldInfoService moldInfoService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -381,6 +384,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailShowDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+
+
         List<String> skuIdList = list.stream().map(ProductDetailShowDTO::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
@@ -436,6 +445,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 一级供应商名称
             if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
+
+            //模具档案
+            MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+            if(Objects.nonNull(moldInfoEntity)){
+                item.setMoldId(moldInfoEntity.getId());
+                item.setMoldCode(moldInfoEntity.getCode());
+                item.setMoldName(moldInfoEntity.getName());
+                item.setTag(moldInfoEntity.getTag());
+                item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
             }
         }
 
@@ -6490,6 +6509,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
+        List<ProductDetailDTO.SkuDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+        if(moldMap.size() > 0){
+            for (ProductDetailDTO.SkuDTO item : list) {
+                //模具档案
+                MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+                if(Objects.nonNull(moldInfoEntity)){
+                    item.setMoldId(moldInfoEntity.getId());
+                    item.setMoldCode(moldInfoEntity.getCode());
+                    item.setMoldName(moldInfoEntity.getName());
+                    item.setTag(moldInfoEntity.getTag());
+                    item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
+                }
+            }
+        }
+
+
+
         return new PagingVO<>(pageData);
     }
 
