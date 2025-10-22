@@ -285,6 +285,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (assetNoticeDetailEntityList.isEmpty()) {
             throw new ServiceException(ApiError.ERROR_95298);
         }
+
+
         //可以生成采购订单的明细（未生成、部分生成）
         List<AssetNoticeDetailEntity> collect = assetNoticeDetailEntityList.stream()
                 .filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
@@ -333,7 +335,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             viewGeneratePurchaseOrderDTO.setApplyQty(assetNoticeDetailEntity.getApplyQty());
             viewGeneratePurchaseOrderDTO.setWaitQty(assetNoticeDetailEntity.getApplyQty().subtract(totalPurchaseQty));
-
+            viewGeneratePurchaseOrderDTO.setId(assetNoticeDetailEntity.getMainId());
             viewGeneratePurchaseOrderDTO.setAssetNoticeDetailId(assetNoticeDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetNoticeEntity.getCode());
             viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliverDate());
