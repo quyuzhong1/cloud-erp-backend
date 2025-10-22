@@ -1230,6 +1230,22 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return parentList;
     }
 
+    @Override
+    public List<UserSuperiorDTO> listDeptByUserIds(List<String> userIds) {
+        if (CollUtil.isEmpty(userIds)){
+            return Collections.emptyList();
+        }
+        List<UserSuperiorDTO> resultList = new ArrayList<>();
+        for (String userId : userIds){
+            List<UserSuperiorDTO> userSuperiorDTOS = sysDepartmentUserService.listDeptByUserId(userId);
+            if (CollUtil.isEmpty(userSuperiorDTOS)){
+                continue;
+            }
+            resultList.addAll(userSuperiorDTOS);
+        }
+        return resultList;
+    }
+
 
     /**
      * 根据用户id 获取用户登录的信息

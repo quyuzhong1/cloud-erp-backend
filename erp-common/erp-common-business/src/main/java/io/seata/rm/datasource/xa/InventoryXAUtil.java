@@ -31,7 +31,7 @@ public class InventoryXAUtil {
 				return;
 			}
 			transactionId = xaXid.getGlobalXid().replace(":", "_");
-			logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", transactionId , status);
+			logMsg = StringUtil.appendLogMsg("InventoryXAUtil的doXa", transactionId , status);
 	    	log.info("{}开始" , logMsg);
 			Class<?> forName = Class.forName("com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter");
 			Method method = forName.getMethod("doXa", String.class , Integer.class);

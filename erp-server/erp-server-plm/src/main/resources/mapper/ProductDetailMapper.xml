@@ -1800,6 +1800,18 @@
                     #{item}
                 </foreach>
             </if>
+        <if test="params.propertyList !=null and params.propertyList.size>0">
+            AND pi.property_id IN
+            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
+        <if test="params.notPropertyList !=null and params.notPropertyList.size>0">
+            AND pi.property_id not IN
+            <foreach collection="params.notPropertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
             order by
                 case when pd.sku_no ILIKE concat(#{params.remoteSearchSku}::text,'%') THEN 1
                      when pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text) THEN 2

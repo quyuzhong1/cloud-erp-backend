@@ -3889,7 +3889,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> newChargeIds = CharSequenceUtil.isNotBlank(newChargeId) ? Arrays.asList(newChargeId.split(",")) : new ArrayList<>();
         List<String> chargeIds = Stream.concat(oldChargeIds.stream(), newChargeIds.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.getUserListByUserIds(chargeIds) : new ArrayList<>();
-        List<UserSuperiorDTO> userSuperiorDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.listSuperiorByUserIds(chargeIds) : new ArrayList<>();
+        List<UserSuperiorDTO> userSuperiorDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.listDeptByUserIds(chargeIds) : new ArrayList<>();
         String oldChargeLog = getChargeNameLog(oldChargeId,findUserDTOS,userSuperiorDTOS);
         String newChargeLog = getChargeNameLog(newChargeId,findUserDTOS, userSuperiorDTOS);
         OperateLogEntity operateLogEntity = new OperateLogEntity();
@@ -3919,7 +3919,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             FindUserDTO findUserDTO = findUserDTOS.stream().filter(e -> chargeId.equals(e.getUserId())).findFirst().orElse(null);
             String userName = findUserDTO != null ? findUserDTO.getUserName() : "";
             //根据level组装部门名称中间使用>
-            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId()) && !ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(e.getSuperiorType())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
+            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
             deptName = CharSequenceUtil.isNotBlank(deptName) ? deptName : "无部门";
             sb.append(String.format("%s[%s]", userName, deptName));
         }
