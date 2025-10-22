@@ -50,7 +50,7 @@ public class AssetPurchaseOrderEntity extends BaseEntity<AssetPurchaseOrderEntit
     * 单据状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
     */
