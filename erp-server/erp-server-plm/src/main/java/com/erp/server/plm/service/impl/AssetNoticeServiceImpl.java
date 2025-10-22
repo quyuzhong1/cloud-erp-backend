@@ -350,7 +350,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
 
         //已审核数据才能生成采购单
-        long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus().getCode())).count();
+        long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (statusCount > 0) {
             throw new ServiceException(ApiError.ERROR_95299);
         }
@@ -580,7 +580,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     private Boolean validateDisApprove(AssetNoticeEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // TODO 下游盘点计划单反审核
@@ -615,7 +615,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     public BatchResultDTO cancelProcess(String id) {
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -852,7 +852,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     */
     private void handleData(AssetNoticeEntity assetNoticeEntity) {
         //状态默认待提交
-        assetNoticeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        assetNoticeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         assetNoticeEntity.setInvalidStatus(Boolean.FALSE);
         //采购员
         if (StringUtils.isNotBlank(assetNoticeEntity.getApplyUserId())) {
@@ -898,7 +898,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 entity.setApplyDeptId(firstMoldImportDTO.getApplyDeptId());
                 entity.setApplyDeptName(firstMoldImportDTO.getApplyDeptName());
                 entity.setInvalidStatus(Boolean.FALSE);
-                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
 
                 // 保存主表
                 boolean save = super.save(entity);

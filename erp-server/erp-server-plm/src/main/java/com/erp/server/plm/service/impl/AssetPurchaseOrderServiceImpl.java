@@ -1,8 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
+import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.AssetPurchaseOrderSupplierEntity;
@@ -42,9 +42,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -554,6 +552,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             }
         } else {
             assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+        }
+
+        if (StringUtils.isBlank(assetPurchaseOrderEntity.getSourceId())) {
+            assetPurchaseOrderEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
 
         assetPurchaseOrderEntity.setInvalidStatus(Boolean.FALSE);
