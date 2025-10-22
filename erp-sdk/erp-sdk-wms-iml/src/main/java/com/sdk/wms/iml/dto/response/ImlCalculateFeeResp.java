@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -20,7 +21,7 @@ public class ImlCalculateFeeResp {
     @JSONField(name = "currencyDesc")
     private String currencyDesc;
     @JSONField(name = "amount")
-    private Integer amount;
+    private BigDecimal amount;
     @JSONField(name = "feeDetails")
     private List<FeeDetailsDTO> feeDetails;
     @JSONField(name = "isCheckSuccess")
@@ -36,7 +37,7 @@ public class ImlCalculateFeeResp {
         @JSONField(name = "feeName")
         private String feeName;
         @JSONField(name = "feeAmount")
-        private Integer feeAmount;
+        private BigDecimal feeAmount;
         @JSONField(name = "remark")
         private String remark;
     }

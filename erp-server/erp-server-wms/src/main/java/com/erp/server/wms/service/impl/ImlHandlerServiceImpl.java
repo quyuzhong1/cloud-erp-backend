@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -12,8 +13,12 @@ import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.damai.dto.request.DaMaiCalculateFeeRequest;
+import com.sdk.wms.damai.dto.response.DaMaiCalculateFeeResp;
+import com.sdk.wms.damai.dto.response.DaMaiPageBaseResp;
 import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.dto.request.*;
+import com.sdk.wms.iml.dto.response.ImlCalculateFeeResp;
 import com.sdk.wms.iml.dto.response.ImlInboundResp;
 import com.sdk.wms.iml.dto.response.ImlOutboundResp;
 import com.sdk.wms.iml.service.ImlService;
@@ -178,7 +183,56 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
-        return ApiResult.error("功能未开发");
+        List<ImlCalculateFeeReq.SkusDTO> skusDTOS = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(calculateFeeReq.getSkus())){
+            for (ThirdWarehouseCalculateFeeReq.SkusDTO sku : calculateFeeReq.getSkus()) {
+                ImlCalculateFeeReq.SkusDTO skusDTO = new ImlCalculateFeeReq.SkusDTO();
+                skusDTO.setSkuBarcode(sku.getPlatformSkuNo());
+                skusDTO.setQty(sku.getQty());
+                skusDTOS.add(skusDTO);
+            }
+        }
+        ImlCalculateFeeReq imlCalculateFeeReq = ImlCalculateFeeReq.builder()
+                .orderType("OUTBOUND")
+                .bizType("TOC")
+                .transportProductCode(calculateFeeReq.getChannelCode())
+                .orderBoxes( Arrays.asList(
+                        ImlCalculateFeeReq.OrderBoxesDTO.builder()
+                                .length(calculateFeeReq.getLength())
+                                .width(calculateFeeReq.getWidth())
+                                .height(calculateFeeReq.getHeight())
+                                .weight(calculateFeeReq.getWeight())
+                                .build()
+                ))
+                .skus( skusDTOS)
+                .address( ImlCalculateFeeReq.AddressDTO.builder()
+                        .country(calculateFeeReq.getCountryCode())
+                        .city(calculateFeeReq.getCity())
+                        .postcode(calculateFeeReq.getPostCode())
+                        .build()
+                )
+                .build();
+        ImlBaseResp<ImlCalculateFeeResp> resp = imlService.calculateFee(imlCalculateFeeReq);
+        if(!isSuccess(resp.getCode())){
+            return failure(resp.getMessage());
+        }
+
+        ImlCalculateFeeResp imlCalculateFeeResp = resp.getData();
+        if(Objects.isNull(imlCalculateFeeResp) || CollectionUtils.isEmpty(imlCalculateFeeResp.getFeeDetails())){
+            return success(Collections.emptyList());
+        }
+        List<ImlCalculateFeeResp.FeeDetailsDTO> feeDetails = imlCalculateFeeResp.getFeeDetails();
+        BigDecimal transportFee = feeDetails.stream().filter(v->v.getFeeCode().equals("TRANSPORT")).findFirst().map(ImlCalculateFeeResp.FeeDetailsDTO::getFeeAmount).orElse(BigDecimal.ZERO);
+        BigDecimal totalAmount = imlCalculateFeeResp.getAmount();
+        List<ThirdWarehouseCalculateFeeResponse> responseList = new ArrayList<>();
+        ThirdWarehouseCalculateFeeResponse response = new ThirdWarehouseCalculateFeeResponse();
+        response.setChannelCode(calculateFeeReq.getChannelCode());
+        response.setCurrency(imlCalculateFeeResp.getCurrencyCode());
+        response.setOtherCost(totalAmount.subtract(transportFee));
+        response.setShippingCost(transportFee);
+        response.setTotalShippingCost(totalAmount);
+        responseList.add(response);
+        return success(responseList);
     }
 
     @Override
