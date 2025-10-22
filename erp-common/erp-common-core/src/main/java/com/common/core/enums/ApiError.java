@@ -627,6 +627,8 @@ public enum ApiError implements Serializable {
     ERROR_95300(95300,"资产通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
     ERROR_MOLD_NOT_APPROVE(95301,"模具未审核通过"),
     ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
+    ERROR_MOLD_RETURN_EXIST(95303,"模具档案已存在返还策略"),
+    ERROR_MOLD_ALERT_EXIST(95304,"模具档案已存在预警策略"),
     /**
      * TMS 错误
      * 从96000 开始

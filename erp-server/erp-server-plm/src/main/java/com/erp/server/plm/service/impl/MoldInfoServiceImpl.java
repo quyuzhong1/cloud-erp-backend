@@ -116,6 +116,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private MoldRefSkuService moldRefSkuService;
     @Resource
     private CfgMouldSettingService cfgMouldSettingService;
+    @Resource
+    private CfgMoldAlertRuleService cfgMoldAlertRuleService;
+    @Resource
+    private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -360,6 +364,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         // 反审核条件判断
         validateDisApprove(entity);
 
+        //检查模具下游关联数据是否存在
+        checkDownstream(entity.getId());
+
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
@@ -391,10 +398,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
-        Integer count = moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count();
-        if(count > 0){
-            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
-        }
+        //检查模具下游关联数据是否存在
+        checkDownstream(id);
 
         // 删除主单数据
         log.info("删除 开始删除模具档案主单数据，id：【{}】", id);
@@ -405,6 +410,26 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         sysLogService.addSysLogBySave(msg, "", id, "");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
+
+    /**
+     * 检查模具下游关联数据是否存在
+     * <p>用于删除模具前的校验，确保没有其他数据引用该模具</p>
+     *
+     * @param id 模具ID，用于查询关联数据
+     */
+    private void checkDownstream(String id) {
+        if(moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count() > 0){
+            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
+        }
+
+        if(cfgMoldReturnAlertRuleService.lambdaQuery().eq(CfgMoldReturnAlertRuleEntity::getMoldId, id).count() > 0 ){
+            throw new ServiceException(ApiError.ERROR_MOLD_RETURN_EXIST);
+        }
+        if(cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getMoldId, id).count() > 0 ){
+            throw new ServiceException(ApiError.ERROR_MOLD_ALERT_EXIST);
+        }
+    }
+
     /**
     * 作废
     */
@@ -419,10 +444,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-        Integer count = moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count();
-        if(count > 0){
-            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
-        }
+        //检查模具下游关联数据是否存在
+        checkDownstream(id);
         log.info("作废 开始修改模具档案状态数据，id：【{}】", id);
         lambdaUpdate().eq(MoldInfoEntity::getId, id)
             .set(MoldInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
