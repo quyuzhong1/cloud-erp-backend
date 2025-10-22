@@ -1200,7 +1200,13 @@
                 ${params.permissionSql}
             </if>
         </where>
-        order by sb2c.id desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sb2c.id desc
     </select>
 
     <!-- 异常订单导出 -->
