@@ -45,6 +45,7 @@
     <select id="paging" resultType="com.erp.model.plm.dto.AssetNoticeDTO$ListDTO">
         SELECT
             an.ID AS ID,
+            and1.id as detailId,
             an.code AS code,
             and1.asset_id AS assetId,
             and1.asset_code AS assetCode,
@@ -93,7 +94,8 @@
             pp.main_supplier,
             and1.plan_deliver_date,
             and1.apply_qty,
-            and1.create_po_type
+            and1.create_po_type,
+            and1.id
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

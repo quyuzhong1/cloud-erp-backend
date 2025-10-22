@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -84,6 +85,11 @@ public class AssetNoticeDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
 
         /**
         * 单号
@@ -496,6 +502,7 @@ public class AssetNoticeDTO implements Serializable {
          * 含税单价
          */
         @NotNull(message = "含税单价不能为空")
+        @DecimalMin(value = "0.0", inclusive = false, message = "采购数量必须大于0")
         private BigDecimal taxPrice;
 
         /**
@@ -525,6 +532,7 @@ public class AssetNoticeDTO implements Serializable {
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")
+        @DecimalMin(value = "0.0", inclusive = false, message = "采购数量必须大于0")
         private BigDecimal applyQty;
 
         /**
