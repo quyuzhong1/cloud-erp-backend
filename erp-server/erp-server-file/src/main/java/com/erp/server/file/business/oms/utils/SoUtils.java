@@ -61,7 +61,8 @@ public final class SoUtils {
         headMap.put("deliveryStatusName", "发货状态");
         headMap.put("skuNo", "sku");
         headMap.put("productName", "产品名称");
-        headMap.put("platformSkuNo", "客户SKU");
+        headMap.put("customerSkuNo", "客户SKU");
+        headMap.put("platformSkuNo", "平台SKU");
         headMap.put("qty", "销售数量");
         headMap.put("frozenQty", "锁定数量");
         headMap.put("virtualUsableQty", "虚拟仓可用库存");

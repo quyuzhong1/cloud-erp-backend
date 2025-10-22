@@ -48,13 +48,14 @@ public class YunTuService {
      */
     public YunTuResponse<List<YunTuCreateOrder>> createOrder(@Valid List<YunTuCreateOrderRequest> request,Map<String, String> authMap){
         log.info("==========YunTuService.createOrder==========start");
-        log.warn("authMap:{}, orderRequest:{}",authMap, request);
         String appKey = authMap.get(CLIENT_ID);
         String appSecret = authMap.get(CLIENT_SECRET);
         String url = authMap.get("url");
         validate(appKey,appSecret,url);
         List<Map<String,Object>> paramsMapList =  BeanMapUtil.beanToMapList(request);
+        log.warn("云途下单请求参数:{}", JSONObject.toJSONString(paramsMapList));
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
+
         log.warn("下单完成：{}", JSON.toJSONString(response));
         return JSON.parseObject(response,new TypeReference<YunTuResponse<List<YunTuCreateOrder>>>() {}.getType());
     }

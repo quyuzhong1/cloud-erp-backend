@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -176,7 +177,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	List<String> currencyList = new ArrayList<>();
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getPayCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList);
+        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         	Map<String, String> currencyMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(listByCurrency)) {
         		currencyMap = listByCurrency.stream().collect(Collectors.toMap(ViewDTO::getId, ViewDTO::getName));
@@ -433,6 +434,19 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoOutstockDetailEntity.getThirdOrderCode());
     	        shudiyunB2cOrderDTO.setParent_node_no(platformCode);
     			
+    	        if(StringUtils.isBlank(shudiyunB2cOrderDTO.getDepartment_code()) && StringUtils.isNotBlank(shudiyunB2cOrderDTO.getShop_no())) {
+                	List<CustomerInfoEntity> deptCustomerInfoList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getCode, 
+                			shudiyunB2cOrderDTO.getShop_no()).list();
+                	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
+                		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
+                		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
+                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getUseOrgId()).list();
+                		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
+                			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+                			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+                		}
+                	}
+                }
     	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
