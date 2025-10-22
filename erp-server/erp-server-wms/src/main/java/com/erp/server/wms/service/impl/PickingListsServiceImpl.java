@@ -583,7 +583,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         pickingLists.forEach(pickingListsEntity -> {
             this.lambdaUpdate()
-                    .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.NOT.getCode())
+                    .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.CANCEL.getCode())
                     .set(PickingListsEntity::getPrintTime, LocalDateTime.now())
                     .set(PickingListsEntity::getPrintUserId, loginUser.getUid())
                     .set(PickingListsEntity::getPrintUserName, loginUser.getUserName())
