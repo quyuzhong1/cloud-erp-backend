@@ -11,7 +11,6 @@ import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;

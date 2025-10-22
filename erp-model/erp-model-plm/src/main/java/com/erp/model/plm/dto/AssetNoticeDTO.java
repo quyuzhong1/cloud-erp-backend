@@ -436,31 +436,37 @@ public class AssetNoticeDTO implements Serializable {
         /**
          * 采购通知单id
          */
+        @NotBlank(message = "采购通知单id不能为空")
         private String id;
 
         /**
          * 资产通知单明细id
          */
+        @NotBlank(message = "资产通知单明细id不能为空")
         private String assetNoticeDetailId;
 
         /**
          * 资产通知单号
          */
+        @NotBlank(message = "资产通知单号不能为空")
         private String code;
 
         /**
          * 资产id
          */
+        @NotBlank(message = "资产id不能为空")
         private String assetId;
 
         /**
          * 资产编码
          */
+        @NotBlank(message = "资产编码不能为空")
         private String assetCode;
 
         /**
          * 资产名称
          */
+        @NotBlank(message = "资产名称不能为空")
         private String assetName;
 
 
@@ -489,6 +495,7 @@ public class AssetNoticeDTO implements Serializable {
         /**
          * 含税单价
          */
+        @NotNull(message = "含税单价不能为空")
         private BigDecimal taxPrice;
 
         /**
@@ -499,6 +506,7 @@ public class AssetNoticeDTO implements Serializable {
         /**
          * 税率
          */
+        @NotBlank(message = "税率不能为空")
         private BigDecimal taxRate;
 
         /**

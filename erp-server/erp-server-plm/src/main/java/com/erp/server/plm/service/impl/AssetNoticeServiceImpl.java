@@ -16,7 +16,6 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
@@ -46,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import com.erp.model.plm.dto.AssetNoticeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -345,14 +345,17 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<String> ids = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getId).collect(Collectors.toList());
         //主表数据
         List<AssetNoticeEntity> mainList = this.listByIds(ids);
+
         if (CollectionUtils.isEmpty(mainList)) {
             throw new ServiceException(ApiError.ERROR_95297);
         }
+
         //已审核数据才能生成采购单
         long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus().getCode())).count();
         if (statusCount > 0) {
             throw new ServiceException(ApiError.ERROR_95299);
         }
+
         //模具信息
         List<String> assetIds = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetId).collect(Collectors.toList());
         List<MoldInfoEntity> moldInfoEntities = moldInfoService.listByIds(assetIds);
@@ -396,6 +399,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
             addDTO.setPurchaseUserName(value.get(0).getPurchaseUserId());
             addDTO.setPurchaseDate(LocalDate.now());
+            addDTO.setSourceCode(value.get(0).getCode());
+            addDTO.setSourceId(value.get(0).getId());
+            addDTO.setSourceType(SourceTypeEnum.ASSET_NOTICE.getCode());
 
             //采购订单供应商信息
             AssetPurchaseOrderSupplierDTO.AddDTO supplierDTO = new AssetPurchaseOrderSupplierDTO.AddDTO();
@@ -432,27 +438,25 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             //采购订单明细信息
             List<AssetPurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
             for (AssetNoticeDTO.ListGeneratePurchaseOrderDTO generatePurchaseOrderDTO : value) {
-
                 AssetPurchaseOrderDetailDTO.AddDTO addDetailDTO = new AssetPurchaseOrderDetailDTO.AddDTO();
-                //采购申请对应明细信息
+
+                LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+                lambdaQueryWrapper.eq(AssetPurchaseOrderDetailEntity::getSourceDetailId,generatePurchaseOrderDTO.getAssetNoticeDetailId())
+                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE);
+
                 MoldInfoEntity moldInfoEntity = moldInfoEntities.stream().filter(obj -> obj.getId().equals(generatePurchaseOrderDTO.getAssetId())).findFirst().orElse(null);
                 if (org.springframework.util.ObjectUtils.isEmpty(moldInfoEntity)) {
                     throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
                 }
-                addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
-                addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
-                addDetailDTO.setPlanDeliveryDate(generatePurchaseOrderDTO.getPlanDeliveryDate());
+
+                BeanUtils.copyProperties(generatePurchaseOrderDTO,addDetailDTO);
                 addDetailDTO.setAssetId(moldInfoEntity.getId());
                 addDetailDTO.setAssetCode(moldInfoEntity.getCode());
                 addDetailDTO.setAssetName(moldInfoEntity.getName());
-                addDetailDTO.setTaxPrice(generatePurchaseOrderDTO.getTaxPrice());
-                //采购数量
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getApplyQty());
                 //采购金额
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
-                addDetailDTO.setTaxRate(generatePurchaseOrderDTO.getTaxRate());
                 addDetailDTO.setMainId(generatePurchaseOrderDTO.getId());
-                addDetailDTO.setRemark(generatePurchaseOrderDTO.getRemark());
                 addDetailDTO.setIsUrgent(Boolean.FALSE);
                 addDetailDTO.setIsEndReceive(Boolean.FALSE);
                 addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
@@ -485,7 +489,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         Map<String, AssetNoticeEntity> detailMainMap = Maps.newHashMap();
         for (AssetNoticeDetailEntity detail : detailList) {
             //已采购数量
-            BigDecimal purchaseQty = BigDecimal.ZERO;
+            LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = assetPurchaseOrderDetailService.list(lambdaQueryWrapper);
+            BigDecimal purchaseQty = detailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
 
             //本次采购数量
             BigDecimal thisPurchaseQty = list.stream()
@@ -498,10 +505,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
             //申请数量
             BigDecimal applyQty = detail.getApplyQty();
-            if (thisPurchaseQty.compareTo(applyQty.subtract(purchaseQty)) > 0) {
+            if (applyQty.compareTo(purchaseQty.add(thisPurchaseQty)) < 0) {
                 // 不允许下推
                 prohibitDetails.add(detail);
-            } else if (thisPurchaseQty.compareTo(applyQty.subtract(purchaseQty)) == 0) {
+            } else if (applyQty.compareTo(purchaseQty.add(thisPurchaseQty)) == 0) {
                 detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
             } else {
                 detail.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
