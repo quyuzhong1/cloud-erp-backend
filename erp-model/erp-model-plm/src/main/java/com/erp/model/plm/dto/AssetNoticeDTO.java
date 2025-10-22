@@ -681,5 +681,20 @@ public class AssetNoticeDTO implements Serializable {
          */
         private LocalDate planDeliveryDate;
 
+        /**
+         * 对应skuId
+         */
+        private String skuId;
+
+        /**
+         * 对应skuId
+         */
+        private String skuNo;
+
+        /**
+         * 对应productName
+         */
+        private String productName;
+
     }
 }
