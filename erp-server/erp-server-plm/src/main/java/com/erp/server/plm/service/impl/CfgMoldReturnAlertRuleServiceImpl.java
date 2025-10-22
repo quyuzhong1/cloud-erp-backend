@@ -227,6 +227,9 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
      */
     private void handleData(CfgMoldReturnAlertRuleEntity entity) {
         MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(entity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
+        if(!moldInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+            throw new ServiceException(ApiError.ERROR_MOLD_NOT_APPROVE);
+        }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
             throw new ServiceException(ApiError.ERROR_92008);
