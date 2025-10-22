@@ -1108,7 +1108,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
                 
                 // 移动端商品详情字段填充
-                productDTO.setReservedQty(detail.getRecipientQty() - detail.getDeliveryQty());
+                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为领用数量-已出库数量
+                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (detail.getRecipientQty() - detail.getDeliveryQty());
+                productDTO.setReservedQty(reservedQty);
                 productDTO.setDeliveryQty(detail.getDeliveryQty());
                 productDTO.setExecStatus(detail.getExecStatus());
                 
@@ -1142,10 +1144,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     String curApproveName = curApproveList.stream()
                         .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
                         .collect(Collectors.joining(","));
-                    if (StringUtils.isNotBlank(curApproveId)) {
+                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
                         data.setApproveUserId(curApproveId);
                     }
-                    if (StringUtils.isNotBlank(curApproveName)) {
+                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
                         data.setApproveUserName(curApproveName);
                     }
                 }
@@ -1289,10 +1291,26 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
 
-            //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+            //最新审核人：如果approveUserId或approveUserName为空则去查询并填充
+            if ((StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) 
+                && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveId = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
+                        .collect(Collectors.joining(","));
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
+                        data.setApproveUserId(curApproveId);
+                    }
+                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
             }
         }
     }
