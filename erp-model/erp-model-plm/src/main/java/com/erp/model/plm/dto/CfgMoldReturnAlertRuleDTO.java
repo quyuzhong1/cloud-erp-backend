@@ -351,11 +351,13 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
         /**
         * 开始日期
         */
+        @NotNull(message = "开始日期不能为空")
         private LocalDate startDate;
 
         /**
         * 结束日期
         */
+        @NotNull(message = "结束日期不能为空")
         private LocalDate endDate;
 
         /**

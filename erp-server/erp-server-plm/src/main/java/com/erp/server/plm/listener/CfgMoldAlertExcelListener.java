@@ -19,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -162,6 +163,18 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
             errorMsgList.add(ApiError.ERROR_92008.msg);
+        }
+
+        //校验寿命数量必须大于预警寿命（数量）
+        if(Objects.nonNull(excelDTO.getAlertLifeQty()) && Objects.nonNull(excelDTO.getLifeQty())){
+            if(excelDTO.getLifeQty() < excelDTO.getAlertLifeQty()){
+                errorMsgList.add(ApiError.ERROR_95302.msg);
+            }
+        }
+
+        //预警寿命百分比在0-100
+        if(Objects.nonNull(excelDTO.getAlertLifeRate()) && (excelDTO.getAlertLifeRate().compareTo(BigDecimal.ZERO) < 0 || excelDTO.getAlertLifeRate().compareTo(new BigDecimal(100)) > 0)){
+            errorMsgList.add("预警寿命（%）取值范围0-100");
         }
 
         //存在错误数据则直接返回

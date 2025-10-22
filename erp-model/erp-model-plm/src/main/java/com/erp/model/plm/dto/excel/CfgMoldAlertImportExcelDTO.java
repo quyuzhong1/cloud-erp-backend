@@ -94,20 +94,30 @@ public class CfgMoldAlertImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "预警寿命（数量）", index = 6)
-    @FieldValid(fieldName = "预警寿命（数量）",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "预警寿命（数量）",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private Integer alertLifeQty;
+
+
+    /**
+     * 预警寿命（数量）
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "预警寿命（%）", index = 7)
+    @FieldValid(fieldName = "预警寿命（%）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    private BigDecimal alertLifeRate;
+
     /**
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 7)
+    @ExcelProperty(value = "备注", index = 8)
     @FieldValid(fieldName = "备注")
     private String remark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =8)
+    @ExcelProperty(value = "错误数据", index =9)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }
