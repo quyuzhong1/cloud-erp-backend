@@ -70,6 +70,31 @@ public class SsoLoginResponseDTO implements Serializable {
     private List<SysMenuVO> leftMenuList;
 
     /**
+     * 用户名
+     */
+    private String userName;
+
+    /**
+     * 头像
+     */
+    private String headIcon;
+
+    /**
+     * 真实姓名
+     */
+    private String realName;
+
+    /**
+     * 电话号码
+     */
+    private String mobile;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
      * 创建成功响应
      */
     public static SsoLoginResponseDTO success(String token, String userId, String appId, String[] pathList, String signSessionId) {
@@ -97,6 +122,29 @@ public class SsoLoginResponseDTO implements Serializable {
         response.setSignSessionId(signSessionId);
         response.setPermissionList(permissionList);
         response.setLeftMenuList(leftMenuList);
+        return response;
+    }
+
+    /**
+     * 创建成功响应（包含权限、菜单和用户信息）
+     */
+    public static SsoLoginResponseDTO success(String token, String userId, String appId, String[] pathList, 
+                                              String signSessionId, List<String> permissionList, List<SysMenuVO> leftMenuList,
+                                              String userName, String headIcon, String realName, String mobile, String email) {
+        SsoLoginResponseDTO response = new SsoLoginResponseDTO();
+        response.setSuccess(true);
+        response.setToken(token);
+        response.setUserId(userId);
+        response.setAppId(appId);
+        response.setPathList(pathList);
+        response.setSignSessionId(signSessionId);
+        response.setPermissionList(permissionList);
+        response.setLeftMenuList(leftMenuList);
+        response.setUserName(userName);
+        response.setHeadIcon(headIcon);
+        response.setRealName(realName);
+        response.setMobile(mobile);
+        response.setEmail(email);
         return response;
     }
 
