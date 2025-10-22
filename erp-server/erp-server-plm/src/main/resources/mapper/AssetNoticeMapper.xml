@@ -96,6 +96,7 @@
             and1.apply_qty,
             and1.create_po_type,
             and1.id
+        order by an.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
