@@ -309,14 +309,19 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
             viewGeneratePurchaseOrderDTO.setPurchaseOrgName(companyEntity.getCompanyName());
 
-            //获取sku最小起订量和采购交期
+            //获取sku信息
             LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(ProductDetailEntity::getSkuNo,assetNoticeDetailEntity.getAssetCode())
                     .eq(ProductDetailEntity::getIsDeleted,Boolean.FALSE);
             ProductDetailEntity productDetailEntity = productDetailService.getOne(queryWrapper);
-            ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(productDetailEntity.getId());
-            viewGeneratePurchaseOrderDTO.setMoq(productPurchaseEntity.getMoq());
-            viewGeneratePurchaseOrderDTO.setDeliveryDay(productPurchaseEntity.getDeliveryCycle());
+            if (!Objects.isNull(productDetailEntity)) {
+                ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(productDetailEntity.getId());
+                viewGeneratePurchaseOrderDTO.setMoq(productPurchaseEntity.getMoq());
+                viewGeneratePurchaseOrderDTO.setDeliveryDay(productPurchaseEntity.getDeliveryCycle());
+                viewGeneratePurchaseOrderDTO.setSkuId(productDetailEntity.getId());
+                viewGeneratePurchaseOrderDTO.setSkuNo(productDetailEntity.getSkuNo());
+                viewGeneratePurchaseOrderDTO.setProductName(productDetailEntity.getName());
+            }
 
             //关联待采购数量
             LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
