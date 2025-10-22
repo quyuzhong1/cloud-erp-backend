@@ -252,7 +252,10 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        return ApiResult.error("查询Iml出库单失败");
+    }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         ImlBaseResp<String> response = imlService.getWarehouse();

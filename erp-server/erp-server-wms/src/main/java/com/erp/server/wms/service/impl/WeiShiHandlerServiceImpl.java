@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -12,9 +13,13 @@ import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.wms.aliexpress.util.Constants;
+import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
+import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
+import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
 import com.sdk.wms.weishi.dto.response.WeiShiCreateOutboundResp;
+import com.sdk.wms.weishi.dto.response.WeiShiOutboundResp;
 import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
 import com.sdk.wms.weishi.enums.WeiShiEnums;
 import com.sdk.wms.weishi.service.WeiShiService;
@@ -22,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -214,7 +220,20 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
+        weiShiGetOutboundRequest.setReferNo(queryOutboundReq.getErpOrderCode());
+        WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(weiShiGetOutboundRequest, ThirdWarehouseContext.getAuthMap());
+        if (null == resp || resp.getData() == null) {
+            throw new ServiceException("纬狮获取出库单数据失败: 响应结果为空");
+        }
+        if(resp.getCode() != 200){
+            log.warn("纬狮获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMsg());
+            throw new ServiceException("纬狮获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMsg());
+        }
+        return success(resp.getData().getOrderNo());
+    }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         Map<String, Object> authJson = dto.getAuthJson();

@@ -748,6 +748,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 推荐仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 备注
          */
         private String remark;

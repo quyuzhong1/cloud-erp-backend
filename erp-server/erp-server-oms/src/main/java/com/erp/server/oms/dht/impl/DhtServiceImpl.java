@@ -23,6 +23,7 @@ import com.sdk.oms.dht.service.DhtCustomerAccountService;
 import com.sdk.oms.dht.service.DhtCustomerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -46,11 +47,14 @@ public class DhtServiceImpl implements DhtService {
     @Resource
     private DictBasicService dictBasicService;
 
+    @Value("${dht.defaultUserMobile}")
+    private String defaultUserMobile;
+
     @Override
     public CustomerDTO.ThirdCustomerAccountDTO queryCustomerAccountByCustomerCode(CustomerInfoEntity customerInfoEntity) {
         //先查询订货通客户id
         DhtCommonQueryReq customerReq = new DhtCommonQueryReq();
-        DhtUserResp userResp = dhtCommonService.getUserByMobile("15007174733");
+        DhtUserResp userResp = dhtCommonService.getUserByMobile(defaultUserMobile);
         customerReq.setCurrentOpenUserId(userResp.getEmpList().get(0).getOpenUserId());
         DhtCommonQueryReq.DataDTO customerDataDTO = DhtCommonQueryReq.DataDTO.builder()
                 .findExplicitTotalNum(false)
