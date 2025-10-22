@@ -98,6 +98,10 @@ public enum DictBasicEnum {
 //    DESIGNATED_ROLE("designated_role", "assigneeOption", "指定角色", "审批人选项"),
 //    DQE_OWNER("dqe_owner", "assigneeOption", "DQE负责人", "审批人选项"),
     PRODUCT_MANAGER("productManager", "formInternalContact", "产品经理", "指定角色选项"),
+    
+    // 表单内联系人审批类型
+    CONTACT_SELF("contactSelf", "approveType", "联系人自己", "审批类型"),
+    CONTACT_SUPERIOR("contactSuperior", "approveType", "联系人上级", "审批类型"),
 
     ;
 

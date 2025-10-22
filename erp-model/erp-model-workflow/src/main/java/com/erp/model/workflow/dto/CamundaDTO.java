@@ -27,6 +27,12 @@ public class CamundaDTO {
          * 审批选项值
          */
         private String assignee;
+
+        /**
+         * 审批类型（联系人自己/联系人上级）
+         */
+        private String approveType;
+
         /**
          * 候选人
          */
