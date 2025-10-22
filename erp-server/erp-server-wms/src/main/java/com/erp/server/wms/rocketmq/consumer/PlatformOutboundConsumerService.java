@@ -120,6 +120,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
+    public static void main(String[] args) {
+        String a = "{\n" +
+                "  \"authId\": \"1976194554104430593\",\n" +
+                "  \"provider\": \"iml\",\n" +
+                "  \"orderCode\": \"OT80565-20251021-000001\",\n" +
+                "  \"referenceNo\": \"WFHD20251021001\",\n" +
+                "  \"orderStatus\": \"waitShipped\",\n" +
+                "  \"interceptStatus\": \"\",\n" +
+                "  \"thirdOrderStatus\": \"WAIT_OUTBOUND\",\n" +
+                "  \"outBoundTime\": \"\",\n" +
+                "  \"trackNo\": \"123456\",\n" +
+                "  \"abnormalProblemReason\": \"\"\n" +
+                "}";
+        PlatformOutboundDTO dto = JSONUtil.toBean(a, PlatformOutboundDTO.class);
+        System.out.println(dto);
+    }
     @Override
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
