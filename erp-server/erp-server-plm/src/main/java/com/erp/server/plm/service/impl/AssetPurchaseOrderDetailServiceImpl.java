@@ -103,6 +103,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
             BeanMapperUtils.copy(addDTO, assetPurchaseOrderDetailEntity);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
+            assetPurchaseOrderDetailEntity.setTotalAmount(assetPurchaseOrderDetailEntity.getPurchaseQty().multiply(assetPurchaseOrderDetailEntity.getTaxPrice()));
             detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
         super.saveBatch(detailEntityList);
