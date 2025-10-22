@@ -640,6 +640,31 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
 
+        //最新审核人：如果approveUserId或approveUserName为空则去查询
+        if (StringUtils.isBlank(viewDTO.getApproveUserId()) || StringUtils.isBlank(viewDTO.getApproveUserName())) {
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BACK_INFO.getCode(), viewDTO.getId()));
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+            if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(viewDTO.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveId = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
+                        .collect(Collectors.joining(","));
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveId)) {
+                        viewDTO.setApproveUserId(curApproveId);
+                    }
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        viewDTO.setApproveUserName(curApproveName);
+                    }
+                }
+            }
+        }
 
         return viewDTO;
     }
