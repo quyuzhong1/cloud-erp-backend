@@ -43,12 +43,12 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/detail_inbound_order";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/new_stock_total_query";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
-        body.put("orderNo","IN80565-20251020-000001");
+        body.put("pageIndex",3);
         String timestamp = String.valueOf(new Date().getTime());
         String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
         Map<String,String> headerMap = new HashMap<>();
