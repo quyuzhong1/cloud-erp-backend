@@ -1,16 +1,21 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
+import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.AssetPurchaseOrderSupplierEntity;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
-import com.erp.model.plm.enums.PurchaseStateEnum;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.ContractStampStatusEnum;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.scm.feign.ScmDictFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
 import com.erp.server.plm.service.AssetPurchaseOrderSupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -37,9 +42,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -78,6 +81,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private SupplierFeign supplierFeign;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private ScmDictFeign scmDictFeign;
+
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -101,8 +114,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         BeanMapperUtils.copy(addDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
 
         //处理供应商数据
-        handleSupplierData(assetPurchaseOrderSupplierEntity);
-        assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
+        handleSupplierData(assetPurchaseOrderSupplierEntity,assetPurchaseOrderEntity);
 
         boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
         if(!savePurchaseSupplier) {
@@ -531,11 +543,26 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     private void handleData(AssetPurchaseOrderEntity assetPurchaseOrderEntity) {
         assetPurchaseOrderEntity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
         //默认资产采购单
-        assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+        if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getOrderType())) {
+            String orderType = AssetPurchaseOrderTypeEnum.getNameByCode(assetPurchaseOrderEntity.getOrderType());
+            if (StringUtils.isNotBlank(orderType)) {
+                assetPurchaseOrderEntity.setOrderType(orderType);
+            } else {
+                assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+            }
+        } else {
+            assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+        }
+
+        if (StringUtils.isBlank(assetPurchaseOrderEntity.getSourceId())) {
+            assetPurchaseOrderEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+        }
+
         assetPurchaseOrderEntity.setInvalidStatus(Boolean.FALSE);
+
     }
 
-    private void handleSupplierData(AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity) {
+    private void handleSupplierData(AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity,AssetPurchaseOrderEntity assetPurchaseOrderEntity) {
         if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getSupplierId())) {
             throw new ServiceException("供应商id不允许为空");
         }
@@ -551,5 +578,25 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayee())) {
             throw new ServiceException("账户名称不允许为空");
         }
+
+        //付款条件
+        List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
+        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue));
+        assetPurchaseOrderSupplierEntity.setPaymentConditionName(paymentConditionMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPaymentCondition(),""));
+
+        //结算方式
+        List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+        assetPurchaseOrderSupplierEntity.setPayMethodName(settleDictMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPayMethodId(),""));
+
+        //收款银行,银行账号
+        List<String> idList = new ArrayList<>(1);
+        idList.add(assetPurchaseOrderSupplierEntity.getSupplierId());
+        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS = supplierFeign.listDefaultBySupplierIdList(idList);
+        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
+        assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
+        assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
+
+        assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
     }
 }

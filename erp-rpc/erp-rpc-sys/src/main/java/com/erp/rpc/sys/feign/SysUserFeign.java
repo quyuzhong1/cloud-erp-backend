@@ -230,7 +230,11 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/listSuperiorByUserIds")
     List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
-
+    /**
+     * 根据用户id查询所有上级部门
+     */
+    @PostMapping("feign/user/listDeptByUserIds")
+    List<UserSuperiorDTO> listDeptByUserIds(@RequestBody List<String> userIds);
     /**
      * 根据角色id查用户名称
      */
