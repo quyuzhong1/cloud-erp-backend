@@ -475,14 +475,12 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
         */
-        @NotBlank(message = "合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成不能为空")
         private String contractStampStatus;
 
         /**
         * 单据类型
         */
         @NotBlank(message = "单据类型不能为空")
-        @Size(max = 255,message = "单据类型最大长度不能超过255位")
         private String orderType;
 
         /**
@@ -503,6 +501,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
         * 采购日期
         */
+        @NotNull(message = "采购日期不能为空")
         private LocalDate purchaseDate;
 
         /**

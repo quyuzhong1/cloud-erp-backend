@@ -210,6 +210,7 @@ public class AssetNoticeDetailDTO implements Serializable {
         /**
         * 标识(首套模、复制模)
         */
+        @NotBlank(message = "标识不能为空")
         private String tag;
 
         /**

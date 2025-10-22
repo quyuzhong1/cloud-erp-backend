@@ -8,10 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -183,6 +180,7 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         */
         @NotNull(message = "含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        @DecimalMin(value = "0.0", inclusive = false, message = "单价必须大于0")
         private BigDecimal taxPrice;
 
         /**
@@ -209,19 +207,20 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         */
         @NotNull(message = "采购数量不能为空")
         @Digits(integer = 12, fraction = 4, message = "采购数量整数位不能超过12位，小数位不能超过4位")
+        @DecimalMin(value = "0.0", inclusive = false, message = "采购数量必须大于0")
         private BigDecimal purchaseQty;
 
         /**
         * 价税合计
         */
-        @NotNull(message = "价税合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "价税合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal totalAmount;
 
         /**
         * 计划交期
         */
-        private LocalDate planDeliveryDate;
+        @NotNull(message = "计划交期不能为空")
+        private LocalDate planDeliverDate;
 
         /**
         * 是否加急
@@ -253,8 +252,13 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         /**
         * 来源明细id
         */
-        @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
+
+        /**
+         * 标识
+         */
+        @NotNull(message = "标识不能为空")
+        private String tag;
 
     }
 
