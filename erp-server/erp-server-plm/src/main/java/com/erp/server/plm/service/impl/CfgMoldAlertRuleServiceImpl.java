@@ -282,6 +282,10 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
             throw new ServiceException(ApiError.ERROR_98012);
         }
         log.info("作废 开始修改模具预警策略状态数据，id：【{}】", id);
+        lambdaUpdate().eq(CfgMoldAlertRuleEntity::getId, id)
+                .set(CfgMoldAlertRuleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(CfgMoldAlertRuleEntity::getInvalidRemark, remark)
+                .update();
 
         // 作废日志数据
         log.info("作废 开始记录操作日志，id：【{}】", id);
