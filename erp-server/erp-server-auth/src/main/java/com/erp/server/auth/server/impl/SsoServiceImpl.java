@@ -136,6 +136,11 @@ public class SsoServiceImpl implements SsoService {
                 // 9. 查询权限和菜单（在最后查询）
                 List<String> permissionList = null;
                 List<com.erp.model.sys.vo.SysMenuVO> leftMenuList = null;
+                String userName = null;
+                String headIcon = null;
+                String realName = null;
+                String mobile = null;
+                String email = null;
                 try {
                     SysUserDTO sysUserById = sysUserFeign.getSysUserById(userId);
                     ApiResult<SysUserDTO> userLoginInfoResult = sysUserFeign.getUserLoginInfo(
@@ -146,13 +151,34 @@ public class SsoServiceImpl implements SsoService {
                         SysUserDTO loginInfo = userLoginInfoResult.getData();
                         permissionList = loginInfo.getPermissionList();
                         leftMenuList = loginInfo.getLeftMenuList();
+                        // 获取用户基本信息
+                        userName = loginInfo.getUserName();
+                        headIcon = loginInfo.getHeadIcon();
+                        realName = loginInfo.getRealName();
+                        mobile = loginInfo.getMobile();
+                    }
+                    
+                    // 获取email（从FindUserDTO中获取）
+                    FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userId);
+                    if (findUserDTO != null) {
+                        email = findUserDTO.getEmail();
+                        // 如果前面没有获取到，从FindUserDTO中补充
+                        if (userName == null) {
+                            userName = findUserDTO.getUserName();
+                        }
+                        if (realName == null) {
+                            realName = findUserDTO.getRealName();
+                        }
+                        if (mobile == null) {
+                            mobile = findUserDTO.getMobile();
+                        }
                     }
                 } catch (Exception e) {
                     log.error("获取用户权限和菜单失败，userId: {}", userId, e);
                     // 获取失败不影响登录，继续执行
                 }
                 
-                // 10. 返回成功响应，包含signSessionId、permissionList和leftMenuList
+                // 10. 返回成功响应，包含signSessionId、permissionList、leftMenuList和用户信息
                 return SsoLoginResponseDTO.success(
                     jwtToken, 
                     userId, 
@@ -160,7 +186,12 @@ public class SsoServiceImpl implements SsoService {
                     pathList, 
                     sessionId,
                     permissionList,
-                    leftMenuList
+                    leftMenuList,
+                    userName,
+                    headIcon,
+                    realName,
+                    mobile,
+                    email
                 );
                 
             } catch (ServiceException e) {
