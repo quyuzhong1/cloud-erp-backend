@@ -49,9 +49,7 @@
             and1.asset_id AS assetId,
             and1.asset_code AS assetCode,
             and1.asset_name AS assetName,
-            mi.supplier_id AS supplierId,
-            mi.supplier_code AS supplierCode,
-            mi.supplier_name AS supplierName,
+            pp.main_supplier AS supplierId,
             and1.plan_deliver_date AS planDeliverDate,
             and1.apply_qty AS applyQty,
             COALESCE((and1.apply_qty - COALESCE(SUM(apod.purchase_qty),0)), 0) AS waitQty,
@@ -70,7 +68,9 @@
         FROM
             asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
-            LEFT JOIN mold_info mi ON mi.id = and1.asset_id and mi.is_deleted = false
+            LEFT JOIN product_detail pd on pd.sku_no = and1.asset_code
+            LEFT JOIN product_info pi on pi.id = pd.product_id
+            LEFT JOIN product_purchase pp on pp.sku_id = pi.id
             LEFT JOIN asset_purchase_order_detail apod ON apod.source_detail_id = and1.id AND apod.is_deleted = false
             LEFT JOIN asset_purchase_order apo ON apo.id = apod.main_id AND apo.approve_status = 'approve' and apo.is_deleted = false
         WHERE
@@ -90,9 +90,7 @@
             and1.asset_id,
             and1.asset_code,
             and1.asset_name,
-            mi.supplier_id,
-            mi.supplier_code,
-            mi.supplier_name,
+            pp.main_supplier,
             and1.plan_deliver_date,
             and1.apply_qty,
             and1.create_po_type
