@@ -109,6 +109,11 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         super.saveBatch(detailEntityList);
     }
 
+    @Override
+    public void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> assetPurchaseOrderDetailDTOList, String assetPurchaseOrderId) {
+
+    }
+
 
     /**
     * 新增修改处理数据
