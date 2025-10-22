@@ -47,4 +47,11 @@ public interface KingdeePaymentConditionService extends SuperService<KingdeePaym
      * @return List<KingdeePaymentConditionEntity>
      */
     List<KingdeePaymentConditionEntity> listByNameList(List<String> paymentConditionNames);
+    /**
+     * 查询所有付款条件
+     * @author will
+     * @date 2025/10/21 16:15
+     * @return List<KingdeePaymentConditionEntity>
+     */
+    List<KingdeePaymentConditionEntity> listAll();
 }

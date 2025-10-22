@@ -22,7 +22,6 @@ import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,20 +166,10 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
         // 新增数据
-        add(jsonObject,  thirdProcessEntity, fieldMapList, valueMapList);
+        //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
+        CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
+        createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
     }
-
-    //处理推送类型的消息
-    public void add(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,  List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
-        try {
-            //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
-            CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
-            createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
-        } catch (Exception e) {
-            throw new ServiceException("创建单据异常，msg= {}", e.getMessage());
-        }
-    }
-
 
     /**
      * 根据流程状态处理最终的回调逻辑。

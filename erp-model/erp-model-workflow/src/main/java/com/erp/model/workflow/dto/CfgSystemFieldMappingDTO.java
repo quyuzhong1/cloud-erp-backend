@@ -195,7 +195,7 @@ public class CfgSystemFieldMappingDTO implements Serializable {
         /**
          * 业务key，CfgQueryOptionBussinessKeyEnum枚举
          */
-        private String businessKey;
+        private String bussinessKey;
 
         /**
          * erp字段名称

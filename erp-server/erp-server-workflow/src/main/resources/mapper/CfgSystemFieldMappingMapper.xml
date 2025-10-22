@@ -50,19 +50,25 @@
             cqo.field_belongs_type as sysParentId
         from cfg_system_field_mapping csfm
         inner join cfg_query_option cqo on csfm.cfg_query_option_id = cqo.id and cqo.is_deleted = false
-        where is_deleted = false and csfm.disabled = false
-        <if test="params.useType != null and params.useType != ''">
-            and cqo.use_type = #{params.useType}
+        where csfm.is_deleted = false and csfm.disabled = false
+        <if test="params != null and params.size > 0" >
+            and
+            <foreach collection="params" open="(" item="item" close=")" separator="or">
+                <if test="item.useType != null and item.useType != ''">
+                    cqo.use_type = #{item.useType}
+                </if>
+                <if test="item.bussinessKey != null and item.bussinessKey != ''">
+                    and cqo.bussiness_key = #{item.bussinessKey}
+                </if>
+                <if test="item.sysField != null and item.sysField != ''">
+                    and cqo.condition_field = #{item.sysField}
+                </if>
+                <if test="item.sysParentId != null and item.sysParentId != ''">
+                    and cqo.field_belongs_type = #{item.sysParentId}
+                </if>
+            </foreach>
         </if>
-        <if test="params.businessKey != null and params.businessKey != ''">
-            and cqo.business_key = #{params.businessKey}
-        </if>
-        <if test="params.sysField != null and params.sysField != ''">
-            and cqo.condition_field = #{params.sysField}
-        </if>
-        <if test="params.sysParentId != null and params.sysParentId != ''">
-            and cqo.field_belongs_type = #{params.sysParentId}
-        </if>
+
     </select>
 
 

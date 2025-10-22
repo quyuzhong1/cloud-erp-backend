@@ -4,6 +4,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -12,7 +13,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.workflow.dto.CfgSystemFieldMappingDTO;
 import com.erp.model.workflow.entity.CfgSystemFieldMappingEntity;
 import com.erp.server.workflow.mapper.CfgSystemFieldMappingMapper;
@@ -24,7 +24,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -99,22 +101,26 @@ public class CfgSystemFieldMappingServiceImpl extends SuperServiceImpl<CfgSystem
     }
 
     @Override
-    public List<Object> listFeignQueryData(CfgSystemFieldMappingEntity entity) {
+    public List<JSONObject> listFeignQueryData(CfgSystemFieldMappingEntity entity) {
         if (CharSequenceUtil.isBlank(entity.getFeignPath()) || CharSequenceUtil.isBlank(entity.getFeignMethod())) {
             return Collections.emptyList();
         }
-        List<JSONObject> jsonObjectList = null;
+        // feign参数转换
+        List<Object> list;
+        try {
+             list = JSONUtil.toList(entity.getFeignParam(), Object.class);
+        } catch (Exception e) {
+            throw new ServiceException("远程查询参数转换失败,feignParam:{}"+entity.getFeignParam());
+        }
+
+        List<JSONObject> jsonObjectList;
         try {
              jsonObjectList = FeignQuery.invokeList(JSONObject.class, entity.getFeignPath(), entity.getFeignMethod(),
-                    Collections.singletonList(entity.getFeignParam()));
+                     list);
         } catch (Exception e) {
             throw new ServiceException("远程查询失败,feignPath:{},feignMethod:{},msg:{}"+entity.getFeignPath() + entity.getFeignMethod() + e.getMessage());
         }
-
-
-
-
-        return ;
+        return jsonObjectList;
     }
 
 

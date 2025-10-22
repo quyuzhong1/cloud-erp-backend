@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+import cn.hutool.json.JSONObject;
 import com.erp.model.workflow.entity.CfgSystemFieldMappingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -47,7 +48,7 @@ public interface CfgSystemFieldMappingService extends SuperService<CfgSystemFiel
      * @author will
      * @date 2025/10/20 10:40
      * @param cfgSystemFieldMappingEntity
-     * @return List<Object>
+     * @return List<JSONObject>
      */
-    List<Object> listFeignQueryData(CfgSystemFieldMappingEntity cfgSystemFieldMappingEntity);
+    List<JSONObject> listFeignQueryData(CfgSystemFieldMappingEntity cfgSystemFieldMappingEntity);
 }

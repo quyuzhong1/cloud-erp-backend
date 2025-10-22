@@ -115,6 +115,14 @@ public class ApproveTaskDetailDTO implements Serializable {
          * 字段信息
          */
         private CfgQueryOptionEntity cfgQueryOptionEntity;
+        /**
+         * 唯一编码
+         */
+        private String uniqueCode;
+        /**
+         * 数大臣所属表编码
+         */
+        private String sysParentId;
     }
 
     /**
@@ -149,7 +157,6 @@ public class ApproveTaskDetailDTO implements Serializable {
         /**
          * 数大臣字段值
          */
-        @NotBlank(message = "数大臣字段值不能为空")
         private String sysFieldValue;
 
         /**
