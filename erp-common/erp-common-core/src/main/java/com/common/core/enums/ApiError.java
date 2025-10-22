@@ -625,6 +625,8 @@ public enum ApiError implements Serializable {
     ERROR_95298(95298,"未找到资产通知单明细"),
     ERROR_95299(95299,"未找到可以下推的资产通知单"),
     ERROR_95300(95300,"资产通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
+    ERROR_MOLD_NOT_APPROVE(95301,"模具未审核通过"),
+    ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
     /**
      * TMS 错误
      * 从96000 开始

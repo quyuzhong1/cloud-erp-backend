@@ -181,6 +181,7 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         /**
         * 预警寿命（数量）
         */
+        @NotNull(message = "预警寿命（数量）不能为空")
         @Min(value = 1,message = "预警寿命（数量）不能小于1")
         private Integer alertLifeQty;
 
@@ -188,7 +189,8 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         * 预警寿命（%）
         */
         @Digits(integer = 12, fraction = 4, message = "预警寿命（%）整数位不能超过12位，小数位不能超过4位")
-        @DecimalMin(value = "0", inclusive = false, message = "预警寿命（%）必须大于0")
+        @DecimalMin(value = "0", message = "预警寿命（%）不能小于0")
+        @DecimalMax(value = "100", inclusive = true, message = "预警寿命（%）不能大于100")
         private BigDecimal alertLifeRate;
 
         /**
