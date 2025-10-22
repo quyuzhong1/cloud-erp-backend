@@ -50,7 +50,7 @@ public class AssetNoticeEntity extends BaseEntity<AssetNoticeEntity> {
     * 单据状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 申请人id
     */
