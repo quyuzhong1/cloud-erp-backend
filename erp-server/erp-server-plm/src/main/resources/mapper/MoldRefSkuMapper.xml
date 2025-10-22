@@ -110,6 +110,9 @@ mrs.sku_qty AS skuQty
         <if test="params.moldId != null and params.moldId != ''">
             and mrs.mold_id = #{params.moldId}
         </if>
+        <if test="params.moldCode != null and params.moldCode != ''">
+            and mrs.mold_code = #{params.moldCode}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and  (mrs.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%') or  mrs.product_name ILIKE concat('%',#{params.searchKeyword}::text,'%') )
             ORDER BY
