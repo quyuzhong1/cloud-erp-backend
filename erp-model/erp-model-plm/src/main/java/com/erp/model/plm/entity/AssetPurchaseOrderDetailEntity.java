@@ -80,8 +80,8 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
     /**
     * 计划交期
     */
-    @TableField("plan_delivery_date")
-    private LocalDate planDeliveryDate;
+    @TableField("plan_deliver_date")
+    private LocalDate planDeliverDate;
     /**
     * 是否加急
     */
@@ -112,6 +112,12 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
     */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 标识(首套模，复制模)
+     */
+    @TableField("tag")
+    private String tag;
 
 
     public static final String MAIN_ID = "main_id";
