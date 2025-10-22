@@ -365,11 +365,20 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         //sku信息
         List<String> assetCodeList = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetCode).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.getByIdList(assetCodeList);
-
+        LambdaQueryWrapper<ProductDetailEntity> skuQueryWrapper = new LambdaQueryWrapper<>();
+        skuQueryWrapper.in(ProductDetailEntity::getSkuNo,assetCodeList);
+        List<ProductDetailEntity> skuList = productDetailService.list(skuQueryWrapper);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
+
+        LambdaQueryWrapper<MoldInfoEntity> moldQueryWrapper = new LambdaQueryWrapper<>();
+        moldQueryWrapper.in(MoldInfoEntity::getCode,assetCodeList);
+        List<MoldInfoEntity> moldList = moldInfoService.list(moldQueryWrapper);
+        if (CollectionUtils.isEmpty(moldList)) {
+            throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+        }
+
 
         log.info("生成采购订单 ids= {}",ids);
 
@@ -457,6 +466,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     throw new ServiceException(ApiError.ERROR_95107);
                 }
 
+
+                MoldInfoEntity moldInfoEntity = moldList.stream().filter(obj -> obj.getCode().equals(generatePurchaseOrderDTO.getAssetCode())).findFirst().orElse(null);
+                if (org.springframework.util.ObjectUtils.isEmpty(moldInfoEntity)) {
+                    throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+                }
+
                 BeanUtils.copyProperties(generatePurchaseOrderDTO,addDetailDTO);
                 addDetailDTO.setAssetId(productDetailEntity.getId());
                 addDetailDTO.setAssetCode(productDetailEntity.getSkuNo());
@@ -468,6 +483,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setIsUrgent(Boolean.FALSE);
                 addDetailDTO.setIsEndReceive(Boolean.FALSE);
                 addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
+                addDetailDTO.setTag(moldInfoEntity.getTag());
                 details.add(addDetailDTO);
             }
             addDTO.setAssetPurchaseOrderDetailDTO(details);
