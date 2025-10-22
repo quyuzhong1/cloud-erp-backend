@@ -588,7 +588,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .set(PickingListsEntity::getPrintUserId, loginUser.getUid())
                     .set(PickingListsEntity::getPrintUserName, loginUser.getUserName())
                     .eq(PickingListsEntity::getId, pickingListsEntity.getId()).update();
-            operateLogService.addModuleOperateLog("执行了取消打印拣货单，状态变更为未打印", ModuleTypeEnum.PICKING_LISTS.getCode(), pickingListsEntity.getId(), "取消打印");
+            operateLogService.addModuleOperateLog("执行了取消打印拣货单，状态变更为取消打印", ModuleTypeEnum.PICKING_LISTS.getCode(), pickingListsEntity.getId(), "取消打印");
         });
     }
 
