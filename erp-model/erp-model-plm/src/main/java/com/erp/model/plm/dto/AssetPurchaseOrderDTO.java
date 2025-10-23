@@ -14,6 +14,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import org.python.antlr.ast.Str;
+
 import java.util.Map;
 
 /**
@@ -41,6 +43,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -107,6 +114,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
         */
         private String contractStampStatus;
+
+        /**
+         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
+         */
+        private String contractStampStatusName;
 
         /**
         * 单据类型

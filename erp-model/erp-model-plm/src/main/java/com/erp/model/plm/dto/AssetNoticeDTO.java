@@ -225,7 +225,7 @@ public class AssetNoticeDTO implements Serializable {
         /**
          * 计划交期
          */
-        private LocalDate planDeliverDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 申请数量
@@ -561,7 +561,7 @@ public class AssetNoticeDTO implements Serializable {
          * 计划交期
          */
         @NotNull(message = "计划交期不能为空")
-        private LocalDate planDeliverDate;
+        private LocalDate planDeliveryDate;
 
         private String remark;
 

@@ -51,7 +51,7 @@
             and1.asset_code AS assetCode,
             and1.asset_name AS assetName,
             pp.main_supplier AS supplierId,
-            and1.plan_deliver_date AS planDeliverDate,
+            and1.plan_delivery_date AS planDeliveryDate,
             and1.apply_qty AS applyQty,
             COALESCE((and1.apply_qty - COALESCE(SUM(apod.purchase_qty),0)), 0) AS waitQty,
             COALESCE(SUM(apod.purchase_qty),0) AS realPurchaseQty,

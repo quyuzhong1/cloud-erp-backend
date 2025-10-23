@@ -40,7 +40,7 @@ public interface AssetPurchaseOrderDetailService extends SuperService<AssetPurch
 
     void add(List<AssetPurchaseOrderDetailDTO.AddDTO> detailList, String assetPurchaseOrderId);
 
-    void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> assetPurchaseOrderDetailDTOList, String assetPurchaseOrderId);
+    void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList, String assetPurchaseOrderId);
 
 
 }

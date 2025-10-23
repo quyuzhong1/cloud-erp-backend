@@ -18,7 +18,7 @@
        <result column="asset_name" property="assetName" />
        <result column="tag" property="tag" />
        <result column="is_urgent" property="isUrgent" />
-       <result column="plan_deliver_date" property="planDeliverDate" />
+       <result column="plan_delivery_date" property="planDeliveryDate" />
        <result column="apply_qty" property="applyQty" />
        <result column="purchase_org_id" property="purchaseOrgId" />
        <result column="remark" property="remark" />
