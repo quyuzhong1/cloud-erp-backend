@@ -33,13 +33,13 @@ public class MercadoLocalReceiverDmpHandler extends DmpInputDoNextDmpHandler {
 
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_local_shipment_data");
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibreLocal_shipment_data");
 
         DmpInputTaskEntity dmpInputTaskEntity1 = list.stream().filter(req -> "1899659842348408324".equals(req.getCfgInputId())).findFirst().orElse(null);
 
         List<ParamData> paramDataList1 = new ArrayList<>();
         paramDataList1.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity1.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList1 = mongoService.findMongoData(paramDataList1, "mercadolibre_local_bill_data");
+        List<Map<String, Object>> dmpInputMongoChildList1 = mongoService.findMongoData(paramDataList1, "mercadolibreLocal_bill_data");
 
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if (CollUtil.isNotEmpty(detailList)) {
