@@ -1295,24 +1295,41 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
      * 归还人的台账就是借用单中的借入人台账，需要动态查询
      */
     private void validateReturnUserLedger(SampleReturnInfoEntity entity, List<SampleReturnDetailEntity> detailList) {
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleReturnDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getReturnUserId());
+        searchDTO.setUseUserId(entity.getReturnUserId()); // 归还人的使用方就是自己
+        searchDTO.setSkuIds(skuIds);
+        searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
         
-        // 查询归还人的台账ID（归还人就是借用单的借入人）
         for (SampleReturnDetailEntity detail : detailList) {
-            // 根据归还人信息查询台账
-            SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-            searchDTO.setUserId(entity.getReturnUserId());
-            searchDTO.setUseUserId(entity.getReturnUserId()); // 归还人的使用方就是自己
-            searchDTO.setSkuIds(new ArrayList<>(Arrays.asList(detail.getSkuId())));
-            searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
-            
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-            
-            if (CollUtil.isNotEmpty(ledgerList) && ledgerList.get(0) != null) {
-                SampleLedgerDTO.SkuAvailableQtyDTO ledgerDTO = ledgerList.get(0);
-                sampleLedgerIds.add(ledgerDTO.getSampleLedgerId());
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getReturnQty()); // 归还人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
@@ -1342,16 +1359,42 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
      * 接收人的台账就是借用单中的借出人台账（sampleLedgerId）
      */
     private void validateReceiverUserLedger(SampleReturnInfoEntity entity, List<SampleReturnDetailEntity> detailList) {
+        // 批量查询借用单明细：收集所有 sourceDetailId
+        List<String> sourceDetailIds = detailList.stream()
+                .map(SampleReturnDetailEntity::getSourceDetailId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(sourceDetailIds)) {
+            log.warn("归还单明细中没有来源明细ID，无法查询接收人台账，单据编号：{}", entity.getCode());
+            throw new ServiceException("归还单明细中没有来源明细ID，无法反审核");
+        }
+        
+        // 一次性批量查询所有借用单明细
+        List<SampleBorrowDetailEntity> borrowDetailList = sampleBorrowDetailService.listByIds(sourceDetailIds);
+        
+        // 构建 sourceDetailId -> sampleLedgerId 的映射
+        Map<String, String> sourceIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(borrowDetailList)) {
+            sourceIdToLedgerIdMap = borrowDetailList.stream()
+                    .filter(bd -> StrUtil.isNotBlank(bd.getSampleLedgerId()))
+                    .collect(Collectors.toMap(
+                            SampleBorrowDetailEntity::getId,
+                            SampleBorrowDetailEntity::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
         
-        // 接收人的台账ID就是借用单明细中的sampleLedgerId
         for (SampleReturnDetailEntity detail : detailList) {
-            // 从借用单明细获取sampleLedgerId（借出人的台账）
-            SampleBorrowDetailEntity borrowDetail = sampleBorrowDetailService.getById(detail.getSourceDetailId());
-            if (borrowDetail != null && StrUtil.isNotBlank(borrowDetail.getSampleLedgerId())) {
-                sampleLedgerIds.add(borrowDetail.getSampleLedgerId());
+            String ledgerId = sourceIdToLedgerIdMap.get(detail.getSourceDetailId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getReturnQty()); // 反审核时接收人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
