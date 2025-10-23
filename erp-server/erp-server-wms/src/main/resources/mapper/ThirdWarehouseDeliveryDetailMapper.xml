@@ -33,6 +33,17 @@
         is_deleted,
         main_id, sku_id, sku_no, delivery_qty, warehouse_id, platform_sku_no
     </sql>
+    <select id="listWaitShipByWarehouseIds" resultType="com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity">
+        select twd.*
+        from third_warehouse_delivery twd
+        inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
+        where twd.is_deleted = false
+        and twd.status = 'waitHandle'
+        and twdd.warehouse_id in
+        <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 
 
 </mapper>

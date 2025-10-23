@@ -83,4 +83,14 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
     public List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(@RequestBody List<String> mainIds){
         return thirdWarehouseDeliveryDetailService.listByMainIds(mainIds);
     }
+
+    /**
+     * 根据主表id获取详情列表
+     * @return
+     */
+    @PostMapping("/listWaitShipByWarehouseIds")
+    public List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseIds){
+        return thirdWarehouseDeliveryDetailService.listWaitShipByWarehouseIds(warehouseIds);
+    }
+
 }

@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.KingdeeParamDTO;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 
@@ -41,11 +42,11 @@ public interface KingdeeCommonService {
      * @param apiUtils
      * @param json
      * @param param
-     * @description: 新增或修改
+     * @description: 新增或修改后提审，审核
      * @author Will
      * @date: 2023/3/3 14:52
      */
-    Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
+    Boolean saveAndAutoApprove(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 
     /**
      * 新增或修改客户地址
@@ -279,6 +280,14 @@ public interface KingdeeCommonService {
      * @author Lambda
      */
     Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
+    /**
+     * 判断金蝶单据是否已审核
+     * @author will
+     * @date 2025/10/13 16:34
+     * @param kingdeeDTO
+     * @return String
+     */
+    String checkKingdeeSyncApprove(KingdeeDTO kingdeeDTO);
 }
 
 

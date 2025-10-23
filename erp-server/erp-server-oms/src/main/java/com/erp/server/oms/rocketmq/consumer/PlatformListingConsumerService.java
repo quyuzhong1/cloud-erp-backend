@@ -1,6 +1,7 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -24,6 +25,7 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -72,7 +74,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -102,13 +105,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null || PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), StrUtil.blankToDefault(dto.getAuthId(),""));
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-                paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+                paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
@@ -135,6 +138,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
+            //上传图片到文件服务器
+            if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
+                entity.setProductImageUrl(entity.getProductImageUrl());
+            }
+
             if (null == oldEntity) {
                 if (!listingInfoService.save(entity)) {
                     throw new ServiceException("【listing消费】Listing 产品保存失败");
@@ -143,6 +151,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
                 if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
                     skuMappingEntity.setHasMappingAll(true);
+                }
+                //订货通设置b2b平台
+                if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                    skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
                 }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");

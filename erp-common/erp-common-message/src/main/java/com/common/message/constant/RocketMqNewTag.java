@@ -188,4 +188,19 @@ public class RocketMqNewTag {
      * 新中台飞书审批实例详情对接
      */
     public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_tag";
+    
+    /**
+     * restcloud平台商品
+     */
+    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_tag";
+    
+    /**
+     * restcloudb2b订单
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_tag";
+    
+    /**
+     * restcloud收款单
+     */
+    public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_tag";
 }

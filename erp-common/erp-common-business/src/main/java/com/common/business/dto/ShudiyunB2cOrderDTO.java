@@ -2,6 +2,8 @@ package com.common.business.dto;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -640,29 +642,6 @@ public class ShudiyunB2cOrderDTO {
     }
     
     public void setDefaultValue() {
-    	if(StringUtils.isBlank(country_code) || StringUtils.equals("ALL", country_code)) {
-    		country_code = "CN";
-    	}
-    	if(StringUtils.isBlank(country)) {
-    		country = "中国大陆";
-    	}
-    	if(StringUtils.isBlank(region_code)) {
-    		region_code = "AS";
-    	}
-    	if(StringUtils.isBlank(region_name)) {
-    		region_name = "亚洲";
-    	}
-    	if(StringUtils.isBlank(military_region_code)) {
-    		military_region_code = "china";
-    	}
-    	if(StringUtils.isBlank(military_region_name)) {
-    		military_region_name = "中国军区";
-    	}
-    	if(StringUtils.isBlank(department_code)) {
-    		department_code = "BM00145";
-    	}
-    	if(StringUtils.isBlank(department_name)) {
-    		department_name = "直播电商组（中国军区 ）";
-    	}
+    	
     }
 }

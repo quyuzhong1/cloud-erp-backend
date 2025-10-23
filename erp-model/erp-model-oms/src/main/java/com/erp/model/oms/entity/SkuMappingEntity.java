@@ -147,8 +147,8 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
         this.listingId = entity.getId();
         this.warehouseId = "";
         this.warehouseName = "";
-        this.effectiveTime = LocalDateTime.now(ZoneId.systemDefault());
-        this.expireTime = this.effectiveTime.plusYears(MathUtil.NUMBER_100);
+        this.effectiveTime = LocalDateTime.now(ZoneId.systemDefault()).minusYears(MathUtil.NUMBER_100);
+        this.expireTime = LocalDateTime.now(ZoneId.systemDefault()).plusYears(MathUtil.NUMBER_100);
         this.isExpire = false;
     }
 }

@@ -238,7 +238,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : thirdFieldNotEmptyDTO) {
-            if (dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.DEFAULT.getCode()) || dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.NULLVALUE.getCode())) {
+            if (dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.DEFAULT.getCode()) || dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.NULLVALUE.getCode()) || CharSequenceUtil.equals(dto.getThirdFieldId(),"default")) {
                 // 校验通过后，进行保存或更新操作
                 if (StrUtil.isEmpty(dto.getId())) {
                     dto.setId(IdWorker.getIdStr());
@@ -249,6 +249,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 entitiesToAddOrUpdate.add(entity);
                 continue;
             }
+
             // 校验 dto 的 third_field_type 和 sys_field_type
             CfgQueryOptionFieldTypeEnum thirdFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getThirdFieldType().toUpperCase());
             CfgQueryOptionFieldTypeEnum sysFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getSysFieldType().toUpperCase());

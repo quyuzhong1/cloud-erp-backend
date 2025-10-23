@@ -893,25 +893,38 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
 
         Map<String, Object> finalResultMap = new HashMap<>();
+        //排序
+        Map<String, List<CfgProcessFieldMapEntity>> readListMap = reorderMap(groupedFieldMaps);
+        for (Map.Entry<String, List<CfgProcessFieldMapEntity>> entry : readListMap.entrySet()) {
+            String feishuWidgetId = entry.getKey();
+            List<CfgProcessFieldMapEntity> relevantFieldMaps = entry.getValue();
 
-        // 遍历飞书原始数据 Map
-        for (Map.Entry<String, Object> entry : feishuIdValueMap.entrySet()) {
-            String feishuWidgetId = entry.getKey(); // 飞书控件 ID (e.g., "customerName", "detailList")
-            Object feishuOriginalValue = entry.getValue(); // 飞书原始值
+            Object feishuOriginalValue = feishuIdValueMap.get(feishuWidgetId);
 
-            // 获取与当前飞书控件 ID 相关的字段映射配置
-            List<CfgProcessFieldMapEntity> relevantFieldMaps = groupedFieldMaps.get(feishuWidgetId);
-
-            // 如果没有找到对应的映射配置，则跳过此字段
-            if (relevantFieldMaps == null || relevantFieldMaps.isEmpty()) {
+            //如果key值是默认值则需要循环所有的映射
+            if ("default".equals(feishuWidgetId)) {
+                for (CfgProcessFieldMapEntity fieldMap : relevantFieldMaps) {
+                    Object object = finalResultMap.get(fieldMap.getSysParentId());
+                    if (ObjUtil.isEmpty(object)) {
+                        finalResultMap.put(fieldMap.getSysField(),fieldMap.getDefaultValue());
+                        continue;
+                    }
+                    if (object instanceof Map) {
+                        //将默认值加入object中
+                        ((Map<String, Object>) object).put(fieldMap.getSysField(),fieldMap.getDefaultValue());
+                    } else if ( object instanceof List) {
+                        //将默认值加入object中
+                        ((List<Map<String, Object>>) object).forEach(map -> map.put(fieldMap.getSysField(),fieldMap.getDefaultValue()));
+                    } else {
+                        finalResultMap.put(fieldMap.getSysField(),fieldMap.getDefaultValue());
+                    }
+                }
                 continue;
             }
 
-            // 判断当前字段是否是明细列表的父级字段
             // 我们通过检查 relevantFieldMaps 中第一个实体的 isDetailField 和 sysParentId 来判断
             boolean isDetailListParent = relevantFieldMaps.get(0).getIsDetailField() &&
                     CharSequenceUtil.isNotBlank(relevantFieldMaps.get(0).getSysParentId());
-
 
             if (feishuOriginalValue instanceof List && isDetailListParent) {
                 // 如果是明细列表，调用专门处理明细列表的方法
@@ -923,6 +936,25 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             }
         }
         return finalResultMap;
+    }
+
+    /**
+     * 排序MAP
+     * @author will
+     * @date 2025/9/30 10:46
+     * @param groupedFieldMaps
+     * @return Map<String,List<CfgProcessFieldMapEntity>>
+     */
+    private Map<String, List<CfgProcessFieldMapEntity>> reorderMap(Map<String, List<CfgProcessFieldMapEntity>> groupedFieldMaps) {
+        return groupedFieldMaps.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    if ("default".equals(e1.getKey())) return 1;
+                    if ("default".equals(e2.getKey())) return -1;
+                    return 0;
+                })
+                .collect(LinkedHashMap::new,
+                        (map, entry) -> map.put(entry.getKey(), entry.getValue()),
+                        LinkedHashMap::putAll);
     }
 
     /**
@@ -976,6 +1008,11 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      */
     private Object mapValue(Object feishuOriginalValue, CfgProcessFieldMapEntity fieldMap,
                             Map<String, List<CfgProcessValueMapEntity>> valueMapsByFieldMapId) {
+
+        //默认值直接取
+        if ("default".equals(fieldMap.getThirdFieldId())) {
+            return fieldMap.getDefaultValue();
+        }
 
         // 将原始值转换为字符串，便于处理多选和值映射
         String valueStr = (feishuOriginalValue == null) ? "" : feishuOriginalValue.toString();
@@ -1580,6 +1617,29 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             }
         }
 
+        //添加默认值
+        List<CfgProcessFieldMapEntity> defaultList = fieldMapByThirdFieldId.get("default");
+        if (CollUtil.isNotEmpty(defaultList)) {
+            List<ApproveTaskDetailDTO.AddDTO> addDefaultList = new ArrayList<>();
+            for  (CfgProcessFieldMapEntity fieldMapEntity : defaultList) {
+                if (CharSequenceUtil.equals(fieldMapEntity.getSysParentId(),"main")) {
+                    ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.toBean(fieldMapEntity, ApproveTaskDetailDTO.AddDTO.class);
+                    addDTO.setSysFieldValue(fieldMapEntity.getDefaultValue());
+                    addDTO.setEntityCode(fieldMapEntity.getSysParentId());
+                    addDefaultList.add(addDTO);
+                } else {
+                    List<Integer> indexList = detailList.stream().filter(obj ->CharSequenceUtil.equals(obj.getEntityCode(), fieldMapEntity.getSysParentId())).map(ApproveTaskDetailDTO.AddDTO::getIndex).distinct().collect(Collectors.toList());
+                    for (Integer index : indexList) {
+                        ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.toBean(fieldMapEntity, ApproveTaskDetailDTO.AddDTO.class);
+                        addDTO.setSysFieldValue(fieldMapEntity.getDefaultValue());
+                        addDTO.setEntityCode(fieldMapEntity.getSysParentId());
+                        addDTO.setIndex(index);
+                        addDefaultList.add(addDTO);
+                    }
+                }
+            }
+            detailList.addAll(addDefaultList);
+        }
         System.out.println("生成的DTO数量: " + detailList.size());
         return detailList;
     }

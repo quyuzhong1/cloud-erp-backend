@@ -33,6 +33,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.dto.AuthUserShopDTO;
+import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -293,10 +294,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //        }
 
         if (StringUtils.isBlank(countryId)) {
-            countryId = DictValueEnum.ALL.getCode();
+            countryId = DictValueEnum.CN.getCode();
         }
         customer.setName(shop.getName());
         customer.setCountryId(countryId);
+        List<CfgCountryPartitionEntity> cfgCountryPartitionEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry, countryId).list();
+        if(CollUtil.isNotEmpty(cfgCountryPartitionEntityList)) {
+        	customer.setPartitionId(cfgCountryPartitionEntityList.get(0).getPartitionId());
+        }
         //币种
         customer.setCurrency(currency);
         customer.setSellerId(shop.getChargeId());

@@ -12,7 +12,6 @@ import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -61,4 +60,14 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/updateDmpOutputTaskRecordEntity")
     Boolean updateDmpOutputTaskRecordEntity(@RequestBody List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
+
+    /**
+     * 获取最后一条拉取记录
+     * @author will
+     * @date 2025/8/27 18:23
+     * @param paramDTO
+     * @return LastPullDTO
+     */
+    @PostMapping("feign/inout/getLastPullRecord")
+    DmpPushTaskDTO.LastPullDTO getLastPullRecord(@RequestBody DmpPushTaskDTO.LastPullParamDTO paramDTO);
 }

@@ -25,13 +25,14 @@ import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -561,6 +562,43 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping("/autoDeliveryDisApprove")
     public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return soDeliveryNoticeService.autoDeliveryDisApprove(dto);
+    }
+
+    /**
+     * 允许出库
+     * @author will
+     * @date 2025/8/29 17:39
+     * @param list
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "允许出库")
+    @PostMapping(value = "/batchUpdateIsAllowOutstock")
+    public ApiResult<List<BatchResultDTO>> batchUpdateIsAllowOutstock(@RequestBody @Validated ValidList<SoDeliveryNoticeDTO.PermitOutstockDTO> list) {
+        List<String> ids = list.stream().map(SoDeliveryNoticeDTO.PermitOutstockDTO::getId).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(ids);
+        for (SoDeliveryNoticeDTO.PermitOutstockDTO dto : list) {
+            String id = dto.getId();
+            BatchResultDTO resultDTO;
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soDeliveryNoticeService.updateIsAllowOutstock(entity,dto);
+            }catch (Exception e){
+                log.error("发货通知单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
 

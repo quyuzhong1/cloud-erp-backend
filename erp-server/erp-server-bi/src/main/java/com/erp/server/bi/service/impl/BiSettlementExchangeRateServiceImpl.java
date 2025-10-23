@@ -9,8 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -25,7 +24,10 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.dmp.entity.AfterSaleEntity;
+import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
@@ -65,6 +67,8 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO) {
@@ -224,6 +228,8 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             updateSettlementExchangeRate(list);
             //添加redis
             list.stream().forEach(this::setRedisExchangeRate);
+            //同步订货通
+            createSyncDhtMsg(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("汇率【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
@@ -232,6 +238,22 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         }
 
         return Boolean.TRUE;
+    }
+
+    public void createSyncDhtMsg(List<BiSettlementExchangeRateEntity> list) {
+        //过滤掉目标币别不是cny的数据
+        list = list.stream().filter(v->v.getTargetCurrencyCode().equals(CurrencyEnum.CNY.getCurrencyCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<DmpPushMsgEntity> msgList = new ArrayList<>();
+        for (BiSettlementExchangeRateEntity entity : list) {
+            DmpPushMsgEntity dmpPushMsgEntity = buildDmpPushMsgEntity(entity);
+            msgList.add(dmpPushMsgEntity);
+        }
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            dmpTaskFeign.batchCreateDmpPushMsg(msgList);
+        }
     }
 
 
@@ -305,6 +327,41 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
                 .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
                 .map(BiSettlementExchangeRateEntity::getExchangeRate)
                 .findFirst().orElse(null);
+    }
+
+    @Override
+    public void syncLastestRateToDht() {
+        List<BiSettlementExchangeRateEntity> list = this.list();
+        //过滤掉目标币别不是cny的数据和状态不是已审核
+        list = list.stream().filter(v->v.getTargetCurrencyCode().equals(CurrencyEnum.CNY.getCurrencyCode())
+                && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
+        //source_currency_code相同 取settlement_date_begin 最大的一条
+        Map<String, BiSettlementExchangeRateEntity> map = list.stream().collect(Collectors.toMap(BiSettlementExchangeRateEntity::getSourceCurrencyCode, v -> v, (v1, v2) -> {
+            if (v1.getSettlementDateBegin().isAfter(v2.getSettlementDateBegin())) {
+                return v1;
+            } else {
+                return v2;
+            }
+        }));
+        list = new ArrayList<>(map.values());
+        log.warn("同步最新汇率到订货通，list=【{}】", JSONUtil.toJsonStr(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            createSyncDhtMsg(list);
+        }
+    }
+
+    // 构建DmpPushMsgEntity
+    private DmpPushMsgEntity buildDmpPushMsgEntity(BiSettlementExchangeRateEntity biSettlementExchangeRateEntity) {
+        DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
+        dmpPushMsgEntity.setTargetPlatform(PlatformDictEnum.DHT.getCode());
+        dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
+        dmpPushMsgEntity.setSourceType(SourceTypeEnum.BD_RATE.getCode());
+        dmpPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        dmpPushMsgEntity.setSourceId(biSettlementExchangeRateEntity.getId());
+        dmpPushMsgEntity.setSourceCode(biSettlementExchangeRateEntity.getSourceCurrencyCode());
+        dmpPushMsgEntity.setPushData(JSONUtil.toJsonStr(biSettlementExchangeRateEntity));
+        dmpPushMsgEntity.setMessageCreateTime(LocalDateTime.now());
+        return dmpPushMsgEntity;
     }
 
 

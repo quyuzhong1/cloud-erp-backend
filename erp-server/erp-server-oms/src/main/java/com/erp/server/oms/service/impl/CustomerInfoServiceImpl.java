@@ -36,6 +36,8 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
@@ -55,6 +57,8 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.DhtService;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -103,6 +107,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private CommonService commonService;
 
     @Resource
+    private SyncDhtService syncDhtService;
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Resource
@@ -123,6 +129,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Resource
+    private DhtService dhtService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -165,6 +173,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     /**
      * 获取到分组的id 集合
      *
@@ -259,7 +270,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -361,7 +372,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -399,6 +410,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return false;
         }
         List<CustomerInfoEntity> list = this.listByIds(ids);
+        
+        List<CustomerInfoEntity> hasPartitionList = list.stream().filter(l -> StringUtils.isNotBlank(l.getPartitionId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(hasPartitionList)) {
+        	Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+            Map<String, String> dictPartitionIdCodeMap = FeignQuery.getByIds(DictPartitionEntity.class, 
+            		hasPartitionList.stream().map(CustomerInfoEntity::getPartitionId).filter(Objects::nonNull).collect(Collectors.toList()))
+            		  .stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getCode));
+            String errorDepartmentCodeJoin = hasPartitionList.stream().filter(l -> queryAndCacheOmsDictBasic(cacheMap, dictPartitionIdCodeMap.get(l.getPartitionId()), l.getPlatformType()) == null)
+            		.map(CustomerInfoEntity::getCode).collect(Collectors.joining("、"));
+            if(StringUtils.isNotBlank(errorDepartmentCodeJoin)) {
+            	throw new ServiceException(errorDepartmentCodeJoin + "军区未关联部门，请联系实施配置");
+            }
+        }
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -433,6 +457,58 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return result;
 
+    }
+    
+    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String partitionCode, String dictPlatform) {
+        if (StringUtils.isBlank(partitionCode) || StringUtils.isBlank(dictPlatform)){
+            return null;
+        }
+        Map<String, Object> dictBasicMap = cacheMap.getOrDefault("omsDictBasic", new HashMap<>());
+        List<DictBasicEntity> sdyPartitionDeptList = new ArrayList<>();
+        List<DictBasicEntity> sdyPlatformDeptList = new ArrayList<>();
+        List<SysDepartmentEntity> deptList = new LinkedList<>();
+
+        Object level1ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+        Object level2ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+        Object deptListObj = dictBasicMap.get("deptList");
+        if (null == level2ListObj || null == level1ListObj || null == deptListObj) {
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
+            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+                Map<String, List<DictBasicEntity>> groupMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+                sdyPartitionDeptList = groupMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+                sdyPlatformDeptList = groupMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+                dictBasicMap.putAll(groupMap);
+            }
+            // 部门信息
+            deptList = sysUserFeign.getDeptEntityList();
+            if (CollectionUtils.isNotEmpty(deptList)){
+                dictBasicMap.put("deptList", deptList);
+            }
+            cacheMap.put("omsDictBasic", dictBasicMap);
+        } else {
+            sdyPartitionDeptList = (List<DictBasicEntity>) level1ListObj;
+            sdyPlatformDeptList = (List<DictBasicEntity>) level2ListObj;
+            deptList = (List<SysDepartmentEntity>) deptListObj;
+        }
+
+        // 军区一级部门映射
+        DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(partitionCode)).findFirst().orElse(null);
+        // 销售平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
+            List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+            return deptList.stream().filter(e -> e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                    && deptLevel2Ids.contains(e.getId())
+                    )
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
     }
 
     /**
@@ -608,12 +684,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 subregionName = globalArea.getSubregionName();
             }
         }
-        if(StringUtils.isNotBlank(customer.getCountryId())){
-            List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,customer.getCountryId()).list();
-            if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
-                view.setPartitionName(cfgCountryPartitionEntity.get(0).getPartitionName());
-                view.setPartitionCode(cfgCountryPartitionEntity.get(0).getPartitionCode());
-                view.setPartitionId(cfgCountryPartitionEntity.get(0).getPartitionId());
+        String partitionId = customer.getPartitionId();
+		if(StringUtils.isNotBlank(partitionId)){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class, partitionId);
+            if(dictPartitionEntity != null){
+                view.setPartitionName(dictPartitionEntity.getName());
+                view.setPartitionCode(dictPartitionEntity.getCode());
             }
         }
         view.setAreaName(areaName);
@@ -771,7 +847,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //修改附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
 
             //批量修改联系人信息
             List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());
@@ -866,6 +942,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerSellerService.batchSellerHistory(list, LocalDate.now());
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_APPROVE.getCode());
             List<String> countryIdList = list.stream().map(CustomerInfoEntity::getCountryId).collect(Collectors.toList());
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
             list.forEach(customer->{
@@ -883,6 +961,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         return Boolean.TRUE;
+    }
+
+    private void sendDhtPushTask(List<CustomerInfoEntity> list, String code) {
+        //查询地址
+        List<String> ids = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = customerAddressService.listAllByMainIds(ids);
+        for (CustomerInfoEntity customerInfo : list) {
+            syncDhtService.createSyncCustomerTaskToDht(customerInfo,code);
+        }
+        for (CustomerAddressEntity customerAddressEntity : customerAddressEntities) {
+            String newOperate = customerAddressEntity.getIsDeleted() ? SyncOperateEnum.OPERATE_DELETE.getCode() : code;
+            syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity, newOperate);
+        }
     }
 
 
@@ -924,6 +1015,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1072,7 +1165,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (dto.getDisabled()) {
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
+        // 发送金蝶
         sendPushTask(customerList,operate);
+        // 发送订货通
+        sendDhtPushTask(customerList, operate);
         return  update;
     }
 
@@ -2437,5 +2533,26 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public void updateApproveStatus(CustomerInfoEntity entity) {
         this.updateById(entity);
+    }
+
+    @Override
+    public CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto) {
+        CustomerInfoEntity entity = this.getById(dto.getId());
+        return dhtService.queryCustomerAccountByCustomerCode(entity);
+    }
+
+    @Override
+    public Boolean isSyncDht(String customerId) {
+        if(StringUtils.isBlank(customerId)){
+            return false;
+        }
+        CfgSettingEntity cfgSetting = cfgSettingService.getSettingByKey(CfgSettingEnum.DHT_CUSTOMER_WHITELIST.getCode());
+        if(cfgSetting != null && StringUtils.isNotBlank(cfgSetting.getValue())){
+            List<String> whitelist = Arrays.asList(cfgSetting.getValue().split(","));
+            if(whitelist.contains(customerId)){
+                return true;
+            }
+        }
+        return false;
     }
 }

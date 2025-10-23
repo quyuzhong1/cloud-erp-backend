@@ -14,12 +14,20 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
         si.code,
+        si.platform_order_code as platformOrderCode,
+        si.dict_platform as dictPlatform,
+        si.account_deduct_amount as accountDeductAmount,
+        si.rebate_deduct_amount as rebateDeductAmount,
+        si.credit_deduct_amount as creditDeductAmount,
+        si.platform_order_code as platformOrderCode,
+        si.order_amount as orderAmount,
         si.order_type AS orderType,
         si.approve_status AS approveStatus,
         si.customer_id AS customerId,
         si.invalid_status AS invalidStatus,
         si.sales_org_name AS salesOrgName,
         si.seller_name AS sellerName,
+        si.discount_amount AS discountAmount,
         sod.delivery_status AS deliveryStatus,
         si.require_date AS requireDate,
         si.create_user_name AS createUserName,
@@ -59,7 +67,8 @@
         sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        GREATEST(si.order_amount - si.discount_amount - si.receive_amount - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiveAmount
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -189,6 +198,7 @@
             si.receive_method AS receiveMethod,
             si.receive_date AS receiveDate,
             si.receive_amount AS receiveAmount,
+        si.order_amount as orderAmount,
             si.trade_term AS tradeTerm,
             sod.amount_local_currency AS amountLocalCurrency,
             sod.all_amount_local_currency AS allAmountLocalCurrency,
@@ -220,6 +230,7 @@
             sod.is_reissue AS isReissue,
             sod.is_close AS isClose,
             sod.platform_sku_no AS platformSkuNo,
+        sod.customer_sku_no AS customerSkuNo,
             sod.frozen_qty as frozenQty,
             sod.to_country as toCountry,
         fdp.id as partitionId,

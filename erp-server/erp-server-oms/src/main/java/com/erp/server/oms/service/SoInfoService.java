@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -42,11 +43,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 提交
      *
      * @param entity
+     * @param isFromDht
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
      */
-    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess);
+    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht);
 
 
     /**
@@ -134,13 +136,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     /**
      * 结束审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 10:55
+     *
      * @param dto
      * @param entity
+     * @param isSyncDht
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:55
      **/
-    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity);
+    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity, boolean isSyncDht);
 
     /**
      * 反审核
@@ -526,4 +530,22 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
+
+    void updateSoReceiptAmount(List<String> soIds);
+
+    void handlePlatformConsumer(PlatformB2bOrderDTO dto);
+
+    SoInfoEntity getByThirdSystemAndCode(String thirdSystem, String code);
+
+    BatchResultDTO skuMappingBatch(String id);
+
+    List<SoInfoEntity> listByPlatformOrderCodes(List<String> platformOrderCodeList,String dictPlatform);
+    /**
+     * 更新订货通平台订单id
+     * @author will
+     * @date 2025/9/23 12:07
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
 }
