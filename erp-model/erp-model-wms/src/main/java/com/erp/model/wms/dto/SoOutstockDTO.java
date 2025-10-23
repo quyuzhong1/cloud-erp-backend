@@ -421,6 +421,10 @@ public class SoOutstockDTO implements Serializable {
          * 客户备注
          */
         private String customerRemark;
+        /**
+         * 客户采购订单号
+         */
+        private String customerPO;
     }
 
     /**·

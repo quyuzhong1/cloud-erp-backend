@@ -98,7 +98,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     private static final String CLASSPATH = String.valueOf(ProjectTaskEntity.class);
 
@@ -587,10 +587,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 
-        List<SysLogEntity> addSyslogList = new ArrayList<>(taskList.size());
+        List<OperateLogEntity> addSyslogList = new ArrayList<>(taskList.size());
 
         for (ProjectTaskEntity item : taskList) {
-            SysLogEntity sysLogEntity = new SysLogEntity();
+            OperateLogEntity operateLogEntity = new OperateLogEntity();
 
             StringBuilder sb = new StringBuilder();
             sb.append(userName).append(" ").append(nowTime).append(" ").append("变更");
@@ -627,18 +627,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             sb.append(entity.getChangeStartTime()).append(" ");
             sb.append("原始计划结束时间 ").append(item.getPlanStartTime()).append("变更为 ");
             sb.append(entity.getChangeEndTime()).append(" ");
-            sysLogEntity.setClassPath(CLASSPATH);
-            sysLogEntity.setBusinessId(taskId);
-            sysLogEntity.setContent(sb.toString());
-            sysLogEntity.setCreateUserId(userId);
-            sysLogEntity.setCreateUserName(userName);
+            operateLogEntity.setClassPath(CLASSPATH);
+            operateLogEntity.setBusinessId(taskId);
+            operateLogEntity.setContent(sb.toString());
+            operateLogEntity.setCreateUserId(userId);
+            operateLogEntity.setCreateUserName(userName);
 
             addList.add(entity);
-            addSyslogList.add(sysLogEntity);
+            addSyslogList.add(operateLogEntity);
         }
         Boolean saveResult = this.saveBatch(addList);
         if (saveResult) {
-            sysLogService.addSysLogByBatchSave(addSyslogList);
+            operateLogService.addSysLogByBatchSave(addSyslogList);
         }
 
 

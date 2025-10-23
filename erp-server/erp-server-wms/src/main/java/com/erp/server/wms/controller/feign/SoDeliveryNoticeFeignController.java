@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -101,6 +102,15 @@ public class SoDeliveryNoticeFeignController {
     }
 
     /**
+     * 根据销售订单查询发货通知单
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/listDeliveryNoticeBySoIds")
+    public List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(@RequestBody List<String> soIds) {
+        return soDeliveryNoticeService.listDeliveryNoticeBySoIds(soIds);
+    }
+    /**
      * 通过源id获取通知记录
      *
      * @param id
@@ -120,5 +130,12 @@ public class SoDeliveryNoticeFeignController {
     public SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id) {
         return soDeliveryNoticeDetailService.getById(id);
     }
-
+    /**
+     * 更新销售信息
+     * @param soInfoEntity
+     */
+    @PostMapping("/updateSalesInfo")
+    public void updateSalesInfo(@RequestBody SoInfoEntity soInfoEntity){
+        soDeliveryNoticeService.updateSalesInfo(soInfoEntity);
+    }
 }
