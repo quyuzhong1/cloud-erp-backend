@@ -3,16 +3,20 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -39,6 +43,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.ApproveTypeEnum.PASS;
@@ -128,6 +133,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
     @GlobalTransactional(rollbackFor = Exception.class)
     public void addFreshGenerate(JSONObject jsonObject, Map<String, Object> map, CfgThirdProcessEntity thirdProcessEntity,
                                  List<ApproveTaskDetailDTO.AddDTO> addDTOS) {
+        String createUserId = jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
         JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
         JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
         String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
@@ -163,6 +169,8 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         String reason = "";
         String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
         try {
+            //查找创建人
+            addCreateUser(createUserId,addDTO);
             //添加供应商
             ValidatorUtil.validateEntity(addDTO);
             batchResultDTO = supplierFeign.add(addDTO);
@@ -181,6 +189,29 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
             thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
         }
+    }
+
+    /**
+     * 创建人
+     * @author will
+     * @date 2025/9/29 10:19
+     * @param createUserId
+     * @return FindUserDTO
+     */
+    @Override
+    public void addCreateUser (String createUserId,SupplierDTO.InsertDTO addDTO) {
+        SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), createUserId);
+        if (Objects.isNull(userByThird)) {
+            throw new ServiceException("飞书创建人未绑定，请绑定后重新生成,thirdUserId:"+createUserId);
+        }
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
+        if (ObjUtil.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+        }
+        addDTO.setCreateUserId(findUserDTO.getUserId());
+        addDTO.setCreateUserName(findUserDTO.getUserName());
+        addDTO.setUpdateUserId(findUserDTO.getUserId());
+        addDTO.setUpdateUserName(findUserDTO.getUserName());
     }
 
     /**

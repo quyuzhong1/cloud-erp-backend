@@ -10,7 +10,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -20,7 +19,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -36,7 +34,6 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
@@ -46,10 +43,8 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Instant;
@@ -441,7 +436,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
             try {
                 //查找创建人
-                addCreateUser(createUserId,addDTO);
+                fsInstancesService.addCreateUser(createUserId,addDTO);
                 // 第二步：保存供应商信息
                 ValidatorUtil.validateEntity(addDTO);
                 batchResultDTO = supplierFeign.add(addDTO);
@@ -463,6 +458,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
     }
+
 
     @Override
     public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {

@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import cn.hutool.json.JSONObject;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 
@@ -36,12 +37,22 @@ public interface FsInstancesService {
      *
      * @author will
      * @date 2025/10/23 16:01
- * @param jsonObject
- * @param map
- * @param thirdProcessEntity
- * @param addDTOS
+     * @param jsonObject
+     * @param map
+     * @param thirdProcessEntity
+     * @param addDTOS
      * @return void
      */
     void addFreshGenerate(JSONObject jsonObject, Map<String, Object> map, CfgThirdProcessEntity thirdProcessEntity,
                           List<ApproveTaskDetailDTO.AddDTO> addDTOS);
+
+    /**
+     * 创建人
+     * @author will
+     * @date 2025/10/23 16:15
+     * @param createUserId
+     * @param addDTO
+     * @return void
+     */
+    void addCreateUser (String createUserId, SupplierDTO.InsertDTO addDTO);
 }
