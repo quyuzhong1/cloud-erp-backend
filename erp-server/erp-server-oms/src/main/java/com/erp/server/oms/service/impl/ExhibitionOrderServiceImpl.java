@@ -10,6 +10,9 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
@@ -157,6 +160,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private KingdeeFeign kingdeeFeign;
     @Resource
     private SampleLedgerFeign sampleLedgerFeign;
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
     @Resource
     private SoDetailService soDetailService;
     @Resource
@@ -834,6 +843,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE)
                 .update();
 
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -892,6 +904,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
+        
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //判断上一次的审核的任务是否已经全部执行成功
@@ -2350,6 +2366,26 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         }
 
         return 0;
+    }
+
+    /**
+     * 使用分布式锁校验样品台账数量
+     * 展会订单：审核-X，反审核+X
+     */
+    private void validateSampleLedgerQtyWithLock(ExhibitionOrderEntity entity, ApproveTypeEnum approveType) {
+        // 获取展会订单明细
+        List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery()
+                .eq(ExhibitionOrderDetailEntity::getMainId, entity.getId())
+                .list();
+        
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品展会订单",
+            detailList,
+            approveType,
+            sampleLedgerFeign::getLedgerQtyMap
+        );
     }
 
 
