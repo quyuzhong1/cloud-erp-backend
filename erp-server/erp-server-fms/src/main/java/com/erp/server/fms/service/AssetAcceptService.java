@@ -201,4 +201,12 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
                                 List<com.erp.model.fms.dto.excel.AssetAcceptExcelDTO> errorList2, 
                                 String importType);
 
+    /**
+     * 下载导入模板
+     * @author wuht
+     * @date: 2025-10-23
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
 }

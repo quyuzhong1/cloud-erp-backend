@@ -2,6 +2,7 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.erp.server.fms.service.AssetAcceptService;
+import com.erp.server.fms.service.AssetCardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +23,9 @@ public class ImportFmsFeignController {
 
     @Resource
     private AssetAcceptService assetAcceptService;
+    
+    @Resource
+    private AssetCardService assetCardService;
 
     /**
      * 导入资产验收表
@@ -34,6 +38,21 @@ public class ImportFmsFeignController {
             assetAcceptService.importAssetAccept(dto);
         } catch (Exception e) {
             log.error("导入资产验收表失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 导入资产卡片
+     * @param dto 导入参数
+     */
+    @PostMapping("/assetCard")
+    public void importAssetCard(@RequestBody BaseDTO.ImportDTO dto) {
+        log.info("开始导入资产卡片，任务ID：{}", dto.getTaskId());
+        try {
+            assetCardService.importAssetCard(dto);
+        } catch (Exception e) {
+            log.error("导入资产卡片失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
             throw e;
         }
     }

@@ -89,7 +89,7 @@ public class AssetCardController extends BaseController {
     }
 
     /**
-    * 列表查询
+    * 列表查询 fms:assetCard:paging
     * @author wuht
     * @date: 2025-10-11
     * @param dto
@@ -407,5 +407,17 @@ public class AssetCardController extends BaseController {
         assetCardService.exportList(dto, response);
     }
 
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-01-10
+    * @param dto
+    * @return
+    */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "资产卡片主表导入Excel")
+    public ApiResult<Boolean> importFile(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        return success(assetCardService.importFile(dto));
+    }
 
 }

@@ -152,4 +152,21 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetCardEntity entity);
 
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-01-10
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 异步导入资产卡片
+    * @author wuht
+    * @date: 2025-01-10
+    * @param dto
+    */
+    void importAssetCard(BaseDTO.ImportDTO dto);
+
 }

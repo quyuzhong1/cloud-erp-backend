@@ -484,4 +484,18 @@ public class AssetAcceptController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 下载导入模板
+     * @author wuht
+     * @date: 2025-10-23
+     * @param response
+     * @return ApiResult<Object>
+     */
+    @GetMapping("/downloadTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产验收单导入模板")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        assetAcceptService.downloadTemplate(response);
+        return success();
+    }
+
 }

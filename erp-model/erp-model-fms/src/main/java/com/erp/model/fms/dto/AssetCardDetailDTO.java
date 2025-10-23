@@ -111,11 +111,6 @@ public class AssetCardDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
 
     }
 
@@ -124,9 +119,13 @@ public class AssetCardDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * id 新增这个字段为空
+         */
+        private String id;
+
+        /**
         * 来源明细ID
         */
-        @NotBlank(message = "来源明细ID不能为空")
         @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
         private String sourceDetailId;
 
@@ -167,14 +166,12 @@ public class AssetCardDetailDTO implements Serializable {
         /**
         * 供应商名称
         */
-        @NotBlank(message = "供应商名称不能为空")
         @Size(max = 100,message = "供应商名称最大长度不能超过100位")
         private String supplierName;
 
         /**
         * 使用部门名称
         */
-        @NotBlank(message = "使用部门名称不能为空")
         @Size(max = 50,message = "使用部门名称最大长度不能超过50位")
         private String useDeptName;
 
