@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.plm.dto.AssetNoticeDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderSupplierEntity;
+import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
@@ -630,16 +631,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 只查询未作废的订单
         queryWrapper.eq(AssetPurchaseOrderEntity::getInvalidStatus, Boolean.FALSE);
         
-        // 关键字查询：支持code和supplierName模糊查询
+        // 关键字查询：支持code模糊查询
         if (StrUtil.isNotBlank(paramDTO.getKeyword())) {
-            queryWrapper.and(wrapper -> wrapper
-                .like(AssetPurchaseOrderEntity::getCode, paramDTO.getKeyword())
-            );
+            queryWrapper.like(AssetPurchaseOrderEntity::getCode, paramDTO.getKeyword());
         }
         
         // 按采购日期倒序排列
         queryWrapper.orderByDesc(AssetPurchaseOrderEntity::getPurchaseDate);
-
 
         // 查询数据
         List<AssetPurchaseOrderEntity> entityList = this.list(queryWrapper);
@@ -647,6 +645,25 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (CollUtil.isEmpty(entityList)) {
             return new ArrayList<>();
         }
+        
+        // 获取所有订单ID
+        List<String> orderIds = entityList.stream()
+                .map(AssetPurchaseOrderEntity::getId)
+                .collect(Collectors.toList());
+        
+        // 批量查询供应商信息
+        List<AssetPurchaseOrderSupplierEntity> supplierList = assetPurchaseOrderSupplierService.list(
+                new LambdaQueryWrapper<AssetPurchaseOrderSupplierEntity>()
+                        .in(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, orderIds)
+        );
+        
+        // 构建订单ID到供应商信息的映射
+        Map<String, AssetPurchaseOrderSupplierEntity> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(
+                        AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
         
         // 转换为DTO
         return entityList.stream().map(entity -> {
@@ -657,6 +674,14 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             selectDTO.setPurchaseUserName(entity.getPurchaseUserName());
             selectDTO.setApproveStatus(entity.getApproveStatus());
             selectDTO.setApproveStatusName(ApproveStatusEnum.getName(entity.getApproveStatus()));
+            
+            // 设置供应商信息
+            AssetPurchaseOrderSupplierEntity supplier = supplierMap.get(entity.getId());
+            if (supplier != null) {
+                selectDTO.setSupplierId(supplier.getSupplierId());
+                selectDTO.setSupplierName(supplier.getSupplierName());
+            }
+            
             return selectDTO;
         }).collect(Collectors.toList());
     }
