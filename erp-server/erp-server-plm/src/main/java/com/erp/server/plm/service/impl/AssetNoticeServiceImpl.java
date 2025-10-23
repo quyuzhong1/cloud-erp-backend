@@ -783,7 +783,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        startDTO.setBusinessKey(SourceTypeEnum.MOULD_INFO.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_NOTICE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
