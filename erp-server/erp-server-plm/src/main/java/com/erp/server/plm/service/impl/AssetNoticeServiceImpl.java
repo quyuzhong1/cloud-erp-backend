@@ -204,8 +204,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
+        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
@@ -339,7 +339,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             viewGeneratePurchaseOrderDTO.setId(assetNoticeDetailEntity.getMainId());
             viewGeneratePurchaseOrderDTO.setAssetNoticeDetailId(assetNoticeDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetNoticeEntity.getCode());
-            viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliverDate());
+            viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliveryDate());
 
             viewGeneratePurchaseOrderDTOS.add(viewGeneratePurchaseOrderDTO);
         }
@@ -423,7 +423,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             //采购订单供应商信息
             AssetPurchaseOrderSupplierDTO.AddDTO supplierDTO = new AssetPurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(value.get(0).getSupplierId());
-
+            supplierDTO.setSupplierName(value.get(0).getSupplierName());
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.stream()
                     .filter(obj -> obj.getSupplierEntity().getId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
             SupplierContactEntity defaultSupplierContact = supplierDefaultDTO.getSupplierContactEntity();

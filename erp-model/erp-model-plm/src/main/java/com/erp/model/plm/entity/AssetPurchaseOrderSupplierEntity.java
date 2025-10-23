@@ -35,6 +35,11 @@ public class AssetPurchaseOrderSupplierEntity extends BaseEntity<AssetPurchaseOr
     @TableField("supplier_id")
     private String supplierId;
     /**
+     * 供应商名称
+     */
+    @TableField("supplier_name")
+    private String supplierName;
+    /**
     * 结算方式
     */
     @TableField("pay_method_id")

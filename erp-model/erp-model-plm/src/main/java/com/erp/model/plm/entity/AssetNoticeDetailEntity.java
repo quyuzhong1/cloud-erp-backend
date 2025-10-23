@@ -59,8 +59,8 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
     /**
     * 计划交期
     */
-    @TableField("plan_deliver_date")
-    private LocalDate planDeliverDate;
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
     /**
     * 申请数量
     */

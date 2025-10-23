@@ -140,6 +140,12 @@ public class AssetPurchaseOrderSupplierDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        private String supplierName;
+
+        /**
         * 结算方式
         */
         @NotBlank(message = "结算方式不能为空")
