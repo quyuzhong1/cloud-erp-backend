@@ -1305,14 +1305,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 操作日志
         if(dto.getIsSubmitAutoApprove()){
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserName("system",UserTypeEnum.ERP.code);
-            if(Objects.isNull(findUserDTO)){
-                findUserDTO = new FindUserDTO();
-                findUserDTO.setUserId("0");
-                findUserDTO.setUserName("system");
-            }
             String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", "system", entity.getCode(), "B2C销售订单表", approveName, ruleName, dto.getComment());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作",findUserDTO);
+            operateLogService.addModuleOperateLogBySystem(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
         }else{
             String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表", approveName, ruleName, dto.getComment());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
@@ -3034,8 +3028,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
     }
 
-    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public ApiResult<String> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq) {
         //如果已存在发货单，不处理
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
@@ -3055,15 +3049,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return ApiResult.success(entity.getShippingOrderNo());
             }
         }
-        String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
-        createOutboundReq.setReferenceNo(code);
+        try {
+            String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
+            createOutboundReq.setReferenceNo(code);
+        }catch (Exception e){
+            log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
+            throw new ServiceException("生成三方仓发货单异常", e.getMessage());
+        }
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
-            throw new ServiceException(ApiError.DEFAULT.code, message);
+            throw new ServiceException("调用三方仓出库单异常：{}", message);
         }
         return apiResult;
     }
