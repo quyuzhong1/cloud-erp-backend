@@ -12,6 +12,8 @@ import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
+import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
+import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -48,9 +50,24 @@ public class MoldMonitorGenJob {
      * 任务节点记录表补偿重试
      * @Author jack
      **/
-    @XxlJob("WorkflowTaskRecordRetryJob")
+    @XxlJob("MoldMonitorGenJob")
     public ReturnT<String> WorkflowTaskRecordRetryJob() {
-        XxlJobHelper.log("WorkflowTaskRecordRetryJob 执行开始");
+        XxlJobHelper.log("MoldMonitorGenJob 执行开始");
+        //预警策略
+        List<CfgMoldAlertRuleEntity> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getDisabled,false).eq(CfgMoldAlertRuleEntity::getInvalidStatus,false).list();
+        //返还策略
+        List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll();
+
+        if(CollUtil.isNotEmpty(cfgMoldAlertRuleEntities)){
+
+
+
+
+        }
+
+
+
+
 //
 //        List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.listErrorTask();
 //        if (CollectionUtil.isEmpty(list)) {
@@ -79,7 +96,7 @@ public class MoldMonitorGenJob {
 //                XxlJobHelper.log(StrUtil.format("展会订单任务节点记录补偿重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
 //            }
 //        }
-        XxlJobHelper.log("WorkflowTaskRecordRetryJob 执行任务列表结束");
+        XxlJobHelper.log("MoldMonitorGenJob 执行任务列表结束");
         return ReturnT.SUCCESS;
     }
 }

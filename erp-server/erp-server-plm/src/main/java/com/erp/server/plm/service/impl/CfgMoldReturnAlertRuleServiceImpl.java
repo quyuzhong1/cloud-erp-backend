@@ -271,6 +271,12 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         return new PagingVO(pageData);
     }
 
+
+    @Override
+    public List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll() {
+        return this.baseMapper.listAll();
+    }
+
     /**
      * 分页查询、导出 数据处理
      */
