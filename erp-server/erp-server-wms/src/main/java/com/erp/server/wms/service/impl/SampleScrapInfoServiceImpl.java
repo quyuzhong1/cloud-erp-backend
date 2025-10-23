@@ -5,9 +5,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -101,6 +103,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SampleLedgerService sampleLedgerService;
+
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -541,6 +546,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -583,6 +591,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
         
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1289,6 +1300,30 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品报废单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleScrapInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品报废单明细
+        List<SampleScrapDetailEntity> detailList = sampleScrapDetailService.list(
+            new LambdaQueryWrapper<SampleScrapDetailEntity>()
+                .eq(SampleScrapDetailEntity::getMainId, entity.getId())
+        );
+        
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品报废单",
+            detailList,
+            approveType,
+            sampleLedgerService::getLedgerQtyMap
+        );
     }
 
 }

@@ -15,6 +15,7 @@ import com.common.business.enums.*;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -49,8 +50,9 @@ import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -117,9 +119,11 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Autowired
     private WarehouseService warehouseService;
-
     @Autowired
     private FileFeign fileFeign;
+
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1629,6 +1633,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -1652,6 +1660,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 同步反审核并删除关联的其他入库单
         try {
@@ -1821,6 +1832,30 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         
         Map<String, String> ledgerIdMap = getSampleLedgerIdMap(userId, useUserId, Collections.singletonList(skuId));
         return ledgerIdMap.get(skuId);
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品退回单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleBackInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品退回单明细
+        List<SampleBackDetailEntity> detailList = sampleBackDetailService.list(
+            new LambdaQueryWrapper<SampleBackDetailEntity>()
+                .eq(SampleBackDetailEntity::getMainId, entity.getId())
+        );
+        
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品退回单",
+            detailList,
+            approveType,
+            sampleLedgerService::getLedgerQtyMap
+        );
     }
 
 }

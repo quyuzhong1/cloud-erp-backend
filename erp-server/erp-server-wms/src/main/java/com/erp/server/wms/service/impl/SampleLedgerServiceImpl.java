@@ -168,6 +168,32 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         return this.baseMapper.listSkuAvailableQtyByUserId(dto);
     }
 
+    /**
+     * 批量查询台账当前数量
+     * 
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到当前数量的映射
+     */
+    @Override
+    public Map<String, Integer> getLedgerQtyMap(List<String> sampleLedgerIds) {
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            return Collections.emptyMap();
+        }
+
+        // 查询台账实体
+        List<SampleLedgerEntity> ledgerList = this.lambdaQuery()
+                .in(SampleLedgerEntity::getId, sampleLedgerIds)
+                .list();
+
+        // 构建ID到数量的映射
+        return ledgerList.stream()
+                .collect(Collectors.toMap(
+                        SampleLedgerEntity::getId,
+                        SampleLedgerEntity::getQty,
+                        (existing, replacement) -> existing
+                ));
+    }
+
 
     @Override
     public PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO){

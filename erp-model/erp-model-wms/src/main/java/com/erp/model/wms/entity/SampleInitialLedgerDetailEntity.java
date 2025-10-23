@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 
 
 /**
@@ -22,7 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_initial_ledger_detail")
-public class SampleInitialLedgerDetailEntity extends BaseEntity<SampleInitialLedgerDetailEntity> {
+public class SampleInitialLedgerDetailEntity extends BaseEntity<SampleInitialLedgerDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 主表ID（关联期初台账）
@@ -54,6 +56,11 @@ public class SampleInitialLedgerDetailEntity extends BaseEntity<SampleInitialLed
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 样品台账id
+    */
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -67,6 +74,8 @@ public class SampleInitialLedgerDetailEntity extends BaseEntity<SampleInitialLed
     public static final String QTY = "qty";
 
     public static final String REMARK = "remark";
+
+    public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
 
     @Override
     public Serializable pkVal() {
