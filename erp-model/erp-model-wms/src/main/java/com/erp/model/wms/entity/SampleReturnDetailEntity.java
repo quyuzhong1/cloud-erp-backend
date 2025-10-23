@@ -61,11 +61,6 @@ public class SampleReturnDetailEntity extends BaseEntity<SampleReturnDetailEntit
     */
     @TableField("remark")
     private String remark;
-    /**
-    * 样品台账id
-    */
-    @TableField("sample_ledger_id")
-    private String sampleLedgerId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -82,10 +77,17 @@ public class SampleReturnDetailEntity extends BaseEntity<SampleReturnDetailEntit
 
     public static final String REMARK = "remark";
 
-    public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
-
     @Override
     public Serializable pkVal() {
+        return null;
+    }
+
+    /**
+     * 实现接口方法：获取样品台账ID
+     * 归还单需要从借用单动态获取台账ID，此处返回null
+     */
+    @Override
+    public String getSampleLedgerId() {
         return null;
     }
 

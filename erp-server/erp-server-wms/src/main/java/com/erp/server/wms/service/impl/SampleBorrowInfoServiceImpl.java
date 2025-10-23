@@ -1650,24 +1650,41 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
      * 校验借入人台账数量（反审核时）
      */
     private void validateBorrowUserLedger(SampleBorrowInfoEntity entity, List<SampleBorrowDetailEntity> detailList) {
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleBorrowDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getBorrowUserId());
+        searchDTO.setUseUserId(entity.getBorrowUserId()); // 借入人的使用方就是自己
+        searchDTO.setSkuIds(skuIds);
+        searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
         
-        // 查询借入人的台账ID
         for (SampleBorrowDetailEntity detail : detailList) {
-            // 根据借入人信息查询台账
-            SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-            searchDTO.setUserId(entity.getBorrowUserId());
-            searchDTO.setUseUserId(entity.getBorrowUserId()); // 借入人的使用方就是自己
-            searchDTO.setSkuIds(new ArrayList<>(Arrays.asList(detail.getSkuId())));
-            searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
-            
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-            
-            if (CollUtil.isNotEmpty(ledgerList) && ledgerList.get(0) != null) {
-                SampleLedgerDTO.SkuAvailableQtyDTO ledgerDTO = ledgerList.get(0);
-                sampleLedgerIds.add(ledgerDTO.getSampleLedgerId());
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getBorrowQty()); // 反审核时借入人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
