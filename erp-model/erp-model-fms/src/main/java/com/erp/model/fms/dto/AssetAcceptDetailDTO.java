@@ -132,17 +132,17 @@ public class AssetAcceptDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
+        /**
+         * id 新增这个字段为空
+         */
+        private String id;
 
         /**
         * 来源明细ID

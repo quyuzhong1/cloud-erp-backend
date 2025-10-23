@@ -457,4 +457,16 @@ public class AssetLocationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 获取资产位置下拉列表
+     * @author wuhaotian
+     * @date: 2025-10-21
+     * @param keyword 关键字（支持编码和地址模糊查询）
+     * @return ApiResult<List<AssetLocationDTO.DropDownDTO>>
+     */
+    @GetMapping("/drop/down/list")
+    public ApiResult<List<AssetLocationDTO.DropDownDTO>> dropDownList(@RequestParam(value = "keyword", required = false) String keyword) {
+        return success(assetLocationService.dropDownList(keyword));
+    }
+
 }

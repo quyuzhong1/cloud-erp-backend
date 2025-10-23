@@ -18,192 +18,224 @@ import java.util.List;
 public interface AssetLocationService extends SuperService<AssetLocationEntity> {
 
     /**
-    * 新增
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return
-    */
+     * 新增
+     *
+     * @param dto
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BaseResultDTO.AddDTO add(AssetLocationDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return
-    */
+     * 修改
+     *
+     * @param dto
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     Boolean update(AssetLocationDTO.UpdateDTO dto);
 
     /**
-    * 分页列表查询
-    * @author wuht
-    * @date: 2025-10-11
-    * @param pagingParamDTO
-    * @return PagingVO<AssetLocationDTO.ListDTO>>
-    */
+     * 分页列表查询
+     *
+     * @param pagingParamDTO
+     * @return PagingVO<AssetLocationDTO.ListDTO>>
+     * @author wuht
+     * @date: 2025-10-11
+     */
     PagingVO<AssetLocationDTO.ListDTO> paging(PagingDTO<AssetLocationDTO.PagingParamDTO> pagingParamDTO);
 
     /**
-    * 状态统计
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return List<AssetLocationDTO.TabListDTO>>
-    */
+     * 状态统计
+     *
+     * @param dto
+     * @return List<AssetLocationDTO.TabListDTO>>
+     * @author wuht
+     * @date: 2025-10-11
+     */
     List<AssetLocationDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
-    * 详情
-    * @author wuht
-    * @date: 2025-10-11
-    * @param id
-    * @return
-    */
+     * 详情
+     *
+     * @param id
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     AssetLocationDTO.ViewDTO view(String id);
 
     /**
-    * 新增并提交审核
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return BaseResultDTO.AddDTO
-    */
+     * 新增并提交审核
+     *
+     * @param dto
+     * @return BaseResultDTO.AddDTO
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BaseResultDTO.AddDTO addAndSubmit(AssetLocationDTO.AddDTO dto);
 
     /**
-    * 修改并提交审核
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return
-    */
-    void updateAndSubmit(AssetLocationDTO.UpdateDTO dto);
-
-     /**
-     * 提交审核
+     * 修改并提交审核
+     *
+     * @param dto
+     * @return
      * @author wuht
      * @date: 2025-10-11
+     */
+    void updateAndSubmit(AssetLocationDTO.UpdateDTO dto);
+
+    /**
+     * 提交审核
+     *
      * @param id
      * @return
+     * @author wuht
+     * @date: 2025-10-11
      */
     BatchResultDTO submit(String id);
 
     /**
-    * 审核
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @return
-    */
+     * 审核
+     *
+     * @param dto
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-    * 反审核
-    * @author wuht
-    * @date: 2025-10-11
-    * @param id
-    * @return
-    */
+     * 反审核
+     *
+     * @param id
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BatchResultDTO disApprove(String id);
 
     /**
-    * 删除
-    * @author wuht
-    * @date: 2025-10-11
-    * @param id
-    * @return
-    */
+     * 删除
+     *
+     * @param id
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BatchResultDTO delete(String id);
+
     /**
-    * 作废
-    * @author wuht
-    * @date: 2025-10-11
-    * @param id
-    * @param remark
-    * @return
-    */
+     * 作废
+     *
+     * @param id
+     * @param remark
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author wuht
-    * @date: 2025-10-11
-    * @param id
-    * @return
-    */
+     * 撤销
+     *
+     * @param id
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @param response
-    * @return
-    */
+     * 导出Excel
+     *
+     * @param dto
+     * @param response
+     * @return
+     * @author wuht
+     * @date: 2025-10-11
+     */
     Boolean exportList(AssetLocationDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 获取资产位置分页数据（用于异步导出）
-     * @author wuht
-     * @date: 2025-10-13
+     *
      * @param dto 分页参数
      * @return 分页结果
+     * @author wuht
+     * @date: 2025-10-13
      */
     PagingVO<AssetLocationDTO.ListDTO> getAssetLocationPageData(PagingDTO<AssetLocationDTO.ExportDTO> dto);
 
     /**
-    * 审核通过回调方法
-    * @param dto
-    * @param entity
-    * @return
-    */
+     * 审核通过回调方法
+     *
+     * @param dto
+     * @param entity
+     * @return
+     */
     Boolean approveEnd(ApproveOneDTO dto, AssetLocationEntity entity);
 
     /**
-    * 批量启用/禁用
-    * @author wuht
-    * @date: 2025-10-13
-    * @param dto
-    * @return
-    */
+     * 批量启用/禁用
+     *
+     * @param dto
+     * @return
+     * @author wuht
+     * @date: 2025-10-13
+     */
     Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
 
     /**
      * 下载模板
-     * @author wuht
-     * @date: 2025-10-13
+     *
      * @param response
      * @return
+     * @author wuht
+     * @date: 2025-10-13
      */
     void downloadTemplate(HttpServletResponse response);
 
     /**
      * 异步导入
-     * @author wuht
-     * @date: 2025-10-13
+     *
      * @param dto
      * @return
+     * @author wuht
+     * @date: 2025-10-13
      */
     Boolean importExcel(BaseDTO.ImportDTO dto);
 
     /**
      * 导入资产位置
+     *
+     * @param dto
      * @author wuht
      * @date: 2025-10-13
-     * @param dto
      */
     void importAssetLocation(BaseDTO.ImportDTO dto);
 
     /**
      * 处理导入成功的数据列表
+     *
+     * @param successList 成功的数据列表
+     * @param errorList2  错误数据列表2
+     * @param importType  导入类型
      * @author wuht
      * @date: 2025-10-13
-     * @param successList 成功的数据列表
-     * @param errorList2 错误数据列表2
-     * @param importType 导入类型
      */
     void handleImportSuccessList(List<com.erp.model.fms.dto.excel.AssetLocationExcelDTO> successList, List<com.erp.model.fms.dto.excel.AssetLocationExcelDTO> errorList2, String importType);
+
+    /**
+     * 获取资产位置下拉列表
+     *
+     * @param keyword 关键字（支持编码和地址模糊查询）
+     * @return List<AssetLocationDTO.DropDownDTO>
+     * @author wuhaotian
+     * @date: 2025-10-21
+     */
+    List<AssetLocationDTO.DropDownDTO> dropDownList(String keyword);
 
 }
