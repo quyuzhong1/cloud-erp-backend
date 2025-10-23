@@ -411,6 +411,10 @@ public class SoB2cDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
 
         /**
          * 付款状态
@@ -735,10 +739,6 @@ public class SoB2cDTO implements Serializable {
          * 审核人id
          */
         private String approveUserId;
-        /**
-         * 审核人名称
-         */
-        private String approveUserName;
         /**
          * 是否匹配仓库规则
          */

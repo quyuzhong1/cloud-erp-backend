@@ -141,10 +141,23 @@ public class PdaSoReturnReceiveController extends BaseController {
             menuCode = "wms:pdaSoReturnReceive:submit",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnReceiveService.submit(dto.getIds());
-
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnReceiveEntity> entityList = soReturnReceiveService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货签收单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnReceiveService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("退货签收单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

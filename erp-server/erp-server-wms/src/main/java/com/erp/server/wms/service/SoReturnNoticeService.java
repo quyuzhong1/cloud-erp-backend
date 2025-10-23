@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -75,10 +76,10 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/14 10:04
-     * @param ids ids
+     * @param entity entity
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoReturnNoticeEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -109,6 +110,15 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @return java.lang.Boolean
      **/
     BatchResultDTO approve(SoReturnNoticeEntity entity, String type, String comment, Boolean isNeedProcess);
+    /**
+     * 审核完成
+     * @author will
+     * @date 2025/10/22 17:58
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoReturnNoticeEntity entity);
 
     /**
      * 批量反审核
