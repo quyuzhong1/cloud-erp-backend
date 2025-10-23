@@ -580,7 +580,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (CollUtil.isEmpty(pickingLists)){
             throw new ServiceException("拣货单不存在");
         }
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
         pickingLists.forEach(pickingListsEntity -> {
             this.lambdaUpdate()
                     .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.NOT.getCode())
