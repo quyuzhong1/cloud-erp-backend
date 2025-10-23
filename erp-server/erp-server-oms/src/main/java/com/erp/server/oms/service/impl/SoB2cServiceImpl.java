@@ -3055,15 +3055,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return ApiResult.success(entity.getShippingOrderNo());
             }
         }
-        String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
-        createOutboundReq.setReferenceNo(code);
+        try {
+            String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
+            createOutboundReq.setReferenceNo(code);
+        }catch (Exception e){
+            log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
+            throw new ServiceException("生成三方仓发货单异常", e.getMessage());
+        }
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
-            throw new ServiceException(ApiError.DEFAULT.code, message);
+            throw new ServiceException("调用三方仓出库单异常：{}", message);
         }
         return apiResult;
     }
