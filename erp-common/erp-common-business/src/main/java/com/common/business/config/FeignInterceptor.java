@@ -1,5 +1,9 @@
 package com.common.business.config;
 
+import com.alibaba.fastjson.JSON;
+import com.common.business.constant.UserStateConstants;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.StrUtils;
 import com.google.common.collect.Lists;
 import feign.RequestInterceptor;
@@ -51,6 +55,15 @@ public class FeignInterceptor implements RequestInterceptor {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
             return;
+        }
+        //用户修改为system
+        if(Objects.nonNull(UserContext.getIsUserSystem()) && UserContext.getIsUserSystem()){
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+            loginUser.setUserName(UserStateConstants.USER_SYSTEM);
+            loginUser.setUserAccount("");
+            String userJson = JSON.toJSONString(loginUser);
+            requestTemplate.header("tokenuserinfo", userJson);
         }
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         Enumeration<String> headerNames = request.getHeaderNames();
