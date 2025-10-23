@@ -972,7 +972,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             add.setApproveStatus(entity.getApproveStatus());
             if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
                 String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
-                operateLogService.addModuleOperateLogBySystem(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
+                operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
                 String msg = CharSequenceUtil.format("订单拆分子单自动审核通过" );
                 operateLogService.addModuleOperateLogBySystem(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
@@ -983,7 +983,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }else{
                 if(ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
                     String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
-                    operateLogService.addModuleOperateLogBySystem(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
+                    operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
                 }
                 add.setApproveStatus(entity.getApproveStatus());
                 this.updateById(add);
