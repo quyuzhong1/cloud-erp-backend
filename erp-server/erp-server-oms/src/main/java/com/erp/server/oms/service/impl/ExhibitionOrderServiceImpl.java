@@ -1077,7 +1077,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         Map<String, Object> data = dto.getData();
         //校验data是否为空
         if (ObjectUtil.isEmpty(data)) {
-            mqResponseDTO.setErrorMsg("data为·   -空");
+            mqResponseDTO.setErrorMsg("data为空");
             return mqResponseDTO;
         }
         // 校验exhibitionOrderId是否存在且非空
