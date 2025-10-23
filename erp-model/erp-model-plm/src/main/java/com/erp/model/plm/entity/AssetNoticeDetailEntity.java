@@ -59,8 +59,8 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
     /**
     * 计划交期
     */
-    @TableField("plan_deliver_date")
-    private LocalDate planDeliverDate;
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
     /**
     * 申请数量
     */
@@ -96,7 +96,7 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
 
     public static final String IS_URGENT = "is_urgent";
 
-    public static final String PLAN_DELIVER_DATE = "plan_deliver_date";
+    public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
     public static final String APPLY_QTY = "apply_qty";
 

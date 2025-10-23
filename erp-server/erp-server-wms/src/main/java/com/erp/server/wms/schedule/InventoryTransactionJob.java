@@ -3,12 +3,14 @@ package com.erp.server.wms.schedule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
@@ -35,6 +37,10 @@ public class InventoryTransactionJob {
     @Resource
     private InventoryTransactionService inventoryTransactionService;
     
+    @Resource
+    @Qualifier("inventoryTransactionToInventoryHisPool")
+    private ExecutorService inventoryTransactionToInventoryHisPool;
+    
     @XxlJob("inventoryTransactionToInventoryHis")
     public ReturnT inventoryTransactionToInventoryHis() {
         int transactionSize = 100;
@@ -52,15 +58,17 @@ public class InventoryTransactionJob {
         	.select(InventoryTransactionEntity::getInventoryId)
         	.list();
         for(InventoryTransactionEntity l : list) {
-        	String inventoryId = l.getInventoryId();
-        	MDC.put("traceId", inventoryId);
-			try {
-				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId , "");
-			} catch (Exception e) {
-				log.error("自动迁移redis库存失败：{}" , inventoryId);
-			}finally {
-				MDC.remove("traceId");
-			}
+        	inventoryTransactionToInventoryHisPool.execute(() -> {
+        		String inventoryId = l.getInventoryId();
+            	MDC.put("traceId", inventoryId);
+    			try {
+    				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId , "");
+    			} catch (Exception e) {
+    				log.error("自动迁移redis库存失败：{}" , inventoryId);
+    			}finally {
+    				MDC.remove("traceId");
+    			}
+        	});
         }
         return ReturnT.SUCCESS;
     }

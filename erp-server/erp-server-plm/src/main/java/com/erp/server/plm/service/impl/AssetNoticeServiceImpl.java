@@ -205,8 +205,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
+        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
@@ -267,7 +267,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
         AssetNoticeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -286,6 +286,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (assetNoticeDetailEntityList.isEmpty()) {
             throw new ServiceException(ApiError.ERROR_95298);
         }
+
+
         //可以生成采购订单的明细（未生成、部分生成）
         List<AssetNoticeDetailEntity> collect = assetNoticeDetailEntityList.stream()
                 .filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
@@ -310,14 +312,19 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
             viewGeneratePurchaseOrderDTO.setPurchaseOrgName(companyEntity.getCompanyName());
 
-            //获取sku最小起订量和采购交期
+            //获取sku信息
             LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(ProductDetailEntity::getSkuNo,assetNoticeDetailEntity.getAssetCode())
                     .eq(ProductDetailEntity::getIsDeleted,Boolean.FALSE);
             ProductDetailEntity productDetailEntity = productDetailService.getOne(queryWrapper);
-            ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(productDetailEntity.getId());
-            viewGeneratePurchaseOrderDTO.setMoq(productPurchaseEntity.getMoq());
-            viewGeneratePurchaseOrderDTO.setDeliveryDay(productPurchaseEntity.getDeliveryCycle());
+            if (!Objects.isNull(productDetailEntity)) {
+                ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(productDetailEntity.getId());
+                viewGeneratePurchaseOrderDTO.setMoq(productPurchaseEntity.getMoq());
+                viewGeneratePurchaseOrderDTO.setDeliveryDay(productPurchaseEntity.getDeliveryCycle());
+                viewGeneratePurchaseOrderDTO.setSkuId(productDetailEntity.getId());
+                viewGeneratePurchaseOrderDTO.setSkuNo(productDetailEntity.getSkuNo());
+                viewGeneratePurchaseOrderDTO.setProductName(productDetailEntity.getName());
+            }
 
             //关联待采购数量
             LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
@@ -330,9 +337,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             viewGeneratePurchaseOrderDTO.setApplyQty(assetNoticeDetailEntity.getApplyQty());
             viewGeneratePurchaseOrderDTO.setWaitQty(assetNoticeDetailEntity.getApplyQty().subtract(totalPurchaseQty));
 
+            viewGeneratePurchaseOrderDTO.setId(assetNoticeDetailEntity.getMainId());
             viewGeneratePurchaseOrderDTO.setAssetNoticeDetailId(assetNoticeDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetNoticeEntity.getCode());
-            viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliverDate());
+            viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliveryDate());
 
             viewGeneratePurchaseOrderDTOS.add(viewGeneratePurchaseOrderDTO);
         }
@@ -358,11 +366,20 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         //sku信息
         List<String> assetCodeList = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetCode).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.getByIdList(assetCodeList);
-
+        LambdaQueryWrapper<ProductDetailEntity> skuQueryWrapper = new LambdaQueryWrapper<>();
+        skuQueryWrapper.in(ProductDetailEntity::getSkuNo,assetCodeList);
+        List<ProductDetailEntity> skuList = productDetailService.list(skuQueryWrapper);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
+
+        LambdaQueryWrapper<MoldInfoEntity> moldQueryWrapper = new LambdaQueryWrapper<>();
+        moldQueryWrapper.in(MoldInfoEntity::getCode,assetCodeList);
+        List<MoldInfoEntity> moldList = moldInfoService.list(moldQueryWrapper);
+        if (CollectionUtils.isEmpty(moldList)) {
+            throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+        }
+
 
         log.info("生成采购订单 ids= {}",ids);
 
@@ -371,7 +388,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = new AssetPurchaseOrderEntity();
         assetPurchaseOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPO));
-        assetPurchaseOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);//默认待审核
+        assetPurchaseOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());//默认待审核
         assetPurchaseOrderEntity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
         assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
 
@@ -407,7 +424,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             //采购订单供应商信息
             AssetPurchaseOrderSupplierDTO.AddDTO supplierDTO = new AssetPurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(value.get(0).getSupplierId());
-
+            supplierDTO.setSupplierName(value.get(0).getSupplierName());
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.stream()
                     .filter(obj -> obj.getSupplierEntity().getId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
             SupplierContactEntity defaultSupplierContact = supplierDefaultDTO.getSupplierContactEntity();
@@ -450,6 +467,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     throw new ServiceException(ApiError.ERROR_95107);
                 }
 
+
+                MoldInfoEntity moldInfoEntity = moldList.stream().filter(obj -> obj.getCode().equals(generatePurchaseOrderDTO.getAssetCode())).findFirst().orElse(null);
+                if (org.springframework.util.ObjectUtils.isEmpty(moldInfoEntity)) {
+                    throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+                }
+
                 BeanUtils.copyProperties(generatePurchaseOrderDTO,addDetailDTO);
                 addDetailDTO.setAssetId(productDetailEntity.getId());
                 addDetailDTO.setAssetCode(productDetailEntity.getSkuNo());
@@ -461,6 +484,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setIsUrgent(Boolean.FALSE);
                 addDetailDTO.setIsEndReceive(Boolean.FALSE);
                 addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
+                addDetailDTO.setTag(moldInfoEntity.getTag());
                 details.add(addDetailDTO);
             }
             addDTO.setAssetPurchaseOrderDetailDTO(details);

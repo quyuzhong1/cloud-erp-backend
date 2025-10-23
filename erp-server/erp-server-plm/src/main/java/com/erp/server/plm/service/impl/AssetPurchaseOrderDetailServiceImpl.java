@@ -2,6 +2,8 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.AssetNoticeDetailDTO;
+import com.erp.model.plm.entity.AssetNoticeDetailEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -107,6 +109,21 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
         super.saveBatch(detailEntityList);
+    }
+
+    @Override
+    public void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList, String assetPurchaseOrderId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntities = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
+            BeanMapperUtils.copy(updateDTO, assetPurchaseOrderDetailEntity);
+            assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
+            assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
+        }
+        super.updateBatchById(assetPurchaseOrderDetailEntities);
     }
 
 

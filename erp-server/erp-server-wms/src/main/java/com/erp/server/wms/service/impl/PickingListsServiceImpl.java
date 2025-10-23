@@ -584,9 +584,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         pickingLists.forEach(pickingListsEntity -> {
             this.lambdaUpdate()
                     .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.NOT.getCode())
-                    .set(PickingListsEntity::getPrintTime, LocalDateTime.now())
-                    .set(PickingListsEntity::getPrintUserId, loginUser.getUid())
-                    .set(PickingListsEntity::getPrintUserName, loginUser.getUserName())
+                    .set(PickingListsEntity::getPrintTime, null)
+                    .set(PickingListsEntity::getPrintUserId, "")
+                    .set(PickingListsEntity::getPrintUserName, "")
                     .eq(PickingListsEntity::getId, pickingListsEntity.getId()).update();
             operateLogService.addModuleOperateLog("执行了取消打印拣货单，状态变更为未打印", ModuleTypeEnum.PICKING_LISTS.getCode(), pickingListsEntity.getId(), "取消打印");
         });

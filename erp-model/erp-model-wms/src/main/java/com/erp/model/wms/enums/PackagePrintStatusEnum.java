@@ -12,7 +12,7 @@ public enum PackagePrintStatusEnum implements EnumMessage {
 
     NOT("not", "未打印"),
     ALREADY("already", "已打印"),
-    CANCEL("cancel", "已取消"),
+    CANCEL("cancel", "取消打印"),
     ;
     /**
      * 类型

@@ -225,7 +225,7 @@ public class AssetNoticeDTO implements Serializable {
         /**
          * 计划交期
          */
-        private LocalDate planDeliverDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 申请数量
@@ -564,6 +564,7 @@ public class AssetNoticeDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         private String remark;
+
     }
 
     @Data
@@ -680,6 +681,21 @@ public class AssetNoticeDTO implements Serializable {
          * 预计交货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 对应skuId
+         */
+        private String skuId;
+
+        /**
+         * 对应skuId
+         */
+        private String skuNo;
+
+        /**
+         * 对应productName
+         */
+        private String productName;
 
     }
 }

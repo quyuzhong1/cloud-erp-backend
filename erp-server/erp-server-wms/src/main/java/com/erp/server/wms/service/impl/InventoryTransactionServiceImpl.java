@@ -202,11 +202,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , transactionId);
     	log.info("{}开始" , logMsg);
     	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
-		long waitTime = 30;
-		if(StringUtils.isNotBlank(transactionId)) {
-			waitTime = 3;
-		}
-    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , waitTime);
+    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , 5);
     	if(tryLock != null) {
     		try {
     			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);

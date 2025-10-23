@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -38,6 +39,8 @@ public interface AssetPurchaseOrderDetailService extends SuperService<AssetPurch
     Boolean endReceive(List<String> idList, String remark,Boolean b);
 
     void add(List<AssetPurchaseOrderDetailDTO.AddDTO> detailList, String assetPurchaseOrderId);
+
+    void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList, String assetPurchaseOrderId);
 
 
 }
