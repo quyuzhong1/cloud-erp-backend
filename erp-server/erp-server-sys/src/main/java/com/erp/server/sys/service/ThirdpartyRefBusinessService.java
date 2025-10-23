@@ -1,5 +1,6 @@
 package com.erp.server.sys.service;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
 
 import java.util.List;
@@ -16,18 +17,18 @@ public interface ThirdpartyRefBusinessService extends SuperService<ThirdpartyRef
 
 
 
-    List<ThirdpartyRefBusinessEntity> listByBusinessIds(List<String> idList);
+    List<ThirdpartyRefBusinessEntity> listByBusinessIds(List<String> idList , String businessType);
 
     /**
      * 根据业务id获取
      * @param businessId
      * @return
      */
-    ThirdpartyRefBusinessEntity getByBusinessId(String businessId);
+    ThirdpartyRefBusinessEntity getByBusinessId(String businessId , String businessType);
 
     /**
      * 根据业务id删除
      * @param id
      */
-    void removeByBusinessId(String businessId);
+    void removeByBusinessId(String businessId , String businessType);
 }
