@@ -615,7 +615,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         for (SoReceiptDetailEntity deleteDetailEntity : deleteDetailList) {
             SoReceiptEntity soReceiptEntity = handleDelEntityList.stream().filter(v -> v.getId().equals(deleteDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                throw new ServiceException("收款单状态不允许删除");
+                throw new ServiceException("只有待提交或审核不通过的收款单允许删除");
             }
             this.deleteByDetail(soReceiptEntity,deleteDetailEntity);
         }

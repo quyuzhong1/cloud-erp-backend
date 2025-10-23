@@ -388,21 +388,18 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     }
 
     @Override
-    public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation,FindUserDTO findUserDTO) {
-        LoginUser loginUser = UserContext.getNonLoginUser();
-        String originUserId = loginUser.getUid();
-        String originUserName = loginUser.getUserName();
-        loginUser.setUid(findUserDTO.getUserId());
-        loginUser.setUserName(findUserDTO.getUserName());
-        OperateLogEntity entity = new OperateLogEntity();
-        entity.setModuleType(moduleType)
-                .setBusinessId(businessId)
-                .setContent(content)
-                .setOperation(operation);
-        boolean result = this.save(entity);
-        loginUser.setUid(originUserId);
-        loginUser.setUserName(originUserName);
-        return result;
+    public Boolean addModuleOperateLogBySystem(String content, String moduleType, String businessId,String operation) {
+        try {
+            UserContext.setIsUserSystem(true);
+            OperateLogEntity entity = new OperateLogEntity();
+            entity.setModuleType(moduleType)
+                    .setBusinessId(businessId)
+                    .setContent(content)
+                    .setOperation(operation);
+            return this.save(entity);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     @Override
