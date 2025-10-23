@@ -307,13 +307,13 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         searchDTO.setSearchKeyword(dto.getSearchKeyword());
         List<ProductDetailDTO.SkuDTO> skuDTOS = baseMapper.listSkuInfoByEanOrSkuNo(searchDTO);
         if (CollectionUtils.isEmpty(skuDTOS)) {
-            throw new ServiceException("扫码SKU【{}】不存在", dto.getSearchKeyword());
+            throw new ServiceException("扫码【{}】不存在", dto.getSearchKeyword());
         }
         //存在的已审核sku
         List<String> skuNoList = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
         String skuNOs = skuDTOS.stream().filter(e -> !Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && !skuNoList.contains(e.getSkuNo())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(skuNOs)){
-            throw new ServiceException("扫码SKU【{}】未审核", dto.getSearchKeyword());
+            throw new ServiceException("扫码【{}】未审核", dto.getSearchKeyword());
         }
         ProductDetailDTO.SkuDTO skuDTO = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && dto.getSearchKeyword().equals(e.getSkuNo())).findFirst().orElse(null);
         if (Objects.nonNull(skuDTO)){
@@ -328,7 +328,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             skuSearchDTO.setEan(skuDTO1.getEanNo());
             return skuSearchDTO;
         }
-        throw new ServiceException("扫码SKU【{}】不存在", dto.getSearchKeyword());
+        throw new ServiceException("扫码【{}】不存在", dto.getSearchKeyword());
     }
 }
 
