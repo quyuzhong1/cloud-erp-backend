@@ -91,6 +91,22 @@ cmr.count_dim AS countDim
         cmr.create_time desc,
         cmrd.return_qty_limit asc
     </select>
+    <select id="listAll" resultType="com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        ,
+        cmrd.id AS detailId,
+        cmrd.return_qty_limit AS returnQtyLimit,
+        cmrd.return_price as returnPrice,
+        cmrd.remark AS detailRemark
+        FROM
+        cfg_mold_return_alert_rule cmr
+        left join cfg_mold_return_alert_detail cmrd on cmr.id = cmrd.main_id and cmrd.is_deleted = FALSE
+        where
+             cmr.is_deleted = FALSE
+        and cmr.disabled = FALSE
+        and cmr.invalid_status = FALSE
+    </select>
 
 
 </mapper>

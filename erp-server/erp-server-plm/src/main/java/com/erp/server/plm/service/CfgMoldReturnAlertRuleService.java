@@ -45,6 +45,8 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
 
     PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> paging(PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto);
 
+    List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll();
+
     CfgMoldReturnAlertRuleDTO.ViewDTO view(String id);
 
     BatchResultDTO delete(String id);

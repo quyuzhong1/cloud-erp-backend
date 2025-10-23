@@ -56,26 +56,6 @@ public class MoldMonitorController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author jack
-    * @date:  2025-10-22
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "模具监控修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "plm:moldMonitor:update",
-        serviceClass = MoldMonitorService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated MoldMonitorDTO.UpdateDTO dto) {
-        moldMonitorService.update(dto);
-        return success();
-    }
-
-
-    /**
      * 获取状态统计
      * @return
      */
