@@ -361,6 +361,16 @@ public class AssetAcceptDTO implements Serializable {
          */
         private List<AssetAcceptDetailDTO.ViewDTO> detailList;
 
+        /**
+         * 附件URL列表
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称列表
+         */
+        private List<String> attachmentNameList;
+
     }
 
     /**

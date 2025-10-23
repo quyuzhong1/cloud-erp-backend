@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -61,11 +62,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_FMS_ASSET_LOCATION;
@@ -688,5 +685,40 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
                 errorList2.add(excelDTO);
             }
         }
+    }
+
+    @Override
+    public List<AssetLocationDTO.DropDownDTO> dropDownList(String keyword) {
+        // 构建查询条件
+        LambdaQueryWrapper<AssetLocationEntity> queryWrapper = new LambdaQueryWrapper<AssetLocationEntity>()
+                .eq(AssetLocationEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(AssetLocationEntity::getDisabled, false)
+                .eq(AssetLocationEntity::getIsDeleted, false);
+
+        // 如果有关键字，添加模糊查询条件
+        if (StrUtil.isNotBlank(keyword)) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(AssetLocationEntity::getCode, keyword)
+                    .or()
+                    .like(AssetLocationEntity::getAddress, keyword)
+            );
+        }
+
+        // 按编码升序排列
+        queryWrapper.orderByAsc(AssetLocationEntity::getCode);
+
+        List<AssetLocationEntity> entityList = this.list(queryWrapper);
+
+        if (CollUtil.isEmpty(entityList)) {
+            return new ArrayList<>();
+        }
+
+        return entityList.stream().map(entity -> {
+            AssetLocationDTO.DropDownDTO dto = new AssetLocationDTO.DropDownDTO();
+            dto.setId(entity.getId());
+            dto.setCode(entity.getCode());
+            dto.setAddress(entity.getAddress());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

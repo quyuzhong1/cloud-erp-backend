@@ -80,4 +80,8 @@ public class IdWorker {
         return new UUID(random.nextLong(), random.nextLong()).toString().replace(StringPool.DASH, StringPool.EMPTY);
     }
 
+    public static void main(String[] args) {
+        System.out.println(getIdStr());
+    }
+
 }

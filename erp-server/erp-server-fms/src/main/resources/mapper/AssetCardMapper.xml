@@ -53,7 +53,53 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetCardDTO$ListDTO">
-
+        SELECT
+            ac.id,
+            ac.approve_status,
+            ac.approve_user_id,
+            ac.approve_user_name,
+            ac.approve_time,
+            ac.invalid_status,
+            ac.invalid_remark,
+            ac.invalid_time,
+            ac.source_code,
+            ac.source_type,
+            ac.source_id,
+            ac.org_id,
+            ac.org_name,
+            ac.type,
+            ac.code,
+            ac.status,
+            ac.change_method,
+            ac.name,
+            ac.unit,
+            ac.qty,
+            ac.start_use_date,
+            ac.asset_code,
+            ac.asset_location_id,
+            ac.disposal_status,
+            ac.remark,
+            ac.create_time,
+            ac.create_user_name,
+            -- 明细表字段（不包含通用字段）
+            acd.id as detailId,
+            acd.source_detail_id,
+            acd.asset_code as detailAssetCode,
+            acd.asset_location_id as detailAssetLocationId,
+            acd.qty as detailQty,
+            acd.supplier_id,
+            acd.supplier_name,
+            acd.use_dept_name,
+            acd.use_dept_id,
+            acd.cost_type,
+            acd.remark as detailRemark
+        FROM asset_card ac
+        LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
+        WHERE ac.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY ac.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -61,7 +107,59 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.fms.dto.AssetCardDTO$ListDTO">
-
+        SELECT
+            ac.id,
+            ac.approve_status,
+            ac.approve_user_id,
+            ac.approve_user_name,
+            ac.approve_time,
+            ac.invalid_status,
+            ac.invalid_remark,
+            ac.invalid_time,
+            ac.source_code,
+            ac.source_type,
+            ac.source_id,
+            ac.org_id,
+            ac.org_name,
+            ac.type,
+            ac.code,
+            ac.status,
+            ac.change_method,
+            ac.name,
+            ac.unit,
+            ac.qty,
+            ac.start_use_date,
+            ac.asset_code,
+            ac.asset_location_id,
+            ac.disposal_status,
+            ac.remark,
+            ac.create_time,
+            ac.create_user_name,
+            -- 明细表字段（不包含通用字段）
+            acd.id as detailId,
+            acd.source_detail_id,
+            acd.asset_code as detailAssetCode,
+            acd.asset_location_id as detailAssetLocationId,
+            acd.qty as detailQty,
+            acd.supplier_id,
+            acd.supplier_name,
+            acd.use_dept_name,
+            acd.use_dept_id,
+            acd.cost_type,
+            acd.remark as detailRemark
+        FROM asset_card ac
+        LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
+        WHERE ac.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        <if test="ids != null and ids.size() > 0">
+            AND ac.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY ac.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.fms.dto.AssetCardDTO$TabListDTO">
         SELECT
