@@ -3210,7 +3210,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 2, 需要更新的销售出库单明细(目前单个明细对应一个订单)
         List<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList = new LinkedList<>();
 
-        // 3, 已存在的销售出库单明细(用于检查清理历史异常信息)
+        // 3, 已存在的销售出库单明细(信息未变更)
         List<PlatformSoOutStockDetailDTO> existSourceDetailList = new LinkedList<>();
 
         // 销售订单明细
@@ -3218,6 +3218,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         // 销售出库单主体
         Map<String, SoOutstockEntity> mainEntityMap = new HashMap<>();
+
+        // 已存在的销售出库单
+        List<SoOutstockEntity> existingOutstockEntityList = new LinkedList<>();
 
 
         // 判断过滤/新增/更新销售出库单
@@ -3253,6 +3256,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         && soOutstockEntity.getBillDate().isEqual(detailDTO.convertPlatformDeliveryDateTime())){
                     // 3, 明细已存在且信息未变更
                     existSourceDetailList.add(detailDTO);
+                    existingOutstockEntityList.add(soOutstockEntity);
                 } else {
                     // 2，明细存在日期或数量变更
                     updateGenerateSourceDetailList.add(detailDTO);
@@ -3270,10 +3274,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 更新
         Boolean updateResult = soOutstockService.updatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList, mainEntityMap, detailEntityListMap);
 
+        // 未变更信息检查是否已审核通过
+        if (CollectionUtils.isNotEmpty(existingOutstockEntityList)){
+            for (SoOutstockEntity soOutstockEntity : existingOutstockEntityList) {
+                if (ApproveStatusEnum.APPROVE.equals(soOutstockEntity.getApproveStatus())){
+                    continue;
+                }
+                if (ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())){
+                    soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(), ""));
+                    continue;
+                }
+                if (ApproveStatusEnum.WAIT_SUBMIT.equals(soOutstockEntity.getApproveStatus())){
+                    soOutstockService.submitAndApprove(soOutstockEntity.getId());
+                }
+            }
+        }
+
         if (addResult && updateResult){
-            List<SoOutstockDetailEntity> collect = detailEntityListMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
             // 检查清理历史异常信息
-            soOutstockService.checkAndDeletePlatformB2cOutStock(existSourceDetailList, soB2cEntity, collect);
+            log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}", soB2cEntity.getPlatformCode());
+            List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+            deleteDTO.setMainId(soB2cEntity.getId());
+            deleteDTO.setType(type);
+            deleteDTO.setDetailIdList(detailList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            soB2cFeign.checkAndDeleteAllError(deleteDTO);
         }
 
         return true;
@@ -3820,7 +3846,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkAndDeletePlatformB2cOutStock(List<PlatformSoOutStockDetailDTO> existSourceDetailList, SoB2cEntity soB2cEntity, Collection<SoOutstockDetailEntity> detailEntityList) {
-        if (CollectionUtils.isEmpty(existSourceDetailList) || CollectionUtils.isEmpty(detailEntityList) ) {
+        if (CollectionUtils.isEmpty(detailEntityList) ) {
             return;
         }
         List<String> existSoDetailIds = detailEntityList.stream().map(SoOutstockDetailEntity::getSoDetailId).distinct().collect(Collectors.toList());
