@@ -112,15 +112,15 @@ public class AssetPurchaseOrderEntity extends BaseEntity<AssetPurchaseOrderEntit
     @TableField("purchase_org_name")
     private String purchaseOrgName;
     /**
-    * 作废状态（false未作废，true已作废）
-    */
-    @TableField("invalid_status")
-    private Boolean invalidStatus;
-    /**
     * 作废时间
     */
     @TableField("invalid_time")
     private LocalDateTime invalidTime;
+    /**
+     * 作废状态（false未作废，true已作废）
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
     /**
     * 作废原因
     */

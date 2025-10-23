@@ -503,5 +503,16 @@ public class AssetPurchaseOrderController extends BaseController {
         assetPurchaseOrderService.exportList(dto, response);
     }
 
+    /**
+     * 下拉选择列表（支持关键字查询）
+     * @author wtr
+     * @date: 2025-10-16
+     * @param paramDTO 查询参数
+     * @return ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>>
+     */
+    @PostMapping("/selectList")
+    public ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO) {
+        return success(assetPurchaseOrderService.selectList(paramDTO));
+    }
 
 }
