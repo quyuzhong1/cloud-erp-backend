@@ -92,7 +92,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                         break;
                     } else {
                         log.warn("节点处理超时，触发远程调用，index={}, sourceId={}", i, mqDTO.getSourceId());
-                        success = remoteInvoke(map, entity, i, 0); // 超时重试
+                        success = remoteInvoke(map, entity, i, 1); // 超时重试
                     }
                     break;
                 case PENDING:
@@ -122,7 +122,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         String classPath = entity.getClassPath();
         if(StringUtils.isBlank(classPath)){
             log.error("classPath is blank for workflowTaskRecordEntity id: {}", entity.getId());
-            markAsFailed(entity,"classpath为空");
+            markAsFailed(entity,"classpath为空",plus);
             return Boolean.FALSE;
         }
 
@@ -130,7 +130,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         if(StringUtils.isBlank(jsonStr)){
             log.error("inputData is blank for workflowTaskRecordEntity id: {}", entity.getId());
             String msg = StrUtil.format("traceId: 【{}】，inputData为空",traceId);
-            markAsFailed(entity,msg);
+            markAsFailed(entity,msg,plus);
             return Boolean.FALSE;
         }
 
@@ -147,7 +147,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         } catch (Exception e) {
             log.error("Failed to parse inputData JSON for workflowTaskRecordEntity id: {}", entity.getId(), e);
             String msg = StrUtil.format("traceId: 【{}】，Failed to parse inputData JSON for workflowTaskRecordEntity id: 【{}】，e :{}",traceId,entity.getId(),e);
-            markAsFailed(entity,msg);
+            markAsFailed(entity,msg,plus);
             return Boolean.FALSE;
         }
 
@@ -155,7 +155,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         if (split.length != 2) {
             log.error("Invalid classPath format: {} for workflowTaskRecordEntity id: {}", classPath, entity.getId());
             String msg = StrUtil.format("traceId: 【{}】，Invalid classPath format: {} for workflowTaskRecordEntity id: {}",traceId,classPath, entity.getId());
-            markAsFailed(entity,msg);
+            markAsFailed(entity,msg,plus);
             return Boolean.FALSE;
         }
 
@@ -171,7 +171,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         } catch (Exception e) {
             log.error("Feign invoke failed for workflowTaskRecordEntity id: {}", entity.getId(), e);
             String msg = StrUtil.format("traceId: 【{}】，Feign invoke failed for workflowTaskRecordEntity id: {}，e :{}",traceId, entity.getId(),e);
-            markAsFailed(entity,msg);
+            markAsFailed(entity,msg,plus);
             return Boolean.FALSE;
         }
 
@@ -187,6 +187,9 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             if(StringUtils.isNotBlank(errorMsg)){
                 entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
                 entity.setLastError(errorMsg);
+                entity.setRetryCount(entity.getRetryCount() + plus);
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.FALSE;
             }else {
                 entity.setStatus(WorkflowTaskRecordStatusEnum.SUCCESS.getCode());
                 entity.setLastError("");
@@ -195,16 +198,18 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                     map.put(nextEntity.getIndex() ,nextEntity);
                     workflowTaskRecordService.updateById(nextEntity);
                 }
+                entity.setRetryCount(entity.getRetryCount() + plus);
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.TRUE;
             }
-            entity.setRetryCount(entity.getRetryCount() + plus);
-            workflowTaskRecordService.updateById(entity);
-            return Boolean.TRUE;
+
         }
     }
 
-    private void markAsFailed(WorkflowTaskRecordEntity entity,String errorMsg) {
+    private void markAsFailed(WorkflowTaskRecordEntity entity,String errorMsg,Integer plus) {
         entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
         entity.setLastError(errorMsg);
+        entity.setRetryCount(entity.getRetryCount() + plus);
         workflowTaskRecordService.updateById(entity);
     }
 }

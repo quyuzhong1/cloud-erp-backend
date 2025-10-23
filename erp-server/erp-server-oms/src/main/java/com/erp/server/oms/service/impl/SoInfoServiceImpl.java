@@ -457,7 +457,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         if(!isFromDht && PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
-            throw new ServiceException("订货单创建的订单无法提审");
+            throw new ServiceException("订货通创建的订单无法提审");
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1614,7 +1614,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             soReceiptService.autoApproveBySo(entity);
 
             //订货通同步
-            if(isSyncDht && customerInfoService.isSyncDht(entity.getCustomerId())){
+            if((isSyncDht && customerInfoService.isSyncDht(entity.getCustomerId())) || CharSequenceUtil.equals(entity.getDictPlatform() ,PlatformDictEnum.DHT.getCode())){
                 syncDhtService.createSyncSoInfoTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }

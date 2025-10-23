@@ -1723,7 +1723,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         Map<String, Object> data = dto.getData();
         //校验data是否为空
@@ -1781,11 +1781,20 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //提审
             soOutstockService.submit(soOutstockIds,Boolean.FALSE);
 
+            //审核通过
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(soOutstockIds.get(0));
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setComment(comment);
+            BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
+            if (!approve.getSuccess()) {
+                throw new ServiceException(approve.getMsg());
+            }
+
             Map<String, Object> map = new HashMap<>();
             map.put("otherInstockId", otherInstockId);
             map.put("soOutstockId", soOutstockIds.get(0));
             mqResponseDTO.setData(map);
-
         }catch (Exception e){
             log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
@@ -1909,59 +1918,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
 
         mqResponseDTO.setData(data);
-        return mqResponseDTO;
-    }
-
-    /**
-     * 生成其他入库单和销售出库单并审批流程
-     *
-     * @param dto MQ请求数据传输对象，包含流程审批所需的数据
-     * @return MQ响应数据传输对象，包含处理结果和错误信息
-     */
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
-        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
-        Map<String, Object> data = dto.getData();
-        //校验data是否为空
-        if (ObjectUtil.isEmpty(data)) {
-            mqResponseDTO.setErrorMsg("data为空");
-            return mqResponseDTO;
-        }
-
-        if(!data.containsKey("otherInstockId") || Objects.isNull(data.get("otherInstockId")) || !data.containsKey("soOutstockId") || Objects.isNull(data.get("soOutstockId")) ){
-            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId为空");
-            return mqResponseDTO;
-        }
-        String otherInstockId;
-        String soOutstockId;
-        try {
-            otherInstockId = String.valueOf(data.get("otherInstockId"));
-            soOutstockId = String.valueOf(data.get("soOutstockId"));
-        } catch (Exception e) {
-            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId类型转换失败");
-            log.warn("otherInstockId 类型转换失败: {} 或 soOutstockId 类型转换失败: {}", data.get("otherInstockId"),data.get("soOutstockId"));
-            return mqResponseDTO;
-        }
-
-        try{
-
-            String comment = "展会订单自动审核通过";
-            //审核通过
-            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-            approveOneDTO.setId(soOutstockId);
-            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            approveOneDTO.setComment(comment);
-            BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
-            if (!approve.getSuccess()) {
-                throw new ServiceException(approve.getMsg());
-            }
-        }catch (Exception e){
-            log.error("生成其他入库单和销售出库单失败，otherInstockId: {}，soOutstockId: {}", otherInstockId,soOutstockId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
-            return mqResponseDTO;
-        }
         return mqResponseDTO;
     }
 }
