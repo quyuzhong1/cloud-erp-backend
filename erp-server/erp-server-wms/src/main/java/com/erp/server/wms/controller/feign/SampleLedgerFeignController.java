@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -82,6 +83,18 @@ public class SampleLedgerFeignController extends BaseController {
     @PostMapping("/addSampleLedgerFlow")
     public Boolean addSampleLedgerFlow(@RequestBody SampleLedgerFlowDTO.AddFlowDTO addDTO) {
         return sampleLedgerFlowService.addSampleLedgerFlow(addDTO);
+    }
+
+    /**
+     * 批量查询样品台账数量
+     * @author system
+     * @date: 2025-10-23
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到数量的映射 Map<sampleLedgerId, qty>
+     */
+    @PostMapping("/getLedgerQtyMap")
+    public Map<String, Integer> getLedgerQtyMap(@RequestBody List<String> sampleLedgerIds) {
+        return sampleLedgerService.getLedgerQtyMap(sampleLedgerIds);
     }
 
 

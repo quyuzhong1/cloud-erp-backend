@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
@@ -65,8 +66,7 @@ import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import com.erp.rpc.file.feign.FileFeign;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -109,6 +109,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private FileFeign fileFeign;
+
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -300,6 +306,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -343,6 +353,9 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1116,6 +1129,30 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 bean.add(addDTO);
             }
         }
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品期初台账单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleInitialLedgerEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品期初台账单明细
+        List<SampleInitialLedgerDetailEntity> detailList = sampleInitialLedgerDetailService.list(
+            new LambdaQueryWrapper<SampleInitialLedgerDetailEntity>()
+                .eq(SampleInitialLedgerDetailEntity::getMainId, entity.getId())
+        );
+        
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品期初台账单",
+            detailList,
+            approveType,
+            sampleLedgerService::getLedgerQtyMap
+        );
     }
 
 }

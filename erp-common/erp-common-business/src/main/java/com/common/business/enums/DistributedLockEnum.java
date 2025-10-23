@@ -14,6 +14,8 @@ public enum DistributedLockEnum {
     //系统系统
     SYS_GEN_DOCNO("SYS_GEN_DOCNO","系统服务获取单号"),
 
+    //样品台账系统
+    SAMPLE_LEDGER("SAMPLE_LEDGER","样品台账操作"),
 
     //WMS仓库系统
     WMS_INVENTORY_SKU("WMS_INVENTORY_SKU","WMS仓储系统库存操作"),
