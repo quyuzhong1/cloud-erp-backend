@@ -613,7 +613,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					}else {
 						if(new Date().after(DateUtil.offsetSecond(date, timeout))) {
 							try {
+								log.info("{}自动回滚开始" , logMsg);
 								this.rollbackRedis(t);
+								log.info("{}自动回滚结束" , logMsg);
 							} catch (Exception e) {
 								log.error("检查redis自动回滚执行失败：{}" , t , e);
 							}
