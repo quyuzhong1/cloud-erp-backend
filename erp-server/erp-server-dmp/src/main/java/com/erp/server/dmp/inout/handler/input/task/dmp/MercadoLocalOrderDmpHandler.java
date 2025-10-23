@@ -62,7 +62,7 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
         DmpInputTaskEntity slaInputTaskEntity = list.stream().filter(req -> "1952980922018058717".equals(req.getCfgInputId())).findFirst().orElse(null);
         List<ParamData> paramSlaList = new ArrayList<>();
         paramSlaList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, slaInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildSlaList = mongoService.findMongoData(paramSlaList, "mercadolibre_local_shipmentSla_data");
+        List<Map<String, Object>> dmpInputMongoChildSlaList = mongoService.findMongoData(paramSlaList, "mercadolibreLocal_shipmentSla_data");
 
         //使用 DateTimeFormatter 解析字符串日期
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
