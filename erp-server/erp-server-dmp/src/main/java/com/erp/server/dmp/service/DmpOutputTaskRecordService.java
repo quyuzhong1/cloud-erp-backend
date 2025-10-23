@@ -159,8 +159,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);
 
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
-
-    Boolean batchNoNeedSyncBySourceCode(List<String> sourceCodeList, String remark);
     /**
      * 获取最后一条拉取记录
      * @author will
@@ -169,4 +167,8 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return LastPullDTO
      */
     DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO);
+
+    Boolean batchNoNeedSyncBySourceCode(List<String> sourceCodeList, String remark);
+
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass);
 }

@@ -775,6 +775,11 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
+    public DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+        return baseMapper.getLastPullRecord(paramDTO);
+    }
+
+    @Override
     public Boolean batchNoNeedSyncBySourceCode(List<String> sourceCodeList, String remark) {
         if (CollectionUtils.isEmpty(sourceCodeList)) {
             return Boolean.FALSE;
@@ -792,7 +797,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
-    public DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO) {
-        return baseMapper.getLastPullRecord(paramDTO);
+    public List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass) {
+        return baseMapper.getLastOutputTaskRecordList(sourceCodeList, outputClass);
     }
 }
