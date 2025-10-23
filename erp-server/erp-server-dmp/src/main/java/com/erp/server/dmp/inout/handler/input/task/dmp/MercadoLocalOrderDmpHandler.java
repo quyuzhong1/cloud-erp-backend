@@ -56,7 +56,7 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
 
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_local_shipment_data");
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibreLocal_shipment_data");
 
         //查询SLA信息
         DmpInputTaskEntity slaInputTaskEntity = list.stream().filter(req -> "1952980922018058717".equals(req.getCfgInputId())).findFirst().orElse(null);
