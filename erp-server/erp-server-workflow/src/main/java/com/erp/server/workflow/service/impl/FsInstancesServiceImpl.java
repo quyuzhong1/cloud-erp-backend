@@ -1,18 +1,29 @@
 package com.erp.server.workflow.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ValidatorUtil;
+import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
+import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
@@ -27,7 +38,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.ApproveTypeEnum.PASS;
@@ -43,13 +54,7 @@ import static com.common.business.enums.ApproveTypeEnum.REJECT;
 public class FsInstancesServiceImpl implements FsInstancesService {
 
     @Resource
-    private ThirdProcessDefinitionService thirdProcessDefinitionService;
-
-    @Resource
     private ApproveTaskInfoService approveTaskInfoService;
-
-    @Resource
-    private ThirdProcessInstanceService thirdProcessInstanceService;
 
     @Resource
     private CreateBillFactory createBillFactory;
@@ -72,60 +77,17 @@ public class FsInstancesServiceImpl implements FsInstancesService {
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private SupplierFeign supplierFeign;
+
+    @Resource
+    private ThirdProcessDefinitionService thirdProcessDefinitionService;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void pullFsInstancesDetails(String data) {
-        JSONObject jsonObject = JSONUtil.parseObj(data);
-        String approvalCode = jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode());
-
-        // 1. 获取启用的流程定义
-        List<ThirdProcessDefinitionEntity> activeDefs = thirdProcessDefinitionService.list(
-                new LambdaQueryWrapper<ThirdProcessDefinitionEntity>()
-                        .eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
-                        .eq(ThirdProcessDefinitionEntity::getIsDeleted, false)
-        );
-
-        // 2. 保存或更新实例
-        ThirdProcessInstanceEntity instanceEntity = buildInstanceEntity(jsonObject);
-        thirdProcessInstanceService.saveOrUpdate(instanceEntity,
-                new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getInstanceCode, instanceEntity.getInstanceCode())
-        );
-
-        // 3. 查找当前 approvalCode 对应的流程定义类型
-        Optional<ThirdProcessDefinitionEntity> match = activeDefs.stream()
-                .filter(def -> approvalCode.equals(def.getApprovalCode()))
-                .findFirst();
-
-        if (match.isPresent()) {
-            String type = match.get().getType();
-            if (ThirdProcessDefinitionTypeEnum.PULL.getCode().equals(type)) {
-                handleAddInstance(jsonObject);
-            } else {
-                handleUpdateStatus(jsonObject,match.get().getSourcePlatform());
-            }
-        } else {
-            // 未找到对应定义，是否记录日志或抛出异常？
-            log.warn("未找到匹配的流程定义: approvalCode={}", approvalCode);
-        }
-    }
-
-    private ThirdProcessInstanceEntity buildInstanceEntity(JSONObject jsonObject) {
-        ThirdProcessInstanceEntity entity = new ThirdProcessInstanceEntity();
-        entity.setApprovalCode(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
-        entity.setStartTime(jsonObject.getStr(FsRequestBodyAttributesEnum.STARTTIME.getCode()));
-        entity.setEndTime(jsonObject.getStr(FsRequestBodyAttributesEnum.ENDTIME.getCode()));
-        entity.setSerialNumber(jsonObject.getStr(FsRequestBodyAttributesEnum.SERIALNUMBER.getCode()));
-        entity.setStatus(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
-        entity.setForm(jsonObject.getStr(FsRequestBodyAttributesEnum.FORM.getCode()));
-        entity.setInstanceCode(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
-        entity.setApprovalName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
-        entity.setTaskList(jsonObject.getStr(FsRequestBodyAttributesEnum.TASKLIST.getCode()));
-        entity.setThirdJson(jsonObject);
-        return entity;
-    }
-
-    private void handleUpdateStatus(JSONObject jsonObject, String sourcePlatform) {
+    public void handleUpdateStatus(JSONObject jsonObject, String sourcePlatform) {
         //更新或新增thirdProcessMan and taskMan
         thirdProcessManagementService.addOrUpdate(jsonObject,sourcePlatform);
 
@@ -141,7 +103,8 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         }
     }
 
-    private void handleAddInstance(JSONObject jsonObject) {
+    @Override
+    public void handleAddInstance(JSONObject jsonObject) {
         // 从 jsonObject 中获取 instanceCode
         CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).eq(CfgThirdProcessEntity::getIsDeleted, false));
 
@@ -154,21 +117,94 @@ public class FsInstancesServiceImpl implements FsInstancesService {
 
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
-        // 新增数据
-        add(jsonObject,  thirdProcessEntity, fieldMapList, valueMapList);
+        //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
+        CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
+        createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
     }
 
-    //处理推送类型的消息
-    public void add(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,  List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void addFreshGenerate(JSONObject jsonObject, Map<String, Object> map, CfgThirdProcessEntity thirdProcessEntity,
+                                 List<ApproveTaskDetailDTO.AddDTO> addDTOS) {
+        JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
+        JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
+        String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
+        Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
+        LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
+        //值映射
+        SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
+
+        //第一条账户设置成默认
+        if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
+            addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
+        }
+        addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
+        addDTO.setThirdApprovalUserId(lastUserId);
+        addDTO.setThirdApproveTime(approveTime);
+
+        //生成三方生成查询主表数据
+        ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS,thirdProcessEntity.getBussinessKey());
+        //查询三方生成查询
+        ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
+        if (ObjectUtil.isNotEmpty(taskInfoEntity)) {
+            SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfoEntity.getBussinessId());
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                log.warn(CharSequenceUtil.format("供应商【{}】已存在，直接标记消费成功",supplierEntity.getCode()));
+                return;
+            }
+            //判断是否存在三方生成查询数据，存在则删除
+            approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
+        }
+        // 第二步：保存供应商信息
+        BatchResultDTO batchResultDTO = new BatchResultDTO();
+        String reason = "";
+        String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
         try {
-            //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
-            CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
-            createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
+            //添加供应商
+            ValidatorUtil.validateEntity(addDTO);
+            batchResultDTO = supplierFeign.add(addDTO);
         } catch (Exception e) {
-            throw new ServiceException("创建单据异常，msg= {}", e.getMessage());
+            taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
+            reason = e.getMessage();
+        }
+        taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
+        taskInfo.setBussinessCode(batchResultDTO.getCode());
+        taskInfo.setBussinessId(batchResultDTO.getId());
+        taskInfo.setHappenTime(LocalDateTime.now());
+        taskInfo.setStatus(taskStatus);
+        taskInfo.setReason(reason);
+        approveTaskInfoService.add(taskInfo);
+        //添加三方流程记录
+        if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+            thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
         }
     }
 
+    /**
+     * 数据组装
+     * @author will
+     * @date 2025/10/23 16:04
+     * @param jsonObject
+     * @param addDTOS
+     * @param bussinessKey
+     * @return AddDTO
+     */
+    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {
+        ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).
+                eq(ThirdProcessDefinitionEntity::getIsDeleted, false).eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()));
+        ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
+        addDTO.setDetailList(addDTOS);
+        addDTO.setType(thirdProcessDefinition.getType());
+        addDTO.setThirdDefinniationName(thirdProcessDefinition.getName());
+        addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
+        addDTO.setThirdApprovalCode(thirdProcessDefinition.getApprovalCode());
+        addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
+        addDTO.setBussinessKey(bussinessKey);
+        return addDTO;
+    }
 
     /**
      * 根据流程状态处理最终的回调逻辑。
