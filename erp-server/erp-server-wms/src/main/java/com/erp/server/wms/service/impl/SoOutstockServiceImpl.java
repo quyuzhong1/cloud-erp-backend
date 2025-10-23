@@ -3294,10 +3294,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 检查清理历史异常信息
             log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}", soB2cEntity.getPlatformCode());
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
-            SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
             deleteDTO.setMainId(soB2cEntity.getId());
             deleteDTO.setType(type);
-            soB2cFeign.checkAndDeleteAllError(deleteDTO);
+            soB2cFeign.deleteError(deleteDTO);
+
         }
 
         return true;
