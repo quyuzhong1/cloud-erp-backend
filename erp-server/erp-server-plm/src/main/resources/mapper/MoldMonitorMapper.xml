@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.MoldMonitorMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.MoldMonitorEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_rule_json" property="sourceRuleJson" />
+       <result column="status" property="status" />
+       <result column="return_status" property="returnStatus" />
+       <result column="life_status" property="lifeStatus" />
+       <result column="purchase_order_qty" property="purchaseOrderQty" />
+       <result column="warehouse_receive_qty" property="warehouseReceiveQty" />
+       <result column="po_instock_qty" property="poInstockQty" />
+       <result column="actual_return_price" property="actualReturnPrice" />
+       <result column="return_user_id" property="returnUserId" />
+       <result column="return_user_name" property="returnUserName" />
+       <result column="return_date" property="returnDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        mm.id AS id,
+mm.create_user_id AS createUserId,
+mm.create_user_name AS createUserName,
+mm.create_time AS createTime,
+mm.update_user_id AS updateUserId,
+mm.update_user_name AS updateUserName,
+mm.update_time AS updateTime,
+mm.version AS version,
+mm.is_deleted AS isDeleted,
+mm.source_id AS sourceId,
+mm.source_detail_id AS sourceDetailId,
+mm.source_type AS sourceType,
+mm.source_rule_json AS sourceRuleJson,
+mm.status AS status,
+mm.return_status AS returnStatus,
+mm.life_status AS lifeStatus,
+mm.purchase_order_qty AS purchaseOrderQty,
+mm.warehouse_receive_qty AS warehouseReceiveQty,
+mm.po_instock_qty AS poInstockQty,
+mm.actual_return_price AS actualReturnPrice,
+mm.return_user_id AS returnUserId,
+mm.return_user_name AS returnUserName,
+mm.return_date AS returnDate,
+mm.remark AS remark
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.plm.dto.MoldMonitorDTO$TabListDTO">
+        SELECT
+        CASE
+        <if test="params != null and params.sourceType == 'cfgMoldReturnAlertrRule'">
+            return_status
+        </if>
+        <if test="params != null and params.sourceType == 'cfgMoldAlertrRule'">
+            life_status
+        </if>
+        ELSE NULL
+        END AS tabFlag,
+        COUNT(*) AS count
+        FROM mold_monitor
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            AND ${params.permissionSql}
+        </if>
+        <if test="params != null">
+            <choose>
+                <when test="params.sourceType == 'cfgMoldReturnAlertrRule'">
+                    GROUP BY return_status
+                </when>
+                <when test="params.sourceType == 'cfgMoldAlertrRule'">
+                    GROUP BY life_status
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.MoldMonitorDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM
+        mold_monitor mm
+        where
+        ${params.sqlMap.default}
+        AND mm.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.sourceType != null and params.sourceType != ''">
+            and mm.source_type = #{params.sourceType}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        mm.create_time desc
+    </select>
+
+
+</mapper>

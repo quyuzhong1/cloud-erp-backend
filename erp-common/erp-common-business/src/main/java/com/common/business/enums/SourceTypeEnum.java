@@ -157,6 +157,8 @@ public enum SourceTypeEnum {
     APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
+    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertrRule", "模具返还策略","cfg_mold_return_alert_rule"),
+    CFG_MOLD_ALERT_RULE("cfgMoldAlertrRule", "模具预警策略","cfg_mold_alert_rule"),
 
     LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
