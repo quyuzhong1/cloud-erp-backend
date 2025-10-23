@@ -67,7 +67,7 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 		if(Objects.nonNull(dmpInputTaskEntity)){
 			List<ParamData> paramDataList = new ArrayList<>();
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-			shipmentMongoList = mongoService.findMongoData(paramDataList, "mercadolibre_local_shipment_data");
+			shipmentMongoList = mongoService.findMongoData(paramDataList, "mercadolibreLocal_shipment_data");
 		}
 		if (CollectionUtil.isEmpty(shipmentMongoList)) {
 			return new ArrayList<>();
