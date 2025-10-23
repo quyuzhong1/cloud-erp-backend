@@ -742,36 +742,4 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
-
-    @Override
-    public DictBasicDTO addDictCredential(String credentialName) {
-        if(StringUtils.isBlank(credentialName)){
-            return null;
-        }
-
-        //校验名称是否已存在
-        Integer count = dictBasicService.lambdaQuery()
-                .eq(DictBasicEntity::getName, credentialName)
-                .eq(DictBasicEntity::getType, DictBasicEnum.CREDENTIAL_TYPE.getType())
-                .count();
-        if(count > 0){
-            throw new ServiceException(ApiError.ERROR_98124);
-        }
-
-        DictBasicEntity dictBasicEntity = new DictBasicEntity();
-        dictBasicEntity.setValue("CT_"+IdWorker.getIdStr());
-        dictBasicEntity.setName(credentialName);
-        dictBasicEntity.setType(DictBasicEnum.CREDENTIAL_TYPE.getType());
-        dictBasicEntity.setTypeName(DictBasicEnum.CREDENTIAL_TYPE.getDesc());
-        dictBasicEntity.setStatus(Boolean.TRUE);
-        boolean save = dictBasicService.save(dictBasicEntity);
-        if(!save){
-            throw new ServiceException("自定义证照新增失败");
-        }
-        DictBasicDTO dto = new DictBasicDTO();
-        BeanMapper.copy(dictBasicEntity, dto);
-        return dto;
-    }
-
-
 }
