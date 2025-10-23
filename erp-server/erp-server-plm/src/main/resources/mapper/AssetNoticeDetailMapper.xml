@@ -35,7 +35,7 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, asset_id, asset_code, asset_name, tag, is_urgent, plan_deliver_date, apply_qty, purchase_org_id, remark
+        main_id, asset_id, asset_code, asset_name, tag, is_urgent, plan_delivery_date, apply_qty, purchase_org_id, remark
     </sql>
 
     <select id="searchMoldRefSkuByAssetId" resultType="com.erp.model.plm.dto.AssetNoticeDetailDTO$AssetDetailRefSkuDTO">

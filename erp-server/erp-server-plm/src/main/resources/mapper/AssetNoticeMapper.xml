@@ -92,7 +92,7 @@
             and1.asset_code,
             and1.asset_name,
             pp.main_supplier,
-            and1.plan_deliver_date,
+            and1.plan_delivery_date,
             and1.apply_qty,
             and1.create_po_type,
             and1.id
