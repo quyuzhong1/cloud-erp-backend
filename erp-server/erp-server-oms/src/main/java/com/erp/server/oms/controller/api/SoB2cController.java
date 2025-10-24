@@ -7,8 +7,8 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -557,7 +557,7 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soB2cService.cancelProcess(id);
+                resultDTO = soB2cService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("B2C销售订单撤销失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
