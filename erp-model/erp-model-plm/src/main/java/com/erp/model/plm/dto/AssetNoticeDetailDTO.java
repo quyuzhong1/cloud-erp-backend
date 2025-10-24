@@ -222,7 +222,6 @@ public class AssetNoticeDetailDTO implements Serializable {
         /**
         * 计划交期
         */
-        @NotNull(message = "计划交期不能为空")
         private LocalDate planDeliveryDate;
 
         /**
