@@ -870,7 +870,29 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         startDTO.setBusinessKey(SourceTypeEnum.ASSET_ACCEPTANCE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        
+        // 查询人员列表并按personType分组，同一personType的userId用逗号分割
+        List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
+                .eq(AssetAcceptPersonEntity::getAssetAcceptId, entity.getId())
+                .list();
+        
+        Map<String, String> personTypeUserIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(personList)) {
+            personTypeUserIdMap = personList.stream()
+                    .collect(Collectors.groupingBy(
+                            AssetAcceptPersonEntity::getPersonType,
+                            Collectors.mapping(
+                                    AssetAcceptPersonEntity::getUserId,
+                                    Collectors.joining(",")
+                            )
+                    ));
+        }
+        
+        // 合并entity和人员信息到variablesMap
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        variablesMap.putAll(personTypeUserIdMap);
+        startDTO.setVariablesMap(variablesMap);
+        
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
