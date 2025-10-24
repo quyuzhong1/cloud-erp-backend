@@ -49,4 +49,9 @@ public class AssetNoticeApproveHandler extends AbstractApproveHandler {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return assetNoticeService.approveEnd(approveOne,assetNoticeEntity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }
