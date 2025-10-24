@@ -62,4 +62,39 @@
         GROUP BY
         dci.ID
     </select>
+
+    <!-- DmpCfgInput -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_cfg_input
+        where
+        ${params.sqlMap.default}
+        and is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_input where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$ListDTO">
+
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_cfg_input
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
 </mapper>

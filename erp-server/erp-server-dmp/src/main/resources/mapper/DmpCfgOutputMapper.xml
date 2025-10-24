@@ -31,8 +31,53 @@
         update_user_id,
         version,
         is_deleted,
-        system_id, input_convert_id, type, type_id, disabled, extend_json
+        system_id,
+        input_convert_id,
+        type,
+        type_id,
+        disabled,
+        extend_json,
+        push_rate,
+        output_class,
+        app_id,
+        flow_code,
+        flow_name,
+        exec_system,
+        exec_url
     </sql>
 
+    <!-- DmpCfgOutput -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_cfg_output
+        where
+        ${params.sqlMap.default}
+        and is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_output where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_cfg_output
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
 
 </mapper>

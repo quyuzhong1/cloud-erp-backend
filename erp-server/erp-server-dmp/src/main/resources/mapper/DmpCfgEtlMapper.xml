@@ -41,5 +41,39 @@
         disabled, app_id, flow_code, flow_name, last_time, next_time, interval_time, override_time, max_retry_count, exec_timeout, dealy_time, max_interval_time, extend_json
     </sql>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_cfg_etl
+        where
+        ${params.sqlMap.default}
+        and is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_etl where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$ListDTO">
+
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_cfg_etl
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
 
 </mapper>

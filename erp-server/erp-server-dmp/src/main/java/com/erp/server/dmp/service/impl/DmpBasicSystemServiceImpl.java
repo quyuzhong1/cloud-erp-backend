@@ -249,9 +249,9 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             updateById(entity);
             // 日志
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "启用平台管理数据");
+            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "启用【平台管理】数据");
         } else {
-            ServiceException.runError("该平台管理数据已启用，无需重复操作");
+            ServiceException.runError("该【平台管理】数据已启用，无需重复操作");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
@@ -262,10 +262,10 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             entity.setDisabled(true);
             updateById(entity);
             // 日志
-            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "禁用管理");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "禁用平台管理数据");
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
+            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "禁用【平台管理】数据");
         } else {
-            ServiceException.runError("该平台管理数据已禁用，无需重复操作");
+            ServiceException.runError("该【平台管理】数据已禁用，无需重复操作");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }

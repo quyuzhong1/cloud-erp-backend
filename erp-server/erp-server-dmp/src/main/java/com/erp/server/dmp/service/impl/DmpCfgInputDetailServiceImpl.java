@@ -1,38 +1,57 @@
 package com.erp.server.dmp.service.impl;
 
-
-import java.util.List;
-import java.util.Optional;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
-import com.erp.server.dmp.service.DmpCfgInputDetailService;
-
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 外部系统接口明细 服务实现类
  * </p>
  *
- * @author shukai
- * @since 2024-06-11
+ * @author Jim
+ * @since 2025-10-23
  */
 @Slf4j
 @Service
 public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDetailMapper, DmpCfgInputDetailEntity> implements DmpCfgInputDetailService {
+    @Resource
+    private OperateLogService operateLogService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -94,5 +113,129 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     */
     private void handleData(DmpCfgInputDetailEntity dmpCfgInputDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public PagingVO<DmpCfgInputDetailDTO.ListDTO> paging(PagingDTO<DmpCfgInputDetailDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpCfgInputDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<DmpCfgInputDetailDTO.TabListDTO> tabList(PermissionsDTO param) {
+        DmpCfgInputDetailDTO.PagingParamDTO searchParam = new DmpCfgInputDetailDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<DmpCfgInputDetailDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<DmpCfgInputDetailDTO.TabListDTO> resultList = new LinkedList<>();
+        resultList.add(new DmpCfgInputDetailDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpCfgInputDetailDTO.TabListDTO::getCount).sum()));
+        resultList.addAll(list);
+        List<String> existStatusList = list.stream().map(DmpCfgInputDetailDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<String> tabList = Arrays.asList("f", "t");
+        tabList.forEach(status -> {
+            if (!existStatusList.contains(status)) {
+                resultList.add(new DmpCfgInputDetailDTO.TabListDTO(status, "t".equals(status) ? "停用" : "启用", 0));
+            }
+        });
+        return resultList;
+    }
+
+    @Override
+    public void exportList(DmpCfgInputDetailDTO.ExportDTO param, HttpServletResponse response) {
+        List<DmpCfgInputDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/dmpCfgInputDetail.xlsx";
+        String name = "外部系统接口明细导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO delete(String id) {
+        DmpCfgInputDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到外部系统接口明细数据"));
+        // 只有待提交数据允许删除
+        // TODO 删除明细数据（如果有明细数据的话）
+
+        // 删除主单数据
+        log.info("删除 开始删除外部系统接口明细主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除外部系统接口明细日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "外部系统接口明细");
+        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除外部系统接口明细数据");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+    }
+
+
+    @Override
+    public DmpCfgInputDetailDTO.ViewDTO view(String id) {
+        DmpCfgInputDetailEntity dmpCfgInputDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到外部系统接口明细数据"));
+        DmpCfgInputDetailDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgInputDetailDTO.ViewDTO.class, dmpCfgInputDetailEntity);
+        // 数据填充处理
+        fillOne(data);
+        // TODO 查询明细数据（如果有的话）
+        return data;
+    }
+
+    private void fillOne(DmpCfgInputDetailDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<DmpCfgInputDetailDTO.ListDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+
+    }
+
+    @Override
+    public BatchResultDTO enable(DmpCfgInputDetailEntity entity) {
+        if (entity.getDisabled()) {
+            entity.setDisabled(false);
+            updateById(entity);
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取调度");
+            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "启用【拉取调度】数据");
+        } else {
+            ServiceException.runError("该【拉取调度】数据已启用，无需重复操作");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO disable(DmpCfgInputDetailEntity entity) {
+        if (!entity.getDisabled()) {
+            entity.setDisabled(true);
+            updateById(entity);
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取调度");
+            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "禁用【拉取调度】数据");
+        } else {
+            ServiceException.runError("该【拉取调度】数据已禁用，无需重复操作");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
     }
 }

@@ -1,24 +1,40 @@
 package com.erp.server.dmp.service.impl;
 
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.dmp.entity.DmpEtlTaskEntity;
-import com.erp.server.dmp.mapper.DmpEtlTaskMapper;
-import com.erp.server.dmp.service.DmpEtlTaskService;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpEtlTaskDTO;
+import com.erp.model.dmp.dto.DmpEtlTaskDTO;
+import com.erp.model.dmp.entity.DmpEtlTaskEntity;
+import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.server.dmp.mapper.DmpEtlTaskMapper;
+import com.erp.server.dmp.service.DmpEtlTaskService;
+import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpEtlTaskDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
 /**
  * <p>
  * etl任务 服务实现类
@@ -91,5 +107,116 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
     */
     private void handleData(DmpEtlTaskEntity dmpEtlTaskEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public PagingVO<DmpEtlTaskDTO.ListDTO> paging(PagingDTO<DmpEtlTaskDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpEtlTaskDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+
+    @Override
+    public List<DmpEtlTaskDTO.TabListDTO> tabList(PermissionsDTO param) {
+        DmpEtlTaskDTO.PagingParamDTO searchParam = new DmpEtlTaskDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<DmpEtlTaskDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        int total = list.stream().mapToInt(DmpEtlTaskDTO.TabListDTO::getCount).sum();
+        List<DmpEtlTaskDTO.TabListDTO> resultList = new ArrayList<>();
+        // 计算合计数量
+        resultList.add(new DmpEtlTaskDTO.TabListDTO("all", "全部", total));
+
+        List<DmpTaskStatuEnum> statusList = Arrays.stream(DmpTaskStatuEnum.values()).collect(Collectors.toList());
+        // 不存在的状态赋值为0
+        Map<String, DmpEtlTaskDTO.TabListDTO> listMap = list.stream().collect(Collectors.toMap(DmpEtlTaskDTO.TabListDTO::getTabFlag, e -> e));
+        statusList.forEach(status -> {
+            DmpEtlTaskDTO.TabListDTO tabListDTO = listMap.get(status.getCode());
+            if (tabListDTO != null) {
+                resultList.add(tabListDTO);
+            } else {
+                resultList.add(new DmpEtlTaskDTO.TabListDTO(status.getCode(), status.getName(), 0));
+            }
+        });
+        return resultList;
+    }
+
+    @Override
+    public void exportList(DmpEtlTaskDTO.ExportDTO param, HttpServletResponse response) {
+        List<DmpEtlTaskDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/dmpEtlTask.xlsx";
+        String name = "etl任务导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO delete(String id) {
+        DmpEtlTaskEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到etl任务数据"));
+        // 只有待提交数据允许删除
+        // TODO 删除明细数据（如果有明细数据的话）
+
+        // 删除主单数据
+        log.info("删除 开始删除etl任务主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除etl任务日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "etl任务");
+        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除etl任务数据");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+    }
+
+
+    @Override
+    public DmpEtlTaskDTO.ViewDTO view(String id) {
+        DmpEtlTaskEntity dmpEtlTaskEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到etl任务数据"));
+        DmpEtlTaskDTO.ViewDTO data = BeanMapperUtils.map(DmpEtlTaskDTO.ViewDTO.class, dmpEtlTaskEntity);
+        // 数据填充处理
+        fillOne(data);
+        // TODO 查询明细数据（如果有的话）
+        return data;
+    }
+
+
+    private void fillOne(DmpEtlTaskDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<DmpEtlTaskDTO.ListDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        // 属性赋值
+        for(DmpEtlTaskDTO.ListDTO data : list) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            // TODO 其他如需要显示名称的字段赋值
+        }
     }
 }
