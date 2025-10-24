@@ -16,7 +16,7 @@ public class UserStateConstants {
     /**
      * 系统默认用户ID
      */
-    public static final String USER_SYSTEM_ID = "0";
+    public static final String USER_SYSTEM_ID = "1977926753442455554";
 
     /**
      * 系统默认用户名称

@@ -37,13 +37,4 @@ public interface DmpAmazonFeign {
      **/
     @PostMapping("/amazon/shop")
     AmazonShopInfoDTO getShopAuth(@RequestBody String shopId);
-
-    /**
-     * 重推销售出库单
-     *
-     * @Author Jim
-     * @since 2024-03-12
-     **/
-    @PostMapping("/amazon/checkAndSendSoOutStock")
-    Boolean checkAndSendSoOutStock(@RequestBody DmpPullSoOutStockDTO dto);
 }

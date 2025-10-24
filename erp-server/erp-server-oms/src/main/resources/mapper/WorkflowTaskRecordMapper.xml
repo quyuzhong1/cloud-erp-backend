@@ -31,6 +31,9 @@
         WHERE
             is_deleted = false
             and source_id IN ( SELECT DISTINCT source_id FROM workflow_task_record WHERE status !='success' and is_deleted = false )
+        <if test="id != null and id != ''">
+            and source_id = #{id}
+        </if>
     </select>
 
     <select id="getTaskErrorReport" resultType="com.erp.model.oms.dto.WorkflowTaskRecordDTO$TaskErrorReportDTO">

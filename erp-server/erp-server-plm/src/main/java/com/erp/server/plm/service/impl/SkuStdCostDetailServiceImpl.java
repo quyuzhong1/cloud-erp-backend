@@ -33,7 +33,7 @@ import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -92,7 +92,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Resource
     private BomSkuService bomSkuService;
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     private static final String CLASSPATH = String.valueOf(SkuStdCostDetailEntity.class);
 
@@ -199,7 +199,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 addDTO.getStdCostPrice() + addDTO.getCurrency()
                 );
         //操作日志
-        sysLogService.addSysLogBySave(msg, CLASSPATH, newDetailEntity.getId(), listDTO.getSkuId());
+        operateLogService.addSysLogBySave(msg, CLASSPATH, newDetailEntity.getId(), listDTO.getSkuId());
 
         return BatchResultDTO.success(newDetailEntity.getId(), listDTO.getSkuNo());
     }
@@ -261,7 +261,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         String msg = CharSequenceUtil.format("编辑【{}】sku标准成本", mainEntity.getSkuNo());
         //操作日志
-        sysLogService.addSysLogByUpdate(old, newEntity, CLASSPATH, old.getId(), mainEntity.getSkuId(), msg);
+        operateLogService.addSysLogByUpdate(old, newEntity, CLASSPATH, old.getId(), mainEntity.getSkuId(), msg);
         return update;
     }
 
@@ -363,12 +363,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
         //操作日志
         String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+        OperateLogEntity sysLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
                 .setOperation("状态变更")
                 .setClassPath(CLASSPATH);
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(sysLogEntity);
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
@@ -393,12 +393,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
         //操作日志
         String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据审核通过 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+        OperateLogEntity sysLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
                 .setOperation("状态变更")
                 .setClassPath(CLASSPATH);
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(sysLogEntity);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -444,12 +444,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
         //操作日志
         String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据反审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+        OperateLogEntity sysLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
                 .setOperation("状态变更")
                 .setClassPath(CLASSPATH);
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(sysLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -475,12 +475,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         super.removeById(id);
         //操作日志
         String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据删除 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+        OperateLogEntity sysLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
                 .setOperation("状态变更")
                 .setClassPath(CLASSPATH);
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(sysLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DELETE);
     }
 
@@ -512,12 +512,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
         //操作日志
         String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据撤销 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+        OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
                 .setOperation("状态变更")
                 .setClassPath(CLASSPATH);
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(operateLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
