@@ -1779,7 +1779,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             List<String> soOutstockIds = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
 
             //提审
-            soOutstockService.submit(soOutstockIds,Boolean.FALSE);
+            soOutstockService.submit(soOutstockEntities.get(0),Boolean.FALSE);
+
 
             //审核通过
             ApproveOneDTO approveOneDTO = new ApproveOneDTO();
