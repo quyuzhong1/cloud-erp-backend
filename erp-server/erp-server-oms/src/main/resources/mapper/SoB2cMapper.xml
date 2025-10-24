@@ -105,6 +105,7 @@
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
+        sb2c.create_user_name as createUserName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
         sb2c.nfe_invoice_status as nfeInvoiceStatus,
         sb2c.multi_channel_type as multiChannelType
@@ -112,6 +113,7 @@
     <sql id="Full_Managed_Column_List">
         distinct sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
         sb2c.shop_id as shopId,
@@ -184,6 +186,8 @@
     <sql id="Export_Column_List">
         sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
+        sb2c.approve_user_name as approveUserName,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
@@ -274,6 +278,8 @@
     <sql id="Export_Fully_managed_Column_List">
         sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
+        sb2c.approve_user_name as approveUserName,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,

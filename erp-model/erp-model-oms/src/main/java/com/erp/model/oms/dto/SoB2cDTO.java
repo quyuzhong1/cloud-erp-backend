@@ -853,6 +853,10 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
     }
 
     @Data
@@ -2836,6 +2840,15 @@ public class SoB2cDTO implements Serializable {
          * 订单创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 审批人名称
+         */
+        private String approveUserName;
+
         /**
          * 销售订单明细id
          */

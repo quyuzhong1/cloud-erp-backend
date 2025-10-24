@@ -39,4 +39,9 @@ public class CustomerCreditApplyApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setId(dto.getBusinessId());
         return customerCreditApplyService.approveEnd(approveOneDTO,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

@@ -37,4 +37,9 @@ public class ExhibitionOrderApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return exhibitionOrderService.approveEnd(approveOneDTO,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

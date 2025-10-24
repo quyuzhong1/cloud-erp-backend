@@ -170,6 +170,7 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER("136", "样品台账"),
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PAYABLE_INFO("145", "应付单"),
+    SO_B2C_REFUND("146", "售后订单"),
 
     ;
 
