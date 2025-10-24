@@ -1,8 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -19,7 +17,6 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -83,10 +80,10 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/14 10:04
-     * @param ids ids
-     * @return java.lang.Boolean
+     * @param entity entity
+     * @return java.lang.BatchResultDTO
      **/
-    Boolean submit(List<String> ids,Boolean isNeedProcess);
+    BatchResultDTO submit(SoDeliveryNoticeEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -353,4 +350,14 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
 
     void updateSalesInfo(SoInfoEntity soInfoEntity);
+
+    /**
+     * 审核通过
+     * @author will
+     * @date 2025/10/22 15:53
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeEntity entity);
 }

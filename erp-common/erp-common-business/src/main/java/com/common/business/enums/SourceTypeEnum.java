@@ -129,6 +129,9 @@ public enum SourceTypeEnum {
     EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
 
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
+    SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
+
+
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),

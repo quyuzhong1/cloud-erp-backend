@@ -121,6 +121,31 @@ public class SoB2cRefundEntity extends BaseEntity<SoB2cRefundEntity> {
     @TableField("refund_cny_amount")
     private BigDecimal refundCnyAmount;
 
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private String approveStatus;
+
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
 
     public static final String CODE = "code";
 

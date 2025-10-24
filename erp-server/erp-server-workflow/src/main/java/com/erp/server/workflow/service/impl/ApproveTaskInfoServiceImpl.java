@@ -176,6 +176,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         Map<String, List<CfgQueryOptionEntity>> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getFieldBelongsType(),obj.getConditionField())));
 
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
+            detailDTO.setSysParentId(detailDTO.getEntityCode());
+            //唯一编码
+            detailDTO.setUniqueCode(CharSequenceUtil.format("{}-{}",detailDTO.getEntityCode(),detailDTO.getSysField()));
             //第三方类型名称
             detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
             //数大臣类型名称
