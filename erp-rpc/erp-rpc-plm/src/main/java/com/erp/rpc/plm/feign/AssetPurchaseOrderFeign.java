@@ -24,7 +24,7 @@ public interface AssetPurchaseOrderFeign {
      * @param assetPurchaseOrderId 资产采购订单ID
      * @return 资产采购订单明细列表
      */
-    @PostMapping("/api/assetPurchaseOrder/queryDetailsForAccept")
+    @PostMapping("/feign/assetPurchaseOrder/queryDetailsForAccept")
     ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> queryDetailsForAccept(@RequestBody String assetPurchaseOrderId);
 
     /**
@@ -33,6 +33,6 @@ public interface AssetPurchaseOrderFeign {
      * @param paramDTO 查询参数
      * @return 下拉选择列表
      */
-    @PostMapping("/api/assetPurchaseOrder/selectList")
+    @PostMapping("/feign/assetPurchaseOrder/selectList")
     ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO);
 }
