@@ -468,7 +468,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<SampleScrapInfoDTO.TabListDTO> list = new ArrayList<>();
         list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
         list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
-        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
+        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "已审核" , map.get(ApproveStatusEnum.APPROVE.getCode())));
         return list;
     }
 
