@@ -631,5 +631,73 @@ public class AssetPurchaseOrderDTO implements Serializable {
 
     }
 
+    /**
+     * 资产采购订单明细（用于资产验收单添加明细）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailForAcceptDTO {
+
+        /**
+         * 采购订单明细ID
+         */
+        private String id;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 待验收数量
+         */
+        private Integer pendingAcceptQty;
+
+        /**
+         * 已验收数量
+         */
+        private Integer acceptedQty;
+
+        /**
+         * 可验收数量
+         */
+        private Integer availableAcceptQty;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 模具编码
+         */
+        private String moldCode;
+
+        /**
+         * 模具名称
+         */
+        private String moldName;
+    }
+
 
 }

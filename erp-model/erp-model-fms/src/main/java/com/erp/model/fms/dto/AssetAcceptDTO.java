@@ -538,9 +538,29 @@ public class AssetAcceptDTO implements Serializable {
         private String assetAcceptId;
 
         /**
+         * 资产采购订单ID（新增时传入，用于确定来源）
+         */
+        private String assetPurchaseOrderId;
+
+        /**
          * SKU搜索条件（支持多个，用换行分隔）
          */
         private String searchKeyword;
+
+        /**
+         * 高级查询条件
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * 当前页码
+         */
+        private Integer currPage = 1;
+
+        /**
+         * 每页大小
+         */
+        private Integer pageSize = 20;
 
     }
 
@@ -555,6 +575,11 @@ public class AssetAcceptDTO implements Serializable {
          * 是否已选中
          */
         private Boolean selected = false;
+
+        /**
+         * skuId编码
+         */
+        private String skuId;
 
         /**
          * SKU编码
@@ -627,7 +652,7 @@ public class AssetAcceptDTO implements Serializable {
         /**
          * 明细列表
          */
-        private List<AddDetailItemDTO> detailList;
+        private List<AddDetailItemDTO> list;
     }
 
 }
