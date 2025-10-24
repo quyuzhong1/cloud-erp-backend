@@ -14,7 +14,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,11 +42,11 @@ public class SoReturnInstockApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
-        SoReturnReceiveEntity entity = soReturnInstockService.getById(dto.getId());
+        SoReturnInstockEntity entity = soReturnInstockService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售退货入库单");
         }
-        BatchResultDTO resultDTO = soReturnInstockService.disApprove(entity);
+        BatchResultDTO resultDTO = soReturnInstockService.disApprove(entity,Boolean.TRUE);
         return resultDTO.getSuccess();
     }
 
