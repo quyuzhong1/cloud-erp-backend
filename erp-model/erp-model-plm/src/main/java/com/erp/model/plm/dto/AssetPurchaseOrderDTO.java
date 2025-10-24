@@ -570,5 +570,66 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String errorUrl;
     }
 
+    /**
+     * 下拉选择DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 资产采购单号
+         */
+        private String code;
+
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 采购日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+    }
+
+    /**
+     * 下拉选择查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectParamDTO {
+        /**
+         * 关键字（支持code和supplierName模糊查询）
+         */
+        private String keyword;
+
+    }
+
 
 }

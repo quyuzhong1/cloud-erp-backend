@@ -52,6 +52,31 @@ public class AssetLocationDTO implements Serializable {
          private Integer count;
 
      }
+
+     /**
+     * 下拉列表DTO
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class DropDownDTO {
+
+         /**
+         * ID
+         */
+         private String id;
+
+         /**
+         * 编码
+         */
+         private String code;
+
+         /**
+         * 地址
+         */
+         private String address;
+
+     }
      /**
      * 分页列表查询参数
      */

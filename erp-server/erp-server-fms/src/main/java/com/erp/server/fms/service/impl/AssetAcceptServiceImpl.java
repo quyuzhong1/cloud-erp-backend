@@ -27,6 +27,11 @@ import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.enums.AssetCardStatusEnum;
+import com.erp.model.fms.enums.UnitEnum;
+import com.erp.model.fms.enums.AssetCategoryEnum;
+import com.erp.model.fms.enums.AssetStatusEnum;
+import com.erp.model.fms.enums.ChangeMethodEnum;
+import com.erp.model.fms.enums.DisposalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -104,6 +109,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AssetAcceptDTO.AddDTO addDTO) {
+        // 验证明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("资产验收明细不能为空，至少需要一条明细数据");
+        }
+        
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
 
@@ -223,6 +233,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AssetAcceptDTO.UpdateDTO addOrUpdateDTO) {
+        // 验证明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("资产验收明细不能为空，至少需要一条明细数据");
+        }
+        
         AssetAcceptEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产验收单"));
         // 待提交和审核不通过允许修改
@@ -1068,25 +1083,18 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 基础信息映射
         cardDTO.setSourceCode(acceptEntity.getCode()); // 来源单号
-        cardDTO.setSourceType("资产验收单"); // 卡片来源
+        cardDTO.setSourceType(SourceTypeEnum.ASSET_ACCEPTANCE.getCode()); // 卡片来源
         cardDTO.setSourceId(acceptEntity.getId()); // 来源ID
         cardDTO.setOrgId(acceptEntity.getAcceptOrgId()); // 资产组织 = 验收组织
         cardDTO.setOrgName(acceptEntity.getAcceptOrgName()); // 资产组织名称
-        cardDTO.setUnit("PCS"); // 计量单位默认值
-        cardDTO.setType("机器设备"); // 资产类别默认值
-        cardDTO.setStatus("正常使用"); // 资产状态默认值
-        cardDTO.setChangeMethod("购入"); // 变动方式默认值
+        cardDTO.setUnit(UnitEnum.PCS.getName()); // 计量单位默认值
+        cardDTO.setType(AssetCategoryEnum.MACHINERY.getName()); // 资产类别默认值
+        cardDTO.setStatus(AssetStatusEnum.NORMAL.getName()); // 资产状态默认值
+        cardDTO.setChangeMethod(ChangeMethodEnum.PURCHASE.getName()); // 变动方式默认值
         cardDTO.setName(detail.getProductName()); // 资产名称 = 产品名称
         cardDTO.setStartUseDate(currentDate); // 开始使用日期 = 操作日期
         cardDTO.setQty(1); // 数量 = 1（每个明细项拆分为多个卡片）
-        cardDTO.setAssetCode(""); // 资产编码（由编码规则生成）
-        cardDTO.setDisposalStatus(""); // 处置情况默认值
-        cardDTO.setRemark(""); // 备注默认值
-        
-        // 实物信息映射
-        cardDTO.setAssetLocationId(detail.getAssetLocationId()); // 资产位置
-        cardDTO.setRemark(detail.getRemark()); // 备注
-        
+
         return cardDTO;
     }
 
@@ -1422,6 +1430,16 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 bean.add(addDTO);
             }
         }
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/assetAcceptTemplate.xlsx";
+        String excelName = "资产验收单导入模板.xlsx";
+        com.common.core.utils.ExcelUtil.downloadTemplate(path, excelName, response);
     }
 
 }

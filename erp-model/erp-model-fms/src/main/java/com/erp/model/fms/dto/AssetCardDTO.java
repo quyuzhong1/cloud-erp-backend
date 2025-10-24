@@ -37,15 +37,20 @@ public class AssetCardDTO implements Serializable {
      @AllArgsConstructor
      public static class TabListDTO {
 
-         /**
-         * 类型
-         */
-         private String tabFlag;
+        /**
+        * 类型
+        */
+        private String tabFlag;
 
-         /**
-         * 数量
-         */
-         private Integer count;
+        /**
+        * 类型名称
+        */
+        private String tabFlagName;
+
+        /**
+        * 数量
+        */
+        private Integer count;
 
      }
      /**
@@ -101,6 +106,11 @@ public class AssetCardDTO implements Serializable {
         * 卡片来源（采购收货 手工建卡 盘盈建卡）
         */
         private String sourceType;
+        
+        /**
+        * 卡片来源名称
+        */
+        private String sourceTypeName;
 
         /**
         * 来源ID
@@ -121,6 +131,11 @@ public class AssetCardDTO implements Serializable {
         * 资产类型（机器设备）
         */
         private String type;
+        
+        /**
+        * 资产类型名称
+        */
+        private String typeName;
 
         /**
         * 卡片编码
@@ -131,11 +146,21 @@ public class AssetCardDTO implements Serializable {
         * 资产状态（正常使用）
         */
         private String status;
+        
+        /**
+        * 资产状态名称
+        */
+        private String statusName;
 
         /**
         * 变动方式（购入 盘盈）
         */
         private String changeMethod;
+        
+        /**
+        * 变动方式名称
+        */
+        private String changeMethodName;
 
         /**
         * 资产名称
@@ -146,6 +171,11 @@ public class AssetCardDTO implements Serializable {
         * 计量单位
         */
         private String unit;
+        
+        /**
+        * 计量单位名称
+        */
+        private String unitName;
 
         /**
         * 数量
@@ -197,6 +227,67 @@ public class AssetCardDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+        
+        // 明细表字段
+        /**
+        * 明细ID
+        */
+        private String detailId;
+        
+        /**
+        * 来源明细ID
+        */
+        private String sourceDetailId;
+        
+        /**
+        * 明细资产编码
+        */
+        private String detailAssetCode;
+        
+        /**
+        * 明细资产位置ID
+        */
+        private String detailAssetLocationId;
+        
+        /**
+        * 明细数量
+        */
+        private Integer detailQty;
+        
+        /**
+        * 供应商ID
+        */
+        private String supplierId;
+        
+        /**
+        * 供应商名称
+        */
+        private String supplierName;
+        
+        /**
+        * 使用部门名称
+        */
+        private String useDeptName;
+        
+        /**
+        * 使用部门ID
+        */
+        private String useDeptId;
+        
+        /**
+        * 费用项目
+        */
+        private String costType;
+        
+        /**
+        * 费用项目名称
+        */
+        private String costTypeName;
+        
+        /**
+        * 明细备注
+        */
+        private String detailRemark;
     }
 
     /**
@@ -246,6 +337,11 @@ public class AssetCardDTO implements Serializable {
         * 卡片来源（采购收货 手工建卡 盘盈建卡）
         */
         private String sourceType;
+        
+        /**
+        * 卡片来源名称
+        */
+        private String sourceTypeName;
 
         /**
         * 来源ID
@@ -266,6 +362,11 @@ public class AssetCardDTO implements Serializable {
         * 资产类型（机器设备）
         */
         private String type;
+        
+        /**
+        * 资产类型名称
+        */
+        private String typeName;
 
         /**
         * 卡片编码
@@ -276,11 +377,21 @@ public class AssetCardDTO implements Serializable {
         * 资产状态（正常使用）
         */
         private String status;
+        
+        /**
+        * 资产状态名称
+        */
+        private String statusName;
 
         /**
         * 变动方式（购入 盘盈）
         */
         private String changeMethod;
+        
+        /**
+        * 变动方式名称
+        */
+        private String changeMethodName;
 
         /**
         * 资产名称
@@ -291,6 +402,11 @@ public class AssetCardDTO implements Serializable {
         * 计量单位
         */
         private String unit;
+        
+        /**
+        * 计量单位名称
+        */
+        private String unitName;
 
         /**
         * 数量
@@ -331,8 +447,6 @@ public class AssetCardDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
     }
 
     /**
@@ -354,19 +468,19 @@ public class AssetCardDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
+
+
         private LocalDateTime invalidTime;
 
         /**
         * 来源单号
         */
-        @NotBlank(message = "来源单号不能为空")
         @Size(max = 100,message = "来源单号最大长度不能超过100位")
         private String sourceCode;
 
         /**
-        * 卡片来源（采购收货 手工建卡 盘盈建卡）
+        * 卡片来源（采购收货 手工建卡 盘盈建卡） /fms/dict/list?key=cardSource
         */
-        @NotBlank(message = "卡片来源（采购收货 手工建卡 盘盈建卡）不能为空")
         @Size(max = 200,message = "卡片来源（采购收货 手工建卡 盘盈建卡）最大长度不能超过200位")
         private String sourceType;
 
@@ -378,16 +492,15 @@ public class AssetCardDTO implements Serializable {
         private String sourceId;
 
         /**
-        * 资产组织ID
+        * 资产组织ID /sys/company/list
         */
         @NotBlank(message = "资产组织ID不能为空")
         @Size(max = 19,message = "资产组织ID最大长度不能超过19位")
         private String orgId;
 
         /**
-        * 资产组织名称
+        * 资产组织名称 /sys/company/list
         */
-        @NotBlank(message = "资产组织名称不能为空")
         @Size(max = 50,message = "资产组织名称最大长度不能超过50位")
         private String orgName;
 
@@ -427,6 +540,11 @@ public class AssetCardDTO implements Serializable {
         private String unit;
 
         /**
+         * 备注
+         */
+        private String remark;
+
+        /**
         * 数量
         */
         @NotNull(message = "数量不能为空")
@@ -435,36 +553,13 @@ public class AssetCardDTO implements Serializable {
         /**
         * 开始使用日期
         */
+        @NotNull(message = "开始使用日期不能为空")
         private LocalDate startUseDate;
 
         /**
-        * 资产编码
-        */
-        @NotBlank(message = "资产编码不能为空")
-        @Size(max = 50,message = "资产编码最大长度不能超过50位")
-        private String assetCode;
-
-        /**
-        * 资产位置ID
-        */
-        @NotBlank(message = "资产位置ID不能为空")
-        @Size(max = 19,message = "资产位置ID最大长度不能超过19位")
-        private String assetLocationId;
-
-        /**
-        * 处置情况（空 部分处置 完全清理）
-        */
-        @NotBlank(message = "处置情况（空 部分处置 完全清理）不能为空")
-        @Size(max = 20,message = "处置情况（空 部分处置 完全清理）最大长度不能超过20位")
-        private String disposalStatus;
-
-        /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 200,message = "备注最大长度不能超过200位")
-        private String remark;
-
+         * 明细
+         */
+        private List<AssetCardDetailDTO.AddDTO>detailList;
 
     }
 
