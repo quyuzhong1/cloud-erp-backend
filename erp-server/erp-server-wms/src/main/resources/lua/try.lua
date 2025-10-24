@@ -89,22 +89,44 @@ end
 local transactionrediskey = (transactionkey .. transaction);
 local beforetransactions = transactionrediskey .. '==';
 local beforetransactionsvalue = redis.call('SMEMBERS', transactionrediskey);
+local indexbeforetransactions = 0;
 for _, beforetransactionsv in ipairs(beforetransactionsvalue) do
-    beforetransactions = beforetransactions .. beforetransactionsv .. ',';
+    if indexbeforetransactions == 0 then
+        beforetransactions = beforetransactions .. beforetransactionsv;
+    else
+        beforetransactions = beforetransactions .. ',,' .. beforetransactionsv;
+    end
+    indexbeforetransactions = indexbeforetransactions + 1;
 end
 local beforeinventorys = '';
 local afterinventorys = '';
-for index ,newc in ipairs(newcurrentvaluearr) do
+local newcurrentvaluearrindex = 0;
+for _ ,newc in ipairs(newcurrentvaluearr) do
     local beforeinv = redis.call('get' , newc[2]);
-    beforeinventorys = beforeinventorys .. newc[2] .. '==' .. beforeinv .. ',';
+    if newcurrentvaluearrindex == 0 then
+        beforeinventorys = beforeinventorys .. newc[2] .. '==' .. beforeinv;
+    else
+        beforeinventorys = beforeinventorys .. ',,' .. newc[2] .. '==' .. beforeinv;
+    end
     redis.call('SADD' , transactionrediskey , newc[1]);
     redis.call('set' , newc[2] , newc[3]);
-    afterinventorys = afterinventorys .. newc[2] .. '==' .. newc[3] .. ',';
+    if newcurrentvaluearrindex == 0 then
+        afterinventorys = afterinventorys .. newc[2] .. '==' .. newc[3];
+    else
+        afterinventorys = afterinventorys .. ',,' .. newc[2] .. '==' .. newc[3];
+    end
+    newcurrentvaluearrindex = newcurrentvaluearrindex + 1;
 end
-local aftertransactions = transactionrediskey;
+local aftertransactions = transactionrediskey .. '==';
 local aftertransactionsvalue = redis.call('SMEMBERS', transactionrediskey);
+local indexaftertransactions = 0;
 for _, aftertransactionsv in ipairs(aftertransactionsvalue) do
-    aftertransactions = aftertransactions .. ',' .. aftertransactionsv;
+    if indexaftertransactions == 0 then
+        aftertransactions = aftertransactions .. aftertransactionsv;
+    else
+        aftertransactions = aftertransactions  .. ',,' .. aftertransactionsv;
+    end
+    indexaftertransactions = indexaftertransactions + 1;
 end
 result['success'] = true;
 result['beforetransactions'] = beforetransactions;

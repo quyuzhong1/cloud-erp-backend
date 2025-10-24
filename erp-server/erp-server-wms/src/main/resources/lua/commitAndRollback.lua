@@ -9,11 +9,17 @@ local value = redis.call('SMEMBERS', key);
 local beforetransactions = key .. '==';
 local beforeinventorys = '';
 local afterinventorys = '';
+local valueindex = 0;
 for _, v in ipairs(value) do
-    beforetransactions = beforetransactions .. v .. ',';
     local currkey = (current .. v);
     local currvalue = redis.call('get', currkey);
-    beforeinventorys = beforeinventorys .. currkey .. '==' .. currvalue .. ',';
+    if valueindex == 0 then
+        beforetransactions = beforetransactions .. v;
+        beforeinventorys = beforeinventorys .. currkey .. '==' .. currvalue;
+    else
+        beforetransactions = beforetransactions .. v;
+        beforeinventorys = beforeinventorys .. ',,' .. currkey .. '==' .. currvalue;
+    end
     if currvalue == 0 or currvalue == false then
         result['success'] = false;
         result['errormsg'] = '即时库存key不存在' .. currkey;
@@ -47,7 +53,12 @@ for _, v in ipairs(value) do
         local newvalue = uqty .. uvalue;
         redis.call('set', currkey, newvalue);
         redis.call('SREM', key, v);
-        afterinventorys = afterinventorys .. currkey .. '==' .. newvalue .. ',';
+        if valueindex == 0 then
+            afterinventorys = afterinventorys .. currkey .. '==' .. newvalue;
+        else
+            afterinventorys = afterinventorys .. ',,' .. currkey .. '==' .. newvalue;
+        end
+        valueindex = valueindex + 1;
     end
 end
 result['success'] = true;
@@ -55,7 +66,12 @@ result['beforetransactions'] = beforetransactions;
 result['beforeinventorys'] = beforeinventorys;
 result['afterinventorys'] = afterinventorys;
 local opallcount = redis.call('INCRBY' , 'inventory:op:all' , 1);
-local trycount = redis.call('INCRBY' , 'inventory:op:try' , 1);
 result['opallcount'] = opallcount;
-result['trycount'] = trycount;
+if type == 'commit' then
+    local commitcount = redis.call('INCRBY' , 'inventory:op:' .. type , 1);
+    result['commitcount'] = commitcount;
+else
+    local rollbackcount = redis.call('INCRBY' , 'inventory:op:' .. type , 1);
+    result['rollbackcount'] = rollbackcount;
+end
 return cjson.encode(result);
