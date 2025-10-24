@@ -37,7 +37,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -508,7 +507,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     public Boolean updateContractStampStatus(AssetPurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
         List<String> ids = dto.getIds();
-        if (CollUtil.isNotEmpty(ids) && StringUtil.isNotBlank(dto.getContractStampStatus())) {
+        if (CollUtil.isNotEmpty(ids) && StringUtils.isNotBlank(dto.getContractStampStatus())) {
             List<AssetPurchaseOrderEntity> assetPurchaseOrderEntityList = new ArrayList<>();
             List<AssetPurchaseOrderEntity> oldList = listByIds(ids);
             assetPurchaseOrderEntityList.addAll(oldList);
