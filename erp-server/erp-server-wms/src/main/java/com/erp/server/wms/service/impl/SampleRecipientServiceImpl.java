@@ -1024,7 +1024,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("只有已审核通过的样品领用单能结束领用");
         }
 
-        // 检查明细状态，只有部分出库的样品领用单能结束领用
+        // 检查明细状态，只有待出库或部分出库的样品领用单能结束领用
         List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
             .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
             .list();
@@ -1033,23 +1033,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单明细不能为空");
         }
 
-        // 检查是否有部分出库状态的明细
-        boolean hasPartOutstock = detailList.stream()
-            .anyMatch(detail -> SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()));
-
-        if (!hasPartOutstock) {
-            throw new ServiceException("只有部分出库的样品领用单能结束领用");
-        }
-
-        // 检查是否所有明细都是"已出库"或"待出库"
-        boolean allCompletedOrWaiting = detailList.stream()
-            .allMatch(detail ->
-                SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
-                SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
+        // 检查是否有待出库或部分出库状态的明细
+        boolean hasWaitOrPartOutstock = detailList.stream()
+            .anyMatch(detail -> 
+                SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
+                SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
             );
 
-        if (allCompletedOrWaiting) {
-            throw new ServiceException("只有部分出库的样品领用单能结束领用");
+        if (!hasWaitOrPartOutstock) {
+            throw new ServiceException("只有待出库或部分出库的样品领用单能结束领用");
         }
     }
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgSystemFieldMappingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgSystemFieldMappingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="cfg_query_option_id" property="cfgQueryOptionId" />
+       <result column="source_display_field" property="sourceDisplayField" />
+       <result column="source_field" property="sourceField" />
+       <result column="business_field" property="businessField" />
+       <result column="feign_path" property="feignPath" />
+       <result column="feign_method" property="feignMethod" />
+       <result column="feign_param" property="feignParam" />
+       <result column="target_field" property="targetField" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        cfg_query_option_id, source_display_field, source_field, business_field, feign_path, feign_method, feign_param, target_field, disabled
+    </sql>
+
+    <!-- 查询所有系统字段映射配置 -->
+    <select id="listSystemFieldMapping" resultType="com.erp.model.workflow.entity.CfgSystemFieldMappingEntity">
+        select
+            csfm.source_display_field,
+            csfm.source_field,
+            csfm.business_field,
+            csfm.feign_path,
+            csfm.feign_method,
+            csfm.feign_param,
+            csfm.target_field,
+            cqo.field_belongs_type as sysParentId
+        from cfg_system_field_mapping csfm
+        inner join cfg_query_option cqo on csfm.cfg_query_option_id = cqo.id and cqo.is_deleted = false
+        where csfm.is_deleted = false and csfm.disabled = false
+        <if test="params != null and params.size > 0" >
+            and
+            <foreach collection="params" open="(" item="item" close=")" separator="or">
+                <if test="item.useType != null and item.useType != ''">
+                    cqo.use_type = #{item.useType}
+                </if>
+                <if test="item.bussinessKey != null and item.bussinessKey != ''">
+                    and cqo.bussiness_key = #{item.bussinessKey}
+                </if>
+                <if test="item.sysField != null and item.sysField != ''">
+                    and cqo.condition_field = #{item.sysField}
+                </if>
+                <if test="item.sysParentId != null and item.sysParentId != ''">
+                    and cqo.field_belongs_type = #{item.sysParentId}
+                </if>
+            </foreach>
+        </if>
+
+    </select>
+
+
+</mapper>
