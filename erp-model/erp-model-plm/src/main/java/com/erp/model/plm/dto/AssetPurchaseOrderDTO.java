@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -84,6 +86,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
 
         /**
         * 资产采购单号
@@ -227,9 +234,14 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String supplierName;
 
         /**
-         * 是否结束验收
+         * 结束验收AssetPurchaseOrderReceiveEnum
          */
-        private Boolean isEndReceive;
+        private String endReceive;
+
+        /**
+         * 结束验收名称AssetPurchaseOrderReceiveEnum
+         */
+        private String endReceiveName;
 
         /**
          * 结束验收时间
@@ -239,17 +251,17 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
          * skuId
          */
-        private String skuId;
+        private String assetId;
 
         /**
          * sku编码
          */
-        private String skuNo;
+        private String assetCode;
 
         /**
          * 产品名称
          */
-        private String productName;
+        private String assetName;
 
         /**
          * 计划交期
@@ -632,4 +644,13 @@ public class AssetPurchaseOrderDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ContractStampStatusParamsDTO extends BaseIdsDTO.IdsDTO{
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
+    }
 }

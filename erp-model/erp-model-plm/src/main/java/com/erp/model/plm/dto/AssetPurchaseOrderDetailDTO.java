@@ -5,9 +5,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
@@ -54,6 +53,16 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         * 资产名称
         */
         private String assetName;
+
+        /**
+         * 标识(首套模first、复制模copy)
+         */
+        private String tag;
+
+        /**
+         * 标识名称(首套模first、复制模copy)
+         */
+        private String tagName;
 
         /**
         * 含税单价
@@ -106,9 +115,14 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private String kingdeeDetailId;
 
         /**
-        * 是否结束收货
+        * 结束收货AssetPurchaseOrderReceiveEnum
         */
-        private Boolean isEndReceive;
+        private String endReceive;
+
+        /**
+         * 结束收货名称AssetPurchaseOrderReceiveEnum
+         */
+        private String endReceiveName;
 
         /**
         * 结束验收时间
@@ -120,7 +134,62 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
+        /**
+         * 关联SKU详情
+         */
+        private List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
+    }
 
+    /**
+     * 关联SKU详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AssetDetailRefSkuDTO {
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 项目编号
+         */
+        private String projectCode;
+
+        /**
+         * 项目名称
+         */
+        private String projectName;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 用量
+         */
+        private BigDecimal skuQty;
     }
 
     /**
@@ -239,10 +308,9 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private String kingdeeDetailId;
 
         /**
-        * 是否结束收货
+        * 结束收货AssetPurchaseOrderReceiveEnum
         */
-        @NotNull(message = "是否结束收货不能为空")
-        private Boolean isEndReceive;
+        private String endReceive;
 
         /**
         * 结束验收时间

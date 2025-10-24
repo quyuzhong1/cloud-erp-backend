@@ -126,6 +126,11 @@ public class AssetPurchaseOrderEntity extends BaseEntity<AssetPurchaseOrderEntit
     */
     @TableField("invalid_remark")
     private String invalidRemark;
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
 
     public static final String CODE = "code";

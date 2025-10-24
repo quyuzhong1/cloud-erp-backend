@@ -2,6 +2,7 @@ package com.erp.server.fms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -85,6 +86,18 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, assetAcceptDetailEntity, null, assetAcceptDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Integer getAcceptQtyByDetailId(String detailId) {
+        LambdaQueryWrapper<AssetAcceptDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AssetAcceptDetailEntity::getSourceDetailId, detailId)
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE);
+        List<AssetAcceptDetailEntity> list = this.list(queryWrapper);
+        if (!list.isEmpty()) {
+            return list.stream().mapToInt(AssetAcceptDetailEntity::getAcceptedQty).sum();
+        }
+        return null;
     }
 
 
