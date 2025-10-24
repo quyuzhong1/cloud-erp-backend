@@ -162,11 +162,24 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     Boolean updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
 
+
     /**
      * 下拉选择列表（支持关键字查询）
      * @param paramDTO 查询参数
      * @return 下拉选择列表
      */
     List<AssetPurchaseOrderDTO.SelectDTO> selectList(AssetPurchaseOrderDTO.SelectParamDTO paramDTO);
+    /**
+     * 下拉选择列表（支持关键字查询）
+     * @param paramDTO 查询参数
+     * @return 下拉选择列表
+     */
+    /**
+     * 查询资产采购订单明细（用于资产验收单添加明细）
+     *
+     * @param assetPurchaseOrderId 资产采购订单ID
+     * @return 明细列表
+     */
+    List<AssetPurchaseOrderDTO.DetailForAcceptDTO> queryDetailsForAccept(String assetPurchaseOrderId);
 
 }
