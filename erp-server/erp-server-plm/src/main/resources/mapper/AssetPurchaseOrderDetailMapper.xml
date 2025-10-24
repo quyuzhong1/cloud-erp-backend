@@ -26,7 +26,7 @@
        <result column="is_urgent" property="isUrgent" />
        <result column="remark" property="remark" />
        <result column="kingdee_detail_id" property="kingdeeDetailId" />
-       <result column="is_end_receive" property="isEndReceive" />
+       <result column="end_receive" property="endReceive" />
        <result column="end_receive_time" property="endReceiveTime" />
        <result column="source_detail_id" property="sourceDetailId" />
     </resultMap>
@@ -42,7 +42,7 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, asset_id, asset_code, asset_name, tax_price, currency, currency_symbol, tax_rate, purchase_qty, total_amount, plan_delivery_date, is_urgent, remark, kingdee_detail_id, is_end_receive, end_receive_time, source_detail_id
+        main_id, asset_id, asset_code, asset_name, tax_price, currency, currency_symbol, tax_rate, purchase_qty, total_amount, plan_delivery_date, is_urgent, remark, kingdee_detail_id, end_receive, end_receive_time, source_detail_id
     </sql>
 
 

@@ -160,7 +160,7 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     Boolean approveEnd(ApproveOneDTO dto, AssetPurchaseOrderEntity entity);
 
 
-    Boolean updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
+    Boolean updateContractStampStatus(AssetPurchaseOrderDTO.ContractStampStatusParamsDTO dto);
 
 
     /**

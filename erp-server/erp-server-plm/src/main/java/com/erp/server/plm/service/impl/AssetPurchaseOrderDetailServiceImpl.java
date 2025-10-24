@@ -2,8 +2,10 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.plm.dto.AssetNoticeDetailDTO;
-import com.erp.model.plm.entity.AssetNoticeDetailEntity;
+import com.common.business.enums.AssetPurchaseOrderReceiveEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.fms.feign.AssetAceptFeign;
+import com.erp.server.plm.service.AssetPurchaseOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -20,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -34,8 +38,15 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetPurchaseOrderDetailMapper, AssetPurchaseOrderDetailEntity> implements AssetPurchaseOrderDetailService {
+
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Autowired
+    private AssetAceptFeign assetAceptFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -91,8 +102,46 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     }
 
     @Override
-    public Boolean endReceive(List<String> idList, String remark, Boolean b) {
-        return null;
+    public Boolean endReceive(List<String> idList, String remark) {
+        if (CollectionUtils.isEmpty(idList)) {
+            throw new IllegalArgumentException("ID列表不能为空");
+        }
+
+        List<AssetPurchaseOrderDetailEntity> oldList = this.listByIds(idList);
+        if (CollectionUtils.isEmpty(oldList)) {
+            throw new ServiceException(ApiError.ERROR_95298);
+        }
+
+        // 过滤需更新的记录（未结束接收的明细）
+        List<AssetPurchaseOrderDetailEntity> toUpdateList = oldList.stream()
+                .filter(entity -> !AssetPurchaseOrderReceiveEnum.CLOSE.getCode().equals(entity.getEndReceive()))
+                .collect(Collectors.toList());
+
+        // 批量更新状态
+        boolean updateResult = this.lambdaUpdate()
+                .set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.CLOSE.getCode())
+                .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime, LocalDate.now())
+                .set(AssetPurchaseOrderDetailEntity::getRemark, remark)
+                .in(AssetPurchaseOrderDetailEntity::getId, toUpdateList.stream().map(AssetPurchaseOrderDetailEntity::getId).collect(Collectors.toList()))
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                .update();
+
+        // 记录操作日志
+        if (updateResult) {
+            for (AssetPurchaseOrderDetailEntity updatedEntity : toUpdateList) {
+                String msg = StrUtil.format("SKU【{}】结束验收，结束原因：{}", updatedEntity.getAssetCode(), remark);
+                operateLogService.addSysLogByUpdate(
+                        oldList.stream().filter(old -> old.getId().equals(updatedEntity.getId())).findFirst().orElse(null),
+                        updatedEntity,
+                        ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
+                        updatedEntity.getId(),
+                        "资产采购单",
+                        msg
+                );
+            }
+        }
+
+        return updateResult;
     }
 
     @Override
@@ -106,6 +155,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             BeanMapperUtils.copy(addDTO, assetPurchaseOrderDetailEntity);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
             assetPurchaseOrderDetailEntity.setTotalAmount(assetPurchaseOrderDetailEntity.getPurchaseQty().multiply(assetPurchaseOrderDetailEntity.getTaxPrice()));
+            assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
             detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
         super.saveBatch(detailEntityList);

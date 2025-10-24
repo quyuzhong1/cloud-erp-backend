@@ -150,7 +150,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
 		Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -189,7 +188,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
 		Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : ids) {
@@ -228,7 +226,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
 		Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -268,7 +265,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
 		Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -306,7 +302,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
 		Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -345,7 +340,6 @@ public class AssetPurchaseChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
         Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {

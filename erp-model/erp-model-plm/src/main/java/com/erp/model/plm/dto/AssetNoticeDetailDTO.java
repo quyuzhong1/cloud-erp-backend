@@ -103,6 +103,7 @@ public class AssetNoticeDetailDTO implements Serializable {
 
     }
 
+
     /**
      * 关联SKU详情
      */

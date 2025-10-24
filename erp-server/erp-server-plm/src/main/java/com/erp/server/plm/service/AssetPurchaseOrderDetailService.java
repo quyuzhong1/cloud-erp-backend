@@ -36,7 +36,7 @@ public interface AssetPurchaseOrderDetailService extends SuperService<AssetPurch
     */
     Boolean update(AssetPurchaseOrderDetailDTO.UpdateDTO dto);
 
-    Boolean endReceive(List<String> idList, String remark,Boolean b);
+    Boolean endReceive(List<String> idList, String remark);
 
     void add(List<AssetPurchaseOrderDetailDTO.AddDTO> detailList, String assetPurchaseOrderId);
 
