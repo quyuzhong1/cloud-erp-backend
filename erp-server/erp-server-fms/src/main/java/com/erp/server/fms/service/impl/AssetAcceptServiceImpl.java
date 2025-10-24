@@ -1297,7 +1297,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             }
             
             productSkuDTO.setStatusList(Collections.singletonList(2)); // 2表示审核通过
-            productSkuDTO.setNotPropertyList(Collections.singletonList("资产")); // 不要资产类型
+            productSkuDTO.setPropertyList(Collections.singletonList("资产")); //过滤资产类型
 
             com.common.business.dto.base.PagingDTO<com.erp.model.plm.dto.ProductSkuDTO> pagingDTO = new com.common.business.dto.base.PagingDTO<>();
             pagingDTO.setParams(productSkuDTO);
