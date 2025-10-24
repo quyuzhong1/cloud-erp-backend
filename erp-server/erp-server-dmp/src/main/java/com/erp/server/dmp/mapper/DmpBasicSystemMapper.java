@@ -1,12 +1,18 @@
 package com.erp.server.dmp.mapper;
+import com.common.business.dto.TabListDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import com.erp.model.plm.dto.DictControllerDTO;
 import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
+
+import com.erp.model.dmp.dto.DmpBasicSystemDTO;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.util.List;
-
 
 /**
  * <p>
@@ -26,4 +32,34 @@ public interface DmpBasicSystemMapper extends BaseMapper<DmpBasicSystemEntity> {
      * @return java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>
      **/
     List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem();
+
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<DmpBasicSystemDTO.ListDTO> paging(Page query, @Param("params") DmpBasicSystemDTO.PagingParamDTO params);
+
+    /**
+     * 状态数量
+     * @param params
+     * @return
+     */
+    List<ApproveStatusQtyDTO> listCount(@Param("params") DmpBasicSystemDTO.PagingParamDTO params);
+
+    /**
+     * 导出Excel查询
+     * @param params
+     * @return
+     */
+    List<DmpBasicSystemDTO.ListDTO> listExport(@Param("params") DmpBasicSystemDTO.ExportDTO params);
+
+
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    List<DmpBasicSystemDTO.TabListDTO> tabList(@Param("params") DmpBasicSystemDTO.PagingParamDTO searchParam);
 }

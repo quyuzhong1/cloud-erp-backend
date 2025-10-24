@@ -1,10 +1,16 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpBasicSystemDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.plm.dto.DictControllerDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -51,4 +57,71 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
      * @return java.util.List<com.erp.model.dmp.entity.DmpBasicSystemEntity>
      **/
     DmpBasicSystemEntity listByCode(String code);
+
+    /**
+     * 分页列表查询
+     *
+     * @param pagingParamDTO
+     * @return PagingVO<DmpBasicSystemDTO.ListDTO>>
+     * @author Jim
+     * @date: 2025-10-23
+     */
+    PagingVO<DmpBasicSystemDTO.ListDTO> paging(PagingDTO<DmpBasicSystemDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 状态统计
+     *
+     * @param dto
+     * @return List<DmpBasicSystemDTO.TabListDTO>>
+     * @author Jim
+     * @date: 2025-10-23
+     */
+    List<DmpBasicSystemDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+
+    /**
+     * 删除
+     *
+     * @param id
+     * @return
+     * @author Jim
+     * @date: 2025-10-23
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 详情
+     *
+     * @param id
+     * @return
+     * @author Jim
+     * @date: 2025-10-23
+     */
+    DmpBasicSystemDTO.ViewDTO view(String id);
+
+
+    /**
+     * 导出Excel
+     *
+     * @param dto
+     * @param response
+     * @return
+     * @author Jim
+     * @date: 2025-10-23
+     */
+    void exportList(DmpBasicSystemDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 启用
+     * @param entity 实体
+     * @return 批处理对象
+     */
+    BatchResultDTO enable(DmpBasicSystemEntity entity);
+
+    /**
+     * 启用
+     * @param entity 实体
+     * @return 批处理对象
+     */
+    BatchResultDTO disable(DmpBasicSystemEntity entity);
 }
