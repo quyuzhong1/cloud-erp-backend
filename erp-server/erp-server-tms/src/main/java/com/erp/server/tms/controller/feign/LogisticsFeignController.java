@@ -100,6 +100,18 @@ public class LogisticsFeignController {
         return logisticsChannelService.getById(channelId);
     }
     /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @param logisticsPlatform
+     * @return
+     */
+    @GetMapping("/getChannelByCode")
+    public LogisticsChannelEntity getChannelByCode(@RequestParam("channelCode") String channelCode,
+                                                   @RequestParam("logisticsPlatform") String logisticsPlatform){
+        return logisticsChannelService.getChannelByCode(channelCode,logisticsPlatform);
+    }
+
+    /**
      * 获取渠道 根据渠道名称
      * @param channelName
      * @return
