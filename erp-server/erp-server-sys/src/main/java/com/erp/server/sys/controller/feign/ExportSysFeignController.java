@@ -1,15 +1,26 @@
 package com.erp.server.sys.controller.feign;
 
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.sys.dto.*;
-import com.erp.server.sys.service.*;
+import javax.annotation.Resource;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.CfgThirdNoticeDTO;
+import com.erp.model.sys.dto.DictBasicAllDTO;
+import com.erp.model.sys.dto.DictCityDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.DictGlobalAreaDTO;
+import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.server.sys.service.CfgThirdNoticeService;
+import com.erp.server.sys.service.DictBasicAllService;
+import com.erp.server.sys.service.DictCityService;
+import com.erp.server.sys.service.DictCountryService;
+import com.erp.server.sys.service.DictGlobalAreaService;
+import com.erp.server.sys.service.ThirdNoticePushRecordService;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -24,6 +35,8 @@ public class ExportSysFeignController {
     private CfgThirdNoticeService cfgThirdNoticeService;
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
+    @Resource
+    private DictBasicAllService dictBasicAllService;
 
     @PostMapping("/city")
     public PagingVO<DictCityDTO.PagingViewDTO> exportCity(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
@@ -52,5 +65,10 @@ public class ExportSysFeignController {
     @PostMapping("/exportCfgThirdNoticePushRecord")
     public PagingVO<ThirdNoticePushRecordDTO.ListDTO> exportCfgThirdNoticePushRecord(@RequestBody PagingDTO<ThirdNoticePushRecordDTO.PagingParamDTO> dto){
         return thirdNoticePushRecordService.paging(dto);
+    }
+    
+    @PostMapping("/exportDictBasicAll")
+    public PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto){
+    	return dictBasicAllService.paging(dto);
     }
 }

@@ -171,6 +171,7 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PAYABLE_INFO("145", "应付单"),
 
+    DICT_BASIC("150", "字典数据"),
     ;
 
 
