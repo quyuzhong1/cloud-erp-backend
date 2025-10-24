@@ -15,7 +15,7 @@ import java.util.List;
  * @author wuht
  * @since 2025-01-20
  */
-@FeignClient(name = "erp-server-plm", fallback = AssetPurchaseOrderFeignFallback.class, configuration = FeignErrorDecoder.class)
+@FeignClient(name = "erp-plm", fallback = AssetPurchaseOrderFeignFallback.class, configuration = FeignErrorDecoder.class)
 public interface AssetPurchaseOrderFeign {
 
     /**
