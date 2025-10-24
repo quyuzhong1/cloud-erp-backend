@@ -49,7 +49,51 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.AssetPurchaseOrderDTO$ListDTO">
-
+        SELECT
+            apo.id as id,
+            apod.id as detailId,
+            apo.code as code,
+            apo.source_id as sourceId,
+            apo.source_code as sourceCode,
+            apo.source_type as sourcetype,
+            apo.order_type as orderType,
+            apo.approve_status as approveStatus,
+            apo.invalid_status as invalidStatus,
+            apod.end_receive as endReceive,
+            apod.asset_id as assetId,
+            apod.asset_code as assetCode,
+            apod.asset_name as assetName,
+            apo.contract_stamp_status as contractStampStatus,
+            apod.plan_delivery_date as planDeliveryDate,
+            apod.tax_price as taxPrice,
+            apod.tax_rate as taxRate,
+            apod.purchase_qty as purchaseQty,
+            apod.total_amount as totalAmount,
+            apod.remark as remark,
+            apo.approve_user_id as approveUserId,
+            apo.approve_user_name as approveUserName,
+            apo.approve_user_time as approveUserTime,
+            apo.purchase_user_id as purchaseUserId,
+            apo.purchase_user_name as purchaseUserName,
+            apo.create_user_id as createUserId,
+            apo.create_user_name as createUserName,
+            apo.create_time as createTime
+        FROM
+            asset_purchase_order apo
+            left join asset_purchase_order_detail apod on apod.main_id = apo.ID and apod.is_deleted = false
+            left join asset_purchase_order_supplier apos on apos.asset_purchase_order_id = apo."id" and apos.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and apo.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        order by apo.create_time
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

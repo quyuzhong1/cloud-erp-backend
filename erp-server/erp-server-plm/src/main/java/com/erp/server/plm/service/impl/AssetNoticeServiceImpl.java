@@ -494,7 +494,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
                 addDetailDTO.setMainId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setIsUrgent(Boolean.FALSE);
-                addDetailDTO.setIsEndReceive(Boolean.FALSE);
+                addDetailDTO.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                 addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
                 addDetailDTO.setTag(moldInfoEntity.getTag());
                 details.add(addDetailDTO);
@@ -791,7 +791,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
-
 
     }
     /**

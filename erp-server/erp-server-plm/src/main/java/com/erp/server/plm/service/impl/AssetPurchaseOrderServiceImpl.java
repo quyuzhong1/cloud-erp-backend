@@ -1,27 +1,33 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.erp.model.plm.dto.AssetNoticeDTO;
-import com.erp.model.plm.entity.AssetPurchaseOrderSupplierEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.dto.AssetNoticeDetailDTO;
+import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
+import com.erp.model.plm.entity.*;
 import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
+import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.ContractStampStatusEnum;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
-import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
-import com.erp.server.plm.service.AssetPurchaseOrderSupplierService;
+import com.erp.server.plm.mapper.AssetNoticeDetailMapper;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeAssetPurchaseService;
+import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -35,6 +41,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +59,13 @@ import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -77,7 +87,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     private AssetPurchaseOrderSupplierService assetPurchaseOrderSupplierService;
 
     @Autowired
+    private SyncKingdeeAssetPurchaseService syncKingdeeAssetPurchaseService;
+
+    @Autowired
+    private AssetPurchaseChangeService assetPurchaseChangeService;
+
+    @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private AssetNoticeDetailMapper assetNoticeDetailMapper;
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
@@ -93,6 +112,12 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
     @Autowired
     private ScmDictFeign scmDictFeign;
+
+    @Autowired
+    private AssetAceptFeign assetAceptFeign;
+
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -111,69 +136,69 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderEntity.setCode(code);
 
         boolean savePurchaseOrder = super.save(assetPurchaseOrderEntity);
-        if(!savePurchaseOrder) {
+        if (!savePurchaseOrder) {
             throw new ServiceException("资产采购单保存失败");
         }
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(addDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
 
         //处理供应商数据
-        handleSupplierData(assetPurchaseOrderSupplierEntity,assetPurchaseOrderEntity);
+        handleSupplierData(assetPurchaseOrderSupplierEntity, assetPurchaseOrderEntity);
 
         boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
-        if(!savePurchaseSupplier) {
+        if (!savePurchaseSupplier) {
             throw new ServiceException("资产采购单供应商信息报错失败");
         }
 
         // 新增明细
-        assetPurchaseOrderDetailService.add(addDTO.getAssetPurchaseOrderDetailDTO(),assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.add(addDTO.getAssetPurchaseOrderDetailDTO(), assetPurchaseOrderEntity.getId());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购单" , assetPurchaseOrderEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购单", assetPurchaseOrderEntity.getCode());
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(assetPurchaseOrderEntity.getId(), code);
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AssetPurchaseOrderDTO.UpdateDTO addOrUpdateDTO) {
         AssetPurchaseOrderEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(addOrUpdateDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
-        AssetPurchaseOrderEntity assetPurchaseOrderEntity =  BeanMapperUtils.map(AssetPurchaseOrderEntity.class, addOrUpdateDTO);
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = BeanMapperUtils.map(AssetPurchaseOrderEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(assetPurchaseOrderEntity);
         log.info("编辑 开始修改数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(assetPurchaseOrderEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("资产采购单保存失败");
         }
 
         //处理供应商数据
         BeanMapperUtils.copy(addOrUpdateDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
-        handleSupplierData(assetPurchaseOrderSupplierEntity,assetPurchaseOrderEntity);
+        handleSupplierData(assetPurchaseOrderSupplierEntity, assetPurchaseOrderEntity);
         boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.updateById(assetPurchaseOrderSupplierEntity);
-        if(!savePurchaseSupplier) {
+        if (!savePurchaseSupplier) {
             throw new ServiceException("资产采购单供应商信息报错失败");
         }
 
         // 更新明细
-        assetPurchaseOrderDetailService.update(addOrUpdateDTO.getAssetPurchaseOrderDetailDTOList(),assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.update(addOrUpdateDTO.getAssetPurchaseOrderDetailDTOList(), assetPurchaseOrderEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseOrderEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseOrderEntity.getCode(), "");
-        operateLogService.addSysLogByUpdate(old, assetPurchaseOrderEntity, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(),"资产采购单", msg);
+        operateLogService.addSysLogByUpdate(old, assetPurchaseOrderEntity, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "资产采购单", msg);
         return Boolean.TRUE;
     }
 
@@ -183,8 +208,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<AssetPurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
@@ -195,27 +220,37 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public List<AssetPurchaseOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetPurchaseOrderDTO.PagingParamDTO searchParam = new AssetPurchaseOrderDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        List<AssetPurchaseOrderDTO.TabListDTO> returnList = new ArrayList<>();
         List<AssetPurchaseOrderDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+
+
         // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
+        List<String> statusList = AssetApproveStatusEnum.getStatusList();
+
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetPurchaseOrderDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        for (AssetPurchaseOrderDTO.TabListDTO tabListDTO : list) {
+            tabListDTO.setTabFlagName(AssetApproveStatusEnum.getName(tabListDTO.getTabFlag()));
+        }
+
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
+            if (!existStatusList.contains(status)) {
                 list.add(new AssetPurchaseOrderDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
             }
         });
-        // 计算合计数量
-        list.add(new AssetPurchaseOrderDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetPurchaseOrderDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+
+        // 合计数量要放第一个
+        returnList.add(new AssetPurchaseOrderDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetPurchaseOrderDTO.TabListDTO::getCount).sum()));
+        returnList.addAll(list);
+
+        return returnList;
     }
 
     @Override
     public void exportList(AssetPurchaseOrderDTO.ExportDTO param, HttpServletResponse response) {
         List<AssetPurchaseOrderDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+        if (CollUtil.isEmpty(list)) {
+            return;
         }
         // 数据处理
         fillList(list);
@@ -251,8 +286,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 记录操作日志
         log.info("提交 开始记录日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, entity.getId(), "提交操作");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "资产采购单提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -282,20 +316,19 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         AssetPurchaseOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, entity.getId(), "审核操作");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "资产采购单审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -309,8 +342,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -334,15 +366,17 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "资产采购单反审核操作");
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity), SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -351,7 +385,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+
+        LambdaQueryWrapper<AssetPurchaseChangeEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(AssetPurchaseChangeEntity::getSourceId,entity.getId())
+                .eq(AssetPurchaseChangeEntity::getIsDeleted,Boolean.FALSE);
+
+        List<AssetPurchaseChangeEntity> purchaseChangeList = assetPurchaseChangeService.list(lambdaQueryWrapper);
+        if (CollectionUtils.isNotEmpty(purchaseChangeList)) {
+            throw new ServiceException(ApiError.ERROR_95306);
+        }
+
         return true;
     }
 
@@ -360,10 +403,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public BatchResultDTO delete(String id) {
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+        //删除明细
+        assetPurchaseOrderDetailService.removeById(id,null);
 
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
@@ -371,9 +415,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        operateLogService.addSysLogBySave(msg, null, entity.getCode(), "删除数据");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getCode(), "删除数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
+
     /**
     * 作废
     */
@@ -393,8 +438,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, entity.getId(), "作废操作");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -410,7 +454,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
+
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改状态，id：【{}】", id);
@@ -419,12 +463,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -443,14 +485,59 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //发送金蝶
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
         return Boolean.TRUE;
     }
 
+    private void sendPushTask(List<AssetPurchaseOrderEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeAssetPurchaseService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+
     @Override
-    public Boolean updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
-        return null;
+    public Boolean updateContractStampStatus(AssetPurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
+        List<String> ids = dto.getIds();
+        if (CollUtil.isNotEmpty(ids) && StringUtils.isNotBlank(dto.getContractStampStatus())) {
+            List<AssetPurchaseOrderEntity> assetPurchaseOrderEntityList = new ArrayList<>();
+            List<AssetPurchaseOrderEntity> oldList = listByIds(ids);
+            assetPurchaseOrderEntityList.addAll(oldList);
+            lambdaUpdate()
+                    .set(AssetPurchaseOrderEntity::getContractStampStatus, dto.getContractStampStatus())
+                    .in(AssetPurchaseOrderEntity::getId, ids)
+                    .update();
+
+            //操作日志
+            String name = ContractStampStatusEnum.getName(dto.getContractStampStatus());
+
+            for (AssetPurchaseOrderEntity purchaseOrderEntity : assetPurchaseOrderEntityList) {
+                AssetPurchaseOrderEntity oldEntity = oldList.stream().filter(old -> old.getId().equals(purchaseOrderEntity.getId())).findFirst().orElse(null);
+                String msg = StrUtil.format("{}合同盖章状态由【{}】变更为：【{}】", purchaseOrderEntity.getCode() ,  ContractStampStatusEnum.getName(oldEntity.getContractStampStatus()) , ContractStampStatusEnum.getName(purchaseOrderEntity.getContractStampStatus()));
+                operateLogService.addSysLogByUpdate(
+                        oldEntity,
+                        purchaseOrderEntity,
+                        ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
+                        purchaseOrderEntity.getId(),
+                        "资产采购单",
+                        msg
+                );
+            }
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -459,9 +546,32 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderDTO.ViewDTO data = BeanMapperUtils.map(AssetPurchaseOrderDTO.ViewDTO.class, assetPurchaseOrderEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+
+        LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AssetPurchaseOrderDetailEntity::getMainId,id)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE);
+        List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.list(queryWrapper);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_95307);
+        }
+        List<AssetPurchaseOrderDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.ViewDTO.class, detailList);
+        fillViewList(dtoList);
+        data.setAssetPurchaseOrderDetailDTOList(dtoList);
         return data;
     }
+
+    public void fillViewList(List<AssetPurchaseOrderDetailDTO.ViewDTO> dtoList){
+
+        for (AssetPurchaseOrderDetailDTO.ViewDTO detailDTO : dtoList) {
+            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetNoticeDetailRefSkuDTOS = assetNoticeDetailMapper.searchMoldRefSkuByAssetId(detailDTO.getAssetId());
+            //关联sku信息
+            List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO.class, assetNoticeDetailRefSkuDTOS);
+            detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
+            detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
+        }
+
+    }
+
     /**
     * 启动流程
     *
@@ -541,8 +651,19 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         for(AssetPurchaseOrderDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
             data.setContractStampStatusName(ContractStampStatusEnum.getName(data.getContractStampStatus()));
+            data.setEndReceiveName(AssetPurchaseOrderReceiveEnum.getName(data.getEndReceive()));
+            //从资产验收单获取
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(data.getId());
+            BigDecimal parseAcceptQty = acceptQty == null ? BigDecimal.ZERO : new BigDecimal(acceptQty);
+            //如果是结束验收状态,待验收数为0
+            if (AssetPurchaseOrderReceiveEnum.CLOSE.getCode().equals(data.getEndReceive())) {
+                data.setAcceptQty(data.getPurchaseQty().subtract(parseAcceptQty));
+                data.setUnAcceptQty(BigDecimal.ZERO);
+            } else {
+                data.setAcceptQty(parseAcceptQty);
+                data.setUnAcceptQty(data.getPurchaseQty().subtract(parseAcceptQty));
+            }
 
         }
     }
@@ -562,6 +683,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     */
     private void handleData(AssetPurchaseOrderEntity assetPurchaseOrderEntity) {
         assetPurchaseOrderEntity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
+        assetPurchaseOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         //默认资产采购单
         if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getOrderType())) {
             String orderType = AssetPurchaseOrderTypeEnum.getNameByCode(assetPurchaseOrderEntity.getOrderType());
@@ -624,39 +746,39 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public List<AssetPurchaseOrderDTO.SelectDTO> selectList(AssetPurchaseOrderDTO.SelectParamDTO paramDTO) {
         // 构建查询条件
         LambdaQueryWrapper<AssetPurchaseOrderEntity> queryWrapper = new LambdaQueryWrapper<>();
-        
+
         // 只查询已审核的订单
         queryWrapper.eq(AssetPurchaseOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode());
-        
+
         // 只查询未作废的订单
         queryWrapper.eq(AssetPurchaseOrderEntity::getInvalidStatus, Boolean.FALSE);
-        
+
         // 关键字查询：支持code模糊查询
         if (StrUtil.isNotBlank(paramDTO.getKeyword())) {
             queryWrapper.like(AssetPurchaseOrderEntity::getCode, paramDTO.getKeyword());
         }
-        
+
         // 按采购日期倒序排列
         queryWrapper.orderByDesc(AssetPurchaseOrderEntity::getPurchaseDate);
 
         // 查询数据
         List<AssetPurchaseOrderEntity> entityList = this.list(queryWrapper);
-        
+
         if (CollUtil.isEmpty(entityList)) {
             return new ArrayList<>();
         }
-        
+
         // 获取所有订单ID
         List<String> orderIds = entityList.stream()
                 .map(AssetPurchaseOrderEntity::getId)
                 .collect(Collectors.toList());
-        
+
         // 批量查询供应商信息
         List<AssetPurchaseOrderSupplierEntity> supplierList = assetPurchaseOrderSupplierService.list(
                 new LambdaQueryWrapper<AssetPurchaseOrderSupplierEntity>()
                         .in(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, orderIds)
         );
-        
+
         // 构建订单ID到供应商信息的映射
         Map<String, AssetPurchaseOrderSupplierEntity> supplierMap = supplierList.stream()
                 .collect(Collectors.toMap(
@@ -664,7 +786,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         Function.identity(),
                         (existing, replacement) -> existing
                 ));
-        
+
         // 转换为DTO
         return entityList.stream().map(entity -> {
             AssetPurchaseOrderDTO.SelectDTO selectDTO = new AssetPurchaseOrderDTO.SelectDTO();
@@ -674,15 +796,47 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             selectDTO.setPurchaseUserName(entity.getPurchaseUserName());
             selectDTO.setApproveStatus(entity.getApproveStatus());
             selectDTO.setApproveStatusName(ApproveStatusEnum.getName(entity.getApproveStatus()));
-            
+
             // 设置供应商信息
             AssetPurchaseOrderSupplierEntity supplier = supplierMap.get(entity.getId());
             if (supplier != null) {
                 selectDTO.setSupplierId(supplier.getSupplierId());
                 selectDTO.setSupplierName(supplier.getSupplierName());
             }
-            
+
             return selectDTO;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AssetPurchaseOrderDTO.DetailForAcceptDTO> queryDetailsForAccept(String assetPurchaseOrderId) {
+        if (StrUtil.isBlank(assetPurchaseOrderId)) {
+            return new ArrayList<>();
+        }
+
+        // 查询资产采购订单明细
+        List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, assetPurchaseOrderId)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, false)
+                .list();
+
+        if (CollUtil.isEmpty(detailList)) {
+            return new ArrayList<>();
+        }
+
+        // 转换为DTO（数量计算由 FMS 模块负责）
+        return detailList.stream().map(detail -> {
+            AssetPurchaseOrderDTO.DetailForAcceptDTO dto = new AssetPurchaseOrderDTO.DetailForAcceptDTO();
+            dto.setId(detail.getId());
+            dto.setSkuId(detail.getAssetId());
+            dto.setSkuNo(detail.getAssetCode());
+            dto.setProductName(detail.getAssetName());
+            dto.setPurchaseQty(detail.getPurchaseQty() != null ? detail.getPurchaseQty().intValue() : 0);
+            dto.setIsUrgent(detail.getIsUrgent());
+            dto.setRemark(detail.getRemark());
+            dto.setMoldCode(detail.getAssetCode()); // 模具编码使用资产编码
+            dto.setMoldName(detail.getAssetName()); // 模具名称使用资产名称
+            return dto;
         }).collect(Collectors.toList());
     }
 }

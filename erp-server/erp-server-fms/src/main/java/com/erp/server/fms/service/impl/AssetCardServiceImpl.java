@@ -374,26 +374,22 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         return list;
     }
 
+
+    /**
+     * 获取资产卡片分页数据（用于异步导出）
+     * @param dto
+     * @return
+     */
     @Override
-    public void exportList(AssetCardDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetCardDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+    public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(PagingDTO<AssetCardDTO.ExportDTO> dto) {
+        // 调用现有的分页查询方法
+        IPage<AssetCardDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>();
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetCard.xlsx";
-        String name = "资产卡片主单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
     @Transactional(rollbackFor = Exception.class)
