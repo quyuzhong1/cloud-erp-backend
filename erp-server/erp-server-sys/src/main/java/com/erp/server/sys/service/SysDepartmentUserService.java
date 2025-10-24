@@ -67,6 +67,13 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      */
     List<UserSuperiorDTO> listSuperiorByUserId(String userId);
 
+    /**
+     * 根据人员id查询所有部门
+     * @param userId
+     * @return
+     */
+    List<UserSuperiorDTO> listDeptByUserId(String userId);
+
     
     /**
      * 根据部门id 获取部门员工

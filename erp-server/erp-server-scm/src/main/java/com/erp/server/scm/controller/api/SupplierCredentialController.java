@@ -236,18 +236,4 @@ public class SupplierCredentialController extends BaseController {
         return success();
     }
 
-
-    /**
-     * 保存拜访管理字典
-     * @param dto
-     * @return DictBasicDTO
-     */
-    @PostMapping("/addDictCredential")
-    @LogAction(value = LogActionEnum.INSERT, desc = "保存拜访管理字典")
-    public ApiResult<DictBasicDTO> addDictCredential(@RequestBody @Validated SupplierCredentialDTO.DictCredentialDTO dto) {
-        DictBasicDTO dictBasicDTO = supplierCredentialService.addDictCredential(dto.getCredentialName());
-        return Objects.nonNull(dictBasicDTO) ? success(dictBasicDTO) : failure();
-    }
-
-
 }

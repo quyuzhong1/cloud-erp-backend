@@ -71,6 +71,29 @@ public class PickingListsEntity extends BaseEntity<PickingListsEntity> {
     @TableField("location_total")
     private Integer locationTotal;
 
+    /**
+     * 打印人ID
+     */
+    @TableField("print_user_id")
+    private String printUserId;
+    /**
+     * 打印人姓名
+     */
+    @TableField("print_user_name")
+    private String printUserName;
+    /**
+     * 打印时间
+     */
+    @TableField("print_time")
+    private String printTime;
+    /**
+     * 打印状态
+     * PackagePrintStatusEnum
+     */
+    @TableField("print_status")
+    private String printStatus;
+
+
     public static final String WAREHOUSE_ID = "warehouse_id";
 
     public static final String WAREHOUSE_NAME = "warehouse_name";

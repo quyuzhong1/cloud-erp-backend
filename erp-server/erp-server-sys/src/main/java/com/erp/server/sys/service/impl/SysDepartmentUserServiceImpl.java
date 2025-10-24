@@ -186,6 +186,11 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         return resultList;
     }
 
+    @Override
+    public List<UserSuperiorDTO> listDeptByUserId(String userId) {
+        return baseMapper.listSuperiorByUserId(userId);
+    }
+
 
     /**
      * 根据部门id 获取部门员工

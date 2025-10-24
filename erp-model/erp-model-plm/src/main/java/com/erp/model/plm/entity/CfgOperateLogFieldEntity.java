@@ -13,9 +13,9 @@ import lombok.experimental.Accessors;
  * @date 2022/12/5 18:12
  */
 @Data
-@TableName("sys_log_field")
+@TableName("cfg_operate_log_field")
 @Accessors(chain = true)
-public class SysLogFieldEntity extends BaseEntity<SysLogFieldEntity> {
+public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntity> {
 
     private static final long serialVersionUID = 1L;
 
