@@ -43,7 +43,7 @@ public interface AssetCardMapper extends BaseMapper<AssetCardEntity> {
     * @param params
     * @return
     */
-    List<AssetCardDTO.ListDTO> listExport(@Param("params") AssetCardDTO.ExportDTO params);
+    IPage<AssetCardDTO.ListDTO> listExport(@Param("params") AssetCardDTO.ExportDTO params);
 
 
     /**
