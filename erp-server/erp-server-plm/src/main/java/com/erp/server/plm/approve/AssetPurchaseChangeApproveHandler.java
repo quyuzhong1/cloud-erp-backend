@@ -51,4 +51,9 @@ public class AssetPurchaseChangeApproveHandler extends AbstractApproveHandler {
         return assetPurchaseChangeService.approveEnd(approveOne,assetPurchaseChangeEntity);
 
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }
