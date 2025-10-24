@@ -18,6 +18,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.AbstractRedisUtil;
 import com.common.business.utils.StringUtil;
 import com.common.core.exception.ServiceException;
@@ -88,30 +90,30 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		String logMsg = StringUtil.appendLogMsg("InventoryRedisUtil的execute操作：" + opName , args);
     	log.info("{}开始" , logMsg);
 		int i = 0;
-		String result = "";
+		boolean success = false;
+		String errormsg = "";
 		boolean isRetry = false;
 		String execute = "";
 		while(i < 3) {
 			execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
-			log.info("库存redis操作{}，入参{}，结果{}" , opName , args ,execute);
-			long sleepTime = 1000L;
+			log.info("库存redis操作{}，入参{}，lua结果：{}" , opName , args ,execute);
+			long sleep = 0L;
 			if(StringUtils.isNotBlank(execute)) {
-				String[] resultSplitList = execute.split(splitSign);
-				if(resultSplitList.length == 1) {
-					result = execute;
-				}else if(resultSplitList.length == 2) {
-					isRetry = true;
-					result = resultSplitList[0];
-					try {
-						sleepTime = Long.parseLong(resultSplitList[1]);
-					} catch (NumberFormatException e) {
-						log.error("库存redis操作{}，转换重试时间失败{}" , opName , execute);
-					}
+				JSONObject parseObject = JSON.parseObject(execute);
+				Boolean successVal = parseObject.getBoolean("success");
+				if(successVal != null) {
+					success = successVal.booleanValue();
 				}
+				Long sleepVal = parseObject.getLong("sleep");
+				if(sleepVal != null) {
+					isRetry = true;
+					sleep = sleepVal.longValue();
+				}
+				errormsg = parseObject.getString("errormsg");
 			}
 			if(isRetry) {
 				try {
-					Thread.sleep(sleepTime);
+					Thread.sleep(sleep);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
@@ -120,9 +122,9 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			}
 			i = i + 1;
 		}
-		if(!"0".equals(result)) {
-			log.error("库存redis操作{}，结果为：{}，lua原始结果： {}" , opName , result , execute);
-			throw new ServiceException(result);
+		if(!success) {
+			log.error("库存redis操作{}，结果为：{}，lua原始结果： {}" , opName , errormsg , execute);
+			throw new ServiceException(errormsg);
 		}
     	log.info("{}结束" , logMsg);
 	}
