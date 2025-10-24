@@ -971,11 +971,20 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
             add.setApproveStatus(entity.getApproveStatus());
             if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+                String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
+                operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "提交操作");
+                String msg = CharSequenceUtil.format("订单拆分子单自动审核通过" );
+                operateLogService.addModuleOperateLogBySystem(msg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "审核操作");
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                approveOneDTO.setIsSubmitAutoApprove(true);
                 soB2cService.approveEnd(approveOneDTO,add,true);
                 needRuleList.add(add);
             }else{
+                if(ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
+                    String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
+                    operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "提交操作");
+                }
                 add.setApproveStatus(entity.getApproveStatus());
                 this.updateById(add);
             }

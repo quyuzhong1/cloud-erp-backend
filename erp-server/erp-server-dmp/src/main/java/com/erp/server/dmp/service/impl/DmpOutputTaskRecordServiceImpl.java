@@ -795,4 +795,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
                 .update();
     }
+
+    @Override
+    public List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass) {
+        return baseMapper.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
 }

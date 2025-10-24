@@ -52,4 +52,21 @@
         WHERE pd.is_deleted = FALSE
         and pd.id = #{skuId}
     </select>
+    <select id="listSkuInfoByEanOrSkuNo" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
+        SELECT pd.id AS skuId,
+               pd.sku_no as skuNo,
+               pd.images_url as imageUrl,
+               pi.name as productName,
+               pd.status as status,
+               pd.variant_property variantProperty,
+               pp.ean as eanNo
+        FROM product_detail pd
+         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+         LEFT JOIN product_purchase pp ON pp.sku_id = pd.id AND pp.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        and (pd.sku_no = #{params.searchKeyword} or pp.ean = #{params.searchKeyword})
+        <if test="params.status != null">
+            and pd.status = #{params.status}
+        </if>
+    </select>
 </mapper>

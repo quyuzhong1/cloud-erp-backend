@@ -179,12 +179,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
                     .set(StringUtils.isNotBlank(syncKingdeeCode), DictCityEntity::getKingdeeCode, syncKingdeeCode)
                     .update();
         }
-        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        Class<DictCityEntity> AreaClass = DictCityEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id , businessType);
         if (Objects.isNull(refBusinessEntity)) {
-            Class<DictCityEntity> AreaClass = DictCityEntity.class;
-            TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String businessType = tableName.value();
             ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
             refEntity.setBusinessType(businessType);
             refEntity.setBusinessId(id);
@@ -245,7 +245,11 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
                 dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
             }
         });
-        thirdpartyRefBusinessService.removeByBusinessId(id);
+        Class<DictCityEntity> AreaClass = DictCityEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        thirdpartyRefBusinessService.removeByBusinessId(id , businessType);
         return BatchResultDTO.success(entity.getId(), entity.getCountryName(), OperationTypeEnum.DELETE);
 
 

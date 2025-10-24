@@ -1612,6 +1612,14 @@ public class SkuMappingDTO implements Serializable {
          * 客户id
          */
         private String cutomerId;
+        /**
+         *
+         */
+        private String type;
+        /**
+         * 匹配结果吧true 已匹配 false 未匹配
+         */
+        private String matchResult;
     }
 
 
