@@ -233,4 +233,10 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_outbound_to_wms_topic";
 
+
+    /**
+     * 新中台平台库存
+     */
+    public static final String RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inventory_to_wms_topic";
+
 }
