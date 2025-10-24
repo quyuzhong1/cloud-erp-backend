@@ -513,5 +513,15 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO) {
         return success(assetPurchaseOrderService.selectList(paramDTO));
     }
+    /**
+     * 查询资产采购订单明细（用于资产验收单添加明细）
+     *
+     * @param assetPurchaseOrderId 资产采购订单ID
+     * @return 明细列表
+     */
+    @PostMapping("/queryDetailsForAccept")
+    public ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> queryDetailsForAccept(@RequestBody String assetPurchaseOrderId) {
+        return success(assetPurchaseOrderService.queryDetailsForAccept(assetPurchaseOrderId));
+    }
 
 }
