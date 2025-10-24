@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.fms.entity.AssetCardEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 
 /**
  * 资产卡片主表
@@ -41,6 +43,9 @@ public class AssetCardController extends BaseController {
 
     @Resource
     private AssetCardService assetCardService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 新增
@@ -403,8 +408,10 @@ public class AssetCardController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产卡片主表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetCardDTO.ExportDTO dto, HttpServletResponse response) {
-        assetCardService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetCardDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("资产卡片导出", FileTaskEventEnum.EXPORT_FMS_ASSET_CARD.getCode(), dto);
+        return success(true);
     }
 
     /**

@@ -134,15 +134,13 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     */
     BatchResultDTO cancelProcess(String id);
 
+
     /**
-    * 导出Excel
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(AssetCardDTO.ExportDTO dto, HttpServletResponse response);
+     * 获取资产卡片分页数据（用于异步导出）
+     * @param dto
+     * @return
+     */
+    PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(PagingDTO<AssetCardDTO.ExportDTO> dto);
 
     /**
     * 审核通过回调方法

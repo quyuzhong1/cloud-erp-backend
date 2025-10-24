@@ -7,10 +7,12 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.fms.dto.AssetLocationDTO;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.AssetAcceptService;
+import com.erp.server.fms.service.AssetCardService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +34,9 @@ public class ExportFmsFeignController {
     
     @Resource
     private AssetAcceptService assetAcceptService;
+    
+    @Resource
+    private AssetCardService assetCardService;
 
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -51,6 +56,15 @@ public class ExportFmsFeignController {
     @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
     public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(@RequestBody PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
         return assetAcceptService.getAssetAcceptPageData(dto);
+    }
+
+    @PostMapping("/getAssetCardPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "fms:assetCard:export"
+    )
+    public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(@RequestBody PagingDTO<AssetCardDTO.ExportDTO> dto) {
+        return assetCardService.getAssetCardPageData(dto);
     }
 }
 
