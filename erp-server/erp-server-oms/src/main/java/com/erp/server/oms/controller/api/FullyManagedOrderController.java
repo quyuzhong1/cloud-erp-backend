@@ -4,10 +4,13 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -17,7 +20,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.CfgSettingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
@@ -390,7 +396,7 @@ public class FullyManagedOrderController extends BaseController {
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soB2cService.cancelProcess(id);
+                resultDTO = soB2cService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("全平台销售订单撤销失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
