@@ -4,7 +4,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictBasicAllDTO;
-import com.erp.model.sys.dto.DictBasicAllDTO.ExpotParamDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.PagingParamDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.ViewDTO;
 
@@ -26,5 +25,5 @@ public interface DictBasicAllService{
 	
 	PagingVO<ViewDTO> paging(PagingDTO<PagingParamDTO> dto);
 	
-	Boolean exportExcel(ExpotParamDTO dto);
+	Boolean exportExcel(PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto);
 }

@@ -62,7 +62,7 @@ public class DictBasicAllController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "字典数据导出")
     @PostMapping(value = "/exportExcel")
     public ApiResult<?> exportExcel(@RequestBody @Validated PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
-        return success();
+        return success(dictBasicAllService.exportExcel(dto));
     }
     
     /**

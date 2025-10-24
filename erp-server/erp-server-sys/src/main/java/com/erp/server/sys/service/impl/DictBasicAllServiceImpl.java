@@ -26,10 +26,10 @@ import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.AddDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.BatchOpDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.CommonDTO;
-import com.erp.model.sys.dto.DictBasicAllDTO.ExpotParamDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.PagingParamDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.UpdateDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.ViewDTO;
@@ -183,7 +183,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	}
 
 	@Override
-	public Boolean exportExcel(ExpotParamDTO dto) {
+	public Boolean exportExcel(PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
 		downloadTaskFeign.saveDownloadTask("字典数据表", FileTaskEventEnum.EXPORT_DICT_BASIC_ALL.getCode(), dto);
 		return Boolean.TRUE;
 	}
