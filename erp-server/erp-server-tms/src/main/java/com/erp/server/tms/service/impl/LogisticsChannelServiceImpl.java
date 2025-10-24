@@ -936,4 +936,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         return baseMapper.listByPlatformCode(platformCodeList);
     }
+
+    @Override
+    public LogisticsChannelEntity getChannelByCode(String channelCode, String logisticsPlatform) {
+        if (CharSequenceUtil.isEmpty(channelCode) || CharSequenceUtil.isEmpty(logisticsPlatform)){
+            throw new ServiceException("渠道编码和物流类型不能为空");
+        }
+        return baseMapper.getChannelByCode(channelCode,logisticsPlatform);
+    }
 }

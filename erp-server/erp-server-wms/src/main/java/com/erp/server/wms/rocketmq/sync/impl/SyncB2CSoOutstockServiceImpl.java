@@ -37,6 +37,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -54,6 +55,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
@@ -133,6 +135,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private DictBasicService dictBasicService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -277,7 +281,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (ObjectUtil.isNotEmpty(company)) {
             soOutstock.setWarehouseOrgName(company.getCompanyName());
         }
-
+        //wdt渠道映射erp
+        String logisticsCode = entity.getLogisticsCompanyCode();
+        LogisticsChannelEntity channel = logisticsFeign.getChannelByCode(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
+        if (Objects.isNull(channel)){
+            throw new ServiceException(ApiError.ERROR_CHANNEL_NOTFOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
+        }
+        soOutstock.setLogisticsChannelId(channel.getId());
+        soOutstock.setLogisticsChannelCode(channel.getCode());
+        soOutstock.setLogisticsChannelName(channel.getName());
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());

@@ -363,6 +363,17 @@
             #{item}
         </foreach>
     </select>
+    <select id="getChannelByCode" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        SELECT
+            lc.id,
+            lc.code,
+            lc."name"
+        FROM logistics_channel lc
+                 LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
+        where lc.is_deleted= false
+          and lc.code = #{channelCode}
+          and la.logistics_platform = #{logisticsPlatform}
+    </select>
 
 
 </mapper>
