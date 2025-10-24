@@ -347,14 +347,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     if (outStockQty + planQty > soQty) {
                         throw new ServiceException(ApiError.ERROR_92028);
                     }
-                    if (ObjectUtil.isEmpty(batchNo)) {
-                        //即时库存
-                        Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
-                                equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                        if (planQty > inventory) {
-                            throw new ServiceException(ApiError.ERROR_92030);
-                        }
-                    }
+//                    if (ObjectUtil.isEmpty(batchNo)) {
+//                        //即时库存
+//                        Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+//                                equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+//                        if (planQty > inventory) {
+//                            throw new ServiceException(ApiError.ERROR_92030);
+//                        }
+//                    }
                 }
             }
         }
@@ -627,7 +627,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                     if (actualQty > inventory) {
-                        throw new ServiceException(ApiError.ERROR_92030);
+//                        throw new ServiceException(ApiError.ERROR_92030);
                     }
 
                 }

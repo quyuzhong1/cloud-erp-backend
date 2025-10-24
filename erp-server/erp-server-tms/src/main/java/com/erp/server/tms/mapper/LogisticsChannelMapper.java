@@ -98,4 +98,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
 
     List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(@Param("platformCodeList") List<String> platformCodeList);
+
+    LogisticsChannelEntity getChannelByCode(@Param("channelCode") String channelCode, @Param("logisticsPlatform") String logisticsPlatform);
 }

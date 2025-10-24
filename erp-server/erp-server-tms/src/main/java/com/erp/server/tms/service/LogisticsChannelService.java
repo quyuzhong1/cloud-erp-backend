@@ -260,4 +260,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
 
     List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList);
+
+    LogisticsChannelEntity getChannelByCode(String channelCode, String logisticsType);
 }

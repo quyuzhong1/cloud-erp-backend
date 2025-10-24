@@ -6,59 +6,57 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SampleBorrowDetailEntity;
+import com.erp.model.wms.entity.SampleReturnDetailEntity;
+import com.erp.model.wms.entity.SampleReturnInfoEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.mapper.SampleReturnInfoMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
 import org.springframework.beans.BeanUtils;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
-import com.erp.model.wms.entity.SampleReturnDetailEntity;
-import com.erp.model.wms.entity.SampleReturnInfoEntity;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SampleLedgerFlowBuilder;
-import com.erp.server.wms.service.SampleReturnDetailService;
-import com.erp.server.wms.service.SampleReturnInfoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -107,6 +105,16 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Autowired
     private SampleBorrowDetailService sampleBorrowDetailService;
+
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -486,6 +494,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -528,6 +540,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1239,6 +1254,169 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品归还单实体
+     * @param approveType 审核类型
+     */
+    /**
+     * 使用分布式锁校验样品台账数量
+     * 归还单特殊处理：
+     * - 审核时：校验归还人台账（从借用单sampleLedgerId）
+     * - 反审核时：校验接收人台账（从借用单sampleLedgerId）
+     */
+    private void validateSampleLedgerQtyWithLock(SampleReturnInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品归还单明细
+        List<SampleReturnDetailEntity> detailList = sampleReturnDetailService.list(
+            new LambdaQueryWrapper<SampleReturnDetailEntity>()
+                .eq(SampleReturnDetailEntity::getMainId, entity.getId())
+        );
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("样品归还单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            // 审核：校验归还人台账是否足够扣减
+            validateReturnUserLedger(entity, detailList);
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            // 反审核：校验接收人台账是否足够扣减
+            validateReceiverUserLedger(entity, detailList);
+        }
+    }
+    
+    /**
+     * 校验归还人台账数量（审核时）
+     * 归还人的台账就是借用单中的借入人台账，需要动态查询
+     */
+    private void validateReturnUserLedger(SampleReturnInfoEntity entity, List<SampleReturnDetailEntity> detailList) {
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleReturnDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getReturnUserId());
+        searchDTO.setUseUserId(entity.getReturnUserId()); // 归还人的使用方就是自己
+        searchDTO.setSkuIds(skuIds);
+        searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleReturnDetailEntity detail : detailList) {
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(-detail.getReturnQty()); // 归还人减少库存
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到归还人台账，SKU：{}，归还人：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getReturnUserName(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的归还人台账不存在，无法审核", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的归还人台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验归还人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.PASS, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("归还人台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
+    }
+    
+    /**
+     * 校验接收人台账数量（反审核时）
+     * 接收人的台账就是借用单中的借出人台账（sampleLedgerId）
+     */
+    private void validateReceiverUserLedger(SampleReturnInfoEntity entity, List<SampleReturnDetailEntity> detailList) {
+        // 批量查询借用单明细：收集所有 sourceDetailId
+        List<String> sourceDetailIds = detailList.stream()
+                .map(SampleReturnDetailEntity::getSourceDetailId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(sourceDetailIds)) {
+            log.warn("归还单明细中没有来源明细ID，无法查询接收人台账，单据编号：{}", entity.getCode());
+            throw new ServiceException("归还单明细中没有来源明细ID，无法反审核");
+        }
+        
+        // 一次性批量查询所有借用单明细
+        List<SampleBorrowDetailEntity> borrowDetailList = sampleBorrowDetailService.listByIds(sourceDetailIds);
+        
+        // 构建 sourceDetailId -> sampleLedgerId 的映射
+        Map<String, String> sourceIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(borrowDetailList)) {
+            sourceIdToLedgerIdMap = borrowDetailList.stream()
+                    .filter(bd -> StrUtil.isNotBlank(bd.getSampleLedgerId()))
+                    .collect(Collectors.toMap(
+                            SampleBorrowDetailEntity::getId,
+                            SampleBorrowDetailEntity::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleReturnDetailEntity detail : detailList) {
+            String ledgerId = sourceIdToLedgerIdMap.get(detail.getSourceDetailId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(-detail.getReturnQty()); // 反审核时接收人减少库存
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到接收人台账，SKU：{}，接收人：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getReceiverUserName(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的接收人台账不存在，无法反审核", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的接收人台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验接收人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.DIS_APPROVE, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("接收人台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
     }
 
 }

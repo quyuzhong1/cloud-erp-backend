@@ -8,6 +8,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -283,8 +284,13 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<String> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        Boolean result =  soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
-        return result?success():failure("重新生成销售出库单失败");
+        try {
+            UserContext.setIsUserSystem(true);
+            Boolean result =  soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
+            return result?success():failure("重新生成销售出库单失败");
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     /**

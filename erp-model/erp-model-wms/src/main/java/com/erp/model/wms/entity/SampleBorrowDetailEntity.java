@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 
 
 /**
@@ -22,7 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_borrow_detail")
-public class SampleBorrowDetailEntity extends BaseEntity<SampleBorrowDetailEntity> {
+public class SampleBorrowDetailEntity extends BaseEntity<SampleBorrowDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 关联主表ID
@@ -85,6 +87,15 @@ public class SampleBorrowDetailEntity extends BaseEntity<SampleBorrowDetailEntit
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    /**
+     * 实现接口方法：获取数量
+     * 借用单使用 borrowQty 字段
+     */
+    @Override
+    public Integer getQty() {
+        return this.borrowQty;
     }
 
 }

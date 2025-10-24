@@ -17,12 +17,16 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.enums.ImportTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -146,6 +150,14 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Autowired
     private WmsAttachmentService attachmentService;
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
     @Autowired
     @Lazy
     private SampleRecipientService _this;
@@ -697,6 +709,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 反审核条件判断
         validateDisApprove(entity);
+
+        // 使用分布式锁进行数量校验（反审核时需要校验台账是否足够扣减）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -2756,6 +2771,86 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 使用分布式锁校验样品台账数量
+     * 领用单需要动态查询台账ID
+     * 领用单：审核+X（不需要校验），反审核-X（需要校验）
+     */
+    private void validateSampleLedgerQtyWithLock(SampleRecipientEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品领用单明细
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("样品领用单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 只有反审核时需要校验（扣减库存）
+        if (!ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            log.info("样品领用单审核不需要校验台账数量，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleRecipientDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setUseUserId(entity.getUseUserId());
+        searchDTO.setSkuIds(skuIds);
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleRecipientDetailEntity detail : detailList) {
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(-detail.getRecipientQty()); // 反审核时扣减库存
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到台账，SKU：{}，领用人：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getUserName(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的样品台账不存在，无法反审核", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的样品台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验样品领用单台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, approveType, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("样品领用单台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
     }
 
 

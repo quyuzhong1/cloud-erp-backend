@@ -327,4 +327,14 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/checkKingdeeSyncApprove")
     String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO);
+
+    /**
+     * 获取最新推送记录
+     */
+    @GetMapping("feign/outputTaskRecord/getLastOutputTaskRecordList")
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@RequestParam(value = "sourceCodeList",required = false) List<String> sourceCodeList,
+                                                                @RequestParam(value = "outputClass",required = false) String outputClass
+    );
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.server.sys.mapper.ThirdpartyRefBusinessMapper;
@@ -26,25 +27,25 @@ public class ThirdpartyRefBusinessServiceImpl extends SuperServiceImpl<Thirdpart
 
 
     @Override
-    public List<ThirdpartyRefBusinessEntity> listByBusinessIds(List<String> idList) {
+    public List<ThirdpartyRefBusinessEntity> listByBusinessIds(List<String> idList , String businessType) {
         if (CollectionUtils.isEmpty(idList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(ThirdpartyRefBusinessEntity::getBusinessId, idList).list();
+        return this.lambdaQuery().eq(ThirdpartyRefBusinessEntity::getBusinessType, businessType).in(ThirdpartyRefBusinessEntity::getBusinessId, idList).list();
     }
 
     @Override
-    public ThirdpartyRefBusinessEntity getByBusinessId(String businessId) {
+    public ThirdpartyRefBusinessEntity getByBusinessId(String businessId , String businessType) {
         if (StringUtils.isBlank(businessId)) {
             return null;
         }
-        return this.lambdaQuery().eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(ThirdpartyRefBusinessEntity::getBusinessType, businessType).eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).last("LIMIT 1").one();
     }
 
     @Override
-    public void removeByBusinessId(String businessId) {
+    public void removeByBusinessId(String businessId , String businessType) {
         if (StringUtils.isNotBlank(businessId)) {
-            this.lambdaUpdate().eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).remove();
+            this.lambdaUpdate().eq(ThirdpartyRefBusinessEntity::getBusinessType, businessType).eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).remove();
         }
     }
 }
