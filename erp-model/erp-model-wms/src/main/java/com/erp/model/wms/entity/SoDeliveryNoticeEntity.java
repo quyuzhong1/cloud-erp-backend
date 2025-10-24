@@ -265,6 +265,13 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     @TableField("transfer_warehouse_ids")
     private String transferWarehouseIds;
 
+    /**
+     * 是否展会订单
+     */
+    @TableField(exist = false)
+    private String soInfoSourceType;
+
+
     public static final String APPROVE_STATUS = "approve_status";
 
     
