@@ -597,6 +597,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             detailView.setProductName(productDetailEntity.getSkuName());
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
+            detailView.setUnitName(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
 
             //参考供应商

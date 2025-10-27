@@ -228,7 +228,12 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 产品名称
