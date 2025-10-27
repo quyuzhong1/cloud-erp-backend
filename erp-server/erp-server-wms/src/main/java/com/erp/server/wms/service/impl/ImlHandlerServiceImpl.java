@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -260,7 +261,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         ImlCreateOutboundReq imlCreateOutboundReq =  this.buildOutboundDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(imlCreateOutboundReq));
         ImlBaseResp<ImlOutboundResp> imlInboundRespImlBaseResp = imlService.createOutboundBill(imlCreateOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(imlInboundRespImlBaseResp));
         if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
             return failure(imlInboundRespImlBaseResp.getMessage());
         }
