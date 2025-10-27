@@ -3,33 +3,27 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
-import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.core.enums.CurrencyEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.plm.entity.*;
-
 import java.io.File;
 import java.io.IOException;
-import java.math.RoundingMode;
 import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.*;
@@ -62,7 +56,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xpath.operations.Bool;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1153,6 +1146,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId) {
+        return assetAceptFeign.getAcceptByDetailId(detailId);
     }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(

@@ -1,5 +1,7 @@
 package com.erp.server.plm.service;
 
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
 import com.common.business.service.SuperService;
@@ -183,5 +185,7 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
+
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
 
 }
