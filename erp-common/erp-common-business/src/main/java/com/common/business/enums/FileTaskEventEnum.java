@@ -100,7 +100,6 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
-    EXPORT_OMS_B2B_PLATFORM_SKU("EXPORT_OMS_B2B_PLATFORM_SKU","b2b平台sku对照列表","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
     EXPORT_OMS_B2B_PLATFORM_SKU("EXPORT_OMS_B2B_PLATFORM_SKU","b2b平台sku对照列表","","",""),
     EXPORT_OMS_PACKAGE_PLAN("EXPORT_OMS_PACKAGE_PLAN","组包计划导出","","",""),
