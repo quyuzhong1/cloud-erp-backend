@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -23,7 +24,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpEtlTaskDTO;
 import com.erp.model.dmp.dto.DmpEtlTaskDTO;
 import com.erp.model.dmp.entity.DmpEtlTaskEntity;
+import com.erp.model.dmp.entity.DmpEtlTaskEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpEtlTaskMapper;
 import com.erp.server.dmp.service.DmpEtlTaskService;
@@ -36,8 +40,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
 /**
  * <p>
  * etl任务 服务实现类
@@ -66,12 +72,12 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
 
         log.info("开始新增etl任务");
         boolean save = super.save(dmpEtlTaskEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("etl任务保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "etl任务" , dmpEtlTaskEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "etl任务", dmpEtlTaskEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, dmpEtlTaskEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -80,27 +86,27 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(DmpEtlTaskDTO.UpdateDTO addOrUpdateDTO) {
         DmpEtlTaskEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "etl任务"));
-        DmpEtlTaskEntity dmpEtlTaskEntity =  BeanMapperUtils.map(DmpEtlTaskEntity.class, addOrUpdateDTO);
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "etl任务"));
+        DmpEtlTaskEntity dmpEtlTaskEntity = BeanMapperUtils.map(DmpEtlTaskEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(dmpEtlTaskEntity);
         log.info("编辑 开始修改etl任务数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpEtlTaskEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("etl任务保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录etl任务日志数据，id：【{}】", dmpEtlTaskEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpEtlTaskEntity.getId(), "etl任务");
+        log.info("编辑 开始记录etl任务日志数据，id：【{}】", dmpEtlTaskEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpEtlTaskEntity.getId(), "etl任务");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dmpEtlTaskEntity, null, dmpEtlTaskEntity.getId(), msg);
         return Boolean.TRUE;
@@ -108,10 +114,10 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(DmpEtlTaskEntity dmpEtlTaskEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 
     @Override
@@ -119,7 +125,7 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<DmpEtlTaskDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -178,7 +184,7 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
 
     @Override
     public DmpEtlTaskDTO.ViewDTO view(String id) {
-        DmpEtlTaskEntity dmpEtlTaskEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到etl任务数据"));
+        DmpEtlTaskEntity dmpEtlTaskEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到etl任务数据"));
         DmpEtlTaskDTO.ViewDTO data = BeanMapperUtils.map(DmpEtlTaskDTO.ViewDTO.class, dmpEtlTaskEntity);
         // 数据填充处理
         fillOne(data);
@@ -197,14 +203,37 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
      * 分页查询、导出 数据处理
      */
     private void fillList(List<DmpEtlTaskDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
 
         // 属性赋值
-        for(DmpEtlTaskDTO.ListDTO data : list) {
+        for (DmpEtlTaskDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             // TODO 其他如需要显示名称的字段赋值
+        }
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "entity.id")
+    public BatchResultDTO retry(DmpEtlTaskEntity entity) {
+        if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus()) &&
+                !DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus())) {
+            throw new ServiceException("仅完成或错误状态的清洗任务允许重试");
+        }
+
+        entity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+        entity.setErrorCount(0);
+        entity.setUpdateTime(LocalDateTime.now());
+        boolean retryResult = super.updateById(entity);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据重试操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "清洗任务");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_INPUT_TASK.getCode(), entity.getId(), "重试清洗任务数据");
+        if (retryResult) {
+            return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.ADD);
+        } else {
+            throw new ServiceException("清洗任务重试失败");
         }
     }
 }

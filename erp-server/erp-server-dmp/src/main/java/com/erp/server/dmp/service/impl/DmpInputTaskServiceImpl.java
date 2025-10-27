@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -23,8 +24,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.OperateLogService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -258,7 +261,6 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         downloadTaskFeign.saveDownloadTask("拉取任务Excel导出", FileTaskEventEnum.EXPORT_DMP_INPUT_TASK.getCode(), dto);
     }
 
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
@@ -271,7 +273,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         // 删除日志数据
         log.info("删除 开始删除拉取任务日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取任务");
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除拉取任务数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_INPUT_TASK.getCode(), entity.getId(), "删除拉取任务数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
@@ -303,7 +305,54 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 
         // 属性赋值
         for(DmpInputTaskDTO.ListDTO data : list) {
-            // TODO 其他如需要显示名称的字段赋值
+            // 其他如需要显示名称的字段赋值
+            data.setStatusName(DmpInputTaskStatusEnum.getName(data.getStatus()));
+
+            data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
+        }
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "entity.id")
+    public BatchResultDTO retry(DmpInputTaskEntity entity) {
+        if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus()) &&
+                !DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus())) {
+            throw new ServiceException("仅完成或错误状态的拉取任务允许重试");
+        }
+        // 判断是否为初始化重试
+        boolean newRetry = DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus())
+                || !(DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus()) && entity.getErrorMessage().startsWith("init@@"));
+
+        boolean retryResult = true;
+        if (newRetry){
+            DmpInputTaskEntity dmpInputTaskEntity = new DmpInputTaskEntity();
+            BeanMapperUtils.copy(entity, dmpInputTaskEntity);
+            boolean updateResult = true;
+            if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus())){
+                entity.setStatus(DmpInputTaskStatusEnum.FINISH.getCode());
+                entity.setUpdateTime(LocalDateTime.now());
+                updateResult = super.updateById(entity);
+            }
+            // 重试主单数据
+            log.info("重试 开始重试拉取任务主单数据，id：【{}】", entity.getId());
+            boolean saveResult = super.save(dmpInputTaskEntity);
+            retryResult = updateResult && saveResult;
+            // 重试日志数据
+            log.info("重试 开始重试拉取任务日志数据，id：【{}】", entity.getId());
+        } else {
+            entity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+            entity.setErrorCount(0);
+            entity.setUpdateTime(LocalDateTime.now());
+            retryResult = super.updateById(entity);
+        }
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据重试操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取任务");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_INPUT_TASK.getCode(), entity.getId(), "重试拉取任务数据");
+        if (retryResult){
+            return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.ADD);
+        } else {
+            throw new ServiceException("拉取任务重试失败");
         }
     }
 

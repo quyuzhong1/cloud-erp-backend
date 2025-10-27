@@ -82,4 +82,13 @@ public interface DmpOutputTaskService extends SuperService<DmpOutputTaskEntity> 
      * @return
      */
     void exportList(DmpOutputTaskDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 删除
+     * @author Jim
+     * @date: 2025-10-23
+     * @param entity
+     * @return
+     */
+    BatchResultDTO retry(DmpOutputTaskEntity entity);
 }

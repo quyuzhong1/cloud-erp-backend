@@ -193,15 +193,18 @@ public class DmpInputTaskDTO implements Serializable {
     public static class ListDTO {
 
         /**
-         * 主键id
+         * 主键id(任务ID）
          */
-        private String  id;
+        private String id;
 
         /**
          * 拉取数据配置id
          */
         private String cfgInputId;
-
+        /**
+         * 输入信息名称
+         */
+        private String cfgInputName;
         /**
          * 下一层级id
          */
@@ -223,6 +226,11 @@ public class DmpInputTaskDTO implements Serializable {
         private String status;
 
         /**
+         * 状态名称
+         */
+        private String statusName;
+
+        /**
          * 异常原因
          */
         private String errorMessage;
@@ -231,6 +239,11 @@ public class DmpInputTaskDTO implements Serializable {
          * 任务类型：normal=正常任务，history=补偿任务，hotfix=及时任务
          */
         private String taskType;
+
+        /**
+         * 任务类型名称
+         */
+        private String taskTypeName;
 
         /**
          * 错误次数
@@ -268,22 +281,6 @@ public class DmpInputTaskDTO implements Serializable {
         private String instanceId;
 
         /**
-         * 代号
-         */
-        private String code;
-
-        /**
-         * 代号
-         */
-        private String approveStatus;
-
-
-        /**
-         * 审核状态名称
-         */
-        private String approveStatusName;
-
-        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -292,6 +289,16 @@ public class DmpInputTaskDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

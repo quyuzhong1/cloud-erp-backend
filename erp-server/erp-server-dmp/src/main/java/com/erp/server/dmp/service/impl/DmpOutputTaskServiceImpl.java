@@ -6,12 +6,17 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.OperateLogService;
 import org.slf4j.MDC;
@@ -233,6 +238,30 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
         for(DmpOutputTaskDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             // TODO 其他如需要显示名称的字段赋值
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "entity.id")
+    public BatchResultDTO retry(DmpOutputTaskEntity entity) {
+        if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus()) &&
+                !DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus())) {
+            throw new ServiceException("仅完成或错误状态的推送允许重试");
+        }
+        if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(entity.getExecSystem())) {
+            throw new ServiceException("DMP系统执行的推送任务不允许重试");
+        }
+        entity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+        entity.setErrorCount(0);
+        entity.setUpdateTime(LocalDateTime.now());
+        boolean retryResult = super.updateById(entity);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据重试操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_INPUT_TASK.getCode(), entity.getId(), "重试推送数据");
+        if (retryResult) {
+            return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.ADD);
+        } else {
+            throw new ServiceException("推送重试失败");
         }
     }
 }

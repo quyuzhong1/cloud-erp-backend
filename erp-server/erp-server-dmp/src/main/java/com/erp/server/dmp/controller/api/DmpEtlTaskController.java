@@ -2,7 +2,9 @@ package com.erp.server.dmp.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.server.dmp.query.DmpEtlTaskQueryHandler;
+import com.erp.server.dmp.service.DmpInputTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -186,5 +188,42 @@ public class DmpEtlTaskController extends BaseController {
         dmpEtlTaskService.exportList(dto, response);
     }
 
-
+    /**
+     * 重试
+     * @author Jim
+     * @date:  2025-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/retry")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpEtlTask:retry",
+            serviceClass = DmpInputTaskService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "清洗任务重试")
+    public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<DmpEtlTaskEntity> list = dmpEtlTaskService.lambdaQuery().in(DmpEtlTaskEntity::getId, ids).list();
+        Map<String, DmpEtlTaskEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpEtlTaskEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            DmpEtlTaskEntity entity = idEntityMap.get(id);
+            try {
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "清洗任务不存在, 重试失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = dmpEtlTaskService.retry(entity);
+            }catch (Exception e){
+                log.error("清洗任务重试失败",e);
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

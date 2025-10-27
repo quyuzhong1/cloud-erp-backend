@@ -127,7 +127,7 @@ public class DmpInputTaskController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		// 数据查询放入外层，处理结果统一更新或单条更新
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().in(DmpInputTaskEntity::getId, ids).list();
 		Map<String, DmpInputTaskEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -185,6 +185,45 @@ public class DmpInputTaskController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取任务导出Excel数据")
     public void exportList(@RequestBody @Validated DmpInputTaskDTO.ExportDTO dto, HttpServletResponse response) {
         dmpInputTaskService.exportList(dto, response);
+    }
+
+    /**
+     * 重试
+     * @author Jim
+     * @date:  2025-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/retry")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpInputTask:retry",
+            serviceClass = DmpInputTaskService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "拉取任务重试")
+    public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().in(DmpInputTaskEntity::getId, ids).list();
+        Map<String, DmpInputTaskEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            DmpInputTaskEntity entity = idEntityMap.get(id);
+            try {
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "拉取任务不存在, 重试失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = dmpInputTaskService.retry(entity);
+            }catch (Exception e){
+                log.error("拉取任务重试失败",e);
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

@@ -22,6 +22,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputMapper;
 import com.erp.server.dmp.service.DmpCfgInputService;

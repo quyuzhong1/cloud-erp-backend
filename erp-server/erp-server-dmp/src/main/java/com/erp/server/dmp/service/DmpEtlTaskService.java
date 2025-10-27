@@ -82,4 +82,12 @@ public interface DmpEtlTaskService extends SuperService<DmpEtlTaskEntity> {
     */
     void exportList(DmpEtlTaskDTO.ExportDTO dto, HttpServletResponse response);
 
+    /**
+     * 重试
+     * @author Jim
+     * @date: 2025-10-23
+     * @param entity
+     * @return
+     */
+    BatchResultDTO retry(DmpEtlTaskEntity entity);
 }
