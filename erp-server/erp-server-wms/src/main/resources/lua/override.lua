@@ -4,10 +4,11 @@ local key = ARGV[1];
 local qty = ARGV[2];
 local result = {};
 local value = redis.call('get', key);
-local beforeinventorys = (key .. '==' .. value);
+local beforeinventorys = key .. '==';
 if value == 0 or value == false then
     redis.call('set', key, qty);
 else
+    beforeinventorys = beforeinventorys .. value;
     for sku in string.gmatch(value, '([^' .. delimiter .. ']+)') do
         i = i + 1;
     end

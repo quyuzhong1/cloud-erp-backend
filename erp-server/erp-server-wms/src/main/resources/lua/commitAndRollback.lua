@@ -13,18 +13,18 @@ local valueindex = 0;
 for _, v in ipairs(value) do
     local currkey = (current .. v);
     local currvalue = redis.call('get', currkey);
-    if valueindex == 0 then
-        beforetransactions = beforetransactions .. v;
-        beforeinventorys = beforeinventorys .. currkey .. '==' .. currvalue;
-    else
-        beforetransactions = beforetransactions .. v;
-        beforeinventorys = beforeinventorys .. ',,' .. currkey .. '==' .. currvalue;
-    end
     if currvalue == 0 or currvalue == false then
         result['success'] = false;
         result['errormsg'] = '即时库存key不存在' .. currkey;
         return cjson.encode(result);
     else
+        if valueindex == 0 then
+            beforetransactions = beforetransactions .. v;
+            beforeinventorys = beforeinventorys .. currkey .. '==' .. currvalue;
+        else
+            beforetransactions = beforetransactions .. v;
+            beforeinventorys = beforeinventorys .. ',,' .. currkey .. '==' .. currvalue;
+        end
         local uqty = 0;
         local uvalue = '';
         local i = 0;
