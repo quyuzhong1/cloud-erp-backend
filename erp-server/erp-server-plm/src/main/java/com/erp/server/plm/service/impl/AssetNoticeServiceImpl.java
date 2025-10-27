@@ -531,8 +531,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         Map<String, AssetNoticeEntity> detailMainMap = Maps.newHashMap();
         for (AssetNoticeDetailEntity detail : detailList) {
             //已采购数量
-            LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            List<AssetPurchaseOrderDetailEntity> detailEntityList = assetPurchaseOrderDetailService.list(lambdaQueryWrapper);
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, detail.getId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
             BigDecimal purchaseQty = detailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 

@@ -290,6 +290,9 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField(exist = false)
     private String base64Str;
 
+    @TableField(exist = false)
+    private String fileName;
+
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String SOURCE_CODE = "source_code";

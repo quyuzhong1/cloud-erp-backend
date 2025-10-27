@@ -34,7 +34,8 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "warehouseCode", ignore = true),
             @Mapping(target = "warehouseId", ignore = true),
             @Mapping(target = "warehouseName",  ignore = true),
-            @Mapping(target = "platformWarehouseStatus", source = "platformWarehouseStatus")
+            @Mapping(target = "platformWarehouseStatus", source = "platformWarehouseStatus"),
+            @Mapping(target = "platformWarehouseType", source = "platformWarehouseType")
     })
     OverseasProviderWarehouseEntity warehouseDb(PlatformWarehouseDTO dto);
 

@@ -209,4 +209,25 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台收款单
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_group";
+
+    /**
+     * restcloud平台仓库
+     */
+    public static final String RESTCLOUD_PLATFORM_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_warehouse_to_wms_group";
+
+    /**
+     * 新中台平台入库
+     */
+    public static final String RESTCLOUD_PLATFORM_INBOUND_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inbound_to_wms_group";
+
+
+    /**
+     * 新中台平台出库
+     */
+    public static final String RESTCLOUD_PLATFORM_OUTBOUND_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_outbound_to_wms_group";
+    /**
+     * 新中台平台库存
+     */
+    public static final String RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inventory_to_wms_group";
+
 }

@@ -72,7 +72,7 @@ public interface OmsListingInfoFeign {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
      **/
     @PostMapping("feign/listing/listInfoByPlatformSkuNo")
-    public List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
+    List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
 
     @PostMapping("feign/listing/updatePlatformSkuId")
     boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId);

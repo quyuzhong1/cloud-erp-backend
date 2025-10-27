@@ -145,7 +145,7 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopInfo.getId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WILDBERRIES.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
