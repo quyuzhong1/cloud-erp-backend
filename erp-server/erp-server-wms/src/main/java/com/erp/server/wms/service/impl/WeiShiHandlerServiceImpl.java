@@ -168,6 +168,9 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn("调用三方仓出库单请求:{}", JSONObject.toJSONString(weiShiCreateOutboundRequest));
         WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
         log.warn("调用三方仓出库单结果:{}", JSONObject.toJSONString(resp));
+        if(Objects.isNull(resp)){
+            return failure("纬狮创建出库单响应结果为空");
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
