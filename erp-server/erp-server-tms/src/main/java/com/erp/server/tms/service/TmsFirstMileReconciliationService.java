@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -133,12 +134,12 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     /**
      * 撤销
      *
-     * @param id id
+     * @param dto id
      * @return BatchResultDTO
      * @author Jim
      * @date: 2024-03-25
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel

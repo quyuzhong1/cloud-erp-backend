@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -173,14 +174,14 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
     /**
      * 撤销
      *
-     * @param id
+     * @param dto
      * @param entity
      * @param mainEntity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO cancelProcess(String id, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 导出Excel

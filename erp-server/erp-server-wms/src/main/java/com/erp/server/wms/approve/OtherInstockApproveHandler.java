@@ -22,7 +22,7 @@ public class OtherInstockApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return otherInstockService.cancelProcess(Collections.singletonList(dto.getId()));
+        return otherInstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

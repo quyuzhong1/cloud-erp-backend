@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
@@ -320,10 +321,10 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * 撤销流程
      * @author yl
      * @date 2023-06-25 17:11
-     * @param taaskIdList
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> taaskIdList);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 获取任务审核情况

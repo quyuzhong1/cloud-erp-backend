@@ -27,7 +27,7 @@ public class SampleRecipientApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleRecipientService.cancelProcess(dto.getId());
+        BatchResultDTO result = sampleRecipientService.cancelProcess(dto);
         return result.getSuccess();
     }
 

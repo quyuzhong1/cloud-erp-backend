@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.query.SubcontractReturnQueryHandler;
@@ -360,7 +361,7 @@ public class SubcontractReturnController extends BaseController {
         for (String id : ids) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = subcontractReturnService.cancelProcess(id);
+                cancelResult = subcontractReturnService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("委外退料单撤回流程失败",e);
                 SubcontractReturnEntity entity = idEntityMap.get(id);

@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -19,12 +20,13 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售退货通知单
@@ -268,7 +270,7 @@ public class SoReturnNoticeController extends BaseController {
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnNoticeService.cancelProcess(dto.getIds());
+        Boolean flag = soReturnNoticeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 

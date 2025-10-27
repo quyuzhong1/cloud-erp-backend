@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -110,7 +111,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      **/
     BatchResultDTO disApprove(SoReturnEntity entity);
@@ -119,10 +120,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废

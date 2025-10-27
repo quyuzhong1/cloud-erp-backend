@@ -21,7 +21,7 @@ public class DeliveryPlanApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = wmsDeliveryPlanService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = wmsDeliveryPlanService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

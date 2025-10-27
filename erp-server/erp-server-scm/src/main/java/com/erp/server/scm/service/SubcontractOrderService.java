@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -138,10 +139,10 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * 撤销
     * @author will
     * @date: 2023-06-08
-    * @param ids
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(SubcontractOrderEntity entity);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto,SubcontractOrderEntity entity);
 
     /**
     * 导出Excel

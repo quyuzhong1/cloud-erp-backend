@@ -258,7 +258,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                 ApproveDTO.CancelProcessDTO cancelProcessDTO = new ApproveDTO.CancelProcessDTO();
                 cancelProcessDTO.setBusinessKey(one.getBussinessKey());
                 cancelProcessDTO.setId(one.getBussinessId());
-                cancelProcessDTO.setSourcePlatform(ProcessSourcePlatformEnum.FS.getCode());
+                cancelProcessDTO.setExecuteSystem(ProcessSourcePlatformEnum.FS.getCode());
                 processManagementService.cancelProcessFeign(cancelProcessDTO);
                 break;
             case DELETED:

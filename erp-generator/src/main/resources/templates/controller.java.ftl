@@ -34,6 +34,7 @@ import com.common.core.controller.vo.ApiResult;
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
 import cn.hutool.core.util.ObjectUtil;
 </#if>
 <#if dataPermission>
@@ -409,7 +410,7 @@ public class ${table.controllerName} {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = ${serviceBean}.cancelProcess(id);
+                cancelResult = ${serviceBean}.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("${docName}撤回流程失败",e);
                 ${entity} entity = idEntityMap.get(id);

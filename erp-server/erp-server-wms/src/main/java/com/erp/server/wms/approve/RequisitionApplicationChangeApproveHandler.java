@@ -23,7 +23,7 @@ public class RequisitionApplicationChangeApproveHandler extends AbstractApproveH
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = requisitionApplicationChangeService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = requisitionApplicationChangeService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

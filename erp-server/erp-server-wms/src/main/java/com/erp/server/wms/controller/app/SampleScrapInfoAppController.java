@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.app;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -14,7 +15,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
@@ -22,10 +22,8 @@ import com.erp.server.wms.service.SampleScrapInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -358,7 +356,7 @@ public class SampleScrapInfoAppController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleScrapInfoService.cancelProcess(id,ClientTypeEnum.APP);
+                cancelResult = sampleScrapInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端撤回流程失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);

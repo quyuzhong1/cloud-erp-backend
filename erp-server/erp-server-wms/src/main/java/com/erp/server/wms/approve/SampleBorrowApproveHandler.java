@@ -1,6 +1,5 @@
 package com.erp.server.wms.approve;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -8,16 +7,12 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.server.wms.service.SampleBorrowInfoService;
-import com.erp.server.wms.service.TransferOutService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 
 @Component
 @ApproveBusinessKey(SourceTypeEnum.SAMPLE_BORROW_INFO)
@@ -28,7 +23,7 @@ public class SampleBorrowApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleBorrowInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
+        BatchResultDTO result = sampleBorrowInfoService.cancelProcess(dto, ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 

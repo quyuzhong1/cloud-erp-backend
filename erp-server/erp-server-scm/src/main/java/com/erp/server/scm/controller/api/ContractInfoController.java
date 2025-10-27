@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,10 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.server.scm.query.ContractInfoQueryHandler;
 import com.erp.server.scm.service.CfgSupplierSalesService;
@@ -32,7 +30,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -294,7 +291,7 @@ public class ContractInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = contractInfoService.cancelProcess(id);
+                cancelResult = contractInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("合同管理单撤回流程失败",e);
                 ContractInfoEntity entity = idEntityMap.get(id);

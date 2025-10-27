@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -442,7 +443,7 @@ public class PurchaseApplicationController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchaseApplicationService.cancelProcess(entity));
+                resultDTOS.add(purchaseApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id),entity));
             }catch (Exception e){
                 log.error("采购申请单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

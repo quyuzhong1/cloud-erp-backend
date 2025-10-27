@@ -23,7 +23,7 @@ public class SoMultiChannelApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = soMultiChannelService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = soMultiChannelService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

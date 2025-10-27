@@ -30,7 +30,7 @@ public class SampleInitialLedgerApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleInitialLedgerService.cancelProcess(dto.getId());
+        BatchResultDTO result = sampleInitialLedgerService.cancelProcess(dto);
         return result.getSuccess();
     }
 

@@ -31,7 +31,7 @@ public class SoInfoApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return soInfoService.cancelProcess(Collections.singletonList(dto.getId()));
+        return soInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

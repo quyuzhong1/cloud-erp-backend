@@ -5,8 +5,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -349,7 +349,7 @@ public class OtherOutstockController extends BaseController {
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = otherOutstockService.cancelProcess(dto.getIds());
+        Boolean result = otherOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result == true ? success() : failure();
     }
 

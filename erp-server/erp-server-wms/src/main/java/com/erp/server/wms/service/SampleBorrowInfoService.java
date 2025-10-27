@@ -1,17 +1,16 @@
 package com.erp.server.wms.service;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
-import com.common.business.vo.PagingVO;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -127,10 +126,10 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
     * 撤销
     * @author jack
     * @date: 2025-08-20
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, ClientTypeEnum clientType);
 
     /**
     * 导出Excel

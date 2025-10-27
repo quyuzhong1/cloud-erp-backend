@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -177,10 +178,10 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * 撤销流程
      * @author yl
      * @date 2023-05-15 15:39
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     
     /**

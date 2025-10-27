@@ -31,7 +31,7 @@ public class CustomerB2bChangeSellerApproveHandler extends AbstractApproveHandle
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        List<BatchResultDTO> batchResultDTOS = customerB2bSellerChangeService.batchCancel(Collections.singletonList(dto.getId()));
+        List<BatchResultDTO> batchResultDTOS = customerB2bSellerChangeService.batchCancel(new ApproveDTO.BatchCancelProcessDTO(dto));
         return CollUtil.isEmpty(batchResultDTOS) ? Boolean.TRUE : batchResultDTOS.get(0).getSuccess();
     }
 

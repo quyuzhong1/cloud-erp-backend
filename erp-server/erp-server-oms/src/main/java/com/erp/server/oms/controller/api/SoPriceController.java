@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -298,7 +299,7 @@ public class SoPriceController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soPriceService.cancelProcess((entity)));
+                resultDTOS.add(soPriceService.cancelProcess(new ApproveDTO.CancelProcessDTO(id)));
             }catch (Exception e){
                 log.error("销售价目撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -122,7 +123,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param entity
      * @return java.lang.Boolean
      */
-    BatchResultDTO cancelProcessEntity(PurchasePriceEntity entity);
+    BatchResultDTO cancelProcessEntity(ApproveDTO.CancelProcessDTO dto, PurchasePriceEntity entity);
 
     /**
      * 采购信息分页

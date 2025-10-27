@@ -22,7 +22,7 @@ public class PilotApplicationApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = pilotApplicationService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = pilotApplicationService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

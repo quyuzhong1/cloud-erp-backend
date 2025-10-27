@@ -30,7 +30,7 @@ public class SampleBackInfoApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleBackInfoService.cancelProcess(dto.getId());
+        BatchResultDTO result = sampleBackInfoService.cancelProcess(dto);
         return result.getSuccess();
     }
 
