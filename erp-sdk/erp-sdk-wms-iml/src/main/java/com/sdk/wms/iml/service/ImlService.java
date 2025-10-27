@@ -22,6 +22,9 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -43,12 +46,18 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/new_stock_total_query";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/query_refund_order_detail";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
-        body.put("pageIndex",3);
+        body.put("code","RI2025031000003");
+//        body.put("pageSize",50);
+        //查询前一天的时间戳的数据
+        long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        body.put("createTimeFrom",startTime);
+        body.put("createTimeTo",endTime);
         String timestamp = String.valueOf(new Date().getTime());
         String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
         Map<String,String> headerMap = new HashMap<>();
