@@ -327,9 +327,11 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_FMS_ASSET_LOCATION("EXPORT_FMS_ASSET_LOCATION","资产位置导出","","","ExportFmsAssetLocationHandler"),
     EXPORT_FMS_ASSET_ACCEPT_REPORT("EXPORT_FMS_ASSET_ACCEPT_REPORT","资产验收表导出","","","ExportFmsAssetAcceptHandler"),
     EXPORT_FMS_ASSET_CARD("EXPORT_FMS_ASSET_CARD","资产卡片导出","","","ExportFmsAssetCardHandler"),
+    EXPORT_FMS_ASSET_STOCKTAKING_PLAN("EXPORT_FMS_ASSET_STOCKTAKING_PLAN","资产盘点方案导出","","","ExportFmsAssetStocktakingPlanHandler"),
     IMPORT_FMS_ASSET_LOCATION("IMPORT_FMS_ASSET_LOCATION","导入资产位置","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetLocation",""),
     IMPORT_FMS_ASSET_ACCEPT("IMPORT_FMS_ASSET_ACCEPT","导入资产验收表","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetAccept",""),
     IMPORT_FMS_ASSET_CARD("IMPORT_FMS_ASSET_CARD","导入资产卡片","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetCard",""),
+    IMPORT_FMS_ASSET_STOCKTAKING_PLAN("IMPORT_FMS_ASSET_STOCKTAKING_PLAN","导入资产盘点方案","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetStocktakingPlan",""),
 
     DEFAULT("DEFAULT", "默认","","","");
     private final String code;

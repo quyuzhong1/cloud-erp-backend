@@ -134,15 +134,13 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
     */
     BatchResultDTO cancelProcess(String id);
 
+
     /**
-    * 导出Excel
-    * @author wuht
-    * @date: 2025-10-11
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(AssetStocktakingPlanDTO.ExportDTO dto, HttpServletResponse response);
+     * 获取资产盘点方案分页数据（用于异步导出）
+     * @param dto
+     * @return
+     */
+    PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto);
 
     /**
     * 审核通过回调方法
@@ -160,5 +158,22 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
     * @return
     */
     BatchResultDTO pushDown(String id);
+
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-10-27
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 导入资产盘点方案（异步调用）
+    * @author wuht
+    * @date: 2025-10-27
+    * @param dto
+    */
+    void importAssetStocktakingPlan(BaseDTO.ImportDTO dto);
 
 }

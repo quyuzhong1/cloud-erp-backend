@@ -36,6 +36,17 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetStocktakingPlanMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.listener.AssetStocktakingPlanExcelListener;
+import com.erp.model.fms.dto.excel.AssetStocktakingPlanImportExcelDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelReader;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.business.enums.FileTaskStatusEnum;
 import org.apache.commons.lang3.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +55,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,6 +86,14 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     private AssetCardDetailService assetCardDetailService;
     @Autowired
     private AssetStocktakingDetailService assetStocktakingDetailService;
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FileFeign fileFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
+    @Autowired
+    private AssetLocationService assetLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -164,26 +185,22 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         return list;
     }
 
+
+    /**
+     * 获取资产盘点方案分页数据（用于异步导出）
+     * @param dto
+     * @return
+     */
     @Override
-    public void exportList(AssetStocktakingPlanDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetStocktakingPlanDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+    public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
+        // 调用现有的分页查询方法
+        IPage<AssetStocktakingPlanDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>();
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetStocktakingPlan.xlsx";
-        String name = "资产盘点方案单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -766,5 +783,47 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
                 planEntity.getId(), "下推操作");
         
         return BatchResultDTO.success(planEntity.getId(), planEntity.getCode());
+    }
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入资产盘点方案", FileTaskEventEnum.IMPORT_FMS_ASSET_STOCKTAKING_PLAN.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetStocktakingPlan(BaseDTO.ImportDTO dto) {
+        AssetStocktakingPlanExcelListener excelListenerUtil = new AssetStocktakingPlanExcelListener(
+            this, assetLocationService, sysUserFeign, 
+            dto.getTaskId(), dto.getImportType(), dto.getImportCount()
+        );
+        
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetStocktakingPlanImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetStocktakingPlanImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "资产盘点方案错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetStocktakingPlanImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }
