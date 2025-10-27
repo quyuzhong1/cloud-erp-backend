@@ -66,8 +66,28 @@
     <!-- DmpCfgInput -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$ListDTO">
         select
-        <include refid="Base_Column_List"></include>
-        from dmp_cfg_input
+            dci.id AS id,
+            dci.create_time AS createTime,
+            dci.update_time AS updateTime,
+            dci.create_user_name AS createUserName,
+            dci.create_user_id AS createUserId,
+            dci.update_user_name AS updateUserName,
+            dci.update_user_id AS updateUserId,
+            dci.version AS version,
+            dci.is_deleted AS isDeleted,
+            dci.system_id AS systemId,
+            dci.code AS code,
+            dci.name AS name,
+            dci.type AS type,
+            dci.type_id AS typeId,
+            dci.disabled AS disabled,
+            dci.extend_json AS extendJson,
+            dci.exec_system AS execSystem,
+            dci.is_main_task AS isMainTask,
+            dci.bill_type AS billType,
+            dbs.name AS systemName
+        from dmp_cfg_input dci
+        left join dmp_basic_system dbs on dbs.id = dci.system_id
         where
         ${params.sqlMap.default}
         and is_deleted = false

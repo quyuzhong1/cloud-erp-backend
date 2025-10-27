@@ -150,7 +150,7 @@ public class DmpCfgInputController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        // 数据查询放入外层，处理结果统一更新或单条更新
         List<DmpCfgInputEntity> list = dmpCfgInputService.lambdaQuery().in(DmpCfgInputEntity::getId, ids).list();
         Map<String, DmpCfgInputEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, w -> w));
         for (String id : dto.getIds()) {

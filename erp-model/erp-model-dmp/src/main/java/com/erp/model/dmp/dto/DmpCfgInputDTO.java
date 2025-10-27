@@ -44,6 +44,11 @@ public class DmpCfgInputDTO implements Serializable {
         private String systemId;
 
         /**
+         * 系统名称
+         */
+        private String systemName;
+
+        /**
          * 数据代码
          */
         private String code;
@@ -73,7 +78,27 @@ public class DmpCfgInputDTO implements Serializable {
          */
         private String extendJson;
 
+        /**
+         * 是否主任务
+         */
+        private Boolean isMainTask;
 
+        /**
+         * 单据业务类型
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billType;
+
+        /**
+         * 执行系统:默认:dmp
+         */
+        private String execSystem;
+
+        /**
+         * RestCloud执行流程地址:
+         * 来源接口：/api/dmp/restCloud/paging
+         */
+        private String execUrl;
     }
 
     /**
@@ -107,6 +132,7 @@ public class DmpCfgInputDTO implements Serializable {
 
         /**
          * 系统id
+         * 接口：/dmp/dmpBasicSystem/listDmpBasicSystem
          */
         @NotBlank(message = "系统id不能为空")
         @Size(max = 50, message = "系统id最大长度不能超过50位")
@@ -144,7 +170,27 @@ public class DmpCfgInputDTO implements Serializable {
          */
         private String extendJson;
 
+        /**
+         * 是否主任务
+         */
+        private Boolean isMainTask;
 
+        /**
+         * 单据业务类型
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billType;
+
+        /**
+         * 执行系统:默认:dmp
+         */
+        private String execSystem;
+
+        /**
+         * RestCloud执行流程地址:
+         * 来源接口：/api/dmp/restCloud/paging
+         */
+        private String execUrl;
     }
 
 
@@ -204,6 +250,11 @@ public class DmpCfgInputDTO implements Serializable {
         private String systemId;
 
         /**
+         * 系统名称
+         */
+        private String systemName;
+
+        /**
          * 数据代码
          */
         private String code;
@@ -232,6 +283,28 @@ public class DmpCfgInputDTO implements Serializable {
          * 扩展json
          */
         private String extendJson;
+
+        /**
+         * 是否主任务
+         */
+        private Boolean isMainTask;
+
+        /**
+         * 单据业务类型
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billType;
+
+        /**
+         * 执行系统:默认:dmp
+         */
+        private String execSystem;
+
+        /**
+         * RestCloud执行流程地址:
+         * 来源接口：/api/dmp/restCloud/paging
+         */
+        private String execUrl;
 
 
     }
@@ -273,6 +346,11 @@ public class DmpCfgInputDTO implements Serializable {
         private String systemId;
 
         /**
+         * 系统名称
+         */
+        private String systemName;
+
+        /**
          * 数据代码
          */
         private String code;
@@ -302,6 +380,27 @@ public class DmpCfgInputDTO implements Serializable {
          */
         private String extendJson;
 
+        /**
+         * 是否主任务
+         */
+        private Boolean isMainTask;
+
+        /**
+         * 单据业务类型
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billType;
+
+        /**
+         * 执行系统:默认:dmp
+         */
+        private String execSystem;
+
+        /**
+         * RestCloud执行流程地址:
+         * 来源接口：/api/dmp/restCloud/paging
+         */
+        private String execUrl;
 
     }
 }
