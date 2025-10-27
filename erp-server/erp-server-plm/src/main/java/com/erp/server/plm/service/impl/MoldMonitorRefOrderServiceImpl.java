@@ -54,7 +54,6 @@ public class MoldMonitorRefOrderServiceImpl extends SuperServiceImpl<MoldMonitor
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "模具监控关联单据" , moldMonitorRefOrderEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, moldMonitorRefOrderEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(moldMonitorRefOrderEntity.getId(), moldMonitorRefOrderEntity.getId());
@@ -84,7 +83,6 @@ public class MoldMonitorRefOrderServiceImpl extends SuperServiceImpl<MoldMonitor
             log.info("编辑 开始记录模具监控关联单据日志数据，id：【{}】", moldMonitorRefOrderEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), moldMonitorRefOrderEntity.getId(), "模具监控关联单据");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, moldMonitorRefOrderEntity, null, moldMonitorRefOrderEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
