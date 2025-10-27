@@ -419,10 +419,8 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
                     if (CollectionUtils.isNotEmpty(virtualInventoryList)) {
                         for (VirtualInventoryDTO.VirtualInventoryQtyDTO virtualQty : virtualInventoryList) {
                             String key = virtualQty.getSkuId();
-                            Integer currentQty = virtualInventoryMap.get(key);
-                            if (currentQty == null || virtualQty.getInventoryQty() > currentQty) {
-                                virtualInventoryMap.put(key, virtualQty.getInventoryQty());
-                            }
+                            Integer currentQty = virtualInventoryMap.getOrDefault(key, 0);
+                            virtualInventoryMap.put(key, currentQty + virtualQty.getInventoryQty());
                         }
                     }
                 } catch (Exception e) {
@@ -443,10 +441,8 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
                     if (CollectionUtils.isNotEmpty(realInventoryList)) {
                         for (InventoryQtyDTO.SkuInventoryStatusTotalDTO realQty : realInventoryList) {
                             String key = realQty.getSkuId();
-                            Integer currentQty = realInventoryMap.get(key);
-                            if (currentQty == null || realQty.getInventoryTotal() > currentQty) {
-                                realInventoryMap.put(key, realQty.getInventoryTotal());
-                            }
+                            Integer currentQty = realInventoryMap.getOrDefault(key, 0);
+                            realInventoryMap.put(key, currentQty + realQty.getInventoryTotal());
                         }
                     }
                 } catch (Exception e) {
