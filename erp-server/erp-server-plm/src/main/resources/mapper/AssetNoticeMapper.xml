@@ -81,11 +81,6 @@
             ${params.permissionSql}
         </if>
         GROUP BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
             an.ID,
             an.code,
             and1.asset_id,
@@ -96,7 +91,13 @@
             and1.apply_qty,
             and1.create_po_type,
             and1.id
-        order by an.create_time desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+    an.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
