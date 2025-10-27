@@ -104,14 +104,12 @@ public class AssetAcceptPersonDTO implements Serializable {
         /**
         * 人员ID
         */
-        @NotBlank(message = "人员ID不能为空")
         @Size(max = 19,message = "人员ID最大长度不能超过19位")
         private String userId;
 
         /**
         * 人员姓名
         */
-        @NotBlank(message = "人员姓名不能为空")
         @Size(max = 50,message = "人员姓名最大长度不能超过50位")
         private String userName;
 
