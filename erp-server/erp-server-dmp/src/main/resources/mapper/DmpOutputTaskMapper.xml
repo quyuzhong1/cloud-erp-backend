@@ -17,8 +17,13 @@
        <result column="start_time" property="startTime" />
        <result column="end_time" property="endTime" />
        <result column="status" property="status" />
-       <result column="request_data" property="requestData" />
-       <result column="response_data" property="responseData" />
+       <result column="task_type" property="taskType" />
+       <result column="error_count" property="errorCount" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="exec_timeout" property="execTimeout" />
+       <result column="error_message" property="errorMessage" />
+       <result column="exec_system" property="execSystem" />
+       <result column="instance_id" property="instanceId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,41 +37,42 @@
         update_user_id,
         version,
         is_deleted,
-        cfg_output_id, next_level_id, start_time, end_time, status, request_data, response_data
+        cfg_output_id, next_level_id, start_time, end_time, status, task_type, exec_system, instance_id
     </sql>
 
     <!-- DmpOutputTask -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskDTO$ListDTO">
         SELECT
-            id AS id,
-            cfg_output_id AS cfgOutputId,
-            next_level_id AS nextLevelId,
-            start_time AS startTime,
-            end_time AS endTime,
-            status AS status,
-            create_time AS createTime,
-            update_time AS updateTime,
-            create_user_name AS createUserName,
-            create_user_id AS createUserId,
-            update_user_name AS updateUserName,
-            update_user_id AS updateUserId,
-            version AS version,
-            is_deleted AS isDeleted,
-            task_type AS taskType,
-            error_count AS errorCount,
-            input_task_id AS inputTaskId,
-            exec_timeout AS execTimeout,
-            error_message AS errorMessage,
-            exec_system AS execSystem,
-            instance_id AS instanceId
-            from dmp_output_task
+            dot.id AS id,
+            dot.cfg_output_id AS cfgOutputId,
+            dot.next_level_id AS nextLevelId,
+            dot.start_time AS startTime,
+            dot.end_time AS endTime,
+            dot.status AS status,
+            dot.create_time AS createTime,
+            dot.update_time AS updateTime,
+            dot.create_user_name AS createUserName,
+            dot.create_user_id AS createUserId,
+            dot.update_user_name AS updateUserName,
+            dot.update_user_id AS updateUserId,
+            dot.version AS version,
+            dot.is_deleted AS isDeleted,
+            dot.task_type AS taskType,
+            dot.error_count AS errorCount,
+            dot.input_task_id AS inputTaskId,
+            dot.exec_timeout AS execTimeout,
+            dot.error_message AS errorMessage,
+            dot.exec_system AS execSystem,
+            dot.instance_id AS instanceId
+            from dmp_output_task dot
+            left join dmp_cfg_output dco on dot.cfg_output_id = dco.id
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and dot.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by update_time desc
+        order by dot.update_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

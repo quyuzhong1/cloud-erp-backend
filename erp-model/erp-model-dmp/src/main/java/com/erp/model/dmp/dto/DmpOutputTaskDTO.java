@@ -236,6 +236,11 @@ public class DmpOutputTaskDTO implements Serializable {
         private String status;
 
         /**
+         * 推送状态名称
+         */
+        private String statusName;
+
+        /**
          * 推送类型
          */
         private String taskType;
@@ -266,25 +271,9 @@ public class DmpOutputTaskDTO implements Serializable {
         private String execSystem;
 
         /**
-         * 实例id
+         * restcloud任务id(实例id)
          */
         private String instanceId;
-
-        /**
-         * 代号
-         */
-        private String code;
-
-        /**
-         * 代号
-         */
-        private String approveStatus;
-
-
-        /**
-         * 审核状态名称
-         */
-        private String approveStatusName;
 
         /**
          * 创建时间
@@ -295,6 +284,16 @@ public class DmpOutputTaskDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

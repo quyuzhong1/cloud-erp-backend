@@ -236,8 +236,8 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
 
         // 属性赋值
         for(DmpOutputTaskDTO.ListDTO data : list) {
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setStatusName(DmpTaskStatuEnum.getName(data.getStatus()));
+            //  其他如需要显示名称的字段赋值
         }
     }
 
