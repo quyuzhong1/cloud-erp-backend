@@ -159,7 +159,9 @@ public class ThirdWarehouseRefreshTokenJob {
         List<OverseasProviderEntity> alreadyAuthList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
         for (OverseasProviderEntity overseasProviderEntity : alreadyAuthList) {
             String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, overseasProviderEntity.getCode(), overseasProviderEntity.getId());
-            redisUtil.set(tokenKey, overseasProviderEntity.getAuthJson(), 86400);
+            Map<String,Object> map = overseasProviderEntity.getAuthJson();
+            map.put("ownerCode",overseasProviderEntity.getOwnerCode());
+            redisUtil.set(tokenKey, map, 86400);
         }
 
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");

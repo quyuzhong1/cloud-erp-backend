@@ -39,12 +39,17 @@ public interface WildberriesConstant {
     String POST_ORDERS_STATUS = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/orders/status";
     //创建组包
     String POST_CREATE_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies";
+    String GET_SUPPLY_DETAIL = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}";
     //添加组包
     String POST_ADD_BOX_TO_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/trbx";
+    String DEL_BOX_FROM_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/trbx";
+    String GET_SUPPLY_BOX_LIST = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/trbx";
     //添加订单到组包
     String PATCH_ADD_ORDER_TO_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/orders/{}";
+    String GET_SUPPLY_ORDER = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/orders";
+    String GET_SUPPLY_QR_CODE = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/barcode?type={}";
     //订单面单
-    String POST_ORDER_LABEL = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/orders/stickers";
+    String POST_ORDER_LABEL = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/orders/stickers?type={}&width={}&height={}";
     //标记发货
     String PATCH_SIGN_DELIVERY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/deliver";
     //跨境面单

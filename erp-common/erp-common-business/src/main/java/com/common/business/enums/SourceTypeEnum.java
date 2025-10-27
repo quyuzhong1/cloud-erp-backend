@@ -243,6 +243,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE("thirdWarehouseUploadHandoverFile", "第三方仓上传交接文件","dmp_push_task"),
     THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),

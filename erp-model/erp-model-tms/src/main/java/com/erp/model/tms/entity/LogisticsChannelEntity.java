@@ -253,6 +253,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("channel_type")
     private String channelType;
 
+    /**
+     * 推送交接文件类型
+     */
+    @TableField("handover_doc_type")
+    private String handoverDocType;
 
     public static final String MAIN_ID = "main_id";
 

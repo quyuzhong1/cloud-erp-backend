@@ -155,6 +155,11 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
+
+    @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
         JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);

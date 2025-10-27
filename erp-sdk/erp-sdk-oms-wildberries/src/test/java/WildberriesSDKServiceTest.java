@@ -139,49 +139,85 @@ public class WildberriesSDKServiceTest {
         //{"id":"WB-GI-SAND-7946"}
     }
     @Test
-    public void createSupply() {
+    public void createSupply() throws InterruptedException {
         CreateSupplyRequest request = CreateSupplyRequest.builder().name("XSDD251010000001").build();
         CreateSupplyResponse supply = wildberriesSDKService.createSupply(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(supply));
         //{"id":"WB-GI-SAND-7946"}
     }
-
     @Test
-    public void addBoxToSupply() {
-        String supplyId = "WB-GI-SAND-7946";
-        AddBoxToSupplyRequest request = AddBoxToSupplyRequest.builder().amount(1).build();
-        AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(WildberriesConstant.TOKEN, supplyId, request);
-        System.out.println(JSONUtil.toJsonStr(addBoxToSupplyResponse));
-        //{"trbxIds":["WB-TRBX-SAND-7947"]}
+    public void getSupplyDetail() {
+        String supplyId = "WB-GI-SAND-8316";
+        String supply = wildberriesSDKService.getSupplyDetail(WildberriesConstant.TOKEN, supplyId);
+        System.out.println(JSONUtil.toJsonStr(supply));
+        //{"id":"WB-GI-SAND-8316","done":false,"createdAt":"2025-10-17T03:46:53.642Z","closedAt":null,"scanDt":null,"name":"XSDD251016000002","cargoType":1,"destinationOfficeId":1}
     }
 
     @Test
-    public void addOrderToSupply() {
-        String supplyId = "WB-GI-SAND-7946";
-        AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder().supplyId(supplyId).orderId(3916460244L).build();
+    public void addBoxToSupply() throws InterruptedException {
+        String supplyId = "WB-GI-SAND-8316";
+        AddBoxToSupplyRequest request = AddBoxToSupplyRequest.builder().amount(1).build();
+        AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(WildberriesConstant.TOKEN, supplyId, request);
+        System.out.println(JSONUtil.toJsonStr(addBoxToSupplyResponse));
+        //{"trbxIds":["WB-TRBX-SAND-8318"]}
+    }
+
+    @Test
+    public void delBoxFromSupply() {
+        String supplyId = "WB-GI-SAND-8316";
+        String trbxId = "WB-TRBX-SAND-8317";
+        String addBoxToSupplyResponse = wildberriesSDKService.delBoxFromSupply(WildberriesConstant.TOKEN, supplyId, Collections.singletonList(trbxId));
+        System.out.println(JSONUtil.toJsonStr(addBoxToSupplyResponse));
+        //{"trbxIds":["WB-TRBX-SAND-8318"]}
+    }
+    @Test
+    public void getSupplyBoxList() {
+        String supplyId = "WB-GI-SAND-8316";
+        String response = wildberriesSDKService.getSupplyBoxList(WildberriesConstant.TOKEN, supplyId);
+        System.out.println(JSONUtil.toJsonStr(response));
+        //{"trbxes":[{"id":"WB-TRBX-SAND-8317","orders":[]},{"id":"WB-TRBX-SAND-8318","orders":[]}]}
+        //{"id": "1978713068531814402", "barcode": "WB-TRBX-SAND-8317", "errorType": "getLogisticsCode", "packageNo": "WB-GI-SAND-8316", "platformCode": "8224", "packagePlanId": "1979031327613415426"}
+    }
+    @Test
+    public void addOrderToSupply() throws InterruptedException {
+        String supplyId = "WB-GI-SAND-8316";
+        //{"id": "1978713068531814402", "barcode": "WB-TRBX-SAND-8317", "errorType": "getLogisticsCode", "packageNo": "WB-GI-SAND-8316", "packagePlanId": "1979031327613415426"}
+        AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder().supplyId(supplyId).orderId(8224L).build();
         AddOrderToSupplyResponse addOrderToSupplyResponse = wildberriesSDKService.addOrderToSupply(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(addOrderToSupplyResponse));
         //{"trbxIds":["WB-TRBX-SAND-7947"]}
     }
     @Test
-    public void getOrderLabel() {
-        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3893097985L))
+    public void getSupplyOrders() {
+        String supplyId = "WB-GI-SAND-8316";
+        String addOrderToSupplyResponse = wildberriesSDKService.getSupplyOrders(WildberriesConstant.TOKEN, supplyId);
+    }
+    @Test
+    public void getSupplyQrCode() {
+        String supplyId = "WB-GI-SAND-8316";
+        String addOrderToSupplyResponse = wildberriesSDKService.getSupplyQrCode(WildberriesConstant.TOKEN, supplyId);
+    }
+
+    @Test
+    public void getOrderLabel() throws InterruptedException {
+        //8224L  3893097985L
+        OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(8224L))
                 .width(58)
                 .height(40)
                 .type("png")
                 .build();
         OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request);
-        String pdfBase64 = null;
-        try {
-            pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("===============================");
-        System.out.println("data:application/pdf;base64," + pdfBase64);
+//        String pdfBase64 = null;
+//        try {
+//            pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        System.out.println("===============================");
+//        System.out.println("data:application/pdf;base64," + pdfBase64);
     }
     @Test
-    public void getCrossOrderLabel() {
+    public void getCrossOrderLabel() throws InterruptedException {
         OrderLabelRequest request = OrderLabelRequest.builder().orders(Arrays.asList(3916460244L))
                 .width(58)
                 .height(40)
@@ -247,5 +283,9 @@ public class WildberriesSDKServiceTest {
         String warehouse = wildberriesSDKService.getOfficeForPass(WildberriesConstant.TOKEN);
         System.out.println(JSONUtil.toJsonStr(warehouse));
     }
-
+    @Test
+    public void signDelivery() throws InterruptedException {
+        String supplyId = "WB-GI-SAND-8316";
+        wildberriesSDKService.signDelivery(WildberriesConstant.TOKEN,supplyId);
+    }
 }

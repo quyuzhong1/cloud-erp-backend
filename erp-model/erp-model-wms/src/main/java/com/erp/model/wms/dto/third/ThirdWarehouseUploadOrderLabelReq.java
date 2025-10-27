@@ -27,6 +27,9 @@ public class ThirdWarehouseUploadOrderLabelReq extends ThirdWarehouseAuth{
     //物流跟踪号
     @NotBlank(message = "物流跟踪号不能为空")
     private String trackNo;
+
+    //货主编码
+    private String ownerCode;
     //文件类型
     private String fileType;
     //面单URL数组

@@ -213,6 +213,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (content != null) {
                 base64 = Base64.getEncoder().encodeToString(content);
                 mainEntity.setBase64Str(base64);
+                mainEntity.setFileName(addDTO.getAttachNameList().get(0));
             }
         }
 
@@ -292,6 +293,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .shopId(shopId)
                 .ownerCode(providerEntity.getOwnerCode())
                 .fileBase64(mainEntity.getBase64Str())
+                .fileName(mainEntity.getFileName())
                 // 交货方式，0自送，1揽收
                 .incomeType(collectingService)
                 .receivingType(inStockType)
@@ -417,6 +419,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (content != null) {
                 base64 = Base64.getEncoder().encodeToString(content);
                 mainEntity.setBase64Str(base64);
+                mainEntity.setFileName(updateDTO.getAttachNameList().get(0));
             }
         }
         // 推送到第三方
