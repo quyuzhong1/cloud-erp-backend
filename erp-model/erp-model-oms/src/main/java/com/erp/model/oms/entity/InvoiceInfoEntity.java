@@ -155,6 +155,18 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     @TableField("start_code")
     private String startCode;
     /**
+     * 公司名称
+     */
+    @TableField("company_name")
+    private String companyName;
+    /**
+     *
+     * 卖家税号
+     */
+    @TableField("seller_tax_no")
+    private String sellerTaxNo;
+
+    /**
      * 发票地址
      */
     @TableField(exist = false)
