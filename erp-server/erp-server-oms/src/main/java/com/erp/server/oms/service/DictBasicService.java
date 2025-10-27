@@ -1,9 +1,12 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.tms.dto.DictHsCodeDTO;
 
 import java.util.List;
 
@@ -79,4 +82,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
     List<DictBasicDTO.ViewDTO> listSalesPlatform(String key);
 
     List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key);
+
+    PagingVO<DictBasicDTO.ViewDTO> paging(PagingDTO<DictBasicDTO.PagingParamDTO> dto);
 }

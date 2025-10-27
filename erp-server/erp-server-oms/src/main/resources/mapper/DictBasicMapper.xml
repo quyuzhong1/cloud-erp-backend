@@ -21,4 +21,28 @@
         <result column="sort" property="sort" />
     </resultMap>
 
+    <select id="paging" resultType="com.erp.model.oms.dto.DictBasicDTO$ViewDTO">
+        SELECT
+            db.id,
+            db.create_user_id as createUserId,
+            db.create_user_name as createUserName,
+            db.create_time as createTime,
+            db.update_user_id as updateUserId,
+            db.update_user_name as updateUserName,
+            db.update_time as updateTime,
+            db.version,
+            db.is_deleted as isDeleted,
+            db.remark,
+            db.value,
+            db.type,
+            db.name,
+            db.status,
+            db.sort,
+            db.type_name as typeName,
+            db.sub_type as subType
+        FROM dict_basic db
+        WHERE  ${params.sqlMap.default}
+          and db.is_deleted=FALSE
+    </select>
+
 </mapper>

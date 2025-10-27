@@ -1,9 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.DictHsCodeDTO;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,4 +46,12 @@ public class DictBasicController extends BaseController {
 
 
 
+    /**
+     * 销售平台分页查询
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<DictBasicDTO.ViewDTO>> paging(@RequestBody @Validated PagingDTO<DictBasicDTO.PagingParamDTO> dto) {
+        return success(dictBasicService.paging(dto));
+    }
 }

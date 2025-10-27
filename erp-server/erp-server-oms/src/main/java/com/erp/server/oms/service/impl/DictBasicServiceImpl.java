@@ -2,13 +2,19 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.tms.dto.DictHsCodeDTO;
+import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.server.oms.mapper.DictBasicMapper;
 import com.erp.server.oms.service.DictBasicService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -193,5 +199,22 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
         return result;
+    }
+
+    @Override
+    public PagingVO<DictBasicDTO.ViewDTO> paging(PagingDTO<DictBasicDTO.PagingParamDTO> dto) {
+        DictBasicDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<DictBasicDTO.ViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        // 仅查询销售平台类型
+        List<String> typeList = Collections.singletonList("salesPlatform");
+        IPage<DictBasicDTO.ViewDTO> pageData = baseMapper.paging(query, params, typeList);
+        List<DictBasicDTO.ViewDTO> list = pageData.getRecords();
+        fillList(list);
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillList(List<DictBasicDTO.ViewDTO> list) {
+
     }
 }
