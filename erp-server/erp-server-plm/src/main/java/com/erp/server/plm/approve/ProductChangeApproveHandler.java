@@ -34,7 +34,7 @@ public class ProductChangeApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = productChangeService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = productChangeService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

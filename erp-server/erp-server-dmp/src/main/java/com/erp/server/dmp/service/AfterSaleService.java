@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -136,10 +137,10 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     * 撤销
     * @author jack
     * @date: 2025-04-06
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

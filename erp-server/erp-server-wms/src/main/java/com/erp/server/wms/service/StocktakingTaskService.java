@@ -1,12 +1,16 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -64,10 +68,10 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
 
     /**
      * 撤销流程
-     * @param id
+     * @param dto
      * @return
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 分配用户

@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
@@ -131,10 +132,10 @@ public interface SampleBackInfoService extends SuperService<SampleBackInfoEntity
     * 撤销
     * @author wuhaotian
     * @date: 2025-08-21
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -276,10 +277,10 @@ public interface SampleBackInfoService extends SuperService<SampleBackInfoEntity
      * 撤销（带客户端类型）
      * @author wuhaotian
      * @date: 2025-09-15
-     * @param id 样品退回单ID
+     * @param dto 样品退回单ID
      * @param clientType 客户端类型
      * @return 操作结果
      */
-    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, ClientTypeEnum clientType);
 
 }

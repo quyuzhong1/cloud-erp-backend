@@ -38,7 +38,7 @@ public class SoPriceChangeApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return soPriceChangeService.cancelProcess(Collections.singletonList(dto.getId()));
+        return soPriceChangeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

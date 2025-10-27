@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -129,10 +130,10 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 撤销
      * @Author Luo_WG
      * @Date 2023/11/17 10:52
-     * @param id
+     * @param dto
      * @return com.common.business.dto.base.BatchResultDTO
      **/
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel数据

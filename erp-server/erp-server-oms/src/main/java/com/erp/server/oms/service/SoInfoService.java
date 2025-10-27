@@ -2,8 +2,12 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.PlatformB2bOrderDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
@@ -160,12 +164,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:51
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量删除
@@ -356,7 +360,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @description: 更新明细备注
      * @author Will
      * @date: 2023/7/19 15:15
-     * @param dto
+     * @param ids
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);;
@@ -364,7 +368,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @description: 更新备注
      * @author Will
      * @date: 2023/7/20 9:58
-     * @param dto
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO updateRemark(SoInfoEntity entity, String remark);

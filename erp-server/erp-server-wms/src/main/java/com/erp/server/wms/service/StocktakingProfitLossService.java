@@ -1,6 +1,10 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -78,10 +82,10 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * 取消流程
      * @author yl
      * @date 2023-08-14 14:46
-     * @param id
+     * @param dto
      * @return com.common.business.dto.base.BatchResultDTO
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 更改金蝶同步状态

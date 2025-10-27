@@ -1,12 +1,12 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
@@ -163,10 +163,10 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @description: 取消流程
      * @author Will
      * @date: 2023/5/17 15:16
-     * @param ids
+     * @param dto
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean

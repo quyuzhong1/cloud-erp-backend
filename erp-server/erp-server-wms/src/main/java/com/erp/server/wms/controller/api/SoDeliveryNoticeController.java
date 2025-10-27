@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -306,7 +307,7 @@ public class SoDeliveryNoticeController extends BaseController {
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soDeliveryNoticeService.cancelProcess(dto.getIds());
+        Boolean flag = soDeliveryNoticeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 

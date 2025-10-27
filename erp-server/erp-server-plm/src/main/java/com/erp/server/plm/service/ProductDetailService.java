@@ -2,8 +2,12 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
@@ -464,10 +468,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/6/14 17:28
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 批量删除

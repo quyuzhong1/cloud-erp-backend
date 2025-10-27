@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -27,7 +28,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -703,7 +707,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         PilotApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"试产申请"));
         // 只有审核中的单据允许撤销
         if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE_ING) != 0) {
@@ -717,6 +722,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据撤销流程", UserContext.getNonLoginUser().getUserName(), entity.getCode());
         this.addLog(id, "撤销操作", format, null, null, null);
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getNonLoginUser().getUid());

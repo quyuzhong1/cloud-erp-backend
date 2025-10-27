@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -163,7 +164,7 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierService.cancelProcess(dto.getIds());
+        Boolean result = supplierService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result == true ? success() : failure();
     }
 

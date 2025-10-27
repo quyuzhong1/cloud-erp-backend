@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -21,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
-import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
@@ -541,7 +541,7 @@ public class ProjectTaskController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销项目任务")
     @PostMapping("/cancelProcess")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = projectTaskService.cancelProcess(dto.getIds());
+        Boolean result = projectTaskService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 

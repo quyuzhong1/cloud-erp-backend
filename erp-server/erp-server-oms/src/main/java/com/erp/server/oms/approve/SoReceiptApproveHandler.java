@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +39,7 @@ public class SoReceiptApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return soReceiptService.cancelProcess(dto.getId());
+        return soReceiptService.cancelProcess(dto);
     }
 
     @Override

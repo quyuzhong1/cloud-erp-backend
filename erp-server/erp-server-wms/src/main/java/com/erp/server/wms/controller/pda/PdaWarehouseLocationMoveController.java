@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.pda;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -531,7 +532,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = warehouseLocationMoveService.cancelProcess(id);
+                cancelResult = warehouseLocationMoveService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("仓位移动主单撤回流程失败",e);
                 WarehouseLocationMoveEntity entity = warehouseLocationMoveService.getById(id);

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -9,19 +10,14 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
-import com.erp.server.wms.service.SoReturnInstockService;
-import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -277,7 +273,7 @@ public class PdaPoReceiveController extends BaseController {
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = warehouseReceiveService.cancelProcess(dto.getIds());
+        Boolean flag = warehouseReceiveService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 
