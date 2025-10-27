@@ -259,6 +259,11 @@ public class DmpEtlTaskDTO implements Serializable {
         private String status;
 
         /**
+         * 状态名称
+         */
+        private String statusName;
+
+        /**
          * 异常原因
          */
         private String errorMessage;
@@ -284,25 +289,25 @@ public class DmpEtlTaskDTO implements Serializable {
         private LocalDateTime nextExecTime;
 
         /**
-         * 实例id
+         * 实例id/restcloud任务id
          */
         private String instanceId;
 
         /**
-         * 代号
+         * 执行系统:默认:dmp
          */
-        private String code;
+        private String execSystem;
 
         /**
-         * 代号
+         * RestCloud执行流程地址:
+         * 来源接口：/api/dmp/restCloud/paging
          */
-        private String approveStatus;
-
+        private String execUrl;
 
         /**
-         * 审核状态名称
+         * 清洗配置名称（流程名称）
          */
-        private String approveStatusName;
+        private String flowName;
 
         /**
          * 创建时间
@@ -313,6 +318,16 @@ public class DmpEtlTaskDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
