@@ -22,6 +22,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -904,13 +905,24 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         //采购员
         if (StringUtils.isNotBlank(assetNoticeEntity.getApplyUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getApplyUserId());
+
             if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseUser)) {
                 throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             assetNoticeEntity.setApplyUserName(purchaseUser.getUserName());
-            // 部门
-            assetNoticeEntity.setApplyDeptId(purchaseUser.getDepartmentId());
-            assetNoticeEntity.setApplyDeptName(purchaseUser.getDepartmentName());
+
+
+        }
+        // 部门
+        if (StringUtils.isNotBlank(assetNoticeEntity.getApplyDeptId())) {
+            List<String> depIdList = new ArrayList<>(1);
+            depIdList.add(assetNoticeEntity.getApplyDeptId());
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(depIdList);
+            if (deptList.isEmpty()) {
+                throw new ServiceException(ApiError.ERROR_9029);
+            }
+            assetNoticeEntity.setApplyDeptId(deptList.get(0).getId());
+            assetNoticeEntity.setApplyDeptName(deptList.get(0).getName());
         }
 
     }
