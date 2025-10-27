@@ -729,4 +729,112 @@ public class AssetPurchaseOrderDTO implements Serializable {
         @NotBlank(message = "合同盖章状态不能为空")
         private String contractStampStatus;
     }
+
+    /**
+     * 导出网采合同
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPurchaseContractDTO {
+        /**
+         * 录单日期
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 编号
+         */
+        private String code;
+
+        /**
+         * 供货单位
+         */
+        private String supplierName;
+
+        /**
+         * 摘要
+         */
+        private String settleMethod;
+
+        /**
+         * 制单人
+         */
+        private String createUserName;
+
+        /**
+         * 采购主管
+         */
+        private String approveUserName;
+
+        /**
+         * 合计数量
+         */
+        private BigDecimal sumQty;
+
+        /**
+         * 合计未含税金额
+         */
+        private BigDecimal sumAmount;
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal sumTaxAmount;
+    }
+    /**
+     * 网采合同明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseContractDetailDTO {
+        /**
+         * 序号
+         */
+        private Integer sort;
+        /**
+         * 图片
+         */
+        private String img;
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+        /**
+         * 商品名称
+         */
+        private String productName;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private String taxRate;
+
+        /**
+         * 金额
+         */
+        private BigDecimal totalAmount;
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

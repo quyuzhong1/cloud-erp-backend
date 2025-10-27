@@ -182,4 +182,6 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
+    Boolean exportPurchaseContract(String id, HttpServletResponse response);
+
 }

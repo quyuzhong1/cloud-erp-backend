@@ -524,4 +524,11 @@ public class AssetPurchaseOrderController extends BaseController {
         return success(assetPurchaseOrderService.queryDetailsForAccept(assetPurchaseOrderId));
     }
 
+    @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
+    @GetMapping("/exportPurchaseContract")
+    public ApiResult<?> exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
+        Boolean flag = assetPurchaseOrderService.exportPurchaseContract(id, response);
+        return flag == true ? success() : failure();
+    }
+
 }
