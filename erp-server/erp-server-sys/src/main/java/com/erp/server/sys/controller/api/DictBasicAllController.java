@@ -40,7 +40,7 @@ public class DictBasicAllController extends BaseController {
     private DictBasicAllService dictBasicAllService;
 
     /**
-     * 分页查询
+     * 分页查询，tab=all为全部，able为启动，disable为停用
      * @author Will
      * @date: 2023/11/13 15:12
      * @param dto
@@ -61,7 +61,7 @@ public class DictBasicAllController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "字典数据导出")
     @PostMapping(value = "/exportExcel")
-    public ApiResult<?> exportExcel(@RequestBody @Validated PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
         return success(dictBasicAllService.exportExcel(dto));
     }
     

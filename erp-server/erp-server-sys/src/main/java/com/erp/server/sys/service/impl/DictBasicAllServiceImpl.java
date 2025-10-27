@@ -21,6 +21,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.SystemCodeEnum;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.StringUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
@@ -59,6 +60,20 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	@Resource
     private DownloadTaskFeign downloadTaskFeign;
 	
+	private static final Map<String, Map<String, String>> systemCodeDiffFieldMap = new HashMap<>();
+	static {
+		Map<String , String> plmMap = new HashMap<>();
+		plmMap.put("sort", "order_index");
+		systemCodeDiffFieldMap.put(SystemCodeEnum.PLM.getCode(), plmMap);
+		
+		Map<String , String> srmTmsMrpMap = new HashMap<>();
+		srmTmsMrpMap.put("sort", "index");
+		srmTmsMrpMap.put("value", "code");
+		systemCodeDiffFieldMap.put(SystemCodeEnum.SRM.getCode(), srmTmsMrpMap);
+		systemCodeDiffFieldMap.put(SystemCodeEnum.TMS.getCode(), srmTmsMrpMap);
+		systemCodeDiffFieldMap.put(SystemCodeEnum.MRP.getCode(), srmTmsMrpMap);
+	}
+	
 	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
@@ -81,7 +96,28 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	}
 	
 	private Map<String, Object> getEntityMap(CommonDTO dto){
-		return BeanUtil.beanToMap(dto);
+		Map<String, Object> map = BeanUtil.beanToMap(dto);
+		String systemCode = dto.getSystemCode();
+		Map<String, Object> newMap = new HashMap<>();
+		for(Map.Entry<String, Object> m : map.entrySet()) {
+			newMap.put(this.convertField(systemCode, m.getKey(), true), m.getValue());
+		}
+		return newMap;
+	}
+	
+	private String convertField(String systemCode , String field , boolean isCamel) {
+		Map<String, String> diffFieldMap = systemCodeDiffFieldMap.get(systemCode);
+		if(diffFieldMap != null) {
+			String convertField = diffFieldMap.get(field);
+			if(convertField != null) {
+				if(isCamel) {
+					return StringUtil.convertToCamel(convertField);
+				}else {
+					return convertField;
+				}
+			}
+		}
+		return field;
 	}
 	
 	private String getServiceClass(String systemCode) {
@@ -98,7 +134,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		try {
 			clazz = Class.forName(entityClass);
 		} catch (ClassNotFoundException e) {
-			throw new ServiceException("未查到到枚举类" + entityClass);
+			throw new ServiceException("未查到到字典类" + entityClass);
 		}
 		return clazz;
 	}
@@ -119,7 +155,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		String type = dto.getType();
 		String value = dto.getValue();
 		String id = dto.getId();
-		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("type", type).eq("value", value).ne("id", id);
+		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("type", type).eq(this.convertField(systemCode , "value" , false), value).ne("id", id);
 		List list = FeignQuery.list(feignBuilder);
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
@@ -171,6 +207,15 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 			if(advanceQueryDTO != null) {
 				systemCode = advanceQueryDTO.getValue().toString();
 			}
+			String finalSystemCode = systemCode;
+			advanceQueryDTOList.forEach(a -> {
+				String sql = params.getSqlMap().get("default");
+				String field = a.getField();
+				String tStart = "t.";
+				if(field.startsWith(tStart)) {
+					params.getSqlMap().put("default", sql.replace(field , tStart + this.convertField(finalSystemCode, field.replace(tStart, ""), false)));
+				}
+			});
 		}
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -178,6 +223,15 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
         List<ViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
+        }
+        for(ViewDTO l : list) {
+        	l.setSystemCode(systemCode);
+        	Boolean status = l.getStatus();
+        	if(status != null && status) {
+        		l.setStatusName("启用");
+        	}else {
+        		l.setStatusName("停用");
+        	}
         }
         return new PagingVO<>(pageData);
 	}
