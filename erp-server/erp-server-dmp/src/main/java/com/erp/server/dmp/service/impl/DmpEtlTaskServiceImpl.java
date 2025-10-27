@@ -10,6 +10,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -23,6 +24,7 @@ import com.erp.model.dmp.dto.DmpEtlTaskDTO;
 import com.erp.model.dmp.dto.DmpEtlTaskDTO;
 import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpEtlTaskMapper;
 import com.erp.server.dmp.service.DmpEtlTaskService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -32,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,6 +51,8 @@ import java.util.stream.Collectors;
 public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, DmpEtlTaskEntity> implements DmpEtlTaskService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -148,25 +153,8 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
     }
 
     @Override
-    public void exportList(DmpEtlTaskDTO.ExportDTO param, HttpServletResponse response) {
-        List<DmpEtlTaskDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dmpEtlTask.xlsx";
-        String name = "etl任务导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DmpEtlTaskDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("清洗任务Excel导出", FileTaskEventEnum.EXPORT_DMP_ETL_TASK.getCode(), dto);
     }
 
 

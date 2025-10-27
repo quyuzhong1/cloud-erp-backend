@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -51,6 +53,8 @@ import java.util.stream.Collectors;
 public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDetailMapper, DmpCfgInputDetailEntity> implements DmpCfgInputDetailService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -147,25 +151,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     }
 
     @Override
-    public void exportList(DmpCfgInputDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<DmpCfgInputDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dmpCfgInputDetail.xlsx";
-        String name = "外部系统接口明细导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DmpCfgInputDetailDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("拉取调度Excel导出", FileTaskEventEnum.EXPORT_DMP_CFG_INPUT_DETAIL.getCode(), dto);
     }
 
 

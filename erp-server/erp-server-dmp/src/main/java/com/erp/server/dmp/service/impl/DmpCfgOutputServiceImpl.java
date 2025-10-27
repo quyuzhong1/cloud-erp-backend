@@ -10,6 +10,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.dmp.mapper.DmpCfgOutputMapper;
 import com.erp.server.dmp.service.DmpCfgOutputService;
@@ -36,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,6 +59,8 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -147,25 +152,8 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     }
 
     @Override
-    public void exportList(DmpCfgOutputDTO.ExportDTO param, HttpServletResponse response) {
-        List<DmpCfgOutputDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dmpCfgOutput.xlsx";
-        String name = "推送数据配置导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DmpCfgOutputDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("推送配置Excel导出", FileTaskEventEnum.EXPORT_DMP_CFG_OUTPUT.getCode(), dto);
     }
 
     @Transactional(rollbackFor = Exception.class)

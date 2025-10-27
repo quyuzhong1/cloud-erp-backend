@@ -3,15 +3,14 @@ package com.erp.server.dmp.controller.feign;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.AfterSaleDTO;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +34,25 @@ public class ExportDmpFeignController {
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
     @Resource
     private AfterSaleService afterSaleService;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
+    @Resource
+    private DmpCfgEtlService dmpCfgEtlService;
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+    private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+    @Resource
+    private DmpEtlTaskService dmpEtlTaskService;
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
+    @Resource
+    private DmpOutputTaskService dmpOutputTaskService;
+
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -72,5 +90,50 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
     public PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
         return afterSaleService.exportList(dto);
+    }
+
+    @PostMapping("/exportBasicSystemDetail")
+    public PagingVO<DmpBasicSystemDTO.ListDTO> exportBasicSystemDetail(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto) {
+        return dmpBasicSystemService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgEtlDetail")
+    public PagingVO<DmpCfgEtlDTO.ListDTO> exportDmpCfgEtlDetail(@RequestBody @Validated PagingDTO<DmpCfgEtlDTO.PagingParamDTO> dto) {
+        return dmpCfgEtlService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgInputDetail")
+    public PagingVO<DmpCfgInputDTO.ListDTO> exportDmpCfgInputDetail(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.PagingParamDTO> dto) {
+        return dmpCfgInputService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgInputDetailDetail")
+    public PagingVO<DmpCfgInputDetailDTO.ListDTO> exportDmpCfgInputDetailDetail(@RequestBody @Validated PagingDTO<DmpCfgInputDetailDTO.PagingParamDTO> dto) {
+        return dmpCfgInputDetailService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgOutputDetail")
+    public PagingVO<DmpCfgOutputDTO.ListDTO> exportDmpCfgOutputDetail(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.PagingParamDTO> dto) {
+        return dmpCfgOutputService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgOutputDetailDetail")
+    public PagingVO<DmpCfgOutputDetailDTO.ListDTO> exportDmpCfgOutputDetailDetail(@RequestBody @Validated PagingDTO<DmpCfgOutputDetailDTO.PagingParamDTO> dto) {
+        return dmpCfgOutputDetailService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpEtlTaskDetail")
+    public PagingVO<DmpEtlTaskDTO.ListDTO> exportDmpEtlTaskDetail(@RequestBody @Validated PagingDTO<DmpEtlTaskDTO.PagingParamDTO> dto) {
+        return dmpEtlTaskService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpInputTaskDetail")
+    public PagingVO<DmpInputTaskDTO.ListDTO> exportDmpInputTaskDetail(@RequestBody @Validated PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
+        return dmpInputTaskService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpOutputTaskDetail")
+    public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTaskDetail(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
+        return dmpOutputTaskService.paging(dto);
     }
 }

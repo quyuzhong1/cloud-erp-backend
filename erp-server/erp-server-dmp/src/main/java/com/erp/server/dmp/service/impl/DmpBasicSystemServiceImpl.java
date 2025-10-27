@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpBasicSystemMapper;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputService;
@@ -60,6 +62,8 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     private DmpCfgInputService dmpCfgInputService;
     @Resource
     private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -171,25 +175,8 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     }
 
     @Override
-    public void exportList(DmpBasicSystemDTO.ExportDTO param, HttpServletResponse response) {
-        List<DmpBasicSystemDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dmpBasicSystem.xlsx";
-        String name = "平台管理导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DmpBasicSystemDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("平台管理Excel导出", FileTaskEventEnum.EXPORT_DMP_BASIC_SYSTEM.getCode(), dto);
     }
 
 

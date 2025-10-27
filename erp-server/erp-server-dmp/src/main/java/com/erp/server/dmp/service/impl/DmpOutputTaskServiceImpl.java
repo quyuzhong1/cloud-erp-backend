@@ -6,11 +6,13 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.OperateLogService;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
@@ -67,6 +69,8 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
 
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -178,25 +182,8 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
     }
 
     @Override
-    public void exportList(DmpOutputTaskDTO.ExportDTO param, HttpServletResponse response) {
-        List<DmpOutputTaskDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dmpOutputTask.xlsx";
-        String name = "推送任务导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DmpOutputTaskDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("推送任务Excel导出", FileTaskEventEnum.EXPORT_DMP_OUTPUT_TASK.getCode(), dto);
     }
 
 
