@@ -216,11 +216,6 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_topic";
 
-    /**
-     * 新中台同步飞书审批详情
-     */
-    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_topic";
-
 
     /**
      * restcloud同步平台仓库
