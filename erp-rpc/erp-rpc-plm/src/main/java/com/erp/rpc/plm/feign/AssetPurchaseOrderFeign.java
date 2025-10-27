@@ -15,7 +15,7 @@ import java.util.List;
  * @author wuht
  * @since 2025-01-20
  */
-@FeignClient(name = "erp-plm", fallback = AssetPurchaseOrderFeignFallback.class, configuration = FeignErrorDecoder.class)
+@FeignClient(name = "erp-plm",  configuration = FeignErrorDecoder.class)
 public interface AssetPurchaseOrderFeign {
 
     /**
@@ -35,4 +35,13 @@ public interface AssetPurchaseOrderFeign {
      */
     @PostMapping("/feign/assetPurchaseOrder/selectList")
     ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO);
+
+    /**
+     * 根据订单编号查询资产采购订单（用于导入）
+     *
+     * @param code 订单编号
+     * @return 资产采购订单信息（包含明细）
+     */
+    @PostMapping("/feign/assetPurchaseOrder/getByCode")
+    ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> getByCode(@RequestBody String code);
 }

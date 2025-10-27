@@ -939,6 +939,48 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
+    public AssetPurchaseOrderDTO.DetailWithSkuDTO getByCode(String code) {
+        if (StrUtil.isBlank(code)) {
+            return null;
+        }
+
+        // 查询未删除且审核通过的资产采购订单
+        AssetPurchaseOrderEntity entity = this.lambdaQuery()
+                .eq(AssetPurchaseOrderEntity::getCode, code)
+                .eq(AssetPurchaseOrderEntity::getIsDeleted, false)
+                .eq(AssetPurchaseOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .one();
+
+        if (entity == null) {
+            log.warn("未找到已审核通过的资产采购订单，订单号：{}", code);
+            return null;
+        }
+
+        // 查询订单明细
+        List<AssetPurchaseOrderDTO.DetailForAcceptDTO> detailList = queryDetailsForAccept(entity.getId());
+
+        // 查询供应商信息
+        AssetPurchaseOrderSupplierEntity supplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, entity.getId())
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, false)
+                .one();
+
+        // 封装返回结果
+        AssetPurchaseOrderDTO.DetailWithSkuDTO result = new AssetPurchaseOrderDTO.DetailWithSkuDTO();
+        result.setId(entity.getId());
+        result.setCode(entity.getCode());
+        result.setDetailList(detailList);
+        
+        // 设置供应商信息
+        if (supplierEntity != null) {
+            result.setSupplierId(supplierEntity.getSupplierId());
+            result.setSupplierName(supplierEntity.getSupplierName());
+        }
+
+        return result;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception{
         if (CollectionUtils.isEmpty(successList)) {
