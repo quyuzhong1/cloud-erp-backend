@@ -524,11 +524,27 @@ public class AssetPurchaseOrderController extends BaseController {
         return success(assetPurchaseOrderService.queryDetailsForAccept(assetPurchaseOrderId));
     }
 
+    /**
+     * 网采合同导出
+     * @param id
+     * @param response
+     * @return
+     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
     @GetMapping("/exportPurchaseContract")
     public ApiResult<?> exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
         Boolean flag = assetPurchaseOrderService.exportPurchaseContract(id, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 获取关联单据
+     * @param detailId
+     * @return
+     */
+    @GetMapping("/getAcceptByDetailId")
+    public ApiResult<?> getAcceptByDetailId(@RequestParam("detailId") String detailId) {
+        return assetPurchaseOrderService.getAcceptByDetailId(detailId);
     }
 
 }

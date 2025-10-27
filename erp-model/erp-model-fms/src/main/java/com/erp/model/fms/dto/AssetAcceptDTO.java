@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
@@ -653,6 +654,77 @@ public class AssetAcceptDTO implements Serializable {
          * 明细列表
          */
         private List<AddDetailItemDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AssetPurchaseOrderRefListDTO {
+
+        /**
+         * 资产验收单号
+         */
+        private String AssetAcceptCode;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatuts;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatutsName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 验收日期
+         */
+        private LocalDate acceptDate;
+
+        /**
+         * 验收数量
+         */
+        private BigDecimal acceptQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
     }
 
 }
