@@ -14,6 +14,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
+import com.erp.model.plm.enums.AssetNoticeTabListEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -202,29 +203,33 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         AssetNoticeDTO.PagingParamDTO searchParam = new AssetNoticeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AssetNoticeDTO.TabListDTO> returnList = new ArrayList<>();
+        //统计非审核状态数量
         List<AssetNoticeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        //统计已生成和待生成状态数量
+        List<AssetNoticeDTO.TabListDTO> refPurchaseTabList = baseMapper.refPurchaseTabList(searchParam);
+        list.addAll(refPurchaseTabList);
 
+        // 获取状态列表,all最后统计
+        List<String> statusList = AssetNoticeTabListEnum.getStatusList();
+        statusList.remove("all");
 
-        // 获取状态列表
-        List<String> statusList = AssetApproveStatusEnum.getStatusList();
-
-        // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetNoticeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         for (AssetNoticeDTO.TabListDTO tabListDTO : list) {
-            tabListDTO.setTabFlagName(AssetApproveStatusEnum.getName(tabListDTO.getTabFlag()));
+            tabListDTO.setTabFlagName(AssetNoticeTabListEnum.getName(tabListDTO.getTabFlag()));
         }
 
+        // 不存在的状态赋值为0
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
+            list.add(new AssetNoticeDTO.TabListDTO(status, AssetNoticeTabListEnum.getName(status), 0));
         }
         });
 
         // 合计数量要放第一个
-        returnList.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
+        list.add(new AssetNoticeDTO.TabListDTO("all", AssetNoticeTabListEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
         returnList.addAll(list);
 
-        return returnList;
+        return list;
     }
 
     @Override

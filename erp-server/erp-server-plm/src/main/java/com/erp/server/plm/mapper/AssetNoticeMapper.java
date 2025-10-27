@@ -52,4 +52,8 @@ public interface AssetNoticeMapper extends BaseMapper<AssetNoticeEntity> {
     * @return
     */
     List<AssetNoticeDTO.TabListDTO> tabList(@Param("params") AssetNoticeDTO.PagingParamDTO searchParam);
+
+
+    List<AssetNoticeDTO.TabListDTO> refPurchaseTabList(@Param("params") AssetNoticeDTO.PagingParamDTO searchParam);
+
 }
