@@ -184,8 +184,9 @@ public class DmpOutputTaskController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "推送任务导出Excel数据")
-    public void exportList(@RequestBody @Validated DmpOutputTaskDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated DmpOutputTaskDTO.ExportDTO dto, HttpServletResponse response) {
         dmpOutputTaskService.exportList(dto, response);
+        return success(true);
     }
 
     /**

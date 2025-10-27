@@ -252,8 +252,9 @@ public class DmpCfgInputDetailController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取调度导出Excel数据")
-    public void exportList(@RequestBody @Validated DmpCfgInputDetailDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgInputDetailDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgInputDetailService.exportList(dto, response);
+        return success(true);
     }
 
 }

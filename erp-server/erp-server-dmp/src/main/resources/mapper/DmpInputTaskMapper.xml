@@ -110,6 +110,7 @@
             dit.exec_timeout AS execTimeout,
             dit.extend_json AS extendJson,
             dit.exec_system AS execSystem,
+            dit.instance_id AS instanceId,
             dit.next_exec_time AS nextExecTime
         from dmp_input_task dit
         left join dmp_cfg_input dci on dit.cfg_input_id = dci.id
