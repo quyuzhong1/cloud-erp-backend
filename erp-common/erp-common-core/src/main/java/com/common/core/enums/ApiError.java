@@ -299,7 +299,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
-    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致"),
+    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
 
     /**
      * PLM 错误
