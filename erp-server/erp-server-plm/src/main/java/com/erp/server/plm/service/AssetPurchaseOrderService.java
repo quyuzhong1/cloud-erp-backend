@@ -1,11 +1,14 @@
 package com.erp.server.plm.service;
 
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -183,5 +186,9 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
+
+    AssetPurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
+
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
 
 }

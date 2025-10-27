@@ -524,11 +524,46 @@ public class AssetPurchaseOrderController extends BaseController {
         return success(assetPurchaseOrderService.queryDetailsForAccept(assetPurchaseOrderId));
     }
 
+    /**
+     * 网采合同导出
+     * @param id
+     * @param response
+     * @return
+     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
     @GetMapping("/exportPurchaseContract")
     public ApiResult<?> exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
         Boolean flag = assetPurchaseOrderService.exportPurchaseContract(id, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 查询采购合同PDF数据
+     * @author Will
+     * @date: 2023/3/15 17:59
+     * @param id
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购合同PDF")
+    @GetMapping("/listAssetPurchaseContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "plm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            serviceClass = AssetPurchaseOrderService.class,
+            keyIdName = "id")
+    public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
+        AssetPurchaseOrderDTO.ExportPdfDTO exportPdfDTO = assetPurchaseOrderService.listPurchaseContractPdf(id);
+        return success(exportPdfDTO);
+    }
+
+    /**
+     * 获取关联单据
+     * @param detailId
+     * @return
+     */
+    @GetMapping("/getAcceptByDetailId")
+    public ApiResult<?> getAcceptByDetailId(@RequestParam("detailId") String detailId) {
+        return assetPurchaseOrderService.getAcceptByDetailId(detailId);
     }
 
 }

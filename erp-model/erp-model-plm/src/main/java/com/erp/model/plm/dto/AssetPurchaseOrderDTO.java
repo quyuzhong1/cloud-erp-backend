@@ -837,4 +837,128 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+        /**
+         * 合同号
+         */
+        private String code;
+        private String codeStr;
+
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 含税金额合计
+         */
+        private BigDecimal totalAmount;
+        /**
+         * 含税金额合计 增加千分位分割
+         */
+        private String totalAmountStr;
+
+        /**
+         * 不含税金额合计
+         */
+        private BigDecimal totalNotTaxAmount;
+        /**
+         * 不含税金额合计 增加千分位分割
+         */
+        private String totalNotTaxAmountStr;
+        /**
+         * 不含税金额合计 中文大写
+         */
+        private String totalNotTaxAmountChinese;
+
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 供应商账户名称
+         */
+        private String supplierAccountName;
+        /**
+         * 供应商收款银行
+         */
+        private String supplierBankName;
+        /**
+         * 供应商银行账号
+         */
+        private String supplierBankNo;
+
+        /**
+         * 甲方
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 签订日期（甲方）
+         */
+        private LocalDate firstSignDate;
+
+        /**
+         * 收货地址（甲方）
+         */
+        private String deliveryWarehouseAddress;
+
+        /**
+         * 联系人（甲方）
+         */
+        private String deliveryWarehouseContract;
+
+        /**
+         * 联系电话（甲方）
+         */
+        private String deliveryWarehouseTel;
+
+        /**
+         * 乙方
+         */
+        private String supplierName;
+
+        /**
+         * 签订日期（乙方）
+         */
+        private LocalDate secondSignDate;
+
+        /**
+         * 供方地址（乙方）
+         */
+        private String supplierAddress;
+
+        /**
+         * 联系人（乙方）
+         */
+        private String supplierContract;
+
+        /**
+         * 联系电话（乙方）
+         */
+        private String supplierTel;
+
+        /**
+         * 邮箱（乙方）
+         */
+        private String supplierEmail;
+
+        /**
+         * 付款方式名称
+         */
+        private String paymentConditionName;
+        /**
+         * 付款方式名称
+         */
+        private String logoUrl;
+
+        /**
+         * 明细信息
+         */
+        private List<AssetPurchaseOrderDetailDTO.ExportPdfDTO> details;
+    }
+
 }

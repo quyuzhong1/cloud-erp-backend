@@ -1,41 +1,41 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
-import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.plm.entity.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.KingdeeFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
@@ -62,7 +62,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xpath.operations.Bool;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,6 +160,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private KingdeeFeign kingdeeFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1153,6 +1155,141 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public AssetPurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id) {
+        AssetPurchaseOrderDTO.ExportPdfDTO exportPdfDTO = new AssetPurchaseOrderDTO.ExportPdfDTO();
+
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = this.getById(id);
+        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(assetPurchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_95307);
+        }
+
+        List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId,id)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95308);
+        }
+        //主数据处理
+        exportPdfDTO.setCode(assetPurchaseOrderEntity.getCode());
+        exportPdfDTO.setCodeStr("合同号：" + assetPurchaseOrderEntity.getCode());
+        //采购组织
+        exportPdfDTO.setPurchaseOrgName(assetPurchaseOrderEntity.getPurchaseOrgName());
+        //甲方签收日期
+        exportPdfDTO.setFirstSignDate(assetPurchaseOrderEntity.getCreateTime().toLocalDate());
+        //乙方签收日期
+        exportPdfDTO.setSecondSignDate(assetPurchaseOrderEntity.getCreateTime().toLocalDate());
+
+        //查询订单供应商信息
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplier = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId,id)
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted,Boolean.FALSE)
+                .one();
+        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(assetPurchaseOrderSupplier)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        exportPdfDTO.setSupplierTel(assetPurchaseOrderSupplier.getContactTelNumber());
+        // 采购订单供应商付款条件
+        String paymentConditionCode = assetPurchaseOrderSupplier.getPaymentCondition();
+        if (StrUtils.isNotEmpty(paymentConditionCode)) {
+            List<BaseDropDownDTO.DisabledDTO> paymentConditionList = scmTaskFeign.listPaymentCondition();
+            BaseDropDownDTO.DisabledDTO disabledDTO = paymentConditionList.stream().filter(obj -> obj.getCode().equals(paymentConditionCode)).findFirst().orElse(null);
+            if (Objects.nonNull(disabledDTO)) {
+                exportPdfDTO.setPaymentConditionName(disabledDTO.getValue());
+            }
+        }
+
+        //结算方式
+        List<DictBasicEntity> payMethodList = scmDictFeign.listDictByIdList(Arrays.asList(assetPurchaseOrderSupplier.getPayMethodId()));
+        if (!payMethodList.isEmpty()) {
+            exportPdfDTO.setPayMethodName(payMethodList.get(0).getName());
+        }
+
+        //原供应商信息
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(assetPurchaseOrderSupplier.getSupplierId());
+        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //供应商账号信息
+        String supplierBankNo = "";
+        String supplierBankName = "";
+        String supplierAccountName = "";
+
+        if (Objects.nonNull(assetPurchaseOrderSupplier)) {
+            supplierBankNo = Objects.nonNull(assetPurchaseOrderSupplier) ? assetPurchaseOrderSupplier.getBankAccount() : "";
+            supplierBankName = Objects.nonNull(assetPurchaseOrderSupplier) ? assetPurchaseOrderSupplier.getBankName() : "";
+            supplierAccountName = Objects.nonNull(assetPurchaseOrderSupplier) ? assetPurchaseOrderSupplier.getPayee() : "";
+        }
+        exportPdfDTO.setSupplierBankName(supplierBankName);
+        exportPdfDTO.setSupplierBankNo(supplierBankNo);
+        exportPdfDTO.setSupplierAccountName(supplierAccountName);
+
+        exportPdfDTO.setSupplierName(supplier.getName());
+        exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
+
+
+        //供应商联系人信息
+        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(assetPurchaseOrderSupplier.getContactId())) {
+            SupplierContactEntity supplierContact = scmTaskFeign.getSupplierContactById(assetPurchaseOrderSupplier.getContactId());
+            if (ObjectUtils.isEmpty(supplierContact)) {
+                throw new ServiceException(ApiError.ERROR_98039);
+            }
+            exportPdfDTO.setSupplierEmail(supplierContact.getEmail());
+            exportPdfDTO.setSupplierContract(supplierContact.getPerson());
+        }
+
+        DecimalFormat df2 = new DecimalFormat("#,##0.00");
+        DecimalFormat df4 = new DecimalFormat("#,##0.0000");
+        //明细物料信息
+        List<AssetPurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
+        for (AssetPurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
+            AssetPurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new AssetPurchaseOrderDetailDTO.ExportPdfDTO();
+            BeanMapperUtils.copy(purchaseOrderDetailEntity, detailDTO);
+            //明细数据处理
+            detailDTO.setUnitName("个");
+            //不含税单价（不含税价格=含税价格/（1+增值税税率））
+            detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(), MathUtil.add(BigDecimal.ONE, detailDTO.getTaxRate())));
+            //不含税单价 增加千分位分割
+            detailDTO.setPriceStr(df4.format(detailDTO.getPrice()));
+            //含税金额 增加千分位分割
+            detailDTO.setTaxPriceStr(df4.format(detailDTO.getTaxPrice()));
+            //不含税金额
+            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiplyWithTwo(detailDTO.getPrice(), detailDTO.getPurchaseQty()).setScale(2, RoundingMode.HALF_UP));
+            //不含税金额 增加千分位分割
+            detailDTO.setNotTaxPurchaseAmountStr(df2.format(detailDTO.getNotTaxPurchaseAmount()));
+            //含税金额 增加千分位分割
+            detailDTO.setTotalAmountStr(df2.format(detailDTO.getTotalAmount()));
+            detailDTO.setTaxRate(MathUtil.multiplyWithTwo(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
+            details.add(detailDTO);
+        }
+        //含税金额合计
+        BigDecimal totalAmount = details.stream().map(AssetPurchaseOrderDetailDTO.ExportPdfDTO::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        exportPdfDTO.setTotalAmount(totalAmount);
+        //含税金额合计  增加千分位分割
+        exportPdfDTO.setTotalAmountStr(df2.format(totalAmount));
+        //不含税金额合计
+        BigDecimal totalNotTaxAmount = details.stream().map(AssetPurchaseOrderDetailDTO.ExportPdfDTO::getNotTaxPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        exportPdfDTO.setTotalNotTaxAmount(totalNotTaxAmount);
+        //不含税金额合计  增加千分位分割
+        exportPdfDTO.setTotalNotTaxAmountStr(df2.format(totalNotTaxAmount));
+        String currency = list.get(0).getCurrency();
+        String currencyName = "";
+        if (StrUtil.isNotBlank(currency)) {
+            currencyName = CurrencyEnum.getNameByCode(currency);
+        }
+        //将totalNotTaxAmount转换为中文大写
+        String totalNotTaxAmountChinese = Convert.digitToChinese(totalAmount.doubleValue());
+        exportPdfDTO.setTotalNotTaxAmountChinese(currencyName + totalNotTaxAmountChinese);
+        exportPdfDTO.setCurrency(currency);
+        exportPdfDTO.setDetails(details);
+        return exportPdfDTO;
+    }
+
+    @Override
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId) {
+        return assetAceptFeign.getAcceptByDetailId(detailId);
     }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(
