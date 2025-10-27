@@ -13,6 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -219,8 +220,8 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		}
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = FeignQuery.invoke(IPage.class , this.getMapperClass(systemCode), "paging", Arrays.asList(query , params));
-        List<ViewDTO> list = pageData.getRecords();
+        Page pageData = FeignQuery.invoke(Page.class , this.getMapperClass(systemCode), "paging", Arrays.asList(query , params));
+        List<ViewDTO> list = JSON.parseArray(JSON.toJSONString(pageData.getRecords()), ViewDTO.class);
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
@@ -233,6 +234,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
         		l.setStatusName("停用");
         	}
         }
+        pageData.setRecords(list);
         return new PagingVO<>(pageData);
 	}
 
