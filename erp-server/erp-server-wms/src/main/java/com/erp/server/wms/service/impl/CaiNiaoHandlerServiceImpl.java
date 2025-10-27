@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -162,7 +163,9 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AliexpressOrderDTO aliexpressOrderDTO = convertToOrderDto(createOutboundReq);
         try {
+            log.warn("调用菜鸟仓出库单请求:{}", JSONObject.toJSONString(aliexpressOrderDTO));
             ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressOrderDTO);
+            log.warn("调用菜鸟仓出库单结果:{}", JSONObject.toJSONString(apiOrderResponseDTO));
             if(!apiOrderResponseDTO.isSuccess()){
                 log.error("创建菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
