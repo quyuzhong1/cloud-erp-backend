@@ -139,7 +139,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         searchParam.setPermissionSql(param.getPermissionSql());
         List<DmpCfgOutputDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         List<DmpCfgOutputDTO.TabListDTO> resultList = new LinkedList<>();
-        resultList.add(new DmpCfgOutputDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpCfgOutputDTO.TabListDTO::getCount).sum()));
+//        resultList.add(new DmpCfgOutputDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpCfgOutputDTO.TabListDTO::getCount).sum()));
         resultList.addAll(list);
         List<String> existStatusList = list.stream().map(DmpCfgOutputDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         List<String> tabList = Arrays.asList("f", "t");

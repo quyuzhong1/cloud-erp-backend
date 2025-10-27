@@ -160,7 +160,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         searchParam.setPermissionSql(param.getPermissionSql());
         List<DmpBasicSystemDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         List<DmpBasicSystemDTO.TabListDTO> resultList = new LinkedList<>();
-        resultList.add(new DmpBasicSystemDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpBasicSystemDTO.TabListDTO::getCount).sum()));
+//        resultList.add(new DmpBasicSystemDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpBasicSystemDTO.TabListDTO::getCount).sum()));
         resultList.addAll(list);
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(DmpBasicSystemDTO.TabListDTO::getTabFlag).collect(Collectors.toList());

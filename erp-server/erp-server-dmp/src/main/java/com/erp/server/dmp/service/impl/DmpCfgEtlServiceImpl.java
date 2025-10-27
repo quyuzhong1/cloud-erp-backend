@@ -131,7 +131,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         searchParam.setPermissionSql(param.getPermissionSql());
         List<DmpCfgEtlDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         List<DmpCfgEtlDTO.TabListDTO> resultList = new LinkedList<>();
-        resultList.add(new DmpCfgEtlDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpCfgEtlDTO.TabListDTO::getCount).sum()));
+//        resultList.add(new DmpCfgEtlDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpCfgEtlDTO.TabListDTO::getCount).sum()));
         resultList.addAll(list);
         List<String> existStatusList = list.stream().map(DmpCfgEtlDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         List<String> tabList = Arrays.asList("f", "t");

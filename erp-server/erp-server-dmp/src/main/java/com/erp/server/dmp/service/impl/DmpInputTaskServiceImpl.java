@@ -237,7 +237,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         int total = list.stream().mapToInt(DmpInputTaskDTO.TabListDTO::getCount).sum();
         List<DmpInputTaskDTO.TabListDTO> resultList = new ArrayList<>();
         // 计算合计数量
-        resultList.add(new DmpInputTaskDTO.TabListDTO("all", "全部", total));
+//        resultList.add(new DmpInputTaskDTO.TabListDTO("all", "全部", total));
 
         List<DmpTaskStatuEnum> statusList = Arrays.stream(DmpTaskStatuEnum.values()).collect(Collectors.toList());
         // 不存在的状态赋值为0

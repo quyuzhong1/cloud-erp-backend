@@ -136,7 +136,7 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
         int total = list.stream().mapToInt(DmpEtlTaskDTO.TabListDTO::getCount).sum();
         List<DmpEtlTaskDTO.TabListDTO> resultList = new ArrayList<>();
         // 计算合计数量
-        resultList.add(new DmpEtlTaskDTO.TabListDTO("all", "全部", total));
+//        resultList.add(new DmpEtlTaskDTO.TabListDTO("all", "全部", total));
 
         List<DmpTaskStatuEnum> statusList = Arrays.stream(DmpTaskStatuEnum.values()).collect(Collectors.toList());
         // 不存在的状态赋值为0
