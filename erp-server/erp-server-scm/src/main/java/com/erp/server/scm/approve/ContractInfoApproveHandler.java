@@ -27,7 +27,7 @@ public class ContractInfoApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到合同管理单数据");
         }
-        BatchResultDTO resultDTO = contractInfoService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = contractInfoService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 
