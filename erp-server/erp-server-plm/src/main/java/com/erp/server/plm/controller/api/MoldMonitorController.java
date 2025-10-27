@@ -3,9 +3,10 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.MoldInfoDTO;
+import com.erp.model.plm.dto.MoldMonitorDTO;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.query.MoldMonitorQueryHandler;
+import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -43,19 +44,6 @@ public class MoldMonitorController extends BaseController {
     private MoldMonitorService moldMonitorService;
 
     /**
-    * 新增
-    * @author jack
-    * @date:  2025-10-22
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "模具监控新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated MoldMonitorDTO.AddDTO dto) {
-        return success(moldMonitorService.add(dto));
-    }
-
-    /**
      * 获取状态统计
      * @return
      */
@@ -74,7 +62,7 @@ public class MoldMonitorController extends BaseController {
      * @author jack
      * @date: 2025-10-10
      * @param dto
-     * @return ApiResult<PagingVO<MoldInfoDTO.ListDTO>>
+     * @return ApiResult<PagingVO<MoldMonitorDTO.ListDTO>>
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -86,6 +74,54 @@ public class MoldMonitorController extends BaseController {
     public ApiResult<PagingVO<MoldMonitorDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto) {
         return success(moldMonitorService.paging(dto));
     }
+
+    /**
+     * 详情
+     * @author jack
+     * @date:  2025-10-10
+     * @param id
+     * @return ApiResult<MoldMonitorDTO.ViewDTO>>
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:moldMonitor:view",
+            serviceClass = MoldMonitorService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<MoldMonitorDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(moldMonitorService.view(id));
+    }
+
+
+    /**
+     * 根据模具id 查询关联订单
+     * @author jack
+     * @date: 2025-10-10
+     * @param dto
+     * @return ApiResult<List<MoldMonitorDTO.ListDTO>>
+     */
+    @PostMapping("/listRefOrderById")
+    public ApiResult<List<MoldMonitorDTO.RefOrderDTO>> listRefOrderById(@RequestBody @Validated MoldMonitorDTO.RefOrderParamsDTO dto) {
+        return success(moldMonitorService.listRefOrderById(dto));
+    }
+
+
+    /**
+     * 返还确认
+     * @author jack
+     * @date: 2025-10-10
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/updateReturnPriceById")
+    public ApiResult<BatchResultDTO> updateReturnPriceById(@RequestBody @Validated MoldMonitorDTO.UpdateReturnParamsDTO dto) {
+        return success(moldMonitorService.updateReturnPriceById(dto));
+    }
+
+
+
+
 
 
 }

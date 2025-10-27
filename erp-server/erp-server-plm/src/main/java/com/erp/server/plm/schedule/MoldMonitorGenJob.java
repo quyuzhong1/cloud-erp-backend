@@ -14,8 +14,11 @@ import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
+import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
+import com.erp.server.plm.service.MoldMonitorRefOrderService;
+import com.erp.server.plm.service.MoldMonitorService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -28,6 +31,7 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -41,10 +45,16 @@ public class MoldMonitorGenJob {
     private MQProducerService mqProducerService;
 
     @Resource
+    private MoldMonitorService moldMonitorService;
+
+    @Resource
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
 
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+
+    @Resource
+    private MoldMonitorRefOrderService moldMonitorRefOrderService;
 
     /**
      * 任务节点记录表补偿重试
@@ -60,13 +70,19 @@ public class MoldMonitorGenJob {
 
         if(CollUtil.isNotEmpty(cfgMoldAlertRuleEntities)){
 
+            List<String> ids = cfgMoldAlertRuleEntities.stream().map(CfgMoldAlertRuleEntity::getId).collect(Collectors.toList());
+
+            List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
+            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceId, Function.identity()));
+
+            for (CfgMoldAlertRuleEntity entity : cfgMoldAlertRuleEntities) {
 
 
 
+
+
+            }
         }
-
-
-
 
 //
 //        List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.listErrorTask();
