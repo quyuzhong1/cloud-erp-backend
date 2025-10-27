@@ -313,7 +313,6 @@ public class AssetStocktakingPlanDTO implements Serializable {
         /**
         * 描述
         */
-        @NotBlank(message = "描述不能为空")
         @Size(max = 500,message = "描述最大长度不能超过500位")
         private String remark;
 
