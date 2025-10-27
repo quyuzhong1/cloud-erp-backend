@@ -9,14 +9,10 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeApplicationCategoryService;
-import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
-import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
-import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.kingdee.*;
 import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
 import com.erp.server.plm.service.*;
 import com.sdk.third.lingxing.dto.ProductInfo;
-import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -24,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,6 +76,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private ProductInfoService productInfoService;
 
+    @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Resource
+    private SyncKingdeeAssetPurchaseService syncKingdeeAssetPurchaseService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -100,6 +101,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case APPLICATION_CATEGORY:
                 resultList = syncApplicationCategory(sourceDetailList);
+                break;
+            case ASSET_PURCHASE_ORDER:
+                resultList =  syncAssetPurchaseOrder(sourceDetailList);
                 break;
             default:
                 break;
@@ -391,6 +395,25 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             ProductInfo productInfo = syncLingXingProductDetailService.convertProductInfo(productDetailEntity);
             Map<String, Object> dataMap = JSONUtil.parseObj(productInfo);
             resultList.put(syncParamDetailDTO.getDataId(), dataMap);
+        }
+        return resultList;
+    }
+
+    private List<DmpPushTaskEntity> syncAssetPurchaseOrder (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncAssetPurchaseOrder >>>> 未找到数据！");
+            return Collections.EMPTY_LIST;
+        }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            AssetPurchaseOrderEntity assetPurchaseOrderEntity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(assetPurchaseOrderEntity)) {
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeAssetPurchaseService.syncDataToKingdee(assetPurchaseOrderEntity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
         return resultList;
     }

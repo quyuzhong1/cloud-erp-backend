@@ -579,6 +579,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             case SO_INFO:
             case SO_CHANGE:
                 omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+            case ASSET_PURCHASE_ORDER:
+                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             default:
                 return;

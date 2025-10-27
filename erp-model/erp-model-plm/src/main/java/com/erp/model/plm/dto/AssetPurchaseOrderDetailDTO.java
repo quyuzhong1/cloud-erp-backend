@@ -3,11 +3,12 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
@@ -54,6 +55,16 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         * 资产名称
         */
         private String assetName;
+
+        /**
+         * 标识(首套模first、复制模copy)
+         */
+        private String tag;
+
+        /**
+         * 标识名称(首套模first、复制模copy)
+         */
+        private String tagName;
 
         /**
         * 含税单价
@@ -106,9 +117,14 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private String kingdeeDetailId;
 
         /**
-        * 是否结束收货
+        * 结束收货AssetPurchaseOrderReceiveEnum
         */
-        private Boolean isEndReceive;
+        private String endReceive;
+
+        /**
+         * 结束收货名称AssetPurchaseOrderReceiveEnum
+         */
+        private String endReceiveName;
 
         /**
         * 结束验收时间
@@ -120,7 +136,62 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
+        /**
+         * 关联SKU详情
+         */
+        private List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
+    }
 
+    /**
+     * 关联SKU详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AssetDetailRefSkuDTO {
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 项目编号
+         */
+        private String projectCode;
+
+        /**
+         * 项目名称
+         */
+        private String projectName;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 用量
+         */
+        private BigDecimal skuQty;
     }
 
     /**
@@ -239,10 +310,9 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private String kingdeeDetailId;
 
         /**
-        * 是否结束收货
+        * 结束收货AssetPurchaseOrderReceiveEnum
         */
-        @NotNull(message = "是否结束收货不能为空")
-        private Boolean isEndReceive;
+        private String endReceive;
 
         /**
         * 结束验收时间
@@ -262,5 +332,188 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class MoldImportDTO {
+        /**
+         * 序号(相同的为一张单)
+         */
+        private String serialNumber;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源单号
+         */
+        private String sourceType;
+
+        /**
+         * 采购日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 供应商
+         */
+        private AssetPurchaseOrderDetailDTO.SupplierImportDTO supplierImportDTO;
+
+        /**
+         * 明细
+         */
+        private List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class MoldDetailImportDTO {
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 模具id
+         */
+        private String assetId;
+
+        /**
+         * 模具编码
+         */
+        private String assetCode;
+
+        /**
+         * 模具编码
+         */
+        private String assetName;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 采购数量
+         */
+        private BigDecimal  purchaseQty;
+
+        /**
+         * 备注
+         */
+        private String  remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierImportDTO{
+
+        /**
+         * 供应商id
+         */
+        private String SupplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String SupplierName;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 供应商联系人id
+         */
+        private String contactId;
+
+        /**
+         * 币种
+         */
+        private String payCurrency;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String contactName;
+
+        /**
+         * 供应商电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 账户名称
+         */
+        private String payee;
+
+        /**
+         * 收款银行
+         */
+        private String bankName;
+
+        /**
+         * 银行账号
+         */
+        private String bankAccount;
+    }
 }
