@@ -165,6 +165,9 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
         WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(Objects.isNull(resp)){
+            return failure("纬狮创建出库单响应结果为空");
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
