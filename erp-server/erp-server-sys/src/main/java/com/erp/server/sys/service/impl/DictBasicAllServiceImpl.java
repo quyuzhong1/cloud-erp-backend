@@ -10,11 +10,12 @@ import java.util.Objects;
 import javax.annotation.Resource;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -27,6 +28,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.AddDTO;
@@ -42,7 +44,6 @@ import com.erp.server.sys.service.OperateLogService;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import io.seata.spring.annotation.GlobalTransactional;
 
 /**
  * <p>
@@ -61,6 +62,9 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	@Resource
     private DownloadTaskFeign downloadTaskFeign;
 	
+	@Autowired
+	protected IdentifierGenerator identifierGenerator;
+	
 	private static final Map<String, Map<String, String>> systemCodeDiffFieldMap = new HashMap<>();
 	static {
 		Map<String , String> plmMap = new HashMap<>();
@@ -75,19 +79,20 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		systemCodeDiffFieldMap.put(SystemCodeEnum.MRP.getCode(), srmTmsMrpMap);
 	}
 	
-	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public BaseResultDTO.AddDTO add(AddDTO dto) {
 		String systemCode = dto.getSystemCode();
 		String type = dto.getType();
 		String value = dto.getValue();
-		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("type", type).eq("value", value);
+		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("type", type).eq(this.convertField(systemCode , "value" , false), value);
 		List list = FeignQuery.list(feignBuilder);
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
 		}
-		FeignQuery.invoke(this.getServiceClass(systemCode), "save", Arrays.asList(this.getEntityMap(dto)));
+		Map<String, Object> entityMap = this.getEntityMap(dto);
+		entityMap.put("id", identifierGenerator.nextId(new BasicDictEntity()).toString());
+		FeignQuery.invoke(this.getServiceClass(systemCode), "saveJsonObject", Arrays.asList(entityMap));
 		Map<String, Object> beanToMap = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
 		String id = (String)beanToMap.get("id");
 		String msg = CharSequenceUtil.format("用户【{}】新增【{}】系统为【{}】，类型为【{}】，类型名称为【{}】，值为【{}】", 
@@ -148,7 +153,6 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		return className;
 	}
 	
-	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public void update(UpdateDTO dto) {
@@ -163,13 +167,12 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		}
 		feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("id", id);
 		Map<String, Object> old = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
-		FeignQuery.invoke(this.getServiceClass(systemCode), "updateById", Arrays.asList(this.getEntityMap(dto)));
+		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
 		Map<String, Object> newEntity = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
         operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.DICT_BASIC.getCode(), id, msg);
 	}
 
-	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public void batchOp(BatchOpDTO dto) {
@@ -178,21 +181,25 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		String opTypeName = "";
 		List<String> ids = dto.getIds();
 		List<Map<String, Object>> param = new ArrayList<>(ids.size());
-		for(String id : ids) {
-			Map<String, Object> p = new HashMap<>();
-			p.put("id", id);
-			if("delete".equals(opType)) {
-				p.put("", true);
-				opTypeName = "批量删除";
-			}else if("able".equals(opType)) {
-				p.put("status", true);
-				opTypeName = "批量启用，启用状态由{停用}改为{启用}";
-			}else if("disable".equals(opType)) {
-				p.put("status", false);
-				opTypeName = "批量停用，启用状态由{启用}改为{停用}";
-			}
-		}
-		FeignQuery.invoke(this.getServiceClass(systemCode), "updateBatchById", Arrays.asList(param));
+        if("delete".equals(opType)) {
+        	opTypeName = "批量删除";
+        	FeignQuery.invoke(this.getServiceClass(systemCode), "removeByIds", Arrays.asList(ids));
+        }else {
+        	for(String id : ids) {
+    			Map<String, Object> p = new HashMap<>();
+    			p.put("id", id);
+    			if("able".equals(opType)) {
+    				p.put("status", true);
+    				opTypeName = "批量启用，启用状态由{停用}改为{启用}";
+    			}else if("disable".equals(opType)) {
+    				p.put("status", false);
+    				opTypeName = "批量停用，启用状态由{启用}改为{停用}";
+    			}
+    			param.add(p);
+    		}
+        	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(param));
+        }
+		
 		for(String id : ids) {
 			operateLogService.addModuleOperateLog(opTypeName, ModuleTypeEnum.DICT_BASIC.getCode(), id, "状态变更");
 		}

@@ -1,8 +1,21 @@
 package com.erp.server.scm.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.DictBasicDTO;
@@ -10,14 +23,8 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.server.scm.mapper.DictBasicMapper;
 import com.erp.server.scm.service.DictBasicService;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import cn.hutool.core.collection.CollUtil;
 
 /**
  * <p>
@@ -30,6 +37,39 @@ import java.util.stream.Collectors;
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+	@Override
+	public boolean saveJsonObject(JSONObject jsonObject) {
+		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+		LocalDateTime now = LocalDateTime.now();
+		LoginUser loginUser = UserContext.getNonLoginUser();
+		String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+    	entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        
+        entity.setCreateTime(now);
+		entity.setCreateUserId(userId);
+		entity.setCreateUserName(userName);
+		return super.save(entity);
+	}
+	
+	@Override
+	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
+		List<DictBasicEntity> entityList = new ArrayList<>();
+		for(JSONObject jsonObject : jsonObjects) {
+			DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+			LocalDateTime now = LocalDateTime.now();
+			LoginUser loginUser = UserContext.getNonLoginUser();
+			String userId = loginUser.getUid();
+	        String userName = loginUser.getUserName();
+	    	entity.setUpdateTime(now);
+	        entity.setUpdateUserId(userId);
+	        entity.setUpdateUserName(userName);
+	        entityList.add(entity);
+		}
+        return super.updateBatchById(entityList);
+	}
 
     /**
      * 保存或者修改字典信息
