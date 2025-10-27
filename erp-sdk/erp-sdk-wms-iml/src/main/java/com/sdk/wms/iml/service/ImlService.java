@@ -56,8 +56,6 @@ public class ImlService {
         //查询前一天的时间戳的数据
         long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        body.put("createTimeFrom",startTime);
-        body.put("createTimeTo",endTime);
         String timestamp = String.valueOf(new Date().getTime());
         String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
         Map<String,String> headerMap = new HashMap<>();
@@ -65,6 +63,8 @@ public class ImlService {
         headerMap.put("x-app-sign",appSign);
         headerMap.put("x-request-time",timestamp);
         headerMap.put("x-request-token",REQUEST_TOKEN);
+        System.out.println(JSONObject.toJSONString(body));
+        System.out.println(JSONObject.toJSONString(headerMap));
         String bodyStr = OkHttpUtils.doPostJson(API_URL,body, headerMap);
         System.out.println(bodyStr);
     }

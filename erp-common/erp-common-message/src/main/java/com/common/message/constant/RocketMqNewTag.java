@@ -232,4 +232,9 @@ public class RocketMqNewTag {
      */
     public static final String RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inventory_to_wms_tag";
 
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_tag";
+
 }
