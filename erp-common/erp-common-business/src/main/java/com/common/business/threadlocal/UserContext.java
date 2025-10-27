@@ -71,11 +71,11 @@ public final class UserContext {
     }
 
     public static void clearIsUserSystem() {
-        userThreadLocal.remove();
+        isUserSystemThreadLocal.remove();
     }
 
 
     public static void clear() {
-        isUserSystemThreadLocal.remove();
+        userThreadLocal.remove();
     }
 }
