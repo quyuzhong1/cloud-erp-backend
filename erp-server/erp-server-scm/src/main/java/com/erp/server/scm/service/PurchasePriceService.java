@@ -232,4 +232,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     List<PurchasePriceEntity> listByCodes(List<String> codes);
 
     void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice();
 }

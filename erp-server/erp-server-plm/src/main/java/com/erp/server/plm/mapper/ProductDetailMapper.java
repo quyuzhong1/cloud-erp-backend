@@ -363,6 +363,9 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuVO> listSkuPackAndPurchaseByIds(@Param("skuIds")List<String> skuIds);
 
     List<SkuVO> listByApprovePropertyNotAsset(@Param("skuNos") List<String> skuNos);
+
+    List<SkuVO> listAssetProduct();
+
 }
 
 

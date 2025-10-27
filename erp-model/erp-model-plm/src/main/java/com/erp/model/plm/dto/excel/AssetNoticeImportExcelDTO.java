@@ -68,8 +68,8 @@ public class AssetNoticeImportExcelDTO  implements Serializable {
      * 申请数量
      */
     @ExcelProperty("*申请数量")
-    @FieldValid(fieldName = "applyQtyStr", isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
-    private String  applyQtyStr;
+    @FieldValid(fieldName = "applyQtyStr", isNotBlank = true ,maxLength = 16)
+    private String applyQtyStr;
 
     /**
      * 采购组织
