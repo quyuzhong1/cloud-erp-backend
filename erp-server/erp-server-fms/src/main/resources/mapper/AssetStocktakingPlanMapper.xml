@@ -46,7 +46,42 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetStocktakingPlanDTO$ListDTO">
-
+        SELECT
+            asp.id,
+            asp.approve_status,
+            asp.approve_user_id,
+            asp.approve_user_name,
+            asp.approve_time,
+            asp.invalid_status,
+            asp.invalid_remark,
+            asp.invalid_time,
+            asp.code,
+            asp.plan_name,
+            asp.asset_org_id,
+            asp.asset_org_name,
+            asp.remark,
+            asp.asset_categories,
+            asp.use_dept_ids,
+            asp.asset_location_ids,
+            asp.card_code_start,
+            asp.card_code_end,
+            asp.create_time,
+            asp.create_user_name
+        FROM asset_stocktaking_plan asp
+        WHERE
+        ${params.sqlMap.default}
+        AND asp.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        asp.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -54,7 +89,36 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.fms.dto.AssetStocktakingPlanDTO$ListDTO">
-
+        SELECT
+            asp.id,
+            asp.approve_status,
+            asp.approve_user_id,
+            asp.approve_user_name,
+            asp.approve_time,
+            asp.invalid_status,
+            asp.invalid_remark,
+            asp.invalid_time,
+            asp.code,
+            asp.plan_name,
+            asp.asset_org_id,
+            asp.asset_org_name,
+            asp.remark,
+            asp.asset_categories,
+            asp.use_dept_ids,
+            asp.asset_location_ids,
+            asp.card_code_start,
+            asp.card_code_end,
+            asp.create_time,
+            asp.create_user_name
+        FROM asset_stocktaking_plan asp
+        WHERE
+        ${params.sqlMap.default}
+        AND asp.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY asp.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.fms.dto.AssetStocktakingPlanDTO$TabListDTO">
         SELECT

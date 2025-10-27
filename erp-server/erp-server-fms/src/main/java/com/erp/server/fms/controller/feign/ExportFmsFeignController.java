@@ -8,11 +8,13 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.fms.dto.AssetLocationDTO;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetCardDTO;
+import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.AssetAcceptService;
 import com.erp.server.fms.service.AssetCardService;
+import com.erp.server.fms.service.AssetStocktakingPlanService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +39,9 @@ public class ExportFmsFeignController {
     
     @Resource
     private AssetCardService assetCardService;
+    
+    @Resource
+    private AssetStocktakingPlanService assetStocktakingPlanService;
 
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -65,6 +70,15 @@ public class ExportFmsFeignController {
     )
     public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(@RequestBody PagingDTO<AssetCardDTO.ExportDTO> dto) {
         return assetCardService.getAssetCardPageData(dto);
+    }
+
+    @PostMapping("/getAssetStocktakingPlanPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "fms:assetStocktakingPlan:export"
+    )
+    public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
+        return assetStocktakingPlanService.getAssetStocktakingPlanPageData(dto);
     }
 }
 

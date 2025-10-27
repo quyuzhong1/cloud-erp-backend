@@ -17,26 +17,13 @@ import java.util.List;
  */
 public interface MoldMonitorService extends SuperService<MoldMonitorEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-10-22
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(MoldMonitorDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-10-22
-    * @param dto
-    * @return
-    */
-    Boolean update(MoldMonitorDTO.UpdateDTO dto);
-
-
     List<MoldMonitorDTO.TabListDTO> tabList(MoldMonitorDTO.TabDTO dto);
 
     PagingVO<MoldMonitorDTO.ListDTO> paging(PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
+
+    MoldMonitorDTO.ViewDTO view(String id);
+
+    List<MoldMonitorDTO.RefOrderDTO> listRefOrderById(MoldMonitorDTO.RefOrderParamsDTO dto);
+
+    BatchResultDTO updateReturnPriceById(MoldMonitorDTO.UpdateReturnParamsDTO dto);
 }

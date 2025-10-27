@@ -563,5 +563,53 @@ public class AssetCardDTO implements Serializable {
 
     }
 
+    /**
+    * 获取已审核资产卡片查询参数
+    */
+    @Data
+    @NoArgsConstructor
+    public static class QueryApprovedDTO {
+        /**
+        * 资产卡片编码（模糊查询）
+        */
+        private String code;
+
+        /**
+        * 开始编码（可空）
+        */
+        private String startCode;
+    }
+
+    /**
+    * 已审核资产卡片返回结果
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ApprovedCardDTO {
+        /**
+        * 资产卡片ID
+        */
+        private String id;
+
+        /**
+        * 资产卡片编码
+        */
+        private String code;
+
+        /**
+        * 资产名称
+        */
+        private String name;
+
+        /**
+        * 资产类型
+        */
+        private String type;
+
+        /**
+        * 资产类型名称
+        */
+        private String typeName;
+    }
 
 }

@@ -392,6 +392,26 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         return new PagingVO<>(pageData);
     }
 
+    /**
+     * 获取已审核资产卡片列表（用于盘点方案）
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<AssetCardDTO.ApprovedCardDTO> getApprovedCardList(AssetCardDTO.QueryApprovedDTO dto) {
+        List<AssetCardDTO.ApprovedCardDTO> list = this.baseMapper.getApprovedCardList(dto);
+        if(CollUtil.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        // 填充资产类型名称
+        for(AssetCardDTO.ApprovedCardDTO card : list) {
+            if (StringUtils.isNotBlank(card.getType())) {
+                card.setTypeName(com.erp.model.fms.enums.AssetCategoryEnum.getName(card.getType()));
+            }
+        }
+        return list;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
@@ -792,7 +812,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入资产卡片", "IMPORT_FMS_ASSET_CARD", dto);
+        downloadTaskFeign.saveImportTask("导入资产卡片", FileTaskEventEnum.IMPORT_FMS_ASSET_CARD.getCode(), dto);
         return Boolean.TRUE;
     }
 
