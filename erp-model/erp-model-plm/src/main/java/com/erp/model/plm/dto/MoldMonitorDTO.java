@@ -3,7 +3,6 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,10 +13,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * <p>
@@ -158,6 +157,76 @@ public class MoldMonitorDTO implements Serializable {
          */
         private String remark;
 
+
+        /**
+         * 模具id
+         */
+        private String moldId;
+        /**
+         * 模具编码
+         */
+        private String moldCode;
+        /**
+         * 模具名称
+         */
+        private String moldName;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商编号
+         */
+        private String supplierCode;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldReturnAlertRuleCountDimEnum
+         */
+        private String countDim;
+        private String countDimName;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+        private String disabledName;
+
+        //返还
+        /**
+         * 返还数量上限
+         */
+        private Integer returnQtyLimit;
+        /**
+         * 返回金额
+         */
+        private BigDecimal returnPrice;
+
+        //预警
+        /**
+         * 寿命数量
+         */
+        private Integer lifeQty;
+        /**
+         * 预警寿命（数量）
+         */
+        private Integer alertLifeQty;
+        /**
+         * 预警寿命（%）
+         */
+        private BigDecimal alertLifeRate;
+
+
     }
 
     /**
@@ -207,221 +276,136 @@ public class MoldMonitorDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends ListDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * 来源明细id
-        */
-        private String sourceDetailId;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 来源json
-        */
-        private String sourceRuleJson;
-
-        /**
-        * 统计状态：counting=统计中 , finish=统计完成
-        */
-        private String status;
-
-        /**
-        * 返还状态：underachieved=未达量 , notReturned=未返 , returned=已返
-        */
-        private String returnStatus;
-
-        /**
-        * 寿命状态：healthy=健康 , alert=预警 , exhausted=耗尽
-        */
-        private String lifeStatus;
-
-        /**
-        * 采购下单数量
-        */
-        private Integer purchaseOrderQty;
-
-        /**
-        * 采购收货数量
-        */
-        private Integer warehouseReceiveQty;
-
-        /**
-        * 采购入库数量
-        */
-        private Integer poInstockQty;
-
-        /**
-        * 实际返还金额
-        */
-        private BigDecimal actualReturnPrice;
-
-        /**
-        * 返还人id
-        */
-        private String returnUserId;
-
-        /**
-        * 返还人
-        */
-        private String returnUserName;
-
-        /**
-        * 返还日期
-        */
-        private LocalDate returnDate;
-
-        /**
-        * 返还说明
-        */
-        private String remark;
-
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
 
+
     /**
-    * 新增
+    * 关联订单参数
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class RefOrderParamsDTO  {
 
         /**
-        * 主键id
-        */
+         * 类型  purchaseOrder =采购单  ,warehouseReceive = 收货单 , poInstock = 入库单
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String businessType;
+        /**
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
 
+    /**
+    * 关联订单
+    */
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class RefOrderDTO  {
 
         /**
-        * 来源id
-        */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
-        private String sourceId;
+         * 主键id
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        private String approveStatusName;
 
         /**
-        * 来源明细id
-        */
-        @NotBlank(message = "来源明细id不能为空")
-        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
-        private String sourceDetailId;
-
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
         /**
-        * 来源类型
-        */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
-        private String sourceType;
-
+         * skuId
+         */
+        private String skuId;
         /**
-        * 来源json
-        */
-        @NotBlank(message = "来源json不能为空")
-        private String sourceRuleJson;
-
+         * skuNo
+         */
+        private String skuNo;
         /**
-        * 统计状态：counting=统计中 , finish=统计完成
-        */
-        @NotBlank(message = "统计状态：counting=统计中 , finish=统计完成不能为空")
-        @Size(max = 32,message = "统计状态：counting=统计中 , finish=统计完成最大长度不能超过32位")
-        private String status;
-
+         * 产品名称
+         */
+        private String productName;
         /**
-        * 返还状态：underachieved=未达量 , notReturned=未返 , returned=已返
-        */
-        @NotBlank(message = "返还状态：underachieved=未达量 , notReturned=未返 , returned=已返不能为空")
-        @Size(max = 32,message = "返还状态：underachieved=未达量 , notReturned=未返 , returned=已返最大长度不能超过32位")
-        private String returnStatus;
-
+         * 日期
+         */
+        private LocalDate date;
         /**
-        * 寿命状态：healthy=健康 , alert=预警 , exhausted=耗尽
-        */
-        @NotBlank(message = "寿命状态：healthy=健康 , alert=预警 , exhausted=耗尽不能为空")
-        @Size(max = 32,message = "寿命状态：healthy=健康 , alert=预警 , exhausted=耗尽最大长度不能超过32位")
-        private String lifeStatus;
+         * 数量
+         */
+        private Integer qty;
+    }
 
-        /**
-        * 采购下单数量
-        */
-        @NotNull(message = "采购下单数量不能为空")
-        private Integer purchaseOrderQty;
 
-        /**
-        * 采购收货数量
-        */
-        @NotNull(message = "采购收货数量不能为空")
-        private Integer warehouseReceiveQty;
 
+    /**
+     * 关联订单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateReturnParamsDTO  {
         /**
-        * 采购入库数量
-        */
-        @NotNull(message = "采购入库数量不能为空")
-        private Integer poInstockQty;
-
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
         /**
-        * 实际返还金额
-        */
+         * 实际返还金额
+         */
         @NotNull(message = "实际返还金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "实际返还金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal actualReturnPrice;
-
         /**
-        * 返还人id
-        */
-        @NotBlank(message = "返还人id不能为空")
-        @Size(max = 32,message = "返还人id最大长度不能超过32位")
-        private String returnUserId;
-
-        /**
-        * 返还人
-        */
+         * 返还人id
+         */
         @NotBlank(message = "返还人不能为空")
-        @Size(max = 32,message = "返还人最大长度不能超过32位")
-        private String returnUserName;
-
+        private String returnUserId;
         /**
-        * 返还日期
-        */
+         * 返还日期
+         */
+        @NotNull(message = "返还日期不能为空")
         private LocalDate returnDate;
-
         /**
-        * 返还说明
-        */
-        @NotBlank(message = "返还说明不能为空")
-        @Size(max = 200,message = "返还说明最大长度不能超过200位")
+         * 附件集合
+         */
         private String remark;
 
-
+        /**
+         * 附件集合
+         */
+        @NotEmpty(message = "附件不能为空")
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
     }
-
 
 }
