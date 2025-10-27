@@ -538,6 +538,25 @@ public class AssetPurchaseOrderController extends BaseController {
     }
 
     /**
+     * 查询采购合同PDF数据
+     * @author Will
+     * @date: 2023/3/15 17:59
+     * @param id
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购合同PDF")
+    @GetMapping("/listAssetPurchaseContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "plm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            serviceClass = AssetPurchaseOrderService.class,
+            keyIdName = "id")
+    public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
+        AssetPurchaseOrderDTO.ExportPdfDTO exportPdfDTO = assetPurchaseOrderService.listPurchaseContractPdf(id);
+        return success(exportPdfDTO);
+    }
+
+    /**
      * 获取关联单据
      * @param detailId
      * @return

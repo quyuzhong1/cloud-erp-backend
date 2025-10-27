@@ -516,4 +516,89 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
          */
         private String bankAccount;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+
+        /**
+         * 名称
+         */
+        private String declareName;
+
+        /**
+         * 型号
+         */
+        private String declareModel;
+
+        /**
+         * 描述
+         */
+        private String productName;
+
+        /**
+         * 数量
+         */
+        private BigDecimal purchaseQty;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 不含税单价
+         */
+        private BigDecimal price;
+        /**
+         * 不含税单价 使用科学计数法展示
+         */
+        private String priceStr;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 含税单价 使用科学计数法展示
+         */
+        private String taxPriceStr;
+
+        /**
+         * 不含税金额
+         */
+        private BigDecimal notTaxPurchaseAmount;
+        /**
+         * 不含税金额 使用科学计数法展示
+         */
+        private String notTaxPurchaseAmountStr;
+
+        /**
+         * 含税金额
+         */
+        private BigDecimal totalAmount;
+        /**
+         * 含税金额 使用科学计数法展示
+         */
+        private String totalAmountStr;
+
+        /**
+         * 交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }
