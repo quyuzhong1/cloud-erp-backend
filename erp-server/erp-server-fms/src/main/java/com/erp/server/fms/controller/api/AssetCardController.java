@@ -427,4 +427,16 @@ public class AssetCardController extends BaseController {
         return success(assetCardService.importFile(dto));
     }
 
+    /**
+    * 获取已审核资产卡片列表（用于盘点方案）
+    * @author wuht
+    * @date: 2025-10-24
+    * @param dto
+    * @return
+    */
+    @PostMapping("/getApprovedCardList")
+    public ApiResult<List<AssetCardDTO.ApprovedCardDTO>> getApprovedCardList(@RequestBody AssetCardDTO.QueryApprovedDTO dto) {
+        return success(assetCardService.getApprovedCardList(dto));
+    }
+
 }

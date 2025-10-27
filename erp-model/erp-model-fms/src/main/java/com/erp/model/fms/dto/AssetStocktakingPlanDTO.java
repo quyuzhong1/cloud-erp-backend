@@ -302,7 +302,6 @@ public class AssetStocktakingPlanDTO implements Serializable {
         /**
         * 资产组织名称
         */
-        @NotBlank(message = "资产组织名称不能为空")
         @Size(max = 50,message = "资产组织名称最大长度不能超过50位")
         private String assetOrgName;
 
@@ -316,32 +315,27 @@ public class AssetStocktakingPlanDTO implements Serializable {
         /**
         * 资产类别（机器设备）字符串数组
         */
-        @NotBlank(message = "资产类别（机器设备）字符串数组不能为空")
         private String assetCategories;
 
         /**
         * 使用部门ID字符串数组
         */
-        @NotBlank(message = "使用部门ID字符串数组不能为空")
         private String useDeptIds;
 
         /**
         * 资产位置ID字符串数组
         */
-        @NotBlank(message = "资产位置ID字符串数组不能为空")
         private String assetLocationIds;
 
         /**
         * 卡片编码-开始
         */
-        @NotBlank(message = "卡片编码不能为空")
         @Size(max = 50,message = "卡片编码最大长度不能超过50位")
         private String cardCodeStart;
 
         /**
         * 卡片编码-结束
         */
-        @NotBlank(message = "卡片编码不能为空")
         @Size(max = 50,message = "卡片编码最大长度不能超过50位")
         private String cardCodeEnd;
 

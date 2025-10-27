@@ -152,4 +152,13 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetStocktakingPlanEntity entity);
 
+    /**
+    * 下推操作（校验资产盘点表中是否存在未审核的资产卡片）
+    * @author wuht
+    * @date: 2025-10-24
+    * @param id 盘点方案ID
+    * @return
+    */
+    BatchResultDTO pushDown(String id);
+
 }

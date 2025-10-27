@@ -52,4 +52,11 @@ public interface AssetCardMapper extends BaseMapper<AssetCardEntity> {
     * @return
     */
     List<AssetCardDTO.TabListDTO> tabList(@Param("params") AssetCardDTO.PagingParamDTO searchParam);
+
+    /**
+    * 获取已审核资产卡片列表（用于盘点方案）
+    * @param params
+    * @return
+    */
+    List<AssetCardDTO.ApprovedCardDTO> getApprovedCardList(@Param("params") AssetCardDTO.QueryApprovedDTO params);
 }

@@ -173,4 +173,24 @@
         GROUP BY approve_status
     </select>
 
+    <select id="getApprovedCardList" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDTO">
+        SELECT
+            ac.id,
+            ac.code,
+            ac.name,
+            ac.type,
+            '' as typeName
+        FROM asset_card ac
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="params.code != null and params.code != ''">
+            AND ac.code LIKE CONCAT('%', #{params.code}, '%')
+        </if>
+        <if test="params.startCode != null and params.startCode != ''">
+            AND ac.code &gt;= #{params.startCode}
+        </if>
+        ORDER BY ac.code ASC
+        LIMIT 100
+    </select>
+
 </mapper>
