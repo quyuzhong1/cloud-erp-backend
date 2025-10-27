@@ -209,27 +209,44 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDTO.TabListDTO> refPurchaseTabList = baseMapper.refPurchaseTabList(searchParam);
         list.addAll(refPurchaseTabList);
 
-        // 获取状态列表,all最后统计
+        // 获取状态列表（all最后统计）
         List<String> statusList = AssetNoticeTabListEnum.getStatusList();
         statusList.remove("all");
 
-        List<String> existStatusList = list.stream().map(AssetNoticeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        for (AssetNoticeDTO.TabListDTO tabListDTO : list) {
-            tabListDTO.setTabFlagName(AssetNoticeTabListEnum.getName(tabListDTO.getTabFlag()));
-        }
+        // 设置状态名称
+        list.forEach(tabListDTO ->
+                tabListDTO.setTabFlagName(AssetNoticeTabListEnum.getName(tabListDTO.getTabFlag()))
+        );
 
-        // 不存在的状态赋值为0
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AssetNoticeDTO.TabListDTO(status, AssetNoticeTabListEnum.getName(status), 0));
-        }
+        // 补全缺失的状态（确保顺序与枚举一致）
+        List<AssetNoticeDTO.TabListDTO> finalList = new ArrayList<>();
+        statusList.forEach(status -> {
+            Optional<AssetNoticeDTO.TabListDTO> existingItem = list.stream()
+                    .filter(item -> item.getTabFlag().equals(status))
+                    .findFirst();
+            if (existingItem.isPresent()) {
+                finalList.add(existingItem.get()); // 已存在的状态直接添加
+            } else {
+                // 缺失的状态补0
+                finalList.add(new AssetNoticeDTO.TabListDTO(
+                        status,
+                        AssetNoticeTabListEnum.getName(status),
+                        0
+                ));
+            }
         });
 
-        // 合计数量要放第一个
-        list.add(new AssetNoticeDTO.TabListDTO("all", AssetNoticeTabListEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
-        returnList.addAll(list);
+        // 添加合计项（all）
+        returnList.add(new AssetNoticeDTO.TabListDTO(
+                "all",
+                AssetNoticeTabListEnum.ALL.getName(),
+                finalList.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()
+        ));
 
-        return list;
+        // 按枚举顺序添加所有状态
+        returnList.addAll(finalList);
+
+        return returnList;
     }
 
     @Override
