@@ -378,6 +378,19 @@ public class WeiShiService {
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiOutboundResp>>() {});
     }
 
+    /**
+     * 退货入库单查询
+     * @return
+     */
+    public WeiShiBaseResp<WeiShiReturnInstockResp> getReturnInstock(WeiShiGetReturnInstockRequest weiShiGetReturnInstockRequest,Map<String,Object> authMap){
+        String action = "batchGetReturnOrderDetail";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiGetReturnInstockRequest));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiReturnInstockResp>>() {});
+    }
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
