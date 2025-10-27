@@ -89,7 +89,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台管理", dmpBasicSystemEntity.getCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getCode(), "新增平台管理数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "新增平台管理数据");
 
         return new BaseResultDTO.AddDTO(dmpBasicSystemEntity.getId(), dmpBasicSystemEntity.getCode());
     }
@@ -117,7 +117,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         log.info("编辑 开始记录平台管理日志数据，单号：【{}】", dmpBasicSystemEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "平台管理");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getCode(), "更新平台管理数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "更新平台管理数据");
 
         return Boolean.TRUE;
     }
@@ -199,7 +199,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         // 删除日志数据
         log.info("删除 开始删除平台管理日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除平台管理数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "删除平台管理数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -236,7 +236,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             updateById(entity);
             // 日志
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "启用【平台管理】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "启用【平台管理】数据");
         } else {
             ServiceException.runError("该【平台管理】数据已启用，无需重复操作");
         }
@@ -250,7 +250,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             updateById(entity);
             // 日志
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "禁用【平台管理】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "禁用【平台管理】数据");
         } else {
             ServiceException.runError("该【平台管理】数据已禁用，无需重复操作");
         }
