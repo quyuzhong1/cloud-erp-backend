@@ -2459,6 +2459,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     * @return void
     */
     private void autoPushInvoice (SoB2cEntity entity,OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse,LogisticsChannelEntity logisticsChannelEntity,ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        log.warn("推送发票，参数为=========={}", JSONUtil.toJsonStr(createOutboundReq));
         //物流渠道
         if (ObjectUtil.isEmpty(logisticsChannelEntity) || !logisticsChannelEntity.getIsSendInvoice()) {
             return;
@@ -2807,13 +2808,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Async("omsErpExecutor")
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NEVER)
     public void asyncThirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, SoB2cLogisticsEntity logisticsEntity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
+        log.warn("B2C订单【{}】下出库单，第三方仓【{}】，物流单【{}】", entity.getCode(), warehouseId, logisticsEntity.getCode());
         try {
             //下出库单命令
             soB2cService.thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasProviderWarehouse, detailList, newChannelId);
             //删除异常订单信息
-            soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
-            this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+//            soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
+//            this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         } catch (Exception e) {
             log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -2834,6 +2837,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_THIRD_DELIVERY_ORDER_KEY,keyName = "logisticsEntity.mainId",waiteTime = 60)
     public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, SoB2cLogisticsEntity logisticsEntity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
+        entity = soB2cService.getById(entity.getId());
+        if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())){
+            log.warn("B2C订单【{}】已发货，不进行出库单处理", entity.getCode());
+            //已发货不进行处理
+            return;
+        }
         //判断渠道是否是海外仓的渠道，否的话判断新的渠道是否是海外仓渠道，否则报错
         Boolean isCheckNewChannel = false;
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
@@ -2999,9 +3008,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         autoPushInvoice(entity, overseasProviderWarehouse, channelEntity,createOutboundReq);
 
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
-
+        log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(entity.getCode()));
         ApiResult<String> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq);
-        log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
+        log.warn("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String shippingOrderNo = apiResult.getData();
         if (StringUtils.isNotBlank(shippingOrderNo)) {
             this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
@@ -3021,9 +3030,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException("推送面单失败{}",uploadOrderLabelResponse.getMsg());
             }
         }
-
-        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
-        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+        this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
+//        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
+//        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         String msg = CharSequenceUtil.format("创建海外仓出库单成功，单号【{}】", shippingOrderNo);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
     }
@@ -3031,16 +3041,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
 //    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public ApiResult<String> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         //如果已存在发货单，不处理
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
-        if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())){
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             if (CharSequenceUtil.isBlank(entity.getShippingOrderNo())){
+                log.warn("订单{}已存在待处理的发货单，但是三方仓发货单为空", entity.getCode());
                 //获取三方仓已生成的发货单id
                 ThirdWarehouseQueryOutboundReq queryOutboundReq = new ThirdWarehouseQueryOutboundReq();
                 queryOutboundReq.setErpOrderCode(thirdWarehouseDeliveryEntity.getCode());
                 queryOutboundReq.setThirdWarehouseProvideCode(createOutboundReq.getThirdWarehouseProvideCode());
                 queryOutboundReq.setAuthId(createOutboundReq.getAuthId());
                 ApiResult<String> stringApiResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
+                log.warn("查询三方仓发货单结果:{}", JSONUtil.toJsonStr(stringApiResult));
                 if (stringApiResult.isSuccess()){
                     return ApiResult.success(stringApiResult.getData());
                 }
@@ -3050,13 +3063,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         try {
-            String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
-            createOutboundReq.setReferenceNo(code);
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                log.warn("订单{}已存在待处理的发货单，使用已存在的发货单", entity.getCode());
+                createOutboundReq.setReferenceNo(thirdWarehouseDeliveryEntity.getCode());
+            }else {
+                String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
+                log.warn("新增三方仓发货单成功，发货单code:{}", code);
+                createOutboundReq.setReferenceNo(code);
+            }
         }catch (Exception e){
             log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
             throw new ServiceException("生成三方仓发货单异常", e.getMessage());
         }
+        log.warn("调用三方仓出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
+        log.warn("调用三方仓出库单结果:{}", JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
@@ -3075,6 +3096,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param entity
      */
     public String addThirdWarehouseDelivery(ThirdWarehouseCreateOutboundReq createOutboundReq, String warehouseId, SoB2cEntity entity) {
+        log.warn("新增三方仓发货单请求:销售订单:{} 请求参数{}", JSONUtil.toJsonStr(entity), JSONUtil.toJsonStr(createOutboundReq));
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         thirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
         thirdWarehouseDeliveryEntity.setSoId(entity.getId());
