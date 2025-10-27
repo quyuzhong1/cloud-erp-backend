@@ -170,18 +170,42 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     public List<AssetStocktakingPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetStocktakingPlanDTO.PagingParamDTO searchParam = new AssetStocktakingPlanDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        
+        // 使用一个SQL查询获取所有状态的统计数量
         List<AssetStocktakingPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
+        
+        // 设置tabFlagName
+        list.stream().forEach(e -> {
+            e.setTabFlagName(ApproveStatusEnum.getTableName(e.getTabFlag()));
+        }); 
+        
+        // 获取状态列表，确保所有状态都存在
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetStocktakingPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        
+        // 不存在的状态赋值为0
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetStocktakingPlanDTO.TabListDTO(status, 0));
-        }
+                AssetStocktakingPlanDTO.TabListDTO newTab = new AssetStocktakingPlanDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
+                list.add(newTab);
+            }
         });
-        list.add(new AssetStocktakingPlanDTO.TabListDTO("all", list.stream().mapToInt(AssetStocktakingPlanDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        
+        // 按照指定顺序排序：待提交、审核中、已审核、不通过
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approve", "reject");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
+        // 计算合计数量并添加"全部"标签
+        int totalCount = list.stream().mapToInt(AssetStocktakingPlanDTO.TabListDTO::getCount).sum();
+        AssetStocktakingPlanDTO.TabListDTO allTab = new AssetStocktakingPlanDTO.TabListDTO("all", "全部", totalCount);
+        list.add(0, allTab); // 添加到第一位
+        
         return list;
     }
 
