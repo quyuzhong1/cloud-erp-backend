@@ -105,6 +105,36 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
+        assetAcceptEntity.setSourceCode(addDTO.getPurchaseCode());
+
+        // 如果填写了模具采购订单号，查询订单信息并设置来源（只在新增时且有订单号时才查询）
+        if (StringUtils.isNotBlank(addDTO.getPurchaseCode())) {
+            try {
+                ApiResult<com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult = 
+                    assetPurchaseOrderFeign.getByCode(addDTO.getPurchaseCode());
+                
+                if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
+                    com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
+                    
+                    // 设置来源信息
+                    assetAcceptEntity.setSourceId(orderData.getId());
+                    assetAcceptEntity.setSourceCode(orderData.getCode());
+                    assetAcceptEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+                    
+                    // 设置供应商信息（如果DTO中没有提供，则从订单中获取）
+                    if (StringUtils.isBlank(addDTO.getSupplierId()) && StringUtils.isNotBlank(orderData.getSupplierId())) {
+                        assetAcceptEntity.setSupplierId(orderData.getSupplierId());
+                        assetAcceptEntity.setSupplierName(orderData.getSupplierName());
+                    }
+                } else {
+                    log.warn("根据模具采购订单号{}查询订单失败: {}", 
+                        addDTO.getPurchaseCode(), 
+                        orderResult != null ? orderResult.getMsg() : "返回结果为空");
+                }
+            } catch (Exception e) {
+                log.error("查询模具采购订单{}失败", addDTO.getPurchaseCode(), e);
+            }
+        }
 
         // 数据处理
         handleData(assetAcceptEntity);
@@ -1448,12 +1478,58 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         for (Map.Entry<String, List<AssetAcceptExcelDTO>> entry : collect.entrySet()) {
             List<AssetAcceptExcelDTO> value = entry.getValue();
             AssetAcceptExcelDTO importMainDTO = value.get(0);
-            AssetAcceptDTO.AddDTO addDTO = new AssetAcceptDTO.AddDTO();
-            BeanMapperUtils.copy(importMainDTO, addDTO);
             
-            // 设置验收日期
-            addDTO.setAcceptDate(importMainDTO.getAcceptDate());
-            addDTO.setPurchaseCode(importMainDTO.getPurchaseCode());
+            try {
+                AssetAcceptDTO.AddDTO addDTO = new AssetAcceptDTO.AddDTO();
+                BeanMapperUtils.copy(importMainDTO, addDTO);
+                
+                // 设置验收日期
+                addDTO.setAcceptDate(importMainDTO.getAcceptDate());
+                // 模具采购订单号：如果为空则设置默认值（因为是必填字段）
+                addDTO.setPurchaseCode(StringUtils.isNotBlank(importMainDTO.getPurchaseCode()) 
+                    ? importMainDTO.getPurchaseCode() 
+                    : "手动创建");
+
+            // 如果填写了模具采购订单号，查询订单信息并设置来源
+            Map<String, String> skuToDetailIdMap = new HashMap<>();
+            if (StringUtils.isNotBlank(importMainDTO.getPurchaseCode())) {
+                try {
+                    ApiResult<com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult = 
+                        assetPurchaseOrderFeign.getByCode(importMainDTO.getPurchaseCode());
+                    
+                    if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
+                        com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
+                        
+                        // 设置来源信息
+                        addDTO.setSourceId(orderData.getId());
+                        addDTO.setSourceCode(orderData.getCode());
+                        addDTO.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+                        
+                        // 设置供应商信息
+                        if (StringUtils.isNotBlank(orderData.getSupplierId())) {
+                            addDTO.setSupplierId(orderData.getSupplierId());
+                            addDTO.setSupplierName(orderData.getSupplierName());
+                        }
+                        
+                        // 构建SKU到明细ID的映射
+                        if (CollUtil.isNotEmpty(orderData.getDetailList())) {
+                            skuToDetailIdMap = orderData.getDetailList().stream()
+                                .filter(detail -> StringUtils.isNotBlank(detail.getSkuNo()))
+                                .collect(Collectors.toMap(
+                                    detail -> detail.getSkuNo(),
+                                    detail -> detail.getId(),
+                                    (existing, replacement) -> existing
+                                ));
+                        }
+                    } else {
+                        log.warn("根据模具采购订单号{}查询订单失败: {}", 
+                            importMainDTO.getPurchaseCode(), 
+                            orderResult != null ? orderResult.getMsg() : "返回结果为空");
+                    }
+                } catch (Exception e) {
+                    log.error("查询模具采购订单{}失败", importMainDTO.getPurchaseCode(), e);
+                }
+            }
             addDTO.setIsNeedSeal(importMainDTO.getIsNeedSeal());
             addDTO.setAcceptOrgId(importMainDTO.getAcceptOrgId());
             addDTO.setAcceptOrgName(importMainDTO.getAcceptOrgName());
@@ -1461,7 +1537,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             addDTO.setAcceptUserName(importMainDTO.getAcceptUserName());
             addDTO.setAcceptDeptId(importMainDTO.getAcceptDeptId());
             addDTO.setAcceptDeptName(importMainDTO.getAcceptDeptName());
-            addDTO.setAcceptDesc(importMainDTO.getAcceptDesc());
+            // 验收说明：如果为空则设置默认值（因为是必填字段）
+            addDTO.setAcceptDesc(StringUtils.isNotBlank(importMainDTO.getAcceptDesc()) 
+                ? importMainDTO.getAcceptDesc() 
+                : "资产验收");
+            
+            // 如果没有设置供应商信息（查询订单失败或未填订单号），则标记为错误
+            if (StringUtils.isBlank(addDTO.getSupplierId())) {
+                String errorMsg = "无法获取供应商信息，请确保模具采购订单号正确且订单已审核通过";
+                for (AssetAcceptExcelDTO dto : value) {
+                    dto.setErrorMsg(errorMsg);
+                    errorList2.add(dto);
+                }
+                continue; // 跳过这组数据
+            }
 
             // 构建验收人员列表
             List<AssetAcceptPersonDTO.AddDTO> personList = new ArrayList<>();
@@ -1506,6 +1595,12 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             List<AssetAcceptDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (AssetAcceptExcelDTO importDTO : value) {
                 AssetAcceptDetailDTO.AddDTO detailDTO = new AssetAcceptDetailDTO.AddDTO();
+                
+                // 根据SKU编号从映射中获取来源明细ID
+                if (StringUtils.isNotBlank(importDTO.getSkuNo()) && skuToDetailIdMap.containsKey(importDTO.getSkuNo())) {
+                    detailDTO.setSourceDetailId(skuToDetailIdMap.get(importDTO.getSkuNo()));
+                }
+                
                 detailDTO.setSkuId(importDTO.getSkuId());
                 detailDTO.setProductName(importDTO.getProductName());
                 detailDTO.setAcceptQty(importDTO.getAcceptQty());
@@ -1522,8 +1617,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             }
             addDTO.setDetailList(detailList);
 
-            if (ImportTypeEnum.ADD.getCode().equals(importType)) {
-                bean.add(addDTO);
+                if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                    bean.add(addDTO);
+                }
+            } catch (Exception e) {
+                // 保存失败，添加到错误列表
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && errorMsg.length() > 200) {
+                    errorMsg = errorMsg.substring(0, 200);
+                }
+                for (AssetAcceptExcelDTO dto : value) {
+                    dto.setErrorMsg(errorMsg);
+                    errorList2.add(dto);
+                }
+                log.error("导入第{}条资产验收单失败", importMainDTO.getSerialNumber(), e);
             }
         }
     }

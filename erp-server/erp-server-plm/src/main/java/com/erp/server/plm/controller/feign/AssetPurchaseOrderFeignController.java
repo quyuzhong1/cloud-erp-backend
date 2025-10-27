@@ -46,5 +46,17 @@ public class AssetPurchaseOrderFeignController extends BaseController {
     public ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO) {
         return success(assetPurchaseOrderService.selectList(paramDTO));
     }
+
+    /**
+     * 根据订单编号查询资产采购订单（用于导入）
+     * 查询未删除且审核通过的订单及其明细
+     *
+     * @param code 订单编号
+     * @return 资产采购订单信息（包含明细）
+     */
+    @PostMapping("/getByCode")
+    public ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> getByCode(@RequestBody String code) {
+        return success(assetPurchaseOrderService.getByCode(code));
+    }
 }
 
