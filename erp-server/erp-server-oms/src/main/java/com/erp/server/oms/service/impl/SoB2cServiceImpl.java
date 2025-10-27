@@ -88,6 +88,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
+import com.erp.model.tms.enums.LogisticsHandoverDocTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -406,6 +407,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
     private FileFeign fileFeign;
+
+    @Resource
+    private PackagePlanService packagePlanService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2039,7 +2043,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private BatchResultDTO getWildberrisLogistics(SoB2cEntity entity, Boolean isDelivery) {
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
         if(CollectionUtils.isNotEmpty(workflowTaskRecordEntities)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "该订单已生成组包计划任务");
+            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+            addTaskDTO.setSourceId(entity.getId());
+            addTaskDTO.setSourceCode(entity.getCode());
+            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
+            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "重试获取物流信息");
         }
         //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
@@ -3040,6 +3054,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //通过订单处理规则处理参数
         Map<String, Object> map = this.getRuleOrderHandleMap(entity, logisticsChannelId, receiver);
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
+
+        //查询交接文件配置
+        String handoverLabelUrl = "";
+        if(StringUtils.isNotBlank(channelEntity.getHandoverDocType())){
+            if(LogisticsHandoverDocTypeEnum.HANDOVER_PACKAGE.getCode().equals(channelEntity.getHandoverDocType())){
+                PackagePlanEntity packagePlanEntity = packagePlanService.getBySoId(entity.getId());
+                if(Objects.isNull(packagePlanEntity) || StringUtils.isBlank(packagePlanEntity.getHandoverLabelUrl())){
+                    throw new ServiceException("交接文件不存在，请先生成交接文件");
+                }
+                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
+
+                handoverLabelUrl = domain + packagePlanEntity.getHandoverLabelUrl();
+            }
+        }
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
             String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();
@@ -3061,9 +3089,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             createOutboundReq.setAttach(Collections.singletonList(attach));
             createOutboundReq.setOnlineFlag(true);
             createOutboundReq.setLabelData(logisticsLabelBase64);
-            //极风需要在线url
+            //生成在线url
             if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
                 String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")),entity.getCode()+".pdf",new HashMap<>());
                 String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
                 createOutboundReq.setLabelUrl(domain+path);
@@ -3084,17 +3113,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
         }
         //上传面单
-        if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel() && PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())){
+        if(Objects.nonNull(channelEntity.getIsPushLabel())
+                && channelEntity.getIsPushLabel()
+                && (
+                PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())
+                || PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())
+        )){
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
             ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq = new ThirdWarehouseUploadOrderLabelReq();
             uploadOrderLabelReq.setOrderCode(shippingOrderNo);
             uploadOrderLabelReq.setTrackNo(soB2cLogisticsEntity.getCode());
+            uploadOrderLabelReq.setFileUrlList(Arrays.asList(createOutboundReq.getLabelUrl()));
             uploadOrderLabelReq.setFileIdList(Collections.singletonList(createOutboundReq.getAttach().get(0).getAttachId()));
             uploadOrderLabelReq.setAuthId(overseasProviderWarehouse.getMainId());
             uploadOrderLabelReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabelResponse = thirdWarehouseFeign.uploadOrderLabel(uploadOrderLabelReq);
             if(!uploadOrderLabelResponse.isSuccess()){
                 throw new ServiceException("推送面单失败{}",uploadOrderLabelResponse.getMsg());
+            }
+        }
+        if(StringUtils.isNotBlank(channelEntity.getHandoverDocType())&& LogisticsHandoverDocTypeEnum.HANDOVER_PACKAGE.getCode().equals(channelEntity.getHandoverDocType())
+                && PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())){
+            ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq = new ThirdWarehouseUploadHandoverFileReq();
+            uploadHandoverFileReq.setOrderCode(shippingOrderNo);
+            uploadHandoverFileReq.setDictPlatform(entity.getDictPlatform());
+            uploadHandoverFileReq.setFileUrl(handoverLabelUrl);
+            int lastSlashIndex = handoverLabelUrl.lastIndexOf("/");
+            // 截取最后一个斜杠后面的内容
+            String fileName = handoverLabelUrl.substring(lastSlashIndex + 1);
+            uploadHandoverFileReq.setFileName(fileName);
+            uploadHandoverFileReq.setOwnerCode(overseasProviderWarehouse.getOwnerCode());
+            uploadHandoverFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+            uploadHandoverFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+            ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile = thirdWarehouseFeign.uploadHandoverFile(uploadHandoverFileReq);
+            if(!uploadHandoverFile.isSuccess()){
+                throw new ServiceException("推送交接文件失败{}",uploadHandoverFile.getMsg());
             }
         }
 

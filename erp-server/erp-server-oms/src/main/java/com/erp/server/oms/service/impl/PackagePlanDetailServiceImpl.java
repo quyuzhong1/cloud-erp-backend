@@ -13,18 +13,25 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.PackagePlanDetailDTO;
 import com.erp.model.oms.entity.PackagePlanDetailEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.PackagePlanDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.PackagePlanDetailService;
+import com.erp.server.oms.service.SoB2cLogisticsService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 组包计划明细 服务实现类
@@ -38,6 +45,8 @@ import java.util.Optional;
 public class PackagePlanDetailServiceImpl extends SuperServiceImpl<PackagePlanDetailMapper, PackagePlanDetailEntity> implements PackagePlanDetailService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -111,9 +120,25 @@ public class PackagePlanDetailServiceImpl extends SuperServiceImpl<PackagePlanDe
     @Override
     public List<PackagePlanDetailEntity> getByMainIds(List<String> ids) {
         if (CollUtil.isEmpty(ids)){
-            return null;
+            return Collections.emptyList();
         }
-        return this.lambdaQuery().in(PackagePlanDetailEntity::getMainId, ids).list();
+        List<PackagePlanDetailEntity> list = this.lambdaQuery().in(PackagePlanDetailEntity::getMainId, ids).list();
+        if (CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> soIds = list.stream().map(PackagePlanDetailEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIds);
+        if (CollUtil.isEmpty(soB2cLogisticsEntities)){
+            return list;
+        }
+        list.forEach(e -> {
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(f -> f.getMainId().equals(e.getSoId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cLogisticsEntity)){
+                e.setTransportNo(soB2cLogisticsEntity.getCode());
+                e.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+            }
+        });
+        return list;
     }
 
     @Override
