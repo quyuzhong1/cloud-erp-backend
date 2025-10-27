@@ -1144,7 +1144,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         //审核人不能和创建人一样
         String createUserId = "" + execution.getVariable("createUserId");
         userList.stream().filter(obj -> CharSequenceUtil.equals(createUserId,obj.getUserId())).findFirst().ifPresent(obj -> {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,createUserId);
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,obj.getUserName());
         });
 
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
