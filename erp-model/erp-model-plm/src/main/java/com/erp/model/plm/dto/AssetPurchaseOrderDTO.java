@@ -110,7 +110,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
         * 审核时间
         */
-        private LocalDateTime approveUserTime;
+        private LocalDateTime approveTime;
 
         /**
         * 单据状态
@@ -298,7 +298,10 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private BigDecimal acceptQty;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -349,6 +352,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 单据状态
         */
         private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
@@ -574,7 +582,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<AssetNoticeDTO.AddDTO> successList;
+        private List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList;
 
         /**
          * 错误url
