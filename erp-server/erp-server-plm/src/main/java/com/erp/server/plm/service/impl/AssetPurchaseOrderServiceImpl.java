@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
@@ -28,11 +29,10 @@ import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -125,6 +125,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
     @Autowired
     private MoldInfoService moldInfoService;
+
+    @Autowired
+    private ProductDetailService productDetailService;
 
     @Autowired
     private ProductDetailMapper productDetailMapper;
@@ -1056,6 +1059,102 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
     }
 
+    @Override
+    public Boolean exportPurchaseContract(String id, HttpServletResponse response) {
+
+        AssetPurchaseOrderDTO.ExportPurchaseContractDTO contractDTO = new AssetPurchaseOrderDTO.ExportPurchaseContractDTO();
+        AssetPurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+
+        contractDTO.setCreateTime(purchaseOrderEntity.getCreateTime());
+        contractDTO.setApproveUserName(purchaseOrderEntity.getApproveUserName());
+        contractDTO.setCode(purchaseOrderEntity.getCode());
+        contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
+
+        //摘要
+        List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+        contractDTO.setSettleMethod(settleDictMap.get("supplierPayMode"));
+
+        //供应商
+        AssetPurchaseOrderSupplierEntity supplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, purchaseOrderEntity.getId())
+                .one();
+        contractDTO.setSupplierName(supplierEntity.getSupplierName());
+        List<AssetPurchaseOrderDetailEntity> purchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId,purchaseOrderEntity.getId())
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE)
+                .list();
+
+        //计算总数
+        BigDecimal sum = purchaseOrderDetailEntityList.stream()
+                .map(AssetPurchaseOrderDetailEntity::getPurchaseQty)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumQty(sum);
+
+        //计算总价
+        BigDecimal sumTaxAmount = purchaseOrderDetailEntityList.stream()
+                .map(AssetPurchaseOrderDetailEntity::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumTaxAmount(sumTaxAmount);
+
+        List<AssetPurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
+        List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(AssetPurchaseOrderDetailEntity::getAssetId).collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.listSkuProductByIds(skuIdList);
+        Integer sort = MathUtil.ZERO;
+        for (AssetPurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
+            sort++;
+            SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(detailEntity.getAssetId())).findFirst().orElse(new SkuVO());
+            AssetPurchaseOrderDTO.PurchaseContractDetailDTO detailDTO = new AssetPurchaseOrderDTO.PurchaseContractDetailDTO();
+            detailDTO.setSort(sort);
+            detailDTO.setImg("");
+            detailDTO.setSkuNo(detailEntity.getAssetCode());
+            detailDTO.setProductName(skuVO.getSkuName());
+            detailDTO.setRemark(detailEntity.getRemark());
+            BigDecimal qty = detailEntity.getPurchaseQty();
+            detailDTO.setQty(qty);
+            //含税单价
+            BigDecimal taxPrice = detailEntity.getTaxPrice();
+            detailDTO.setTaxPrice(taxPrice);
+            //0.0900
+            BigDecimal taxRate = detailEntity.getTaxRate();
+            BigDecimal flagTaxRate = BigDecimal.ZERO;
+            if (Objects.nonNull(taxRate)) {
+                flagTaxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100).setScale(2);
+            }
+            detailDTO.setTaxRate(flagTaxRate + "%");
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            //未税单价
+            BigDecimal price = BigDecimal.ZERO;
+            if (Objects.nonNull(taxPrice)) {
+                price = MathUtil.divide(taxPrice, multiplyTax);
+            }
+            detailDTO.setPrice(price);
+            //未税金额
+            detailDTO.setTotalAmount(MathUtil.multiplyWithTwo(price, qty));
+            //单位
+            detailDTO.setUnit(skuVO.getUnitName());
+            //含税金额
+            detailDTO.setTaxAmount(detailEntity.getTotalAmount());
+            contractDetailList.add(detailDTO);
+        }
+        BigDecimal sumAmount = contractDetailList.stream().map(AssetPurchaseOrderDTO.PurchaseContractDetailDTO::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumAmount(sumAmount);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/assetPurchaseContractExport.xlsx";
+        String name = "采购单网采合同";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+
+        try {
+            new ExcelPrintUtils().patchExport(contractDetailList, contractDTO, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("网采合同导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(
             List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList,
             String purchaseOrgId,
@@ -1064,7 +1163,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         return moldDetailImportDTOList.stream()
                 .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(purchaseOrgId)
-                        .skuId(moldDetail.getAssetId()) // 假设 assetId 对应 skuId
+                        .skuId(moldDetail.getAssetId())
                         .supplierId(supplierId)
                         .qty(moldDetail.getPurchaseQty() != null ? moldDetail.getPurchaseQty().intValue() : null)
                         .build())
