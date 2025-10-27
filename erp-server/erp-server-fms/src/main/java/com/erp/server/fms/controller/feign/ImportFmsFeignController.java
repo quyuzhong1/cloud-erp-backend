@@ -3,6 +3,7 @@ package com.erp.server.fms.controller.feign;
 import com.common.business.dto.base.BaseDTO;
 import com.erp.server.fms.service.AssetAcceptService;
 import com.erp.server.fms.service.AssetCardService;
+import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.AssetStocktakingPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,9 @@ import javax.annotation.Resource;
 public class ImportFmsFeignController {
 
     @Resource
+    private AssetLocationService assetLocationService;
+
+    @Resource
     private AssetAcceptService assetAcceptService;
     
     @Resource
@@ -30,6 +34,21 @@ public class ImportFmsFeignController {
     
     @Resource
     private AssetStocktakingPlanService assetStocktakingPlanService;
+
+    /**
+     * 导入资产位置
+     * @param dto 导入参数
+     */
+    @PostMapping("/assetLocation")
+    public void importAssetLocation(@RequestBody BaseDTO.ImportDTO dto) {
+        log.info("开始导入资产位置，任务ID：{}", dto.getTaskId());
+        try {
+            assetLocationService.importAssetLocation(dto);
+        } catch (Exception e) {
+            log.error("导入资产位置失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            throw e;
+        }
+    }
 
     /**
      * 导入资产验收表

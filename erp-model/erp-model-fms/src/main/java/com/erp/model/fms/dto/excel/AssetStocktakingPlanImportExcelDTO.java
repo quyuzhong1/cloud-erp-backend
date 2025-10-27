@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
@@ -24,6 +25,7 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 资产组织ID
      */
+    @ExcelIgnore
     private String assetOrgId;
 
     /**
@@ -54,6 +56,7 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 使用部门ID（多个用逗号分隔）
      */
+    @ExcelIgnore
     private String useDeptIds;
 
     /**
@@ -65,6 +68,7 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 资产位置ID（多个用逗号分隔）
      */
+    @ExcelIgnore
     private String assetLocationIds;
 
     /**
@@ -82,11 +86,13 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 创建人ID
      */
+    @ExcelIgnore
     private String createUserId;
 
     /**
      * 创建人姓名
      */
+    @ExcelIgnore
     private String createUserName;
 
     /**

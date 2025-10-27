@@ -578,6 +578,11 @@ public class AssetAcceptDTO implements Serializable {
         private Boolean selected = false;
 
         /**
+         * 来源单据明细ID（模具采购订单明细ID）
+         */
+        private String sourceDetailId;
+
+        /**
          * skuId编码
          */
         private String skuId;
@@ -631,6 +636,7 @@ public class AssetAcceptDTO implements Serializable {
          * 模具名称（如果来源于模具采购订单）
          */
         private String moldName;
+        
     }
 
     /**
