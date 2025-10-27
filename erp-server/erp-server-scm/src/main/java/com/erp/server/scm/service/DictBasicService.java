@@ -2,6 +2,7 @@ package com.erp.server.scm.service;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -18,7 +19,10 @@ import java.util.List;
  * @since 2023-03-16
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
-
+	
+	boolean saveJsonObject(JSONObject jsonObject);
+	
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
     
     /**
      * 保存或者修改字典信息
