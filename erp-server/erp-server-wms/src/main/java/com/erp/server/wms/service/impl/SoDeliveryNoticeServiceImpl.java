@@ -685,17 +685,22 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException("只有未作废和审核中的数据允许审核");
         }
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException("未生成装箱任务，不允许审核");
-        }
-        //检查出库配置，是否需要状态
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
-        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
-            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
-                throw new ServiceException("{已装箱+全部称重}才能审核通过");
+
+        // 非展会订单需要执行
+        if(!Objects.equals(entity.getSoInfoSourceType(),SourceTypeEnum.EXHIBITION_ORDER.getCode())){
+            PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
+            if (Objects.isNull(taskEntity)) {
+                throw new ServiceException("未生成装箱任务，不允许审核");
+            }
+            //检查出库配置，是否需要状态
+            CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
+            if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
+                if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
+                    throw new ServiceException("{已装箱+全部称重}才能审核通过");
+                }
             }
         }
+
         //调用审核流程
         approveProcess(entity, new ApproveOneDTO(entity.getId(), type, comment));
         //操作日志
@@ -753,14 +758,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
 
-            //销售通知明细信息
-            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
-            if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99044);
-            }
+            // 非展会订单需要执行
+            if(!Objects.equals(entity.getSoInfoSourceType(),SourceTypeEnum.EXHIBITION_ORDER.getCode())){
+                //销售通知明细信息
+                List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
+                if (CollectionUtils.isEmpty(detailList)) {
+                    throw new ServiceException(ApiError.ERROR_99044);
+                }
 
-            //针对拣货单进行库存的多退少补
-            handleApproveVirtualInventoryQty(entity);
+                //针对拣货单进行库存的多退少补
+                handleApproveVirtualInventoryQty(entity);
+            }
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -817,7 +825,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //撤销现有流程
-        workflowFeign.cancelProcess(ids);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoDeliveryNoticeEntity::getId, ids)
@@ -2466,15 +2481,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         try {
-            String id = soDeliveryNoticeEntity.getId();
-//            approve(soDeliveryNoticeEntity,ApproveTypeEnum.PASS.getStatus(),"展会订单自动审核通过", Boolean.FALSE);
             //审核通过
-            lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
-                    .eq(SoDeliveryNoticeEntity::getId, id)
-                    .update();
-            //操作日志
+            SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(soDeliveryNoticeEntity.getId());
+            entity.setSoInfoSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
             String comment = "展会订单自动审核通过";
-            operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.PASS.getName(),soDeliveryNoticeEntity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), id, "审核操作");
+            approve(entity,ApproveTypeEnum.PASS.getStatus(), comment,Boolean.FALSE);
         }catch (Exception e) {
             log.error("发货通知单审批通过异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
