@@ -16,6 +16,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
@@ -26,6 +27,7 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.AssetNoticeExcelListener;
 import com.erp.server.plm.mapper.AssetNoticeDetailMapper;
+import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -100,6 +102,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private AssetNoticeDetailMapper assetNoticeDetailMapper;
+
+    @Autowired
+    private ProductDetailMapper productDetailMapper;
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
@@ -696,16 +701,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         //查询所有审核通过的模具
-        LambdaQueryWrapper<MoldInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(MoldInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
-                .eq(MoldInfoEntity::getIsDeleted,Boolean.FALSE)
-                .eq(MoldInfoEntity::getInvalidStatus,Boolean.FALSE);
-        List<MoldInfoEntity> moldList = moldInfoService.list(lambdaQueryWrapper);
+        List<SkuVO> skuVOList = productDetailMapper.listAssetProduct();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(moldList,userList,deptList,companyList);
+        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(skuVOList,userList,deptList,companyList);
 
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

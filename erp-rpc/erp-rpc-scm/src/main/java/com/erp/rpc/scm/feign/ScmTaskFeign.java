@@ -479,4 +479,28 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/listSkuBySupplierIds")
     List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds);
+
+    /**
+     * 获取所有供应商
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplier")
+    List<SupplierEntity> listSupplier();
+
+    /**
+     * 获取所有供应商联系人
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplierContact")
+    List<SupplierContactEntity> listSupplierContact();
+
+    /**
+     * 获取所有供应商账户信息
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplierAccount")
+    List<SupplierAccountEntity> listSupplierAccount();
 }

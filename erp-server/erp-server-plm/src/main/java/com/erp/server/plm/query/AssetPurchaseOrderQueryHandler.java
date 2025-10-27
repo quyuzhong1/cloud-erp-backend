@@ -2,10 +2,7 @@ package com.erp.server.plm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
 
 /**
  * @Author: wtr

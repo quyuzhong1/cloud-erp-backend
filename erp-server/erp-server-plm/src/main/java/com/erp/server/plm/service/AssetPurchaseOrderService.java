@@ -1,14 +1,12 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.dto.AssetNoticeDetailDTO;
+
+import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -181,5 +179,7 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
      * @return 明细列表
      */
     List<AssetPurchaseOrderDTO.DetailForAcceptDTO> queryDetailsForAccept(String assetPurchaseOrderId);
+
+    void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
 }

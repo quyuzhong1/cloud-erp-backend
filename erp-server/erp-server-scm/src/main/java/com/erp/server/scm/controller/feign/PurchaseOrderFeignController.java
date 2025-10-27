@@ -1,9 +1,9 @@
 package com.erp.server.scm.controller.feign;
 
-
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -14,10 +14,8 @@ import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,7 +49,7 @@ public class PurchaseOrderFeignController {
     private SalesDemandService salesDemandService;
 
     @Resource
-    private PurchaseApplicationService purchaseApplicationService;
+    private SupplierAccountService supplierAccountService;
 
     /**
      * 根据id查询采购订单
@@ -555,5 +553,41 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listSkuBySupplierIds")
     public List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds) {
         return purchaseOrderService.listSkuBySupplierIds(supplierIds);
+    }
+
+    /**
+     * 获取所有供应商
+     * @return
+     */
+    @PostMapping("/listSupplier")
+    public List<SupplierEntity> listSupplier() {
+        return supplierService.lambdaQuery()
+                .eq(SupplierEntity::getIsDeleted, Boolean.FALSE)
+                .eq(SupplierEntity::getDisabled, Boolean.FALSE)
+                .eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .list();
+    }
+
+    /**
+     * 获取所有供应商联系人
+     * @return
+     */
+    @PostMapping("/listSupplierContact")
+    public List<SupplierContactEntity> listSupplierContact() {
+        return supplierContactService.lambdaQuery()
+                .eq(SupplierContactEntity::getIsDeleted, Boolean.FALSE)
+                .eq(SupplierContactEntity::getDisabled, Boolean.FALSE)
+                .list();
+    }
+
+    /**
+     * 获取所有供应商联系人
+     * @return
+     */
+    @PostMapping("/listSupplierAccount")
+    public List<SupplierAccountEntity> listSupplierAccount() {
+        return supplierAccountService.lambdaQuery()
+                .eq(SupplierAccountEntity::getIsDeleted, Boolean.FALSE)
+                .list();
     }
 }

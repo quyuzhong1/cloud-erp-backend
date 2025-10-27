@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -330,5 +332,188 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class MoldImportDTO {
+        /**
+         * 序号(相同的为一张单)
+         */
+        private String serialNumber;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源单号
+         */
+        private String sourceType;
+
+        /**
+         * 采购日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 供应商
+         */
+        private AssetPurchaseOrderDetailDTO.SupplierImportDTO supplierImportDTO;
+
+        /**
+         * 明细
+         */
+        private List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class MoldDetailImportDTO {
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 模具id
+         */
+        private String assetId;
+
+        /**
+         * 模具编码
+         */
+        private String assetCode;
+
+        /**
+         * 模具编码
+         */
+        private String assetName;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 采购数量
+         */
+        private BigDecimal  purchaseQty;
+
+        /**
+         * 备注
+         */
+        private String  remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierImportDTO{
+
+        /**
+         * 供应商id
+         */
+        private String SupplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String SupplierName;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 供应商联系人id
+         */
+        private String contactId;
+
+        /**
+         * 币种
+         */
+        private String payCurrency;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String contactName;
+
+        /**
+         * 供应商电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 账户名称
+         */
+        private String payee;
+
+        /**
+         * 收款银行
+         */
+        private String bankName;
+
+        /**
+         * 银行账号
+         */
+        private String bankAccount;
+    }
 }
