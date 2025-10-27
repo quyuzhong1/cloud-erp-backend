@@ -187,8 +187,9 @@ public enum ModuleTypeEnum {
     ASSET_DISPOSAL("152", "资产处置单"),
     ASSET_NOTICE("153","资产通知单"),
     ASSET_PURCHASE_ORDER("154","资产采购单"),
-    ASSET_PURCHASE_CHANGE("155","资产采购变更单")
+    ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
     ;
+
 
 
 
