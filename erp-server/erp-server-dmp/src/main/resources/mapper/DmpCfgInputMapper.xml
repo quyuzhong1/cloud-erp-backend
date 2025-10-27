@@ -90,7 +90,7 @@
         left join dmp_basic_system dbs on dbs.id = dci.system_id
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and dci.s_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
