@@ -1240,6 +1240,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             // 转换数据并计算数量
             for (com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailForAcceptDTO detail : apiResult.getData()) {
                 AssetAcceptDTO.AddDetailItemDTO item = new AssetAcceptDTO.AddDetailItemDTO();
+                item.setSourceDetailId(detail.getId()); // 设置来源单据明细ID（模具采购订单明细ID）
                 item.setSkuId(detail.getSkuId());
                 item.setSkuNo(detail.getSkuNo());
                 item.setProductName(detail.getProductName());

@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
@@ -76,6 +77,7 @@ public class AssetCardImportExcelDTO {
     /**
      * 开始使用日期
      */
+    @ExcelIgnore
     private LocalDate startUseDate;
 
     /**

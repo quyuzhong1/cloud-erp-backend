@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
@@ -22,11 +23,13 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 行号
      */
+    @ExcelIgnore
     private Integer rowNum;
 
     /**
      * 错误信息
      */
+    @ExcelIgnore
     private String errorMsg;
 
     /**
@@ -48,6 +51,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 验收日期
      */
+    @ExcelIgnore
     private LocalDate acceptDate;
 
     /**
@@ -67,6 +71,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 是否盖章
      */
+    @ExcelIgnore
     private Boolean isNeedSeal;
 
     /**
@@ -80,6 +85,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 验收组织ID
      */
+    @ExcelIgnore
     private String acceptOrgId;
 
     /**
@@ -92,6 +98,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 验收人ID
      */
+    @ExcelIgnore
     private String acceptUserId;
 
     /**
@@ -104,6 +111,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 验收部门ID
      */
+    @ExcelIgnore
     private String acceptDeptId;
 
     /**
@@ -123,6 +131,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 采购开发ID
      */
+    @ExcelIgnore
     private String purchaseDevId;
 
     /**
@@ -135,6 +144,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 质量工程师ID
      */
+    @ExcelIgnore
     private String qualityEngineerId;
 
     /**
@@ -147,6 +157,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 结构工程师ID
      */
+    @ExcelIgnore
     private String structureEngineerId;
 
     /**
@@ -159,6 +170,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 产品经理ID
      */
+    @ExcelIgnore
     private String productManagerId;
 
     /**
@@ -171,6 +183,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 项目经理ID
      */
+    @ExcelIgnore
     private String projectManagerId;
 
     /**
@@ -184,11 +197,13 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * SKU ID
      */
+    @ExcelIgnore
     private String skuId;
 
     /**
      * 产品名称
      */
+    @ExcelIgnore
     private String productName;
 
     /**
@@ -202,6 +217,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 验收数量
      */
+    @ExcelIgnore
     private Integer acceptQty;
 
     /**
@@ -215,6 +231,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 资产位置ID
      */
+    @ExcelIgnore
     private String assetLocationId;
 
     /**
@@ -228,6 +245,7 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 使用部门ID
      */
+    @ExcelIgnore
     private String useDeptId;
 
     /**
@@ -248,10 +266,12 @@ public class AssetAcceptExcelDTO implements Serializable {
     /**
      * 创建人ID
      */
+    @ExcelIgnore
     private String createUserId;
 
     /**
      * 创建人姓名
      */
+    @ExcelIgnore
     private String createUserName;
 }
