@@ -2717,9 +2717,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public void processThirdBarcode() {
+    public void processThirdBarcode(List<String> sourceCodeList) {
         //获取符合条件的列表
-        List<PackingTaskEntity> list = this.lambdaQuery().eq(PackingTaskEntity::getSourceType, PickingSourceTypeEnum.THIRD.getCode()).list();
+        List<PackingTaskEntity> list = this.lambdaQuery().eq(PackingTaskEntity::getSourceType, PickingSourceTypeEnum.THIRD.getCode())
+                .in(CollUtil.isNotEmpty(sourceCodeList), PackingTaskEntity::getSourceCode, sourceCodeList)
+                .list();
         if (CollUtil.isEmpty(list)){
             return;
         }
