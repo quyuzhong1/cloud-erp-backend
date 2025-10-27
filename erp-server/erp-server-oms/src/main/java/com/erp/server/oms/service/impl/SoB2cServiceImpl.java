@@ -3044,7 +3044,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         //如果已存在发货单，不处理
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
-        if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())){
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             if (CharSequenceUtil.isBlank(entity.getShippingOrderNo())){
                 log.warn("订单{}已存在待处理的发货单，但是三方仓发货单为空", entity.getCode());
                 //获取三方仓已生成的发货单id
@@ -3063,9 +3063,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         try {
-            String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
-            log.warn("新增三方仓发货单成功，发货单code:{}", code);
-            createOutboundReq.setReferenceNo(code);
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                log.warn("订单{}已存在待处理的发货单，使用已存在的发货单", entity.getCode());
+                createOutboundReq.setReferenceNo(thirdWarehouseDeliveryEntity.getCode());
+            }else {
+                String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
+                log.warn("新增三方仓发货单成功，发货单code:{}", code);
+                createOutboundReq.setReferenceNo(code);
+            }
         }catch (Exception e){
             log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
             throw new ServiceException("生成三方仓发货单异常", e.getMessage());
