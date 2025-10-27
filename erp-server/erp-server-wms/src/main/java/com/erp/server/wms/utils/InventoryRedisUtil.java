@@ -96,7 +96,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		String execute = "";
 		while(i < 3) {
 			execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
-			log.info("库存redis操作{}，入参{}，lua结果：{}" , opName , args ,execute);
+			log.warn("库存redis操作{}，入参{}，lua结果：{}" , opName , args ,execute);
 			long sleep = 0L;
 			if(StringUtils.isNotBlank(execute)) {
 				JSONObject parseObject = JSON.parseObject(execute);
