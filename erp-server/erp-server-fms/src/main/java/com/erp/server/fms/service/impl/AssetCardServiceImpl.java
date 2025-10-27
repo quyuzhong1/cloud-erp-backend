@@ -812,7 +812,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入资产卡片", "IMPORT_FMS_ASSET_CARD", dto);
+        downloadTaskFeign.saveImportTask("导入资产卡片", FileTaskEventEnum.IMPORT_FMS_ASSET_CARD.getCode(), dto);
         return Boolean.TRUE;
     }
 

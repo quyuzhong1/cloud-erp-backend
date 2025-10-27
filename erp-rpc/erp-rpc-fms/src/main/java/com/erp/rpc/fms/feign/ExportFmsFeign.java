@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.fms.dto.AssetLocationDTO;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetCardDTO;
+import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +36,12 @@ public interface ExportFmsFeign {
      */
     @PostMapping("/feign/export/getAssetCardPageData")
     PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(@RequestBody PagingDTO<AssetCardDTO.ExportDTO> dto);
+
+    /**
+     * 导出资产盘点方案
+     */
+    @PostMapping("/feign/export/getAssetStocktakingPlanPageData")
+    PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto);
 
 }
 

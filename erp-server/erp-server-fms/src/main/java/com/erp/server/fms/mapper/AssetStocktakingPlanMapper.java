@@ -43,7 +43,7 @@ public interface AssetStocktakingPlanMapper extends BaseMapper<AssetStocktakingP
     * @param params
     * @return
     */
-    List<AssetStocktakingPlanDTO.ListDTO> listExport(@Param("params") AssetStocktakingPlanDTO.ExportDTO params);
+    IPage<AssetStocktakingPlanDTO.ListDTO> listExport(@Param("params") AssetStocktakingPlanDTO.ExportDTO params);
 
 
     /**

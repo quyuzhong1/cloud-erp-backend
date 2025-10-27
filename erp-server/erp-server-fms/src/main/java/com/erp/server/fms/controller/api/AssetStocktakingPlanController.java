@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 
 /**
  * 资产盘点方案表
@@ -41,6 +43,9 @@ public class AssetStocktakingPlanController extends BaseController {
 
     @Resource
     private AssetStocktakingPlanService assetStocktakingPlanService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 新增
@@ -403,8 +408,10 @@ public class AssetStocktakingPlanController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产盘点方案表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetStocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
-        assetStocktakingPlanService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetStocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("资产盘点方案导出", FileTaskEventEnum.EXPORT_FMS_ASSET_STOCKTAKING_PLAN.getCode(), dto);
+        return success(true);
     }
 
     /**
@@ -447,6 +454,19 @@ public class AssetStocktakingPlanController extends BaseController {
             resultDTOS.add(pushDownResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-10-27
+    * @param dto
+    * @return
+    */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "资产盘点方案导入Excel")
+    public ApiResult<Boolean> importFile(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        return success(assetStocktakingPlanService.importFile(dto));
     }
 
 }
