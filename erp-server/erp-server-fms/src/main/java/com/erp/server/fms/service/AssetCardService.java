@@ -143,6 +143,13 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(PagingDTO<AssetCardDTO.ExportDTO> dto);
 
     /**
+     * 获取已审核资产卡片列表（用于盘点方案）
+     * @param dto
+     * @return
+     */
+    List<AssetCardDTO.ApprovedCardDTO> getApprovedCardList(AssetCardDTO.QueryApprovedDTO dto);
+
+    /**
     * 审核通过回调方法
     * @param dto
     * @param entity

@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 
 /**
  * 资产盘点方案表
@@ -41,6 +43,9 @@ public class AssetStocktakingPlanController extends BaseController {
 
     @Resource
     private AssetStocktakingPlanService assetStocktakingPlanService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 新增
@@ -403,9 +408,65 @@ public class AssetStocktakingPlanController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产盘点方案表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetStocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
-        assetStocktakingPlanService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetStocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("资产盘点方案导出", FileTaskEventEnum.EXPORT_FMS_ASSET_STOCKTAKING_PLAN.getCode(), dto);
+        return success(true);
     }
 
+    /**
+    * 下推操作（校验资产盘点表中是否存在未审核的资产卡片）
+    * @author wuht
+    * @date:  2025-10-24
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/pushDown")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "fms:assetStocktakingPlan:pushDown",
+            serviceClass = AssetStocktakingPlanService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "资产盘点方案下推")
+    public ApiResult<List<BatchResultDTO>> batchPushDown(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<AssetStocktakingPlanEntity> list = assetStocktakingPlanService.lambdaQuery()
+                .in(AssetStocktakingPlanEntity::getId, ids)
+                .list();
+        Map<String, AssetStocktakingPlanEntity> idEntityMap = list.stream()
+                .collect(Collectors.toMap(AssetStocktakingPlanEntity::getId, w -> w));
+        
+        for (String id : dto.getIds()) {
+            BatchResultDTO pushDownResult;
+            try {
+                pushDownResult = assetStocktakingPlanService.pushDown(id);
+            } catch (Exception e) {
+                log.error("资产盘点方案下推失败", e);
+                AssetStocktakingPlanEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    pushDownResult = BatchResultDTO.fail(id, id, "资产盘点方案单不存在, 下推失败");
+                    resultDTOS.add(pushDownResult);
+                    continue;
+                }
+                pushDownResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(pushDownResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-10-27
+    * @param dto
+    * @return
+    */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "资产盘点方案导入Excel")
+    public ApiResult<Boolean> importFile(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        return success(assetStocktakingPlanService.importFile(dto));
+    }
 
 }
