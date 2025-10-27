@@ -62,18 +62,8 @@
         srd.sku_id,
         srd.sku_no,
         si.warehouse_org_id AS inventoryOrgId,
-        CASE
-        WHEN sd.qty > 0 THEN
-        sd.qty
-        ELSE
-        0
-        END AS salesQty,
-        CASE
-        WHEN sd.amount > 0 THEN
-        sd.amount
-        ELSE
-        0
-        END AS salesAmount,
+        CASE WHEN sd.qty > 0 THEN sd.qty ELSE 0 END AS salesQty,
+        CASE WHEN sd.amount > 0 THEN sd.amount ELSE 0 END AS salesAmount,
         sd.is_gift,
         sd.is_close,
         srd.remark,

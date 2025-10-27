@@ -201,7 +201,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if(Objects.isNull(response)){
                     throw new ServiceException("创建订单失败，返回结果为空");
                 }
-                String msg = Objects.nonNull(response.getResult()) ? response.getResult().getErrorDesc() : response.getErrorResponse().getMsg();
+                String msg = Objects.nonNull(response.getResult()) ? response.getResult().getErrorDesc() : response.getErrorResponse().getMsg() + response.getErrorResponse().getSubMsg();
                 responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), msg);
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),

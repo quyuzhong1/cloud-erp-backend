@@ -133,6 +133,8 @@ public enum BusinessNoTypeEnum {
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
     CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
 
+    CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
+
     ;
 
 
