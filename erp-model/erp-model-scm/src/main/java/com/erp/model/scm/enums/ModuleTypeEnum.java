@@ -175,6 +175,7 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PACKAGE_PLAN("138", "组包计划"),
     PAYABLE_INFO("145", "应付单"),
+    SO_B2C_REFUND("146", "售后订单"),
 
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),

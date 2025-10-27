@@ -1,14 +1,12 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.dto.AssetNoticeDetailDTO;
+
+import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -160,7 +158,8 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     Boolean approveEnd(ApproveOneDTO dto, AssetPurchaseOrderEntity entity);
 
 
-    Boolean updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
+    Boolean updateContractStampStatus(AssetPurchaseOrderDTO.ContractStampStatusParamsDTO dto);
+
 
     /**
      * 下拉选择列表（支持关键字查询）
@@ -168,5 +167,21 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
      * @return 下拉选择列表
      */
     List<AssetPurchaseOrderDTO.SelectDTO> selectList(AssetPurchaseOrderDTO.SelectParamDTO paramDTO);
+    /**
+     * 下拉选择列表（支持关键字查询）
+     * @param paramDTO 查询参数
+     * @return 下拉选择列表
+     */
+    /**
+     * 查询资产采购订单明细（用于资产验收单添加明细）
+     *
+     * @param assetPurchaseOrderId 资产采购订单ID
+     * @return 明细列表
+     */
+    List<AssetPurchaseOrderDTO.DetailForAcceptDTO> queryDetailsForAccept(String assetPurchaseOrderId);
+
+    void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
+
+    Boolean exportPurchaseContract(String id, HttpServletResponse response);
 
 }

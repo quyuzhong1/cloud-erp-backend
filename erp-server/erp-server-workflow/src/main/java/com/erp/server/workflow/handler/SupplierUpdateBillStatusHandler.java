@@ -120,7 +120,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
 
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
 
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);

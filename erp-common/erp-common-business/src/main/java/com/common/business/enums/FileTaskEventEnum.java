@@ -72,6 +72,9 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_PLM_ASSET_NOTICE("EXPORT_PLM_ASSET_NOTICE","资产通知单导出","","",""),
     IMPORT_PLM_ASSET_NOTICE("IMPORT_PLM_ASSET_NOTICE","资产通知单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetNotice",""),
+    EXPORT_PLM_ASSET_PURCHASE_ORDER("EXPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导出","","",""),
+    IMPORT_PLM_ASSET_PURCHASE_ORDER("IMPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetPurchaseOrder",""),
+
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
     EXPORT_OMS_SO_CHANGE("EXPORT_OMS_SO_CHANGE","销售变更单列表","","",""),
@@ -326,10 +329,12 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_THIRD_PROCESS_DEFINITION("EXPORT_THIRD_PROCESS_DEFINITION", "审批定义导出","","",""),
 
     //fms
-    EXPORT_FMS_ASSET_LOCATION("EXPORT_FMS_ASSET_LOCATION","资产位置导出","","",""),
-    EXPORT_FMS_ASSET_ACCEPT_REPORT("EXPORT_FMS_ASSET_ACCEPT_REPORT","资产验收表导出","","",""),
+    EXPORT_FMS_ASSET_LOCATION("EXPORT_FMS_ASSET_LOCATION","资产位置导出","","","ExportFmsAssetLocationHandler"),
+    EXPORT_FMS_ASSET_ACCEPT_REPORT("EXPORT_FMS_ASSET_ACCEPT_REPORT","资产验收表导出","","","ExportFmsAssetAcceptHandler"),
+    EXPORT_FMS_ASSET_CARD("EXPORT_FMS_ASSET_CARD","资产卡片导出","","","ExportFmsAssetCardHandler"),
     IMPORT_FMS_ASSET_LOCATION("IMPORT_FMS_ASSET_LOCATION","导入资产位置","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetLocation",""),
     IMPORT_FMS_ASSET_ACCEPT("IMPORT_FMS_ASSET_ACCEPT","导入资产验收表","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetAccept",""),
+    IMPORT_FMS_ASSET_CARD("IMPORT_FMS_ASSET_CARD","导入资产卡片","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetCard",""),
 
     DEFAULT("DEFAULT", "默认","","","");
     private final String code;

@@ -646,6 +646,11 @@ public class ProcessManagementDTO {
          * 流程参数map
          */
         private Map<String,Object> variablesMap;
+
+        /**
+         * 平台，默认设置成erp
+         */
+        private String sourcePlatform = "erp";
     }
 
     @Data

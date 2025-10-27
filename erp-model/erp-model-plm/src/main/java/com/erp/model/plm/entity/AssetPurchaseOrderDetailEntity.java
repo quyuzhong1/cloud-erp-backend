@@ -98,10 +98,10 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
     /**
-    * 是否结束收货
+    * 结束收货AssetPurchaseOrderReceiveEnum
     */
-    @TableField("is_end_receive")
-    private Boolean isEndReceive;
+    @TableField("end_receive")
+    private String endReceive;
     /**
     * 结束验收时间
     */
@@ -148,7 +148,7 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
 
     public static final String KINGDEE_DETAIL_ID = "kingdee_detail_id";
 
-    public static final String IS_END_RECEIVE = "is_end_receive";
+    public static final String END_RECEIVE = "end_receive";
 
     public static final String END_RECEIVE_TIME = "end_receive_time";
 

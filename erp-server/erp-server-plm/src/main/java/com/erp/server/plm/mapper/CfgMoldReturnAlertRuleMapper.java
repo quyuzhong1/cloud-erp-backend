@@ -27,4 +27,6 @@ public interface CfgMoldReturnAlertRuleMapper extends BaseMapper<CfgMoldReturnAl
     List<CfgMoldReturnAlertRuleDTO.TabListDTO> tabList(@Param("params")  CfgMoldReturnAlertRuleDTO.PagingParamDTO params);
 
     IPage<CfgMoldReturnAlertRuleDTO.ListDTO> paging(Page query,@Param("params") CfgMoldReturnAlertRuleDTO.PagingParamDTO params);
+
+    List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll();
 }

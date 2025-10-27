@@ -305,6 +305,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
+    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致"),
 
     /**
      * PLM 错误
@@ -624,11 +625,16 @@ public enum ApiError implements Serializable {
     ERROR_95297(95297,"未找到资产通知单"),
     ERROR_95298(95298,"未找到资产通知单明细"),
     ERROR_95299(95299,"未找到可以下推的资产通知单"),
-    ERROR_95300(95300,"资产通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
+    ERROR_95300(95300,"开模通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
     ERROR_MOLD_NOT_APPROVE(95301,"模具未审核通过"),
     ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
     ERROR_MOLD_RETURN_EXIST(95303,"模具档案已存在返还策略"),
     ERROR_MOLD_ALERT_EXIST(95304,"模具档案已存在预警策略"),
+    ERROR_95305(98305,"资产通知单已下推资产采购单"),
+    ERROR_95306(98306,"资产采购订单已下推资产采购变更单"),
+    ERROR_95307(95307,"未找到资产采购订单"),
+    ERROR_95308(95308,"未找到资产采购订单明细"),
+    ERROR_95309(95309,"未找到可以下推的资产采购订单"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -1266,6 +1272,7 @@ public enum ApiError implements Serializable {
     ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
     ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
     ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
+    ERROR_CHANNEL_NOTFOUND(92208,"渠道编码在平台【{}】不存在【{}】"),
     ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),
     ERROR_FROM_TO_VM_SAME(92209,"调入虚拟仓和调出虚拟仓需不同"),
     ERROR_TOVM_NOTFOUND(92210,"调入虚拟仓不存在"),

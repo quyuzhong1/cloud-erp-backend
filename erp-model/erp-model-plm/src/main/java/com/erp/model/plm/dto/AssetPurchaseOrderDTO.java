@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -86,6 +88,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String  id;
 
         /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
         * 资产采购单号
         */
         private String code;
@@ -103,7 +110,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
         * 审核时间
         */
-        private LocalDateTime approveUserTime;
+        private LocalDateTime approveTime;
 
         /**
         * 单据状态
@@ -227,9 +234,14 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String supplierName;
 
         /**
-         * 是否结束验收
+         * 结束验收AssetPurchaseOrderReceiveEnum
          */
-        private Boolean isEndReceive;
+        private String endReceive;
+
+        /**
+         * 结束验收名称AssetPurchaseOrderReceiveEnum
+         */
+        private String endReceiveName;
 
         /**
          * 结束验收时间
@@ -239,17 +251,17 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
          * skuId
          */
-        private String skuId;
+        private String assetId;
 
         /**
          * sku编码
          */
-        private String skuNo;
+        private String assetCode;
 
         /**
          * 产品名称
          */
-        private String productName;
+        private String assetName;
 
         /**
          * 计划交期
@@ -286,7 +298,10 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private BigDecimal acceptQty;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -337,6 +352,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         * 单据状态
         */
         private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 合同盖章状态：waitSubmit=待申请,approveIng=已申请,approve=已完成,reject=未完成
@@ -562,7 +582,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<AssetNoticeDTO.AddDTO> successList;
+        private List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList;
 
         /**
          * 错误url
@@ -586,6 +606,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 资产采购单号
          */
         private String code;
+
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
 
         /**
          * 供应商名称
@@ -626,5 +651,190 @@ public class AssetPurchaseOrderDTO implements Serializable {
 
     }
 
+    /**
+     * 资产采购订单明细（用于资产验收单添加明细）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailForAcceptDTO {
 
+        /**
+         * 采购订单明细ID
+         */
+        private String id;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 待验收数量
+         */
+        private Integer pendingAcceptQty;
+
+        /**
+         * 已验收数量
+         */
+        private Integer acceptedQty;
+
+        /**
+         * 可验收数量
+         */
+        private Integer availableAcceptQty;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 模具编码
+         */
+        private String moldCode;
+
+        /**
+         * 模具名称
+         */
+        private String moldName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ContractStampStatusParamsDTO extends BaseIdsDTO.IdsDTO{
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
+    }
+
+    /**
+     * 导出网采合同
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPurchaseContractDTO {
+        /**
+         * 录单日期
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 编号
+         */
+        private String code;
+
+        /**
+         * 供货单位
+         */
+        private String supplierName;
+
+        /**
+         * 摘要
+         */
+        private String settleMethod;
+
+        /**
+         * 制单人
+         */
+        private String createUserName;
+
+        /**
+         * 采购主管
+         */
+        private String approveUserName;
+
+        /**
+         * 合计数量
+         */
+        private BigDecimal sumQty;
+
+        /**
+         * 合计未含税金额
+         */
+        private BigDecimal sumAmount;
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal sumTaxAmount;
+    }
+    /**
+     * 网采合同明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseContractDetailDTO {
+        /**
+         * 序号
+         */
+        private Integer sort;
+        /**
+         * 图片
+         */
+        private String img;
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+        /**
+         * 商品名称
+         */
+        private String productName;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private String taxRate;
+
+        /**
+         * 金额
+         */
+        private BigDecimal totalAmount;
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

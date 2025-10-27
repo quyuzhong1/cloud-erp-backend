@@ -52,6 +52,11 @@ public class AssetPurchaseOrderSupplierDTO implements Serializable {
         private String payMethodId;
 
         /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
         * 结算币种
         */
         private String payCurrency;

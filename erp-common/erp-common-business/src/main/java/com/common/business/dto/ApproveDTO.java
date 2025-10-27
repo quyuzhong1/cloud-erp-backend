@@ -56,6 +56,15 @@ public class ApproveDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 平台，默认设置成erp
+         */
+        private String sourcePlatform = "erp";
+
+
+        public CancelProcessDTO(String id) {
+            this.id = id;
+        }
     }
 
 

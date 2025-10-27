@@ -433,7 +433,9 @@
         <if test="params.isExpire != null">
             AND sm.is_expire = #{params.isExpire}
         </if>
-
+        <if test="params.authId != null and params.authId != ''">
+            and li.auth_id = #{params.authId}
+        </if>
         <!--sku mapping id-->
         <if test="params.skuMappingIds !=null and params.skuMappingIds.size>0">
             AND sm.id IN

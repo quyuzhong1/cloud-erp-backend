@@ -11,6 +11,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.plm.service.AssetNoticeService;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,7 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
     /**
      * 模具数据
      */
-    private List<MoldInfoEntity> moldList;
+    private List<SkuVO> skuList;
 
     /**
      * 核算公司
@@ -71,8 +72,8 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
 
     private final AssetNoticeService assetNoticeService = SpringUtil.getBean(AssetNoticeService.class);
 
-    public AssetNoticeExcelListener(List<MoldInfoEntity> moldList,List<FindUserDTO> userList,List<SysDepartmentDTO> deptList, List<BaseIdDTO> companyList) {
-        this.moldList = moldList;
+    public AssetNoticeExcelListener(List<SkuVO> skuList, List<FindUserDTO> userList, List<SysDepartmentDTO> deptList, List<BaseIdDTO> companyList) {
+        this.skuList = skuList;
         this.userList = userList;
         this.deptList = deptList;
         this.companyList = companyList;
@@ -167,20 +168,20 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
         }
 
         // 模具信息
-        if (CollectionUtils.isEmpty(moldList)) {
+        if (CollectionUtils.isEmpty(skuList)) {
             errorMsgList.add("系统中未发现已启用的模具信息");
         } else {
             if (StringUtils.isNotBlank(importExcelDTO.getAssertCode())) {
-                MoldInfoEntity moldInfoEntity = moldList.stream()
-                        .filter(obj -> obj.getCode().equals(importExcelDTO.getAssertCode()))
+                SkuVO skuVO = skuList.stream()
+                        .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssertCode()))
                         .findFirst()
                         .orElse(null);
-                if (ObjectUtils.isEmpty(moldInfoEntity)) {
+                if (ObjectUtils.isEmpty(skuVO)) {
                     errorMsgList.add("请录入启用的模具信息");
                 } else {
-                    detail.setAssetId(moldInfoEntity.getId());
-                    detail.setAssetCode(moldInfoEntity.getCode());
-                    detail.setAssetName(moldInfoEntity.getName());
+                    detail.setAssetId(skuVO.getSkuId());
+                    detail.setAssetCode(skuVO.getSkuNo());
+                    detail.setAssetName(skuVO.getSkuName());
                 }
             }
         }

@@ -622,7 +622,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
+                    item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
                 }
             }
         }
@@ -1097,6 +1097,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
         PurchasePriceEntity purchasePriceEntity = updateApprovalStatusDTO.getPurchasePriceEntity();
         updateApproveStatus(Collections.singletonList(purchasePriceEntity), approveStatus);
+    }
+
+    @Override
+    public List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice() {
+        return baseMapper.listSkuPrice();
     }
 
     /**

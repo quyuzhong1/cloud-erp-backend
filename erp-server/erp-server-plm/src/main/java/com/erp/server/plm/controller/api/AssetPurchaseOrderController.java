@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.server.plm.query.AssetNoticeQueryHandler;
+import com.erp.server.plm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -111,8 +114,9 @@ public class AssetPurchaseOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:assetPurchaseOrder:paging",
-            tableAlias = ""
+            tableAlias = "apo"
     )
+    @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<AssetPurchaseOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto) {
         return success(assetPurchaseOrderService.paging(dto));
     }
@@ -165,7 +169,6 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
 		Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -243,7 +246,6 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
 		Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -283,7 +285,6 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
 		Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -321,7 +322,6 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
 		Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -360,7 +360,6 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
         Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -415,7 +414,7 @@ public class AssetPurchaseOrderController extends BaseController {
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<?> endReceive(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = assetPurchaseOrderDetailService.endReceive(dto.getIds(), dto.getRemark(),Boolean.TRUE);
+        Boolean result = assetPurchaseOrderDetailService.endReceive(dto.getIds(), dto.getRemark());
         return result == true ? success() : failure();
     }
 
@@ -433,7 +432,7 @@ public class AssetPurchaseOrderController extends BaseController {
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "合同状态更新")
-    public ApiResult<?> updateContractStampStatus(@RequestBody @Validated PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
+    public ApiResult<?> updateContractStampStatus(@RequestBody @Validated AssetPurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
         assetPurchaseOrderService.updateContractStampStatus(dto);
         return success();
     }
@@ -463,7 +462,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产采购单模板")
     @GetMapping("/exportTemplate")
     public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/xxx.xlsx";
+        String path = "classpath:excel/assetPurchaseOrderTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -513,6 +512,23 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/selectList")
     public ApiResult<List<AssetPurchaseOrderDTO.SelectDTO>> selectList(@RequestBody AssetPurchaseOrderDTO.SelectParamDTO paramDTO) {
         return success(assetPurchaseOrderService.selectList(paramDTO));
+    }
+    /**
+     * 查询资产采购订单明细（用于资产验收单添加明细）
+     *
+     * @param assetPurchaseOrderId 资产采购订单ID
+     * @return 明细列表
+     */
+    @PostMapping("/queryDetailsForAccept")
+    public ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> queryDetailsForAccept(@RequestBody String assetPurchaseOrderId) {
+        return success(assetPurchaseOrderService.queryDetailsForAccept(assetPurchaseOrderId));
+    }
+
+    @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
+    @GetMapping("/exportPurchaseContract")
+    public ApiResult<?> exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
+        Boolean flag = assetPurchaseOrderService.exportPurchaseContract(id, response);
+        return flag == true ? success() : failure();
     }
 
 }

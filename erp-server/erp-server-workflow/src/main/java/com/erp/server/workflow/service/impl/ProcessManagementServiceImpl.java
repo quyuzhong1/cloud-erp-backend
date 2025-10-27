@@ -856,7 +856,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         //判断是否走飞书流程
         Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
-        if (isFsApprove) {
+        if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
             throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
         }
 
@@ -1140,6 +1140,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollectionUtils.isEmpty(userList)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
         }
+
+        //审核人不能和创建人一样
+        String createUserId = "" + execution.getVariable("createUserId");
+        userList.stream().filter(obj -> CharSequenceUtil.equals(createUserId,obj.getUserId())).findFirst().ifPresent(obj -> {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF);
+        });
 
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
         saveTaskManagementEntities(task, processInstanceId, activityId, processStartTime, propertiesDTO, executionId, activityName, candidateUsers, userMap,execution.getVariables());

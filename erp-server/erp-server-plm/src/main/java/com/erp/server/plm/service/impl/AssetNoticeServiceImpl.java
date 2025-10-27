@@ -16,6 +16,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
@@ -26,6 +27,7 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.AssetNoticeExcelListener;
 import com.erp.server.plm.mapper.AssetNoticeDetailMapper;
+import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -103,6 +105,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private AssetNoticeDetailMapper assetNoticeDetailMapper;
 
     @Autowired
+    private ProductDetailMapper productDetailMapper;
+
+    @Autowired
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
@@ -136,11 +141,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             throw new ServiceException("资产通知单保存失败");
         }
 
+        hanleAddDetailData(assetNoticeEntity,addDTO.getAssetNoticeDetailDTO());
+        // 新增明细
+        assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产通知单" , assetNoticeEntity.getCode());
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "新增操作");
-        // 新增明细
-        assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
+
         return new BaseResultDTO.AddDTO(assetNoticeEntity.getId(), code);
     }
 
@@ -166,6 +174,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(!save) {
             throw new ServiceException("保存失败");
         }
+        hanleUpdateDetailData(assetNoticeEntity,addOrUpdateDTO.getAssetNoticeDetailDTO());
         assetNoticeDetailService.update(addOrUpdateDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
@@ -192,22 +201,30 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     public List<AssetNoticeDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetNoticeDTO.PagingParamDTO searchParam = new AssetNoticeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        List<AssetNoticeDTO.TabListDTO> returnList = new ArrayList<>();
         List<AssetNoticeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+
+
         // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
+        List<String> statusList = AssetApproveStatusEnum.getStatusList();
+
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetNoticeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         for (AssetNoticeDTO.TabListDTO tabListDTO : list) {
-            tabListDTO.setTabFlagName(ApproveStatusEnum.getName(tabListDTO.getTabFlag()));
+            tabListDTO.setTabFlagName(AssetApproveStatusEnum.getName(tabListDTO.getTabFlag()));
         }
+
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
             list.add(new AssetNoticeDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
         }
         });
-        // 计算合计数量
-        list.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
-        return list;
+
+        // 合计数量要放第一个
+        returnList.add(new AssetNoticeDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetNoticeDTO.TabListDTO::getCount).sum()));
+        returnList.addAll(list);
+
+        return returnList;
     }
 
     @Override
@@ -482,7 +499,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
                 addDetailDTO.setMainId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setIsUrgent(Boolean.FALSE);
-                addDetailDTO.setIsEndReceive(Boolean.FALSE);
+                addDetailDTO.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                 addDetailDTO.setSourceDetailId(generatePurchaseOrderDTO.getAssetNoticeDetailId());
                 addDetailDTO.setTag(moldInfoEntity.getTag());
                 details.add(addDetailDTO);
@@ -514,8 +531,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         Map<String, AssetNoticeEntity> detailMainMap = Maps.newHashMap();
         for (AssetNoticeDetailEntity detail : detailList) {
             //已采购数量
-            LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            List<AssetPurchaseOrderDetailEntity> detailEntityList = assetPurchaseOrderDetailService.list(lambdaQueryWrapper);
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, detail.getId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
             BigDecimal purchaseQty = detailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 
@@ -608,7 +627,16 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+
+        LambdaQueryWrapper<AssetPurchaseOrderEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(AssetPurchaseOrderEntity::getSourceId,entity.getId())
+                .eq(AssetPurchaseOrderEntity::getIsDeleted,Boolean.FALSE);
+
+        List<AssetPurchaseOrderEntity> purchaseOrderEntityList = assetPurchaseOrderService.list(lambdaQueryWrapper);
+        if (CollectionUtils.isNotEmpty(purchaseOrderEntityList)) {
+            throw new ServiceException(ApiError.ERROR_95305);
+        }
+
         return true;
     }
 
@@ -676,16 +704,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         //查询所有审核通过的模具
-        LambdaQueryWrapper<MoldInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(MoldInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
-                .eq(MoldInfoEntity::getIsDeleted,Boolean.FALSE)
-                .eq(MoldInfoEntity::getInvalidStatus,Boolean.FALSE);
-        List<MoldInfoEntity> moldList = moldInfoService.list(lambdaQueryWrapper);
+        List<SkuVO> skuVOList = productDetailMapper.listAssetProduct();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(moldList,userList,deptList,companyList);
+        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(skuVOList,userList,deptList,companyList);
 
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -770,7 +794,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
-
 
     }
     /**
@@ -960,5 +983,45 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         } catch (Exception e) {
             throw new ServiceException("资产通知单导入保存失败", e);
         }
+    }
+
+    public void hanleAddDetailData(AssetNoticeEntity assetNoticeEntity,List<AssetNoticeDetailDTO.AddDTO> assetNoticeDetailDTO){
+        LocalDate today = LocalDate.now();
+        for (AssetNoticeDetailDTO.AddDTO addDTO : assetNoticeDetailDTO) {
+            LocalDate planDeliveryDate = addDTO.getPlanDeliveryDate();
+            if (planDeliveryDate == null) {
+                continue;
+            }
+
+            // 校验日期必须 ≥ 今天
+            if (planDeliveryDate.isBefore(today)) {
+                throw new ServiceException(
+                        "开模通知单模具编码【{}】的预计交货日期【{}】预计交货日期不能小于",
+                        assetNoticeEntity.getCode(),
+                        planDeliveryDate
+                );
+            }
+        }
+
+    }
+
+    public void hanleUpdateDetailData(AssetNoticeEntity assetNoticeEntity,List<AssetNoticeDetailDTO.UpdateDTO> assetNoticeDetailDTO){
+        LocalDate today = LocalDate.now();
+        for (AssetNoticeDetailDTO.UpdateDTO updateDTO : assetNoticeDetailDTO) {
+            LocalDate planDeliveryDate = updateDTO.getPlanDeliveryDate();
+            if (planDeliveryDate == null) {
+                continue;
+            }
+
+            // 校验日期必须 ≥ 今天
+            if (planDeliveryDate.isBefore(today)) {
+                throw new ServiceException(
+                        "开模通知单模具编码【{}】的预计交货日期【{}】预计交货日期不能小于",
+                        assetNoticeEntity.getCode(),
+                        planDeliveryDate
+                );
+            }
+        }
+
     }
 }

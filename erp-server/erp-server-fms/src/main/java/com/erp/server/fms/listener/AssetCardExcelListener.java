@@ -5,6 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FieldValidUtil;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
@@ -16,6 +17,8 @@ import com.erp.server.fms.service.AssetLocationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -117,59 +120,61 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
     }
 
     private void validateData(AssetCardImportExcelDTO data) {
-        if (data.getNo() == null) {
-            throw new ServiceException("序号不能为空");
+        List<String> errorMsgList = new ArrayList<>();
+        
+        // 基础验证
+        List<String> msgList = FieldValidUtil.fieldValid(data);
+        if (CollUtil.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
         
-        if (StringUtils.isBlank(data.getOrgName())) {
-            throw new ServiceException("资产组织不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getUnit())) {
-            throw new ServiceException("计量单位不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getType())) {
-            throw new ServiceException("资产类别不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getStatus())) {
-            throw new ServiceException("资产状态不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getChangeMethod())) {
-            throw new ServiceException("变动方式不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getName())) {
-            throw new ServiceException("资产名称不能为空");
-        }
-        
-        if (data.getStartUseDate() == null) {
-            throw new ServiceException("开始使用日期不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getAssetLocationName())) {
-            throw new ServiceException("资产位置不能为空");
-        }
-        
-        if (data.getQty() == null || data.getQty() <= 0) {
-            throw new ServiceException("数量必须大于0");
-        }
-        
-        if (StringUtils.isBlank(data.getUseDeptName())) {
-            throw new ServiceException("使用部门不能为空");
-        }
-        
-        if (StringUtils.isBlank(data.getCostType())) {
-            throw new ServiceException("费用项目不能为空");
-        }
+        // 日期转换
+        convertDateFields(data, errorMsgList);
         
         // 验证枚举值
-        validateEnumValues(data);
+        try {
+            validateEnumValues(data);
+        } catch (ServiceException e) {
+            errorMsgList.add(e.getMessage());
+        }
         
         // 验证关联数据
-        validateRelatedData(data);
+        try {
+            validateRelatedData(data);
+        } catch (ServiceException e) {
+            errorMsgList.add(e.getMessage());
+        }
+        
+        // 如果有错误，抛出异常
+        if (CollUtil.isNotEmpty(errorMsgList)) {
+            throw new ServiceException(String.join("；", errorMsgList));
+        }
+    }
+
+    /**
+     * 日期转换处理
+     */
+    private void convertDateFields(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 开始使用日期转换
+        String startUseDateStr = data.getStartUseDateStr();
+        if (StringUtils.isNotBlank(startUseDateStr)) {
+            try {
+                // 支持两种日期格式：yyyy-MM-dd 和 yyyy/M/d
+                LocalDate startUseDate = null;
+                try {
+                    startUseDate = LocalDate.parse(startUseDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                } catch (Exception e1) {
+                    try {
+                        startUseDate = LocalDate.parse(startUseDateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                    } catch (Exception e2) {
+                        throw new IllegalArgumentException("日期格式错误");
+                    }
+                }
+                data.setStartUseDate(startUseDate);
+            } catch (Exception e) {
+                errorMsgList.add("开始使用日期格式错误，请使用yyyy-MM-dd或yyyy/M/d格式");
+            }
+        }
     }
 
     private void validateEnumValues(AssetCardImportExcelDTO data) {

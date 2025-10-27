@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.server.wms.query.SampleLedgerFlowQueryHandler;
 import com.erp.server.wms.query.SampleLedgerQueryHandler;
 import com.erp.server.wms.service.SampleLedgerFlowService;
 import com.erp.server.wms.service.SampleLedgerService;
@@ -159,6 +160,7 @@ public class SampleLedgerFeignController extends BaseController {
             menuCode = "wms:sampleLedgerFlow:paging",
             tableAlias = "slf"
     )
+    @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     public ApiResult<PagingVO<SampleLedgerFlowDTO.ListDTO>> getFlowList(@RequestBody @Validated PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> dto) {
         return success(sampleLedgerFlowService.pagingApp(dto));
     }
