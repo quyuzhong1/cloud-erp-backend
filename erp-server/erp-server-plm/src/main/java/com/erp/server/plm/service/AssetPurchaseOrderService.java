@@ -183,6 +183,15 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
      */
     List<AssetPurchaseOrderDTO.DetailForAcceptDTO> queryDetailsForAccept(String assetPurchaseOrderId);
 
+    /**
+     * 根据订单编号查询资产采购订单（用于导入）
+     * 查询未删除且审核通过的订单及其明细
+     *
+     * @param code 订单编号
+     * @return 资产采购订单信息（包含明细）
+     */
+    AssetPurchaseOrderDTO.DetailWithSkuDTO getByCode(String code);
+
     void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
     Boolean exportPurchaseContract(String id, HttpServletResponse response);

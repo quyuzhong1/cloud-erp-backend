@@ -179,7 +179,6 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 资产卡片关联状态（已生成、未生成）
         */
-        @NotBlank(message = "资产卡片关联状态（已生成、未生成）不能为空")
         @Size(max = 20,message = "资产卡片关联状态（已生成、未生成）最大长度不能超过20位")
         private String assetCardStatus;
 
@@ -194,19 +193,16 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 待验收数量
         */
-        @NotNull(message = "待验收数量不能为空")
         private Integer pendingQty;
 
         /**
         * 已验收数量
         */
-        @NotNull(message = "已验收数量不能为空")
         private Integer acceptedQty;
 
         /**
         * 可验收数量
         */
-        @NotNull(message = "可验收数量不能为空")
         private Integer acceptableQty;
 
         /**
@@ -219,7 +215,6 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 使用部门名称
         */
-        @NotBlank(message = "使用部门名称不能为空")
         @Size(max = 50,message = "使用部门名称最大长度不能超过50位")
         private String useDeptName;
 
@@ -240,7 +235,6 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 

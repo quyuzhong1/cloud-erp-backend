@@ -30,6 +30,7 @@ public class AssetAcceptExcelDTO implements Serializable {
      * 错误信息
      */
     @ExcelIgnore
+    @ExcelProperty(value = "错误信息", index = 19)
     private String errorMsg;
 
     /**

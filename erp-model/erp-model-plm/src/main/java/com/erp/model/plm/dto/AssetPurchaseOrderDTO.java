@@ -719,6 +719,39 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String moldName;
     }
 
+    /**
+     * 资产采购订单详情（用于导入时根据订单号查询）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailWithSkuDTO {
+
+        /**
+         * 采购订单ID
+         */
+        private String id;
+
+        /**
+         * 采购订单编号
+         */
+        private String code;
+
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 明细列表
+         */
+        private List<DetailForAcceptDTO> detailList;
+    }
+
 
     @Data
     @NoArgsConstructor

@@ -563,9 +563,13 @@ public class AssetAcceptExcelListener extends AnalysisEventListener<AssetAcceptE
         }
 
         try {
-            // 调用资产位置服务根据名称查询资产位置信息
+            // 调用资产位置服务根据地址或详细地址查询资产位置信息
             List<com.erp.model.fms.entity.AssetLocationEntity> assetLocationList = assetLocationService.lambdaQuery()
-                    .eq(com.erp.model.fms.entity.AssetLocationEntity::getDescription, assetLocationName)
+                    .and(wrapper -> wrapper
+                        .eq(com.erp.model.fms.entity.AssetLocationEntity::getAddress, assetLocationName)
+                        .or()
+                        .eq(com.erp.model.fms.entity.AssetLocationEntity::getDetailedAddress, assetLocationName)
+                    )
                     .eq(com.erp.model.fms.entity.AssetLocationEntity::getIsDeleted, false)
                     .list();
 
@@ -577,7 +581,7 @@ public class AssetAcceptExcelListener extends AnalysisEventListener<AssetAcceptE
                 return result;
             }
 
-            log.warn("未找到资产位置名称：{}", assetLocationName);
+            log.warn("未找到资产位置（地址或详细地址）：{}", assetLocationName);
             return null;
         } catch (Exception e) {
             log.error("查询资产位置ID失败，资产位置名称：{}，错误：{}", assetLocationName, e.getMessage(), e);
