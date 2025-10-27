@@ -1,10 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.entity.AssetPurchaseChangeDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -61,10 +64,13 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurchaseChangeMapper, AssetPurchaseChangeEntity> implements AssetPurchaseChangeService {
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
     @Autowired
     private WorkflowFeign workflowFeign;
 
@@ -80,19 +86,19 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
         log.info("开始新增");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC);
         assetPurchaseChangeEntity.setCode(code);
         boolean save = super.save(assetPurchaseChangeEntity);
         if(!save) {
             throw new ServiceException("保存失败");
         }
 
+        List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntityList = new ArrayList<>();
+        handleDetailData(addDTO,assetPurchaseChangeDetailEntityList);
+
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , assetPurchaseChangeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogBySave(msg, null, assetPurchaseChangeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购变更单" , assetPurchaseChangeEntity.getCode());
+        operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_CHANGE.getCode(), assetPurchaseChangeEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(assetPurchaseChangeEntity.getId(), code);
     }
@@ -503,5 +509,10 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     */
     private void handleData(AssetPurchaseChangeEntity assetPurchaseChangeEntity) {
     // TODO 验证数据 & 数据赋值
+
+    }
+
+    private void handleDetailData(AssetPurchaseChangeDTO.AddDTO addDTO,List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntityList){
+
     }
 }

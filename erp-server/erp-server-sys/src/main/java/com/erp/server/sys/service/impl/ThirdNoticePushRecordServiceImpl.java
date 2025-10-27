@@ -1526,7 +1526,4 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     }
 
 
-
-
-
 }
