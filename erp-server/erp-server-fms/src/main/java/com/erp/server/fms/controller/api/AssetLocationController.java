@@ -407,8 +407,9 @@ public class AssetLocationController extends BaseController {
     )
     @WebAdvanceQuery(handler = AssetLocationQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产位置表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetLocationDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetLocationDTO.ExportDTO dto, HttpServletResponse response) {
         assetLocationService.exportList(dto, response);
+        return success(true);
     }
 
     /**
