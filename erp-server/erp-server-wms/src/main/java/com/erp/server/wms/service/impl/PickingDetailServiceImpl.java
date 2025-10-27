@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -72,8 +73,9 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
         for (PickingDetailDTO.ListDTO listDTO : resultList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                listDTO.setProductName(productName);
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).findFirst().orElse(null);
+                listDTO.setProductName(Objects.nonNull(skuVO) ? skuVO.getSkuName() : null);
+                listDTO.setUnitName(Objects.nonNull(skuVO) ? skuVO.getUnitName() : null);
             }
         }
         return resultList;

@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,6 +36,11 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空", groups = {AddGroup.class})
         private String skuId;
+        /**
+         * 产品名称
+         */
+        @NotBlank(message = "产品名称不能为空", groups = {AddGroup.class})
+        private String unitName;
 
         /**
          * 销售数量
@@ -297,7 +301,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -834,7 +843,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -1005,6 +1019,10 @@ public class SoDetailDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
         /**
          * 产品名称
          */

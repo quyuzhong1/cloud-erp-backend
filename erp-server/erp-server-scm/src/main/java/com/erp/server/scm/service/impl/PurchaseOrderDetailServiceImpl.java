@@ -525,7 +525,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setReceiveQty(receiveQty);
             //未收货数量
             viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() + returnQty - receiveQty);
-
+            //单位
+            String unitName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
+            viewProductDTO.setUnitName(unitName);
             //参考供应商
             String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             if (CollectionUtils.isNotEmpty(supplierIdList)) {

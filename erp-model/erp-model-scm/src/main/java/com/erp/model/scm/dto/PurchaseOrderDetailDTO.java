@@ -343,6 +343,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * sku编码
          */
         private String  skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 产品名称

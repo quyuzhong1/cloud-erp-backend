@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
@@ -38,6 +39,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 产品名称
          */
         private String productName;
+        /**
+         * 产品单位
+         */
+        @NotBlank(message = "产品单位不能为空")
+        private String unitName;
 
         /**
          * 实退数量
@@ -126,6 +132,11 @@ public class PurchaseReturnOrderDetailDTO {
          * sku编码
          */
         private String skuNo;
+        /**
+         * 产品单位
+         */
+        @NotBlank(message = "产品单位不能为空")
+        private String unitName;
 
         /**
          * 实退数量

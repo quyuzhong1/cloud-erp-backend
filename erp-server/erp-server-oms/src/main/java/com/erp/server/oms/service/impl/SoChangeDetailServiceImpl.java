@@ -240,6 +240,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 variantProperty = sku.getVariantProperty();
             }
             item.setUnit(unit);
+            item.setUnitName(unit);
             item.setProductName(productName);
             item.setVariantProperty(variantProperty);
             //税率
@@ -332,6 +333,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     variantProperty = sku.getVariantProperty();
                 }
                 view.setUnit(unit);
+                view.setUnitName(unit);
                 view.setProductName(productName);
                 view.setVariantProperty(variantProperty);
                 viewList.add(view);

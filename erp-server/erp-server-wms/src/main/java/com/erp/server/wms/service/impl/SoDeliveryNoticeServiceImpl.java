@@ -539,10 +539,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             BeanMapperUtils.copy(deliveryNoticeDetailEntity, detailView);
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(deliveryNoticeDetailEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
+            if (Objects.isNull(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
             detailView.setProductName(productDetailEntity.getName());
+            detailView.setUnitName(productDetailEntity.getUnitName());
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());

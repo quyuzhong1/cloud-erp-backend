@@ -608,8 +608,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
         dataList.stream().forEach(data->{
             // 产品名称
-            String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
-            data.setProductName(productName);
+            ProductDetailEntity productDetail = skuMap.getOrDefault(data.getSkuId(), null);
+            data.setProductName(Objects.nonNull(productDetail) ? productDetail.getName() : null);
+            data.setUnitName(Objects.nonNull(productDetail) ? productDetail.getUnitName() : null);
 
             // 调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
@@ -970,6 +971,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         transferInDTO.setInWarehouseLocation(pushData.getInWarehouseLocation());
         transferInDTO.setSkuId(pushData.getSkuId());
         transferInDTO.setSkuNo(pushData.getSkuNo());
+        transferInDTO.setUnitName(pushData.getUnitName());
         transferInDTO.setOutQty(transferOutDetailEntity.getQty());
         transferInDTO.setPlanQty(pushData.getPlanQty());
         transferInDTO.setRemark(pushData.getRemark());

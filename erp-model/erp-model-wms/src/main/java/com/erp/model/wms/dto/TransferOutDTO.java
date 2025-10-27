@@ -525,6 +525,10 @@ public class TransferOutDTO implements Serializable {
          * SKU
          */
         private String skuNo;
+        /**
+         * 产品单位
+         */
+        private String unitName;
 
         /**
          * 产品名称
@@ -624,6 +628,11 @@ public class TransferOutDTO implements Serializable {
          * SKU
          */
         private String skuNo;
+        /**
+         * 产品单位
+         */
+        @NotBlank(message = "产品单位不能为空")
+        private String unitName;
 
         /**
          * 计划调入数量
@@ -707,6 +716,10 @@ public class TransferOutDTO implements Serializable {
          * SKU
          */
         private String skuNo;
+        /**
+         * 产品单位
+         */
+        private String unitName;
 
         /**
          * 产品名称

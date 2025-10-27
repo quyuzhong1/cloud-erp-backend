@@ -260,6 +260,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             addDetailView.setProductName(productDetailEntity.getName());
             addDetailView.setVariantProperty(productDetailEntity.getVariantProperty());
+            addDetailView.setUnitName(productDetailEntity.getUnitName());
             //获取退货数量
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDetailView.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //获取已出库数量
@@ -348,6 +349,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
             item.setUnit(unit);
+            item.setUnitName(unit);
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -871,6 +873,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.setQty(0);
         result.setProductName(skuName);
         result.setUnit(sku.getUnitName());
+        result.setUnitName(sku.getUnitName());
         result.setSkuNo(skuNo);
 
         //即时库存
@@ -1033,7 +1036,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
-            item.setUnit(unit);
+            item.setUnitName(unit);
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -1527,10 +1530,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 skuId = item.getSkuId();
                 result.setProductName(item.getSkuName());
                 result.setUnit(item.getUnitName());
+                result.setUnitName(item.getUnitName());
                 result.setSkuNo(item.getSkuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
+                result.setUnitName("");
                 result.setSkuNo("");
             }
 

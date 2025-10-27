@@ -561,7 +561,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
             jsonObject.set("amount", item.getAmount().add(discountAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
             //单位
-            String unit = item.getUnit();
+            String unit = item.getUnitName();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
