@@ -919,6 +919,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     public AssetAcceptDTO.ViewDTO view(String id) {
         AssetAcceptEntity assetAcceptEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产验收单数据"));
         AssetAcceptDTO.ViewDTO data = BeanMapperUtils.map(AssetAcceptDTO.ViewDTO.class, assetAcceptEntity);
+        data.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
         return data;
@@ -971,7 +972,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             return;
         }
         String id = data.getId();
-        
+
         // 查询验收人员数据
         List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
                 .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
