@@ -535,6 +535,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             //策略被禁用则不再统计
             Boolean disabled = moldMonitorEntity.getDisabled();
             if(Objects.equals(disabled ,Boolean.TRUE)){
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
+                updateById(moldMonitorEntity);
                 continue;
             }
 
@@ -545,9 +547,12 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     .list();
 
             if(CollUtil.isEmpty(moldRefSkuEntities)){
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
+                updateById(moldMonitorEntity);
                 continue;
             }
 
+            moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
             moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.HEALTHY.getCode());
             moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.UNDERACHIEVED.getCode());
             moldMonitorEntity.setPurchaseOrderQty(0);
