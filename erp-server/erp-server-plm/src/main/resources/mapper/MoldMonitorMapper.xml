@@ -31,6 +31,7 @@
         <result column="return_qty_limit" property="returnQtyLimit" />
         <result column="return_price" property="returnPrice" />
        <result column="status" property="status" />
+       <result column="derachieved_status" property="derachievedStatus" />
        <result column="return_status" property="returnStatus" />
        <result column="life_status" property="lifeStatus" />
        <result column="purchase_order_qty" property="purchaseOrderQty" />
@@ -73,6 +74,7 @@ mm.count_dim AS countDim,
 mm.return_qty_limit, 
 mm.return_price,
 mm.status AS status,
+mm.derachieved_status AS derachievedStatus,
 mm.return_status AS returnStatus,
 mm.life_status AS lifeStatus,
 mm.purchase_order_qty AS purchaseOrderQty,
@@ -127,6 +129,7 @@ mm.remark AS remark
         </if>
         <if test="params != null and params.sourceType != null and params.sourceType != ''">
             and mm.source_type = #{params.sourceType}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

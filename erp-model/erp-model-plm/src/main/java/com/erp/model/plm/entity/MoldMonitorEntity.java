@@ -127,7 +127,12 @@ public class MoldMonitorEntity extends BaseEntity<MoldMonitorEntity> {
     @TableField("status")
     private String status;
     /**
-    * 返还状态：underachieved=未达量 , notReturned=未返 , returned=已返  枚举：MoldMonitorReturnStatusEnum
+    * 返还状态：underachieved=未达量 , derachieved=达量  枚举：MoldMonitorDerachievedStatusEnum
+    */
+    @TableField("derachieved_status")
+    private String derachievedStatus;
+    /**
+    * 返还状态： notReturned=未返 , returned=已返  枚举：MoldMonitorReturnStatusEnum
     */
     @TableField("return_status")
     private String returnStatus;

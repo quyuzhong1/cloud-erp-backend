@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -27,4 +28,6 @@ public interface CfgMoldAlertRuleMapper extends BaseMapper<CfgMoldAlertRuleEntit
     List<CfgMoldAlertRuleDTO.TabListDTO> tabList(@Param("params")  CfgMoldAlertRuleDTO.PagingParamDTO params);
 
     IPage<CfgMoldAlertRuleDTO.ListDTO> paging(Page query, @Param("params")  CfgMoldAlertRuleDTO. PagingParamDTO params);
+
+    List<CfgMoldAlertRuleDTO.ListDTO> listAll( @Param("ids")List<String> ids , @Param("today") LocalDate today, @Param("oneMonthLater")  LocalDate oneMonthLater);
 }

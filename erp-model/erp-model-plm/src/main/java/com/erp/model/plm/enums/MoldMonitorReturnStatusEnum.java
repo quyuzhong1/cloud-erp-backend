@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * @since 2025-10-22 16:35:38
  */
 public enum MoldMonitorReturnStatusEnum implements EnumMessage {
-	UNDERACHIEVED("underachieved", "未达量"),
+
 	NOTRETURNED("notReturned", "未返"),
 	RETURNED("returned", "已返"),
     ;

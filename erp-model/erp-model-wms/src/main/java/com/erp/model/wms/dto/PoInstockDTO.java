@@ -1133,6 +1133,8 @@ public class PoInstockDTO implements Serializable {
 
         private String detailId;
 
+        private String skuId;
+
         private String approveStatus;
 
         private Integer qty;

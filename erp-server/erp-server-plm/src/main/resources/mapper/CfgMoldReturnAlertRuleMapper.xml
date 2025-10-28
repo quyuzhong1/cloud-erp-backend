@@ -104,8 +104,13 @@ cmr.count_dim AS countDim
         left join cfg_mold_return_alert_detail cmrd on cmr.id = cmrd.main_id and cmrd.is_deleted = FALSE
         where
              cmr.is_deleted = FALSE
-        and cmr.disabled = FALSE
-        and cmr.invalid_status = FALSE
+        and (cmr.start_date &gt;= #{today} or cmr.end_date &lt;= #{oneMonthLater})
+        <if test="detailIds != null and detailIds.size > 0 ">
+            AND cmrd.id in
+            <foreach collection="detailIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 
