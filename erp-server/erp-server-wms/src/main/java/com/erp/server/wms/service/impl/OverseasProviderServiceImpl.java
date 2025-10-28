@@ -16,6 +16,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -28,6 +29,8 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
@@ -38,10 +41,12 @@ import com.erp.model.wms.enums.SptWarehouseStatusEnum;
 import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +78,9 @@ import java.util.stream.Collectors;
 public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProviderMapper, OverseasProviderEntity> implements OverseasProviderService {
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private LogisticsAuthFeign logisticsAuthFeign;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -433,6 +441,51 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 .eq(OverseasProviderEntity::getShortName, thirdShortName)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public OverseasProviderEntity refreshToken(OverseasProviderEntity entity) {
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(entity.getCode());
+        Map<String,Object> authMap = entity.getAuthJson();
+        ApiResult<String> result = thirdWarehouseService.refreshToken(entity.getId(),authMap);
+        if(result.isSuccess()) {
+            entity.setAuthJson(authMap);
+            this.updateById(entity);
+            //同步刷新物流商token
+            List<LogisticsAuthEntity> logisticsAuthEntities = FeignQuery.create(LogisticsAuthEntity.class)
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, entity.getCode())
+                    .list();
+            if(CollectionUtils.isEmpty(logisticsAuthEntities)){
+                return entity;
+            }
+            List<String> logisticAuthIds = logisticsAuthEntities.stream()
+                    .map(LogisticsAuthEntity::getId)
+                    .collect(Collectors.toList());
+            List<LogisticsAuthFieldEntity> logisticsAuthFieldEntities = FeignQuery.create(LogisticsAuthFieldEntity.class)
+                    .in(LogisticsAuthFieldEntity::getLogisticsAuthId, logisticAuthIds)
+                    .list();
+            if(CollectionUtils.isEmpty(logisticsAuthFieldEntities)){
+                return entity;
+            }
+            List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
+            for (LogisticsAuthFieldEntity logisticsAuthFieldEntity : logisticsAuthFieldEntities) {
+                if(authMap.containsKey(logisticsAuthFieldEntity.getFieldCode())){
+                    logisticsAuthFieldEntity.setFieldValue(authMap.get(logisticsAuthFieldEntity.getFieldCode()).toString());
+                    updateLogistic.add(logisticsAuthFieldEntity);
+                }
+            }
+            if(CollectionUtils.isNotEmpty(updateLogistic)){
+                logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
+            }
+        }else{
+            log.error("[刷新三方仓token] 刷新失败: authId={}, PlatformCode={}， error={}",
+                    entity.getId(),
+                    entity.getCode(),
+                    result.getMsg()
+            );
+            throw new ServiceException("刷新三方仓token失败：" + result.getMsg());
+        }
+        return entity;
     }
 
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
