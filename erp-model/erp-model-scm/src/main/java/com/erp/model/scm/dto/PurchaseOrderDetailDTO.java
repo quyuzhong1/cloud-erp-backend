@@ -347,6 +347,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 单位名称
          */
         private String unitName;
+        /**
+         * ean编码
+         */
+        private String ean;
 
         /**
          * 产品名称
