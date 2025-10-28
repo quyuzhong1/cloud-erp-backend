@@ -7,26 +7,40 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.AddOutputBlackDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.ExpotParamDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.entity.doris.AdsPushTaskEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsPushTaskMapper;
 import com.erp.server.dmp.service.AdsPushTaskService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -48,6 +62,9 @@ import lombok.extern.slf4j.Slf4j;
 public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, AdsPushTaskEntity> implements AdsPushTaskService {
     @Autowired
     private OperateLogService operateLogService;
+    
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -116,6 +133,7 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 		List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(values.length);
 		QueryWrapper<AdsPushTaskEntity> queryWrapper = new QueryWrapper<>();
 		queryWrapper.eq("is_deleted", false);
+		queryWrapper.eq("push_status", "push");
 		queryWrapper.groupBy("status");
 		queryWrapper.select(" status , count(*) errorCount ");
 		List<AdsPushTaskEntity> adsPushTaskEntityList = list(queryWrapper);
@@ -143,5 +161,66 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 			result.add(tabDto);
 		}
 		return result;
+	}
+
+	@Override
+	public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<DmpOutputTaskRecordDTO.PagingDTO> records = pageData.getRecords();
+        //数据处理
+        doOpHandleDmpPushTask(records);
+        return new PagingVO<>(pageData);
+	}
+	
+	private void doOpHandleDmpPushTask(List<DmpOutputTaskRecordDTO.PagingDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (DmpOutputTaskRecordDTO.PagingDTO listDTO : list) {
+            listDTO.setSyncTypeName("推送");
+
+            //如果是推送成功，可能是无需推送状态
+            if (DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(listDTO.getStatus()) && !listDTO.getIsNeedSync()) {
+                listDTO.setStatusName(SyncStatusEnum.NO_NEED_SYNC.getName());
+            } else {
+                listDTO.setStatusName(DmpOutputTaskRecordStatusEnum.getName(listDTO.getStatus()));
+            }
+
+        }
+    }
+
+	@Override
+	public Boolean exportExcel(ExpotParamDTO dto) {
+		downloadTaskFeign.saveDownloadTask("谷云推送任务表", FileTaskEventEnum.EXPORT_RESTCLOUD_PUSH_TASK.getCode(), dto);
+        return Boolean.TRUE;
+	}
+
+	@Override
+	public Boolean batchNoNeedSync(List<String> ids, String remark) {
+		return lambdaUpdate().in(AdsPushTaskEntity::getId, ids)
+				.set(AdsPushTaskEntity::getPushStatus, "self")
+				.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.set(AdsPushTaskEntity::getResponseData, remark)
+				.update();
+	}
+
+	@Override
+	public Boolean addOutputBlack(AddOutputBlackDTO dto) {
+		return lambdaUpdate().in(AdsPushTaskEntity::getId, dto.getIds())
+				.set(AdsPushTaskEntity::getPushStatus, "black")
+				.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.set(AdsPushTaskEntity::getResponseData, dto.getRemark())
+				.update();
+	}
+
+	@Override
+	public BatchResultDTO cancelOutputBlack(String id) {
+		lambdaUpdate().eq(AdsPushTaskEntity::getId, id)
+				.set(AdsPushTaskEntity::getPushStatus, "push")
+				.update();
+		return BatchResultDTO.success(id, id);
 	}
 }

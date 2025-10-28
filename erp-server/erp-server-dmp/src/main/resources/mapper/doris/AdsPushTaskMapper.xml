@@ -47,5 +47,33 @@
         task_id, flow_id, node_id, instance_id, unique_code, data_encrypt, source_platform_name, target_platform_name, bill_topic, bill_key, parent_bill_topic, parent_bill_key, source_id, status, request_data, response_data, error_count, push_status, push_flow_url
     </sql>
 
-
+<!--推送任务列表分页查询-->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT
+        t.id,
+        t.source_platform_name AS sourcePlatformName,
+        t.target_platform_name AS targetPlatformName,
+        t.bill_topic AS sourceTypeName,
+        t.unique_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        CASE WHEN t.push_status = 'self' THEN FALSE ELSE TRUE END AS isNeedSync,
+        CASE WHEN t.push_status = 'black' THEN TRUE ELSE FALSE END AS isBlack
+        FROM ads_push_task t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
 </mapper>

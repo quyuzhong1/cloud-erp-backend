@@ -34,6 +34,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PUSH_TASK("EXPORT_PUSH_TASK","中台推送任务表","","",""),
     EXPORT_PULL_TASK("EXPORT_PULL_TASK","中台拉取任务表","","",""),
     EXPORT_NEW_DMP_PUSH_TASK("EXPORT_NEW_DMP_PUSH_TASK","中台推送任务表","","",""),
+    EXPORT_RESTCLOUD_PUSH_TASK("EXPORT_RESTCLOUD_PUSH_TASK","谷云推送任务表","","",""),
     EXPORT_DMP_AFTER_SALE("EXPORT_DMP_AFTER_SALE","售后申请表","","",""),
 
     //plm
