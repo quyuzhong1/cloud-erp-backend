@@ -1,4 +1,5 @@
 package com.erp.server.fms.service;
+
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -34,4 +35,5 @@ public interface AssetAcceptDetailService extends SuperService<AssetAcceptDetail
     Boolean update(AssetAcceptDetailDTO.UpdateDTO dto);
 
     Integer getAcceptQtyByDetailId(@RequestBody String detailId);
+
 }

@@ -196,7 +196,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         // 新增明细
-        assetPurchaseOrderDetailService.add(addDTO.getAssetPurchaseOrderDetailDTO(), assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.add(addDTO, assetPurchaseOrderEntity.getId());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购单", assetPurchaseOrderEntity.getCode());
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "新增操作");
@@ -238,7 +238,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         // 更新明细
-        assetPurchaseOrderDetailService.update(addOrUpdateDTO.getAssetPurchaseOrderDetailDTOList(), assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.update(addOrUpdateDTO, assetPurchaseOrderEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseOrderEntity.getCode());
@@ -936,6 +936,48 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             dto.setMoldName(detail.getAssetName()); // 模具名称使用资产名称
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public AssetPurchaseOrderDTO.DetailWithSkuDTO getByCode(String code) {
+        if (StrUtil.isBlank(code)) {
+            return null;
+        }
+
+        // 查询未删除且审核通过的资产采购订单
+        AssetPurchaseOrderEntity entity = this.lambdaQuery()
+                .eq(AssetPurchaseOrderEntity::getCode, code)
+                .eq(AssetPurchaseOrderEntity::getIsDeleted, false)
+                .eq(AssetPurchaseOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .one();
+
+        if (entity == null) {
+            log.warn("未找到已审核通过的资产采购订单，订单号：{}", code);
+            return null;
+        }
+
+        // 查询订单明细
+        List<AssetPurchaseOrderDTO.DetailForAcceptDTO> detailList = queryDetailsForAccept(entity.getId());
+
+        // 查询供应商信息
+        AssetPurchaseOrderSupplierEntity supplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, entity.getId())
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, false)
+                .one();
+
+        // 封装返回结果
+        AssetPurchaseOrderDTO.DetailWithSkuDTO result = new AssetPurchaseOrderDTO.DetailWithSkuDTO();
+        result.setId(entity.getId());
+        result.setCode(entity.getCode());
+        result.setDetailList(detailList);
+        
+        // 设置供应商信息
+        if (supplierEntity != null) {
+            result.setSupplierId(supplierEntity.getSupplierId());
+            result.setSupplierName(supplierEntity.getSupplierName());
+        }
+
+        return result;
     }
 
     @Override

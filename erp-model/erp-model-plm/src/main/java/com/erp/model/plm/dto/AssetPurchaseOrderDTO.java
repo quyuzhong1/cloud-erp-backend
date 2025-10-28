@@ -463,7 +463,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @Valid
         @NotNull(message = "资产采购订单明细信息不能为空")
-        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderDetailDTO;
+        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderDetailDTOList;
     }
 
     /**
@@ -717,6 +717,39 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 模具名称
          */
         private String moldName;
+    }
+
+    /**
+     * 资产采购订单详情（用于导入时根据订单号查询）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailWithSkuDTO {
+
+        /**
+         * 采购订单ID
+         */
+        private String id;
+
+        /**
+         * 采购订单编号
+         */
+        private String code;
+
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 明细列表
+         */
+        private List<DetailForAcceptDTO> detailList;
     }
 
 
