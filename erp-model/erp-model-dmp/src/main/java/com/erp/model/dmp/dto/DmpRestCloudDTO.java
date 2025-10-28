@@ -29,6 +29,7 @@ public class DmpRestCloudDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ListDTO {
         /**
          * 流程名称+流程路径
@@ -67,7 +68,7 @@ public class DmpRestCloudDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 流程明细(精准)
+         * 流程名称(精准)
          */
         private String flowName;
 
@@ -87,7 +88,6 @@ public class DmpRestCloudDTO implements Serializable {
         @Pattern(regexp = "input|output|etl", message = "任务配置类型只能为input、output或etl")
         @NotBlank(message = "任务配置类型不能为空")
         private String taskCfgType;
-
     }
 
 }
