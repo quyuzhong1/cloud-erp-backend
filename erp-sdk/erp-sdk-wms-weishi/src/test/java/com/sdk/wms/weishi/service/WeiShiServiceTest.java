@@ -227,6 +227,24 @@ public class WeiShiServiceTest {
     }
 
     @Test
+    public void getReturnInstock() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","6f656319297541f3a687b70fce35cf20");
+//        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+//        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", "e97be72d-1947-4f11-b0cb-339891122372");
+        WeiShiGetReturnInstockRequest weiShiGetReturnInstockRequest = new WeiShiGetReturnInstockRequest();
+        weiShiGetReturnInstockRequest.setQueryTime(WeiShiGetReturnInstockRequest.QueryTimeDTO.builder()
+                        .startTime("2025-05-01 00:00:00")
+                .endTime("2025-11-01 00:00:00")
+                .eventType("UPDATE")
+                .build());
+        WeiShiBaseResp<WeiShiReturnInstockResp>  resp = weiShiService.getReturnInstock(weiShiGetReturnInstockRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp).replace("\\\"", "\"").replace("\"{","{").replace("}\"","}"));
+
+    }
+
+    @Test
     public void getLogisticProductList() {
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");

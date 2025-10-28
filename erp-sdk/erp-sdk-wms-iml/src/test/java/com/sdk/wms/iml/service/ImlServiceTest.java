@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.FileUtil;
+import com.common.core.utils.Md5Util;
+import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.sdk.wms.iml.dto.ImlBaseResp;
@@ -20,8 +22,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +47,32 @@ public class ImlServiceTest {
 //        authMap.put("appToken","fewR7gRJix5l6Xbu7HBPEAtmrXZmYVjHu0DD76oVjNaz0_k6W7D2dRwppWXETUAV");
 //        authMap.put("appSecret","7m=j5-+gpydwadwii8y+eawg6-909-ij");
         ThirdWarehouseContext.setAuthMap(authMap);
+    }
+
+
+    private static final String APP_ID = "1979003219754110977";
+    private static final String APP_SECRET = "7m=j5-+gpydwadwii8y+eawg6-909-ij";
+    private static final String API_URL = "https://open.imlb2c.com/open-sdk/oms/query_refund_order_detail";
+    private static final String REQUEST_TOKEN = "fewR7gRJix5l6Xbu7HBPEAtmrXZmYVjHu0DD76oVjNaz0_k6W7D2dRwppWXETUAV";
+
+    public static void main(String[] args) {
+        Map<String,Object> body = new HashMap<>();
+        body.put("code","RI2025093000197");
+//        body.put("pageSize",50);
+        //查询前一天的时间戳的数据
+        long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        body.put("createTimeFrom",startTime);
+        body.put("createTimeTo",endTime);
+        String timestamp = String.valueOf(new Date().getTime());
+        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
+        Map<String,String> headerMap = new HashMap<>();
+        headerMap.put("x-app-id",APP_ID);
+        headerMap.put("x-app-sign",appSign);
+        headerMap.put("x-request-time",timestamp);
+        headerMap.put("x-request-token",REQUEST_TOKEN);
+        String bodyStr = OkHttpUtils.doPostJson(API_URL,body, headerMap);
+        System.out.println(bodyStr);
     }
 
     @Resource

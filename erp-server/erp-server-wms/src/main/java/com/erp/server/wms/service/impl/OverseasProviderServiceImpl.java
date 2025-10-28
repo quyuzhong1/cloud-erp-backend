@@ -161,7 +161,11 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
         if(CollUtil.isNotEmpty(warehouseList)){
             warehouseList.forEach(v->{
-                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
+                if (v.getPlatformWarehouseType().equals(SptWarehouseTypeEnum.TRANSIT.getCode())) {
+                    v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
+                }else{
+                    v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
+                }
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }
@@ -273,8 +277,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         OverseasProviderEntity entity = this.getById(dto.getId());
         OverseasProviderDTO.AuthorizeViewDTO authorizeViewDTO = BeanUtil.copyProperties(entity,OverseasProviderDTO.AuthorizeViewDTO.class);
         Map<String, Object> authJson = entity.getAuthJson();
-        authorizeViewDTO.setAppKey(authJson.get("appKey").toString());
-        authorizeViewDTO.setAppToken(authJson.get("appToken").toString());
+        authorizeViewDTO.setAppKey(authJson.getOrDefault("appKey","").toString());
+        authorizeViewDTO.setAppToken(authJson.getOrDefault("appToken","").toString());
         authorizeViewDTO.setEmail(authJson.getOrDefault("email","").toString());
         authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
         authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
