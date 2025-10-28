@@ -433,6 +433,10 @@ public class SampleLedgerDTO implements Serializable {
         private String productName;
 
         /**
+         * 台账数量
+         */
+        private Integer ledgerQty;
+        /**
          * 库存数量（可为正数或负数）
          */
         private Integer availableQty;

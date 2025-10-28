@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -157,7 +158,9 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(jiFengCreateOutboundRequest));
         JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMessage());
         }

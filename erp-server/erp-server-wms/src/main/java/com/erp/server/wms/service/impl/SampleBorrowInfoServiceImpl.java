@@ -35,10 +35,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
-import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import com.erp.model.wms.entity.SampleReturnInfoEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -169,44 +166,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         // 提取所有SKU编号，用于后续查询可用数量
         String lendUserId = sampleBorrowInfoEntity.getLendUserId();
-        //校验可用数量是否足够
-        checkDetailQty("" , lendUserId, skuIds, sampleBorrowDetailEntities);
-
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
         sampleBorrowDetailService.saveBatch(sampleBorrowDetailEntities);
         //附件
         addAttachment(addDTO, sampleBorrowInfoEntity);
         return new BaseResultDTO.AddDTO(sampleBorrowInfoEntity.getId(), code);
-    }
-
-    private void checkDetailQty(String id , String lendUserId, List<String> skuIds, List<SampleBorrowDetailEntity> sampleBorrowDetailEntities) {
-        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-        dto.setUserId(lendUserId);
-        dto.setSkuIds(skuIds);
-        dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
-        dto.setChildId(id);
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
-
-        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
-        sampleBorrowDetailEntities.forEach(detailDTO -> {
-            String sampleLedgerId = detailDTO.getSampleLedgerId();
-            SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
-            if(Objects.nonNull(sampleLedger)){
-                Integer availableQty = Objects.isNull(sampleLedger.getAvailableQty()) ? 0 : sampleLedger.getAvailableQty() ;
-                Integer borrowedQty  = Objects.isNull(detailDTO.getBorrowQty()) ? 0 : detailDTO.getBorrowQty() ;
-                if(borrowedQty.compareTo(availableQty) > 0){
-                    throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"借用");
-                }
-
-                //防止明细里还有重复
-                sampleLedger.setAvailableQty(availableQty - borrowedQty);
-                sampleLedgerMap.put(sampleLedgerId,sampleLedger);
-            }else {
-                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"借用");
-            }
-        });
     }
 
     /**
@@ -315,9 +279,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
 
         String lendUserId = sampleBorrowInfoEntity.getLendUserId();
-        //校验可用数量是否足够
-        checkDetailQty(sampleBorrowInfoEntity.getId(),lendUserId, skuIds, sampleBorrowDetailEntities);
-
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
 
         if(CollUtil.isNotEmpty(oldList)){
@@ -867,14 +828,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                         errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
                     } else {
 
-                        Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty();
+                        Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
                         Integer borrowedQty = Objects.isNull(importDTO.getBorrowQty()) ? 0 : Integer.valueOf(importDTO.getBorrowQty());
-                        if (borrowedQty.compareTo(availableQty) > 0) {
+                        if (borrowedQty.compareTo(ledgerQty) > 0) {
                             errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "借用") + "；";
                         } else {
                             importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             //防止超量借用
-                            skuAvailableQtyDTO.setAvailableQty(availableQty - borrowedQty);
+                            skuAvailableQtyDTO.setLedgerQty(ledgerQty - borrowedQty);
                         }
                     }
                 }
@@ -1094,7 +1055,45 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        validateQty(entity);
+    }
+    /**
+     * 校验样品借用明细中的借用数量是否超过对应台账中的可用数量。
+     * <p>
+     * 该方法会根据传入的借用主表信息，查询其所有明细记录，并针对每条明细校验：
+     * 借用数量不能超过该用户在对应台账中该SKU的可用数量。
+     * 若发现某条明细的借用数量超出，则抛出业务异常。
+     *
+     * @param entity 样品借用主表实体对象，用于获取借用用户ID、主表ID等信息
+     */
+    private void validateQty(SampleBorrowInfoEntity entity) {
+        List<SampleBorrowDetailEntity> detailList = sampleBorrowDetailService.lambdaQuery().eq(SampleBorrowDetailEntity::getMainId, entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(SampleBorrowDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        // 为每个明细查询对应的台账数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getLendUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
+        searchDTO.setChildId(entity.getId());
+        searchDTO.setSkuIds(skuIds);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        Map<String, Integer> ledgerMap = ledgerList.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, SampleLedgerDTO.SkuAvailableQtyDTO::getLedgerQty, (o1, o2) -> o1));
+        // 校验每个明细的退回数量（需要按明细查询台账，因为每个明细的使用方不同）
+        for (SampleBorrowDetailEntity detail : detailList) {
+            Integer borrowQty = detail.getBorrowQty();
+            if (borrowQty == null || borrowQty <= 0) {
+                continue; // 跳过无效数量
+            }
+            Integer ledgerQty = ledgerMap.getOrDefault(detail.getSampleLedgerId(), 0);
+            if (borrowQty > ledgerQty) {
+                throw new ServiceException(StrUtil.format("SKU【{}】借用数量【{}】不能大于台账数量【{}】",
+                        detail.getSkuNo(), borrowQty, ledgerQty));
+            }
+            //防止明细里还有重复
+            ledgerMap.put(detail.getSampleLedgerId(),ledgerQty - borrowQty);
+        }
     }
 
     /**

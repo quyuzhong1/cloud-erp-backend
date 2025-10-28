@@ -2524,6 +2524,37 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    public List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds) {
+        if(CollUtil.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery()
+                .in(SoDeliveryNoticeEntity::getSourceId, soIds)
+                .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
+                .eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).list();
+    }
+
+    @Override
+    public void updateSalesInfo(SoInfoEntity soInfoEntity) {
+        if (Objects.nonNull(soInfoEntity)){
+            SysDepartmentDTO dept = null;
+            if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
+                dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            }
+            this.lambdaUpdate()
+                    .set(SoDeliveryNoticeEntity::getSalesOrgId, soInfoEntity.getSalesOrgId())
+                    .set(SoDeliveryNoticeEntity::getSalesOrgName, soInfoEntity.getSalesOrgName())
+                    .set(SoDeliveryNoticeEntity::getSalesDeptId, soInfoEntity.getSalesDeptId())
+                    .set(Objects.nonNull(dept),SoDeliveryNoticeEntity::getSalesDeptName, dept.getName())
+                    .set(SoDeliveryNoticeEntity::getSellerId, soInfoEntity.getSellerId())
+                    .set(SoDeliveryNoticeEntity::getSellerName, soInfoEntity.getSellerName())
+                    .eq(SoDeliveryNoticeEntity::getSourceId, soInfoEntity.getId())
+                    .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
+                    .update();
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {

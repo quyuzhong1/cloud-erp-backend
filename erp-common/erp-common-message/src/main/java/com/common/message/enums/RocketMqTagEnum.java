@@ -672,7 +672,7 @@ public enum RocketMqTagEnum {
 
     public static final String FBA_DELIVERY = "fba_delivery";
 
-    public static final String SYS_LOG = "sys_log";
+    public static final String SYS_LOG = "operate_log";
 
     public static final String AMZ_REPORT = "amz_report";
 

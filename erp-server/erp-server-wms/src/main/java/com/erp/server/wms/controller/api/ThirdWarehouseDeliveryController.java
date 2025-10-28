@@ -8,6 +8,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -108,23 +109,28 @@ public class ThirdWarehouseDeliveryController extends BaseController {
      */
     @PostMapping("/retryOutstock")
     public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto)  {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO resultDTO;
-            try {
-                resultDTO = thirdWarehouseDeliveryService.retryOutstock(id);
-            }catch (Exception e){
-                log.error("重新出库失败",e);
-                ThirdWarehouseDeliveryEntity entity = thirdWarehouseDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
-                    resultDTOS.add(resultDTO);
-                    continue;
+        try {
+            UserContext.setIsUserSystem(true);
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+            for (String id : dto.getIds()) {
+                BatchResultDTO resultDTO;
+                try {
+                    resultDTO = thirdWarehouseDeliveryService.retryOutstock(id);
+                }catch (Exception e){
+                    log.error("重新出库失败",e);
+                    ThirdWarehouseDeliveryEntity entity = thirdWarehouseDeliveryService.getById(id);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+                        resultDTOS.add(resultDTO);
+                        continue;
+                    }
+                    resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(resultDTO);
             }
-            resultDTOS.add(resultDTO);
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }finally {
+            UserContext.clearIsUserSystem();
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

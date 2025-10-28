@@ -1,7 +1,9 @@
 package com.common.business.threadlocal;
 
+import com.common.business.constant.UserStateConstants;
 import com.common.business.vo.LoginUser;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public final class UserContext {
@@ -15,7 +17,27 @@ public final class UserContext {
     }
 
     public static LoginUser getLoginUser() {
+        if(Objects.nonNull(UserContext.getIsUserSystem()) && UserContext.getIsUserSystem()){
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+            loginUser.setUserName(UserStateConstants.USER_SYSTEM);
+            loginUser.setUserAccount("");
+            return loginUser;
+        }
         return userThreadLocal.get();
+    }
+
+    /**
+     * 是否使用system用户
+     */
+    private static final ThreadLocal<Boolean> isUserSystemThreadLocal = ThreadLocal.withInitial(()->false);
+
+    public static void setIsUserSystem(Boolean isUserSystem) {
+        isUserSystemThreadLocal.set(isUserSystem);
+    }
+
+    public static Boolean getIsUserSystem() {
+        return isUserSystemThreadLocal.get();
     }
 
     /**
@@ -23,11 +45,18 @@ public final class UserContext {
      * @return {@link LoginUser}
      */
     public static LoginUser getNonLoginUser() {
+        if(Objects.nonNull(UserContext.getIsUserSystem()) && UserContext.getIsUserSystem()){
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+            loginUser.setUserName(UserStateConstants.USER_SYSTEM);
+            loginUser.setUserAccount("");
+            return loginUser;
+        }
         LoginUser loginUser = userThreadLocal.get();
         if (Objects.isNull(loginUser)) {
             loginUser = new LoginUser();
-            loginUser.setUid("0");
-            loginUser.setUserName("system");
+            loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+            loginUser.setUserName(UserStateConstants.USER_SYSTEM);
             loginUser.setUserAccount("");
         }
         return loginUser;
@@ -40,6 +69,11 @@ public final class UserContext {
     public static LoginUser getDefaultLoginUser() {
          return getNonLoginUser();
     }
+
+    public static void clearIsUserSystem() {
+        isUserSystemThreadLocal.remove();
+    }
+
 
     public static void clear() {
         userThreadLocal.remove();
