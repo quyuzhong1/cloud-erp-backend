@@ -90,11 +90,11 @@ public class CfgMoldAlertImportExcelDTO implements Serializable {
 
 
     /**
-     * 预警寿命（数量）
+     * 预警数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "预警寿命（数量）", index = 6)
-    @FieldValid(fieldName = "预警寿命（数量）",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @ExcelProperty(value = "预警数量", index = 6)
+    @FieldValid(fieldName = "预警数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private Integer alertLifeQty;
 
 
@@ -102,8 +102,8 @@ public class CfgMoldAlertImportExcelDTO implements Serializable {
      * 预警寿命（数量）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "预警寿命（%）", index = 7)
-    @FieldValid(fieldName = "预警寿命（%）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    @ExcelProperty(value = "预警比例(%)", index = 7)
+    @FieldValid(fieldName = "预警比例(%)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private BigDecimal alertLifeRate;
 
     /**

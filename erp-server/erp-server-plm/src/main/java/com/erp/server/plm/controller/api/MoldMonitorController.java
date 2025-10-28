@@ -174,6 +174,21 @@ public class MoldMonitorController extends BaseController {
         return success(moldMonitorService.batchRefresh(dto));
     }
 
+    /**
+     * 刷新统计
+     * @author jack
+     * @date: 2025-10-10
+     * @return ApiResult<BatchResultDTO>
+     */
+    @GetMapping("/calMonitorOrder")
+    public void calMonitorOrder() {
+
+        List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor(null,null);
+
+        moldMonitorService. calMonitorOrder(moldMonitorEntities);
+
+    }
+
 
     /**
      * 模具返还监控导出
