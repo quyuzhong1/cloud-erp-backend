@@ -1382,6 +1382,7 @@ public enum ApiError implements Serializable {
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
     ERROR_TRANSFER_NOT_RETRY_OUTSTOCK(92288, "发货单已调拨出库，不允许重新出库"),
+    ERROR_FBA_FNSKU_NOT_BLANK(92289, "FNSKU不能为空"),
 
     /**
      * OMS 错误
