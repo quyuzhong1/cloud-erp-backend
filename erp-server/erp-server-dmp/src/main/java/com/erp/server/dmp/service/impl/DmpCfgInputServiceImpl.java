@@ -15,6 +15,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -22,13 +23,20 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictBankEntity;
+import com.erp.model.sys.entity.DictBasicEntity;
+import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputMapper;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -185,7 +193,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         // 删除日志数据
         log.info("删除 开始删除输入信息日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "输入信息");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除输入信息数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "删除输入信息数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -212,11 +220,21 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        Map<String, String> sourceTypeMap = new HashMap<>();
+        // api/sys/dictBasic/list?type=sourceType
+        List<DictBasicEntity> sourceTypeList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, "sourceType")
+                .list();
+        if (CollectionUtils.isNotEmpty(sourceTypeList)) {
+            // 分组存在替换
+            sourceTypeMap = sourceTypeList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
+        }
 
         // 属性赋值
         for(DmpCfgInputDTO.ListDTO data : list) {
-//            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
+            data.setSystemName(DmpBasicSystemCodeEnum.getName(data.getSystemId()));
+            data.setBillTypeName(sourceTypeMap.getOrDefault(data.getType(), ""));
         }
     }
 
@@ -226,7 +244,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             entity.setDisabled(false);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "启用【拉取配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "启用【拉取配置】数据");
         } else {
             ServiceException.runError("该【拉取配置】数据已启用，无需重复操作");
         }
@@ -239,7 +257,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             entity.setDisabled(true);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
-            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "禁用【拉取配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "禁用【拉取配置】数据");
         } else {
             ServiceException.runError("该【拉取配置】数据已禁用，无需重复操作");
         }

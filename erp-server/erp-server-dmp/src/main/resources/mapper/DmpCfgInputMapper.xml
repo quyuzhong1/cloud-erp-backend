@@ -82,6 +82,7 @@
             dci.type_id AS typeId,
             dci.disabled AS disabled,
             dci.extend_json AS extendJson,
+            dci.exec_url AS execUrl,
             dci.exec_system AS execSystem,
             dci.is_main_task AS isMainTask,
             dci.bill_type AS billType,
@@ -90,11 +91,11 @@
         left join dmp_basic_system dbs on dbs.id = dci.system_id
         where
         ${params.sqlMap.default}
-        and dci.s_deleted = false
+        and dci.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by update_time desc
+        order by dci.update_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

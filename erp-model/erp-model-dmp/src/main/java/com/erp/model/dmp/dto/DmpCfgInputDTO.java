@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -366,6 +367,11 @@ public class DmpCfgInputDTO implements Serializable {
         private String type;
 
         /**
+         * 输入类型名称
+         */
+        private String typeName;
+
+        /**
          * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
          */
         private String typeId;
@@ -392,6 +398,13 @@ public class DmpCfgInputDTO implements Serializable {
         private String billType;
 
         /**
+         * 单据业务类型名称
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billTypeName;
+
+
+        /**
          * 执行系统:默认:dmp
          */
         private String execSystem;
@@ -401,6 +414,27 @@ public class DmpCfgInputDTO implements Serializable {
          * 来源接口：/api/dmp/restCloud/paging
          */
         private String execUrl;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
+
 
     }
 }
