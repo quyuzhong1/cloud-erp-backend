@@ -278,6 +278,34 @@ public class MoldMonitorDTO implements Serializable {
     }
 
     /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+        /**
+         * 来源类型 cfgMoldReturnAlertrRule =模具返还策略 ， cfgMoldAlertrRule = 模具预警策略
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+
+    }
+
+    /**
     * 详情
     */
     @Data
