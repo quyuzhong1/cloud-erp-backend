@@ -58,4 +58,6 @@ public interface CfgMoldAlertRuleService extends SuperService<CfgMoldAlertRuleEn
     void handleImportSuccessList(List<CfgMoldAlertImportExcelDTO> successList, List<CfgMoldAlertImportExcelDTO> errorList2, String importType);
 
     BatchResultDTO updateStatus(String id, @NotNull(message = "禁用状态不能为空") Boolean disabled);
+
+    List<CfgMoldAlertRuleDTO.ListDTO> listAll(List<String> ids);
 }

@@ -112,10 +112,15 @@ public class MoldMonitorDTO implements Serializable {
         private String status;
         private String statusName;
         /**
-         * 返还状态：underachieved=未达量 , notReturned=未返 , returned=已返  枚举：MoldMonitorReturnStatusEnum
+         * 返还状态： notReturned=未返 , returned=已返  枚举：MoldMonitorReturnStatusEnum
          */
         private String returnStatus;
         private String returnStatusName;
+        /**
+         * 达量状态： underachieved = 未达量 , derachieved = 达量  枚举：MoldMonitorDerachievedStatusEnum
+         */
+        private String derachievedStatus;
+        private String derachievedStatusName;
         /**
          * 寿命状态：healthy=健康 , alert=预警 , exhausted=耗尽  枚举：MoldMonitorLifeStatusEnum
          */

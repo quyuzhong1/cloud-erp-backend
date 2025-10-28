@@ -6,14 +6,15 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 模具预警策略 标准 枚举
+ *  模具监控 达量状态 枚举
  * </p>
  *
  * @author jack
  * @since 2025-10-20 10:27:11
  */
-public enum CfgMoldAlertRuleCountDimEnum implements EnumMessage {
-
+public enum MoldMonitorDerachievedStatusEnum implements EnumMessage {
+    UNDERACHIEVED("underachieved", "未达量"),
+    DERACHIEVED("derachieved", "达量"),
     ;
     /**
      * 类型
@@ -26,7 +27,7 @@ public enum CfgMoldAlertRuleCountDimEnum implements EnumMessage {
      */
     private String name;
 
-    CfgMoldAlertRuleCountDimEnum(String code, String name) {
+    MoldMonitorDerachievedStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -45,7 +46,7 @@ public enum CfgMoldAlertRuleCountDimEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgMoldAlertRuleCountDimEnum statusEnum : CfgMoldAlertRuleCountDimEnum.values()) {
+        for (MoldMonitorDerachievedStatusEnum statusEnum : MoldMonitorDerachievedStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

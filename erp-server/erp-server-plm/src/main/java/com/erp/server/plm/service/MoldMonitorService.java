@@ -4,6 +4,7 @@ import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.MoldMonitorDTO;
+import com.erp.model.plm.entity.MoldMonitorRefOrderEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -36,7 +37,9 @@ public interface MoldMonitorService extends SuperService<MoldMonitorEntity> {
 
     BatchResultDTO cancelReturnPrice(String id);
 
-    List<MoldMonitorEntity> buildMonitor();
+    List<MoldMonitorEntity> buildMonitor(List<String> sourceIds,List<String> sourceDetailIds);
 
     void calMonitorOrder(List<MoldMonitorEntity> list);
+
+    void handlerData(MoldMonitorEntity moldMonitorEntity, Integer qty, List<MoldMonitorRefOrderEntity> moldMonitorRefOrderEntities);
 }
