@@ -192,10 +192,10 @@ public class ImlServiceTest {
     public void createInboundBill() {
         ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
                 .needCustomerAudit("N")
-                .platformOrderNo("FHD12456")
+                .platformOrderNo("FHD1243141256")
                 .bizType("TOC")
-                .destWarehouseCode("ceshi")
-                .customsType("SEPARATE_TAX")
+                .destWarehouseCode("RUS2")
+//                .customsType("SEPARATE_TAX")
                 .inboundType("DIRECT")
                 .expectedDate(LocalDateTimeUtil.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .attachments(Arrays.asList(
@@ -207,14 +207,14 @@ public class ImlServiceTest {
                 ))
                 .boxs(Arrays.asList(
                         ImlCreateInboundReq.BoxsDTO.builder()
-                                .boxNo("ceshi11324")
+//                                .boxNo("ceshi11211111324")
                                 .boxWeight(new BigDecimal(1.5))
                                 .boxLength(new BigDecimal(1.5))
                                 .boxWidth(new BigDecimal(1.5))
                                 .boxHeight(new BigDecimal(1.5))
                                 .boxDetails(Arrays.asList(
                                         ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO.builder()
-                                                .skuBarcode("ceshiB0540-80D")
+                                                .skuBarcode("cola333")
                                                 .quantity(1)
                                                 .build()
                                 ))
@@ -223,7 +223,7 @@ public class ImlServiceTest {
                 .build();
         imlCreateInboundReq.setDirect(
                 ImlCreateInboundReq.DirectDTO.builder()
-                        .trackingNumber("测试1249")
+                        .trackingNumber("354345")
                         .build()
         );
 

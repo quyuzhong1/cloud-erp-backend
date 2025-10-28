@@ -81,8 +81,8 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .needCustomerAudit("N")
                 .platformOrderNo(createInboundReq.getReferenceNo())
                 .bizType("TOC")
-                .destWarehouseCode(createInboundReq.getWarehouseCode())
                 .customsType(createInboundReq.getDeclareType().equals("Y")?"SEPARATE_TAX":createInboundReq.getDeclareType().equals("N")?"NO_TAX":"")
+                .destWarehouseCode(createInboundReq.getWarehouseCode())
                 .inboundType(createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())?"DIRECT":createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())?"TRANSIT":"")
                 .expectedDate(createInboundReq.getEtaDate().atZone(ZoneId.systemDefault())
                         .toInstant()
@@ -148,6 +148,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             boxListDTO.setBoxLength(firstItem.getBoxLength());
             boxListDTO.setBoxWidth(firstItem.getBoxWidth());
             boxListDTO.setBoxHeight(firstItem.getBoxHeight());
+            boxListDTO.setBoxNo(createInboundReq.getReferenceNo() + "-" + boxNo);
             List<ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO> skuVosDTOS = new ArrayList<>();
             for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
                 ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO skuVosDTO = new ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO();
