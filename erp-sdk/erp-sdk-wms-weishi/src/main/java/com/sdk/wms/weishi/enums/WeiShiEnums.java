@@ -171,8 +171,16 @@ public enum WeiShiEnums {
      */
     @Getter
     public enum ReturnInstockTypeEnum {
-        RETURNS_FROM_SERVICE_PROVIDERS(1,"服务商退件", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
-        CUSTOMER_RETURNS(2,"客户退件", ReturnTypeEnum.CUSTOMER_RETURNS),
+        FAILED_TO_COLLECT_MONE(0,"揽收失败", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        DELIVERY_FAILED(1,"派送失败", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        BUYER_RETURNS(2,"买家退件", ReturnTypeEnum.CUSTOMER_RETURNS),
+        THE_PLATFORM_WITHDRAWS_FROM_THE_POSITION(3,"平台退仓", ReturnTypeEnum.OTHER),
+        CUSTOMER_INTERCEPTION(4,"客户拦截", ReturnTypeEnum.OTHER),
+        STAGGERED(5,"错发", ReturnTypeEnum.OTHER),
+        RETURNED(6,"派送失败-退回", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        SCRAP_GOODS(7,"派送失败-弃货", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        SMALL_PACKAGE_RETURN(8,"小包退件", ReturnTypeEnum.OTHER),
+        NO_IDENTIFICATION(9,"无识别", ReturnTypeEnum.OTHER),
         ;
         private final Integer code;
         private final String name;

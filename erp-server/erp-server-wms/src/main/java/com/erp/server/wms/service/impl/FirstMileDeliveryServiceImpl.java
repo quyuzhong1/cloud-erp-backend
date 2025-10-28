@@ -2556,7 +2556,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private Boolean validateExistsTransferInfo(String deliveryId) {
         List<TransferInfoEntity> list = transferInfoService.list(new LambdaQueryWrapper<TransferInfoEntity>()
                 .eq(TransferInfoEntity::getSourceId, deliveryId)
-                .eq(TransferInfoEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
                 .eq(TransferInfoEntity::getInvalidStatus, false));
         return !list.isEmpty();
     }
@@ -2758,7 +2757,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货单不存在");
         }
         if (validateExistsTransferInfo(entity.getId())) {
-            throw new ServiceException(ApiError.ERROR_92138, "发货单已调拨出库，不允许重新出库");
+            throw new ServiceException(ApiError.ERROR_TRANSFER_NOT_RETRY_OUTSTOCK);
         }
         //查询发货详情
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
