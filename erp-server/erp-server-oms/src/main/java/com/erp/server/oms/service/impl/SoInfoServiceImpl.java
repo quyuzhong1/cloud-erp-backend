@@ -1798,7 +1798,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:51
@@ -1806,7 +1806,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -1816,6 +1817,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -3686,7 +3688,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //如果是审核中，撤销审核
             if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                this.cancelProcess(Arrays.asList(exist.getId()));
+                this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Arrays.asList(exist.getId())));
             }
             //如果是已审核，反审核
             if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){

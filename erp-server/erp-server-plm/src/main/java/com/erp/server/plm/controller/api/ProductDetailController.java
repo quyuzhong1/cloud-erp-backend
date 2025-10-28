@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -1121,7 +1122,7 @@ public class ProductDetailController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = productDetailService.cancelProcess(id);
+                cancelResult = productDetailService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("产品信息撤回流程失败",e);
                 ProductDetailEntity entity = productDetailService.getById(id);

@@ -11,6 +11,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -24,7 +25,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDTO;
@@ -510,13 +510,14 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-26 19:00
      */
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99066);
@@ -529,6 +530,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
             revokeDTO.setUserId(userInfo.getUid());

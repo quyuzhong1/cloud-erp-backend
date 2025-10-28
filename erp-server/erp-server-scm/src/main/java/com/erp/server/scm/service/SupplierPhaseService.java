@@ -1,7 +1,11 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DynamicExcelDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
@@ -96,7 +100,7 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 审核完成

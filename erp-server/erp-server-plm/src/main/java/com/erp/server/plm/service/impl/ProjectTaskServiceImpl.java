@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -4034,16 +4035,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 撤销流程
      *
-     * @param taskIdList
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-25 17:11
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean cancelProcess(List<String> taskIdList) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据任务id 获取所有的任务列表
-        List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        List<ProjectTaskEntity> taskList = this.getByTaskIds(ids);
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }

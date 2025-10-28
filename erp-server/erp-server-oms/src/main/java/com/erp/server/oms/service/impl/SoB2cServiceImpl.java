@@ -6295,10 +6295,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(dto.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
         revokeDTO.setUserId(userId);
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
         this.updateApproveStatus(dto.getId(), waitSubmit.getStatus(), Boolean.FALSE);

@@ -53,5 +53,15 @@ public class BasicDictEntity extends BaseEntity<BasicDictEntity> implements Seri
     @TableField("order_index")
     private Integer orderIndex;
 
-
+    /**
+     * 启用状态
+     */
+    @TableField("status")
+    private Boolean status;
+    
+    /**
+     * 类型名称
+     */
+     @TableField("type_name")
+     private String typeName;
 }

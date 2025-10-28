@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -208,7 +209,7 @@ public class BomInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = bomInfoService.cancelProcess(id);
+                cancelResult = bomInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("BOM撤回流程失败",e);
                 BomInfoEntity entity = bomInfoService.getById(id);

@@ -1,8 +1,13 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.sys.dto.DictBasicAllDTO;
+
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -14,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface BasicDictMapper extends BaseMapper<BasicDictEntity> {
-
+	IPage<DictBasicAllDTO.ViewDTO> paging(Page query, @Param("params") DictBasicAllDTO.PagingParamDTO params);
 }

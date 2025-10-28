@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -127,12 +128,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         handleData(sampleReturnInfoEntity);
 
         log.info("开始新增样品归还单");
-        
+
         // 校验明细不能为空
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
             throw new ServiceException("样品归还单明细不能为空");
         }
-        
+
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPGH);
         sampleReturnInfoEntity.setCode(code);
@@ -648,7 +649,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, ClientTypeEnum clientType) {
+        String id = dto.getId();
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -665,6 +667,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -773,7 +776,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
-        
+
         //最新审核人：如果approveUserId或approveUserName为空则去查询
         if (StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) {
             ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -799,7 +802,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 }
             }
         }
-        
+
         return data;
     }
 
@@ -928,7 +931,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
             //最新审核人：如果approveUserId或approveUserName为空则去查询并填充
-            if ((StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) 
+            if ((StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName()))
                 && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
                     .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
@@ -1259,7 +1262,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     /**
      * 使用分布式锁进行样品台账数量校验
      * 实现一锁二判三放行的逻辑
-     * 
+     *
      * @param entity 样品归还单实体
      * @param approveType 审核类型
      */
@@ -1275,12 +1278,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             new LambdaQueryWrapper<SampleReturnDetailEntity>()
                 .eq(SampleReturnDetailEntity::getMainId, entity.getId())
         );
-        
+
         if (CollUtil.isEmpty(detailList)) {
             log.info("样品归还单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         if (ApproveTypeEnum.PASS.equals(approveType)) {
             // 审核：校验归还人台账是否足够扣减
             validateReturnUserLedger(entity, detailList);
@@ -1289,7 +1292,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             validateReceiverUserLedger(entity, detailList);
         }
     }
-    
+
     /**
      * 校验归还人台账数量（审核时）
      * 归还人的台账就是借用单中的借入人台账，需要动态查询
@@ -1300,16 +1303,16 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .map(SampleReturnDetailEntity::getSkuId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         // 一次性批量查询所有台账
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getReturnUserId());
         searchDTO.setUseUserId(entity.getReturnUserId()); // 归还人的使用方就是自己
         searchDTO.setSkuIds(skuIds);
         searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
-        
+
         List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-        
+
         // 构建 skuId -> ledgerId 的映射
         Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
@@ -1320,12 +1323,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                             (existing, replacement) -> existing
                     ));
         }
-        
+
         // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
-        
+
         for (SampleReturnDetailEntity detail : detailList) {
             String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
             if (StrUtil.isNotBlank(ledgerId)) {
@@ -1333,19 +1336,19 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 qtys.add(-detail.getReturnQty()); // 归还人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到归还人台账，SKU：{}，归还人：{}，单据编号：{}", 
+                log.warn("未找到归还人台账，SKU：{}，归还人：{}，单据编号：{}",
                     detail.getSkuNo(), entity.getReturnUserName(), entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的归还人台账不存在，无法审核", detail.getSkuNo()));
             }
         }
-        
+
         if (CollUtil.isEmpty(sampleLedgerIds)) {
             log.info("没有需要校验的归还人台账，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         log.info("开始校验归还人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
-        
+
         // 使用分布式锁进行数量校验
         sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
             sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.PASS, skuNos, sampleLedgerService::getLedgerQtyMap);
@@ -1353,7 +1356,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             return null;
         });
     }
-    
+
     /**
      * 校验接收人台账数量（反审核时）
      * 接收人的台账就是借用单中的借出人台账（sampleLedgerId）
@@ -1365,15 +1368,15 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         if (CollUtil.isEmpty(sourceDetailIds)) {
             log.warn("归还单明细中没有来源明细ID，无法查询接收人台账，单据编号：{}", entity.getCode());
             throw new ServiceException("归还单明细中没有来源明细ID，无法反审核");
         }
-        
+
         // 一次性批量查询所有借用单明细
         List<SampleBorrowDetailEntity> borrowDetailList = sampleBorrowDetailService.listByIds(sourceDetailIds);
-        
+
         // 构建 sourceDetailId -> sampleLedgerId 的映射
         Map<String, String> sourceIdToLedgerIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(borrowDetailList)) {
@@ -1385,12 +1388,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                             (existing, replacement) -> existing
                     ));
         }
-        
+
         // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
-        
+
         for (SampleReturnDetailEntity detail : detailList) {
             String ledgerId = sourceIdToLedgerIdMap.get(detail.getSourceDetailId());
             if (StrUtil.isNotBlank(ledgerId)) {
@@ -1398,19 +1401,19 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 qtys.add(-detail.getReturnQty()); // 反审核时接收人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到接收人台账，SKU：{}，接收人：{}，单据编号：{}", 
+                log.warn("未找到接收人台账，SKU：{}，接收人：{}，单据编号：{}",
                     detail.getSkuNo(), entity.getReceiverUserName(), entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的接收人台账不存在，无法反审核", detail.getSkuNo()));
             }
         }
-        
+
         if (CollUtil.isEmpty(sampleLedgerIds)) {
             log.info("没有需要校验的接收人台账，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         log.info("开始校验接收人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
-        
+
         // 使用分布式锁进行数量校验
         sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
             sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.DIS_APPROVE, skuNos, sampleLedgerService::getLedgerQtyMap);

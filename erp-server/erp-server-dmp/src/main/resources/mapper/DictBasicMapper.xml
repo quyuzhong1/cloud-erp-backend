@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DictBasicMapper">
+
+<select id="paging" resultType="com.erp.model.sys.dto.DictBasicAllDTO$ViewDTO">
+        select id,
+		create_user_id,
+		create_user_name,
+		create_time,
+		update_user_id,
+		update_user_name,
+		update_time,
+		version,
+		is_deleted,
+		remark,
+		value,
+		type,
+		name,
+		status,
+		sort,
+		type_name
+		from dict_basic t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.create_time desc
+    </select>
+
+</mapper>

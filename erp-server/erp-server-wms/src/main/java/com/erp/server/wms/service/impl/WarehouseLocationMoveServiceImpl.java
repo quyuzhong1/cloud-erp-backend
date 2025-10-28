@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -737,7 +738,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         WarehouseLocationMoveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -757,37 +759,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
-    }
-  /**
-    * 撤销
-    */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO pcCancelProcess(String id) {
-        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
-        String mainId = warehouseLocationMoveDetailEntity.getMainId();
-        WarehouseLocationMoveEntity entity = super.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
-        // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
-        }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",mainId);
-
-        log.info("撤销 开始修改仓位移动主单状态，id：【{}】", mainId);
-        updateApproveStatus(mainId, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", mainId);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), mainId, "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

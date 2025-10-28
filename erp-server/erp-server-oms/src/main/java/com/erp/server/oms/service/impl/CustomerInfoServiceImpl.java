@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -35,13 +36,9 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.enums.AddressTypeEnum;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
@@ -1176,14 +1173,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 15:39
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<CustomerInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -1194,6 +1192,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());

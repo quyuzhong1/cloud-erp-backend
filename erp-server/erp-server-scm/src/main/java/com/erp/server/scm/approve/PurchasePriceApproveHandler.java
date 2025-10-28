@@ -54,7 +54,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        BatchResultDTO resultDTO = purchasePriceService.cancelProcessEntity(entity);
+        BatchResultDTO resultDTO = purchasePriceService.cancelProcessEntity(dto,entity);
         return resultDTO.getSuccess();
     }
 

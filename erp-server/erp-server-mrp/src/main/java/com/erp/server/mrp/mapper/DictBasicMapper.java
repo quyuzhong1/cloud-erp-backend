@@ -1,8 +1,12 @@
 package com.erp.server.mrp.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.DictBasicEntity;
+import com.erp.model.sys.dto.DictBasicAllDTO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -28,4 +32,6 @@ public interface DictBasicMapper extends BaseMapper<DictBasicEntity> {
      * @return List<ViewDTO>
      */
     List<CfgRuleCommonDTO.ViewDTO> listRuleCommonTree(@Param("platformType") String platformType,@Param("isDisableOverseas") Boolean isDisableOverseas);
+    
+    IPage<DictBasicAllDTO.ViewDTO> paging(Page query, @Param("params") DictBasicAllDTO.PagingParamDTO params);
 }

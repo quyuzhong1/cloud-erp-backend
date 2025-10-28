@@ -54,7 +54,7 @@ public class SoPriceApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE);
         }
-        BatchResultDTO resultDTO = soPriceService.cancelProcess(entity);
+        BatchResultDTO resultDTO = soPriceService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

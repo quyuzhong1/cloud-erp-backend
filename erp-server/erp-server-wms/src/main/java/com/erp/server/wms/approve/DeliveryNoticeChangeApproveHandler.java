@@ -38,7 +38,7 @@ public class DeliveryNoticeChangeApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = soDeliveryNoticeChangeService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = soDeliveryNoticeChangeService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

@@ -7,6 +7,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
@@ -38,12 +39,13 @@ public class OtherOutstockApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return otherOutstockService.cancelProcess(Collections.singletonList(dto.getId()));
+        return otherOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
-        return otherOutstockService.cancelProcess(Collections.singletonList(dto.getId()));
+        BatchResultDTO resultDTO = otherOutstockService.disApprove(dto.getId());
+        return resultDTO.getSuccess();
     }
 
     @Override
