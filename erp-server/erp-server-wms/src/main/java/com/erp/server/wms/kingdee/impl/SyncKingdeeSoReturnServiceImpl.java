@@ -380,11 +380,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             BigDecimal returnAmountLocalCurrency = detailEntity.getReturnAmountLocalCurrency();
             BigDecimal price = MathUtil.divide(returnAmountLocalCurrency, BigDecimal.valueOf(realQty));
             map.put("price", price);
+
             //含税单价 = 含税退货金额（本位币）/ 退货数量
             BigDecimal taxReturnAmountLocalCurrency = detailEntity.getTaxReturnAmountLocalCurrency();
             BigDecimal taxPrice = MathUtil.divide(taxReturnAmountLocalCurrency, BigDecimal.valueOf(realQty));
             //含税单价
             map.put("taxPrice", taxPrice);
+
             //是否赠品
             map.put("isGift", soDetailEntity.getIsGift());
             //金额
