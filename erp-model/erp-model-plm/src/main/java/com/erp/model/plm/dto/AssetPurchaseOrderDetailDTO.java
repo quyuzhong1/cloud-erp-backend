@@ -249,9 +249,6 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         /**
         * 含税单价
         */
-        @NotNull(message = "含税单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
-        @DecimalMin(value = "0.0", inclusive = false, message = "单价必须大于0")
         private BigDecimal taxPrice;
 
         /**
@@ -284,7 +281,6 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         /**
         * 价税合计
         */
-        @Digits(integer = 12, fraction = 4, message = "价税合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal totalAmount;
 
         /**
