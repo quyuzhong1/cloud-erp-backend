@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -213,7 +214,7 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     void downloadTemplate(HttpServletResponse response);
 
 
-    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId);
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId);
 
-
+    Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
 }

@@ -34,6 +34,7 @@ import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AttachmentEntity;
 import com.erp.model.fms.enums.*;
 import com.erp.model.fms.enums.UnitEnum;
+import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -50,23 +51,19 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.xpath.operations.Bool;
-import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.common.core.controller.vo.ApiResult.success;
 
 /**
@@ -1682,8 +1679,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (!list.isEmpty()) {
-            AssetAcceptEntity assetAcceptEntity = this.lambdaQuery().eq(AssetAcceptEntity::getId, list.get(0)
-                    .getMainId())
+            AssetAcceptEntity assetAcceptEntity = this.lambdaQuery()
+                    .eq(AssetAcceptEntity::getId, list.get(0).getMainId())
                     .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE).one();
             List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> assetAcceptDetailEntityList = new ArrayList<>();
             for (AssetAcceptDetailEntity detailEntity : list) {
@@ -1707,6 +1704,49 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             return success(assetAcceptDetailEntityList);
         }
         return success();
+    }
+
+
+    @Override
+    public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        if (dtoList.isEmpty()) {
+            return Boolean.FALSE;
+        }
+        AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
+        assetAcceptEntity.setSourceId(dtoList.get(0).getId());
+        assetAcceptEntity.setSourceCode(dtoList.get(0).getCode());
+        assetAcceptEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+        assetAcceptEntity.setAcceptDate(LocalDate.now());
+        log.info("开始通过下推新增资产验收单");
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YSD);
+        assetAcceptEntity.setCode(code);
+        boolean save = this.save(assetAcceptEntity);
+
+        if(!save) {
+            throw new ServiceException("资产验收单保存失败");
+        }
+        List<AssetAcceptDetailEntity> assetAcceptDetailEntityList = new ArrayList<>();
+        for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO generateAssetAcceptDTO : dtoList) {
+            AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
+            BeanUtils.copyProperties(generateAssetAcceptDTO,detailEntity);
+            detailEntity.setMainId(assetAcceptEntity.getId());
+            detailEntity.setSourceDetailId(generateAssetAcceptDTO.getId());
+            detailEntity.setSkuId(generateAssetAcceptDTO.getAssetId());
+            detailEntity.setSkuNo(generateAssetAcceptDTO.getAssetCode());
+            detailEntity.setProductName(generateAssetAcceptDTO.getAssetName());
+            detailEntity.setAcceptQty(generateAssetAcceptDTO.getAcceptQty() != null ? generateAssetAcceptDTO.getAcceptQty().intValue() : 0);
+            // 1. 已验收数量 = 已审核资产验收单验收数量
+            detailEntity.setAcceptedQty(generateAssetAcceptDTO.getAcceptedQty() != null ? generateAssetAcceptDTO.getAcceptedQty().intValue() : 0);
+            // 2. 待验收数量 = 采购数量 - 已验收数量
+            detailEntity.setPendingQty(generateAssetAcceptDTO.getPendingQty() != null ? generateAssetAcceptDTO.getPendingQty().intValue() : 0);
+            // 3. 可验收数量 = 待验收数量 - 待提交、审核中、审核不通过的资产验收单验收数量
+            detailEntity.setAcceptableQty(generateAssetAcceptDTO.getAcceptableQty() != null ? generateAssetAcceptDTO.getAcceptableQty().intValue() : 0);
+
+            assetAcceptDetailEntityList.add(detailEntity);
+        }
+
+        return assetAcceptDetailService.saveBatch(assetAcceptDetailEntityList);
     }
 
 }

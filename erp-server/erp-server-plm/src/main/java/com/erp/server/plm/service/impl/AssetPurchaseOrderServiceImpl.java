@@ -2,7 +2,6 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -24,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
@@ -33,7 +33,6 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.KingdeeFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -1332,6 +1331,63 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId) {
         return assetAceptFeign.getAcceptByDetailId(detailId);
+    }
+
+    /**
+     *
+     * @param dto 明细id
+     * @return
+     */
+    @Override
+    public List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto) {
+        List<String> detailIdList = dto.getIds();
+        List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE).
+                in(AssetPurchaseOrderDetailEntity::getId, detailIdList)
+                .list();
+        Map<String, BigDecimal> acceptableQtyMap = assetAceptFeign.getAcceptableQtyByDetailId(detailIdList);
+
+        List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrderDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : detailList) {
+            AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO viewGeneratePurchaseOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO();
+            AssetPurchaseOrderEntity assetPurchaseOrderEntity = this.getById(assetPurchaseOrderDetailEntity.getMainId());
+            viewGeneratePurchaseOrderDTO.setId(assetPurchaseOrderEntity.getId());
+            viewGeneratePurchaseOrderDTO.setCode(assetPurchaseOrderEntity.getCode());
+
+            viewGeneratePurchaseOrderDTO.setAssetId(assetPurchaseOrderDetailEntity.getAssetId());
+            viewGeneratePurchaseOrderDTO.setAssetCode(assetPurchaseOrderDetailEntity.getAssetCode());
+            viewGeneratePurchaseOrderDTO.setAssetName(assetPurchaseOrderDetailEntity.getAssetName());
+            viewGeneratePurchaseOrderDTO.setPurchaseUserId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseUserId()) ? assetPurchaseOrderEntity.getPurchaseUserId() : null);
+            viewGeneratePurchaseOrderDTO.setPurchaseUserName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseUserName()) ? assetPurchaseOrderEntity.getPurchaseUserName() : null);
+            viewGeneratePurchaseOrderDTO.setPurchaseDeptId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId()) ? assetPurchaseOrderEntity.getPurchaseDeptId() : null);
+            viewGeneratePurchaseOrderDTO.setPurchaseDeptName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptName()) ? assetPurchaseOrderEntity.getPurchaseDeptName() : null);
+
+            /**
+             * 1、待验收数量=采购数量-已验收数量
+             * 2、已验收数量=已审核资产验收单订单验收数量
+             * 3、可验收数量=待验收数量-待提交、审核中、审核不通过的资产验收单验收数量
+             */
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(assetPurchaseOrderDetailEntity.getId());
+            BigDecimal pendingQty = assetPurchaseOrderDetailEntity.getPurchaseQty().subtract(new BigDecimal(acceptQty == null ? 0 : acceptQty));
+
+            //待验收数量
+            viewGeneratePurchaseOrderDTO.setPendingQty(pendingQty);
+            //已验收数量
+            viewGeneratePurchaseOrderDTO.setAcceptedQty(new BigDecimal(acceptQty == null ? 0 : acceptQty));
+            //可验收数量
+            viewGeneratePurchaseOrderDTO.setAcceptableQty(pendingQty.subtract(acceptableQtyMap.get(assetPurchaseOrderDetailEntity.getId()) == null ? new BigDecimal("0") : acceptableQtyMap.get(assetPurchaseOrderDetailEntity.getId())));
+
+            viewGeneratePurchaseOrderDTO.setAcceptUserId(UserContext.getDefaultLoginUser().getUid());
+            viewGeneratePurchaseOrderDTO.setAcceptUserName(UserContext.getDefaultLoginUser().getUserName());
+            viewGeneratePurchaseOrderDTO.setAcceptDate(LocalDate.now());
+            viewGeneratePurchaseOrderDTOList.add(viewGeneratePurchaseOrderDTO);
+        }
+        return viewGeneratePurchaseOrderDTOList;
+    }
+
+    @Override
+    public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        return assetAceptFeign.generateAssetAccept(dtoList);
     }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(

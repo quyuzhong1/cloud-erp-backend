@@ -8,7 +8,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -199,5 +198,9 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     AssetPurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
 
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
+
+    List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto);
+
+    Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
 
 }

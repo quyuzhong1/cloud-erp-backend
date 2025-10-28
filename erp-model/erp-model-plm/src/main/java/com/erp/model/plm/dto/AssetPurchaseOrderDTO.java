@@ -3,7 +3,6 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -11,13 +10,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-
 import com.common.business.dto.AdvanceQueryDTO;
-import org.python.antlr.ast.Str;
-
 import java.util.Map;
 
 /**
@@ -992,6 +987,183 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 明细信息
          */
         private List<AssetPurchaseOrderDetailDTO.ExportPdfDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseOrderDTO {
+        /**
+         * 资产采购单id
+         */
+        private String id;
+
+        /**
+         * 资产采购单code
+         */
+        private String code;
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 待验收数量
+         */
+        private BigDecimal pendingQty;
+
+        /**
+         * 已验收数量
+         */
+        private BigDecimal acceptedQty;
+
+        /**
+         * 可验收数量
+         */
+        private BigDecimal acceptableQty;
+
+        /**
+         * 验收人id
+         */
+        private String acceptUserId;
+
+        /**
+         * 验收人名称
+         */
+        private String acceptUserName;
+
+        /**
+         * 验收日期
+         */
+        private LocalDate acceptDate;
+
+        /**
+         * 验收数量
+         */
+        private BigDecimal acceptQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateAssetAcceptDTO{
+        /**
+         * 资产采购单id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 资产采购单编码
+         */
+        @NotBlank(message = "模具采购订单号不能为空")
+        private String code;
+
+        /**
+         * 资产id
+         */
+        @NotBlank(message = "模具id不能为空")
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        @NotBlank(message = "模具编码不能为空")
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        @NotBlank(message = "模具名称不能为空")
+        private String assetName;
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织id不能为空")
+        private String purchaseOrgId;
+
+        /**
+         * 待验收数量
+         */
+        @NotNull(message = "待验收数量不能为空")
+        private BigDecimal pendingQty;
+
+        /**
+         * 已验收数量
+         */
+        @NotNull(message = "已验收数量不能为空")
+        private BigDecimal acceptedQty;
+
+        /**
+         * 可验收数量
+         */
+        @NotNull(message = "可验收数量不能为空")
+        private BigDecimal acceptableQty;
+
+        /**
+         * 验收数量
+         */
+        @NotNull(message = "验收数量不能为空")
+        private BigDecimal acceptQty;
+
+        /**
+         * 资产位置id
+         */
+        @NotBlank(message = "资产位置id不能为空")
+        private String assetLocationId;
+
+        /**
+         * 使用部门id
+         */
+        @NotBlank(message = "使用部门id不能为空")
+        private String useDeptId;
+
+        /**
+         * 使用部门名称
+         */
+        private String useDeptName;
+
+        /**
+         * 费用项目
+         */
+        @NotBlank(message = "费用项目不能为空")
+        private String costType;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 }

@@ -3,6 +3,9 @@ package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.server.fms.service.AssetAcceptService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -18,9 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.fms.dto.AssetAcceptDetailDTO;
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 资产验收表明细表 服务实现类
@@ -34,6 +40,9 @@ import com.common.core.enums.ApiError;
 public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDetailMapper, AssetAcceptDetailEntity> implements AssetAcceptDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private AssetAcceptService assetAcceptService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -99,6 +108,46 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
         }
         return null;
     }
+
+    @Override
+    public Map<String, BigDecimal> getAcceptableQtyByDetailId(List<String> detailIdList) {
+        HashMap<String, BigDecimal> resultMap = new HashMap<>();
+
+        List<AssetAcceptDetailEntity> detailList = this.lambdaQuery()
+                .in(AssetAcceptDetailEntity::getSourceDetailId, detailIdList)
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if (!detailList.isEmpty()) {
+
+            List<String> detailIds = detailList.stream().map(obj -> obj.getMainId()).collect(Collectors.toList());
+
+            //过滤掉待提交、审核中、审核不通过的资产验收单
+            List<AssetAcceptEntity> entityList = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, detailIds)
+                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode())
+                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getCode())
+                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
+                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            List<String> filterList = entityList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+            List<AssetAcceptDetailEntity> collect = detailList.stream().filter(obj -> filterList.contains(obj.getMainId())).collect(Collectors.toList());
+
+            collect.stream()
+                    .forEach(obj -> {
+                        String detailId = obj.getId();
+                        BigDecimal acceptQty = new BigDecimal(obj.getAcceptQty());
+
+                        // 如果 map 中已经存在该 detailId，则累加；否则直接放入
+                        resultMap.merge(
+                                detailId,
+                                acceptQty != null ? acceptQty : BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+                    });
+            return resultMap;
+        }
+        return resultMap;
+    }
+
 
     /**
     * 新增修改处理数据
