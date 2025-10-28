@@ -102,4 +102,6 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
      */
     PoInstockDTO.PagingTotalDTO pagingTotal(@Param("params") PoInstockDTO.SearchParamDTO  dto);
+
+    List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(@Param("params") PoInstockDTO.PoInStockParamDTO params);
 }

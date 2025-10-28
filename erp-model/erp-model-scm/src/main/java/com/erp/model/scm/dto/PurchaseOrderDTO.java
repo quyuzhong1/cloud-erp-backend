@@ -1872,6 +1872,11 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
     }
 
 
