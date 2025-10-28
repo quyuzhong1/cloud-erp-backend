@@ -526,7 +526,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setTag(moldInfoEntity.getTag());
                 details.add(addDetailDTO);
             }
-            addDTO.setAssetPurchaseOrderDetailDTO(details);
+            addDTO.setAssetPurchaseOrderDetailDTOList(details);
             resultList.add(addDTO);
         }
         //新增采购订单

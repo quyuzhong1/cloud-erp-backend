@@ -463,7 +463,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @Valid
         @NotNull(message = "资产采购订单明细信息不能为空")
-        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderDetailDTO;
+        private List<AssetPurchaseOrderDetailDTO.AddDTO> assetPurchaseOrderDetailDTOList;
     }
 
     /**

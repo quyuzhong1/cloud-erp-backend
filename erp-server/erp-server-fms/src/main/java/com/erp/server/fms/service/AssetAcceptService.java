@@ -1,9 +1,12 @@
 package com.erp.server.fms.service;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -208,5 +211,9 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
+
+
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId);
+
 
 }

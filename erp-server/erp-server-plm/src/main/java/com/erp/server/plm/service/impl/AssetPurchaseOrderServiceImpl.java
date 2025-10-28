@@ -196,7 +196,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         // 新增明细
-        assetPurchaseOrderDetailService.add(addDTO.getAssetPurchaseOrderDetailDTO(), assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.add(addDTO, assetPurchaseOrderEntity.getId());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购单", assetPurchaseOrderEntity.getCode());
         operateLogService.addSysLogBySave(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "新增操作");
@@ -238,7 +238,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         // 更新明细
-        assetPurchaseOrderDetailService.update(addOrUpdateDTO.getAssetPurchaseOrderDetailDTOList(), assetPurchaseOrderEntity.getId());
+        assetPurchaseOrderDetailService.update(addOrUpdateDTO, assetPurchaseOrderEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseOrderEntity.getCode());

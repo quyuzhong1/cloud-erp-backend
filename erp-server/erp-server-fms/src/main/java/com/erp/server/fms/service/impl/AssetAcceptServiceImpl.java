@@ -40,6 +40,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.AssetPurchaseOrderFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.listener.AssetAcceptExcelListener;
 import com.erp.server.fms.mapper.AssetAcceptMapper;
@@ -48,6 +49,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.xpath.operations.Bool;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,10 +59,15 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.core.controller.vo.ApiResult.success;
+
 /**
  * <p>
  * 资产验收表 服务实现类
@@ -1643,6 +1651,40 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         String path = "classpath:excel/assetAcceptTemplate.xlsx";
         String excelName = "资产验收单导入模板.xlsx";
         com.common.core.utils.ExcelUtil.downloadTemplate(path, excelName, response);
+    }
+
+    @Override
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId) {
+        List<AssetAcceptDetailEntity> list = assetAcceptDetailService.lambdaQuery()
+                .eq(AssetAcceptDetailEntity::getSourceDetailId, detailId)
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if (!list.isEmpty()) {
+            AssetAcceptEntity assetAcceptEntity = this.lambdaQuery().eq(AssetAcceptEntity::getId, list.get(0)
+                    .getMainId())
+                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE).one();
+            List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> assetAcceptDetailEntityList = new ArrayList<>();
+            for (AssetAcceptDetailEntity detailEntity : list) {
+                AssetAcceptDTO.AssetPurchaseOrderRefListDTO assetPurchaseOrderRefListDTO = new AssetAcceptDTO.AssetPurchaseOrderRefListDTO();
+                assetPurchaseOrderRefListDTO.setAssetAcceptCode(assetAcceptEntity.getCode());
+                assetPurchaseOrderRefListDTO.setApproveStatuts(assetAcceptEntity.getApproveStatus().getCode());
+                assetPurchaseOrderRefListDTO.setApproveStatutsName(assetAcceptEntity.getApproveStatus().getName());
+                assetPurchaseOrderRefListDTO.setInvalidStatus(assetAcceptEntity.getInvalidStatus());
+                assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetAcceptEntity.getInvalidStatus()));
+                assetPurchaseOrderRefListDTO.setSkuId(detailEntity.getSkuId());
+                assetPurchaseOrderRefListDTO.setSkuNo(detailEntity.getSkuNo());
+                assetPurchaseOrderRefListDTO.setProductName(detailEntity.getProductName());
+                assetPurchaseOrderRefListDTO.setAcceptDate(assetAcceptEntity.getAcceptDate());
+                assetPurchaseOrderRefListDTO.setAcceptQty(new BigDecimal(detailEntity.getAcceptQty()));
+                assetPurchaseOrderRefListDTO.setRemark(detailEntity.getRemark());
+                assetPurchaseOrderRefListDTO.setApproveUserId(StringUtils.isNotBlank(assetAcceptEntity.getApproveUserId()) ? assetAcceptEntity.getApproveUserId() : null);
+                assetPurchaseOrderRefListDTO.setApproveUserName(assetAcceptEntity.getApproveUserName());
+
+                assetAcceptDetailEntityList.add(assetPurchaseOrderRefListDTO);
+            }
+            return success(assetAcceptDetailEntityList);
+        }
+        return success();
     }
 
 }
