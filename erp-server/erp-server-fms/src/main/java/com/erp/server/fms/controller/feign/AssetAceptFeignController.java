@@ -2,6 +2,7 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.AssetAcceptService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: wtr
@@ -42,5 +45,25 @@ public class AssetAceptFeignController {
     @PostMapping("/getAssetAccept")
     public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId) {
         return assetAcceptService.getAcceptByDetailId(detailId);
+    }
+
+    /**
+     * 下推资产验收单
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/generateAssetAccept")
+    public Boolean generateAssetAccept(@RequestBody List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList){
+        return assetAcceptService.generateAssetAccept(dtoList);
+    }
+
+    /**
+     * 获取可验收数量
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/getAcceptableQty")
+    public Map<String, BigDecimal> getAcceptableQtyByDetailId(@RequestBody List<String> detailIdList){
+        return assetAcceptDetailService.getAcceptableQtyByDetailId(detailIdList);
     }
 }
