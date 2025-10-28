@@ -111,7 +111,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         result.add(new MoldMonitorDTO.TabListDTO("all","全部", 0));
 
         // 预警状态
-        if(Objects.equals(param.getSourceType(), SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+        if(Objects.equals(param.getSourceType(), MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
             List<String> statusList = MoldMonitorLifeStatusEnum.getStatusList();
             for (String status : statusList) {
                 MoldMonitorDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new MoldMonitorDTO.TabListDTO(status, "", 0));
@@ -335,7 +335,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     public BatchResultDTO updateReturnPriceById(MoldMonitorDTO.UpdateReturnParamsDTO dto) {
         MoldMonitorEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
         String sourceType = old.getSourceType();
-        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+        if(!sourceType.equals(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
             throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
         }
 
@@ -389,7 +389,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     public BatchResultDTO cancelReturnPrice(String id) {
         MoldMonitorEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
         String sourceType = old.getSourceType();
-        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+        if(!sourceType.equals(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
             throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
         }
         MoldMonitorEntity entity = new MoldMonitorEntity();
@@ -470,7 +470,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     moldMonitorEntity = new MoldMonitorEntity();
                     moldMonitorEntity.setSourceId(entity.getId());
                     moldMonitorEntity.setSourceDetailId(entity.getDetailId());
-                    moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
+                    moldMonitorEntity.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
                     moldMonitorEntity.setMoldId(entity.getMoldId());
                     moldMonitorEntity.setMoldCode(entity.getMoldCode());
                     moldMonitorEntity.setMoldName(entity.getMoldName());
@@ -501,7 +501,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 if(Objects.isNull(moldMonitorEntity)){
                     moldMonitorEntity = new MoldMonitorEntity();
                     moldMonitorEntity.setSourceId(entity.getId());
-                    moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
+                    moldMonitorEntity.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
                     moldMonitorEntity.setMoldId(entity.getMoldId());
                     moldMonitorEntity.setMoldCode(entity.getMoldCode());
                     moldMonitorEntity.setMoldName(entity.getMoldName());
@@ -670,7 +670,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             }
 
             String sourceType = moldMonitorEntity.getSourceType();
-            if(Objects.equals(sourceType, SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+            if(Objects.equals(sourceType, MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
                 Integer lifeQty = moldMonitorEntity.getLifeQty();
                 Integer alertLifeQty = moldMonitorEntity.getAlertLifeQty();
                 if(alertLifeQty > qty){
