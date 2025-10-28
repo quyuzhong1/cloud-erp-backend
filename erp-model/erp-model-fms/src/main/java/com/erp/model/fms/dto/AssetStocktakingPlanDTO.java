@@ -317,7 +317,7 @@ public class AssetStocktakingPlanDTO implements Serializable {
         private String remark;
 
         /**
-        * 资产类别（机器设备）字符串数组
+        * 资产类别（机器设备）字符串数组 /fms/dict/list?key=assetCategory
         */
         private String assetCategories;
 
@@ -327,18 +327,18 @@ public class AssetStocktakingPlanDTO implements Serializable {
         private String useDeptIds;
 
         /**
-        * 资产位置ID字符串数组
+        * 资产位置ID字符串数组 http://172.16.100.11:3002/project/163/interface/api/39465
         */
         private String assetLocationIds;
 
         /**
-        * 卡片编码-开始
+        * 卡片编码-开始 http://172.16.100.11:3002/project/163/interface/api/40280
         */
         @Size(max = 50,message = "卡片编码最大长度不能超过50位")
         private String cardCodeStart;
 
         /**
-        * 卡片编码-结束
+        * 卡片编码-结束 http://172.16.100.11:3002/project/163/interface/api/40280
         */
         @Size(max = 50,message = "卡片编码最大长度不能超过50位")
         private String cardCodeEnd;

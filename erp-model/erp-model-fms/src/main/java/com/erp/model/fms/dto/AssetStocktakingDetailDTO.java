@@ -212,9 +212,8 @@ public class AssetStocktakingDetailDTO implements Serializable {
         private String mainId;
 
         /**
-        * 资产类别（机器设备）
+        * 资产类别（机器设备） /fms/dict/list?key=assetCategory
         */
-        @NotBlank(message = "资产类别（机器设备）不能为空")
         @Size(max = 50,message = "资产类别（机器设备）最大长度不能超过50位")
         private String assetCategory;
 
