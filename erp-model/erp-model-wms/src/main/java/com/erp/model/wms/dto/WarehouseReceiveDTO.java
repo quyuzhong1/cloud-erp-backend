@@ -1364,6 +1364,8 @@ public class WarehouseReceiveDTO implements Serializable {
 
         private String detailId;
 
+        private String skuId;
+
         private String approveStatus;
 
         private Integer qty;

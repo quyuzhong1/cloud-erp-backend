@@ -91,5 +91,21 @@ cmr.count_dim AS countDim
         cmr.create_time desc
     </select>
 
+    <select id="listAll" resultType="com.erp.model.plm.dto.CfgMoldAlertRuleDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM
+        cfg_mold_alert_rule cmr
+        where
+             cmr.is_deleted = FALSE
+        and (cmr.start_date &gt;= #{today} or  cmr.end_date &lt;= #{oneMonthLater} )
+        <if test="ids != null and ids.size > 0 ">
+            AND cmr.id in
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
 
 </mapper>

@@ -17,9 +17,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
-import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -27,7 +25,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.CfgMoldAlertExcelListener;
-import com.erp.server.plm.listener.CfgMoldReturnExcelListener;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -38,7 +35,6 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
@@ -46,6 +42,7 @@ import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -415,5 +412,13 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
                 bean.add(addDTO);
             }
         }
+    }
+
+    @Override
+    public List<CfgMoldAlertRuleDTO.ListDTO> listAll(List<String> ids) {
+        LocalDate today = LocalDate.now();
+        //一个月后的日期
+        LocalDate oneMonthLater = today.plusMonths(1);
+        return this.baseMapper.listAll(ids,today,oneMonthLater);
     }
 }

@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -28,5 +29,5 @@ public interface CfgMoldReturnAlertRuleMapper extends BaseMapper<CfgMoldReturnAl
 
     IPage<CfgMoldReturnAlertRuleDTO.ListDTO> paging(Page query,@Param("params") CfgMoldReturnAlertRuleDTO.PagingParamDTO params);
 
-    List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll();
+    List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll(@Param("detailIds")List<String> detailIds,@Param("today") LocalDate today, @Param("oneMonthLater")  LocalDate oneMonthLater);
 }
