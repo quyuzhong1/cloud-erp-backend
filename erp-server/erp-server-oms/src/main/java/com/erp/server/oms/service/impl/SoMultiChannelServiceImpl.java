@@ -268,15 +268,24 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<SoMultiChannelDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<SoMultiChannelDTO.TabListDTO> list1 = new ArrayList<>();
-        SoMultiChannelDTO.TabListDTO tabListDTO = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO) ? tabListDTO : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO1 = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO1) ? tabListDTO1 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO2 = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO2) ? tabListDTO2 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), ApproveStatusEnum.APPROVE.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO3 = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO3) ? tabListDTO3 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName(), 0));
-        list1.forEach(e -> e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag())));
+        //待提交
+        int waitSubmitCount = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName(),"",null,"", waitSubmitCount));
+        //审核中
+        int approveIngCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName(),"",null,"", approveIngCount));
+        //创建中
+        int approveCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.CREATING.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.CREATING.getCode(), CreateStatusEnum.CREATING.getName(),"",null,"", approveCount));
+        //创建成功
+        int successCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.SUCCESS.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.SUCCESS.getCode(), CreateStatusEnum.SUCCESS.getName(),"",null,"", successCount));
+        //审核不通过
+        int rejectCount = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName(),"",null,"", rejectCount));
+        //已作废
+        int voidedCount = list.stream().filter(e -> InvalidStatusEnum.VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(InvalidStatusEnum.VOIDED.getStatus().toString(), InvalidStatusEnum.VOIDED.getName(),"",null,"", voidedCount));
         return list1;
     }
 

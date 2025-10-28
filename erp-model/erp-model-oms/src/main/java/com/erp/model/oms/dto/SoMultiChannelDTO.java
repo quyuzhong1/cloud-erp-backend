@@ -42,6 +42,18 @@ public class SoMultiChannelDTO implements Serializable {
          */
          private String tabFlag;
          private String tabFlagName;
+         /**
+          * 审批状态
+          */
+         private String approveStatus;
+         /**
+          * 无效状态
+          */
+         private Boolean invalidStatus;
+         /**
+          * 创建状态
+          */
+         private String createStatus;
 
          /**
          * 数量
