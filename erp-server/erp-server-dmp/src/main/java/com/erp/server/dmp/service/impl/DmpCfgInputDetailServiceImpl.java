@@ -26,6 +26,8 @@ import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
@@ -169,7 +171,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         // 删除日志数据
         log.info("删除 开始删除外部系统接口明细日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "外部系统接口明细");
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除外部系统接口明细数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "删除外部系统接口明细数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
@@ -197,7 +199,9 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         if(CollUtil.isEmpty(list)) {
             return;
         }
-
+        for (DmpCfgInputDetailDTO.ListDTO data : list) {
+            data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
+        }
     }
 
     @Override
@@ -206,7 +210,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
             entity.setDisabled(false);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取调度");
-            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "启用【拉取调度】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "启用【拉取调度】数据");
         } else {
             ServiceException.runError("该【拉取调度】数据已启用，无需重复操作");
         }
@@ -219,7 +223,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
             entity.setDisabled(true);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取调度");
-            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "禁用【拉取调度】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "禁用【拉取调度】数据");
         } else {
             ServiceException.runError("该【拉取调度】数据已禁用，无需重复操作");
         }

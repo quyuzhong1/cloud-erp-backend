@@ -238,6 +238,26 @@ public class DmpCfgInputDetailDTO implements Serializable {
         private String mainId;
 
         /**
+         * 输入信息代号
+         */
+        private String cfgInputCode;
+
+        /**
+         * 输入信息名称
+         */
+        private String cfgInputName;
+
+        /**
+         * 系统代号
+         */
+        private String systemCode;
+
+        /**
+         * 系统名称
+         */
+        private String systemName;
+
+        /**
          * 下一层级id
          */
         private String nextLevelId;
@@ -278,9 +298,49 @@ public class DmpCfgInputDetailDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用
+         */
+        private String remark;
+
+        /**
          * 扩展json
          */
         private String extendJson;
+
+        /**
+         * 最大间隔时间长度单位秒
+         */
+        private Integer maxIntervalTime;
+
+        /**
+         * 任务类型：normal=正常任务，history=补偿任务
+         */
+        private String taskType;
+
+        /**
+         * 任务类型名称
+         */
+        private String taskTypeName;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
 
     }
 

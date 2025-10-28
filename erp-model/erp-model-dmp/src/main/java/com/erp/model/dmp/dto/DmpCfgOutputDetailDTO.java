@@ -76,6 +76,30 @@ public class DmpCfgOutputDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 输出信息名称
+         */
+        private String cfgOutputName;
+
+        /**
+         * 系统代号
+         */
+        private String systemCode;
+
+        /**
+         * 系统名称
+         */
+        private String systemName;
+
+        /**
+         * 执行url
+         */
+        private String execUrl;
+
+        /**
+         * 执行系统
+         */
+        private String execSystem;
 
         /**
         * 主键id
@@ -140,30 +164,24 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         private Integer dealyTime;
 
         /**
-        * 代号
-        */
-        private String code;
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
-        * 代号
-        */
-        private String approveStatus;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-        /**
-        * 创建时间
-        */
+         * 创建时间【可排序】
+         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

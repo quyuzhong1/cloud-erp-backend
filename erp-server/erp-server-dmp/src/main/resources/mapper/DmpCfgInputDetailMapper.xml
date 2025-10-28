@@ -77,15 +77,42 @@
     <!-- DmpCfgInputDetail -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgInputDetailDTO$ListDTO">
         select
-        <include refid="Base_Column_List"></include>
-        from dmp_cfg_input_detail
+            dcid.id AS id,
+            dci.code as cfgInputCode,
+            dci.name as cfgInputName,
+            dci.system_id as systemId,
+            dbs.code as systemCode,
+            dbs.name as systemName,
+            dcid.create_time AS createTime,
+            dcid.update_time AS updateTime,
+            dcid.create_user_name AS createUserName,
+            dcid.create_user_id AS createUserId,
+            dcid.update_user_name AS updateUserName,
+            dcid.update_user_id AS updateUserId,
+            dcid.version AS version,
+            dcid.is_deleted AS isDeleted,
+            dcid.main_id AS mainId,
+            dcid.next_level_id AS nextLevelId,
+            dcid.last_time AS lastTime,
+            dcid.next_time AS nextTime,
+            dcid.interval_time AS intervalTime,
+            dcid.override_time AS overrideTime,
+            dcid.max_interval_time AS maxIntervalTime,
+            dcid.max_retry_count AS maxRetryCount,
+            dcid.exec_timeout AS execTimeout,
+            dcid.disabled AS disabled,
+            dcid.task_type AS taskType,
+            dcid.extend_json AS extendJson
+        from dmp_cfg_input_detail as dcid
+        left join dmp_cfg_input dci on dci.id = dcid.main_id
+        left join dmp_basic_system dbs on dbs.id = dci.system_id
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and dcid.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by update_time desc
+        order by dcid.update_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

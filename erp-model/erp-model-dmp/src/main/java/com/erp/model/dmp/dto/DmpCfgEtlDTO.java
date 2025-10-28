@@ -278,6 +278,11 @@ public class DmpCfgEtlDTO implements Serializable {
         private String flowName;
 
         /**
+         * 分类
+         */
+        private String appCategory;
+
+        /**
          * 最后成功时间
          */
         private LocalDateTime lastTime;
@@ -322,7 +327,25 @@ public class DmpCfgEtlDTO implements Serializable {
          */
         private String extendJson;
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

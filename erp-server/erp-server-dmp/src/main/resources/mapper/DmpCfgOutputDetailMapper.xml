@@ -41,15 +41,42 @@
     <!-- DmpCfgOutputDetail -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgOutputDetailDTO$ListDTO">
         select
-        <include refid="Base_Column_List"></include>
-        from dmp_cfg_output_detail
+            dcod.id AS id,
+            dco.flow_name as cfgOutputName,
+            dco.exec_url as execUrl,
+            dco.exec_system as execSystem,
+            dbs.code AS systemCode,
+            dbs.name AS systemName,
+            dcod.main_id AS mainId,
+            dcod.next_level_id AS nextLevelId,
+            dcod.last_time AS lastTime,
+            dcod.next_time AS nextTime,
+            dcod.interval_time AS intervalTime,
+            dcod.override_time AS overrideTime,
+            dcod.max_retry_count AS maxRetryCount,
+            dcod.exec_timeout AS execTimeout,
+            dcod.disabled AS disabled,
+            dcod.extend_json AS extendJson,
+            dcod.create_time AS createTime,
+            dcod.update_time AS updateTime,
+            dcod.create_user_name AS createUserName,
+            dcod.create_user_id AS createUserId,
+            dcod.update_user_name AS updateUserName,
+            dcod.update_user_id AS updateUserId,
+            dcod.version AS version,
+            dcod.is_deleted AS isDeleted,
+            dcod.remark AS remark,
+            dcod.dealy_time AS dealyTime
+        from dmp_cfg_output_detail dcod
+        left join dmp_cfg_output dco on dcod.main_id = dco.id
+        left join dmp_basic_system dbs on dco.system_id = dbs.id
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and dcod.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by update_time desc
+        order by dcod.update_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
