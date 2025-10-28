@@ -17,6 +17,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
@@ -34,6 +35,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -95,6 +97,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     private PurchaseOrderFeign purchaseOrderFeign;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public List<MoldMonitorDTO.TabListDTO> tabList(MoldMonitorDTO.TabDTO param) {
@@ -379,6 +383,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelReturnPrice(String id) {
         MoldMonitorEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
         String sourceType = old.getSourceType();
@@ -398,6 +404,14 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         String msg = StrUtil.format("用户【{}】模具编号【{}】返还数量上限【{}】取消返还确认", UserContext.getDefaultLoginUser().getUserName(), old.getMoldCode(),old.getReturnQtyLimit());
         sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
 
+        // 查询相关的附件信息
+        List<PlmAttachmentEntity> attachmentList = attachmentService.listByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            fileFeign.deleteBatchFile(urlList);
+
+            attachmentService.lambdaUpdate().eq(PlmAttachmentEntity::getBusinessId, id).set(PlmAttachmentEntity::getIsDeleted, true).update();
+        }
         String code = StrUtil.format("模具编号【{}】, 返还数量上限【{}】", entity.getMoldCode(), entity.getReturnQtyLimit());
         return BatchResultDTO.success(old.getId(), code, OperationTypeEnum.UPDATE);
     }
