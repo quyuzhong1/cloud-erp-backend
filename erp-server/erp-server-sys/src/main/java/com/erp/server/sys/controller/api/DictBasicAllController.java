@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import java.util.List;
+
 import javax.annotation.Resource;
 
 import org.springframework.validation.annotation.Validated;
@@ -39,6 +41,19 @@ public class DictBasicAllController extends BaseController {
     @Resource
     private DictBasicAllService dictBasicAllService;
 
+    /**
+     * 获取 tab列表
+     * @Author Luo_WG
+     * @Date 2024/9/3 15:15
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.dmp.dto.DmpOutputTaskDTO.TabListDTO>>
+     **/
+    @PostMapping("/tabList")
+    public ApiResult<List<DictBasicAllDTO.TabListDTO>> tabList(@RequestBody @Validated PagingDTO<DictBasicAllDTO.PagingParamDTO> dto) {
+    	List<DictBasicAllDTO.TabListDTO> tabList = dictBasicAllService.tabList(dto);
+        return success(tabList);
+    }
+    
     /**
      * 分页查询
      * 菜单code = sys:dictBasicAll:paging
