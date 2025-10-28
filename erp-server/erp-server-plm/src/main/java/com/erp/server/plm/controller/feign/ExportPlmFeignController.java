@@ -66,6 +66,8 @@ public class ExportPlmFeignController {
     private AssetNoticeService assetNoticeService;
     @Resource
     private AssetPurchaseOrderService assetPurchaseOrderService;
+    @Resource
+    private MoldMonitorService moldMonitorService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -198,5 +200,11 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
     public PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto){
         return assetPurchaseOrderService.paging(dto);
+    }
+
+    @PostMapping("/exportMoldMonitor")
+    @WebAdvanceQuery(handler = MoldMonitorQueryHandler.class)
+    public PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto) {
+        return moldMonitorService.paging(dto);
     }
 }

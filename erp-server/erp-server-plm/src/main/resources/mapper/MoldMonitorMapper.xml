@@ -15,7 +15,21 @@
        <result column="source_id" property="sourceId" />
        <result column="source_detail_id" property="sourceDetailId" />
        <result column="source_type" property="sourceType" />
-       <result column="source_rule_json" property="sourceRuleJson" />
+        <result column="mold_id" property="moldId" />
+        <result column="mold_code" property="moldCode" />
+        <result column="mold_name" property="moldName" />
+        <result column="supplier_id" property="supplierId" />
+        <result column="supplier_code" property="supplierCode" />
+        <result column="supplier_name" property="supplierName" />
+        <result column="disabled" property="disabled" />
+        <result column="life_qty" property="lifeQty" />
+        <result column="alert_life_qty" property="alertLifeQty" />
+        <result column="alert_life_rate" property="alertLifeRate" />
+        <result column="start_date" property="startDate" />
+        <result column="end_date" property="endDate" />
+        <result column="count_dim" property="countDim" />
+        <result column="return_qty_limit" property="returnQtyLimit" />
+        <result column="return_price" property="returnPrice" />
        <result column="status" property="status" />
        <result column="return_status" property="returnStatus" />
        <result column="life_status" property="lifeStatus" />
@@ -43,7 +57,21 @@ mm.is_deleted AS isDeleted,
 mm.source_id AS sourceId,
 mm.source_detail_id AS sourceDetailId,
 mm.source_type AS sourceType,
-mm.source_rule_json AS sourceRuleJson,
+mm.mold_id AS moldId,
+mm.mold_code AS moldCode,
+mm.mold_name AS moldName,
+mm.supplier_id AS supplierId,
+mm.supplier_code AS supplierCode,
+mm.supplier_name AS supplierName,
+mm.disabled AS disabled,
+mm.life_qty AS lifeQty,
+mm.alert_life_qty AS alertLifeQty,
+mm.alert_life_rate AS alertLifeRate,
+mm.start_date AS startDate,
+mm.end_date AS endDate,
+mm.count_dim AS countDim, 
+mm.return_qty_limit, 
+mm.return_price,
 mm.status AS status,
 mm.return_status AS returnStatus,
 mm.life_status AS lifeStatus,
@@ -99,7 +127,6 @@ mm.remark AS remark
         </if>
         <if test="params != null and params.sourceType != null and params.sourceType != ''">
             and mm.source_type = #{params.sourceType}
-        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -108,6 +135,4 @@ mm.remark AS remark
         </if>
         mm.create_time desc
     </select>
-
-
 </mapper>

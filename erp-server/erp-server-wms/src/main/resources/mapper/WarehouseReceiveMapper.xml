@@ -688,5 +688,22 @@
             #{item}
         </foreach>
     </select>
+    <select id="getReceiveByParams" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$ReceiveInfoDTO">
+        select
+        DISTINCT
+        pr.id,
+        prd.id as detailId,
+        prd.receive_qty as qty,
+        pr.approve_status
+        from po_receive pr
+        inner join po_receive_detail prd on pr.id = prd.main_id and prd.is_deleted = false
+        where pr.is_deleted = false
+        <if test="params.skuIds != null and params.skuIds.size>0">
+            AND prd.sku_id IN
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

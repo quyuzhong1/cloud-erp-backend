@@ -2103,4 +2103,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return baseMapper.listReceiveSourceByDetailIds(idList);
     }
+
+    @Override
+    public List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(WarehouseReceiveDTO.ReceiveParamDTO dto) {
+        if(Objects.isNull(dto) || CollUtil.isEmpty(dto.getSkuIds())){
+            return Collections.emptyList();
+        }
+        return baseMapper.getReceiveByParams(dto);
+    }
 }
