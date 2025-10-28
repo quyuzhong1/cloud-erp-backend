@@ -5,7 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.AssetPurchaseOrderReceiveEnum;
 import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.plm.entity.AssetNoticeDetailEntity;
+import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -16,6 +19,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +52,12 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
     @Autowired
     private AssetNoticeDetailService assetNoticeDetailService;
+
+    @Autowired
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -152,15 +162,55 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             return;
         }
 
+        //从价表取价
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.AddDTO dto : addDTO.getAssetPurchaseOrderDetailDTOList()) {
+            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
+            priceDTO.setSkuId(dto.getAssetId());
+            priceDTO.setSupplierId(addDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
+            priceDTO.setQty(dto.getPurchaseQty().intValue());
+            priceDTO.setPurchaseOrgId(addDTO.getPurchaseOrgId());
+            priceDTOList.add(priceDTO);
+        }
+
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = scmTaskFeign.batchGetPurchasePrice(priceDTOList);
+        if (priceDTOS.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDetailDTO.AddDTO addDTO1 : addDTO.getAssetPurchaseOrderDetailDTOList()) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanMapperUtils.copy(addDTO1, assetPurchaseOrderDetailEntity);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntity.setTotalAmount(assetPurchaseOrderDetailEntity.getPurchaseQty().multiply(assetPurchaseOrderDetailEntity.getTaxPrice()));
+            assetPurchaseOrderDetailEntity.setAssetId(addDTO1.getAssetId());
+            assetPurchaseOrderDetailEntity.setAssetCode(addDTO1.getAssetCode());
+            assetPurchaseOrderDetailEntity.setAssetName(addDTO1.getAssetName());
+            assetPurchaseOrderDetailEntity.setCurrency(addDTO1.getCurrency());
+            assetPurchaseOrderDetailEntity.setCurrencySymbol(addDTO1.getCurrencySymbol());
+            assetPurchaseOrderDetailEntity.setTaxRate(addDTO1.getTaxRate());
+            assetPurchaseOrderDetailEntity.setPurchaseQty(addDTO1.getPurchaseQty());
+            assetPurchaseOrderDetailEntity.setPlanDeliveryDate(addDTO1.getPlanDeliveryDate());
+            assetPurchaseOrderDetailEntity.setIsUrgent(addDTO1.getIsUrgent());
+            assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(addDTO1.getSourceDetailId()) ? addDTO1.getSourceDetailId() : null);
+            assetPurchaseOrderDetailEntity.setTag(addDTO1.getTag());
+
+            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
+                if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
+                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                }
+            }
+
             assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
             detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
+
+        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
+        if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+        }
+
         super.saveBatch(detailEntityList);
     }
 
@@ -179,38 +229,83 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             throw new ServiceException(ApiError.ERROR_95311);
         }
 
-        //申请数量不允许超过剩余数量
-        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
-            List<AssetPurchaseOrderDetailEntity> entityList = assetPurchaseOrderDetailService.lambdaQuery()
-                    .eq(AssetPurchaseOrderDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .list();
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(updateDTO.getId());
+        if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getSourceId())) {
+            //有来源的订单申请数量不允许超过剩余数量
+            for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+                List<AssetPurchaseOrderDetailEntity> entityList = assetPurchaseOrderDetailService.lambdaQuery()
+                        .eq(AssetPurchaseOrderDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .list();
 
-            BigDecimal purchaseQtySum = entityList.stream()
-                    .filter(obj -> !obj.getId().equals(assetPurchaseOrderDetailEntity.getId()))
-                    .map(obj -> obj.getPurchaseQty())
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                //排除当前订单的采购数量
+                BigDecimal purchaseQtySum = entityList.stream()
+                        .filter(obj -> !obj.getId().equals(assetPurchaseOrderDetailEntity.getId()))
+                        .map(obj -> obj.getPurchaseQty())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            //获取通知单的申请数量
-            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .one();
-            //申请数量-除了当前单的已采购数量 > 传入的采购数量 才可以保存
-            if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum).compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
-                throw new ServiceException(ApiError.ERROR_95312);
+                //获取通知单的申请数量
+                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .one();
+                //申请数量-除了当前单的已采购数量 > 传入的采购数量 才可以保存
+                if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum).compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
+                    throw new ServiceException(ApiError.ERROR_95312);
+                }
             }
         }
 
-        List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntities = new ArrayList<>();
+        //从价表取价
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
+            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
+            priceDTO.setSkuId(dto.getAssetId());
+            priceDTO.setSupplierId(updateDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
+            priceDTO.setQty(dto.getPurchaseQty().intValue());
+            priceDTO.setPurchaseOrgId(updateDTO.getPurchaseOrgId());
+            priceDTOList.add(priceDTO);
+        }
 
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = scmTaskFeign.batchGetPurchasePrice(priceDTOList);
+        if (priceDTOS.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
+        List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanMapperUtils.copy(dto, assetPurchaseOrderDetailEntity);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
+            assetPurchaseOrderDetailEntity.setAssetId(dto.getAssetId());
+            assetPurchaseOrderDetailEntity.setAssetCode(dto.getAssetCode());
+            assetPurchaseOrderDetailEntity.setAssetName(dto.getAssetName());
+            assetPurchaseOrderDetailEntity.setCurrency(dto.getCurrency());
+            assetPurchaseOrderDetailEntity.setCurrencySymbol(dto.getCurrencySymbol());
+            assetPurchaseOrderDetailEntity.setTaxRate(dto.getTaxRate());
+            assetPurchaseOrderDetailEntity.setPurchaseQty(dto.getPurchaseQty());
+            assetPurchaseOrderDetailEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
+            assetPurchaseOrderDetailEntity.setIsUrgent(dto.getIsUrgent());
+            assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
+            assetPurchaseOrderDetailEntity.setTag(dto.getTag());
+
+            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
+                if (priceDTO.getSkuId().equals(dto.getAssetId())) {
+                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                }
+            }
+
+            assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+            detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
-        super.updateBatchById(assetPurchaseOrderDetailEntities);
+
+        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
+        if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+        }
+
+        super.saveBatch(detailEntityList);
     }
 
 
