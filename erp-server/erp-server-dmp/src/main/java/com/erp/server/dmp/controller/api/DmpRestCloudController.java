@@ -59,7 +59,7 @@ public class DmpRestCloudController extends BaseController {
      * @param dto
      * @return ApiResult<PagingVO<DmpRestCloudDTO.ListDTO>>
      */
-    @PostMapping("/paging")
+    @PostMapping("/flowInfo/paging")
 //    @WebAdvanceQuery
     public ApiResult<PagingVO<DmpRestCloudDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto) {
         // 调用RestCloud接口获取流程列表数据
