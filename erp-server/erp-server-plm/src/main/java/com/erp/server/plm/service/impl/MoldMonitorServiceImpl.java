@@ -351,6 +351,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         }
         entity.setRemark(dto.getRemark());
         entity.setReturnDate(dto.getReturnDate());
+        entity.setReturnStatus(MoldMonitorReturnStatusEnum.RETURNED.getCode());
         updateById(entity);
 
         // 记录主单操作日志
@@ -398,6 +399,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         entity.setReturnUserName("");
         entity.setRemark("");
         entity.setReturnDate(null);
+        entity.setReturnStatus(MoldMonitorReturnStatusEnum.NOTRETURNED.getCode());
         updateById(entity);
 
         // 日志数据
@@ -463,20 +465,20 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().filter(e -> StringUtils.isNotBlank(e.getSourceDetailId())).collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
 
             for (CfgMoldReturnAlertRuleDTO.ListDTO entity : cfgMoldReturnAlertRuleEntities) {
-                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
+                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getDetailId(), null);
                 if(Objects.isNull(moldMonitorEntity)){
                     moldMonitorEntity = new MoldMonitorEntity();
+                    moldMonitorEntity.setSourceId(entity.getId());
+                    moldMonitorEntity.setSourceDetailId(entity.getDetailId());
+                    moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
+                    moldMonitorEntity.setMoldId(entity.getMoldId());
+                    moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                    moldMonitorEntity.setMoldName(entity.getMoldName());
+                    moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                    moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                    moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 }
 
-                moldMonitorEntity.setSourceId(entity.getId());
-                moldMonitorEntity.setSourceDetailId(entity.getDetailId());
-                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
-                moldMonitorEntity.setMoldId(entity.getMoldId());
-                moldMonitorEntity.setMoldCode(entity.getMoldCode());
-                moldMonitorEntity.setMoldName(entity.getMoldName());
-                moldMonitorEntity.setSupplierId(entity.getSupplierId());
-                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
-                moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 moldMonitorEntity.setStartDate( entity.getStartDate());
                 moldMonitorEntity.setEndDate( entity.getEndDate());
                 moldMonitorEntity.setCountDim( entity.getCountDim());
@@ -498,17 +500,17 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
                 if(Objects.isNull(moldMonitorEntity)){
                     moldMonitorEntity = new MoldMonitorEntity();
+                    moldMonitorEntity.setSourceId(entity.getId());
+                    moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
+                    moldMonitorEntity.setMoldId(entity.getMoldId());
+                    moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                    moldMonitorEntity.setMoldName(entity.getMoldName());
+                    moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                    moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                    moldMonitorEntity.setSupplierName(entity.getSupplierName());
 
                 }
-                moldMonitorEntity.setSourceId(entity.getId());
-                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
 
-                moldMonitorEntity.setMoldId(entity.getMoldId());
-                moldMonitorEntity.setMoldCode(entity.getMoldCode());
-                moldMonitorEntity.setMoldName(entity.getMoldName());
-                moldMonitorEntity.setSupplierId(entity.getSupplierId());
-                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
-                moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 moldMonitorEntity.setLifeQty( entity.getLifeQty());
                 moldMonitorEntity.setAlertLifeQty( entity.getAlertLifeQty());
                 moldMonitorEntity.setAlertLifeRate( entity.getAlertLifeRate());
@@ -587,7 +589,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer purchaseQty = purchaseCalcQtyDTO.getPurchaseQty();
-                        if(Objects.isNull(purchaseQty) && purchaseQty >0){
+                        if(Objects.nonNull(purchaseQty) && purchaseQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(purchaseCalcQtyDTO.getSkuId(), 1);
                             int i = purchaseQty * skuQty;
                             qty += i;
@@ -610,7 +612,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer receiveQty = receiveInfoDTO.getQty();
-                        if(Objects.isNull(receiveQty) && receiveQty >0){
+                        if(Objects.nonNull(receiveQty) && receiveQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(receiveInfoDTO.getSkuId(), 1);
                             int i = receiveQty * skuQty;
                             qty += i;
@@ -633,7 +635,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer poInStockQty = poInStockInfoDTO.getQty();
-                        if(Objects.isNull(poInStockQty) && poInStockQty >0){
+                        if(Objects.nonNull(poInStockQty) && poInStockQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(poInStockInfoDTO.getSkuId(), 1);
                             int i = poInStockQty * skuQty;
                             qty += i;
