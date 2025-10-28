@@ -95,7 +95,7 @@ public class DmpRestCloudController extends BaseController {
                         )).collect(Collectors.toList());
                 PagingVO<DmpRestCloudDTO.ListDTO>  restCloudPaging =  new PagingVO<>(resultList,
                         responseJson.getInteger("total"),
-                        responseJson.getInteger("totalPages"),
+                        responseJson.getInteger("pageSize"),
                         responseJson.getInteger("pageNo")
                 );
                 return success(restCloudPaging);
