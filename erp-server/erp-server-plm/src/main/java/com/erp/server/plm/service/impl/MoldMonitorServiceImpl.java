@@ -408,8 +408,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             return BatchResultDTO.success();
         }
         List<MoldMonitorEntity> list = lambdaQuery().in(MoldMonitorEntity::getId, dto.getIds()).list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> sourceIds = list.stream().map(MoldMonitorEntity::getSourceId).distinct().collect(Collectors.toList());
 
+            List<String> sourceDetailIds = list.stream().map(MoldMonitorEntity::getSourceDetailId).distinct().collect(Collectors.toList());
 
+            List<MoldMonitorEntity> moldMonitorEntities = buildMonitor(sourceIds,sourceDetailIds);
+
+            calMonitorOrder(moldMonitorEntities);
+        }
         return BatchResultDTO.success();
     }
 
@@ -425,11 +432,11 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     }
 
     @Override
-    public List<MoldMonitorEntity> buildMonitor(){
+    public List<MoldMonitorEntity> buildMonitor(List<String> sourceIds,List<String> sourceDetailIds){
         //预警策略 (开始时间大于等于今天或结束时间小于等于一个月后的今天)
-        List<CfgMoldAlertRuleDTO.ListDTO> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.listAll(null);
+        List<CfgMoldAlertRuleDTO.ListDTO> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.listAll(sourceIds);
         //返还策略(开始时间大于等于今天或结束时间小于等于一个月后的今天)
-        List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll(null);
+        List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll(sourceDetailIds);
 
         List<MoldMonitorEntity> result = new ArrayList<>(cfgMoldAlertRuleEntities.size() + cfgMoldReturnAlertRuleEntities.size());
 

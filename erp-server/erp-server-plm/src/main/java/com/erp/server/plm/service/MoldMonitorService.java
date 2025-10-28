@@ -37,7 +37,7 @@ public interface MoldMonitorService extends SuperService<MoldMonitorEntity> {
 
     BatchResultDTO cancelReturnPrice(String id);
 
-    List<MoldMonitorEntity> buildMonitor();
+    List<MoldMonitorEntity> buildMonitor(List<String> sourceIds,List<String> sourceDetailIds);
 
     void calMonitorOrder(List<MoldMonitorEntity> list);
 
