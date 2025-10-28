@@ -45,6 +45,7 @@ import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -321,8 +322,11 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
 
 
     @Override
-    public List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll() {
-        return this.baseMapper.listAll();
+    public List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll(List<String> detailIds) {
+        LocalDate today = LocalDate.now();
+        //一个月后的日期
+        LocalDate oneMonthLater = today.plusMonths(1);
+        return this.baseMapper.listAll(detailIds,today,oneMonthLater);
     }
 
     /**

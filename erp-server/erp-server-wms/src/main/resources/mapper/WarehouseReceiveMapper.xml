@@ -694,6 +694,7 @@
         pr.id,
         prd.id as detailId,
         prd.receive_qty as qty,
+        prd.sku_id as skuId,
         pr.approve_status
         from po_receive pr
         inner join po_receive_detail prd on pr.id = prd.main_id and prd.is_deleted = false

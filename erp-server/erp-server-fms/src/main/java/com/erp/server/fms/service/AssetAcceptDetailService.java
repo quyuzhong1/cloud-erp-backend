@@ -6,6 +6,10 @@ import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDetailDTO;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 资产验收表明细表 服务类
@@ -34,6 +38,8 @@ public interface AssetAcceptDetailService extends SuperService<AssetAcceptDetail
     */
     Boolean update(AssetAcceptDetailDTO.UpdateDTO dto);
 
-    Integer getAcceptQtyByDetailId(@RequestBody String detailId);
+    Integer getAcceptQtyByDetailId(String detailId);
+
+    Map<String, BigDecimal> getAcceptableQtyByDetailId(List<String> detailId);
 
 }
