@@ -200,21 +200,4 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
         return result;
     }
-
-    @Override
-    public PagingVO<DictBasicDTO.ViewDTO> paging(PagingDTO<DictBasicDTO.PagingParamDTO> dto) {
-        DictBasicDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page<DictBasicDTO.ViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        // 仅查询销售平台类型
-        List<String> typeList = Collections.singletonList("salesPlatform");
-        IPage<DictBasicDTO.ViewDTO> pageData = baseMapper.paging(query, params, typeList);
-        List<DictBasicDTO.ViewDTO> list = pageData.getRecords();
-        fillList(list);
-        return new PagingVO<>(pageData);
-    }
-
-    private void fillList(List<DictBasicDTO.ViewDTO> list) {
-
-    }
 }

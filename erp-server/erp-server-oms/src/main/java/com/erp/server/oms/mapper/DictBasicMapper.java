@@ -20,5 +20,5 @@ import java.util.List;
 @Mapper
 public interface DictBasicMapper extends BaseMapper<DictBasicEntity> {
 
-    IPage<DictBasicDTO.ViewDTO> paging(Page<DictBasicDTO.ViewDTO> query, DictBasicDTO.PagingParamDTO params, List<String> typeList);
+
 }

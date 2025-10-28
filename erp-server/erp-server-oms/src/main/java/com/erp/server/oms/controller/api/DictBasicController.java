@@ -44,14 +44,4 @@ public class DictBasicController extends BaseController {
         return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
-
-
-    /**
-     * 销售平台分页查询
-     */
-    @PostMapping("/paging")
-    @WebAdvanceQuery
-    public ApiResult<PagingVO<DictBasicDTO.ViewDTO>> paging(@RequestBody @Validated PagingDTO<DictBasicDTO.PagingParamDTO> dto) {
-        return success(dictBasicService.paging(dto));
-    }
 }
