@@ -629,9 +629,9 @@ public class TransferOutDTO implements Serializable {
          */
         private String skuNo;
         /**
-         * 产品单位
+         * 单位
          */
-        @NotBlank(message = "产品单位不能为空")
+        @NotBlank(message = "单位不能为空")
         private String unitName;
 
         /**

@@ -59,6 +59,9 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
 
         List<PickingListsEntity> pickingLists = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, dto.getSourceId()));
         List<String> ids = pickingLists.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         List<PickingDetailEntity> list = lambdaQuery()
                 .eq(PickingDetailEntity::getMainId, ids)
                 .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()), PickingDetailEntity::getSkuNo, dto.getSkuNoList())

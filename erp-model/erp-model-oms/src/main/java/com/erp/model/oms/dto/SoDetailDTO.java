@@ -37,9 +37,9 @@ public class SoDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空", groups = {AddGroup.class})
         private String skuId;
         /**
-         * 产品名称
+         * 单位
          */
-        @NotBlank(message = "产品名称不能为空", groups = {AddGroup.class})
+        @NotBlank(message = "单位不能为空", groups = {AddGroup.class})
         private String unitName;
 
         /**

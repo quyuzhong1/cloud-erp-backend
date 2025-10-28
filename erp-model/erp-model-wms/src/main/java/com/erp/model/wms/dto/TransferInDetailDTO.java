@@ -37,9 +37,9 @@ public class TransferInDetailDTO implements Serializable {
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 单位
          */
-        @NotBlank(message = "产品名称不能为空")
+        @NotBlank(message = "单位不能为空")
         private String unitName;
 
         /**

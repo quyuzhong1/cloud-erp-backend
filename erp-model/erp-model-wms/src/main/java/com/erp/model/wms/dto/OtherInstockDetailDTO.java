@@ -32,9 +32,9 @@ public class OtherInstockDetailDTO implements Serializable {
         @NotBlank(message = "SKU不能为空")
         private String  skuNo;
         /**
-         * 产品单位
+         * 单位
          */
-        @NotBlank(message = "产品单位不能为空")
+        @NotBlank(message = "单位不能为空")
         private String unitName;
         /**
          * 实收数量
