@@ -20,9 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
 import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
-import com.erp.model.plm.entity.CfgMoldReturnAlertDetailEntity;
-import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
-import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -30,16 +28,12 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.CfgMoldAlertExcelListener;
 import com.erp.server.plm.listener.CfgMoldReturnExcelListener;
-import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
-import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.erp.server.plm.mapper.CfgMoldAlertRuleMapper;
-import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -86,6 +80,8 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
     private SysUserFeign sysUserFeign;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private MoldMonitorService moldMonitorService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -270,6 +266,13 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         log.info("删除 开始删除模具预警策略日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】模具编码为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具预警策略");
         operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+
+        //同步删除模具预警监控
+        moldMonitorService.lambdaUpdate()
+                .eq(MoldMonitorEntity::getSourceId, entity.getId())
+                .set(MoldMonitorEntity::getIsDeleted,Boolean.TRUE)
+                .update();
+
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DELETE);
     }
 

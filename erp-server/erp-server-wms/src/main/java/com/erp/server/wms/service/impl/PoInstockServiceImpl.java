@@ -2294,4 +2294,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         operateLogService.batchAddModuleOperateLog("采购入库单【%s】取消流程", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "取消流程操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
+
+    @Override
+    public List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(PoInstockDTO.PoInStockParamDTO dto) {
+        if(Objects.isNull(dto) || CollUtil.isEmpty(dto.getSkuIds())){
+            return Collections.emptyList();
+        }
+        return baseMapper.getPoStockInByParams(dto);
+    }
 }
