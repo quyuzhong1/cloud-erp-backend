@@ -40,10 +40,11 @@ public interface AssetAcceptMapper extends BaseMapper<AssetAcceptEntity> {
 
     /**
     * 导出Excel查询
-    * @param params
+    * @param page 分页对象
+    * @param params 查询参数
     * @return
     */
-    IPage<AssetAcceptDTO.ListDTO> listExport(@Param("params") AssetAcceptDTO.ExportDTO params);
+    IPage<AssetAcceptDTO.ListDTO> listExport(Page page, @Param("params") AssetAcceptDTO.ExportDTO params);
 
 
     /**

@@ -133,12 +133,14 @@
         FROM asset_accept aa
         LEFT JOIN asset_accept_detail aad ON aad.main_id = aa.id AND aad.is_deleted = false
         WHERE aa.is_deleted = false
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        <if test="ids != null and ids.size() > 0">
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size() > 0">
             AND aa.id IN
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
         </if>
