@@ -284,4 +284,23 @@
                 ${params.permissionSql}
             </if>
     </select>
+
+    <select id="getPoStockInByParams" resultType="com.erp.model.wms.dto.PoInstockDTO$PoInStockInfoDTO">
+        SELECT
+            DISTINCT
+            psi.id,
+            psid.id as detailId,
+            psid.stock_in_qty as qty,
+            psi.approve_status
+        FROM po_instock psi
+        left join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        WHERE psi.is_deleted = false
+          AND psi.invalid_status = false
+        <if test="params.skuIds != null and params.skuIds.size>0">
+            AND psid.sku_id IN
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

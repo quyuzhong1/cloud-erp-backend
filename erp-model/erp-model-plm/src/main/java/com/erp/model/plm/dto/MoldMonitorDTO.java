@@ -105,10 +105,7 @@ public class MoldMonitorDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
-        /**
-         * 来源json
-         */
-        private String sourceRuleJson;
+
         /**
          * 统计状态：counting=统计中 , finish=统计完成  枚举：MoldMonitorStatusEnum
          */
@@ -217,6 +214,10 @@ public class MoldMonitorDTO implements Serializable {
          * 寿命数量
          */
         private Integer lifeQty;
+        /**
+         * 剩余寿命数量
+         */
+        private Integer remainingQty;
         /**
          * 预警寿命（数量）
          */
@@ -369,7 +370,7 @@ public class MoldMonitorDTO implements Serializable {
 
 
     /**
-     * 关联订单参数
+     * 返还确认
      */
     @Data
     @NoArgsConstructor
@@ -406,6 +407,31 @@ public class MoldMonitorDTO implements Serializable {
         @NotEmpty(message = "附件不能为空")
         private List<String> attachmentNameList;
         private List<String> attachmentUrlList;
+    }
+
+    /**
+     * 刷新统计参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RefreshParamsDTO  {
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+    }
+
+    /**
+     * 生成监控参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateParamsDTO  {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
     }
 
 }

@@ -1,15 +1,22 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
+import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
+import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.query.MoldMonitorQueryHandler;
 import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -26,7 +33,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.plm.dto.MoldMonitorDTO;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 模具监控
@@ -118,10 +128,93 @@ public class MoldMonitorController extends BaseController {
     public ApiResult<BatchResultDTO> updateReturnPriceById(@RequestBody @Validated MoldMonitorDTO.UpdateReturnParamsDTO dto) {
         return success(moldMonitorService.updateReturnPriceById(dto));
     }
+    /**
+     * 撤销返还
+     * @author jack
+     * @date: 2025-10-10
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/cancelReturnPrice")
+    public ApiResult<List<BatchResultDTO>> cancelReturnPrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MoldMonitorEntity> list = moldMonitorService.lambdaQuery().in(MoldMonitorEntity::getId, ids).list();
+        Map<String, MoldMonitorEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldMonitorEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = moldMonitorService.cancelReturnPrice(id);
+            }catch (Exception e){
+                log.error("模具返还策略删除失败",e);
+                MoldMonitorEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "模具返还策略不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                String code = StrUtil.format("模具编号【{}】, 返还数量上限【{}】", entity.getMoldCode(), entity.getReturnQtyLimit());
+                deleteResult = BatchResultDTO.fail(entity.getId(), code, e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 
+    /**
+     * 刷新统计
+     * @author jack
+     * @date: 2025-10-10
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/refresh")
+    public ApiResult<BatchResultDTO> batchRefresh(@RequestBody @Validated MoldMonitorDTO.RefreshParamsDTO dto) {
+        return success(moldMonitorService.batchRefresh(dto));
+    }
 
 
+    /**
+     * 模具返还监控导出
+     * @author jack
+     * @date:  2025-10-10
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/exportReturn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:moldMonitor:exportReturn",
+            tableAlias = "mm"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还监控导出Excel数据")
+    @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
+    public ApiResult<Object> exportReturn(@RequestBody @Validated MoldMonitorDTO.PagingParamDTO dto, HttpServletResponse response) {
+        moldMonitorService.exportReturn(dto, response);
+        return success();
+    }
 
 
+    /**
+     * 模具预警监控导出
+     * @author jack
+     * @date:  2025-10-10
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/exportAlert")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:moldMonitor:exportAlert",
+            tableAlias = "mm"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具预警监控导出Excel数据")
+    @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
+    public ApiResult<Object> exportAlert(@RequestBody @Validated MoldMonitorDTO.PagingParamDTO dto, HttpServletResponse response) {
+        moldMonitorService.exportAlert(dto, response);
+        return success();
+    }
 }

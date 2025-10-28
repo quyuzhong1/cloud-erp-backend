@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.CfgMoldReturnAlertDetailDTO;
 import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertDetailEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -43,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -77,6 +79,8 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     private SysUserFeign sysUserFeign;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private MoldMonitorService moldMonitorService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -186,7 +190,21 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                     .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
                     .collect(Collectors.toList());
             if(CollUtil.isNotEmpty(remove)){
-                cfgMoldReturnAlertDetailService.removeByIds(remove.stream().map(CfgMoldReturnAlertDetailEntity::getId).collect(Collectors.toList()));
+                List<String> removeIds = remove.stream().map(CfgMoldReturnAlertDetailEntity::getId).collect(Collectors.toList());
+
+                List<MoldMonitorEntity> list = moldMonitorService.lambdaQuery()
+                        .in(MoldMonitorEntity::getSourceDetailId, removeIds)
+                        .gt(MoldMonitorEntity::getActualReturnPrice, BigDecimal.ZERO)
+                        .list();
+                if(CollUtil.isNotEmpty(list)){
+                    StringBuffer sb = new StringBuffer();
+                    String append = "返还数量上限为【{}】返还金额为【{}】;";
+                    for (MoldMonitorEntity moldMonitorEntity : list) {
+                        sb.append(StrUtil.format(append,moldMonitorEntity.getReturnQtyLimit(),moldMonitorEntity.getReturnPrice()));
+                    }
+                    throw new ServiceException(sb.toString()+"已存在返还确认记录，不能删除");
+                }
+                cfgMoldReturnAlertDetailService.removeByIds(removeIds);
                 //添加日志
                 String removeMsg = "删除返还明细返还数量上限为【{}】返还金额为【{}】";
                 for (CfgMoldReturnAlertDetailEntity detailEntity : remove) {
@@ -198,7 +216,23 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         //处理需要新增的数据
         List<CfgMoldReturnAlertDetailEntity> addList = cfgMoldReturnAlertDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(addList)){
+            List<Integer> returnQtyLimits = addList.stream().map(CfgMoldReturnAlertDetailEntity::getReturnQtyLimit).collect(Collectors.toList());
+
+            List<CfgMoldReturnAlertDetailEntity> list = cfgMoldReturnAlertDetailService.lambdaQuery()
+                    .eq(CfgMoldReturnAlertDetailEntity::getMainId, cfgMoldReturnAlertRuleEntity.getId())
+                    .in(CfgMoldReturnAlertDetailEntity::getReturnQtyLimit, returnQtyLimits)
+                    .list();
+            if(CollUtil.isNotEmpty(list)){
+                StringBuffer sb = new StringBuffer();
+                String append = "返还数量上限为【{}】;";
+                for (CfgMoldReturnAlertDetailEntity cfgMoldReturnAlertDetailEntity : list) {
+                    sb.append(StrUtil.format(append,cfgMoldReturnAlertDetailEntity.getReturnQtyLimit(),cfgMoldReturnAlertDetailEntity.getReturnPrice()));
+                }
+                throw new ServiceException(sb.toString()+"已存在明细，不能新增");
+            }
+
             cfgMoldReturnAlertDetailService.saveBatch(addList);
+
             //添加日志
             String addMsg = "新增返还明细返还数量上限为【{}】返还金额为【{}】";
             for (CfgMoldReturnAlertDetailEntity detailEntity : addList) {
@@ -209,6 +243,20 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         //处理需要更新的数据
         List<CfgMoldReturnAlertDetailEntity> updateList = cfgMoldReturnAlertDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(updateList)){
+            List<String> updateIds = updateList.stream().map(CfgMoldReturnAlertDetailEntity::getId).collect(Collectors.toList());
+            List<MoldMonitorEntity> list = moldMonitorService.lambdaQuery()
+                    .in(MoldMonitorEntity::getSourceDetailId, updateIds)
+                    .gt(MoldMonitorEntity::getActualReturnPrice, BigDecimal.ZERO)
+                    .list();
+            if(CollUtil.isNotEmpty(list)){
+                StringBuffer sb = new StringBuffer();
+                String append = "返还数量上限为【{}】返还金额为【{}】;";
+                for (MoldMonitorEntity moldMonitorEntity : list) {
+                    sb.append(StrUtil.format(append,moldMonitorEntity.getReturnQtyLimit(),moldMonitorEntity.getReturnPrice()));
+                }
+                throw new ServiceException(sb.toString()+"已存在返还确认记录，不能编辑");
+            }
+
             cfgMoldReturnAlertDetailService.updateBatchById(updateList);
 
             //添加日志
@@ -330,6 +378,15 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         if (Objects.equals(DisabledEnum.ENABLE.getCode(), entity.getDisabled())) {
             throw new ServiceException(ApiError.ERROR_1069);
         }
+
+        List<MoldMonitorEntity> list = moldMonitorService.lambdaQuery()
+                .eq(MoldMonitorEntity::getSourceId, entity.getId())
+                .gt(MoldMonitorEntity::getActualReturnPrice, BigDecimal.ZERO)
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            throw new ServiceException("该模具返还策略已存在返还确认记录，不能删除");
+        }
+
         // 删除主单数据
         log.info("删除 开始删除模具返还策略主单数据，id：【{}】", id);
         super.removeById(id);
@@ -342,6 +399,13 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         log.info("删除 开始删除模具返还策略日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】模具编码为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具返还策略");
         operateLogService.addSysLogBySave(msg, "", entity.getId(), "");
+
+        //同步删除模具返还监控
+        moldMonitorService.lambdaUpdate()
+                .eq(MoldMonitorEntity::getSourceId, entity.getId())
+                .set(MoldMonitorEntity::getIsDeleted,Boolean.TRUE)
+                .update();
+
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DELETE);
     }
 

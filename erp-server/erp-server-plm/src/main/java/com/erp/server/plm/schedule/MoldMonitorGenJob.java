@@ -1,19 +1,6 @@
 package com.erp.server.plm.schedule;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
-import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
-import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
-import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
@@ -23,16 +10,10 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * 任务节点记录表补偿重试
@@ -61,57 +42,13 @@ public class MoldMonitorGenJob {
      * @Author jack
      **/
     @XxlJob("MoldMonitorGenJob")
-    public ReturnT<String> WorkflowTaskRecordRetryJob() {
+    public ReturnT<String> MoldMonitorGenJob() {
         XxlJobHelper.log("MoldMonitorGenJob 执行开始");
-        //预警策略
-        List<CfgMoldAlertRuleEntity> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getDisabled,false).eq(CfgMoldAlertRuleEntity::getInvalidStatus,false).list();
-        //返还策略
-        List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll();
 
-        if(CollUtil.isNotEmpty(cfgMoldAlertRuleEntities)){
+        List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor();
 
-            List<String> ids = cfgMoldAlertRuleEntities.stream().map(CfgMoldAlertRuleEntity::getId).collect(Collectors.toList());
+        moldMonitorService.calMonitorOrder(moldMonitorEntities);
 
-            List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
-            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceId, Function.identity()));
-
-            for (CfgMoldAlertRuleEntity entity : cfgMoldAlertRuleEntities) {
-
-
-
-
-
-            }
-        }
-
-//
-//        List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.listErrorTask();
-//        if (CollectionUtil.isEmpty(list)) {
-//            return ReturnT.SUCCESS;
-//        }
-//
-//        Map<String, List<WorkflowTaskRecordEntity>> map = list.stream().collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
-//        for (Map.Entry<String, List<WorkflowTaskRecordEntity>> entry : map.entrySet()) {
-//            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = entry.getValue();
-//            if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-//                continue;
-//            }
-//            long count = workflowTaskRecordEntities.stream().filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode()) && e.getRetryCount() > 3).count();
-//            if(count > 0){
-//                continue;
-//            }
-//            WorkflowTaskRecordEntity entity = workflowTaskRecordEntities.get(0);
-//            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
-//            addTaskDTO.setSourceId(entity.getSourceId());
-//            addTaskDTO.setSourceCode(entity.getSourceCode());
-//            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
-//            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByName(entity.getSourceType()));
-//            addTaskDTO.setTraceId(entity.getTraceId());
-//            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, workflowTaskRecordEntities.get(0).getSourceId(),1);
-//            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-//                XxlJobHelper.log(StrUtil.format("展会订单任务节点记录补偿重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-//            }
-//        }
         XxlJobHelper.log("MoldMonitorGenJob 执行任务列表结束");
         return ReturnT.SUCCESS;
     }

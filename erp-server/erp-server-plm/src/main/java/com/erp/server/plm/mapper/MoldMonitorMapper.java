@@ -27,4 +27,5 @@ public interface MoldMonitorMapper extends BaseMapper<MoldMonitorEntity> {
     List<MoldMonitorDTO.TabListDTO> tabList(@Param("params") MoldMonitorDTO.PagingParamDTO params);
 
     IPage<MoldMonitorDTO.ListDTO> paging(Page query,@Param("params")  MoldMonitorDTO.PagingParamDTO params);
+
 }

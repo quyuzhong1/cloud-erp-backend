@@ -3,47 +3,63 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DisabledEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
-import com.erp.model.plm.entity.MoldMonitorRefOrderEntity;
-import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
 import com.erp.model.plm.enums.MoldMonitorLifeStatusEnum;
 import com.erp.model.plm.enums.MoldMonitorReturnStatusEnum;
 import com.erp.model.plm.enums.MoldMonitorStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
-import com.erp.server.plm.constant.SourceType;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.PurchaseOrderFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.plm.service.*;
-import com.erp.model.plm.entity.MoldMonitorEntity;
 import com.erp.server.plm.mapper.MoldMonitorMapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_MONITOR_ALERT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_MONITOR_RETURN;
 
 /**
  * <p>
@@ -59,16 +75,26 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
 
     @Resource
     private MoldMonitorRefOrderService moldMonitorRefOrderService;
-
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
     @Resource
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
-
     @Resource
     private ProductDetailService productDetailService;
     @Resource
     private PlmAttachmentService attachmentService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private OperateLogService sysLogService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
+    @Resource
+    private PurchaseOrderFeign purchaseOrderFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public List<MoldMonitorDTO.TabListDTO> tabList(MoldMonitorDTO.TabDTO param) {
@@ -105,7 +131,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<MoldMonitorDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if(Objects.isNull(pageData) || CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -119,40 +145,9 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         }
 
         for (MoldMonitorDTO.ListDTO data : list) {
-            //获取策略的数据
-            jsonToData(data);
             data.setStatusName(MoldMonitorStatusEnum.getName(data.getStatus()));
             data.setReturnStatusName(MoldMonitorReturnStatusEnum.getName(data.getReturnStatus()));
             data.setLifeStatusName(MoldMonitorLifeStatusEnum.getName(data.getLifeStatus()));
-        }
-    }
-
-    /**
-     * 将JSON格式的数据转换并填充到MoldMonitorDTO.ListDTO对象中
-     * @param data 需要填充数据的MoldMonitorDTO.ListDTO对象
-     */
-    private static void jsonToData(MoldMonitorDTO.ListDTO data) {
-        String sourceRuleJson = data.getSourceRuleJson();
-        if(StringUtils.isNotBlank(sourceRuleJson) && !Objects.equals("{}",sourceRuleJson)){
-            //sourceRuleJson 转实体类MoldMonitorDTO.ViewDTO
-            MoldMonitorDTO.ViewDTO map = BeanMapperUtils.map(MoldMonitorDTO.ViewDTO.class, sourceRuleJson);
-
-            data.setMoldId(map.getMoldId());
-            data.setMoldCode(map.getMoldCode());
-            data.setMoldName(map.getMoldName());
-            data.setSupplierId(map.getSupplierId());
-            data.setSupplierCode(map.getSupplierCode());
-            data.setSupplierName(map.getSupplierName());
-            data.setStartDate(map.getStartDate());
-            data.setEndDate(map.getEndDate());
-            data.setCountDim(map.getCountDim());
-            data.setDisabled(map.getDisabled());
-            data.setReturnQtyLimit(map.getReturnQtyLimit());
-            data.setReturnPrice(map.getReturnPrice());
-            data.setLifeQty(map.getLifeQty());
-            data.setAlertLifeQty(map.getAlertLifeQty());
-            data.setAlertLifeRate(map.getAlertLifeRate());
-
             data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
             data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
         }
@@ -179,15 +174,12 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        //获取策略的数据
-        jsonToData(data);
-
         data.setStatusName(MoldMonitorStatusEnum.getName(data.getStatus()));
         data.setReturnStatusName(MoldMonitorReturnStatusEnum.getName(data.getReturnStatus()));
         data.setLifeStatusName(MoldMonitorLifeStatusEnum.getName(data.getLifeStatus()));
+        data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
+        data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
     }
-
-
 
     /**
      * 根据主ID和业务类型查询关联订单信息列表。
@@ -329,8 +321,266 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateReturnPriceById(MoldMonitorDTO.UpdateReturnParamsDTO dto) {
+        MoldMonitorEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
+        String sourceType = old.getSourceType();
+        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+            throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
+        }
+
+        MoldMonitorEntity entity = new MoldMonitorEntity();
+        BeanMapper.copy(old,entity);
+
+        SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
+
+        entity.setActualReturnPrice(dto.getActualReturnPrice());
+        entity.setReturnUserId(dto.getReturnUserId());
+        if(Objects.nonNull(sysUserDTO)){
+            entity.setReturnUserName(sysUserDTO.getUserName());
+        }
+        entity.setRemark(dto.getRemark());
+        entity.setReturnDate(dto.getReturnDate());
+        updateById(entity);
+
+        // 记录主单操作日志
+        String msg = StrUtil.format("用户【{}】模具编号【{}】返还数量上限【{}】返还监控", UserContext.getDefaultLoginUser().getUserName(), old.getMoldCode(),old.getReturnQtyLimit());
+        sysLogService.addSysLogByUpdate(old,entity,String.valueOf(MoldMonitorEntity.class), entity.getId(), "", msg);
+
+        //附件集合
+        List<String> attachmentUrlList = dto.getAttachmentUrlList();
+        //附件名
+        List<String> attachmentNameList = dto.getAttachmentNameList();
+        List<PlmAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<MoldMonitorEntity> credentialClass = MoldMonitorEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                PlmAttachmentEntity attachment = new PlmAttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(entity.getId());
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
+        return BatchResultDTO.success(old.getId(), old.getId(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO cancelReturnPrice(String id) {
+        MoldMonitorEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
+        String sourceType = old.getSourceType();
+        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+            throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
+        }
+        MoldMonitorEntity entity = new MoldMonitorEntity();
+        BeanMapper.copy(old,entity);
+        entity.setActualReturnPrice(BigDecimal.ZERO);
+        entity.setReturnUserId("");
+        entity.setReturnUserName("");
+        entity.setRemark("");
+        entity.setReturnDate(null);
+        updateById(entity);
+
+        // 日志数据
+        String msg = StrUtil.format("用户【{}】模具编号【{}】返还数量上限【{}】取消返还确认", UserContext.getDefaultLoginUser().getUserName(), old.getMoldCode(),old.getReturnQtyLimit());
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
+
+        String code = StrUtil.format("模具编号【{}】, 返还数量上限【{}】", entity.getMoldCode(), entity.getReturnQtyLimit());
+        return BatchResultDTO.success(old.getId(), code, OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO batchRefresh(MoldMonitorDTO.RefreshParamsDTO dto) {
         return null;
     }
 
+
+    @Override
+    public void exportReturn(MoldMonitorDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("模具返还监控导出", EXPORT_PLM_MOLD_MONITOR_RETURN.getCode(), param);
+    }
+
+    @Override
+    public void exportAlert(MoldMonitorDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("模具预警监控导出", EXPORT_PLM_MOLD_MONITOR_ALERT.getCode(), param);
+    }
+
+    @Override
+    public List<MoldMonitorEntity> buildMonitor(){
+        //预警策略
+        List<CfgMoldAlertRuleEntity> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getDisabled,false).eq(CfgMoldAlertRuleEntity::getInvalidStatus,false).list();
+
+        //返还策略
+        List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll();
+
+        List<MoldMonitorEntity> result = new ArrayList<>(cfgMoldAlertRuleEntities.size() + cfgMoldReturnAlertRuleEntities.size());
+
+        if(CollUtil.isNotEmpty(cfgMoldReturnAlertRuleEntities)){
+
+            List<String> ids = cfgMoldReturnAlertRuleEntities.stream().map(CfgMoldReturnAlertRuleDTO.ListDTO::getId).collect(Collectors.toList());
+
+            List<MoldMonitorEntity> moldMonitorEntities = lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
+
+            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
+
+            for (CfgMoldReturnAlertRuleDTO.ListDTO entity : cfgMoldReturnAlertRuleEntities) {
+                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
+                if(Objects.isNull(moldMonitorEntity)){
+                    moldMonitorEntity = new MoldMonitorEntity();
+                }
+
+                moldMonitorEntity.setSourceId(entity.getId());
+                moldMonitorEntity.setSourceDetailId(entity.getDetailId());
+                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
+                moldMonitorEntity.setMoldId(entity.getMoldId());
+                moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                moldMonitorEntity.setMoldName(entity.getMoldName());
+                moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                moldMonitorEntity.setSupplierName(entity.getSupplierName());
+                moldMonitorEntity.setStartDate( entity.getStartDate());
+                moldMonitorEntity.setEndDate( entity.getEndDate());
+                moldMonitorEntity.setCountDim( entity.getCountDim());
+                moldMonitorEntity.setDisabled(entity.getDisabled());
+                moldMonitorEntity.setReturnQtyLimit(entity.getReturnQtyLimit());
+                moldMonitorEntity.setReturnPrice(entity.getReturnPrice());
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.COUNTING.getCode());
+//                moldMonitorEntity.setReturnStatus(MoldMonitorReturnStatusEnum.UNDERACHIEVED.getCode());
+//                moldMonitorEntity.setPurchaseOrderQty(0);
+//                moldMonitorEntity.setWarehouseReceiveQty(0);
+//                moldMonitorEntity.setPoInstockQty(0);
+                result.add(moldMonitorEntity);
+            }
+        }
+
+        if(CollUtil.isNotEmpty(cfgMoldAlertRuleEntities)){
+            List<String> ids = cfgMoldAlertRuleEntities.stream().map(CfgMoldAlertRuleEntity::getId).collect(Collectors.toList());
+
+            List<MoldMonitorEntity> moldMonitorEntities = lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
+            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceId, Function.identity()));
+
+            for (CfgMoldAlertRuleEntity entity : cfgMoldAlertRuleEntities) {
+                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
+                if(Objects.isNull(moldMonitorEntity)){
+                    moldMonitorEntity = new MoldMonitorEntity();
+
+                }
+                moldMonitorEntity.setSourceId(entity.getId());
+                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
+
+                moldMonitorEntity.setMoldId(entity.getMoldId());
+                moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                moldMonitorEntity.setMoldName(entity.getMoldName());
+                moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                moldMonitorEntity.setSupplierName(entity.getSupplierName());
+                moldMonitorEntity.setLifeQty( entity.getLifeQty());
+                moldMonitorEntity.setAlertLifeQty( entity.getAlertLifeQty());
+                moldMonitorEntity.setAlertLifeRate( entity.getAlertLifeRate());
+                moldMonitorEntity.setStartDate( entity.getStartDate());
+                moldMonitorEntity.setEndDate( entity.getEndDate());
+                moldMonitorEntity.setCountDim( entity.getCountDim());
+                moldMonitorEntity.setDisabled(entity.getDisabled());
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.COUNTING.getCode());
+//                moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.HEALTHY.getCode());
+//                moldMonitorEntity.setPurchaseOrderQty(0);
+//                moldMonitorEntity.setWarehouseReceiveQty(0);
+//                moldMonitorEntity.setPoInstockQty(0);
+                result.add(moldMonitorEntity);
+            }
+        }
+        saveOrUpdateBatch(result);
+        return result;
+    }
+
+    @Override
+    public void calMonitorOrder(List<MoldMonitorEntity> list){
+        if(CollUtil.isEmpty(list)){
+            return;
+        }
+
+        for (MoldMonitorEntity moldMonitorEntity : list) {
+            List<MoldRefSkuEntity> moldRefSkuEntities = moldRefSkuService.lambdaQuery()
+                    .eq(MoldRefSkuEntity::getMoldId, moldMonitorEntity.getMoldId())
+                    .eq(MoldRefSkuEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                    .list();
+
+            if(CollUtil.isEmpty(moldRefSkuEntities)){
+                moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.HEALTHY.getCode());
+                moldMonitorEntity.setReturnStatus(MoldMonitorReturnStatusEnum.UNDERACHIEVED.getCode());
+                moldMonitorEntity.setPurchaseOrderQty(0);
+                moldMonitorEntity.setWarehouseReceiveQty(0);
+                moldMonitorEntity.setPoInstockQty(0);
+                continue;
+            }
+
+            List<MoldMonitorRefOrderEntity> moldMonitorRefOrderEntities = new ArrayList<>();
+
+            List<String> skuIds = moldRefSkuEntities.stream().map(MoldRefSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+
+            String countDim = moldMonitorEntity.getCountDim();
+
+            if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.PURCHASEORDER.getCode())){
+                PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO = new PurchaseOrderDTO.PurchaseCalcQtyParamsDTO();
+                purchaseCalcQtyParamsDTO.setSkuIdList(skuIds);
+                List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO)
+                        .stream()
+                        .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(detail)){
+                    for (PurchaseOrderDTO.PurchaseCalcQtyDTO purchaseCalcQtyDTO : detail) {
+                        MoldMonitorRefOrderEntity moldMonitorRefOrderEntity = new MoldMonitorRefOrderEntity();
+                        moldMonitorRefOrderEntity.setMainId(moldMonitorEntity.getId());
+                        moldMonitorRefOrderEntity.setBusinessId(purchaseCalcQtyDTO.getId());
+                        moldMonitorRefOrderEntity.setBusinessDetailId(purchaseCalcQtyDTO.getPurchaseDetailId());
+                        moldMonitorRefOrderEntity.setBusinessType(CfgMoldReturnAlertRuleCountDimEnum.PURCHASEORDER.getCode());
+                        moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
+                    }
+                    moldMonitorRefOrderService.saveBatch(moldMonitorRefOrderEntities);
+                }
+            }else if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.WAREHOUSERECEIVE.getCode())){
+                WarehouseReceiveDTO.ReceiveParamDTO dto = new WarehouseReceiveDTO.ReceiveParamDTO();
+                List<WarehouseReceiveDTO.ReceiveInfoDTO> detail = wmsTaskFeign.getReceiveByParams(dto)
+                        .stream()
+                        .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(detail)){
+                    for (WarehouseReceiveDTO.ReceiveInfoDTO receiveInfoDTO : detail) {
+                        MoldMonitorRefOrderEntity moldMonitorRefOrderEntity = new MoldMonitorRefOrderEntity();
+                        moldMonitorRefOrderEntity.setMainId(moldMonitorEntity.getId());
+                        moldMonitorRefOrderEntity.setBusinessId(receiveInfoDTO.getId());
+                        moldMonitorRefOrderEntity.setBusinessDetailId(receiveInfoDTO.getDetailId());
+                        moldMonitorRefOrderEntity.setBusinessType(CfgMoldReturnAlertRuleCountDimEnum.WAREHOUSERECEIVE.getCode());
+                        moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
+                    }
+                    moldMonitorRefOrderService.saveBatch(moldMonitorRefOrderEntities);
+                }
+            }else if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.POINSTOCK.getCode())){
+                PoInstockDTO.PoInStockParamDTO dto = new PoInstockDTO.PoInStockParamDTO();
+                List<PoInstockDTO.PoInStockInfoDTO> detail = wmsTaskFeign.getPoStockInByParams(dto)
+                        .stream()
+                        .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(detail)){
+                    for (PoInstockDTO.PoInStockInfoDTO poInStockInfoDTO : detail) {
+                        MoldMonitorRefOrderEntity moldMonitorRefOrderEntity = new MoldMonitorRefOrderEntity();
+                        moldMonitorRefOrderEntity.setMainId(moldMonitorEntity.getId());
+                        moldMonitorRefOrderEntity.setBusinessId(poInStockInfoDTO.getId());
+                        moldMonitorRefOrderEntity.setBusinessDetailId(poInStockInfoDTO.getDetailId());
+                        moldMonitorRefOrderEntity.setBusinessType(CfgMoldReturnAlertRuleCountDimEnum.POINSTOCK.getCode());
+                        moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
+                    }
+                    moldMonitorRefOrderService.saveBatch(moldMonitorRefOrderEntities);
+                }
+            }
+        }
+    }
 }

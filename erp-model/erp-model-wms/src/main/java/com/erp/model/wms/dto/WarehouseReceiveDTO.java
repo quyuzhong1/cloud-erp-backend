@@ -1335,4 +1335,38 @@ public class WarehouseReceiveDTO implements Serializable {
         private String sourceDetailId;
 
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReceiveParamDTO {
+
+        /**
+         * SKU集合
+         */
+        private List<String> skuIds;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReceiveInfoDTO {
+
+        private String id;
+
+        private String detailId;
+
+        private String approveStatus;
+
+        private Integer qty;
+
+    }
 }
