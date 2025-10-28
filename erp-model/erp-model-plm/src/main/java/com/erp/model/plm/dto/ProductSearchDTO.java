@@ -276,6 +276,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          * sku编号
          */
         private String skuNo;
+        /**
+         * ean
+         */
+        private String ean;
 
         /**
          * sku名称
