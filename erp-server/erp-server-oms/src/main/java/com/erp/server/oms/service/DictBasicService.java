@@ -83,5 +83,4 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
 
     List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key);
 
-    PagingVO<DictBasicDTO.ViewDTO> paging(PagingDTO<DictBasicDTO.PagingParamDTO> dto);
 }
