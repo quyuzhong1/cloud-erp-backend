@@ -3,30 +3,35 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.AssetPurchaseOrderReceiveEnum;
+import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
+import com.erp.model.plm.entity.AssetNoticeDetailEntity;
+import com.erp.model.plm.entity.AssetPurchaseOrderEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.rpc.fms.feign.AssetAceptFeign;
-import com.erp.server.plm.service.AssetPurchaseOrderService;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.AssetPurchaseOrderDetailEntity;
 import com.erp.server.plm.mapper.AssetPurchaseOrderDetailMapper;
-import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  *  服务实现类
@@ -43,10 +48,17 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     private OperateLogService operateLogService;
 
     @Autowired
+    private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
+
+    @Autowired
+    private AssetNoticeDetailService assetNoticeDetailService;
+
+    @Autowired
     private AssetPurchaseOrderService assetPurchaseOrderService;
 
     @Autowired
-    private AssetAceptFeign assetAceptFeign;
+    private ScmTaskFeign scmTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -145,35 +157,155 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     }
 
     @Override
-    public void add(List<AssetPurchaseOrderDetailDTO.AddDTO> detailList, String assetPurchaseOrderId) {
-        if (CollectionUtils.isEmpty(detailList)) {
+    public void add(AssetPurchaseOrderDTO.AddDTO addDTO, String assetPurchaseOrderId) {
+        if (CollectionUtils.isEmpty(addDTO.getAssetPurchaseOrderDetailDTOList())) {
             return;
         }
+
+        //从价表取价
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.AddDTO dto : addDTO.getAssetPurchaseOrderDetailDTOList()) {
+            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
+            priceDTO.setSkuId(dto.getAssetId());
+            priceDTO.setSupplierId(addDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
+            priceDTO.setQty(dto.getPurchaseQty().intValue());
+            priceDTO.setPurchaseOrgId(addDTO.getPurchaseOrgId());
+            priceDTOList.add(priceDTO);
+        }
+
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = scmTaskFeign.batchGetPurchasePrice(priceDTOList);
+        if (priceDTOS.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
-        for (AssetPurchaseOrderDetailDTO.AddDTO addDTO : detailList) {
+        for (AssetPurchaseOrderDetailDTO.AddDTO addDTO1 : addDTO.getAssetPurchaseOrderDetailDTOList()) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanMapperUtils.copy(addDTO, assetPurchaseOrderDetailEntity);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntity.setTotalAmount(assetPurchaseOrderDetailEntity.getPurchaseQty().multiply(assetPurchaseOrderDetailEntity.getTaxPrice()));
+            assetPurchaseOrderDetailEntity.setAssetId(addDTO1.getAssetId());
+            assetPurchaseOrderDetailEntity.setAssetCode(addDTO1.getAssetCode());
+            assetPurchaseOrderDetailEntity.setAssetName(addDTO1.getAssetName());
+            assetPurchaseOrderDetailEntity.setCurrency(addDTO1.getCurrency());
+            assetPurchaseOrderDetailEntity.setCurrencySymbol(addDTO1.getCurrencySymbol());
+            assetPurchaseOrderDetailEntity.setTaxRate(addDTO1.getTaxRate());
+            assetPurchaseOrderDetailEntity.setPurchaseQty(addDTO1.getPurchaseQty());
+            assetPurchaseOrderDetailEntity.setPlanDeliveryDate(addDTO1.getPlanDeliveryDate());
+            assetPurchaseOrderDetailEntity.setIsUrgent(addDTO1.getIsUrgent());
+            assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(addDTO1.getSourceDetailId()) ? addDTO1.getSourceDetailId() : null);
+            assetPurchaseOrderDetailEntity.setTag(addDTO1.getTag());
+
+            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
+                if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
+                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                }
+            }
+
             assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
             detailEntityList.add(assetPurchaseOrderDetailEntity);
         }
+
+        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
+        if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+        }
+
         super.saveBatch(detailEntityList);
     }
 
     @Override
-    public void update(List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList, String assetPurchaseOrderId) {
-        if (CollectionUtils.isEmpty(detailList)) {
+    public void update(AssetPurchaseOrderDTO.UpdateDTO updateDTO, String assetPurchaseOrderId) {
+        if (CollectionUtils.isEmpty(updateDTO.getAssetPurchaseOrderDetailDTOList())) {
             return;
         }
-        List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntities = new ArrayList<>();
-        for (AssetPurchaseOrderDetailDTO.UpdateDTO updateDTO : detailList) {
-            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanMapperUtils.copy(updateDTO, assetPurchaseOrderDetailEntity);
-            assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
+
+        //明细条数不允许增加
+        List<AssetPurchaseOrderDetailEntity> list = this.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, assetPurchaseOrderId)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if (updateDTO.getAssetPurchaseOrderDetailDTOList().size() > list.size()) {
+            throw new ServiceException(ApiError.ERROR_95311);
         }
-        super.updateBatchById(assetPurchaseOrderDetailEntities);
+
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(updateDTO.getId());
+        if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getSourceId())) {
+            //有来源的订单申请数量不允许超过剩余数量
+            for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+                List<AssetPurchaseOrderDetailEntity> entityList = assetPurchaseOrderDetailService.lambdaQuery()
+                        .eq(AssetPurchaseOrderDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .list();
+
+                //排除当前订单的采购数量
+                BigDecimal purchaseQtySum = entityList.stream()
+                        .filter(obj -> !obj.getId().equals(assetPurchaseOrderDetailEntity.getId()))
+                        .map(obj -> obj.getPurchaseQty())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                //获取通知单的申请数量
+                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .one();
+                //申请数量-除了当前单的已采购数量 > 传入的采购数量 才可以保存
+                if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum).compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
+                    throw new ServiceException(ApiError.ERROR_95312);
+                }
+            }
+        }
+
+        //从价表取价
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
+            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
+            priceDTO.setSkuId(dto.getAssetId());
+            priceDTO.setSupplierId(updateDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
+            priceDTO.setQty(dto.getPurchaseQty().intValue());
+            priceDTO.setPurchaseOrgId(updateDTO.getPurchaseOrgId());
+            priceDTOList.add(priceDTO);
+        }
+
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = scmTaskFeign.batchGetPurchasePrice(priceDTOList);
+        if (priceDTOS.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
+        List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
+            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
+            assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
+            assetPurchaseOrderDetailEntity.setAssetId(dto.getAssetId());
+            assetPurchaseOrderDetailEntity.setAssetCode(dto.getAssetCode());
+            assetPurchaseOrderDetailEntity.setAssetName(dto.getAssetName());
+            assetPurchaseOrderDetailEntity.setCurrency(dto.getCurrency());
+            assetPurchaseOrderDetailEntity.setCurrencySymbol(dto.getCurrencySymbol());
+            assetPurchaseOrderDetailEntity.setTaxRate(dto.getTaxRate());
+            assetPurchaseOrderDetailEntity.setPurchaseQty(dto.getPurchaseQty());
+            assetPurchaseOrderDetailEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
+            assetPurchaseOrderDetailEntity.setIsUrgent(dto.getIsUrgent());
+            assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
+            assetPurchaseOrderDetailEntity.setTag(dto.getTag());
+
+            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
+                if (priceDTO.getSkuId().equals(dto.getAssetId())) {
+                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                }
+            }
+
+            assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+            detailEntityList.add(assetPurchaseOrderDetailEntity);
+        }
+
+        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
+        if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+        }
+
+        super.saveBatch(detailEntityList);
     }
 
 

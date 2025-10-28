@@ -1,6 +1,8 @@
 package com.erp.model.plm.entity;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -42,10 +44,83 @@ public class MoldMonitorEntity extends BaseEntity<MoldMonitorEntity> {
     @TableField("source_type")
     private String sourceType;
     /**
-    * 来源json
-    */
-    @TableField("source_rule_json")
-    private String sourceRuleJson;
+     * 模具id
+     */
+    @TableField("mold_id")
+    private String moldId;
+    /**
+     * 模具编码
+     */
+    @TableField("mold_code")
+    private String moldCode;
+    /**
+     * 模具名称
+     */
+    @TableField("mold_name")
+    private String moldName;
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+    /**
+     * 供应商编号
+     */
+    @TableField("supplier_code")
+    private String supplierCode;
+    /**
+     * 供应商名称
+     */
+    @TableField("supplier_name")
+    private String supplierName;
+
+    /**
+     * 策略状态
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+    /**
+     * 寿命数量
+     */
+    @TableField("life_qty")
+    private Integer lifeQty;
+    /**
+     * 预警寿命（数量）
+     */
+    @TableField("alert_life_qty")
+    private Integer alertLifeQty;
+    /**
+     * 预警寿命（%）
+     */
+    @TableField("alert_life_rate")
+    private BigDecimal alertLifeRate;
+    /**
+     * 开始日期
+     */
+    @TableField(value = "start_date",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate startDate;
+    /**
+     * 结束日期
+     */
+    @TableField(value = "end_date",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate endDate;
+    /**
+     * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldReturnAlertRuleCountDimEnum
+     */
+    @TableField("count_dim")
+    private String countDim;
+
+    /**
+     * 返还数量上限
+     */
+    @TableField("return_qty_limit")
+    private Integer returnQtyLimit;
+    /**
+     * 返回金额
+     */
+    @TableField("return_price")
+    private BigDecimal returnPrice;
+
     /**
     * 统计状态：counting=统计中 , finish=统计完成  枚举：MoldMonitorStatusEnum
     */
@@ -94,7 +169,7 @@ public class MoldMonitorEntity extends BaseEntity<MoldMonitorEntity> {
     /**
     * 返还日期
     */
-    @TableField("return_date")
+    @TableField(value = "return_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate returnDate;
     /**
     * 返还说明
