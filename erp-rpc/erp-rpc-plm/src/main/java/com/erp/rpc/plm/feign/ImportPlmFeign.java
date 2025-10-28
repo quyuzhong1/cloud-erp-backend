@@ -17,13 +17,16 @@ public interface ImportPlmFeign {
     void skuStdCostDetail(@RequestBody BaseDTO.ImportTypeDTO dto);
 
     @PostMapping("/feign/import/importMoldInfo")
-    void importMoldInfo(@RequestBody BaseDTO.ImportTypeDTO dto);
+    void importMoldInfo(@RequestBody BaseDTO.ImportDTO dto);
 
     @PostMapping("/feign/import/importMoldRefSku")
-    void importMoldRefSku(@RequestBody BaseDTO.ImportTypeDTO dto);
+    void importMoldRefSku(@RequestBody BaseDTO.ImportDTO dto);
 
     @PostMapping("/feign/import/importCfgMoldReturn")
-    void importCfgMoldReturn(@RequestBody BaseDTO.ImportTypeDTO dto);
+    void importCfgMoldReturn(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importCfgMoldAlert")
+    void importCfgMoldAlert(@RequestBody BaseDTO.ImportDTO dto);
 
     @PostMapping("/feign/import/importAssetNotice")
     void importAssetNotice(@RequestBody BaseDTO.ImportTypeDTO dto);

@@ -446,7 +446,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
 
             List<MoldMonitorEntity> moldMonitorEntities = lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
 
-            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
+            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().filter(e -> StringUtils.isNotBlank(e.getSourceDetailId())).collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
 
             for (CfgMoldReturnAlertRuleDTO.ListDTO entity : cfgMoldReturnAlertRuleEntities) {
                 MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);

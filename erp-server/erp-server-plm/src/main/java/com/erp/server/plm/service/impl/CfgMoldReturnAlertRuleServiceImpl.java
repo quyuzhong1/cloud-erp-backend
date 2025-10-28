@@ -94,7 +94,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldReturnAlertRuleEntity.getMoldCode());
+            throw new ServiceException("该模具编码已存在模具返还策略");
         }
 
         // 数据处理
@@ -147,7 +147,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .ne(CfgMoldReturnAlertRuleEntity::getId, cfgMoldReturnAlertRuleEntity.getId())
                 .count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_HAS_EXIST,cfgMoldReturnAlertRuleEntity.getMoldCode());
+            throw new ServiceException("该模具编码已存在模具返还策略");
         }
 
         cfgMoldReturnAlertRuleEntity.setMoldId(old.getMoldId());
@@ -298,12 +298,12 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         // 获取状态列表
         List<CfgMoldReturnAlertRuleDTO.TabListDTO> result = new ArrayList<>();
         result.add(new CfgMoldReturnAlertRuleDTO.TabListDTO("all", "全部", 0));
-        CfgMoldReturnAlertRuleDTO.TabListDTO tTab = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(new CfgMoldReturnAlertRuleDTO.TabListDTO("t", "", 0));
-        tTab.setTabFlagName("禁用");
-        result.add(tTab);
         CfgMoldReturnAlertRuleDTO.TabListDTO fTab = list.stream().filter(e -> e.getTabFlag().equals("f")).findFirst().orElse(new CfgMoldReturnAlertRuleDTO.TabListDTO("f", "", 0));
         fTab.setTabFlagName("启用");
         result.add(fTab);
+        CfgMoldReturnAlertRuleDTO.TabListDTO tTab = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(new CfgMoldReturnAlertRuleDTO.TabListDTO("t", "", 0));
+        tTab.setTabFlagName("禁用");
+        result.add(tTab);
         return result;
     }
 
