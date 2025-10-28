@@ -1,6 +1,7 @@
 package com.erp.model.sys.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +88,35 @@ public class DictBasicAllDTO implements Serializable {
         */
         private String typeName;
 
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 
@@ -109,11 +139,46 @@ public class DictBasicAllDTO implements Serializable {
          * tab=all为全部，able为启用，disable为停用
          */
         private String tabFlag;
+        
+        /**
+         * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
+         * tab=all为全部，able为启用，disable为停用
+         */
+        private String tabFlagName;
 
         /**
          * 数量
          */
         private Integer count = 0;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TypeRequestDTO {
+    	/**
+         * 系统，取选择系统
+         */
+         @NotBlank(message = "系统不能为空")
+         private String systemCode;
+
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TypeResponseDTO {
+        /**
+         * 类型
+         * tab=all为全部，able为启用，disable为停用
+         */
+        private String type;
+        
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
     }
     
     /**

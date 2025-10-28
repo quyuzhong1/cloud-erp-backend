@@ -266,20 +266,19 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 				systemCode = advanceQueryDTO.getValue().toString();
 			}
 		}
-		TabListDTO allDto = new TabListDTO();
-		allDto.setTabFlag("all");
 		TabListDTO ableDto = new TabListDTO();
 		ableDto.setTabFlag("able");
+		ableDto.setTabFlagName("启用");
 		TabListDTO disableDto = new TabListDTO();
 		disableDto.setTabFlag("disable");
+		disableDto.setTabFlagName("停用");
 		
 		List<JSONObject> invokeList = FeignQuery.invokeList(JSONObject.class , this.getServiceClass(systemCode), "list");
 		if(CollUtil.isNotEmpty(invokeList)) {
-			allDto.setCount(invokeList.size());
 			ableDto.setCount(invokeList.stream().filter(j -> j.getBoolean("status")).collect(Collectors.toList()).size());
 			disableDto.setCount(invokeList.stream().filter(j -> !j.getBoolean("status")).collect(Collectors.toList()).size());
 		}
 		
-		return Arrays.asList(allDto , ableDto , disableDto);
+		return Arrays.asList(ableDto , disableDto);
 	}
 }

@@ -1,7 +1,12 @@
 package com.erp.server.sys.controller.api;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -12,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -21,9 +27,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictBasicAllDTO;
+import com.erp.model.sys.dto.DictBasicAllDTO.ViewDTO;
 import com.erp.server.sys.query.DictBasicAllQueryHandler;
 import com.erp.server.sys.service.DictBasicAllService;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -123,4 +131,44 @@ public class DictBasicAllController extends BaseController {
         return success();
     }
 
+    /**
+     * 获取类型
+     * @author shukai
+     * @date:  2025-10-24
+     * @param dto
+     * @return ApiResult
+     */
+     @PostMapping("/getType")
+     public ApiResult<List<DictBasicAllDTO.TypeResponseDTO>> getType(@RequestBody @Validated DictBasicAllDTO.TypeRequestDTO dto) {
+    	 String systemCode = dto.getSystemCode();
+    	 PagingDTO<DictBasicAllDTO.PagingParamDTO> pageDto = new PagingDTO<>();
+    	 pageDto.setPageSize(-1);
+    	 DictBasicAllDTO.PagingParamDTO pDto = new DictBasicAllDTO.PagingParamDTO();
+    	 Map<String,String> sqlMap = new HashMap<>();
+    	 sqlMap.put("default", " 1 = 1 ");
+    	 pDto.setSqlMap(sqlMap);
+    	 AdvanceQueryDTO advanceQueryDTO = new AdvanceQueryDTO();
+    	 advanceQueryDTO.setField("systemCode");
+    	 advanceQueryDTO.setValue(systemCode);
+    	 pDto.setAdvanceQueryDTOList(Arrays.asList(advanceQueryDTO));
+    	 pageDto.setParams(pDto);
+    	 PagingVO<ViewDTO> paging = dictBasicAllService.paging(pageDto);
+    	 List<DictBasicAllDTO.TypeResponseDTO> result = new ArrayList<>();
+    	 List<ViewDTO> list = paging.getList();
+    	 if(CollUtil.isNotEmpty(list)) {
+    		 list.forEach(l -> {
+    			 if(l.getTypeName() == null) {
+    				 l.setTypeName("");
+    			 }
+    		 });
+    		 Map<String, String> typeMaps = list.stream().collect(Collectors.toMap(ViewDTO::getType, ViewDTO::getTypeName , (v1 , v2) -> v1));
+    		 for(Map.Entry<String, String> typeMap : typeMaps.entrySet()) {
+    			 DictBasicAllDTO.TypeResponseDTO r = new DictBasicAllDTO.TypeResponseDTO();
+    			 r.setType(typeMap.getKey());
+    			 r.setTypeName(typeMap.getValue());
+    			 result.add(r);
+    		 }
+    	 }
+         return success(result);
+     }
 }
