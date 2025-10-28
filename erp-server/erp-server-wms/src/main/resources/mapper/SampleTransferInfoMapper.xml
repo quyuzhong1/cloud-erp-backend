@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleTransferInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleTransferInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="transfer_out_user_id" property="transferOutUserId" />
+       <result column="transfer_out_user_name" property="transferOutUserName" />
+       <result column="transfer_out_dept_id" property="transferOutDeptId" />
+       <result column="transfer_out_dept_name" property="transferOutDeptName" />
+       <result column="transfer_in_user_id" property="transferInUserId" />
+       <result column="transfer_in_user_name" property="transferInUserName" />
+       <result column="transfer_in_dept_id" property="transferInDeptId" />
+       <result column="transfer_in_dept_name" property="transferInDeptName" />
+       <result column="transfer_date" property="transferDate" />
+       <result column="remark" property="remark" />
+       <result column="invalid_remark" property="invalidRemark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, approve_status, approve_time, approve_user_id, approve_user_name, invalid_status, transfer_out_user_id, transfer_out_user_name, transfer_out_dept_id, transfer_out_dept_name, transfer_in_user_id, transfer_in_user_name, transfer_in_dept_id, transfer_in_dept_name, transfer_date, remark, invalid_remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_transfer_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$ListDTO">
+        SELECT
+            sti.id,
+            sti.code,
+            sti.approve_status AS approveStatus,
+            sti.transfer_date AS transferDate,
+            sti.approve_user_name AS approveUserName,
+            sti.approve_time AS approveTime,
+            sti.transfer_in_user_name AS transferInUserName,
+            sti.transfer_out_user_name AS transferOutUserName,
+            sti.create_user_name AS createUserName,
+            sti.create_time AS createTime,
+            sti.remark,
+            std.id AS detailId,
+            std.sku_no AS skuNo,
+            std.sku_id AS skuId,
+            std.product_name AS productName,
+            std.transfer_qty AS transferQty,
+            std.remark AS detailRemark
+        FROM sample_transfer_info sti
+        LEFT JOIN sample_transfer_detail std
+            ON std.main_id = sti.id AND std.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND sti.is_deleted = false
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sti.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY sti.create_time DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  sample_transfer_info
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
