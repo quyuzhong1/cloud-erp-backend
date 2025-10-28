@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -101,6 +102,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private FileFeign fileFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -179,12 +182,42 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
         // 保存验收明细数据
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
+            // 收集所有skuId用于批量查询
+            List<String> skuIds = addDTO.getDetailList().stream()
+                    .map(AssetAcceptDetailDTO.AddDTO::getSkuId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 批量查询SKU信息，建立skuId -> skuNo的映射
+            Map<String, String> skuIdToNoMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(skuIds)) {
+                try {
+                    List<com.erp.model.plm.entity.ProductDetailEntity> skuInfoList = plmTaskFeign.getByIdList(skuIds);
+                    if (CollUtil.isNotEmpty(skuInfoList)) {
+                        skuIdToNoMap = skuInfoList.stream()
+                                .filter(sku -> StringUtils.isNotBlank(sku.getId()) && StringUtils.isNotBlank(sku.getSkuNo()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.plm.entity.ProductDetailEntity::getId,
+                                        com.erp.model.plm.entity.ProductDetailEntity::getSkuNo,
+                                        (old, newVal) -> newVal
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询SKU信息失败", e);
+                }
+            }
+            
             List<AssetAcceptDetailEntity> detailEntities = new ArrayList<>();
             for (AssetAcceptDetailDTO.AddDTO detailDTO : addDTO.getDetailList()) {
                 AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
                 detailEntity.setMainId(assetAcceptEntity.getId());
                 detailEntity.setSourceDetailId(detailDTO.getSourceDetailId());
                 detailEntity.setSkuId(detailDTO.getSkuId());
+                // 根据skuId设置skuNo
+                if (StringUtils.isNotBlank(detailDTO.getSkuId())) {
+                    detailEntity.setSkuNo(skuIdToNoMap.get(detailDTO.getSkuId()));
+                }
                 detailEntity.setProductName(detailDTO.getProductName());
                 detailEntity.setAcceptQty(detailDTO.getAcceptQty());
                 // 设置资产卡片关联状态，如果为空则默认为"未生成"
@@ -941,6 +974,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             return;
         }
         String id = data.getId();
+        
         // 查询验收人员数据
         List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
                 .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
@@ -1024,39 +1058,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
            return;
         }
 
-        // 获取所有验收单ID
-        List<String> assetAcceptIds = list.stream().map(AssetAcceptDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        
-        // 查询验收人员信息
-        Map<String, String> acceptPersonMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(assetAcceptIds)) {
-            List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
-                .in(AssetAcceptPersonEntity::getAssetAcceptId, assetAcceptIds)
-                .list();
-            
-            // 按验收单ID分组，拼接人员姓名
-            Map<String, List<AssetAcceptPersonEntity>> personGroupMap = personList.stream()
-                .collect(Collectors.groupingBy(AssetAcceptPersonEntity::getAssetAcceptId));
-            
-            for (Map.Entry<String, List<AssetAcceptPersonEntity>> entry : personGroupMap.entrySet()) {
-                String personNames = entry.getValue().stream()
-                    .map(AssetAcceptPersonEntity::getUserName)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.joining("，"));
-                acceptPersonMap.put(entry.getKey(), personNames);
-            }
-        }
-        
-
         // 属性赋值
         for(AssetAcceptDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             
-            // 设置验收人员中文名称
-            String acceptPersonNames = acceptPersonMap.get(data.getId());
-            data.setAcceptPersonNames(acceptPersonNames);
-            
+            // 设置验收人中文名称（从数据库中已有的 acceptUserName 字段获取）
+            data.setAcceptPersonNames(data.getAcceptUserName());
+
             // 设置来源类型为"采购收货"（资产验收单创建的卡片）
             if (StringUtils.isBlank(data.getSourceType())) {
                 data.setSourceType("采购收货");
@@ -1156,8 +1165,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     */
     @Override
     public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
+        // 创建分页对象
+        Page<AssetAcceptDTO.ListDTO> page = new Page<>(dto.getCurrPage(), dto.getPageSize());
         // 调用现有的分页查询方法
-        IPage<AssetAcceptDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        IPage<AssetAcceptDTO.ListDTO> pageData = this.baseMapper.listExport(page, dto.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>();
         }
@@ -1394,7 +1405,18 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     * 新增修改处理数据
     */
     private void handleData(AssetAcceptEntity assetAcceptEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 根据验收人ID查询用户信息并回填中文名
+        if (StringUtils.isNotBlank(assetAcceptEntity.getAcceptUserId())) {
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserId(assetAcceptEntity.getAcceptUserId());
+                if (user != null && StringUtils.isNotBlank(user.getUserName())) {
+                    assetAcceptEntity.setAcceptUserName(user.getUserName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收人用户信息失败，userId: {}", assetAcceptEntity.getAcceptUserId(), e);
+            }
+        }
+        // TODO 验证数据 & 数据赋值
     }
 
     /**
