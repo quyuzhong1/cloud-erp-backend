@@ -16,6 +16,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.dto.AssetNoticeDetailDTO;
 import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
+import com.erp.model.plm.dto.AssetPurchaseOrderSupplierDTO;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -694,6 +695,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        AssetPurchaseOrderSupplierDTO.ViewDTO supplierViewDTO = new AssetPurchaseOrderSupplierDTO.ViewDTO();
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, data.getId())
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
+                .one();
+        BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierViewDTO);
+        data.setAssetPurchaseOrderSupplierDTO(supplierViewDTO);
     }
 
     /**
