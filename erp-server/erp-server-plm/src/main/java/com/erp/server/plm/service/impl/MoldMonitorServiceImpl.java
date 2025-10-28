@@ -338,6 +338,9 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         if(!sourceType.equals(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
             throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
         }
+        if(!Objects.equals(old.getDerachievedStatus(), MoldMonitorDerachievedStatusEnum.DERACHIEVED.getCode())){
+            throw new ServiceException("未达量无法确认返还");
+        }
 
         MoldMonitorEntity entity = new MoldMonitorEntity();
         BeanMapper.copy(old,entity);
