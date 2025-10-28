@@ -32,6 +32,8 @@ public class ImportPlmFeignController {
     private MoldRefSkuService moldRefSkuService;
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+    @Resource
+    private CfgMoldAlertRuleService cfgMoldAlertRuleService;
 
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -95,6 +97,16 @@ public class ImportPlmFeignController {
     public void importCfgMoldReturn(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             cfgMoldReturnAlertRuleService.importCfgMoldReturn(dto);
+        } catch (Exception e) {
+            log.error("导入模具返还策略失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importCfgMoldAlert")
+    public void importCfgMoldAlert(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgMoldAlertRuleService.importCfgMoldAlert(dto);
         } catch (Exception e) {
             log.error("导入模具返还策略失败", e);
             updateTask(dto.getTaskId(), e);

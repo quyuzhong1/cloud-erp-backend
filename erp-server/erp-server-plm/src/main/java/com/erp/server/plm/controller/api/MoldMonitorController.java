@@ -5,10 +5,12 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.model.plm.entity.MoldMonitorEntity;
+import com.erp.model.plm.enums.MoldMonitorTypeEnum;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.query.MoldMonitorQueryHandler;
 import com.erp.server.plm.service.MoldInfoService;
@@ -174,12 +176,27 @@ public class MoldMonitorController extends BaseController {
         return success(moldMonitorService.batchRefresh(dto));
     }
 
+    /**
+     * 刷新统计
+     * @author jack
+     * @date: 2025-10-10
+     * @return ApiResult<BatchResultDTO>
+     */
+    @GetMapping("/calMonitorOrder")
+    public void calMonitorOrder() {
+
+        List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor(null,null);
+
+        moldMonitorService. calMonitorOrder(moldMonitorEntities);
+
+    }
+
 
     /**
      * 模具返还监控导出
      * @author jack
      * @date:  2025-10-10
-     * @param dto
+     * @param exportParamDTO
      * @param response
      * @return
      */
@@ -191,7 +208,10 @@ public class MoldMonitorController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具返还监控导出Excel数据")
     @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
-    public ApiResult<Object> exportReturn(@RequestBody @Validated MoldMonitorDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportReturn(@RequestBody @Validated MoldMonitorDTO.ExportParamDTO exportParamDTO, HttpServletResponse response) {
+        MoldMonitorDTO.PagingParamDTO dto = new MoldMonitorDTO.PagingParamDTO();
+        BeanMapper.copy(exportParamDTO,dto);
+        dto.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
         moldMonitorService.exportReturn(dto, response);
         return success();
     }
@@ -201,7 +221,7 @@ public class MoldMonitorController extends BaseController {
      * 模具预警监控导出
      * @author jack
      * @date:  2025-10-10
-     * @param dto
+     * @param exportParamDTO
      * @param response
      * @return
      */
@@ -213,7 +233,10 @@ public class MoldMonitorController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具预警监控导出Excel数据")
     @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
-    public ApiResult<Object> exportAlert(@RequestBody @Validated MoldMonitorDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportAlert(@RequestBody @Validated MoldMonitorDTO.ExportParamDTO exportParamDTO, HttpServletResponse response) {
+        MoldMonitorDTO.PagingParamDTO dto = new MoldMonitorDTO.PagingParamDTO();
+        BeanMapper.copy(exportParamDTO,dto);
+        dto.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
         moldMonitorService.exportAlert(dto, response);
         return success();
     }

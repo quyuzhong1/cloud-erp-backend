@@ -17,6 +17,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
@@ -34,6 +35,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -95,6 +97,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     private PurchaseOrderFeign purchaseOrderFeign;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public List<MoldMonitorDTO.TabListDTO> tabList(MoldMonitorDTO.TabDTO param) {
@@ -107,7 +111,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         result.add(new MoldMonitorDTO.TabListDTO("all","全部", 0));
 
         // 预警状态
-        if(Objects.equals(param.getSourceType(), SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+        if(Objects.equals(param.getSourceType(), MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
             List<String> statusList = MoldMonitorLifeStatusEnum.getStatusList();
             for (String status : statusList) {
                 MoldMonitorDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new MoldMonitorDTO.TabListDTO(status, "", 0));
@@ -331,8 +335,11 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     public BatchResultDTO updateReturnPriceById(MoldMonitorDTO.UpdateReturnParamsDTO dto) {
         MoldMonitorEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
         String sourceType = old.getSourceType();
-        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+        if(!sourceType.equals(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
             throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
+        }
+        if(!Objects.equals(old.getDerachievedStatus(), MoldMonitorDerachievedStatusEnum.DERACHIEVED.getCode())){
+            throw new ServiceException("未达量无法确认返还");
         }
 
         MoldMonitorEntity entity = new MoldMonitorEntity();
@@ -347,6 +354,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         }
         entity.setRemark(dto.getRemark());
         entity.setReturnDate(dto.getReturnDate());
+        entity.setReturnStatus(MoldMonitorReturnStatusEnum.RETURNED.getCode());
         updateById(entity);
 
         // 记录主单操作日志
@@ -379,10 +387,12 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelReturnPrice(String id) {
         MoldMonitorEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还监控数据"));
         String sourceType = old.getSourceType();
-        if(!sourceType.equals(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+        if(!sourceType.equals(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
             throw new ServiceException("仅支持配置模具返还预警规则生成的模具返还监控数据进行返还确认操作");
         }
         MoldMonitorEntity entity = new MoldMonitorEntity();
@@ -392,12 +402,22 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         entity.setReturnUserName("");
         entity.setRemark("");
         entity.setReturnDate(null);
+        entity.setReturnStatus(MoldMonitorReturnStatusEnum.NOTRETURNED.getCode());
         updateById(entity);
 
         // 日志数据
         String msg = StrUtil.format("用户【{}】模具编号【{}】返还数量上限【{}】取消返还确认", UserContext.getDefaultLoginUser().getUserName(), old.getMoldCode(),old.getReturnQtyLimit());
         sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
 
+        // 查询相关的附件信息
+        List<PlmAttachmentEntity> attachmentList = attachmentService.listByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(urlList)){
+                fileFeign.deleteBatchFile(urlList);
+            }
+            attachmentService.lambdaUpdate().eq(PlmAttachmentEntity::getBusinessId, id).set(PlmAttachmentEntity::getIsDeleted, true).update();
+        }
         String code = StrUtil.format("模具编号【{}】, 返还数量上限【{}】", entity.getMoldCode(), entity.getReturnQtyLimit());
         return BatchResultDTO.success(old.getId(), code, OperationTypeEnum.UPDATE);
     }
@@ -446,23 +466,23 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
 
             List<MoldMonitorEntity> moldMonitorEntities = lambdaQuery().in(MoldMonitorEntity::getSourceId, ids).list();
 
-            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
+            Map<String, MoldMonitorEntity> moldMonitorMap = moldMonitorEntities.stream().filter(e -> StringUtils.isNotBlank(e.getSourceDetailId())).collect(Collectors.toMap(MoldMonitorEntity::getSourceDetailId, Function.identity()));
 
             for (CfgMoldReturnAlertRuleDTO.ListDTO entity : cfgMoldReturnAlertRuleEntities) {
-                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
+                MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getDetailId(), null);
                 if(Objects.isNull(moldMonitorEntity)){
                     moldMonitorEntity = new MoldMonitorEntity();
+                    moldMonitorEntity.setSourceId(entity.getId());
+                    moldMonitorEntity.setSourceDetailId(entity.getDetailId());
+                    moldMonitorEntity.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
+                    moldMonitorEntity.setMoldId(entity.getMoldId());
+                    moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                    moldMonitorEntity.setMoldName(entity.getMoldName());
+                    moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                    moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                    moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 }
 
-                moldMonitorEntity.setSourceId(entity.getId());
-                moldMonitorEntity.setSourceDetailId(entity.getDetailId());
-                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
-                moldMonitorEntity.setMoldId(entity.getMoldId());
-                moldMonitorEntity.setMoldCode(entity.getMoldCode());
-                moldMonitorEntity.setMoldName(entity.getMoldName());
-                moldMonitorEntity.setSupplierId(entity.getSupplierId());
-                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
-                moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 moldMonitorEntity.setStartDate( entity.getStartDate());
                 moldMonitorEntity.setEndDate( entity.getEndDate());
                 moldMonitorEntity.setCountDim( entity.getCountDim());
@@ -484,17 +504,17 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 MoldMonitorEntity moldMonitorEntity = moldMonitorMap.getOrDefault(entity.getId(), null);
                 if(Objects.isNull(moldMonitorEntity)){
                     moldMonitorEntity = new MoldMonitorEntity();
+                    moldMonitorEntity.setSourceId(entity.getId());
+                    moldMonitorEntity.setSourceType(MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
+                    moldMonitorEntity.setMoldId(entity.getMoldId());
+                    moldMonitorEntity.setMoldCode(entity.getMoldCode());
+                    moldMonitorEntity.setMoldName(entity.getMoldName());
+                    moldMonitorEntity.setSupplierId(entity.getSupplierId());
+                    moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
+                    moldMonitorEntity.setSupplierName(entity.getSupplierName());
 
                 }
-                moldMonitorEntity.setSourceId(entity.getId());
-                moldMonitorEntity.setSourceType(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
 
-                moldMonitorEntity.setMoldId(entity.getMoldId());
-                moldMonitorEntity.setMoldCode(entity.getMoldCode());
-                moldMonitorEntity.setMoldName(entity.getMoldName());
-                moldMonitorEntity.setSupplierId(entity.getSupplierId());
-                moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
-                moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 moldMonitorEntity.setLifeQty( entity.getLifeQty());
                 moldMonitorEntity.setAlertLifeQty( entity.getAlertLifeQty());
                 moldMonitorEntity.setAlertLifeRate( entity.getAlertLifeRate());
@@ -521,6 +541,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             //策略被禁用则不再统计
             Boolean disabled = moldMonitorEntity.getDisabled();
             if(Objects.equals(disabled ,Boolean.TRUE)){
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
+                updateById(moldMonitorEntity);
                 continue;
             }
 
@@ -531,9 +553,12 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     .list();
 
             if(CollUtil.isEmpty(moldRefSkuEntities)){
+                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
+                updateById(moldMonitorEntity);
                 continue;
             }
 
+            moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
             moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.HEALTHY.getCode());
             moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.UNDERACHIEVED.getCode());
             moldMonitorEntity.setPurchaseOrderQty(0);
@@ -568,7 +593,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer purchaseQty = purchaseCalcQtyDTO.getPurchaseQty();
-                        if(Objects.isNull(purchaseQty) && purchaseQty >0){
+                        if(Objects.nonNull(purchaseQty) && purchaseQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(purchaseCalcQtyDTO.getSkuId(), 1);
                             int i = purchaseQty * skuQty;
                             qty += i;
@@ -591,7 +616,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer receiveQty = receiveInfoDTO.getQty();
-                        if(Objects.isNull(receiveQty) && receiveQty >0){
+                        if(Objects.nonNull(receiveQty) && receiveQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(receiveInfoDTO.getSkuId(), 1);
                             int i = receiveQty * skuQty;
                             qty += i;
@@ -614,7 +639,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         moldMonitorRefOrderEntities.add(moldMonitorRefOrderEntity);
 
                         Integer poInStockQty = poInStockInfoDTO.getQty();
-                        if(Objects.isNull(poInStockQty) && poInStockQty >0){
+                        if(Objects.nonNull(poInStockQty) && poInStockQty >0){
                             Integer skuQty = moldRefSkuMap.getOrDefault(poInStockInfoDTO.getSkuId(), 1);
                             int i = poInStockQty * skuQty;
                             qty += i;
@@ -649,7 +674,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             }
 
             String sourceType = moldMonitorEntity.getSourceType();
-            if(Objects.equals(sourceType, SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+            if(Objects.equals(sourceType, MoldMonitorTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
                 Integer lifeQty = moldMonitorEntity.getLifeQty();
                 Integer alertLifeQty = moldMonitorEntity.getAlertLifeQty();
                 if(alertLifeQty > qty){

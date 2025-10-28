@@ -278,6 +278,28 @@ public class MoldMonitorDTO implements Serializable {
     }
 
     /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
+    /**
     * 详情
     */
     @Data

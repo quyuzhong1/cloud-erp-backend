@@ -165,6 +165,11 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
             errorMsgList.add(ApiError.ERROR_92008.msg);
         }
 
+        //预警数量和预警比例 不能同时为空
+        if(Objects.isNull(excelDTO.getAlertLifeQty()) && Objects.isNull(excelDTO.getAlertLifeRate())){
+            errorMsgList.add("预警数量和预警比例不能同时为空");
+        }
+
         //校验寿命数量必须大于预警寿命（数量）
         if(Objects.nonNull(excelDTO.getAlertLifeQty()) && Objects.nonNull(excelDTO.getLifeQty())){
             if(excelDTO.getLifeQty() < excelDTO.getAlertLifeQty()){
