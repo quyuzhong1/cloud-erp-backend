@@ -28,7 +28,7 @@ public class MoldMonitorGenJob {
     public ReturnT<String> MoldMonitorGenJob() {
         XxlJobHelper.log("MoldMonitorGenJob 执行开始");
 
-        List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor();
+        List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor(null,null);
 
         moldMonitorService.calMonitorOrder(moldMonitorEntities);
 
