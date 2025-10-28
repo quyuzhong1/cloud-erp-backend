@@ -90,7 +90,6 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 		if(CollectionUtils.isEmpty(thirdWarehouseDeliveryEntityList)){
 			return Collections.emptyList();
 		}
-		List<String> allCodes = thirdWarehouseDeliveryEntityList.stream().map(ThirdWarehouseDeliveryEntity::getCode).distinct().collect(Collectors.toList());
 		List<String> allSoIds = thirdWarehouseDeliveryEntityList.stream().map(ThirdWarehouseDeliveryEntity::getSoId).distinct().collect(Collectors.toList());
 		//查询销售订单，过滤掉销售订单中shipping_order_no为空的数据
 		List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(allSoIds);
@@ -107,6 +106,8 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 		if(CollectionUtils.isEmpty(thirdWarehouseDeliveryEntityList)){
 			return Collections.emptyList();
 		}
+		List<String> allCodes = thirdWarehouseDeliveryEntityList.stream().map(ThirdWarehouseDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+
 		//分组，每组最多50个
 		List<JiFengOutboundResp> allResult = new ArrayList<>();
 		List<List<String>> partCodeList = ListUtils.partition(allCodes, 50);
