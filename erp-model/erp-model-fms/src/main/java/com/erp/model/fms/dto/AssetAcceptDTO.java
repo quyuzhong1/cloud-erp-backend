@@ -451,7 +451,6 @@ public class AssetAcceptDTO implements Serializable {
         /**
         * 验收组织名称
         */
-        @NotBlank(message = "验收组织名称不能为空")
         @Size(max = 50,message = "验收组织名称最大长度不能超过50位")
         private String acceptOrgName;
 
@@ -465,7 +464,6 @@ public class AssetAcceptDTO implements Serializable {
         /**
         * 验收人姓名
         */
-        @NotBlank(message = "验收人姓名不能为空")
         @Size(max = 50,message = "验收人姓名最大长度不能超过50位")
         private String acceptUserName;
 
@@ -479,7 +477,6 @@ public class AssetAcceptDTO implements Serializable {
         /**
         * 验收部门名称
         */
-        @NotBlank(message = "验收部门名称不能为空")
         @Size(max = 50,message = "验收部门名称最大长度不能超过50位")
         private String acceptDeptName;
 
@@ -493,14 +490,12 @@ public class AssetAcceptDTO implements Serializable {
         /**
         * 供应商名称
         */
-        @NotBlank(message = "供应商名称不能为空")
         @Size(max = 100,message = "供应商名称最大长度不能超过100位")
         private String supplierName;
 
         /**
         * 验收说明
         */
-        @NotBlank(message = "验收说明不能为空")
         @Size(max = 500,message = "验收说明最大长度不能超过500位")
         private String acceptDesc;
 
