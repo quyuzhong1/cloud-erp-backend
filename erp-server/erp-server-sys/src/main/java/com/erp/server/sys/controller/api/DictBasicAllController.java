@@ -42,7 +42,7 @@ public class DictBasicAllController extends BaseController {
     /**
      * 分页查询
      * 菜单code = sys:dictBasicAll:paging
-     * tab=all为全部，able为启动，disable为停用
+     * tab=all为全部，able为启用，disable为停用
      * @author Will
      * @date: 2023/11/13 15:12
      * @param dto
