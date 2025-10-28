@@ -409,9 +409,10 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         // 查询相关的附件信息
         List<PlmAttachmentEntity> attachmentList = attachmentService.listByBusinessIds(Arrays.asList(id));
         if(CollUtil.isNotEmpty(attachmentList)){
-            List<String> urlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).collect(Collectors.toList());
-            fileFeign.deleteBatchFile(urlList);
-
+            List<String> urlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(urlList)){
+                fileFeign.deleteBatchFile(urlList);
+            }
             attachmentService.lambdaUpdate().eq(PlmAttachmentEntity::getBusinessId, id).set(PlmAttachmentEntity::getIsDeleted, true).update();
         }
         String code = StrUtil.format("模具编号【{}】, 返还数量上限【{}】", entity.getMoldCode(), entity.getReturnQtyLimit());
