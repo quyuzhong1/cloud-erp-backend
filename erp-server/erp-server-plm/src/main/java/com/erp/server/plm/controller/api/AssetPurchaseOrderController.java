@@ -5,8 +5,6 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.server.plm.query.AssetNoticeQueryHandler;
 import com.erp.server.plm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.plm.service.AssetPurchaseOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -539,8 +537,8 @@ public class AssetPurchaseOrderController extends BaseController {
 
     /**
      * 查询采购合同PDF数据
-     * @author Will
-     * @date: 2023/3/15 17:59
+     * @author
+     * @date:
      * @param id
      * @return ApiResult
      */
@@ -564,6 +562,38 @@ public class AssetPurchaseOrderController extends BaseController {
     @GetMapping("/getAcceptByDetailId")
     public ApiResult<?> getAcceptByDetailId(@RequestParam("detailId") String detailId) {
         return assetPurchaseOrderService.getAcceptByDetailId(detailId);
+    }
+
+    /**
+     * 下推采购单弹窗显示
+     * @author
+     * @date:
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/viewGenerateAssetAccept")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id,create_user_id",
+            menuCode = "plm:assetNotice:viewGenerateAssetAccept",
+            serviceClass = AssetPurchaseOrderService.class,
+            keyIdName = "ids")
+    public ApiResult<List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> list = assetPurchaseOrderService.viewGenerateAssetAccept(dto);
+        return success(list);
+    }
+
+    /**
+     * 生成资产采购单
+     * @author
+     * @date:
+     * @param dtoList
+     * @return ApiResult
+     */
+    @PostMapping("/generateAssetAccept")
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成资产采购单")
+    public ApiResult<Object> generateAssetAccept(@RequestBody @Validated List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        Boolean flag = assetPurchaseOrderService.generateAssetAccept(dtoList);
+        return flag == true ? success() : failure();
     }
 
 }
