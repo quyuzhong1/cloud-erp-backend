@@ -87,7 +87,7 @@ public class SampleInitialLedgerDetailExcelListener extends AnalysisEventListene
                 Integer qty = Integer.valueOf(qtyStr);
                 addDTO.setQty(qty);
             } catch (NumberFormatException e) {
-                errorMsgList.add("期初数量格式错误，必须为正整数");
+                errorMsgList.add("期初数量格式错误");
             }
         }
 
