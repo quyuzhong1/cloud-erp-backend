@@ -10,7 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.dto.AssetPurchaseOrderDetailDTO;
-import com.erp.model.plm.dto.excel.AssetPurchaseOrderImportExcelDTO;
+import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierAccountEntity;

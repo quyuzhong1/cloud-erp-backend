@@ -1,4 +1,4 @@
-package com.erp.model.plm.dto.excel;
+package com.erp.model.scm.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
