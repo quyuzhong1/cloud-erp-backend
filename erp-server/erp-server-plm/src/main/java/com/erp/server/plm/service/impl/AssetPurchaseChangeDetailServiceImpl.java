@@ -88,6 +88,11 @@ public class AssetPurchaseChangeDetailServiceImpl extends SuperServiceImpl<Asset
         return Boolean.TRUE;
     }
 
+    @Override
+    public void update(List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity) {
+
+    }
+
 
     /**
     * 新增修改处理数据

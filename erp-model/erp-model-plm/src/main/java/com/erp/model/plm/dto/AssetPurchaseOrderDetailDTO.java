@@ -597,4 +597,89 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseChangeOrderDTO{
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 资产采购单单头id
+         */
+        private String mainId;
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 标识(首套模first、复制模copy)
+         */
+        private String tag;
+
+        /**
+         * 标识名称(首套模first、复制模copy)
+         */
+        private String tagName;
+
+        /**
+         * 采购数量
+         */
+        private BigDecimal oldPurchaseQty;
+
+        /**
+         * 原含税单价
+         */
+        private BigDecimal oldTaxPrice;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 原税率
+         */
+        private BigDecimal oldTaxRate;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 关联SKU详情
+         */
+        private List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
+    }
 }

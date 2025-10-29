@@ -61,6 +61,11 @@ public class AssetPurchaseChangeDetailEntity extends BaseEntity<AssetPurchaseCha
     @TableField("old_total_amount")
     private BigDecimal oldTotalAmount;
     /**
+     * 税率
+     */
+    @TableField("old_tax_rate")
+    private BigDecimal oldTaxRate;
+    /**
     * 新采购数量
     */
     @TableField("purchase_qty")
@@ -73,8 +78,13 @@ public class AssetPurchaseChangeDetailEntity extends BaseEntity<AssetPurchaseCha
     /**
     * 新价税合计
     */
-    @TableField("total_price")
-    private BigDecimal totalPrice;
+    @TableField("total_amount")
+    private BigDecimal totalAmount;
+    /**
+     * 新税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
     /**
     * 币种
     */
@@ -85,11 +95,7 @@ public class AssetPurchaseChangeDetailEntity extends BaseEntity<AssetPurchaseCha
     */
     @TableField("currency_symbol")
     private String currencySymbol;
-    /**
-    * 税率
-    */
-    @TableField("tax_rate")
-    private String taxRate;
+
     /**
     * 备注
     */
@@ -125,7 +131,7 @@ public class AssetPurchaseChangeDetailEntity extends BaseEntity<AssetPurchaseCha
 
     public static final String TAX_PRICE = "tax_price";
 
-    public static final String TOTAL_PRICE = "total_price";
+    public static final String TOTAL_AMOUNT = "total_amount";
 
     public static final String CURRENCY = "currency";
 

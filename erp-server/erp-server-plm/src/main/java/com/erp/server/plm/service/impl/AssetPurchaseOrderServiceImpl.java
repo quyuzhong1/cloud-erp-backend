@@ -27,6 +27,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.function.Function;
 import com.erp.model.plm.enums.AssetApproveStatusEnum;
+import com.erp.model.plm.enums.AssetPurchaseChangeOrderTypeEnum;
 import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -34,6 +35,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.KingdeeFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -78,6 +80,7 @@ import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -189,7 +192,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         //处理供应商数据
         handleSupplierData(assetPurchaseOrderSupplierEntity, assetPurchaseOrderEntity);
-
         boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
         if (!savePurchaseSupplier) {
             throw new ServiceException("资产采购单供应商信息报错失败");
@@ -218,7 +220,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_1029);
         }
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
-        BeanMapperUtils.copy(addOrUpdateDTO.getAssetPurchaseOrderSupplierDTO(), assetPurchaseOrderSupplierEntity);
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = BeanMapperUtils.map(AssetPurchaseOrderEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -242,7 +243,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseOrderEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseOrderEntity.getCode(), "");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseOrderEntity.getCode(), "资产采购单");
         operateLogService.addSysLogByUpdate(old, assetPurchaseOrderEntity, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), assetPurchaseOrderEntity.getId(), "资产采购单", msg);
         return Boolean.TRUE;
     }
@@ -1347,7 +1348,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
      * @return
      */
     @Override
-    public List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto) {
+    public List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto) {
         List<String> detailIdList = dto.getIds();
         List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.lambdaQuery()
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE).
@@ -1355,9 +1356,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .list();
         Map<String, BigDecimal> acceptableQtyMap = assetAceptFeign.getAcceptableQtyByDetailId(detailIdList);
 
-        List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrderDTOList = new ArrayList<>();
+        List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> viewGeneratePurchaseOrderDTOList = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : detailList) {
-            AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO viewGeneratePurchaseOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO();
+            AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO viewGeneratePurchaseOrderDTO = new AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO();
             AssetPurchaseOrderEntity assetPurchaseOrderEntity = this.getById(assetPurchaseOrderDetailEntity.getMainId());
             viewGeneratePurchaseOrderDTO.setId(assetPurchaseOrderEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetPurchaseOrderEntity.getCode());
@@ -1396,6 +1397,79 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
         return assetAceptFeign.generateAssetAccept(dtoList);
+    }
+
+    @Override
+    public AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto) {
+        List<String> detailList = dto.getIds();
+
+        List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
+                .in(AssetPurchaseOrderDetailEntity::getId, detailList)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if (list.size() != detailList.size()) {
+            throw new ServiceException(ApiError.ERROR_95308);
+        }
+
+        long count = list.stream().map(obj -> obj.getMainId()).count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_95316);
+        }
+
+        //单头信息
+        AssetPurchaseOrderEntity assetPurchaseOrderEntity = this.lambdaQuery()
+                .eq(AssetPurchaseOrderEntity::getId, list.get(0).getMainId())
+                .eq(AssetPurchaseOrderEntity::getIsDeleted, Boolean.FALSE)
+                .one();
+
+        if (!assetPurchaseOrderEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
+            throw new ServiceException(ApiError.ERROR_95309);
+        }
+
+        AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO();
+        BeanUtils.copyProperties(assetPurchaseOrderEntity,viewGeneratePurchaseChangeOrderDTO);
+        viewGeneratePurchaseChangeOrderDTO.setChangeDate(LocalDate.now());
+
+        viewGeneratePurchaseChangeOrderDTO.setChangeUserId(UserContext.getDefaultLoginUser().getUid());
+        viewGeneratePurchaseChangeOrderDTO.setChangeUserName(UserContext.getDefaultLoginUser().getUserName());
+        SysDepartmentUserNumberDTO deptDTO = sysUserFeign.getDeptByUserId(UserContext.getDefaultLoginUser().getUid());
+        if (Objects.nonNull(deptDTO)) {
+            viewGeneratePurchaseChangeOrderDTO.setChangeDeptId(deptDTO.getDepartmentId());
+            viewGeneratePurchaseChangeOrderDTO.setChangeDeptName(deptDTO.getDepartmentName());
+        }
+        viewGeneratePurchaseChangeOrderDTO.setSourceCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC));
+
+        //关联供应商
+        AssetPurchaseOrderDTO.SupplierDTO supplierDTO = new AssetPurchaseOrderDTO.SupplierDTO();
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, assetPurchaseOrderEntity.getId())
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
+                .one();
+        if (Objects.isNull(assetPurchaseOrderSupplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_96001);
+        }
+        BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierDTO);
+        viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseSupplierDTO(supplierDTO);
+
+        //明细信息
+        List<AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO> viewGeneratePurchaseChangeOrderDTOList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+            AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO1 = new AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO();
+            BeanUtils.copyProperties(assetPurchaseOrderDetailEntity,viewGeneratePurchaseChangeOrderDTO1);
+            viewGeneratePurchaseChangeOrderDTO1.setOldPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
+            viewGeneratePurchaseChangeOrderDTO1.setOldTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
+            viewGeneratePurchaseChangeOrderDTO1.setOldTaxRate(assetPurchaseOrderDetailEntity.getTaxRate());
+
+            //关联sku详情
+            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetNoticeDetailRefSkuDTOS = assetNoticeDetailMapper.searchMoldRefSkuByAssetId(assetPurchaseOrderDetailEntity.getAssetId());
+            List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS =
+                    BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO.class, assetNoticeDetailRefSkuDTOS);
+            viewGeneratePurchaseChangeOrderDTO1.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
+
+            viewGeneratePurchaseChangeOrderDTOList.add(viewGeneratePurchaseChangeOrderDTO1);
+        }
+        viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseChangeOrderDetailDTOList(viewGeneratePurchaseChangeOrderDTOList);
+        return viewGeneratePurchaseChangeOrderDTO;
     }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(

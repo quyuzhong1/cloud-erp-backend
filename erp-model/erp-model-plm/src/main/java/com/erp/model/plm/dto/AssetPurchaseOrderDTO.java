@@ -991,7 +991,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewGeneratePurchaseOrderDTO {
+    public static class ViewGenerateAssetAcceptDTO {
         /**
          * 资产采购单id
          */
@@ -1164,6 +1164,185 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseChangeOrderDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 资产变更单号
+         */
+        private String code;
+
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 变更日期
+         */
+        private LocalDate changeDate;
+
+        /**
+         * 变更人id
+         */
+        private String changeUserId;
+
+        /**
+         * 变更人名称
+         */
+        private String changeUserName;
+
+        /**
+         * 变更部门id
+         */
+        private String changeDeptId;
+
+        /**
+         * 变更部门名称
+         */
+        private String changeDeptName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 变更类型
+         */
+        private String orderType;
+
+        /**
+         * 变更原因
+         */
+        private String changeReason;
+
+        /**
+         * 来源订单id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源订单号
+         */
+        private String sourceCode;
+
+        /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private String invalidStatus;
+
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+
+        /**
+         * 同步金蝶id
+         */
+        private String syncKingdeeId;
+
+        /**
+         * 供应商信息
+         */
+        private AssetPurchaseOrderDTO.SupplierDTO assetPurchaseSupplierDTO;
+
+        /**
+         * 产品明细
+         */
+        private List<AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO> assetPurchaseChangeOrderDetailDTOList;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * 资产采购单id
+         */
+        private String assetPurchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 结算币种
+         */
+        private String payCurrency;
+
+        /**
+         * 供应商联系人id
+         */
+        private String contactId;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String contactName;
+
+        /**
+         * 供应商电话
+         */
+        private String contactTelNumber;
     }
 
 }
