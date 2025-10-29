@@ -16,6 +16,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
-public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractNewPlatformConsumerHandler {
+public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 
 	@Resource
 	private SoReturnInstockService soReturnInstockService;
