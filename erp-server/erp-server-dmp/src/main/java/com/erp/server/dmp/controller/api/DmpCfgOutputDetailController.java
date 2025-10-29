@@ -3,7 +3,11 @@ package com.erp.server.dmp.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.query.DmpCfgInputDetailQueryHandler;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -255,5 +259,46 @@ public class DmpCfgOutputDetailController extends BaseController {
         return success(true);
     }
 
-
+    /**
+     * 生成任务
+     * @author Jim
+     * @date:  2025-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/doTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgOutputDetail:doTask",
+            serviceClass = DmpCfgInputDetailService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INSERT, desc = "推送调度生成任务")
+    public ApiResult<List<BatchResultDTO>> createTask(@RequestBody @Validated DmpCfgOutputDetailDTO.DoTaskDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<DmpCfgOutputDetailEntity> list = dmpCfgOutputDetailService.lambdaQuery().in(DmpCfgOutputDetailEntity::getId, ids).list();
+        Map<String, DmpCfgOutputDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpCfgOutputDetailEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            DmpCfgOutputDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                result = BatchResultDTO.fail(id, id, "推送调度不存在, 删除失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                // TODO
+                DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+//                dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
+//                dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+                result = new BatchResultDTO();
+            }catch (Exception e){
+                log.error("推送调度生成任务失败",e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

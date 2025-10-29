@@ -1,6 +1,8 @@
 package com.erp.model.dmp.dto;
 
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -369,5 +371,53 @@ public class DmpCfgOutputDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DoTaskDTO extends PermissionsDTO {
 
+        /**
+         * 输入明细信息id列表
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 拉取接口条件的开始时间
+         */
+        @NotNull(message = "开始时间不能为空")
+        private LocalDateTime startTime;
+        /**
+         * 拉取接口条件的结束时间
+         */
+        @NotNull(message = "结束时间不能为空")
+        private LocalDateTime endTime;
+
+        /**
+         * 执行超时时间，单位秒
+         */
+        private Integer execTimeout;
+
+        /**
+         * 是否切割时间(默认否)
+         */
+        private boolean splitFlag = false;
+
+        /**
+         * dmp_cfg_input_detail明细扩展参数
+         */
+        private String detailExtendJson;
+
+        /**
+         * 任务类型:
+         * 来源:/dmp/common/enumDropDown?type=DmpInputTaskTaskType
+         */
+        private String taskType;
+
+        /**
+         * 下次执行任务时间
+         */
+        private LocalDateTime nextExecTime;
+
+    }
 }

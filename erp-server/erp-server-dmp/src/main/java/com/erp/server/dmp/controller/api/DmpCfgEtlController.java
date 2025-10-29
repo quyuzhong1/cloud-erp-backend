@@ -2,9 +2,13 @@ package com.erp.server.dmp.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgEtlEntity;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.query.DmpCfgEtlQueryHandler;
 import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -256,5 +260,46 @@ public class DmpCfgEtlController extends BaseController {
         return success(true);
     }
 
-
+    /**
+     * 生成任务
+     * @author Jim
+     * @date:  2025-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/doTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgEtl:doTask",
+            serviceClass = DmpCfgInputDetailService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INSERT, desc = "清洗调度生成任务")
+    public ApiResult<List<BatchResultDTO>> createTask(@RequestBody @Validated DmpCfgEtlDTO.DoTaskDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<DmpCfgEtlEntity> list = dmpCfgEtlService.lambdaQuery().in(DmpCfgEtlEntity::getId, ids).list();
+        Map<String, DmpCfgEtlEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpCfgEtlEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            DmpCfgEtlEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                result = BatchResultDTO.fail(id, id, "清洗调度不存在, 删除失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                // TODO
+                DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+//                dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
+//                dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+                result = new BatchResultDTO();
+            }catch (Exception e){
+                log.error("清洗调度生成任务失败",e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

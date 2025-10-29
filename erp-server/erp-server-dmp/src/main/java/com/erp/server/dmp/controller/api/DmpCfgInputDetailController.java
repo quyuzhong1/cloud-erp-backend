@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.query.DmpCfgOutputDetailQueryHandler;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -257,4 +258,46 @@ public class DmpCfgInputDetailController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 生成任务
+     * @author Jim
+     * @date:  2025-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/doTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgInputDetail:doTask",
+            serviceClass = DmpCfgInputDetailService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拉取调度生成任务")
+    public ApiResult<List<BatchResultDTO>> createTask(@RequestBody @Validated DmpCfgInputDetailDTO.DoTaskDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getId, ids).list();
+        Map<String, DmpCfgInputDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpCfgInputDetailEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            DmpCfgInputDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                result = BatchResultDTO.fail(id, id, "拉取调度不存在, 删除失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                // TODO
+                DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+//                dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
+//                dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+                result = new BatchResultDTO();
+            }catch (Exception e){
+                log.error("拉取调度生成任务失败",e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }
