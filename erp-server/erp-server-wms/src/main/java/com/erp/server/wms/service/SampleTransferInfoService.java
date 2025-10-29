@@ -164,4 +164,43 @@ public interface SampleTransferInfoService extends SuperService<SampleTransferIn
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleTransferInfoEntity entity);
 
+    /**
+    * 导入样品转移单
+    * @author wuhaotian
+    * @date: 2025-10-28
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 导入样品转移单处理
+    * @author wuhaotian
+    * @date: 2025-10-28
+    * @param dto
+    */
+    void importSampleTransfer(BaseDTO.ImportDTO dto);
+
+    /**
+    * 处理导入成功的数据列表
+    * @author wuhaotian
+    * @date: 2025-10-28
+    * @param successList
+    * @param errorNoList
+    * @param errorList2
+    * @param importType
+    */
+    void handleImportSuccessList(List<com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO> successList, 
+                                  List<String> errorNoList, 
+                                  List<com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO> errorList2, 
+                                  String importType);
+
+    /**
+    * 下载导入模板
+    * @author wuhaotian
+    * @date: 2025-10-28
+    * @param response
+    */
+    void downloadTemplate(HttpServletResponse response);
+
 }

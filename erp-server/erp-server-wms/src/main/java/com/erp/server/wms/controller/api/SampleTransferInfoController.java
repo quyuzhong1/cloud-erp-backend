@@ -412,5 +412,31 @@ public class SampleTransferInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 异步导入
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品转移单")
+    @PostMapping("/importFile")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = sampleTransferInfoService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品转移单下载模板")
+    @GetMapping("/downloadTemplate")
+    public void downloadTemplate(HttpServletResponse response) {
+        sampleTransferInfoService.downloadTemplate(response);
+    }
 
 }

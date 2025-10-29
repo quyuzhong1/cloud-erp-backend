@@ -10,6 +10,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -70,6 +71,17 @@ import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO;
+import com.erp.server.wms.listener.SampleTransferInfoExcelListener;
+import org.springframework.transaction.annotation.Propagation;
+import cn.hutool.core.text.CharSequenceUtil;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -79,6 +91,9 @@ import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import java.util.function.Function;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.Comparator;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -113,6 +128,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     private SampleLedgerFlowService sampleLedgerFlowService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1263,5 +1280,186 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
+    }
+
+    // ==================== 导入相关方法 ====================
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入样品转移单", IMPORT_WMS_SAMPLE_TRANSFER_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSampleTransfer(BaseDTO.ImportDTO dto) {
+        // SKU信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e, (o1, o2) -> o1));
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        // 设置操作人
+        FindUserDTO findUserDTO = userList.stream()
+                .filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(findUserDTO)) {
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+        
+        SampleTransferInfoExcelListener excelListenerUtil = new SampleTransferInfoExcelListener(
+                dto.getTaskId(), dto.getImportType(), dto.getImportCount(), deptList, map, userList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SampleTransferImportExcelDTO.class, excelListenerUtil)
+                    .sheet(0)
+                    .doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<SampleTransferImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            // 排序
+            List<SampleTransferImportExcelDTO> sortedErrorList = errorList.stream()
+                    .filter(e -> e.getNo() != null && !e.getNo().isEmpty())
+                    .sorted(Comparator.comparingInt(e -> {
+                        try {
+                            return Integer.parseInt(e.getNo());
+                        } catch (Exception ex) {
+                            return 0;
+                        }
+                    }))
+                    .collect(Collectors.toList());
+            String fileName = "样品转移单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, SampleTransferImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<SampleTransferImportExcelDTO> successList, 
+                                       List<String> errorNoList, 
+                                       List<SampleTransferImportExcelDTO> errorList2, 
+                                       String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            successList = successList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo()))
+                    .collect(Collectors.toList());
+
+            // 全部返回到错误列表
+            List<SampleTransferImportExcelDTO> collect = successList.stream()
+                    .filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        SampleTransferInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleTransferInfoServiceImpl.class);
+
+        // 按序号分组
+        Map<String, List<SampleTransferImportExcelDTO>> collect = successList.stream()
+                .collect(Collectors.groupingBy(SampleTransferImportExcelDTO::getNo));
+        
+        for (Map.Entry<String, List<SampleTransferImportExcelDTO>> entry : collect.entrySet()) {
+            List<SampleTransferImportExcelDTO> value = entry.getValue();
+            SampleTransferImportExcelDTO importMainDTO = value.get(0);
+
+            List<String> skuIds = value.stream().map(SampleTransferImportExcelDTO::getSkuId).collect(Collectors.toList());
+            // 构造查询条件：根据转出人ID和SKU列表查询样品台账中的可用数量
+            SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+            dto.setUserId(importMainDTO.getTransferOutUserId());
+            dto.setSkuIds(skuIds);
+            dto.setType(SampleLedgerTypeEnum.TRANSFER.getCode());
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
+
+            Boolean isAdd = Boolean.TRUE;
+            List<SampleTransferDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (SampleTransferImportExcelDTO importDTO : value) {
+                String errorMsg = importDTO.getErrorMsg();
+                int indexTemp = 1;
+                if (StringUtils.isNotBlank(errorMsg)) {
+                    String[] split = errorMsg.split("；");
+                    indexTemp = split.length + 1;
+                }
+
+                // 关联台账
+                if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
+                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                } else {
+                    SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
+                            .filter(e -> e.getSkuId().equals(importDTO.getSkuId()) 
+                                    && e.getUseUserName().equals(importDTO.getUseUserName()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.isNull(skuAvailableQtyDTO)) {
+                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                    } else {
+                        Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
+                        Integer transferredQty = Objects.isNull(importDTO.getTransferQty()) ? 0 : Integer.valueOf(importDTO.getTransferQty());
+                        if (transferredQty.compareTo(ledgerQty) > 0) {
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "转移") + "；";
+                        } else {
+                            importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
+                            // 防止超量转移
+                            skuAvailableQtyDTO.setLedgerQty(ledgerQty - transferredQty);
+                        }
+                    }
+                }
+                
+                if (StringUtils.isNotBlank(errorMsg)) {
+                    isAdd = Boolean.FALSE;
+                    importDTO.setErrorMsg(errorMsg);
+                } else {
+                    SampleTransferDetailDTO.AddDTO detailDTO = new SampleTransferDetailDTO.AddDTO();
+                    BeanMapperUtils.copy(importDTO, detailDTO);
+                    // 明细备注
+                    detailDTO.setRemark(importDTO.getDetailRemark());
+                    detailList.add(detailDTO);
+                }
+            }
+            
+            if (!isAdd) {
+                errorList2.addAll(value);
+            } else {
+                SampleTransferInfoDTO.AddDTO addDTO = new SampleTransferInfoDTO.AddDTO();
+                BeanMapperUtils.copy(importMainDTO, addDTO);
+                addDTO.setDetailList(detailList);
+
+                bean.add(addDTO);
+            }
+        }
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/sampleTransferInfoTemplate.xlsx";
+        String standardExcelName = "样品转移单导入模板.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
     }
 }
