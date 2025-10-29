@@ -62,10 +62,6 @@ public interface ExportPlmFeign {
     PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportCfgMoldAlert")
     PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto);
-    @PostMapping("/feign/export/exportAssetNotice")
-    PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto);
-    @PostMapping("/feign/export/exportAssetPurchaseOrder")
-    PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportMoldMonitor")
     PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
 }

@@ -13,6 +13,7 @@ import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.server.scm.query.*;
 import com.erp.server.scm.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,6 +56,10 @@ public class ExportScmFeignController {
     private ContractInfoService contractInfoService;
     @Resource
     private SupplierPhaseService supplierPhaseService;
+    @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+    @Resource
+    private AssetNoticeService assetNoticeService;
 
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -272,5 +277,17 @@ public class ExportScmFeignController {
     @WebAdvanceQuery
     public PagingVO<PurchaseOrderDTO.AdjustListDTO> exportPurchaseOrderAdjust(@RequestBody PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
         return purchaseOrderService.adjustPaging(dto);
+    }
+
+    @PostMapping("/exportAssetNotice")
+    @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
+    public PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto) {
+        return assetNoticeService.paging(dto);
+    }
+
+    @PostMapping("/exportAssetPurchaseOrder")
+    @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
+    public PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto){
+        return assetPurchaseOrderService.paging(dto);
     }
 }

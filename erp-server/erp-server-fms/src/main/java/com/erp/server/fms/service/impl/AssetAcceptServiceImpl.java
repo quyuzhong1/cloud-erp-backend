@@ -34,14 +34,14 @@ import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AttachmentEntity;
 import com.erp.model.fms.enums.*;
 import com.erp.model.fms.enums.UnitEnum;
-import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
-import com.erp.rpc.plm.feign.AssetPurchaseOrderFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.AssetPurchaseOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.listener.AssetAcceptExcelListener;
@@ -118,11 +118,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 如果填写了模具采购订单号，查询订单信息并设置来源（只在新增时且有订单号时才查询）
         if (StringUtils.isNotBlank(addDTO.getPurchaseCode())) {
             try {
-                ApiResult<com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult = 
+                ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
                     assetPurchaseOrderFeign.getByCode(addDTO.getPurchaseCode());
                 
                 if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
-                    com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
+                    AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
                     
                     // 设置来源信息
                     assetAcceptEntity.setSourceId(orderData.getId());
@@ -1249,7 +1249,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         try {
             // 调用资产采购订单服务查询明细
-            ApiResult<List<com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailForAcceptDTO>> apiResult =
+            ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> apiResult =
                 assetPurchaseOrderFeign.queryDetailsForAccept(assetPurchaseOrderId);
             
             if (!apiResult.isSuccess() || CollUtil.isEmpty(apiResult.getData())) {
@@ -1258,7 +1258,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
             // 收集所有采购订单明细ID
             List<String> purchaseDetailIds = apiResult.getData().stream()
-                    .map(com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailForAcceptDTO::getId)
+                    .map(AssetPurchaseOrderDTO.DetailForAcceptDTO::getId)
                     .collect(Collectors.toList());
 
             // 查询所有关联的验收单明细，计算数量
@@ -1285,7 +1285,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             }
 
             // 转换数据并计算数量
-            for (com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailForAcceptDTO detail : apiResult.getData()) {
+            for (AssetPurchaseOrderDTO.DetailForAcceptDTO detail : apiResult.getData()) {
                 AssetAcceptDTO.AddDetailItemDTO item = new AssetAcceptDTO.AddDetailItemDTO();
                 item.setSourceDetailId(detail.getId()); // 设置来源单据明细ID（模具采购订单明细ID）
                 item.setSkuId(detail.getSkuId());
@@ -1522,11 +1522,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             Map<String, String> skuToDetailIdMap = new HashMap<>();
             if (StringUtils.isNotBlank(importMainDTO.getPurchaseCode())) {
                 try {
-                    ApiResult<com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult = 
+                    ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
                         assetPurchaseOrderFeign.getByCode(importMainDTO.getPurchaseCode());
                     
                     if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
-                        com.erp.model.plm.dto.AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
+                        AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
                         
                         // 设置来源信息
                         addDTO.setSourceId(orderData.getId());
