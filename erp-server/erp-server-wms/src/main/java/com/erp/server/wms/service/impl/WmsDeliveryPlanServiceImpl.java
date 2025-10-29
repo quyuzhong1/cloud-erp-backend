@@ -226,7 +226,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
