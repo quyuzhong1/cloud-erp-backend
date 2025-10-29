@@ -4,6 +4,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -20,7 +21,7 @@ import javax.annotation.Resource;
 selectorExpression = RocketMqNewTag.DMP_PLATFORM_INVENTORY_TO_WMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_INVENTORY_TO_WMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
-public class RestCloudPlatformNewInventoryConsumerService extends AbstractNewPlatformConsumerHandler {
+public class RestCloudPlatformNewInventoryConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 	@Resource
 	private PlatformInventoryConsumerService platformInventoryConsumerService;
 	
