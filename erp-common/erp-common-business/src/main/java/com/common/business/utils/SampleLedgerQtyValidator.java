@@ -47,11 +47,11 @@ public class SampleLedgerQtyValidator {
             throw new ServiceException("样品台账ID列表与数量列表长度不匹配");
         }
 
-        // 只有审核通过（-X）才需要校验数量是否足够扣减
-        if (!ApproveTypeEnum.PASS.equals(approveType)) {
-            log.info("审核类型为{}，不需要校验数量扣减", approveType.getName());
-            return;
-        }
+//        // 只有审核通过（-X）才需要校验数量是否足够扣减
+//        if (!ApproveTypeEnum.PASS.equals(approveType)) {
+//            log.info("审核类型为{}，不需要校验数量扣减", approveType.getName());
+//            return;
+//        }
 
         log.info("开始校验样品台账数量，台账数量：{}", sampleLedgerIds.size());
 
