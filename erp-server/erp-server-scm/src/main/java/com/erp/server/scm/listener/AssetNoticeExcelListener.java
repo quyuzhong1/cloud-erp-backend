@@ -9,7 +9,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
-import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
+import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.scm.service.AssetNoticeService;

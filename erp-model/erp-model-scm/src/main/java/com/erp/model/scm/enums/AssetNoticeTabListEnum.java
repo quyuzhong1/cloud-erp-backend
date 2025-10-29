@@ -1,29 +1,30 @@
-package com.erp.model.plm.enums;
+package com.erp.model.scm.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
- * @Date: 2025/10/29 8:52
+ * @Date: 2025/10/27 9:55
  * @Param:
  * @Return:
  * @Description:
  **/
-public enum AssetPurchaseOrderTabListEnum implements EnumMessage {
+public enum AssetNoticeTabListEnum implements EnumMessage {
 
     ALL("all", "全部","全部"),
     WAIT_SUBMIT("waitSubmit", "待提交", "待提交"),
     APPROVE_ING("approveIng", "审核中","审核中"),
-    WAIT_RECEIVE("waitReceive", "待验收","待验收"),
-    ALL_RECEIVE("allReceive", "已验收","已验收"),
-    CLOSE("close", "已关闭","已关闭"),
-    REJECT("reject", "审核不通过","不通过");
+    WAIT_CREATE("waitCreate", "待生成","待生成"),
+    CREATED("created", "已生成","已生成"),
+    REJECT("reject", "审核不通过","不通过")
+    ;
 
     @EnumValue
     @JsonValue
@@ -31,7 +32,7 @@ public enum AssetPurchaseOrderTabListEnum implements EnumMessage {
     private String name;
     private String tableName;
 
-    AssetPurchaseOrderTabListEnum(String status, String name,String tableName) {
+    AssetNoticeTabListEnum(String status, String name,String tableName) {
         this.status = status;
         this.name = name;
         this.tableName = tableName;
@@ -56,7 +57,7 @@ public enum AssetPurchaseOrderTabListEnum implements EnumMessage {
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
-            for (AssetPurchaseOrderTabListEnum item : AssetPurchaseOrderTabListEnum.values()) {
+            for (AssetNoticeTabListEnum item : AssetNoticeTabListEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getName();
                 }
@@ -66,7 +67,7 @@ public enum AssetPurchaseOrderTabListEnum implements EnumMessage {
     }
     public static String getTableName(String state) {
         if (StringUtils.isNotBlank(state)) {
-            for (AssetPurchaseOrderTabListEnum item : AssetPurchaseOrderTabListEnum.values()) {
+            for (com.common.business.enums.ApproveStatusEnum item : com.common.business.enums.ApproveStatusEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getTableName();
                 }
@@ -75,12 +76,14 @@ public enum AssetPurchaseOrderTabListEnum implements EnumMessage {
         return "";
     }
 
-    public static AssetPurchaseOrderTabListEnum getByStatus(String status){
+    public static AssetNoticeTabListEnum getByStatus(String status){
         return Arrays.stream(values()).filter(a -> a.getStatus().equalsIgnoreCase(status))
                 .findFirst().orElse(null);
     }
 
     public static List<String> getStatusList() {
-        return Arrays.stream(AssetPurchaseOrderTabListEnum.values()).map(AssetPurchaseOrderTabListEnum::getStatus).collect(Collectors.toList());
+        return Arrays.stream(AssetNoticeTabListEnum.values()).map(AssetNoticeTabListEnum::getStatus).collect(Collectors.toList());
     }
+
 }
+

@@ -1,4 +1,4 @@
-package com.erp.model.plm.enums;
+package com.erp.model.scm.enums;
 
 /**
  * @Author: wtr
