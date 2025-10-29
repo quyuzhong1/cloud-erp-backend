@@ -95,7 +95,9 @@
             acd.remark as detailRemark
         FROM asset_card ac
         LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
-        WHERE ac.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND ac.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -149,15 +151,17 @@
             acd.remark as detailRemark
         FROM asset_card ac
         LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
-        WHERE ac.is_deleted = false
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
-        </if>
-        <if test="ids != null and ids.size() > 0">
+        WHERE
+        ${params.sqlMap.default}
+        AND ac.is_deleted = false
+        <if test="params.ids != null and params.ids.size() > 0">
             AND ac.id IN
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY ac.create_time DESC
     </select>

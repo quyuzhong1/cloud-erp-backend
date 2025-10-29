@@ -86,7 +86,9 @@
             aad.asset_card_status
         FROM asset_accept aa
         LEFT JOIN asset_accept_detail aad ON aad.main_id = aa.id AND aad.is_deleted = false
-        WHERE aa.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND aa.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -132,17 +134,19 @@
             aad.asset_card_status
         FROM asset_accept aa
         LEFT JOIN asset_accept_detail aad ON aad.main_id = aa.id AND aad.is_deleted = false
-        WHERE aa.is_deleted = false
-        <!--权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
+        WHERE
+        ${params.sqlMap.default}
+        AND aa.is_deleted = false
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size() > 0">
             AND aa.id IN
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY aa.create_time DESC
     </select>
