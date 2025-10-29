@@ -260,6 +260,8 @@ public class SkuVO implements Serializable {
      */
     private Boolean isCombination;
 
+    private BigDecimal deliveryCycle;
+
     public String checkAndGetSkuImagesUrl() {
         if (StringUtils.isBlank(this.skuImagesUrl)){
             return "";

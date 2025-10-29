@@ -5,7 +5,6 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
@@ -62,10 +61,6 @@ public class ExportPlmFeignController {
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
     @Resource
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
-    @Resource
-    private AssetNoticeService assetNoticeService;
-    @Resource
-    private AssetPurchaseOrderService assetPurchaseOrderService;
     @Resource
     private MoldMonitorService moldMonitorService;
 
@@ -188,18 +183,6 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = CfgMoldAlertRuleQueryHandler.class)
     public PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto) {
         return cfgMoldAlertRuleService.paging(dto);
-    }
-
-    @PostMapping("/exportAssetNotice")
-    @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
-    public PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto) {
-        return assetNoticeService.paging(dto);
-    }
-
-    @PostMapping("/exportAssetPurchaseOrder")
-    @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
-    public PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto){
-        return assetPurchaseOrderService.paging(dto);
     }
 
     @PostMapping("/exportMoldMonitor")

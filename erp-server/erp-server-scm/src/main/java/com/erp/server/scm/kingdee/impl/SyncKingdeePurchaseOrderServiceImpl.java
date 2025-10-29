@@ -26,6 +26,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -352,4 +353,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("list",list);
         return resultMap;
 	}
+
+    @Override
+    public DmpPushTaskEntity syncDataToKingdee(AssetPurchaseOrderEntity entity, String operate) {
+        return null;
+    }
 }

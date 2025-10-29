@@ -2,7 +2,7 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.AssetAcceptService;
 import org.springframework.web.bind.annotation.PostMapping;

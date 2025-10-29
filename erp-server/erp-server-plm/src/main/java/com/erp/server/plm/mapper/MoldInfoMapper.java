@@ -3,6 +3,7 @@ import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import org.apache.ibatis.annotations.Mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -55,4 +56,7 @@ public interface MoldInfoMapper extends BaseMapper<MoldInfoEntity> {
     List<MoldInfoDTO.TabListDTO> tabList(@Param("params") MoldInfoDTO.PagingParamDTO searchParam);
 
     List<MoldInfoDTO.SearchMoldDTO> searchMold(@Param("params") MoldInfoDTO.SearchDTO searchDTO);
+
+    List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(String assetId);
+
 }

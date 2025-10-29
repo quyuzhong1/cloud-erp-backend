@@ -13,6 +13,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
@@ -668,4 +669,25 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/projectTask/approvalTaskSchedulePass")
     void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/moldInfo/getMoldInfo")
+    MoldInfoEntity getMoldInfoByCode(@RequestBody String moldCode);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/productDetail/listByIds")
+    List<ProductDetailEntity> listByIds(@RequestBody List<String> ids);
+
+
+    @PostMapping("feign/product/listAssetProduct" )
+    List<SkuVO> listAssetProduct();
+
+    @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
+    List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
 }

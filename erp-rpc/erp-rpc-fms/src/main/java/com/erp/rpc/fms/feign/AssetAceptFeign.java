@@ -3,7 +3,7 @@ package com.erp.rpc.fms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

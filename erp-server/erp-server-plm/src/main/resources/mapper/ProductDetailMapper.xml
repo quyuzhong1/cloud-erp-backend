@@ -2128,7 +2128,8 @@
         pp.main_supplier as supplierId,
         pp.main_supplier as mainSupplier,
         pp.second_supplier as secondSupplier,
-        pp.ean
+        pp.ean,
+        pp.delivery_cycle as deliveryCycle
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
