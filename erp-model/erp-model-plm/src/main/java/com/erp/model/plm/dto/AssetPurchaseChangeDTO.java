@@ -41,6 +41,11 @@ public class AssetPurchaseChangeDTO implements Serializable {
          */
          private String tabFlag;
 
+//         /**
+//          * 类型名称
+//          */
+//         private String tabFlagName;
+
          /**
          * 数量
          */
@@ -77,10 +82,131 @@ public class AssetPurchaseChangeDTO implements Serializable {
         */
         private String  id;
 
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
         /**
         * 资产变更单号
         */
         private String code;
+
+        /**
+         * 来源订单id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源订单号
+         */
+        private String sourceCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 原采购数量
+         */
+        private BigDecimal oldPurchaseQty;
+
+        /**
+         * 原含税单价
+         */
+        private BigDecimal oldTaxPrice;
+
+        /**
+         * 原价税合计
+         */
+        private BigDecimal oldTotalAmount;
+
+        /**
+         * 新采购数量
+         */
+        private BigDecimal purchaseQty;
+
+        /**
+         * 新含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 新价税合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 变更备注
+         */
+        private String remark;
+
+        /**
+         * 变更人id
+         */
+        private String changeUserId;
+
+        /**
+         * 变更人名称
+         */
+        private String changeUserName;
 
         /**
         * 审核人id
@@ -98,100 +224,9 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
-        * 单据状态
-        */
-        private String approveStatus;
-
-        /**
-        * 变更日期
-        */
-        private LocalDate changeDate;
-
-        /**
-        * 变更人id
-        */
-        private String changeUserId;
-
-        /**
-        * 变更人名称
-        */
-        private String changeUserName;
-
-        /**
-        * 变更部门id
-        */
-        private String changeDeptId;
-
-        /**
-        * 变更部门名称
-        */
-        private String changeDeptName;
-
-        /**
-        * 采购组织id
-        */
-        private String purchaseOrgId;
-
-        /**
-        * 采购组织名称
-        */
-        private String purchaseOrgName;
-
-        /**
-        * 变更类型
-        */
-        private String orderType;
-
-        /**
-        * 变更原因
-        */
-        private String changeReason;
-
-        /**
-        * 来源订单id
-        */
-        private String sourceId;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 来源订单号
-        */
-        private String sourceCode;
-
-        /**
-        * 作废状态（false未作废，true已作废）
-        */
-        private Boolean invalidStatus;
-
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-
-        /**
-        * 作废原因
-        */
-        private String invalidRemark;
-
-        /**
         * 同步金蝶id
         */
         private String syncKingdeeId;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-        /**
-        * 作废状态名称
-        */
-        private String invalidStatusName;
 
         /**
         * 创建时间
@@ -199,44 +234,16 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
         * 创建人名称
         */
         private String createUserName;
 
-        /**
-         * 原含税单价
-         */
-        private BigDecimal oldTaxPrice;
 
-        /**
-         * 原采购数量
-         */
-        private BigDecimal oldPurchaseQty;
-
-        /**
-         * 原价税合计
-         */
-        private BigDecimal oldTotalAmount;
-
-        /**
-         * 新含税单价
-         */
-        private BigDecimal taxPrice;
-
-        /**
-         * 新采购数量
-         */
-        private BigDecimal purchaseQty;
-
-        /**
-         * 新价税合计
-         */
-        private BigDecimal totalAmount;
-
-        /**
-         * 备注
-         */
-        private String remark;
 
     }
 
@@ -270,6 +277,16 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private String code;
 
         /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
         * 审核人id
         */
         private String approveUserId;
@@ -285,23 +302,18 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
-        * 单据状态
-        */
-        private String approveStatus;
-
-        /**
-        * 变更日期
-        */
+         * 变更日期
+         */
         private LocalDate changeDate;
 
         /**
-        * 变更人id
-        */
+         * 变更人id
+         */
         private String changeUserId;
 
         /**
-        * 变更人名称
-        */
+         * 变更人名称
+         */
         private String changeUserName;
 
         /**

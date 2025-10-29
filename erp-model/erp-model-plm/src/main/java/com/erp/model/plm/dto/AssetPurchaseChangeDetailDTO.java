@@ -59,6 +59,16 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         private String assetName;
 
         /**
+         * 标识(首套模、复制模) MoldInfoTagEnum
+         */
+        private String tag;
+
+        /**
+         * 标识(首套模、复制模) MoldInfoTagEnum
+         */
+        private String tagName;
+
+        /**
         * 原采购数量
         */
         private BigDecimal oldPurchaseQty;
@@ -99,8 +109,13 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         private String currencySymbol;
 
         /**
-        * 税率
+        * 原税率
         */
+        private String oldTaxRate;
+
+        /**
+         * 税率
+         */
         private String taxRate;
 
         /**

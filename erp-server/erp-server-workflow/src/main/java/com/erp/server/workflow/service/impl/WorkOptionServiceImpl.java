@@ -655,6 +655,25 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case TRANSFER_OUT:
                 resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);
                 break;
+            case SAMPLE_RECIPIENT:
+                resultDTOList = wmsTaskFeign.sampleRecipientApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_RETURN_INFO:
+                resultDTOList = wmsTaskFeign.sampleReturnApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_BORROW_INFO:
+                resultDTOList = wmsTaskFeign.sampleBorrowApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_SCRAP_INFO:
+                resultDTOList = wmsTaskFeign.sampleScrapApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_BACK_INFO:
+                resultDTOList = wmsTaskFeign.sampleBackApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_LEDGER_INIT:
+                resultDTOList = wmsTaskFeign.sampleLedgerInitApprove(baseApproveParamDTO);
+                break;
+                
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
