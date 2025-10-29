@@ -9,12 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -43,6 +40,11 @@ public class AssetPurchaseChangeDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -380,7 +382,7 @@ public class AssetPurchaseChangeDTO implements Serializable {
         /**
          * 产品明细
          */
-        private AssetPurchaseChangeDetailDTO.ViewDTO assetPurchaseChangeDetailDTOList;
+        private List<AssetPurchaseChangeDetailDTO.ViewDTO> assetPurchaseChangeDetailDTOList;
     }
 
     /**
@@ -391,11 +393,48 @@ public class AssetPurchaseChangeDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 资产采购单id
+         */
+        private String assetPurchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+
+        /**
          * 资产变更单明细
          */
         @Valid
+        @NotEmpty(message = "明细不能为空")
         private List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierDTO {
+
+
+
+    }
+
 
     /**
     * 修改
@@ -411,10 +450,17 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private String id;
 
         /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
          * 资产变更单明细
          */
         @Valid
-        private List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList;
+        @NotEmpty(message = "明细不能为空")
+        private List<AssetPurchaseChangeDetailDTO.UpdateDTO> assetPurchaseChangeDetailDTOList;
     }
 
     @Data
@@ -424,6 +470,7 @@ public class AssetPurchaseChangeDTO implements Serializable {
         /**
         * 变更日期
         */
+        @NotNull(message = "变更日期不能为空")
         private LocalDate changeDate;
 
         /**
@@ -449,50 +496,42 @@ public class AssetPurchaseChangeDTO implements Serializable {
         /**
         * 采购组织id
         */
-        @NotBlank(message = "采购组织id不能为空")
-        @Size(max = 255,message = "采购组织id最大长度不能超过255位")
+        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
 
         /**
         * 采购组织名称
         */
-        @NotBlank(message = "采购组织名称不能为空")
-        @Size(max = 255,message = "采购组织名称最大长度不能超过255位")
         private String purchaseOrgName;
 
         /**
-        * 变更类型
+        * 变更类型:/api/scm/dict/list?key=assetPurchaseChangeOrderType
         */
         @NotBlank(message = "变更类型不能为空")
-        @Size(max = 255,message = "变更类型最大长度不能超过255位")
         private String orderType;
 
         /**
         * 变更原因
         */
         @NotBlank(message = "变更原因不能为空")
-        @Size(max = 255,message = "变更原因最大长度不能超过255位")
+        @Size(max = 50,message = "变更原因最大长度不能超过50位")
         private String changeReason;
 
         /**
         * 来源订单id
         */
         @NotBlank(message = "来源订单id不能为空")
-        @Size(max = 255,message = "来源订单id最大长度不能超过255位")
         private String sourceId;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 255,message = "来源类型最大长度不能超过255位")
         private String sourceType;
 
         /**
         * 来源订单号
         */
         @NotBlank(message = "来源订单号不能为空")
-        @Size(max = 255,message = "来源订单号最大长度不能超过255位")
         private String sourceCode;
 
         /**

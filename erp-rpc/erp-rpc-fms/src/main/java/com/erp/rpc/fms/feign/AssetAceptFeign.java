@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -23,16 +22,35 @@ import java.util.Map;
 @FeignClient(name = "erp-fms",contextId = "assetAceptFeign",configuration = {FeignErrorDecoder.class})
 public interface AssetAceptFeign {
 
-
+    /**
+     * 获取验收数量
+     * @param detailId
+     * @return
+     */
     @PostMapping("feign/assetAcept/getAcceptQty")
     Integer getAcceptQtyByDetailId(@RequestBody String detailId);
 
+    /**
+     * 获取关联单据
+     * @param detailId
+     * @return
+     */
     @PostMapping("feign/assetAcept/getAssetAccept")
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId);
 
+    /**
+     * 下推资产验收单
+     * @param dtoList
+     * @return
+     */
     @PostMapping("feign/assetAcept/generateAssetAccept")
     Boolean generateAssetAccept(@RequestBody List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
 
+    /**
+     * 获取可验收数量
+     * @param detailIdList
+     * @return
+     */
     @PostMapping("feign/assetAcept/getAcceptableQty")
     Map<String, BigDecimal> getAcceptableQtyByDetailId(@RequestBody List<String> detailIdList);
 }

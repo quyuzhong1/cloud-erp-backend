@@ -86,7 +86,7 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
         * 新价税合计
         */
-        private BigDecimal totalPrice;
+        private BigDecimal totalAmount;
 
         /**
         * 币种
@@ -137,13 +137,11 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
         private String id;
-
     }
 
     @Data
@@ -176,44 +174,50 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
         * 原采购数量
         */
-        @NotNull(message = "原采购数量不能为空")
         @Digits(integer = 12, fraction = 4, message = "原采购数量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldPurchaseQty;
 
         /**
         * 原含税单价
         */
-        @NotNull(message = "原含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "原含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldTaxPrice;
 
         /**
         * 原价税合计
         */
-        @NotNull(message = "原价税合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "原价税合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldTotalAmount;
 
         /**
+         * 原税率
+         */
+        @NotBlank(message = "税率不能为空")
+        private String oldTaxRate;
+
+        /**
         * 新采购数量
         */
-        @NotNull(message = "新采购数量不能为空")
         @Digits(integer = 12, fraction = 4, message = "新采购数量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal purchaseQty;
 
         /**
         * 新含税单价
         */
-        @NotNull(message = "新含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "新含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal taxPrice;
 
         /**
         * 新价税合计
         */
-        @NotNull(message = "新价税合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "新价税合计整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal totalPrice;
+        private BigDecimal totalAmount;
+
+        /**
+         * 税率
+         */
+        @NotBlank(message = "税率不能为空")
+        private String taxRate;
 
         /**
         * 币种
@@ -227,11 +231,7 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         @NotBlank(message = "币种符号不能为空")
         private String currencySymbol;
 
-        /**
-        * 税率
-        */
-        @NotBlank(message = "税率不能为空")
-        private String taxRate;
+
 
         /**
         * 备注

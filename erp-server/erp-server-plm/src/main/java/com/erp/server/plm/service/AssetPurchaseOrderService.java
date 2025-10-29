@@ -199,8 +199,10 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
 
-    List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto);
+    List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto);
 
     Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
+
+    AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto);
 
 }

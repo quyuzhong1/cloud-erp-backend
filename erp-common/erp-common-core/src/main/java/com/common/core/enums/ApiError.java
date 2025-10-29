@@ -4,7 +4,6 @@ package com.common.core.enums;
 import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 
 /**
@@ -639,6 +638,9 @@ public enum ApiError implements Serializable {
     ERROR_95311(95311,"下推的模具采购单不允许新增明细"),
     ERROR_95312(95312,"采购数量不能大于待申请数量"),
     ERROR_95313(95313,"sku【{}】未找到价目表"),
+    ERROR_95314(95314,"变更日期不能小于今天"),
+    ERROR_95315(95315,"采购变更数量不能大于待申请数量"),
+    ERROR_95316(95316,"请选择同一模具采购订单下明细进行变更!"),
     /**
      * TMS 错误
      * 从96000 开始
