@@ -28,7 +28,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.doris.AdsPushTaskEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
 import com.erp.server.dmp.service.AdsPushTaskService;
 
@@ -167,16 +169,24 @@ public class AdsPushTaskController extends BaseController {
                 resultDTO = adsPushTaskService.cancelOutputBlack(id);
             } catch (Exception e) {
                 log.error("取消黑名单 取消失败", e);
-                AdsPushTaskEntity entity = adsPushTaskService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "数据不存在, 取消失败");
-                    resultDTOS.add(resultDTO);
-                    continue;
-                }
-                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getUniqueCode(), e.getMessage());
+                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    
+    /**
+     * 重新同步（批量同步）
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/batchSync")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "重新同步")
+    public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = adsPushTaskService.batchSync(dto.getIds());
+        return flag == true ? success() : failure();
     }
 }

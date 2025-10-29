@@ -2,6 +2,8 @@ package com.erp.server.dmp.service.impl;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,9 +13,12 @@ import javax.annotation.Resource;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -46,6 +51,8 @@ import com.erp.server.dmp.service.AdsPushTaskService;
 import com.erp.server.dmp.service.OperateLogService;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -65,6 +72,12 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
     
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Value("${restcloud.url:172.16.100.96}")
+    private String restcloudUrl;
+	
+	@Value("${restcloud.port:8080}")
+	private String restcloudPort;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -222,5 +235,36 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 				.set(AdsPushTaskEntity::getPushStatus, "push")
 				.update();
 		return BatchResultDTO.success(id, id);
+	}
+
+	@Override
+	public Boolean batchSync(List<String> ids) {
+		lambdaUpdate().set(AdsPushTaskEntity::getPushStatus, "push")
+        	.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+        	.in(AdsPushTaskEntity::getId, ids)
+        	.update();
+		
+		Map<String, Object> map = new HashMap<>();
+		Map<String, String> idSqlMap = new HashMap<>();
+		idSqlMap.put("idSql", " and id in (" + ids.stream().collect(Collectors.joining("','", "'", "'")) + " )");
+		map.put("data", Arrays.asList(idSqlMap));
+		String url = "http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/push/push_data";
+		HttpResponse response = HttpRequest.post(url)
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+		if (200 != response.getStatus()) {
+			throw new ServiceException("调用谷云" + url + "返回状态码为：" + response.getStatus());
+		}else {
+			String body = response.body();
+			JSONObject responseJson = JSON.parseObject(body);
+			Integer resultCode = responseJson.getInteger("resultCode");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null == resultCode || 1 != resultCode) {
+            	throw new ServiceException("调用谷云" + url + "返回报文为：" + body);
+            }
+		}
+		return true;
 	}
 }

@@ -1,10 +1,12 @@
 package com.erp.server.dmp.service;
-import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
-
 import java.util.List;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.entity.doris.AdsPushTaskEntity;
@@ -90,4 +92,13 @@ public interface AdsPushTaskService extends SuperService<AdsPushTaskEntity> {
      * @return java.lang.Boolean
      **/
     BatchResultDTO cancelOutputBlack(String id);
+    
+    /**
+     * 重新同步（批量同步）
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dmpOutputTaskRecordEntityList
+     * @return java.lang.Boolean
+     **/
+    Boolean batchSync(List<String> ids);
 }
