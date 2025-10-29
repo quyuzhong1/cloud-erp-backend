@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.AssetPurchaseOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.AssetPurchaseOrderEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_time" property="approveUserTime" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="contract_stamp_status" property="contractStampStatus" />
+       <result column="order_type" property="orderType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="purchase_date" property="purchaseDate" />
+       <result column="purchase_user_id" property="purchaseUserId" />
+       <result column="purchase_user_name" property="purchaseUserName" />
+       <result column="purchase_dept_id" property="purchaseDeptId" />
+       <result column="purchase_dept_name" property="purchaseDeptName" />
+       <result column="purchase_org_id" property="purchaseOrgId" />
+       <result column="purchase_org_name" property="purchaseOrgName" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="invalid_remark" property="invalidRemark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, approve_user_id, approve_user_name, approve_user_time, approve_status, contract_stamp_status, order_type, source_id, source_code, source_type, purchase_date, purchase_user_id, purchase_user_name, purchase_dept_id, purchase_dept_name, purchase_org_id, purchase_org_name, invalid_status, invalid_time, invalid_remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$ListDTO">
+        SELECT
+            apo.id as id,
+            apod.id as detailId,
+            apo.code as code,
+            apo.source_id as sourceId,
+            apo.source_code as sourceCode,
+            apo.source_type as sourcetype,
+            apo.order_type as orderType,
+            apo.approve_status as approveStatus,
+            apo.invalid_status as invalidStatus,
+            apod.end_receive as endReceive,
+            apod.asset_id as assetId,
+            apod.asset_code as assetCode,
+            apod.asset_name as assetName,
+            apo.contract_stamp_status as contractStampStatus,
+            apod.plan_delivery_date as planDeliveryDate,
+            apod.tax_price as taxPrice,
+            apod.tax_rate as taxRate,
+            apod.purchase_qty as purchaseQty,
+            apod.total_amount as totalAmount,
+            apod.remark as remark,
+            apo.approve_user_id as approveUserId,
+            apo.approve_user_name as approveUserName,
+            apo.approve_user_time as approveUserTime,
+            apo.purchase_user_id as purchaseUserId,
+            apo.purchase_user_name as purchaseUserName,
+            apo.create_user_id as createUserId,
+            apo.create_user_name as createUserName,
+            apo.create_time as createTime,
+            apos.supplier_id as supplierId,
+            apos.supplier_name as supplierName
+        FROM
+            asset_purchase_order apo
+            left join asset_purchase_order_detail apod on apod.main_id = apo.ID and apod.is_deleted = false
+            left join asset_purchase_order_supplier apos on apos.asset_purchase_order_id = apo."id" and apos.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and apo.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        apo.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from asset_purchase_order where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  asset_purchase_order
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <select id="otherTabList" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$TabListDTO">
+        SELECT 'waitReceive' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'waitReceive'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t1
+        union all
+        SELECT 'allReceive' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'allReceive'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t2
+        union all
+        SELECT 'close' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'close'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t3
+    </select>
+
+</mapper>

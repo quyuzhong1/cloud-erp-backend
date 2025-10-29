@@ -5,8 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
