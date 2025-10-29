@@ -28,6 +28,7 @@ import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -936,5 +937,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformCode(platformCodeList);
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
+        return baseMapper.getByPlatformWarehouseAndType(dto);
     }
 }

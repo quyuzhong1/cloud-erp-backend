@@ -22,6 +22,7 @@ import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
 import com.sdk.wms.iml.dto.response.ImlLogisticChannelResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.service.ImlService;
+import io.jsonwebtoken.lang.Collections;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -92,13 +93,24 @@ public class ImlLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<ImlLogisticChannelResp> imlLogisticChannelResps = imlResponse.getData();
             for (ImlLogisticChannelResp imlLogisticChannelResp : imlLogisticChannelResps) {
                 List<ImlLogisticChannelResp.StoreWarehouseDTO> storeWarehouse = imlLogisticChannelResp.getStoreWarehouse();
+                if(Collections.isEmpty(storeWarehouse)){
+                    LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
+                    logisticsSaleChannelEntity.setPlatformChannelId(imlLogisticChannelResp.getProductCode());
+                    logisticsSaleChannelEntity.setCode(imlLogisticChannelResp.getProductCode());
+                    logisticsSaleChannelEntity.setCnName(imlLogisticChannelResp.getProductName());
+                    logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.OMS_IML.getCode());
+                    logisticsSaleChannelEntity.setAging(Objects.nonNull(imlLogisticChannelResp.getPrescription())?String.valueOf(imlLogisticChannelResp.getPrescription()/24):"");
+                    logisticsSaleChannelEntity.setChannelType("FIRST_TRANSPORT".equals(imlLogisticChannelResp.getProductType()) ? ChannelTypeEnum.FIRST_MILE.getCode() : ChannelTypeEnum.LAST_MILE.getCode());
+                    response.add(logisticsSaleChannelEntity);
+                    continue;
+                }
                 for (ImlLogisticChannelResp.StoreWarehouseDTO storeWarehouseDTO : storeWarehouse) {
                     LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
                     logisticsSaleChannelEntity.setPlatformChannelId(imlLogisticChannelResp.getProductCode());
                     logisticsSaleChannelEntity.setCode(imlLogisticChannelResp.getProductCode());
                     logisticsSaleChannelEntity.setCnName(imlLogisticChannelResp.getProductName());
                     logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.OMS_IML.getCode());
-                    logisticsSaleChannelEntity.setAging(String.valueOf(imlLogisticChannelResp.getPrescription()/24));
+                    logisticsSaleChannelEntity.setAging(Objects.nonNull(imlLogisticChannelResp.getPrescription())?String.valueOf(imlLogisticChannelResp.getPrescription()/24):"");
                     logisticsSaleChannelEntity.setPlatformWarehouseCode(storeWarehouseDTO.getWarehouseCode());
                     logisticsSaleChannelEntity.setChannelType("FIRST_TRANSPORT".equals(imlLogisticChannelResp.getProductType()) ? ChannelTypeEnum.FIRST_MILE.getCode() : ChannelTypeEnum.LAST_MILE.getCode());
                     OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream().filter(v->v.getPlatformWarehouseCode().equals(storeWarehouseDTO.getWarehouseCode()) && StringUtils.isNotBlank(v.getWarehouseId())).findFirst().orElse(null);
@@ -113,7 +125,7 @@ public class ImlLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             return success(response);
         } catch (Exception e) {
-            log.error("艾姆勒渠道接口异常：{}", e.getMessage());
+            log.error("艾姆勒渠道接口异常：", e);
             logAndReturnFailure(chanelQueryVO, RequestStatusEnums.FAILED, e);
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         } finally {

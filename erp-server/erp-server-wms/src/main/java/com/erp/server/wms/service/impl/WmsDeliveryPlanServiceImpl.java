@@ -663,6 +663,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             }else if(DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.ALIEXPRESS.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.ALIEXPRESS.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }
 
             //来源类型

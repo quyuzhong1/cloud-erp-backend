@@ -2425,7 +2425,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+            ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();
@@ -2450,6 +2451,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> skuIdList = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
+        if(StringUtils.isNotBlank(data.getToWarehouseId())){
+            WarehouseEntity warehouseEntity = warehouseService.getById(data.getToWarehouseId());
+            if(Objects.nonNull(warehouseEntity)){
+                data.setToWarehouseName(warehouseEntity.getName());
+            }
+        }
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 

@@ -363,6 +363,13 @@
             #{item}
         </foreach>
     </select>
+    <select id="getByPlatformWarehouseAndType" resultType="com.erp.model.wms.dto.DictBasicDTO$DropDownDTO">
+        select  lc.code,lc.cn_name as name,true as status from logistics_sale_channel lc
+        where lc.is_deleted = false and lc.overseas_warehouse_id = #{dto.platformWarehouseId}
+        <if test="dto.channelType != null and dto.channelType != ''">
+            and lc.channel_type = #{dto.channelType}
+        </if>
+    </select>
 
 
 </mapper>
