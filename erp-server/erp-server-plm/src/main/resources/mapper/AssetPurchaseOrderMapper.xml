@@ -118,4 +118,33 @@
         GROUP BY approve_status
     </select>
 
+    <select id="otherTabList" resultType="com.erp.model.plm.dto.AssetPurchaseOrderDTO$TabListDTO">
+        SELECT 'waitReceive' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'waitReceive'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t1
+        union all
+        SELECT 'allReceive' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'allReceive'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t2
+        union all
+        SELECT 'close' as tabFlag,COUNT(*) as count FROM (
+            SELECT 1
+            FROM asset_purchase_order_detail apod
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'close'
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        ) t3
+    </select>
+
 </mapper>
