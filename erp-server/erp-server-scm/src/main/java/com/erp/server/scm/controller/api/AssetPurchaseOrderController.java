@@ -79,7 +79,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "plm:assetPurchaseOrder:update",
+        menuCode = "scm:assetPurchaseOrder:update",
         serviceClass = AssetPurchaseOrderService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AssetPurchaseOrderDTO.UpdateDTO dto) {
@@ -94,7 +94,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:paging",
+            menuCode = "scm:assetPurchaseOrder:paging",
             tableAlias = ""
     )
     public ApiResult<List<AssetPurchaseOrderDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -111,7 +111,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:paging",
+            menuCode = "scm:assetPurchaseOrder:paging",
             tableAlias = "apo"
     )
     @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
@@ -142,7 +142,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:updateAndSubmit",
+            menuCode = "scm:assetPurchaseOrder:updateAndSubmit",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetPurchaseOrderDTO.UpdateDTO dto) {
@@ -160,7 +160,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:submit",
+            menuCode = "scm:assetPurchaseOrder:submit",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
@@ -198,7 +198,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:approve",
+            menuCode = "scm:assetPurchaseOrder:approve",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
@@ -237,7 +237,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:disApprove",
+            menuCode = "scm:assetPurchaseOrder:disApprove",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
@@ -276,7 +276,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:delete",
+            menuCode = "scm:assetPurchaseOrder:delete",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
@@ -313,7 +313,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:invalid",
+            menuCode = "scm:assetPurchaseOrder:invalid",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废")
@@ -351,7 +351,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:cancelProcess",
+            menuCode = "scm:assetPurchaseOrder:cancelProcess",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销")
@@ -389,7 +389,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:view",
+            menuCode = "scm:assetPurchaseOrder:view",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "id")
     @LogViewService
@@ -408,7 +408,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/endReceive")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "plm:assetPurchaseOrder:endReceive",
+            menuCode = "scm:assetPurchaseOrder:endReceive",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<?> endReceive(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -426,7 +426,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/updateContractStampStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "plm:assetPurchaseOrder:updateContractStampStatus",
+            menuCode = "scm:assetPurchaseOrder:updateContractStampStatus",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "合同状态更新")
@@ -492,7 +492,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseOrder:export",
+            menuCode = "scm:assetPurchaseOrder:export",
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
@@ -546,7 +546,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @GetMapping("/listAssetPurchaseContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "plm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            menuCode = "scm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
@@ -574,7 +574,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGenerateAssetAccept")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "plm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -606,7 +606,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGeneratePurchaseChangeOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "plm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
