@@ -20,6 +20,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -206,7 +207,9 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         }
 
         AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
+                .findFirst()
+                .orElse(null);
         if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
         }
@@ -275,18 +278,9 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
+            BeanUtils.copyProperties(updateDTO.getAssetPurchaseOrderDetailDTOList(),detailEntityList);
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntity.setAssetId(dto.getAssetId());
-            assetPurchaseOrderDetailEntity.setAssetCode(dto.getAssetCode());
-            assetPurchaseOrderDetailEntity.setAssetName(dto.getAssetName());
-            assetPurchaseOrderDetailEntity.setCurrency(dto.getCurrency());
-            assetPurchaseOrderDetailEntity.setCurrencySymbol(dto.getCurrencySymbol());
-            assetPurchaseOrderDetailEntity.setTaxRate(dto.getTaxRate());
-            assetPurchaseOrderDetailEntity.setPurchaseQty(dto.getPurchaseQty());
-            assetPurchaseOrderDetailEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
-            assetPurchaseOrderDetailEntity.setIsUrgent(dto.getIsUrgent());
             assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
-            assetPurchaseOrderDetailEntity.setTag(dto.getTag());
 
             for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
                 if (priceDTO.getSkuId().equals(dto.getAssetId())) {
@@ -305,7 +299,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
         }
 
-        super.saveBatch(detailEntityList);
+        super.updateBatchById(detailEntityList);
     }
 
 

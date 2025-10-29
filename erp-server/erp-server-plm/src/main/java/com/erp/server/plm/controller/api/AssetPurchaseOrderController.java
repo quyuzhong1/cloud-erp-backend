@@ -565,7 +565,7 @@ public class AssetPurchaseOrderController extends BaseController {
     }
 
     /**
-     * 下推采购单弹窗显示
+     * 下推资产验收单弹窗显示
      * @author
      * @date:
      * @param dto
@@ -577,13 +577,13 @@ public class AssetPurchaseOrderController extends BaseController {
             menuCode = "plm:assetNotice:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult<List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<AssetPurchaseOrderDTO.ViewGeneratePurchaseOrderDTO> list = assetPurchaseOrderService.viewGenerateAssetAccept(dto);
+    public ApiResult<List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> list = assetPurchaseOrderService.viewGenerateAssetAccept(dto);
         return success(list);
     }
 
     /**
-     * 生成资产采购单
+     * 下推资产验收单
      * @author
      * @date:
      * @param dtoList
@@ -594,6 +594,24 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<Object> generateAssetAccept(@RequestBody @Validated List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
         Boolean flag = assetPurchaseOrderService.generateAssetAccept(dtoList);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推资产验收单弹窗显示
+     * @author
+     * @date:
+     * @param dto 明细id
+     * @return ApiResult
+     */
+    @PostMapping("/viewGeneratePurchaseChangeOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id,create_user_id",
+            menuCode = "plm:assetNotice:viewGenerateAssetAccept",
+            serviceClass = AssetPurchaseOrderService.class,
+            keyIdName = "ids")
+    public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+       AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO = assetPurchaseOrderService.viewGeneratePurchaseChangeOrder(dto);
+        return success(viewGeneratePurchaseChangeOrderDTO);
     }
 
 }

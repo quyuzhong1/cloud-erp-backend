@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.AssetPurchaseChangeDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -31,6 +33,8 @@ public interface AssetPurchaseChangeDetailService extends SuperService<AssetPurc
     * @return
     */
     Boolean update(AssetPurchaseChangeDetailDTO.UpdateDTO dto);
+
+    void update(List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity);
 
 
 }
