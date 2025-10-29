@@ -16,7 +16,7 @@ import java.util.List;
  * @author wuht
  * @since 2025-01-20
  */
-@FeignClient(name = "erp-plm",  configuration = FeignErrorDecoder.class)
+@FeignClient(name = "erp-scm",  configuration = FeignErrorDecoder.class)
 public interface AssetPurchaseOrderFeign {
 
     /**
