@@ -6,11 +6,15 @@ import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.fms.dto.AssetAcceptDTO;
@@ -22,6 +26,7 @@ import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -29,12 +34,15 @@ import java.util.function.Function;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.listener.AssetPurchaseOrderExcelListener;
@@ -50,6 +58,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -150,6 +159,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private FileTemplateFeign fileTemplateFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1211,6 +1223,43 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void exportAssetPurchaseContractPdf(String id, HttpServletResponse response) {
+
+        AssetPurchaseOrderDTO.ExportPdfDTO result = listPurchaseContractPdf(id);
+        if (ObjectUtil.isEmpty(result)) {
+            throw new ServiceException("未发现采购合同订单数据");
+        }
+        List<String> base64List = new ArrayList<>();
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.PO_CONTRACT_PDF);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            return;
+        }
+
+        List<com.erp.model.sys.entity.DictBasicEntity> dictBasicEntity = FeignQuery.create(com.erp.model.sys.entity.DictBasicEntity.class)
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getType, "url")
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getName, "logo")
+                .list();
+        //logo url地址
+        result.setLogoUrl(FastDFSClientUtil.publicUrl + "/" + dictBasicEntity.get(0).getValue());
+        Map<String, Object> map = BeanUtil.beanToMap(result);
+        JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
+        map.put("detail", detail);
+        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
+
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        String base = Base64.getEncoder().encodeToString(bytes);
+        base64List.add("data:application/pdf;base64," + base);
+        PdfUtil.exportBase64ForPdf(response, base64List);
     }
 
     @Override
