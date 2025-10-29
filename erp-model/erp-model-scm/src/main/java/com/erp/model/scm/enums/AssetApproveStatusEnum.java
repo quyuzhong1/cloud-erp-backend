@@ -1,4 +1,4 @@
-package com.erp.model.plm.enums;
+package com.erp.model.scm.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.enums.ApproveTypeEnum;
