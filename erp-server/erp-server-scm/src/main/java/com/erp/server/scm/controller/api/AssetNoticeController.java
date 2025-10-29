@@ -76,7 +76,7 @@ public class AssetNoticeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "plm:assetNotice:update",
+        menuCode = "scm:assetNotice:update",
         serviceClass = AssetNoticeService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AssetNoticeDTO.UpdateDTO dto) {
@@ -91,7 +91,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:paging",
+            menuCode = "scm:assetNotice:paging",
             tableAlias = ""
     )
     public ApiResult<List<AssetNoticeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -108,7 +108,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:paging",
+            menuCode = "scm:assetNotice:paging",
             tableAlias = "an"
     )
     @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
@@ -139,7 +139,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:updateAndSubmit",
+            menuCode = "scm:assetNotice:updateAndSubmit",
             serviceClass = AssetNoticeService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetNoticeDTO.UpdateDTO dto) {
@@ -157,7 +157,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:submit",
+            menuCode = "scm:assetNotice:submit",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
@@ -196,7 +196,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:approve",
+            menuCode = "scm:assetNotice:approve",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
@@ -235,7 +235,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/viewGeneratePurchaseOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "plm:assetNotice:viewGeneratePurchaseOrder",
+            menuCode = "scm:assetNotice:viewGeneratePurchaseOrder",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     public ApiResult<List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -267,7 +267,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:disApprove",
+            menuCode = "scm:assetNotice:disApprove",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
@@ -307,7 +307,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:delete",
+            menuCode = "scm:assetNotice:delete",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
@@ -346,7 +346,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:cancelProcess",
+            menuCode = "scm:assetNotice:cancelProcess",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销")
@@ -386,7 +386,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:cancelProcess",
+            menuCode = "scm:assetNotice:cancelProcess",
             serviceClass = AssetNoticeService.class,
             keyIdName = "ids")
     public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -418,7 +418,7 @@ public class AssetNoticeController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:view",
+            menuCode = "scm:assetNotice:view",
             serviceClass = AssetNoticeService.class,
             keyIdName = "id")
     @LogViewService
@@ -483,7 +483,7 @@ public class AssetNoticeController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetNotice:export",
+            menuCode = "scm:assetNotice:export",
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
