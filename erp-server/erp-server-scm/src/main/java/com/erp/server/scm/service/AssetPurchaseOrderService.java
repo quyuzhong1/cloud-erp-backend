@@ -195,6 +195,8 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
 
+    void exportAssetPurchaseContractPdf(String id, HttpServletResponse response);
+
     AssetPurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
 
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
