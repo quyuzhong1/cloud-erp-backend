@@ -168,7 +168,8 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if(StringUtils.isBlank(code)){
             return null;
         }
-        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code).one();
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code)
+                .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
     }
 
     @Override
