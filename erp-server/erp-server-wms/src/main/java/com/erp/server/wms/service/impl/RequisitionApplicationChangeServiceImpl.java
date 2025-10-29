@@ -190,7 +190,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))" , shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))" , shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
     @Override
     public List<RequisitionApplicationChangeDTO.TabListDTO> tabList(PermissionsDTO param) {

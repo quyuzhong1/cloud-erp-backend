@@ -51,7 +51,7 @@ public class ImlService {
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
-        body.put("code","RI2025031000003");
+        body.put("code","WRI2025081500003");
 //        body.put("pageSize",50);
         //查询前一天的时间戳的数据
         long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
