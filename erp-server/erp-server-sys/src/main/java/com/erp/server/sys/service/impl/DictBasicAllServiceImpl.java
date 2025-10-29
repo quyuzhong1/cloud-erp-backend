@@ -6,15 +6,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -35,6 +38,7 @@ import com.erp.model.sys.dto.DictBasicAllDTO.AddDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.BatchOpDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.CommonDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.PagingParamDTO;
+import com.erp.model.sys.dto.DictBasicAllDTO.TabListDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.UpdateDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.ViewDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -212,7 +216,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
 		if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
 			AdvanceQueryDTO advanceQueryDTO = advanceQueryDTOList.stream().filter(a -> a.getField().equals("systemCode") && Objects.nonNull(a.getValue())).findFirst().orElse(null);
-			if(advanceQueryDTO != null) {
+			if(advanceQueryDTO != null && advanceQueryDTO.getValue() != null && StringUtils.isNotBlank(advanceQueryDTO.getValue().toString())) {
 				systemCode = advanceQueryDTO.getValue().toString();
 			}
 			String finalSystemCode = systemCode;
@@ -249,5 +253,32 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	public Boolean exportExcel(PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
 		downloadTaskFeign.saveDownloadTask("字典数据表", FileTaskEventEnum.EXPORT_DICT_BASIC_ALL.getCode(), dto);
 		return Boolean.TRUE;
+	}
+
+	@Override
+	public List<TabListDTO> tabList(PagingDTO<DictBasicAllDTO.PagingParamDTO> dto) {
+		String systemCode = SystemCodeEnum.SYS.getCode();
+		PagingParamDTO params = dto.getParams();
+		List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+		if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
+			AdvanceQueryDTO advanceQueryDTO = advanceQueryDTOList.stream().filter(a -> a.getField().equals("systemCode") && Objects.nonNull(a.getValue())).findFirst().orElse(null);
+			if(advanceQueryDTO != null && advanceQueryDTO.getValue() != null && StringUtils.isNotBlank(advanceQueryDTO.getValue().toString())) {
+				systemCode = advanceQueryDTO.getValue().toString();
+			}
+		}
+		TabListDTO ableDto = new TabListDTO();
+		ableDto.setTabFlag("able");
+		ableDto.setTabFlagName("启用");
+		TabListDTO disableDto = new TabListDTO();
+		disableDto.setTabFlag("disable");
+		disableDto.setTabFlagName("停用");
+		
+		List<JSONObject> invokeList = FeignQuery.invokeList(JSONObject.class , this.getServiceClass(systemCode), "list");
+		if(CollUtil.isNotEmpty(invokeList)) {
+			ableDto.setCount(invokeList.stream().filter(j -> j.getBoolean("status")).collect(Collectors.toList()).size());
+			disableDto.setCount(invokeList.stream().filter(j -> !j.getBoolean("status")).collect(Collectors.toList()).size());
+		}
+		
+		return Arrays.asList(ableDto , disableDto);
 	}
 }

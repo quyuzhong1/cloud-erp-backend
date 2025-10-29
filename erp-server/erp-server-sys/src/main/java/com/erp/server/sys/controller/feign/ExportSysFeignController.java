@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
@@ -23,6 +24,7 @@ import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.server.sys.query.DictBasicAllQueryHandler;
 import com.erp.server.sys.service.CfgThirdNoticeService;
 import com.erp.server.sys.service.DictBasicAllService;
 import com.erp.server.sys.service.DictCityService;
@@ -84,6 +86,7 @@ public class ExportSysFeignController {
     }
     
     @PostMapping("/exportDictBasicAll")
+    @WebAdvanceQuery(handler = DictBasicAllQueryHandler.class)
     public PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto){
     	return dictBasicAllService.paging(dto);
     }
