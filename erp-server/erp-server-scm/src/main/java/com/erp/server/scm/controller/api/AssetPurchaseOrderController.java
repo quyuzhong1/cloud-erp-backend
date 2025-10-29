@@ -8,6 +8,7 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.server.scm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.scm.service.AssetPurchaseOrderDetailService;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
+import com.erp.server.scm.service.PurchaseOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import javax.annotation.Resource;
@@ -30,6 +31,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -552,6 +554,24 @@ public class AssetPurchaseOrderController extends BaseController {
     public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
         AssetPurchaseOrderDTO.ExportPdfDTO exportPdfDTO = assetPurchaseOrderService.listPurchaseContractPdf(id);
         return success(exportPdfDTO);
+    }
+
+    /**
+     * 导出采购合同PDF
+     * @author
+     * @date:
+     * @param
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购合同PDF")
+    @PostMapping("/exportAssetPurchaseContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
+    public void exportAssetPurchaseContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        assetPurchaseOrderService.exportAssetPurchaseContractPdf(dto.getId(),response);
     }
 
     /**
