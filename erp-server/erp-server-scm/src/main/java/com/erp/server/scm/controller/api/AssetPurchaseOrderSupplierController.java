@@ -56,7 +56,7 @@ public class AssetPurchaseOrderSupplierController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "plm:assetPurchaseOrderSupplier:update",
+        menuCode = "scm:assetPurchaseOrderSupplier:update",
         serviceClass = AssetPurchaseOrderSupplierService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AssetPurchaseOrderSupplierDTO.UpdateDTO dto) {

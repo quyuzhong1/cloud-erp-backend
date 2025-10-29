@@ -63,7 +63,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改资产采购变更单")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "plm:assetPurchaseChange:update",
+        menuCode = "scm:assetPurchaseChange:update",
         serviceClass = AssetPurchaseChangeService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AssetPurchaseChangeDTO.UpdateDTO dto) {
@@ -78,7 +78,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:paging",
+            menuCode = "scm:assetPurchaseChange:paging",
             tableAlias = ""
     )
     public ApiResult<List<AssetPurchaseChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -95,7 +95,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:paging",
+            menuCode = "scm:assetPurchaseChange:paging",
             tableAlias = ""
     )
     public ApiResult<PagingVO<AssetPurchaseChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto) {
@@ -125,7 +125,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:updateAndSubmit",
+            menuCode = "scm:assetPurchaseChange:updateAndSubmit",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetPurchaseChangeDTO.UpdateDTO dto) {
@@ -143,7 +143,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:submit",
+            menuCode = "scm:assetPurchaseChange:submit",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
@@ -181,7 +181,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:approve",
+            menuCode = "scm:assetPurchaseChange:approve",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
@@ -219,7 +219,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:disApprove",
+            menuCode = "scm:assetPurchaseChange:disApprove",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
@@ -258,7 +258,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:delete",
+            menuCode = "scm:assetPurchaseChange:delete",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
@@ -295,7 +295,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:invalid",
+            menuCode = "scm:assetPurchaseChange:invalid",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废")
@@ -333,7 +333,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:cancelProcess",
+            menuCode = "scm:assetPurchaseChange:cancelProcess",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销")
@@ -371,7 +371,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:view",
+            menuCode = "scm:assetPurchaseChange:view",
             serviceClass = AssetPurchaseChangeService.class,
             keyIdName = "id")
     @LogViewService
@@ -390,7 +390,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:assetPurchaseChange:export",
+            menuCode = "scm:assetPurchaseChange:export",
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")

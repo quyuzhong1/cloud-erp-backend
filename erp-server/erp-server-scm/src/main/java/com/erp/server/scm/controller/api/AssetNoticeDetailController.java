@@ -56,7 +56,7 @@ public class AssetNoticeDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "plm:assetNoticeDetail:update",
+        menuCode = "scm:assetNoticeDetail:update",
         serviceClass = AssetNoticeDetailService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AssetNoticeDetailDTO.UpdateDTO dto) {
