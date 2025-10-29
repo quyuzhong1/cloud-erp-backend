@@ -42,6 +42,7 @@
         update_time,
         version,carrier_type,
         is_deleted,
+channel_type,
         platform_channel_id, cn_name, en_name, code,service_platform, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging, origin_country, destination_country, overseas_warehouse_id, platform_warehouse_code
     </sql>
 

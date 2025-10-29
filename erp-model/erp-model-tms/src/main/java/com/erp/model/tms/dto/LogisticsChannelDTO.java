@@ -36,6 +36,22 @@ public class LogisticsChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PlatformWarehouseDTO extends SortDTO {
+
+        /**
+         * 平台仓
+         */
+        @NotBlank(message = "平台仓不能为空")
+        private String platformWarehouseId;
+
+        /**
+         * 渠道类型
+         */
+        private String channelType;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
         /**

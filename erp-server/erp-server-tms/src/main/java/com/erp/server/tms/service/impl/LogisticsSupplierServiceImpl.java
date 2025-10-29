@@ -237,7 +237,6 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
@@ -373,6 +372,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                     }
                     channelEntity.setEffectiveTime(saleChannel.getAging());
                     channelEntity.setCarrierType(saleChannel.getCarrierType());
+                    channelEntity.setChannelType(saleChannel.getChannelType());
                     String channelId = channelEntity.getId();
                     //表示新增
                     if (StringUtils.isBlank(channelId)) {
