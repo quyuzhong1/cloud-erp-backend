@@ -440,4 +440,24 @@ public interface B2cOrderConverter {
     @Mapping(target = "combinationDeclareType", ignore = true)
     @Mapping(target = "childOrderId", ignore = true)
     LogisticsProductVO convertProductVOByEntity(SoB2cDetailEntity detail);
+
+    @Mappings({
+            @Mapping(target = "name", source = "receiverName"),
+//            @Mapping(target = "buyerName", source = "receiverName"),
+            @Mapping(target = "buyerName", ignore = true),
+//            @Mapping(target = "buyerNumber", source = "receiverTelNumber"),
+            @Mapping(target = "buyerNumber", ignore = true),
+            @Mapping(target = "phone", source = "receiverTelNumber"),
+            @Mapping(target = "countryCode", source = "country"),
+            @Mapping(target = "province", source = "provinceName"),
+            @Mapping(target = "city", source = "cityName"),
+            @Mapping(target = "zipcode", source = "postCode"),
+            @Mapping(target = "address1", source = "firstAddress"),
+            @Mapping(target = "address2", source = "secondAddress"),
+            @Mapping(target = "address3", source = "fullAddress"),
+            @Mapping(target = "district", source = "districtName"),
+            @Mapping(target = "email", ignore = true),
+            @Mapping(target = "taxNumber", ignore = true)
+    })
+    SoMultiChannelDTO.ReceiverInfo convertSoMultiChannelReceiver(SoMultiChannelEntity entity);
 }

@@ -28,6 +28,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -310,6 +311,22 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         return createOutboundReq;
     }
 
+    @Override
+    public SoMultiChannelDTO.ReceiverInfo handleRuleOrderSoMultiChannel(SoMultiChannelDTO.ReceiverInfo receiverInfo, Map<String, Object> map) {
+        log.warn("处理第三方仓订单，参数为=========={}", map);
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
+        if(Boolean.TRUE.equals(ruleMatchDTO.getApproveSuccess())){
+            //处理地址
+            this.handleAddressRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理电话
+            this.handlePhoneRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理邮编
+            this.handleZipCodeRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理收货人
+            this.handleReceiveRule(receiverInfo,ruleMatchDTO.getRuleContent());
+        }
+        return receiverInfo;
+    }
 
 
     /**
@@ -375,6 +392,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setProvince(null);
                         break;
                     case CUSTOM_REPLACE:
+                        if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && StringUtils.isNotBlank(addressHandleContent.getProvinceWaitReplaceText()) && receiverInfoVO.getProvince().equals(addressHandleContent.getProvinceWaitReplaceText())) {
+                            receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
+                        }
+                        break;
+                    case TRANSFER:
                         if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && StringUtils.isNotBlank(addressHandleContent.getProvinceWaitReplaceText()) && receiverInfoVO.getProvince().equals(addressHandleContent.getProvinceWaitReplaceText())) {
                             receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }

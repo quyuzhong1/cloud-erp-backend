@@ -2,6 +2,7 @@ package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -16,10 +17,13 @@ import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -55,7 +59,8 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
     private SoMultiChannelDetailService soMultiChannelDetailService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
-
+    @Resource
+    private CfgRuleOrderHandleService cfgRuleOrderHandleService;
     /**
      * 销售变更单同步金碟
      *
@@ -129,10 +134,6 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             throw new ServiceException("未找到销售订单【{}】信息", entity.getSoCode());
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
-        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(soId);
-        if (Objects.isNull(soB2cReceiverEntity)) {
-            throw new ServiceException("未找到销售订单【{}】收货人信息", entity.getSoCode());
-        }
         List<SoMultiChannelDetailEntity> detailList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("未找到多渠道订单【{}】明细信息", entity.getCode());
@@ -140,7 +141,6 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("id", entity.getId());
         resultMap.put("shopId", entity.getDeliveryShopId());
-//        resultMap.put("marketplaceId",entity.getDeliveryShopId());
         if (CharSequenceUtil.isBlank(entity.getDeliveryCode())) {
             throw new ServiceException("未找到多渠道订单【{}】发货单号", entity.getDeliveryCode());
         }
@@ -166,36 +166,40 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         resultMap.put("shippingSpeedCategory", channel.getCode());
         //配送方式
         resultMap.put("fulfillmentPolicy", entity.getShippingMethod());
+        //走订单处理规则
+        SoMultiChannelDTO.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertSoMultiChannelReceiver(entity);
+        Map<String, Object> map = this.getRuleOrderHandleMap(entity);
+        receiverInfo = cfgRuleOrderHandleService.handleRuleOrderSoMultiChannel(receiverInfo, map);
         //配送地址
         HashMap<String, Object> addressMap = new HashMap<>();
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getReceiverName())) {
+        if (CharSequenceUtil.isBlank(receiverInfo.getName())) {
             throw new ServiceException("收货人姓名不能为空");
         }
-        addressMap.put("name", soB2cReceiverEntity.getReceiverName());
-        if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFirstAddress())) {
-            addressMap.put("addressLine1", soB2cReceiverEntity.getFirstAddress());
-        } else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getSecondAddress())) {
-            addressMap.put("addressLine1", soB2cReceiverEntity.getSecondAddress());
-        } else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFullAddress())) {
-            addressMap.put("addressLine1", soB2cReceiverEntity.getFullAddress());
+        addressMap.put("name", receiverInfo.getName());
+        if (CharSequenceUtil.isNotBlank(receiverInfo.getAddress1())) {
+            addressMap.put("addressLine1", receiverInfo.getAddress1());
+        } else if (CharSequenceUtil.isNotBlank(receiverInfo.getAddress2())) {
+            addressMap.put("addressLine1", receiverInfo.getAddress2());
+        } else if (CharSequenceUtil.isNotBlank(receiverInfo.getAddress3())) {
+            addressMap.put("addressLine1", receiverInfo.getAddress3());
         }
-        addressMap.put("addressLine2", soB2cReceiverEntity.getSecondAddress());
-        addressMap.put("addressLine3", soB2cReceiverEntity.getFullAddress());
-        addressMap.put("city", soB2cReceiverEntity.getCityName());
-        addressMap.put("districtOrCounty", soB2cReceiverEntity.getDistrictName());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getProvinceName())) {
+        addressMap.put("addressLine2", receiverInfo.getAddress2());
+        addressMap.put("addressLine3", receiverInfo.getAddress3());
+        addressMap.put("city", receiverInfo.getCity());
+        addressMap.put("districtOrCounty", receiverInfo.getDistrict());
+        if (CharSequenceUtil.isBlank(receiverInfo.getProvince())) {
             throw new ServiceException("收货人州省不能为空");
         }
-        addressMap.put("stateOrRegion", soB2cReceiverEntity.getProvinceName());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getPostCode())) {
+        addressMap.put("stateOrRegion", receiverInfo.getProvince());
+        if (CharSequenceUtil.isBlank(receiverInfo.getZipCode())) {
             throw new ServiceException("收货人邮编不能为空");
         }
-        addressMap.put("postalCode", soB2cReceiverEntity.getPostCode());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getCountry())) {
+        addressMap.put("postalCode", receiverInfo.getZipCode());
+        if (CharSequenceUtil.isBlank(receiverInfo.getCountryCode())) {
             throw new ServiceException("收货人国家不能为空");
         }
-        addressMap.put("countryCode", soB2cReceiverEntity.getCountry());
-        addressMap.put("phone", soB2cReceiverEntity.getTelNumber());
+        addressMap.put("countryCode", receiverInfo.getCountryCode());
+        addressMap.put("phone", receiverInfo.getPhone());
         resultMap.put("destinationAddress", addressMap);
 
         List<HashMap<String, Object>> itemList = new ArrayList<>();
@@ -220,6 +224,23 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
 //        featureConstraintsMap.put("featureName", "BLANK_BOX");
 //        featureConstraintsMap.put("featureFulfillmentPolicy", "NotRequired");
 //        resultMap.put("featureConstraints", Collections.singletonList(featureConstraintsMap));
+        return resultMap;
+    }
+    private Map<String, Object> getRuleOrderHandleMap(SoMultiChannelEntity entity) {
+        Map<String, Object> resultMap = new HashMap<>(4);
+        resultMap.put("dictPlatform", entity.getDictPlatform());
+        resultMap.put("shop", entity.getShopId());
+        resultMap.put("destCountry", CharSequenceUtil.isEmpty(entity.getCountry()) ? "" : entity.getCountry());
+        resultMap.put("logisticsChannelId", CharSequenceUtil.isEmpty(entity.getLogisticsChannelId()) ? "" : entity.getLogisticsChannelId());
+
+        //现有规则解析必须包含明细信息
+        Map<String, Object> detailMap = new HashMap<>(4);
+        detailMap.put("dictPlatform", entity.getDictPlatform());
+        detailMap.put("shop", entity.getShopId());
+        detailMap.put("destCountry", CharSequenceUtil.isEmpty(entity.getCountry()) ? "" : entity.getCountry());
+        detailMap.put("logisticsChannelId", CharSequenceUtil.isEmpty(entity.getLogisticsChannelId()) ? "" : entity.getLogisticsChannelId());
+
+        resultMap.put("detailList", Arrays.asList(detailMap));
         return resultMap;
     }
 

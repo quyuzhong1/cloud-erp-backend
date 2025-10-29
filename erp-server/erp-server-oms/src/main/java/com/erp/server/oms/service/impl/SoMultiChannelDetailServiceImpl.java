@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.SoMultiChannelDetailMapper;
 import com.erp.server.oms.service.SkuMappingService;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,12 +69,12 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
 
         log.info("开始新增多渠道订单明细");
         boolean save = super.save(soMultiChannelDetailEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("多渠道订单明细保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单明细" , soMultiChannelDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单明细", soMultiChannelDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, soMultiChannelDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -81,35 +83,33 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(SoMultiChannelDetailDTO.UpdateDTO addOrUpdateDTO) {
         SoMultiChannelDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
-        SoMultiChannelDetailEntity soMultiChannelDetailEntity =  BeanMapperUtils.map(SoMultiChannelDetailEntity.class, addOrUpdateDTO);
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
+        SoMultiChannelDetailEntity soMultiChannelDetailEntity = BeanMapperUtils.map(SoMultiChannelDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(soMultiChannelDetailEntity);
         log.info("编辑 开始修改多渠道订单明细数据，id：【{}】", old.getId());
         boolean save = super.updateById(soMultiChannelDetailEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("多渠道订单明细保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
-            log.info("编辑 开始记录多渠道订单明细日志数据，id：【{}】", soMultiChannelDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelDetailEntity.getId(), "多渠道订单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soMultiChannelDetailEntity, null, soMultiChannelDetailEntity.getId(), msg);
+        log.info("编辑 开始记录多渠道订单明细日志数据，id：【{}】", soMultiChannelDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelDetailEntity.getId(), "多渠道订单明细");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, soMultiChannelDetailEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelDetailEntity.getMainId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
     public List<SoMultiChannelDetailEntity> addDetail(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailDTO.AddDTO> detailList) {
-        if(CollUtil.isEmpty(detailList)) {
+        if (CollUtil.isEmpty(detailList)) {
             return null;
         }
         List<String> skuIds = detailList.stream().map(SoMultiChannelDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -144,10 +144,18 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         baseMapper.delete(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().eq(SoMultiChannelDetailEntity::getMainId, id));
     }
 
+    @Override
+    public void updateDetail(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailDTO.UpdateDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        detailList.forEach(this::update);
+    }
+
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(SoMultiChannelDetailEntity soMultiChannelDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

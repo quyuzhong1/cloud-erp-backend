@@ -44,9 +44,20 @@ public interface SoMultiChannelConverter {
             @Mapping(target = "logisticsChannelName", source = "channelEntity.name"),
             @Mapping(target = "deliveryWarehouseId", source = "shopInfoEntity.warehouseId"),
             @Mapping(target = "deliveryWarehouseName", source = "shopInfoEntity.warehouseName"),
-            @Mapping(target = "shippingMethod", source = "dto.shippingMethod")
+            @Mapping(target = "shippingMethod", source = "dto.shippingMethod"),
+            @Mapping(target = "receiverId", source = "receiverEntity.id"),
+            @Mapping(target = "receiverName", source = "receiverEntity.receiverName"),
+            @Mapping(target = "country", source = "receiverEntity.country"),
+            @Mapping(target = "provinceName", source = "receiverEntity.provinceName"),
+            @Mapping(target = "cityName", source = "receiverEntity.cityName"),
+            @Mapping(target = "districtName", source = "receiverEntity.districtName"),
+            @Mapping(target = "postCode", source = "receiverEntity.postCode"),
+            @Mapping(target = "receiverTelNumber", source = "receiverEntity.receiverTelNumber"),
+            @Mapping(target = "firstAddress", source = "receiverEntity.firstAddress"),
+            @Mapping(target = "secondAddress", source = "receiverEntity.secondAddress"),
+            @Mapping(target = "fullAddress", source = "receiverEntity.fullAddress"),
     })
-    SoMultiChannelDTO.AddDTO soB2cToAddDTO(SoMultiChannelDTO.SaveDTO dto, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity);
+    SoMultiChannelDTO.AddDTO soB2cToAddDTO(SoMultiChannelDTO.SaveDTO dto, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity, SoB2cReceiverEntity receiverEntity);
     @Mappings({
             @Mapping(target = "mainId", ignore = true),
             @Mapping(target = "qty", source = "deliveryQty"),

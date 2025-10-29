@@ -1,8 +1,13 @@
 package com.erp.model.oms.dto;
 
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.ReceiverDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -468,6 +473,83 @@ public class SoMultiChannelDTO implements Serializable {
         */
         private String outstockStatus;
         private String outstockStatusName;
+
+
+        /**
+         * 收货人id
+         */
+        private String receiverId;
+        /**
+         * 收货人名称
+         */
+        @NotBlank(message = "收货人名称不能为空")
+        private String receiverName;
+        /**
+         * 国家二字码
+         */
+//        @NotBlank(message = "国家二字码不能为空")
+//        @Size(max = 2,message = "国家二字码最大长度不能超过2位")
+        private String country;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 州/省
+         */
+        @NotBlank(message = "州/省不能为空")
+//        @Size(max = 100,message = "州/省最大长度不能超过100位")
+        private String provinceName;
+
+        /**
+         * 城市
+         */
+//        @NotBlank(message = "城市不能为空")
+//        @Size(max = 100,message = "城市最大长度不能超过100位")
+        private String cityName;
+        /**
+         * 区
+         */
+//        @NotBlank(message = "区不能为空")
+//        @Size(max = 100,message = "区最大长度不能超过100位")
+        private String districtName;
+
+        /**
+         * 邮编
+         */
+        @NotBlank(message = "邮编不能为空")
+//        @Size(max = 10,message = "邮编最大长度不能超过10位")
+        private String postCode;
+
+        /**
+         * 收货人电话
+         */
+//        @NotBlank(message = "收货人电话不能为空")
+//        @Size(max = 11,message = "收货人电话最大长度不能超过11位")
+        private String telNumber;
+
+        /**
+         * 地址1
+         */
+//        @NotBlank(message = "地址1不能为空")
+//        @Size(max = 200,message = "地址1最大长度不能超过200位")
+        private String firstAddress;
+
+        /**
+         * 地址2
+         */
+//        @NotBlank(message = "地址2不能为空")
+//        @Size(max = 200,message = "地址2最大长度不能超过200位")
+        private String secondAddress;
+
+        /**
+         * 地址3
+         */
+//        @NotBlank(message = "地址3不能为空")
+//        @Size(max = 200,message = "地址3最大长度不能超过200位")
+        private String fullAddress;
+
         /**
          * 明细列表
          */
@@ -499,7 +581,12 @@ public class SoMultiChannelDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 明细列表
+         */
+        @NotEmpty(message = "明细列表不能为空")
+        @Valid
+        private List<SoMultiChannelDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -656,6 +743,77 @@ public class SoMultiChannelDTO implements Serializable {
         */
 //        @NotBlank(message = "订单备注不能为空")
         private String remark;
+
+        /**
+         * 收货人id
+         */
+        private String receiverId;
+        /**
+         * 收货人名称
+         */
+        @NotBlank(message = "收货人名称不能为空")
+        private String receiverName;
+        /**
+         * 国家二字码
+         */
+//        @NotBlank(message = "国家二字码不能为空")
+//        @Size(max = 2,message = "国家二字码最大长度不能超过2位")
+        private String country;
+
+        /**
+         * 州/省
+         */
+        @NotBlank(message = "州/省不能为空")
+//        @Size(max = 100,message = "州/省最大长度不能超过100位")
+        private String provinceName;
+
+        /**
+         * 城市
+         */
+//        @NotBlank(message = "城市不能为空")
+//        @Size(max = 100,message = "城市最大长度不能超过100位")
+        private String cityName;
+        /**
+         * 区
+         */
+//        @NotBlank(message = "区不能为空")
+//        @Size(max = 100,message = "区最大长度不能超过100位")
+        private String districtName;
+
+        /**
+         * 邮编
+         */
+        @NotBlank(message = "邮编不能为空")
+//        @Size(max = 10,message = "邮编最大长度不能超过10位")
+        private String postCode;
+
+        /**
+         * 收货人电话
+         */
+//        @NotBlank(message = "收货人电话不能为空")
+//        @Size(max = 11,message = "收货人电话最大长度不能超过11位")
+        private String receiverTelNumber;
+
+        /**
+         * 地址1
+         */
+//        @NotBlank(message = "地址1不能为空")
+//        @Size(max = 200,message = "地址1最大长度不能超过200位")
+        private String firstAddress;
+
+        /**
+         * 地址2
+         */
+//        @NotBlank(message = "地址2不能为空")
+//        @Size(max = 200,message = "地址2最大长度不能超过200位")
+        private String secondAddress;
+
+        /**
+         * 地址3
+         */
+//        @NotBlank(message = "地址3不能为空")
+//        @Size(max = 200,message = "地址3最大长度不能超过200位")
+        private String fullAddress;
     }
 
 
@@ -797,4 +955,119 @@ public class SoMultiChannelDTO implements Serializable {
         private String msg;
 
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ReceiverInfo implements ReceiverDTO {
+        /**
+         * 买家姓名
+         */
+        private String buyerName;
+        /**
+         * 买家电话
+         */
+        private String buyerNumber;
+        /**
+         * 收件人姓名
+         */
+        private String name;
+
+        /**
+         * 收件人联系方式
+         */
+        private String phone;
+
+        /**
+         * 收件人邮箱
+         */
+        private String email;
+
+        /**
+         * 收件人国家
+         */
+        private String countryCode;
+
+        /**
+         * 省
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 区域
+         */
+        private String district;
+
+        /**
+         * 邮编
+         */
+        private String zipcode;
+
+        /**
+         * 地址1
+         */
+        private String address1;
+
+        /**
+         * 地址2
+         */
+        private String address2;
+
+        /**
+         * 地址3
+         */
+        private String address3;
+
+        /**
+         * 收件人税号
+         */
+        private String taxNumber;
+
+        @Override
+        public String getAddressFirst() {
+            return address1;
+        }
+
+        @Override
+        public void setAddressFirst(String addressFirst) {
+            this.address1 = addressFirst;
+        }
+
+        @Override
+        public String getTelNumber() {
+            return phone;
+        }
+
+        @Override
+        public void setTelNumber(String telNumber) {
+            this.phone = telNumber;
+        }
+
+        @Override
+        public String getZipCode() {
+            return zipcode;
+        }
+
+        @Override
+        public void setZipCode(String zipCode) {
+            this.zipcode = zipCode;
+        }
+
+        @Override
+        public String getContact() {
+            return name;
+        }
+
+        @Override
+        public void setContact(String contact) {
+            this.name = contact;
+        }
+    }
+
 }

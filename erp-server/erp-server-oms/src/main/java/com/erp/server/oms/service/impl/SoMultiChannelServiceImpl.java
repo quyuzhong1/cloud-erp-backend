@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -37,6 +38,8 @@ import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
@@ -52,6 +55,8 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -144,6 +149,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -237,12 +244,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!save) {
             throw new ServiceException("多渠道订单主单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        // 修改明细数据（包含增删改）（如果有明细的话）
+        soMultiChannelDetailService.updateDetail(soMultiChannelEntity, addOrUpdateDTO.getDetailList());
         // 记录主单操作日志
         log.info("编辑 开始记录多渠道订单主单日志数据，单号：【{}】", soMultiChannelEntity.getDeliveryCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelEntity.getDeliveryCode(), "多渠道订单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        //此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -545,8 +552,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     @Override
-    public SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity) {
-        SoMultiChannelDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.soB2cToAddDTO(dto, shopInfoEntity, soB2cEntity, channelEntity);
+    public SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity, SoB2cReceiverEntity receiverEntity) {
+        SoMultiChannelDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.soB2cToAddDTO(dto, shopInfoEntity, soB2cEntity, channelEntity, receiverEntity);
         List<SoMultiChannelDTO.SoViewDTO> detailList1 = dto.getDetailList().stream().filter(e -> e.getSoId().equals(id)).collect(Collectors.toList());
         List<SoMultiChannelDetailDTO.AddDTO> detailList = SoMultiChannelConverter.INSTANCE.soB2cDetailToAddDTO(detailList1);
         addDTO.setDetailList(detailList);
@@ -1000,6 +1007,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setDictPlatformName(dictPlatformName);
         String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setDeliveryPlatformName(deliveryPlatformName);
+        if (CharSequenceUtil.isNotBlank(data.getCountry())){
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(data.getCountry()));
+            if (CollectionUtil.isNotEmpty(dictCountryEntities)){
+                data.setCountryName(dictCountryEntities.get(0).getNameCn());
+            }
+        }
     }
 
     /**
