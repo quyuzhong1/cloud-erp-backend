@@ -50,4 +50,11 @@ public interface AssetPurchaseOrderMapper extends BaseMapper<AssetPurchaseOrderE
     * @return
     */
     List<AssetPurchaseOrderDTO.TabListDTO> tabList(@Param("params") AssetPurchaseOrderDTO.PagingParamDTO searchParam);
+
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    List<AssetPurchaseOrderDTO.TabListDTO> otherTabList(@Param("params") AssetPurchaseOrderDTO.PagingParamDTO searchParam);
 }

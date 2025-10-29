@@ -14,9 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.plm.dto.AssetNoticeDetailDTO;
-import com.erp.model.plm.dto.AssetPurchaseOrderDetailDTO;
-import com.erp.model.plm.dto.AssetPurchaseOrderSupplierDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -26,10 +24,8 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.function.Function;
-import com.erp.model.plm.enums.AssetApproveStatusEnum;
-import com.erp.model.plm.enums.AssetPurchaseChangeOrderTypeEnum;
-import com.erp.model.plm.enums.AssetPurchaseOrderTypeEnum;
-import com.erp.model.plm.enums.MoldInfoTagEnum;
+
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -69,7 +65,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -267,27 +262,48 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderDTO.PagingParamDTO searchParam = new AssetPurchaseOrderDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AssetPurchaseOrderDTO.TabListDTO> returnList = new ArrayList<>();
+        //统计非审核状态数量
         List<AssetPurchaseOrderDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        //统计已生成和待生成状态数量
+        List<AssetPurchaseOrderDTO.TabListDTO> refPurchaseTabList = baseMapper.otherTabList(searchParam);
+        list.addAll(refPurchaseTabList);
 
+        // 获取状态列表（all最后统计）
+        List<String> statusList = AssetPurchaseOrderTabListEnum.getStatusList();
+        statusList.remove("all");
 
-        // 获取状态列表
-        List<String> statusList = AssetApproveStatusEnum.getStatusList();
+        // 设置状态名称
+        list.forEach(tabListDTO ->
+                tabListDTO.setTabFlagName(AssetPurchaseOrderTabListEnum.getName(tabListDTO.getTabFlag()))
+        );
 
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AssetPurchaseOrderDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        for (AssetPurchaseOrderDTO.TabListDTO tabListDTO : list) {
-            tabListDTO.setTabFlagName(AssetApproveStatusEnum.getName(tabListDTO.getTabFlag()));
-        }
-
-        statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
-                list.add(new AssetPurchaseOrderDTO.TabListDTO(status, AssetApproveStatusEnum.getName(status), 0));
+        // 补全缺失的状态（确保顺序与枚举一致）
+        List<AssetPurchaseOrderDTO.TabListDTO> finalList = new ArrayList<>();
+        statusList.forEach(status -> {
+            Optional<AssetPurchaseOrderDTO.TabListDTO> existingItem = list.stream()
+                    .filter(item -> item.getTabFlag().equals(status))
+                    .findFirst();
+            if (existingItem.isPresent()) {
+                finalList.add(existingItem.get()); // 已存在的状态直接添加
+            } else {
+                // 缺失的状态补0
+                finalList.add(new AssetPurchaseOrderDTO.TabListDTO(
+                        status,
+                        AssetNoticeTabListEnum.getName(status),
+                        0
+                ));
             }
         });
 
-        // 合计数量要放第一个
-        returnList.add(new AssetPurchaseOrderDTO.TabListDTO("all", AssetApproveStatusEnum.ALL.getName() ,list.stream().mapToInt(AssetPurchaseOrderDTO.TabListDTO::getCount).sum()));
-        returnList.addAll(list);
+        // 添加合计项（all）
+        returnList.add(new AssetPurchaseOrderDTO.TabListDTO(
+                "all",
+                AssetNoticeTabListEnum.ALL.getName(),
+                finalList.stream().mapToInt(AssetPurchaseOrderDTO.TabListDTO::getCount).sum()
+        ));
+
+        // 按枚举顺序添加所有状态
+        returnList.addAll(finalList);
 
         return returnList;
     }
@@ -683,7 +699,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
