@@ -349,24 +349,16 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         List<ListingInfoWithSkuMappingDTO> updateFnSkulist = this.checkAndSaveFnskuToListing(platformSkuNoList, channelId);
 
         if (CollectionUtils.isEmpty(updateFnSkulist)) {
-           throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_EXIST, String.join(",", platformSkuNoList));
+            return;
         }
 
         for (T addDTO : detailList) {
             if (CharSequenceUtil.isNotBlank(addDTO.getPlatformFnSku())) {
                 continue;
             }
-            for (ListingInfoWithSkuMappingDTO skuMappingDTO : updateFnSkulist) {
-                if (skuMappingDTO.getShopId().equalsIgnoreCase(channelId) &&
-                        skuMappingDTO.getPlatformSkuNo().equals(addDTO.getPlatformSku())) {
-                    addDTO.setPlatformFnSku(skuMappingDTO.getPlatformFnSku());
-                    break;
-                }
-            }
-            // 如果没有找到对应的FnSku，则抛出异常
-            if (CharSequenceUtil.isBlank(addDTO.getPlatformFnSku())) {
-                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_EXIST, addDTO.getPlatformSku());
-            }
+            updateFnSkulist.stream()
+                    .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equals(addDTO.getPlatformSku()))
+                    .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
         }
     }
 
