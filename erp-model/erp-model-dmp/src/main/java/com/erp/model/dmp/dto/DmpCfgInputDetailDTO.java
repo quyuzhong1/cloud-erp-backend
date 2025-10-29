@@ -2,12 +2,17 @@ package com.erp.model.dmp.dto;
 
 import java.time.LocalDateTime;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -479,5 +484,16 @@ public class DmpCfgInputDetailDTO implements Serializable {
          */
         private LocalDateTime nextExecTime;
 
+        public String getCheckAndDetailExtendJson() {
+            if (StringUtils.isBlank(this.detailExtendJson)){
+                return this.detailExtendJson;
+            }
+            try {
+                JSONUtil.parse(this.detailExtendJson);
+                return this.detailExtendJson;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("detailExtendJson不是合法的json格式");
+            }
+        }
     }
 }

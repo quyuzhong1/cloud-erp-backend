@@ -5,7 +5,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgEtlEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.server.dmp.inout.dto.request.DmpEtlCreateRequest;
+import com.erp.server.dmp.inout.dto.request.DmpEtlHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpEtlCreateFactory;
 import com.erp.server.dmp.query.DmpCfgEtlQueryHandler;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
@@ -49,6 +53,8 @@ public class DmpCfgEtlController extends BaseController {
 
     @Resource
     private DmpCfgEtlService dmpCfgEtlService;
+    @Resource
+    private DmpEtlCreateFactory dmpEtlCreateFactory;
 
     /**
     * 新增
@@ -274,7 +280,7 @@ public class DmpCfgEtlController extends BaseController {
             serviceClass = DmpCfgInputDetailService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INSERT, desc = "清洗调度生成任务")
-    public ApiResult<List<BatchResultDTO>> createTask(@RequestBody @Validated DmpCfgEtlDTO.DoTaskDTO dto) {
+    public ApiResult<List<BatchResultDTO>> doTask(@RequestBody @Validated DmpCfgEtlDTO.DoTaskDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
@@ -289,11 +295,23 @@ public class DmpCfgEtlController extends BaseController {
                 continue;
             }
             try {
-                // TODO
-                DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-//                dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
-//                dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-                result = new BatchResultDTO();
+                // RestCloud执行
+                boolean restCloudCanRun = Arrays.asList(DmpInputTaskTaskTypeEnum.NORMAL.getCode(), DmpInputTaskTaskTypeEnum.HISTORY.getCode()).contains(dto.getTaskType());
+                if (!restCloudCanRun){
+                    result = BatchResultDTO.fail(id, id, "清洗调度只支持普通任务和历史任务，当前任务类型：" + DmpInputTaskTaskTypeEnum.getName(dto.getTaskType()));
+                    resultDTOS.add(result);
+                    continue;
+                }
+                DmpEtlHotfixCreateRequest dmpRequest = new DmpEtlHotfixCreateRequest();
+                dmpRequest.setCfgEtlId(id);
+                dmpRequest.setStartTime(dto.getStartTime());
+                dmpRequest.setEndTime(dto.getEndTime());
+                dmpRequest.setSplitFlag(dto.isSplitFlag());
+                dmpRequest.setExecTimeout(dto.getExecTimeout());
+                dmpRequest.setNextExecTime(dto.getNextExecTime());
+                dmpRequest.setExtendJson(dto.getDetailExtendJson());
+                dmpEtlCreateFactory.createHotfixEtlTask(dmpRequest);
+                result = BatchResultDTO.success(id, id, "生成清洗任务成功");
             }catch (Exception e){
                 log.error("清洗调度生成任务失败",e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());

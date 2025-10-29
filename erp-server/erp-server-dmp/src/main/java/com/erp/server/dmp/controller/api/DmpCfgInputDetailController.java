@@ -1,37 +1,40 @@
 package com.erp.server.dmp.controller.api;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
-import com.erp.server.dmp.query.DmpCfgOutputDetailQueryHandler;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.server.dmp.query.DmpCfgOutputDetailQueryHandler;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgInputService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 
 /**
  * 拉取调度
@@ -47,6 +50,10 @@ public class DmpCfgInputDetailController extends BaseController {
 
     @Resource
     private DmpCfgInputDetailService dmpCfgInputDetailService;
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+    @Resource
+    private DmpInputCreateFactory dmpInputCreateFactory;
 
     /**
     * 新增
@@ -272,12 +279,18 @@ public class DmpCfgInputDetailController extends BaseController {
             serviceClass = DmpCfgInputDetailService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INSERT, desc = "拉取调度生成任务")
-    public ApiResult<List<BatchResultDTO>> createTask(@RequestBody @Validated DmpCfgInputDetailDTO.DoTaskDTO dto) {
+    public ApiResult<List<BatchResultDTO>> doTask(@RequestBody @Validated DmpCfgInputDetailDTO.DoTaskDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
         List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getId, ids).list();
         Map<String, DmpCfgInputDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(DmpCfgInputDetailEntity::getId, w -> w));
+        List<String> mainIds = list.stream().map(DmpCfgInputDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        Map<String, DmpCfgInputEntity> mainIdEntityMap = new HashMap<>();
+        if (CollectionUtil.isNotEmpty(mainIds)){
+            List<DmpCfgInputEntity> mainList = dmpCfgInputService.lambdaQuery().in(DmpCfgInputEntity::getId, mainIds).list();
+            mainIdEntityMap = mainList.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, w -> w));
+        }
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             DmpCfgInputDetailEntity entity = idEntityMap.get(id);
@@ -286,12 +299,31 @@ public class DmpCfgInputDetailController extends BaseController {
                 resultDTOS.add(result);
                 continue;
             }
+            DmpCfgInputEntity dmpCfgInputEntity = mainIdEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(dmpCfgInputEntity)) {
+                result = BatchResultDTO.fail(id, id, "拉取调度配置不存在, 生成拉取任务失败");
+                resultDTOS.add(result);
+                continue;
+            }
             try {
-                // TODO
-                DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-//                dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
-//                dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-                result = new BatchResultDTO();
+                if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())){
+                    // 中台执行
+                    DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = buildDmpInputHotfixCreateRequest(dto, dmpCfgInputEntity, entity);
+                    dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+                } else if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem())){
+                    // RestCloud执行
+                    boolean restCloudCanRun = Arrays.asList(DmpInputTaskTaskTypeEnum.NORMAL.getCode(), DmpInputTaskTaskTypeEnum.HISTORY.getCode()).contains(dto.getTaskType());
+                    if (!restCloudCanRun){
+                        result = BatchResultDTO.fail(id, id, "RestCloud执行系统只支持普通任务和历史任务，当前任务类型：" + DmpInputTaskTaskTypeEnum.getName(dto.getTaskType()));
+                        resultDTOS.add(result);
+                        continue;
+                    }
+                    DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = buildDmpInputHotfixCreateRequest(dto, dmpCfgInputEntity, entity);
+                    dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
+                } else {
+                    ServiceException.runError("不支持的执行系统类型：" + dmpCfgInputEntity.getExecSystem());
+                }
+                result = BatchResultDTO.success(id, id, "生成拉取任务成功");
             }catch (Exception e){
                 log.error("拉取调度生成任务失败",e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
@@ -299,5 +331,21 @@ public class DmpCfgInputDetailController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    private static DmpInputHotfixCreateRequest buildDmpInputHotfixCreateRequest(DmpCfgInputDetailDTO.DoTaskDTO dto,
+                                                                                DmpCfgInputEntity dmpCfgInputEntity,
+                                                                                DmpCfgInputDetailEntity entity) {
+        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        dmpInputHotfixCreateRequest.setCfgInputId(dmpCfgInputEntity.getId());
+        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(entity.getId()));
+        dmpInputHotfixCreateRequest.setTaskType(dto.getTaskType());
+        dmpInputHotfixCreateRequest.setDetailExtendJson(dto.getCheckAndDetailExtendJson());
+        dmpInputHotfixCreateRequest.setStartTime(dto.getStartTime());
+        dmpInputHotfixCreateRequest.setEndTime(dto.getEndTime());
+        dmpInputHotfixCreateRequest.setExecTimeout(null == entity.getExecTimeout() ? dto.getExecTimeout() : entity.getExecTimeout());
+        dmpInputHotfixCreateRequest.setSplitFlag(dto.isSplitFlag());
+        dmpInputHotfixCreateRequest.setNextExecTime(dto.getNextExecTime());
+        return dmpInputHotfixCreateRequest;
     }
 }

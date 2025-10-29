@@ -2,6 +2,7 @@ package com.erp.model.dmp.dto;
 
 import java.time.LocalDateTime;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -15,6 +16,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 /**
@@ -409,8 +412,8 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         private String detailExtendJson;
 
         /**
-         * 任务类型:
-         * 来源:/dmp/common/enumDropDown?type=DmpInputTaskTaskType
+         * 任务类型:默认: normal 正常任务
+         * 来源:/dmp/common/enumDropDown?type=DmpOutputTaskTaskType
          */
         private String taskType;
 
@@ -419,5 +422,16 @@ public class DmpCfgOutputDetailDTO implements Serializable {
          */
         private LocalDateTime nextExecTime;
 
+        public String getCheckAndDetailExtendJson() {
+            if (StringUtils.isBlank(this.detailExtendJson)){
+                return this.detailExtendJson;
+            }
+            try {
+                JSONUtil.parse(this.detailExtendJson);
+                return this.detailExtendJson;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("detailExtendJson不是合法的json格式");
+            }
+        }
     }
 }
