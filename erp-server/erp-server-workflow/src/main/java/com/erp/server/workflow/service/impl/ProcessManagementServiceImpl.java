@@ -439,6 +439,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
+    /**
+     * 校验创建审核人是否一致
+     */
     private void checkApproveUserSame (Map<String,Object> variablesMap) {
         //创建人
         String createUserId = (String) variablesMap.get("createUserId");
@@ -462,7 +465,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
             //未启动流程需要判断创建人和当前登陆人是否一致
-            checkApproveUserSame(dto.getVariablesMap());
+            //checkApproveUserSame(dto.getVariablesMap());
 
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
@@ -1154,12 +1157,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
         }
 
-        //审核人不能和创建人一样
-        String createUserId = "" + execution.getVariable("createUserId");
-        userList.stream().filter(obj -> CharSequenceUtil.equals(createUserId,obj.getUserId())).findFirst().ifPresent(obj -> {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,obj.getUserName());
-        });
-
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
         saveTaskManagementEntities(task, processInstanceId, activityId, processStartTime, propertiesDTO, executionId, activityName, candidateUsers, userMap,execution.getVariables());
     }
@@ -1586,14 +1583,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     public void completeTaskHandle(DelegateTask taskDelegate) {
         log.debug("completeTaskHandle finish ");
-        // 审批任务填充审批信息
+        /*// 审批任务填充审批信息
         DelegateExecution execution = taskDelegate.getExecution();
         //审核人不能和创建人一样
         String createUserId = "" + execution.getVariable("createUserId");
         if (CharSequenceUtil.equals(createUserId,taskDelegate.getAssignee())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
             throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
-        }
+        }*/
     }
 
     /**

@@ -68,10 +68,9 @@
             asp.create_time,
             asp.create_user_name
         FROM asset_stocktaking_plan asp
-        WHERE asp.is_deleted = false
-        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
-            AND ${params.sqlMap.default}
-        </if>
+        WHERE
+        ${params.sqlMap.default}
+        AND asp.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -112,20 +111,19 @@
             asp.create_time,
             asp.create_user_name
         FROM asset_stocktaking_plan asp
-        WHERE asp.is_deleted = false
-        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
-            AND ${params.sqlMap.default}
-        </if>
-        <!--权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
+        WHERE
+        ${params.sqlMap.default}
+        AND asp.is_deleted = false
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size() > 0">
             AND asp.id IN
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY asp.create_time DESC
     </select>

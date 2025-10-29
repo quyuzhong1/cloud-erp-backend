@@ -8,6 +8,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
+import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
@@ -35,6 +36,8 @@ public class ExportDmpFeignController {
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
     @Resource
     private AfterSaleService afterSaleService;
+    @Resource
+    private AdsPushTaskService adsPushTaskService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -72,5 +75,11 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
     public PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
         return afterSaleService.exportList(dto);
+    }
+    
+    @PostMapping("/exportRestcloudPushTask")
+    @WebAdvanceQuery(handler = AdsPushTaskQueryHandler.class)
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportRestcloudPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        return adsPushTaskService.paging(dto);
     }
 }

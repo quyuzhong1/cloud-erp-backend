@@ -1,6 +1,7 @@
 package com.erp.model.sys.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +88,35 @@ public class DictBasicAllDTO implements Serializable {
         */
         private String typeName;
 
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 
@@ -100,6 +130,57 @@ public class DictBasicAllDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
+         * tab=all为全部，able为启用，disable为停用
+         */
+        private String tabFlag;
+        
+        /**
+         * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
+         * tab=all为全部，able为启用，disable为停用
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count = 0;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TypeRequestDTO {
+    	/**
+         * 系统，取选择系统
+         */
+         @NotBlank(message = "系统不能为空")
+         private String systemCode;
+
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TypeResponseDTO {
+        /**
+         * 类型
+         * tab=all为全部，able为启用，disable为停用
+         */
+        private String type;
+        
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
+    }
+    
     /**
      * 列表参数
      */
@@ -180,7 +261,7 @@ public class DictBasicAllDTO implements Serializable {
     public static class CommonDTO {
 
     	/**
-         * systemCode 系统
+         * systemCode 系统	http://172.16.100.11:3002/project/36/interface/api/33222 type=SystemCode
          */
          @NotBlank(message = "systemCode 使用值不能为空")
          @Size(max = 200,message = "systemCode 使用值最大长度不能超过200位")
