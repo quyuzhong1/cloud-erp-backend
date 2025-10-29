@@ -275,6 +275,16 @@ public class DmpCfgOutputDTO implements Serializable {
         private String inputConvertId;
 
         /**
+         * 外部系统接口转换类
+         */
+        private String inputConvertClass;
+
+        /**
+         * 外部系统接口转换类型名称
+         */
+        private String inputConvertType;
+
+        /**
          * 输入类型：api=接口拉取,mq=MQ订阅,db=DB直连
          */
         private String type;
@@ -283,6 +293,11 @@ public class DmpCfgOutputDTO implements Serializable {
          * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
          */
         private String typeId;
+
+        /**
+         * 输入类型名称
+         */
+        private String typeName;
 
         /**
          * 是否禁用

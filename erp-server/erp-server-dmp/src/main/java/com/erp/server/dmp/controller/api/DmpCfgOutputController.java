@@ -253,6 +253,4 @@ public class DmpCfgOutputController extends BaseController {
         dmpCfgOutputService.exportList(dto, response);
         return success(true);
     }
-
-
 }
