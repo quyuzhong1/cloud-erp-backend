@@ -43,8 +43,8 @@ public class AssetPurchaseOrderEntity extends BaseEntity<AssetPurchaseOrderEntit
     /**
     * 审核时间
     */
-    @TableField("approve_user_time")
-    private LocalDateTime approveUserTime;
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
     /**
     * 单据状态
     */
@@ -138,7 +138,7 @@ public class AssetPurchaseOrderEntity extends BaseEntity<AssetPurchaseOrderEntit
 
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
-    public static final String APPROVE_USER_TIME = "approve_user_time";
+    public static final String APPROVE_TIME = "approve_time";
 
     public static final String APPROVE_STATUS = "approve_status";
 

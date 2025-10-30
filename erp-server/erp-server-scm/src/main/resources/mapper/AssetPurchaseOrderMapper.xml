@@ -72,7 +72,7 @@
             apod.remark as remark,
             apo.approve_user_id as approveUserId,
             apo.approve_user_name as approveUserName,
-            apo.approve_user_time as approveUserTime,
+            apo.approve_time as approveTime,
             apo.purchase_user_id as purchaseUserId,
             apo.purchase_user_name as purchaseUserName,
             apo.create_user_id as createUserId,
