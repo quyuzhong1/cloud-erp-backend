@@ -203,7 +203,7 @@ public class ImlServiceTest {
     public void createInboundBill() {
         ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
                 .needCustomerAudit("N")
-                .platformOrderNo("FHD251028000001")
+                .platformOrderNo("FHD251029000001")
                 .bizType("TOC")
                 .destWarehouseCode("RUS2")
 //                .customsType("SEPARATE_TAX")

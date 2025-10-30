@@ -32,7 +32,9 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,15 +73,26 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(imlInboundRespImlBaseResp.getData().getOrderNo());
     }
 
+    public static void main(String[] args) {
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+        String timeStr = now.format(formatter);
+        System.out.println(timeStr);
+    }
+
     private ImlCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
 
         if(StringUtils.isBlank(createInboundReq.getFileBase64())){
             throw new ServiceException("入库单附件不能为空");
         }
-
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+        String timeStr = now.format(formatter);
+        String referenceNo = createInboundReq.getReferenceNo() +"-" + timeStr;
         ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
                 .needCustomerAudit("N")
-                .platformOrderNo(createInboundReq.getReferenceNo())
+                .platformOrderNo(referenceNo)
                 .bizType("TOC")
                 .customsType(createInboundReq.getDeclareType().equals("Y")?"SEPARATE_TAX":createInboundReq.getDeclareType().equals("N")?"NO_TAX":"")
                 .destWarehouseCode(createInboundReq.getWarehouseCode())
@@ -148,7 +161,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             boxListDTO.setBoxLength(firstItem.getBoxLength());
             boxListDTO.setBoxWidth(firstItem.getBoxWidth());
             boxListDTO.setBoxHeight(firstItem.getBoxHeight());
-            boxListDTO.setBoxNo(createInboundReq.getReferenceNo() + "-" + boxNo);
+            boxListDTO.setBoxNo(referenceNo + "-" + boxNo);
             List<ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO> skuVosDTOS = new ArrayList<>();
             for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
                 ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO skuVosDTO = new ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO();
