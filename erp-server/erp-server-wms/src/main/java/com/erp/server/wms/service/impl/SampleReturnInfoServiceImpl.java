@@ -33,10 +33,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
-import com.erp.model.wms.entity.SampleReturnDetailEntity;
-import com.erp.model.wms.entity.SampleReturnInfoEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1305,9 +1302,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .collect(Collectors.toList());
 
         // 一次性批量查询所有台账
+
+        // 一次性批量查询所有台账（不限定 useUserId）
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getReturnUserId());
-        searchDTO.setUseUserId(entity.getReturnUserId()); // 归还人的使用方就是自己
         searchDTO.setSkuIds(skuIds);
         searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
 
@@ -1315,13 +1313,59 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         // 构建 skuId -> ledgerId 的映射
         Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+
+        // 构建 userId-useUserId-skuId -> ledgerId 的映射
+        Map<String, String> ledgerKeyMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
-            skuIdToLedgerIdMap = ledgerList.stream()
+            for (SampleLedgerDTO.SkuAvailableQtyDTO ledger : ledgerList) {
+                String key = entity.getReturnUserId() + "-" + ledger.getUseUserId() + "-" + ledger.getSkuId();
+                ledgerKeyMap.put(key, ledger.getSampleLedgerId());
+            }
+        }
+
+        // 批量查询借用单明细：收集所有 sourceDetailId
+        List<String> sourceDetailIds = detailList.stream()
+                .map(SampleReturnDetailEntity::getSourceDetailId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (CollUtil.isEmpty(sourceDetailIds)) {
+            log.warn("归还单明细中没有来源明细ID，无法查询使用方信息，单据编号：{}", entity.getCode());
+            throw new ServiceException("归还单明细中没有来源明细ID，无法审核");
+        }
+
+        // 一次性批量查询所有借用单明细，构建 sourceDetailId -> borrowDetail 的映射
+        List<SampleBorrowDetailEntity> borrowDetailList = sampleBorrowDetailService.listByIds(sourceDetailIds);
+        Map<String, SampleBorrowDetailEntity> borrowDetailMap = new HashMap<>();
+        List<String> borrowLedgerIds = new ArrayList<>();
+        if (CollUtil.isNotEmpty(borrowDetailList)) {
+            borrowDetailMap = borrowDetailList.stream()
                     .collect(Collectors.toMap(
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            SampleBorrowDetailEntity::getId,
+                            detail -> detail,
                             (existing, replacement) -> existing
                     ));
+            // 收集所有借用单明细中的台账ID
+            borrowLedgerIds = borrowDetailList.stream()
+                    .map(SampleBorrowDetailEntity::getSampleLedgerId)
+                    .filter(StrUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        // 批量查询这些台账信息，构建 ledgerId -> useUserId 的映射
+        Map<String, String> ledgerIdToUseUserIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(borrowLedgerIds)) {
+            List<SampleLedgerEntity> borrowLedgerList = sampleLedgerService.listByIds(borrowLedgerIds);
+            if (CollUtil.isNotEmpty(borrowLedgerList)) {
+                ledgerIdToUseUserIdMap = borrowLedgerList.stream()
+                        .collect(Collectors.toMap(
+                                SampleLedgerEntity::getId,
+                                ledger -> StrUtil.isNotBlank(ledger.getUseUserId()) ? ledger.getUseUserId() : "",
+                                (existing, replacement) -> existing
+                        ));
+            }
         }
 
         // 收集需要校验的台账ID和数量
@@ -1330,7 +1374,26 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         List<String> skuNos = new ArrayList<>();
 
         for (SampleReturnDetailEntity detail : detailList) {
-            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            // 从借用单明细中获取台账信息
+            SampleBorrowDetailEntity borrowDetail = borrowDetailMap.get(detail.getSourceDetailId());
+            if (borrowDetail == null) {
+                log.warn("未找到借用单明细，sourceDetailId：{}，SKU：{}，单据编号：{}",
+                    detail.getSourceDetailId(), detail.getSkuNo(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的借用单明细不存在，无法审核", detail.getSkuNo()));
+            }
+
+            // 从台账ID中获取使用方ID
+            String useUserId = ledgerIdToUseUserIdMap.get(borrowDetail.getSampleLedgerId());
+            if (StrUtil.isBlank(useUserId)) {
+                log.warn("未找到台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}",
+                    borrowDetail.getSampleLedgerId(), detail.getSkuNo(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的台账使用方信息不存在，无法审核", detail.getSkuNo()));
+            }
+
+            // 拼接 key 从 map 中获取台账ID
+            String key = entity.getReturnUserId() + "-" + useUserId + "-" + detail.getSkuId();
+            String ledgerId = ledgerKeyMap.get(key);
+
             if (StrUtil.isNotBlank(ledgerId)) {
                 sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getReturnQty()); // 归还人减少库存
@@ -1338,6 +1401,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             } else {
                 log.warn("未找到归还人台账，SKU：{}，归还人：{}，单据编号：{}",
                     detail.getSkuNo(), entity.getReturnUserName(), entity.getCode());
+                log.warn("未找到归还人台账，SKU：{}，归还人：{}，使用方ID：{}，单据编号：{}",
+                    detail.getSkuNo(), entity.getReturnUserName(), useUserId, entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的归还人台账不存在，无法审核", detail.getSkuNo()));
             }
         }
