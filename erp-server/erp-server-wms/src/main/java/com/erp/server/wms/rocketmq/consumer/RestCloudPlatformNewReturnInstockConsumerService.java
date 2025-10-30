@@ -149,13 +149,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 		}
 
-		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
-		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
-			throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
-		}
 		SoB2cEntity soB2cEntity = null;
 		SoOutstockEntity soOutstock = null;
-		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
 		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
 			ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 			if(dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)){
@@ -172,6 +167,27 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
 			}
 		}
+		WarehouseEntity warehouseEntity = new WarehouseEntity();
+		//艾姆勒没有仓库，拿订单的仓库
+		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())){
+			if(Objects.nonNull(soB2cEntity)){
+				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
+			}
+			List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
+			if(CollectionUtils.isNotEmpty(soB2cDetailEntityList)){
+				String warehouseId = soB2cDetailEntityList.get(0).getWarehouseId();
+				if(StringUtils.isNotBlank(warehouseId)){
+					warehouseEntity = warehouseService.getById(warehouseId);
+				}
+			}
+		}else{
+			OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
+			if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
+				throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+			}
+			warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
+		}
+
 		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
 		if(CollectionUtils.isEmpty(detailEntityList)){
@@ -263,8 +279,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	private SoReturnInstockEntity buildSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoOutstockEntity soOutstock){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
-		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
-		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+		}
 		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
