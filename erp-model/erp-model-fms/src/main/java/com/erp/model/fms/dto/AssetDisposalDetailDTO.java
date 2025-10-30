@@ -47,11 +47,6 @@ public class AssetDisposalDetailDTO implements Serializable {
         private String sourceCode;
 
         /**
-        * 来源明细ID
-        */
-        private String sourceDetailId;
-
-        /**
         * 主表ID
         */
         private String mainId;
@@ -152,11 +147,6 @@ public class AssetDisposalDetailDTO implements Serializable {
         @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
 
-        /**
-        * 来源明细ID
-        */
-        @NotBlank(message = "来源明细ID不能为空")
-        private String sourceDetailId;
 
         /**
         * 主表ID
