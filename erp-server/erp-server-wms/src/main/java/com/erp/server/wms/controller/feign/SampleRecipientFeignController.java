@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.app;
+package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -14,8 +14,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SampleRecipientDTO;
+import com.erp.model.wms.entity.SampleRecipientDetailEntity;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.server.wms.query.SampleRecipientQueryHandler;
+import com.erp.server.wms.service.SampleRecipientDetailService;
 import com.erp.server.wms.service.SampleRecipientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -35,11 +37,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @LogSystemModule("样品领用单app端")
-@RequestMapping("/app/sampleRecipient")
-public class SampleRecipientAppController extends BaseController {
+@RequestMapping("/feign/sampleRecipient")
+public class SampleRecipientFeignController extends BaseController {
 
     @Resource
     private SampleRecipientService sampleRecipientService;
+
+    @Resource
+    private SampleRecipientDetailService sampleRecipientDetailService;
 
     /**
      * 新增
@@ -384,8 +389,23 @@ public class SampleRecipientAppController extends BaseController {
             menuCode = "wms:sampleRecipient:finishRecipient",
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单app端结束领用")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "样品领用单app端结束领用")
     public ApiResult<List<BatchResultDTO>> batchFinishRecipient(@RequestBody @Validated SampleRecipientDTO.FinishRecipientDTO dto) {
+        // 前端传入的是主表ID，需要先查询明细ID
+        List<String> mainIds = dto.getIds();
+        List<String> detailIds = new ArrayList<>();
+        if (!mainIds.isEmpty()) {
+            detailIds = sampleRecipientDetailService.lambdaQuery()
+                    .in(SampleRecipientDetailEntity::getMainId, mainIds)
+                    .eq(SampleRecipientDetailEntity::getIsDeleted, false)
+                    .list()
+                    .stream()
+                    .map(SampleRecipientDetailEntity::getId)
+                    .collect(Collectors.toList());
+        }
+        
+        // 将明细ID设置到dto中
+        dto.setIds(detailIds);
         List<BatchResultDTO> resultDTOS = sampleRecipientService.finishRecipient(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

@@ -270,8 +270,5 @@ public class TongYouCreateOrderRequest {
         @NotNull(message = "申报重量（kg）(单件重量)不能为空")
         private Number weight;
 
-        //产品链接
-        private String url;
-
     }
 }

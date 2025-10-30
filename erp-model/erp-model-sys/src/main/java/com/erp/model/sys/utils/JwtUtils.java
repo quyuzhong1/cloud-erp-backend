@@ -28,10 +28,10 @@ public class JwtUtils {
     /**
      * 私钥加密token
      *
-     * @param
+     * @param info 用户信息
+     * @param secret 密钥
      * @param expireMinutes 过期时间，单位秒
-     * @return
-     * @throws Exception
+     * @return JWT Token
      */
     public static String generateToken(SysUserDTO info, String secret, Long expireMinutes) {
         Date nowDate = new Date();
@@ -39,6 +39,35 @@ public class JwtUtils {
         claimsMap.put("uid", info.getUid());
         claimsMap.put("userName", info.getUserName());
         claimsMap.put(SecurityConstants.USER_KEY, info.getToken());
+        //过期时间
+        Date expireDate = new Date(nowDate.getTime() + expireMinutes * 1000);
+        SecretKey key = generateKey(secret);
+        return Jwts.builder()
+                //作为什么用户的唯一标志
+                .setSubject(info.getUid() + "")
+                .setClaims(claimsMap)
+                .setIssuedAt(nowDate)
+                .setExpiration(expireDate)
+                .signWith(key)
+                .compact();
+    }
+
+    /**
+     * 私钥加密token（带权限路径列表）
+     *
+     * @param info 用户信息
+     * @param secret 密钥
+     * @param expireMinutes 过期时间，单位秒
+     * @param pathList 权限路径列表
+     * @return JWT Token
+     */
+    public static String generateToken(SysUserDTO info, String secret, Long expireMinutes, String[] pathList) {
+        Date nowDate = new Date();
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("uid", info.getUid());
+        claimsMap.put("userName", info.getUserName());
+        claimsMap.put(SecurityConstants.USER_KEY, info.getToken());
+        claimsMap.put("pathList", pathList);
         //过期时间
         Date expireDate = new Date(nowDate.getTime() + expireMinutes * 1000);
         SecretKey key = generateKey(secret);
@@ -92,6 +121,32 @@ public class JwtUtils {
      */
     public static String getValue(Claims claims, String key) {
         return ConvertUtil.toStr(claims.get(key), "");
+    }
+
+    /**
+     * 从JWT Token中获取权限路径列表
+     *
+     * @param token JWT Token
+     * @param secret 密钥
+     * @return 权限路径列表
+     */
+    public static String[] getPathList(String token, String secret) {
+        try {
+            Claims claims = parseToken(token, secret);
+            Object pathListObj = claims.get("pathList");
+            if (pathListObj != null) {
+                if (pathListObj instanceof String[]) {
+                    return (String[]) pathListObj;
+                } else if (pathListObj instanceof java.util.List) {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<String> list = (java.util.List<String>) pathListObj;
+                    return list.toArray(new String[0]);
+                }
+            }
+        } catch (Exception e) {
+            // 解析失败，返回空数组
+        }
+        return new String[0];
     }
 
 

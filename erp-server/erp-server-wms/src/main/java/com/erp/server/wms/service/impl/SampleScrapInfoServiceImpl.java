@@ -5,9 +5,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -70,6 +72,7 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
@@ -102,6 +105,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     @Resource
     private SampleLedgerService sampleLedgerService;
 
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
@@ -123,6 +129,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         handleData(sampleScrapInfoEntity);
 
         log.info("开始新增样品报废单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品报废单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPZF);
         sampleScrapInfoEntity.setCode(code);
@@ -421,7 +433,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<SampleScrapInfoDTO.TabListDTO> list = new ArrayList<>();
         list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
         list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
-        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
+        list.add(new SampleScrapInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "已审核" , map.get(ApproveStatusEnum.APPROVE.getCode())));
         return list;
     }
 
@@ -499,6 +511,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -541,6 +556,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
         
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -699,7 +717,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity sampleScrapInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品报废单数据"));
 
         // 将实体映射为ViewDTO对象
-        SampleScrapInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleScrapInfoDTO.ViewDTO.class, sampleScrapInfoEntity);
+        SampleScrapInfoDTO.ViewDTO data = new SampleScrapInfoDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleScrapInfoEntity, data);
         data.setApproveStatus(sampleScrapInfoEntity.getApproveStatus().getStatus());
 
         // 填充额外展示所需的数据
@@ -741,6 +760,33 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
+        
+        //最新审核人：如果approveUserId或approveUserName为空则去查询
+        if (StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) {
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_SCRAP_INFO.getCode(), data.getId()));
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+            if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveId = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
+                        .collect(Collectors.joining(","));
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
+                        data.setApproveUserId(curApproveId);
+                    }
+                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
+        }
+        
         return data;
     }
 
@@ -859,10 +905,26 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
-            //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+            //最新审核人：如果approveUserId或approveUserName为空则去查询并填充
+            if ((StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) 
+                && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveId = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
+                        .collect(Collectors.joining(","));
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
+                        data.setApproveUserId(curApproveId);
+                    }
+                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
             }
         }
     }
@@ -1241,6 +1303,30 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品报废单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleScrapInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品报废单明细
+        List<SampleScrapDetailEntity> detailList = sampleScrapDetailService.list(
+            new LambdaQueryWrapper<SampleScrapDetailEntity>()
+                .eq(SampleScrapDetailEntity::getMainId, entity.getId())
+        );
+        
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品报废单",
+            detailList,
+            approveType,
+            sampleLedgerService::getLedgerQtyMap
+        );
     }
 
 }
