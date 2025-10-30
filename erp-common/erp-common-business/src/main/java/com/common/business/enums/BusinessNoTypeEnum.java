@@ -142,7 +142,7 @@ public enum BusinessNoTypeEnum {
 
     CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
-    CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPL),
+    CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),
     CODE_MPOCC(113 ,"MPOCC","资产采购变更单",BusinessNoConstant.MPOCC)
     ;
 
