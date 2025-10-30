@@ -50,4 +50,9 @@ public class AssetDisposalApproveHandler extends AbstractApproveHandler {
         approveOne.setVariablesMap(assetDisposalService.getVariablesMap(assetDisposalEntity));
         return assetDisposalService.approveEnd(approveOne,assetDisposalEntity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }
