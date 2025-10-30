@@ -2,6 +2,7 @@ package com.erp.server.scm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.scm.enums.AssetPurchaseOrderTabListEnum;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,15 +20,17 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
         if("apo.tab".equals(field)){
             String status = value.toString();
             if("waitSubmit".equals(status)){
-                super.buildDefaultDTO("apo.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            }else if ("toBeApprove".equals(status)){
-                super.buildDefaultDTO("apo.approve_status",ApproveStatusEnum.APPROVE_ING.getStatus());
-            }else if ("toBeCreate".equals(status)){
-                super.buildDefaultDTO("apo.approve_status",ApproveStatusEnum.APPROVE.getStatus());
-            }else if ("created".equals(status)){
-                super.buildDefaultDTO("apo.approve_status",ApproveStatusEnum.APPROVE.getStatus());
+                super.buildDefaultDTO("apo.approve_status", AssetPurchaseOrderTabListEnum.WAIT_SUBMIT.getStatus());
+            }else if ("approveIng".equals(status)){
+                super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.APPROVE_ING.getStatus());
+            }else if ("waitReceive".equals(status)){
+                super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.WAIT_RECEIVE.getStatus());
+            }else if ("allReceive".equals(status)){
+                super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.ALL_RECEIVE.getStatus());
+            }else if ("close".equals(status)){
+                super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.CLOSE.getStatus());
             }else if ("reject".equals(status)){
-                super.buildDefaultDTO("apo.approve_status",ApproveStatusEnum.REJECT.getStatus());
+                super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.REJECT.getStatus());
             }else {
                 return this.getQueryAllSql();
             }
