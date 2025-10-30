@@ -2337,14 +2337,29 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     printDTO.setShopName(shopInfo.getName());
                 }
             }else if (Objects.nonNull(requisitionApplication)  && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
-                WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
-                if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
-                    DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
-                    printDTO.setCountryId(warehouseEntity.getCountry());
-                    if (Objects.nonNull(country)){
-                        printDTO.setCountryName(country.getNameCn());
+                String countryId = "";
+                String countryName = "";
+                //优先取三方仓关联的仓库的国家
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplication.getChannelId());
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    countryId = overseasProviderWarehouseEntity.getCountry() ;
+                    countryName = overseasProviderWarehouseEntity.getCountryName() ;
+                }
+
+                if(StringUtils.isBlank(countryName)){
+                    WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
+                    if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
+                        countryId = warehouseEntity.getCountry();
+                        DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+               
+                        if (Objects.nonNull(country)){
+                            countryName = country.getNameCn();
+
+                        }
                     }
                 }
+                printDTO.setCountryId(countryId);
+                printDTO.setCountryName(countryName);
             }
         }
         return printDTO;
