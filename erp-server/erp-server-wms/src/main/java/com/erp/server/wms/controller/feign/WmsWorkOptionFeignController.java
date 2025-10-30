@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ClientTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -78,6 +79,25 @@ public class WmsWorkOptionFeignController {
 
     @Resource
     private TransferOutService transferOutService;
+
+    @Resource
+    private SampleRecipientService sampleRecipientService;
+
+    @Resource
+    private SampleReturnInfoService sampleReturnInfoService;
+
+    @Resource
+    private SampleBorrowInfoService sampleBorrowInfoService;
+
+    @Resource
+    private SampleScrapInfoService sampleScrapInfoService;
+
+    @Resource
+    private SampleBackInfoService sampleBackInfoService;
+
+    @Resource
+    private SampleInitialLedgerService sampleInitialLedgerService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -409,6 +429,120 @@ public class WmsWorkOptionFeignController {
             }catch (Exception e){
                 log.error("分步式调出库审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品领用单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleRecipientApprove")
+    public List<BatchResultDTO> sampleRecipientApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleRecipientService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment())));
+            } catch (Exception e) {
+                log.error("样品领用单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品归还单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleReturnApprove")
+    public List<BatchResultDTO> sampleReturnApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),ClientTypeEnum.WEB));
+            } catch (Exception e) {
+                log.error("样品归还单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品借用单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleBorrowApprove")
+    public List<BatchResultDTO> sampleBorrowApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),ClientTypeEnum.WEB));
+            } catch (Exception e) {
+                log.error("样品借用单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品报废单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleScrapApprove")
+    public List<BatchResultDTO> sampleScrapApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),ClientTypeEnum.WEB));
+            } catch (Exception e) {
+                log.error("样品报废单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品退回单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleBackApprove")
+    public List<BatchResultDTO> sampleBackApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleBackInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment())));
+            } catch (Exception e) {
+                log.error("样品退回单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品期初台账审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleLedgerInitApprove")
+    public List<BatchResultDTO> sampleLedgerInitApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleInitialLedgerService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment())));
+            } catch (Exception e) {
+                log.error("样品期初台账审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
             }
         }
         return resultDTOS;

@@ -7,7 +7,7 @@
       u.login_count,u.create_time,u.update_time,u.user_account,u.email,u.head_icon,u.user_state
       FROM sys_user_info u INNER JOIN sys_user_third t
       ON t.user_id=u.uid WHERE t.third_union_id=#{params.thirdPartyUnionId}
-      AND t.third_party_type=#{params.thirdPartyType}
+      AND t.third_party_type=#{params.thirdPartyType} and u.is_deleted = false
     </select>
 
     <select id="listThirdBindUser" resultType="com.common.business.dto.FindUserDTO">
