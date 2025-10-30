@@ -1089,7 +1089,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .build();
                     try {
                         if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                            //自动生成功能打系统标识
+                            Boolean originalValue = UserContext.getIsUserSystem();
+                            UserContext.setIsUserSystem(Boolean.TRUE);
                             BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                            //恢复系统标识
+                            UserContext.setIsUserSystem(originalValue);
+
                             if(autoGenerateResult.getSuccess()){
                                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                                 updateStatusDTO.setIds(Collections.singletonList(entity.getId()));

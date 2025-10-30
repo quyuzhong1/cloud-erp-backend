@@ -583,7 +583,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 }
             }
         }
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         qcInfoService.autoSoReturnReceiveToQcDTO(addList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     @Override

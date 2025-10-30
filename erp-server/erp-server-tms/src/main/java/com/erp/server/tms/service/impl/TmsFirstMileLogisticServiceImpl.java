@@ -33,7 +33,6 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -41,7 +40,6 @@ import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -290,8 +288,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costDetailList.add(dto);
         }
         costAddDTO.setCostDetailList(costDetailList);
-        logisticsBillCostService.add(costAddDTO);
-
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+             logisticsBillCostService.add(costAddDTO);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
 
         //设置附件信息
         Class<LogisticsBillEntity> credentialClass = LogisticsBillEntity.class;
@@ -309,8 +314,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
 
-        //新增暂估账单
-        firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
+
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            //新增暂估账单
+            firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
