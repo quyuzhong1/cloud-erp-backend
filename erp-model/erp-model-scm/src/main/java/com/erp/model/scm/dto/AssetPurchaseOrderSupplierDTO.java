@@ -47,6 +47,11 @@ public class AssetPurchaseOrderSupplierDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
         * 结算方式
         */
         private String payMethodId;

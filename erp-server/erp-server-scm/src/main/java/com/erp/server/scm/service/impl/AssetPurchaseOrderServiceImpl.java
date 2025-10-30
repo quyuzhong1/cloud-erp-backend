@@ -666,16 +666,29 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 数据填充处理
         fillOne(data);
 
-        LambdaQueryWrapper<AssetPurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AssetPurchaseOrderDetailEntity::getMainId,id)
-                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE);
-        List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.list(queryWrapper);
+        //供应商信息
+        AssetPurchaseOrderSupplierDTO.ViewDTO supplierViewDTO = new AssetPurchaseOrderSupplierDTO.ViewDTO();
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, id)
+                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
+                .one();
+        if (Objects.isNull(assetPurchaseOrderSupplierEntity)){
+            throw new ServiceException(ApiError.ERROR_95317);
+        }
+        BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierViewDTO);
+        data.setAssetPurchaseOrderSupplierDTO(supplierViewDTO);
+
+        //明细
+        List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, id)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_95307);
         }
-        List<AssetPurchaseOrderDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.ViewDTO.class, detailList);
-        fillViewList(dtoList);
-        data.setAssetPurchaseOrderDetailDTOList(dtoList);
+        List<AssetPurchaseOrderDetailDTO.ViewDTO> detailViewList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.ViewDTO.class, detailList);
+        fillViewList(detailViewList);
+        data.setAssetPurchaseOrderDetailDTOList(detailViewList);
         return data;
     }
 
