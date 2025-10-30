@@ -1,6 +1,9 @@
 package com.erp.server.scm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.scm.query.AssetPurchaseChangeQueryHandler;
+import com.erp.server.scm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.scm.service.AssetPurchaseChangeService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -48,7 +51,7 @@ public class AssetPurchaseChangeController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增资产采购变更单")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AssetPurchaseChangeDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody AssetPurchaseChangeDTO.AddDTO dto) {
         return success(assetPurchaseChangeService.add(dto));
     }
 
@@ -98,6 +101,7 @@ public class AssetPurchaseChangeController extends BaseController {
             menuCode = "scm:assetPurchaseChange:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = AssetPurchaseChangeQueryHandler.class)
     public ApiResult<PagingVO<AssetPurchaseChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto) {
         return success(assetPurchaseChangeService.paging(dto));
     }

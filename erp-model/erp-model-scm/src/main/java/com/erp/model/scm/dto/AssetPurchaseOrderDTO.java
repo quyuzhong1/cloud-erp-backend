@@ -505,7 +505,7 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String contractStampStatus;
 
         /**
-        * 单据类型
+        * 单据类型/api/scm/dict/list?key=assetPurchaseOrderType
         */
         @NotBlank(message = "单据类型不能为空")
         private String orderType;

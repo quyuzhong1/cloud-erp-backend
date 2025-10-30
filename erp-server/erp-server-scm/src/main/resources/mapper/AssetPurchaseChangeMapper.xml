@@ -50,7 +50,63 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.scm.dto.AssetPurchaseChangeDTO$ListDTO">
-
+        SELECT
+            apc.id as id,
+            apcd.id as detailId,
+            apc.code AS code,
+            apc.source_id AS sourceId,
+            apc.source_type AS sourceType,
+            apc.source_code AS sourceCode,
+            apcd.source_id AS detailSourceId,
+            apcd.source_type AS detailSourceType,
+            apcd.source_code AS detailSourceCode,
+            apcd.source_detail_id AS detailSourceId,
+            apos.supplier_id AS supplierId,
+            apos.supplier_name AS supplierName,
+            apc.approve_status AS approveStatus,
+            apc.approve_time as approveTime,
+            apc.invalid_status AS invalidStatus,
+            apc.invalid_time as invalidTime,
+            apc.invalid_remark as invalidRemark,
+            apcd.asset_id AS assetId,
+            apcd.asset_code AS assetCode,
+            apcd.asset_name AS assetName,
+            apcd.old_purchase_qty AS oldPurchaseQty,
+            apcd.old_tax_price AS oldTaxPrice,
+            apcd.old_total_amount AS oldTotalAmount,
+            apcd.old_tax_rate AS oldTaxRate,
+            apcd.purchase_qty AS PurchaseQty,
+            apcd.tax_price AS TaxPrice,
+            apcd.total_amount AS TotalAmount,
+            apcd.tax_rate AS taxRate,
+            apcd.remark AS remark,
+            apc.change_user_id AS changeUserId,
+            apc.change_user_name AS changeUserName,
+            apc.approve_user_id AS approveUserId,
+            apc.approve_user_name AS approveUserName,
+            apc.approve_time AS approveTime,
+            apc.create_user_id AS createUserId,
+            apc.create_user_name AS createUserName,
+            apc.create_time AS createTime
+        FROM
+            asset_purchase_change apc
+            LEFT JOIN asset_purchase_change_detail apcd ON apcd.main_id = apc.ID
+            AND apcd.is_deleted =
+            FALSE LEFT JOIN asset_purchase_order_supplier apos ON apos.asset_purchase_order_id = apc.source_id
+            AND apos.is_deleted = FALSE
+        WHERE
+            ${params.sqlMap.default}
+            and apc.is_deleted = FALSE
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        apc.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

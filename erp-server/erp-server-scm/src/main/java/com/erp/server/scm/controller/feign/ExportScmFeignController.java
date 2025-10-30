@@ -60,6 +60,8 @@ public class ExportScmFeignController {
     private AssetPurchaseOrderService assetPurchaseOrderService;
     @Resource
     private AssetNoticeService assetNoticeService;
+    @Resource
+    private AssetPurchaseChangeService assetPurchaseChangeService;
 
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -289,5 +291,11 @@ public class ExportScmFeignController {
     @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
     public PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto){
         return assetPurchaseOrderService.paging(dto);
+    }
+
+    @PostMapping("/exportAssetPurchaseChange")
+    @WebAdvanceQuery(handler = AssetPurchaseChangeQueryHandler.class)
+    public PagingVO<AssetPurchaseChangeDTO.ListDTO> exportAssetPurchaseChange(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto){
+        return assetPurchaseChangeService.paging(dto);
     }
 }

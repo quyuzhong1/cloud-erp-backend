@@ -9,7 +9,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -50,7 +49,7 @@ public class AssetPurchaseChangeEntity extends BaseEntity<AssetPurchaseChangeEnt
     * 单据状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 变更日期
     */
