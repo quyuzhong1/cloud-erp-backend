@@ -507,6 +507,17 @@ public class FirstMileDeliveryDTO implements Serializable {
         */
         private String code;
 
+
+        /**
+         * 备货类型
+         */
+        private String demandType;
+
+        /**
+         * 备货类型名称
+         */
+        private String demandTypeName;
+
         /**
         * 审核状态
         */
@@ -567,16 +578,6 @@ public class FirstMileDeliveryDTO implements Serializable {
         * 来源编码
         */
         private String sourceCode;
-
-        /**
-        * 备货类型
-        */
-        private String demandType;
-
-        /**
-        * 备货类型名称
-        */
-        private String demandTypeName;
 
         /**
         * 店铺id
