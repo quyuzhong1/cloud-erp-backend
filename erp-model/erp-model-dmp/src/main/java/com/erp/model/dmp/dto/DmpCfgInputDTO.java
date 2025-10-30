@@ -100,6 +100,26 @@ public class DmpCfgInputDTO implements Serializable {
          * 来源接口：/api/dmp/restCloud/paging
          */
         private String execUrl;
+
+        /**
+         * 流程名称+流程路径
+         */
+        private String fullName;
+
+        /**
+         * 流程名称
+         */
+        private String flowName;
+
+        /**
+         * 流程代号
+         */
+        private String flowCode;
+
+        /**
+         * 应用id
+         */
+        private String appId;
     }
 
     /**

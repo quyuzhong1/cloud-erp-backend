@@ -240,7 +240,7 @@ public class DmpCfgInputController extends BaseController {
     }
 
     /**
-     * 详情
+     * 前端展示详情
      * @author Jim
      * @date:  2025-10-23
      * @param id
@@ -252,9 +252,26 @@ public class DmpCfgInputController extends BaseController {
             menuCode = "dmp:dmpCfgInput:view",
             serviceClass = DmpCfgInputService.class,
             keyIdName = "id")
-    @LogViewService
-    public ApiResult<DmpCfgInputDTO.ViewDTO> view(@RequestParam("id") String id) {
+    public ApiResult<DmpCfgInputDTO.ViewDTO> viewAll(@RequestParam("id") String id) {
         return success(dmpCfgInputService.view(id));
+    }
+
+    /**
+     * 详情(切面使用)
+     * @author Jim
+     * @date:  2025-10-23
+     * @param id
+     * @return ApiResult<DmpCfgInputDTO.ViewDTO>>
+     */
+    @GetMapping("/viewEntity")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgInput:view",
+            serviceClass = DmpCfgInputService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<DmpCfgInputEntity> view(@RequestParam("id") String id) {
+        return success(dmpCfgInputService.viewEntity(id));
     }
 
     /**

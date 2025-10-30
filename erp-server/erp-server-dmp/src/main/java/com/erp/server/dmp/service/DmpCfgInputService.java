@@ -87,6 +87,8 @@ public interface DmpCfgInputService extends SuperService<DmpCfgInputEntity> {
 
     DmpCfgInputDTO.ViewDTO view(String id);
 
+    DmpCfgInputEntity viewEntity(String id);
+
     BatchResultDTO enable(DmpCfgInputEntity entity);
 
     BatchResultDTO disable(DmpCfgInputEntity entity);
