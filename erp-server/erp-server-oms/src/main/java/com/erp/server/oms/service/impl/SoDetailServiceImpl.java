@@ -1928,11 +1928,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (CharSequenceUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
             }
-            
-            //B2B销售订单明细行冻结库存检查 - 修改数量时不允许小于冻结数量
+
+            //仅判断冻结数量
             if (CharSequenceUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
-                if (soDetailEntity.getFrozenQty() < updateDTO.getQty()) {
-                    throw new ServiceException( CharSequenceUtil.format("SKU【{}】发货数量不允许小于冻结数量【{}】，如需修改请联系PMC释放库存后操作",soDetailEntity.getSkuNo(), soDetailEntity.getFrozenQty()));
+                if (soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                    throw new ServiceException( CharSequenceUtil.format("SKU【{}】销售数量不能小于冻结数量",soDetailEntity.getSkuNo()));
                 }
             }
             
