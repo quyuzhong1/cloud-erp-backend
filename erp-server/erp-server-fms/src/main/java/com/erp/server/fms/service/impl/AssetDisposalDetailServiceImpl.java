@@ -1,39 +1,52 @@
 package com.erp.server.fms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.core.enums.CurrencyEnum;
+import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
+import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
+import com.erp.server.fms.service.AssetDisposalPhysicalDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.fms.dto.AssetDisposalDetailDTO;
 import com.erp.model.fms.entity.AssetDisposalDetailEntity;
 import com.erp.server.fms.mapper.AssetDisposalDetailMapper;
 import com.erp.server.fms.service.AssetDisposalDetailService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.erp.server.fms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.fms.dto.AssetDisposalDetailDTO;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import java.util.Optional;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 资产处置单资产明细表 服务实现类
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Slf4j
 @Service
 public class AssetDisposalDetailServiceImpl extends SuperServiceImpl<AssetDisposalDetailMapper, AssetDisposalDetailEntity> implements AssetDisposalDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private AssetDisposalPhysicalDetailService assetDisposalPhysicalDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -94,5 +107,30 @@ public class AssetDisposalDetailServiceImpl extends SuperServiceImpl<AssetDispos
     */
     private void handleData(AssetDisposalDetailEntity assetDisposalDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<AssetDisposalDetailDTO.ViewDTO> listByMainId(String mainId) {
+        if(StringUtils.isBlank(mainId)){
+            return Collections.emptyList();
+        }
+        List<AssetDisposalDetailDTO.ViewDTO> detailList = baseMapper.listByMainId(mainId);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<AssetDisposalPhysicalDetailDTO.ViewDTO> detailPhysicalList = assetDisposalPhysicalDetailService.listByMainId(mainId);
+            // 构建 detailId -> physicalDetails 映射
+            Map<String, List<AssetDisposalPhysicalDetailDTO.ViewDTO>> physicalDetailMap = detailPhysicalList.stream()
+                    .collect(Collectors.groupingBy(AssetDisposalPhysicalDetailDTO.ViewDTO::getAssetDisposalDetailId));
+            // 设置每个 ViewDTO 对应的 PhysicalDetail 列表
+            for (AssetDisposalDetailDTO.ViewDTO viewDTO : detailList) {
+                viewDTO.setDisposalCurrencyName(CurrencyEnum.getNameByCode(viewDTO.getDisposalCurrency()));
+                viewDTO.setInvoiceTypeName(AssetDisposalDetailInvoiceTypeEnum.getName(viewDTO.getInvoiceType()));
+
+                List<AssetDisposalPhysicalDetailDTO.ViewDTO> physicalDetails = physicalDetailMap.get(viewDTO.getId());
+                if (physicalDetails != null) {
+                    viewDTO.setAssetDisposalPhysicalDetailDTOList(physicalDetails);
+                }
+            }
+        }
+        return detailList;
     }
 }

@@ -12,7 +12,7 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="asset_disposal_detail_id" property="assetDisposalDetailId" />
        <result column="main_id" property="mainId" />
        <result column="asset_code" property="assetCode" />
        <result column="asset_location_id" property="assetLocationId" />
@@ -22,17 +22,34 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        source_detail_id, main_id, asset_code, asset_location_id, asset_location_name, qty
+        adpd.id AS id,
+adpd.create_user_id AS createUserId,
+adpd.create_user_name AS createUserName,
+adpd.create_time AS createTime,
+adpd.update_user_id AS updateUserId,
+adpd.update_user_name AS updateUserName,
+adpd.update_time AS updateTime,
+adpd.version AS version,
+adpd.is_deleted AS isDeleted,
+adpd.asset_disposal_detail_id AS assetDisposalDetailId,
+adpd.main_id AS mainId,
+adpd.asset_code AS assetCode,
+adpd.asset_location_id AS assetLocationId,
+adpd.asset_location_name AS assetLocationName,
+adpd.qty AS qty
     </sql>
+
+    <select id="listByMainId" resultType="com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO$ViewDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM
+        asset_disposal_physical_detail adpd
+        where
+        AND adpd.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND adpd.main_id = #{mainId}
+        </if>
+    </select>
 
 
 </mapper>

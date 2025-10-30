@@ -16,8 +16,8 @@ import com.common.business.enums.ApproveStatusEnum;
  * 资产处置单资产明细表
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,6 +25,16 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("asset_disposal_detail")
 public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEntity> {
 
+    /**
+    * 来源ID
+    */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+    * 来源单号
+    */
+    @TableField("source_code")
+    private String sourceCode;
     /**
     * 来源明细ID
     */
@@ -36,27 +46,12 @@ public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEnt
     @TableField("main_id")
     private String mainId;
     /**
-    * 卡片ID
-    */
-    @TableField("card_id")
-    private String cardId;
-    /**
-    * 卡片明细ID
-    */
-    @TableField("card_detail_id")
-    private String cardDetailId;
-    /**
-    * 卡片编码
-    */
-    @TableField("card_code")
-    private String cardCode;
-    /**
     * 资产名称
     */
     @TableField("asset_name")
     private String assetName;
     /**
-    * 单位 PCS
+    * 单位 Pcs
     */
     @TableField("unit")
     private String unit;
@@ -86,7 +81,7 @@ public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEnt
     @TableField("residual_value")
     private BigDecimal residualValue;
     /**
-    * 发票类型（普通发票、增值发票）
+    * 发票类型：ordinary=普通发票, addedValue增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
     */
     @TableField("invoice_type")
     private String invoiceType;
@@ -102,15 +97,13 @@ public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEnt
     private BigDecimal taxAmount;
 
 
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
+
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String MAIN_ID = "main_id";
-
-    public static final String CARD_ID = "card_id";
-
-    public static final String CARD_DETAIL_ID = "card_detail_id";
-
-    public static final String CARD_CODE = "card_code";
 
     public static final String ASSET_NAME = "asset_name";
 

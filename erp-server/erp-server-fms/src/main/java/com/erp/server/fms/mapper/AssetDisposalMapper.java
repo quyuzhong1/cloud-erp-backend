@@ -17,8 +17,8 @@ import java.util.List;
  * 资产处置单主表 Mapper 接口
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Mapper
 public interface AssetDisposalMapper extends BaseMapper<AssetDisposalEntity> {

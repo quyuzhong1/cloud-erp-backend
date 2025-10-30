@@ -5,16 +5,13 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.fms.dto.AssetLocationDTO;
-import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.fms.dto.AssetCardDTO;
-import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.fms.dto.*;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
-import com.erp.server.fms.service.AssetLocationService;
-import com.erp.server.fms.service.AssetAcceptService;
-import com.erp.server.fms.service.AssetCardService;
-import com.erp.server.fms.service.AssetStocktakingPlanService;
+import com.erp.server.fms.query.AssetDisposalQueryHandler;
+import com.erp.server.fms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +39,9 @@ public class ExportFmsFeignController {
     
     @Resource
     private AssetStocktakingPlanService assetStocktakingPlanService;
+
+    @Resource
+    private AssetDisposalService assetDisposalService;
 
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -80,5 +80,13 @@ public class ExportFmsFeignController {
     public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
         return assetStocktakingPlanService.getAssetStocktakingPlanPageData(dto);
     }
+
+
+    @PostMapping("/exportAssetDisposal")
+    @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)
+    public PagingVO<AssetDisposalDTO.ListDTO> exportAssetDisposal(@RequestBody  PagingDTO<AssetDisposalDTO.PagingParamDTO> dto) {
+        return assetDisposalService.paging(dto);
+    }
+
 }
 

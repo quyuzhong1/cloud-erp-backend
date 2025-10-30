@@ -562,7 +562,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 先查询关联的处置明细，再查询对应的主表
         List<String> disposalMainIds = assetDisposalDetailService.lambdaQuery()
             .select(AssetDisposalDetailEntity::getMainId)
-            .eq(AssetDisposalDetailEntity::getCardId, entity.getId())
+            .eq(AssetDisposalDetailEntity::getSourceId, entity.getId())
             .eq(AssetDisposalDetailEntity::getIsDeleted, false)
             .list()
             .stream()

@@ -2,32 +2,32 @@ package com.erp.server.fms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
 import com.erp.model.fms.entity.AssetDisposalPhysicalDetailEntity;
 import com.erp.server.fms.mapper.AssetDisposalPhysicalDetailMapper;
 import com.erp.server.fms.service.AssetDisposalPhysicalDetailService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.erp.server.fms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * 资产处置单实物明细表 服务实现类
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Slf4j
 @Service
@@ -95,4 +95,14 @@ public class AssetDisposalPhysicalDetailServiceImpl extends SuperServiceImpl<Ass
     private void handleData(AssetDisposalPhysicalDetailEntity assetDisposalPhysicalDetailEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+
+    @Override
+    public List<AssetDisposalPhysicalDetailDTO.ViewDTO> listByMainId(String mainId) {
+        if(StringUtils.isBlank(mainId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByMainId(mainId);
+    }
+
 }

@@ -17,8 +17,8 @@ import com.common.business.enums.ApproveStatusEnum;
  * 资产处置单主表
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -26,35 +26,46 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("asset_disposal")
 public class AssetDisposalEntity extends BaseEntity<AssetDisposalEntity> {
 
+    /**
+    * 审批状态
+    */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
+    /**
+    * 审批人ID
+    */
     @TableField("approve_user_id")
     private String approveUserId;
+    /**
+    * 审批人姓名
+    */
     @TableField("approve_user_name")
     private String approveUserName;
+    /**
+    * 审批时间
+    */
     @TableField("approve_time")
     private LocalDateTime approveTime;
+    /**
+    * 是否作废
+    */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+    /**
+    * 作废备注
+    */
     @TableField("invalid_remark")
     private String invalidRemark;
+    /**
+    * 作废时间
+    */
     @TableField("invalid_time")
     private LocalDateTime invalidTime;
-    /**
-    * 来源单号
-    */
-    @TableField("source_code")
-    private String sourceCode;
     /**
     * 来源类型
     */
     @TableField("source_type")
     private String sourceType;
-    /**
-    * 来源ID
-    */
-    @TableField("source_id")
-    private String sourceId;
     /**
     * 单据号
     */
@@ -66,7 +77,7 @@ public class AssetDisposalEntity extends BaseEntity<AssetDisposalEntity> {
     @TableField("business_date")
     private LocalDate businessDate;
     /**
-    * 处置方式（报废、盘亏）
+    * 处置方式：scrap=报废，loss=盘亏  枚举：AssetDisposalDisposalMethodEnum
     */
     @TableField("disposal_method")
     private String disposalMethod;
@@ -101,11 +112,7 @@ public class AssetDisposalEntity extends BaseEntity<AssetDisposalEntity> {
 
     public static final String INVALID_TIME = "invalid_time";
 
-    public static final String SOURCE_CODE = "source_code";
-
     public static final String SOURCE_TYPE = "source_type";
-
-    public static final String SOURCE_ID = "source_id";
 
     public static final String CODE = "code";
 

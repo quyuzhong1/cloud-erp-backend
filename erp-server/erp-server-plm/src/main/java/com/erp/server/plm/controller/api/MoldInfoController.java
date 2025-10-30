@@ -416,7 +416,7 @@ public class MoldInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "模具档案下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/moldTemplate.xlsx";
+        String standardPath = "classpath:excel/moldInfoTemplate.xlsx";
         String standardExcelName = "moldInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
