@@ -1,6 +1,7 @@
 package com.erp.server.fms.controller.api;
 
 
+import com.erp.model.fms.dto.AssetCardDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 
+import java.util.List;
+
 /**
  * 资产卡片明细表
  *
@@ -36,35 +39,15 @@ public class AssetCardDetailController extends BaseController {
     private AssetCardDetailService assetCardDetailService;
 
     /**
-    * 新增
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "资产卡片明细表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AssetCardDetailDTO.AddDTO dto) {
-        return success(assetCardDetailService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "资产卡片明细表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "fms:assetCardDetail:update",
-        serviceClass = AssetCardDetailService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated AssetCardDetailDTO.UpdateDTO dto) {
-        assetCardDetailService.update(dto);
-        return success();
+     * 模糊搜索
+     * @author jack
+     * @date: 2025-10-30
+     * @param dto
+     * @return
+     */
+    @PostMapping("/searchAssetCardDetail")
+    public ApiResult<List<AssetCardDetailDTO.SearchCardDetailDTO>> searchAssetCardDetail(@RequestBody AssetCardDetailDTO.SearchDTO dto) {
+        return success(assetCardDetailService.searchAssetCardDetail(dto));
     }
 
 

@@ -13,11 +13,7 @@ import com.erp.model.fms.entity.AssetDisposalDetailEntity;
 import com.erp.model.fms.entity.AssetDisposalPhysicalDetailEntity;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
-import com.erp.model.plm.dto.MoldInfoDTO;
-import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SampleBorrowDetailDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -41,7 +37,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.fms.dto.AssetDisposalDTO;
@@ -53,13 +48,10 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
 import java.util.stream.Collectors;
 import java.util.*;
 
@@ -67,7 +59,6 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_FMS_ASSET_DISPOSAL;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
 
 /**
  * <p>
@@ -617,7 +608,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     }
 
 
-    private Map<String, Object> getVariablesMap(AssetDisposalEntity entity) {
+    @Override
+    public Map<String, Object> getVariablesMap(AssetDisposalEntity entity) {
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_DISPOSAL.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));

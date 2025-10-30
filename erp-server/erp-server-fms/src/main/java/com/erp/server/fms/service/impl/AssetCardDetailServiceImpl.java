@@ -1,6 +1,7 @@
 package com.erp.server.fms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -11,8 +12,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.entity.AssetCardDetailEntity;
+import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.server.fms.mapper.AssetCardDetailMapper;
 import com.erp.server.fms.service.AssetCardDetailService;
+import com.erp.server.fms.service.AssetLocationService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 资产卡片明细表 服务实现类
@@ -34,6 +39,8 @@ import java.util.Optional;
 public class AssetCardDetailServiceImpl extends SuperServiceImpl<AssetCardDetailMapper, AssetCardDetailEntity> implements AssetCardDetailService {
     @Autowired
     private OperateLogService operateLogService;
+    @Autowired
+    private AssetLocationService assetLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -94,5 +101,21 @@ public class AssetCardDetailServiceImpl extends SuperServiceImpl<AssetCardDetail
     */
     private void handleData(AssetCardDetailEntity assetCardDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    @Override
+    public List<AssetCardDetailDTO.SearchCardDetailDTO> searchAssetCardDetail(AssetCardDetailDTO.SearchDTO dto) {
+        List<AssetCardDetailDTO.SearchCardDetailDTO> list = baseMapper.searchAssetCardDetail(dto);
+        Map<String, String> assetLocationMap = new HashMap<>();
+        List<String> assetLocationIds = list.stream().map(AssetCardDetailDTO.SearchCardDetailDTO::getAssetLocationId).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(assetLocationIds)){
+            List<AssetLocationEntity> assetLocationEntities = assetLocationService.listByIds(assetLocationIds);
+            assetLocationMap = assetLocationEntities.stream().collect(Collectors.toMap(AssetLocationEntity::getId, AssetLocationEntity::getAddress));
+        }
+        for (AssetCardDetailDTO.SearchCardDetailDTO searchCardDetailDTO : list) {
+            searchCardDetailDTO.setAssetLocationName(assetLocationMap.getOrDefault(searchCardDetailDTO.getAssetLocationId(),""));
+        }
+        return list;
     }
 }

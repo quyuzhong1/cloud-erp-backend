@@ -39,5 +39,32 @@
         source_detail_id, main_id, asset_code, asset_location_id, qty, supplier_id, supplier_name, use_dept_name, use_dept_id, cost_type, remark
     </sql>
 
+    <select id="searchAssetCardDetail"
+            resultType="com.erp.model.fms.dto.AssetCardDetailDTO$SearchCardDetailDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from asset_card_detail
+        where
+        is_deleted = false
+        AND approve_status = 'approve'
+        <if test="params.cardId != null and params.cardId != ''">
+            and main_id = #{params.cardId}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            AND
+            (
+            code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            OR
+            name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            )
+            ORDER BY
+            case when code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , code
+        </if>
+
+    </select>
+
 
 </mapper>

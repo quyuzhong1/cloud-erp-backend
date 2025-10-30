@@ -93,7 +93,7 @@ public class AssetDisposalDetailDTO implements Serializable {
         private BigDecimal residualValue;
 
         /**
-        * 发票类型：ordinary=普通发票, addedValue增值发票
+        * 发票类型：invoice=普通发票, valueAddedTax增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
         */
         private String invoiceType;
         private String invoiceTypeName;
@@ -206,7 +206,7 @@ public class AssetDisposalDetailDTO implements Serializable {
         private BigDecimal residualValue;
 
         /**
-        * 发票类型：ordinary=普通发票, addedValue增值发票
+         发票类型：invoice=普通发票, valueAddedTax增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
         */
 //        @NotBlank(message = "发票类型：ordinary=普通发票, addedValue增值发票不能为空")
         private String invoiceType;

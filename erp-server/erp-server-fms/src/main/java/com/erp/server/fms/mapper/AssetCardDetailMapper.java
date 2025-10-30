@@ -1,8 +1,12 @@
 package com.erp.server.fms.mapper;
+import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.entity.AssetCardDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AssetCardDetailMapper extends BaseMapper<AssetCardDetailEntity> {
 
+    List<AssetCardDetailDTO.SearchCardDetailDTO> searchAssetCardDetail(@Param("params") AssetCardDetailDTO.SearchDTO dto);
 }

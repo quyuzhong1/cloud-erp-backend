@@ -6,6 +6,7 @@ import com.erp.model.fms.dto.AssetDisposalDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -151,6 +152,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetDisposalEntity entity);
+
+    Map<String, Object> getVariablesMap(AssetDisposalEntity entity);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 }
