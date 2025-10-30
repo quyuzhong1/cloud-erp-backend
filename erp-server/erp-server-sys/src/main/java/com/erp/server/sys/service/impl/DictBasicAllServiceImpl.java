@@ -41,6 +41,7 @@ import com.erp.model.sys.dto.DictBasicAllDTO.PagingParamDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.TabListDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.UpdateDTO;
 import com.erp.model.sys.dto.DictBasicAllDTO.ViewDTO;
+import com.erp.model.sys.entity.DictBasicEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.sys.service.DictBasicAllService;
 import com.erp.server.sys.service.OperateLogService;
@@ -99,8 +100,8 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		FeignQuery.invoke(this.getServiceClass(systemCode), "saveJsonObject", Arrays.asList(entityMap));
 		Map<String, Object> beanToMap = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
 		String id = (String)beanToMap.get("id");
-		String msg = CharSequenceUtil.format("用户【{}】新增【{}】系统为【{}】，类型为【{}】，类型名称为【{}】，值为【{}】", 
-				UserContext.getDefaultLoginUser().getUserName(), "字典数据" , systemCode , type , dto.getTypeName() , value);
+		String msg = CharSequenceUtil.format("用户【{}】新增【{}】系统为【{}】，类型为【{}】，类型名称为【{}】，值为【{}】，值名称为【{}】，状态为【{}】，排序为【{}】，备注为【{}】", 
+				UserContext.getDefaultLoginUser().getUserName(), "字典数据" , systemCode , type , dto.getTypeName() , value , dto.getName() , dto.getStatus() , dto.getSort() , dto.getRemark());
 		operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DICT_BASIC.getCode(), id, "新增");
 		return new BaseResultDTO.AddDTO(id , id);
 	}
@@ -174,7 +175,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
 		Map<String, Object> newEntity = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
-        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.DICT_BASIC.getCode(), id, msg);
+        operateLogService.addModuleOperateLogByObj(JSON.parseObject(JSON.toJSONString(old) , DictBasicEntity.class), JSON.parseObject(JSON.toJSONString(newEntity) , DictBasicEntity.class), ModuleTypeEnum.DICT_BASIC.getCode(), id, msg);
 	}
 
     @Transactional(rollbackFor = Exception.class)
