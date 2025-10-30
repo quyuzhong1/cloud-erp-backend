@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
@@ -9,10 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -21,8 +20,8 @@ import java.util.Map;
  * 资产处置单主表请求响应实体
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
 */
 @Data
 @NoArgsConstructor
@@ -41,6 +40,10 @@ public class AssetDisposalDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+         * 类型
+         */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -64,6 +67,10 @@ public class AssetDisposalDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
@@ -78,34 +85,45 @@ public class AssetDisposalDTO implements Serializable {
         */
         private String  id;
 
+        /**
+        * 审批状态
+        */
         private String approveStatus;
 
+        /**
+        * 审批人ID
+        */
         private String approveUserId;
 
+        /**
+        * 审批人姓名
+        */
         private String approveUserName;
 
+        /**
+        * 审批时间
+        */
         private LocalDateTime approveTime;
 
+        /**
+        * 是否作废
+        */
         private Boolean invalidStatus;
 
+        /**
+        * 作废备注
+        */
         private String invalidRemark;
 
-        private LocalDateTime invalidTime;
-
         /**
-        * 来源单号
+        * 作废时间
         */
-        private String sourceCode;
+        private LocalDateTime invalidTime;
 
         /**
         * 来源类型
         */
         private String sourceType;
-
-        /**
-        * 来源ID
-        */
-        private String sourceId;
 
         /**
         * 单据号
@@ -118,9 +136,10 @@ public class AssetDisposalDTO implements Serializable {
         private LocalDate businessDate;
 
         /**
-        * 处置方式（报废、盘亏）
+        * 处置方式：scrap=报废，loss=盘亏
         */
         private String disposalMethod;
+        private String disposalMethodName;
 
         /**
         * 资产组织ID
@@ -157,6 +176,70 @@ public class AssetDisposalDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+
+        /**
+         * 明细id
+         */
+        private String assetDisposalDetailId;
+
+        /**
+         * 卡片编码
+         */
+        private String sourceCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 处置数量
+         */
+        private Integer disposalQty;
+
+        /**
+         * 处置币类
+         */
+        private String disposalCurrency;
+        private String disposalCurrencyName;
+
+        /**
+         * 清理费用
+         */
+        private BigDecimal cleanupCost;
+
+        /**
+         * 残值收入 含税
+         */
+        private BigDecimal residualValue;
+
+        /**
+         * 发票类型：ordinary=普通发票, addedValue增值发票
+         */
+        private String invoiceType;
+        private String invoiceTypeName;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 税额
+         */
+        private BigDecimal taxAmount;
+
     }
 
     /**
@@ -183,34 +266,16 @@ public class AssetDisposalDTO implements Serializable {
         */
         private String  id;
 
-        private String approveStatus;
-
-        private String approveUserId;
-
-        private String approveUserName;
-
-        private LocalDateTime approveTime;
-
-        private Boolean invalidStatus;
-
-        private String invalidRemark;
-
-        private LocalDateTime invalidTime;
-
         /**
-        * 来源单号
+        * 审批状态
         */
-        private String sourceCode;
+        private String approveStatus;
+        private String approveStatusName;
 
         /**
         * 来源类型
         */
         private String sourceType;
-
-        /**
-        * 来源ID
-        */
-        private String sourceId;
 
         /**
         * 单据号
@@ -223,9 +288,10 @@ public class AssetDisposalDTO implements Serializable {
         private LocalDate businessDate;
 
         /**
-        * 处置方式（报废、盘亏）
+        * 处置方式：scrap=报废，loss=盘亏
         */
         private String disposalMethod;
+        private String disposalMethodName;
 
         /**
         * 资产组织ID
@@ -242,6 +308,7 @@ public class AssetDisposalDTO implements Serializable {
         */
         private String reason;
 
+        private List<AssetDisposalDetailDTO.ViewDTO> assetDisposalDetailDTOList;
 
     }
 
@@ -251,7 +318,6 @@ public class AssetDisposalDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
 
     }
 
@@ -265,72 +331,51 @@ public class AssetDisposalDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
 
-        private LocalDateTime invalidTime;
-
-        /**
-        * 来源单号
-        */
-        @NotBlank(message = "来源单号不能为空")
-        @Size(max = 100,message = "来源单号最大长度不能超过100位")
-        private String sourceCode;
-
         /**
         * 来源类型
         */
         @NotBlank(message = "来源类型不能为空")
-        @Size(max = 200,message = "来源类型最大长度不能超过200位")
         private String sourceType;
-
-        /**
-        * 来源ID
-        */
-        @NotBlank(message = "来源ID不能为空")
-        @Size(max = 19,message = "来源ID最大长度不能超过19位")
-        private String sourceId;
 
         /**
         * 业务日期
         */
+        @NotNull(message = "业务日期不能为空")
         private LocalDate businessDate;
 
         /**
-        * 处置方式（报废、盘亏）
+        * 处置方式：scrap=报废，loss=盘亏
         */
-        @NotBlank(message = "处置方式（报废、盘亏）不能为空")
-        @Size(max = 20,message = "处置方式（报废、盘亏）最大长度不能超过20位")
+        @NotBlank(message = "处置方式不能为空")
         private String disposalMethod;
 
         /**
         * 资产组织ID
         */
         @NotBlank(message = "资产组织ID不能为空")
-        @Size(max = 19,message = "资产组织ID最大长度不能超过19位")
         private String assetOrgId;
 
         /**
         * 资产组织名称
         */
         @NotBlank(message = "资产组织名称不能为空")
-        @Size(max = 50,message = "资产组织名称最大长度不能超过50位")
         private String assetOrgName;
 
         /**
         * 处置原因
         */
-        @NotBlank(message = "处置原因不能为空")
-        @Size(max = 500,message = "处置原因最大长度不能超过500位")
         private String reason;
 
 
+        @NotEmpty(message = "资产明细不能为空")
+        private List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList;
     }
 
 

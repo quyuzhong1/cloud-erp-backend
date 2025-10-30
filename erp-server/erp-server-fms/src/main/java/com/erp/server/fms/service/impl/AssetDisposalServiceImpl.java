@@ -1,66 +1,90 @@
 package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
+import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.fms.dto.AssetDisposalDTO;
+
+import cn.hutool.core.util.StrUtil;
+import com.common.core.enums.CurrencyEnum;
+import com.erp.model.fms.dto.AssetDisposalDetailDTO;
+import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
+import com.erp.model.fms.entity.AssetDisposalDetailEntity;
+import com.erp.model.fms.entity.AssetDisposalPhysicalDetailEntity;
+import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
+import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.fms.service.AssetDisposalDetailService;
+import com.erp.server.fms.service.AssetDisposalPhysicalDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.fms.entity.AssetDisposalEntity;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetDisposalMapper;
 import com.erp.server.fms.service.AssetDisposalService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.erp.server.fms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.common.core.exception.ServiceException;
+import com.common.business.config.DocNoGenHelper;
+import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.fms.dto.AssetDisposalDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.collection.CollUtil;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.common.business.vo.PagingVO;
+import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import javax.annotation.Resource;
 import java.util.stream.Collectors;
+import java.util.*;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_FMS_ASSET_DISPOSAL;
+
 /**
  * <p>
  * 资产处置单主表 服务实现类
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Slf4j
 @Service
 public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapper, AssetDisposalEntity> implements AssetDisposalService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private AssetDisposalDetailService assetDisposalDetailService;
+    @Resource
+    private AssetDisposalPhysicalDetailService assetDisposalPhysicalDetailService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -74,53 +98,184 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
         log.info("开始新增资产处置单主单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PRODIS);
         assetDisposalEntity.setCode(code);
         boolean save = super.save(assetDisposalEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("资产处置单主单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产处置单主单" , assetDisposalEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, assetDisposalEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产处置单主单", assetDisposalEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), assetDisposalEntity.getId(), "新增操作");
 
+        String mainId = assetDisposalEntity.getId();
+        List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList = addDTO.getAssetDisposalDetailDTOList();
+        for (AssetDisposalDetailDTO.UpdateDTO dto : assetDisposalDetailDTOList) {
+            AssetDisposalDetailEntity detailEntity = new AssetDisposalDetailEntity();
+            BeanMapper.copy(dto, detailEntity);
+            detailEntity.setMainId(mainId);
+            assetDisposalDetailService.save(detailEntity);
+
+            String assetDisposalDetailId = detailEntity.getId();
+
+            List<AssetDisposalPhysicalDetailDTO.UpdateDTO> assetDisposalPhysicalDetailDTOList = dto.getAssetDisposalPhysicalDetailDTOList();
+            assetDisposalPhysicalDetailDTOList.forEach(e -> {
+                e.setMainId(mainId);
+                e.setAssetDisposalDetailId(assetDisposalDetailId);
+            });
+            List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = BeanMapper.copyList(assetDisposalPhysicalDetailDTOList, AssetDisposalPhysicalDetailEntity.class);
+            assetDisposalPhysicalDetailService.saveBatch(assetDisposalPhysicalDetailEntities);
+        }
         return new BaseResultDTO.AddDTO(assetDisposalEntity.getId(), code);
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AssetDisposalDTO.UpdateDTO addOrUpdateDTO) {
         AssetDisposalEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产处置单主单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "资产处置单主单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        AssetDisposalEntity assetDisposalEntity =  BeanMapperUtils.map(AssetDisposalEntity.class, addOrUpdateDTO);
+        AssetDisposalEntity assetDisposalEntity = BeanMapperUtils.map(AssetDisposalEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(assetDisposalEntity);
         log.info("编辑 开始修改资产处置单主单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(assetDisposalEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("资产处置单主单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产处置单主单日志数据，单号：【{}】", assetDisposalEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetDisposalEntity.getCode(), "资产处置单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, assetDisposalEntity, null, assetDisposalEntity.getId(), msg);
+        log.info("编辑 开始记录资产处置单主单日志数据，单号：【{}】", assetDisposalEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetDisposalEntity.getCode(), "资产处置单主单");
+        operateLogService.addModuleOperateLogByObj(old, assetDisposalEntity, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), assetDisposalEntity.getId(), msg);
+
+        //更新明细
+        updateDetail(addOrUpdateDTO, assetDisposalEntity);
+
+
         return Boolean.TRUE;
+    }
+
+    /**
+     * 更新资产处置明细信息（包括新增、修改、删除操作）
+     * @param addOrUpdateDTO 资产处置更新传输对象，包含主表及明细数据
+     * @param assetDisposalEntity 当前资产处置主表实体对象
+     */
+    private void updateDetail(AssetDisposalDTO.UpdateDTO addOrUpdateDTO, AssetDisposalEntity assetDisposalEntity) {
+        String mainId = assetDisposalEntity.getId();
+
+        //查询旧数据
+        List<AssetDisposalDetailEntity> oldDetailList = assetDisposalDetailService.lambdaQuery().eq(AssetDisposalDetailEntity::getMainId, assetDisposalEntity.getId()).list();
+
+        List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList = addOrUpdateDTO.getAssetDisposalDetailDTOList();
+
+        if(CollUtil.isNotEmpty(oldDetailList)){
+            List<String> detailIds = assetDisposalDetailDTOList.stream().map(AssetDisposalDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            // 处理删除的数据
+            List<AssetDisposalDetailEntity> remove = oldDetailList.stream()
+                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(remove)){
+                List<String> removeIds = remove.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
+
+                assetDisposalDetailService.removeByIds(removeIds);
+
+                assetDisposalPhysicalDetailService.lambdaUpdate()
+                        .in(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId, removeIds)
+                        .set(AssetDisposalPhysicalDetailEntity::getIsDeleted,Boolean.TRUE)
+                        .update();
+
+                //添加日志
+                List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(mainId, obj.getSourceCode())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除资产卡片【%s】", ModuleTypeEnum.ASSET_DISPOSAL.getCode(), removePairList, "编辑操作");
+            }
+        }
+
+        //处理需要新增的数据
+        List<AssetDisposalDetailDTO.UpdateDTO> addList = assetDisposalDetailDTOList.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(addList)){
+            for (AssetDisposalDetailDTO.UpdateDTO dto : addList) {
+                AssetDisposalDetailEntity detailEntity = new AssetDisposalDetailEntity();
+                BeanMapper.copy(dto, detailEntity);
+                detailEntity.setMainId(mainId);
+                assetDisposalDetailService.save(detailEntity);
+
+                String assetDisposalDetailId = detailEntity.getId();
+
+                List<AssetDisposalPhysicalDetailDTO.UpdateDTO> assetDisposalPhysicalDetailDTOList = dto.getAssetDisposalPhysicalDetailDTOList();
+                assetDisposalPhysicalDetailDTOList.forEach(e -> {
+                    e.setMainId(mainId);
+                    e.setAssetDisposalDetailId(assetDisposalDetailId);
+                });
+                List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = BeanMapper.copyList(assetDisposalPhysicalDetailDTOList, AssetDisposalPhysicalDetailEntity.class);
+                assetDisposalPhysicalDetailService.saveOrUpdateBatch(assetDisposalPhysicalDetailEntities);
+            }
+
+            //添加日志
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSourceCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加资产卡片【%s】", ModuleTypeEnum.ASSET_DISPOSAL.getCode(), addPairList, "编辑操作");
+        }
+
+        //处理需要更新的数据
+        List<AssetDisposalDetailDTO.UpdateDTO> updateList = assetDisposalDetailDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(updateList)){
+            List<String> assetDisposalDetailIds = updateList.stream().map(AssetDisposalDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+
+            //查询旧数据
+            List<AssetDisposalPhysicalDetailEntity> oldPhysicalDetailList = assetDisposalPhysicalDetailService.lambdaQuery()
+                    .eq(AssetDisposalPhysicalDetailEntity::getMainId, assetDisposalEntity.getId())
+                    .in(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId, assetDisposalDetailIds)
+                    .list();
+
+            Map<String, List<AssetDisposalPhysicalDetailEntity>> map = oldPhysicalDetailList.stream().collect(Collectors.groupingBy(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId));
+
+            for (AssetDisposalDetailDTO.UpdateDTO dto : updateList) {
+                AssetDisposalDetailEntity detailEntity = new AssetDisposalDetailEntity();
+                BeanMapper.copy(dto, detailEntity);
+                detailEntity.setMainId(mainId);
+                assetDisposalDetailService.updateById(detailEntity);
+
+                String assetDisposalDetailId = detailEntity.getId();
+
+                List<AssetDisposalPhysicalDetailDTO.UpdateDTO> assetDisposalPhysicalDetailDTOList = dto.getAssetDisposalPhysicalDetailDTOList();
+                assetDisposalPhysicalDetailDTOList.forEach(e -> {
+                    e.setMainId(mainId);
+                    e.setAssetDisposalDetailId(assetDisposalDetailId);
+                });
+
+                List<AssetDisposalPhysicalDetailEntity> oldPhysicalDetailById = map.getOrDefault(assetDisposalDetailId,null);
+                if(Objects.nonNull(oldPhysicalDetailById) && CollUtil.isNotEmpty(oldPhysicalDetailById)){
+
+                    List<String> detailIds = assetDisposalPhysicalDetailDTOList.stream().map(AssetDisposalPhysicalDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                    // 处理删除的数据
+                    List<AssetDisposalPhysicalDetailEntity> remove = oldPhysicalDetailById.stream()
+                            .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
+                            .collect(Collectors.toList());
+                    if(CollUtil.isNotEmpty(remove)){
+                        List<String> removeIds = remove.stream().map(AssetDisposalPhysicalDetailEntity::getId).collect(Collectors.toList());
+                        assetDisposalPhysicalDetailService.removeByIds(removeIds);
+                    }
+                }
+
+                List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = BeanMapper.copyList(assetDisposalPhysicalDetailDTOList, AssetDisposalPhysicalDetailEntity.class);
+                assetDisposalPhysicalDetailService.saveOrUpdateBatch(assetDisposalPhysicalDetailEntities);
+
+                //添加日志
+                AssetDisposalDetailEntity oldDetail = oldDetailList.stream().filter(e -> Objects.equals(e.getId(),assetDisposalDetailId)).findFirst().orElse(null);
+                if(Objects.nonNull(oldDetail)){
+                    operateLogService.addModuleOperateLogByObj(oldDetail, detailEntity, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), mainId, "编辑资产卡片【%s】",oldDetail.getSourceCode());
+                }
+            }
+        }
     }
 
 
@@ -129,8 +284,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<AssetDisposalDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
@@ -144,38 +299,57 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         List<AssetDisposalDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AssetDisposalDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AssetDisposalDTO.TabListDTO(status, 0));
+        List<AssetDisposalDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new AssetDisposalDTO.TabListDTO("all", "全部", 0));
+        for (String status : statusList) {
+            AssetDisposalDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(new AssetDisposalDTO.TabListDTO(status, "", 0));
+            tabListDTO.setTabFlagName(ApproveStatusEnum.getName(status));
+            result.add(tabListDTO);
         }
+        return result;
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<AssetDisposalDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.MOLD_INFO.getCode(), obj.getId()));
         });
-        list.add(new AssetDisposalDTO.TabListDTO("all", list.stream().mapToInt(AssetDisposalDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
+        // 属性赋值
+        for (AssetDisposalDTO.ListDTO data : list) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            data.setDisposalMethodName(AssetDisposalDisposalMethodEnum.getName(data.getDisposalMethod()));
+            data.setDisposalCurrencyName(CurrencyEnum.getNameByCode(data.getDisposalCurrency()));
+            data.setInvoiceTypeName(AssetDisposalDetailInvoiceTypeEnum.getName(data.getInvoiceType()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
+            }
+        }
     }
 
     @Override
-    public void exportList(AssetDisposalDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetDisposalDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetDisposal.xlsx";
-        String name = "资产处置单主单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(AssetDisposalDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("资产处置单导出", EXPORT_FMS_ASSET_DISPOSAL.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -190,14 +364,12 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         log.info("提交 开始修改资产处置单主单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动资产处置单主单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录资产处置单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -227,39 +399,38 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         AssetDisposalEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
+     * 审核流程处理
+     *
+     * @param entity
+     * @param dto
+     */
     private void approveProcess(AssetDisposalEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_DISPOSAL.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -279,24 +450,20 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
     private Boolean validateDisApprove(AssetDisposalEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -305,10 +472,17 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     public BatchResultDTO delete(String id) {
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1043);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+
+        assetDisposalDetailService.lambdaUpdate().set(AssetDisposalDetailEntity::getIsDeleted, true)
+                .eq(AssetDisposalDetailEntity::getMainId, id)
+                .update();
+
+        assetDisposalPhysicalDetailService.lambdaUpdate().set(AssetDisposalPhysicalDetailEntity::getIsDeleted, true)
+                .eq(AssetDisposalPhysicalDetailEntity::getMainId, id)
+                .update();
 
         // 删除主单数据
         log.info("删除 开始删除资产处置单主单主单数据，id：【{}】", id);
@@ -316,47 +490,51 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         // 删除日志数据
         log.info("删除 开始删除资产处置单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除资产处置单主单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getCode(), "删除资产处置单主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
+
     /**
-    * 作废
-    */
+     * 作废
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+        if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改资产处置单主单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AssetDisposalEntity::getId, id)
-            .set(AssetDisposalEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-            .set(AssetDisposalEntity::getInvalidRemark, remark)
-            .update();
+                .set(AssetDisposalEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(AssetDisposalEntity::getInvalidRemark, remark)
+                .set(AssetDisposalEntity::getInvalidTime, LocalDateTime.now())
+                .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
-     }
+    }
 
     /**
-    * 撤销
-    */
+     * 撤销
+     */
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
+        log.info("撤销 开始撤销流程，id：【{}】", id);
 
         log.info("撤销 开始修改资产处置单主单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -364,12 +542,10 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_DISPOSAL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -383,119 +559,129 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
         return Boolean.TRUE;
     }
 
+
     @Override
     public AssetDisposalDTO.ViewDTO view(String id) {
-        AssetDisposalEntity assetDisposalEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产处置单主单数据"));
+        AssetDisposalEntity assetDisposalEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         AssetDisposalDTO.ViewDTO data = BeanMapperUtils.map(AssetDisposalDTO.ViewDTO.class, assetDisposalEntity);
+
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+
+        //查询明细数据
+        List<AssetDisposalDetailDTO.ViewDTO> detial = assetDisposalDetailService.listByMainId(id);
+        data.setAssetDisposalDetailDTOList(detial);
         return data;
     }
+
+    private void fillOne(AssetDisposalDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setDisposalMethodName(AssetDisposalDisposalMethodEnum.getName(data.getDisposalMethod()));
+    }
+
     /**
-    * 启动流程
-    *
-    * @param entity
-    * @return void
-    * @Date 2023/7/4 10:07
-    **/
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
 
     public void startProcess(AssetDisposalEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_DISPOSAL.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(AssetDisposalDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-            return;
-        }
+
+
+    @Override
+    public Map<String, Object> getVariablesMap(AssetDisposalEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_DISPOSAL.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
+
     /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(AssetDisposalEntity::getId, id)
-            .set(AssetDisposalEntity::getApproveUserId, userInfo.getUid())
-            .set(AssetDisposalEntity::getApproveUserName, userInfo.getUserName())
-            .set(AssetDisposalEntity::getApproveStatus, approveStatus)
-            .set(AssetDisposalEntity::getApproveTime, LocalDateTime.now())
-            .update(new AssetDisposalEntity());
-     }
+                .set(AssetDisposalEntity::getApproveUserId, userInfo.getUid())
+                .set(AssetDisposalEntity::getApproveUserName, userInfo.getUserName())
+                .set(AssetDisposalEntity::getApproveStatus, approveStatus)
+                .set(AssetDisposalEntity::getApproveTime, LocalDateTime.now())
+                .update(new AssetDisposalEntity());
+    }
 
     /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+     * 反审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
         this.lambdaUpdate().eq(AssetDisposalEntity::getId, id)
-            .set(AssetDisposalEntity::getApproveUserId, "")
-            .set(AssetDisposalEntity::getApproveUserName, "")
-            .set(AssetDisposalEntity::getApproveStatus, approveStatus)
-            .set(AssetDisposalEntity::getApproveTime, null)
-            .update(new AssetDisposalEntity());
-        }
+                .set(AssetDisposalEntity::getApproveUserId, "")
+                .set(AssetDisposalEntity::getApproveUserName, "")
+                .set(AssetDisposalEntity::getApproveStatus, approveStatus)
+                .set(AssetDisposalEntity::getApproveTime, null)
+                .update(new AssetDisposalEntity());
+    }
 
     /**
-    * 更新审核状态
-    */
+     * 更新审核状态
+     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetDisposalEntity::getId, id)
-        .set(AssetDisposalEntity::getApproveStatus, approveStatus)
-        .update(new AssetDisposalEntity());
+                .set(AssetDisposalEntity::getApproveStatus, approveStatus)
+                .update(new AssetDisposalEntity());
     }
 
     /**
-    * 分页查询、导出 数据处理
-    */
-    private void fillList(List<AssetDisposalDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-
-        // 属性赋值
-        for(AssetDisposalDTO.ListDTO data : list) {
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
-        }
-    }
-    /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void validateSubmit(AssetDisposalEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(AssetDisposalEntity assetDisposalEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
+    }
+
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        return null;
     }
 }

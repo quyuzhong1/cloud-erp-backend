@@ -6,21 +6,22 @@ import com.erp.model.fms.dto.AssetDisposalDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
  * 资产处置单主表 服务类
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 public interface AssetDisposalService extends SuperService<AssetDisposalEntity> {
 
     /**
     * 新增
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return
     */
@@ -28,8 +29,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 修改
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return
     */
@@ -37,8 +38,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 分页列表查询
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param pagingParamDTO
     * @return PagingVO<AssetDisposalDTO.ListDTO>>
     */
@@ -46,8 +47,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 状态统计
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return List<AssetDisposalDTO.TabListDTO>>
     */
@@ -55,8 +56,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 详情
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param id
     * @return
     */
@@ -64,8 +65,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 新增并提交审核
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return BaseResultDTO.AddDTO
     */
@@ -73,8 +74,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 修改并提交审核
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return
     */
@@ -82,8 +83,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
      /**
      * 提交审核
-     * @author wuht
-     * @date: 2025-10-11
+     * @author jack
+     * @date: 2025-10-29
      * @param id
      * @return
      */
@@ -91,8 +92,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 审核
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return
     */
@@ -100,8 +101,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 反审核
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param id
     * @return
     */
@@ -109,16 +110,16 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 删除
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param id
     * @return
     */
     BatchResultDTO delete(String id);
     /**
     * 作废
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param id
     * @param remark
     * @return
@@ -127,8 +128,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 撤销
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param id
     * @return
     */
@@ -136,13 +137,13 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
 
     /**
     * 导出Excel
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @param response
     * @return
     */
-    void exportList(AssetDisposalDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(AssetDisposalDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -152,4 +153,7 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetDisposalEntity entity);
 
+    Map<String, Object> getVariablesMap(AssetDisposalEntity entity);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
 }

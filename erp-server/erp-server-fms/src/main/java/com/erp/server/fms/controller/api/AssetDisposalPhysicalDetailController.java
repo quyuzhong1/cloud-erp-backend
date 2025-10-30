@@ -23,8 +23,8 @@ import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
 /**
  * 资产处置单实物明细表
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Slf4j
 @RestController
@@ -37,8 +37,8 @@ public class AssetDisposalPhysicalDetailController extends BaseController {
 
     /**
     * 新增
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<String>
     */
@@ -50,8 +50,8 @@ public class AssetDisposalPhysicalDetailController extends BaseController {
 
     /**
     * 修改
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult
     */
