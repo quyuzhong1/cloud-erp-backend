@@ -2092,6 +2092,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 
+        viewDTO.setDemandTypeName(FbaDemandTypeEnum.getName(viewDTO.getDemandType()));
         //查询头程物流单
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(tmsFirstMileLogisticEntities)) {
