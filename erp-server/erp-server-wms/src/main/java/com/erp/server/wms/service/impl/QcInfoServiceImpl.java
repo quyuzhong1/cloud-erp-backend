@@ -838,6 +838,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-20 14:55
      */
     private void autoBatchStockInBill(List<String> idList) {
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+
         String b2bQcType = QcTypeEnum.B2B_OUTSIDE_QC.getCode();
         List<QcResultDTO.StockInDTO> stockInList = qcResultService.getStockIn(idList);
         //只要有采购订单的以及是b2b质检类型
@@ -882,13 +886,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addStockIn.setDetails(details);
             addList.add(addStockIn);
         }
-        List<QcInfoEntity> qcInfoEntityList = listByIds(idList);
-        List<String> receiveIdList = qcInfoEntityList.stream().filter(v->SourceTypeEnum.PO_RECEIVE.getCode().equals(v.getSourceType())).map(QcInfoEntity::getSourceId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(receiveIdList)){
-            warehouseReceiveService.generateStockInWhenQcFinish(receiveIdList);
-        }
         //批量生成 入库单
         poInstockService.batchAdd(addList);
+
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**

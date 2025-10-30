@@ -546,11 +546,17 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto) {
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+
         SubcontractIssueDTO.AddDTO addDTO = dto.getAddDTO();
         //新增
         BaseResultDTO.AddDTO add = this.add(addDTO);
         //无需审核
         if (!dto.getIsApprove()) {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
             return add;
         }
         //提交
@@ -567,6 +573,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (!approve.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return add;
     }
 
