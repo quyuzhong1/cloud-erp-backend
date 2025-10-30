@@ -56,88 +56,34 @@ public class ImlServiceTest {
     private static final String REQUEST_TOKEN = "fewR7gRJix5l6Xbu7HBPEAtmrXZmYVjHu0DD76oVjNaz0_k6W7D2dRwppWXETUAV";
 
     public static void main(String[] args) throws Exception{
-//        Map<String,Object> body = new HashMap<>();
-//        body.put("code","RI2025093000197");
-////        body.put("pageSize",50);
-//        //查询前一天的时间戳的数据
+        Map<String,Object> body = new HashMap<>();
+        body.put("code","RI2025102800925");
+//        body.put("pageSize",50);
+        //查询前一天的时间戳的数据
 //        long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 //        long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 //        body.put("createTimeFrom",startTime);
 //        body.put("createTimeTo",endTime);
-//        String timestamp = String.valueOf(new Date().getTime());
-//        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
-//        Map<String,String> headerMap = new HashMap<>();
-//        headerMap.put("x-app-id",APP_ID);
-//        headerMap.put("x-app-sign",appSign);
-//        headerMap.put("x-request-time",timestamp);
-//        headerMap.put("x-request-token",REQUEST_TOKEN);
-//        String bodyStr = OkHttpUtils.doPostJson(API_URL,body, headerMap);
-//        System.out.println(bodyStr);
+        String timestamp = String.valueOf(new Date().getTime());
+        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
+        Map<String,String> headerMap = new HashMap<>();
+        headerMap.put("x-app-id",APP_ID);
+        headerMap.put("x-app-sign",appSign);
+        headerMap.put("x-request-time",timestamp);
+        headerMap.put("x-request-token",REQUEST_TOKEN);
+        String bodyStr = OkHttpUtils.doPostJson(API_URL + "/open-sdk/oms/query_refund_order_detail",body, headerMap);
+        System.out.println(bodyStr);
 
-        List<Object> allData = new ArrayList<>();
-        String appId = APP_ID;
-        String appToken = REQUEST_TOKEN;
-        String appSecret = APP_SECRET;
-        String ownerCode = "86526";
-//        String extend = indoc.getString("extend_json");
-//        JSONObject extendMap = JSON.parseObject(extend);
-//
-//        JSONObject extendValMap = extendMap.getJSONObject("value");
-        String url = API_URL;
-            boolean isNext = true;
-            int page = 1;
-            while (isNext){
-                // 准备请求数据
-                String timestamp = String.valueOf(new Date().getTime());
-                Map<String,Object> bodyMap = new HashMap<>();
-                bodyMap.put("pageIndex",page);
-                bodyMap.put("pageSize",50);
-                bodyMap.put("platformCustomerCode",ownerCode);
-                String postJson = JSONObject.toJSONString(bodyMap);
-
-                // 计算签名
-                String appSign = Md5Util.md5(appSecret + timestamp + postJson);
-
-                // 创建请求体
-                RequestBody body = RequestBody.create(
-                        MediaType.parse("application/json; charset=utf-8"),
-                        postJson
-                );
-
-                // 创建请求
-                Request request = new Request.Builder()
-                        .url(url + "/open-sdk/oms/new_stock_total_query")
-                        .post(body)
-                        .addHeader("x-app-id", appId)
-                        .addHeader("x-app-sign", appSign)
-                        .addHeader("x-request-time", timestamp)
-                        .addHeader("x-request-token", appToken)
-                        .build();
-
-                // 发送请求
-                OkHttpClient client = new OkHttpClient();
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful()) {
-                        String responseBody = response.body().string();
-                        JSONObject responseJson = JSON.parseObject(responseBody);
-                        if (responseJson.getInteger("code") != 0) {
-                            throw new RuntimeException("API返回错误: " + responseJson);
-                        }
-                        isNext = responseJson.getJSONObject("data").getBooleanValue("hasNext");
-                        JSONArray dataList = responseJson.getJSONObject("data").getJSONArray("list");
-                        if (dataList != null) {
-                            allData.addAll(dataList);
-                        }
-                        //测试环境sku太多，只查询5次
-                        if(page == 10 && appId.equals("1929841041771364354")){
-                        }
-                        page = page +1;
-                    } else {
-                        throw new RuntimeException("请求失败: " + response.code() + " - " + response.message() + "-" +response.body().string() );
-                    }
-                }
-            }
-        System.out.println(allData);
+//        List<Object> allData = new ArrayList<>();
+//        String appId = APP_ID;
+//        String appToken = REQUEST_TOKEN;
+//        String appSecret = APP_SECRET;
+//        String ownerCode = "86526";
+////        String extend = indoc.getString("extend_json");
+////        JSONObject extendMap = JSON.parseObject(extend);
+////
+////        JSONObject extendValMap = extendMap.getJSONObject("value");
+//        String url = API_URL;
     }
 
     @Resource
@@ -218,7 +164,7 @@ public class ImlServiceTest {
     @Test
     public void createOutboundBill() {
         ImlCreateOutboundReq imlCreateOutboundReq = ImlCreateOutboundReq.builder()
-                .platformOrderNo("WFHD20251029001")
+                .platformOrderNo("WFHD202510290101")
                 .ecPlatformOrderNo("asn520254")
                 .logisticsCode("IML-RU")
                 .bizType("TOC")
