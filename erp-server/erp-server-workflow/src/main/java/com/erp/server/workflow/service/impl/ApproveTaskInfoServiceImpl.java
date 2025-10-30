@@ -178,7 +178,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
             detailDTO.setSysParentId(detailDTO.getEntityCode());
             //唯一编码
-            detailDTO.setUniqueCode(CharSequenceUtil.format("{}-{}",detailDTO.getEntityCode(),detailDTO.getSysField()));
+            detailDTO.setUniqueCode(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             //第三方类型名称
             detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
             //数大臣类型名称
