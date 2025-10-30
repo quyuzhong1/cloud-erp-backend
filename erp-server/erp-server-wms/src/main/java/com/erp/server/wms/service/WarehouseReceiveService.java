@@ -307,13 +307,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
-     * 批量质检完成时生成入库单
-     * @param ids ：  收货单id
-     * @return java.lang.Boolean
-     **/
-    Boolean generateStockInWhenQcFinish(List<String> ids);
-
-    /**
      *
      * @param supplierId
      * @return

@@ -863,10 +863,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
             updateArrivalState(purchaseDetailIdList);
         }
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //自动生成补货采购订单
         autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
         //审核通过生成对账明细
         autoAddPoReconciliationDetail(poReturnEntityList1);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**

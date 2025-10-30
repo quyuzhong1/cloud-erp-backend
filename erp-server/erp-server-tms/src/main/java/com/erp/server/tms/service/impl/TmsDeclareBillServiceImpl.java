@@ -902,7 +902,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
         addDTO.setIsAuto(true);
-        this.addFmDeclare(addDTO);
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            this.addFmDeclare(addDTO);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         return true;
     }
 
@@ -949,7 +957,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
         addDTO.setIsAuto(true);
-        this.addB2BDeclare(addDTO);
+
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            this.addB2BDeclare(addDTO);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         return true;
     }
 

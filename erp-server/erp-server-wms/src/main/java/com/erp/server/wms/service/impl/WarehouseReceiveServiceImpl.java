@@ -739,7 +739,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             }
         }
+        //自动生成功能打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         qcInfoService.autoReceiveToQcDTO(addList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1729,37 +1734,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .update();
     }
 
-    @Override
-    public Boolean generateStockInWhenQcFinish(List<String> ids) {
-        List<WarehouseReceiveEntity> warehouseReceiveEntityList = this.listByIds(ids);
-        if(CollectionUtils.isEmpty(warehouseReceiveEntityList)){
-            return true;
-        }
-        List<WarehouseReceiveDetailEntity> allDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
-        Map<String,List<WarehouseReceiveDetailEntity>> detailMap = allDetailList.stream().collect(Collectors.groupingBy(WarehouseReceiveDetailEntity::getMainId));
-        //去掉质检单还没有全部质检的
-        for(WarehouseReceiveEntity main : warehouseReceiveEntityList){
-            List<WarehouseReceiveDetailEntity> detailList = detailMap.get(main.getId());
-            if(CollectionUtils.isEmpty(detailList)){
-                continue;
-            }
-            List<QcInfoEntity> qcInfoList = poInstockService.getReceiveQcInfo(detailList,new ArrayList<>());
-            if(CollectionUtils.isEmpty(qcInfoList)){
-                continue;
-            }
-            if(!qcInfoList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
-                continue;
-            }
-            //暂停需求，因为入货数量不确定，可能质检不良率达到一定比例会整单退掉，后面质检规则确定后再看开发
-            List<WarehouseReceiveDTO.GenerateStockInDTO> dtos = new ArrayList<>();
-//            for(WarehouseReceiveDetailEntity detail : detailList){
-//                WarehouseReceiveDTO.GenerateStockInDTO addDTO = WarehouseReceiveConverter.INSTANCE.entityToGenerateStockConvert(detail,main);
-//                dtos.add(addDTO);
-//            }
-//            this.generateStockIn(dtos);
-        }
-        return true;
-    }
 
     @Override
     public SupplierCountDTO countOrderBySupplierId(String supplierId) {
