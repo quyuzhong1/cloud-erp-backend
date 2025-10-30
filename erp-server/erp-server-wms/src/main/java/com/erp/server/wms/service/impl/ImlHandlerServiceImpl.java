@@ -32,6 +32,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -154,9 +155,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             ImlCreateInboundReq.BoxsDTO boxListDTO = new ImlCreateInboundReq.BoxsDTO();
             ThirdWarehouseCreateInboundReq.Item firstItem = itemList.get(0);
             if(firstItem.getWeightUnit().equals(UnitEnum.WeightUnitEnum.KG.code)){
-                boxListDTO.setBoxWeight(firstItem.getPackageWeight().multiply(new BigDecimal(1000)));
-            }else{
                 boxListDTO.setBoxWeight(firstItem.getPackageWeight());
+            }else{
+                boxListDTO.setBoxWeight(firstItem.getPackageWeight().divide(new BigDecimal(1000), 4, RoundingMode.HALF_UP));
             }
             boxListDTO.setBoxLength(firstItem.getBoxLength());
             boxListDTO.setBoxWidth(firstItem.getBoxWidth());
