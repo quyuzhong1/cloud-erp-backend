@@ -1,6 +1,9 @@
 package com.erp.server.fms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.utils.ExcelUtil;
+import com.erp.server.fms.query.AssetDisposalQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -30,8 +33,8 @@ import com.erp.model.fms.entity.AssetDisposalEntity;
 /**
  * 资产处置单主表
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
  */
 @Slf4j
 @RestController
@@ -44,8 +47,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 新增
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<String>
     */
@@ -57,8 +60,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 修改
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult
     */
@@ -82,7 +85,7 @@ public class AssetDisposalController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetDisposal:paging",
-            tableAlias = ""
+            tableAlias = "ad"
     )
     public ApiResult<List<AssetDisposalDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetDisposalService.tabList(dto));
@@ -90,8 +93,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 列表查询
-    * @author wuht
-    * @date: 2025-10-11
+    * @author jack
+    * @date: 2025-10-29
     * @param dto
     * @return ApiResult<PagingVO<AssetDisposalDTO.ListDTO>>
     */
@@ -99,16 +102,17 @@ public class AssetDisposalController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetDisposal:paging",
-            tableAlias = ""
+            tableAlias = "ad"
     )
+    @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)
     public ApiResult<PagingVO<AssetDisposalDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetDisposalDTO.PagingParamDTO> dto) {
         return success(assetDisposalService.paging(dto));
     }
 
     /**
     * 新增并提交审核
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<Void>
     */
@@ -120,8 +124,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 修改并提交审核
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<Void>
     */
@@ -138,8 +142,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 提交审核
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -153,7 +157,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
 		Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -177,8 +180,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 审核
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -192,7 +195,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
 		Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : ids) {
@@ -216,8 +218,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 反审核
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -231,7 +233,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
 		Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -256,8 +257,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 删除
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -271,7 +272,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
 		Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -294,8 +294,8 @@ public class AssetDisposalController extends BaseController {
     }
     /**
     * 作废
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -309,7 +309,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
 		Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -333,8 +332,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 撤销
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -348,7 +347,6 @@ public class AssetDisposalController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<AssetDisposalEntity> list = assetDisposalService.lambdaQuery().in(AssetDisposalEntity::getId, ids).list();
         Map<String, AssetDisposalEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetDisposalEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -372,8 +370,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 详情
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param id
     * @return ApiResult<AssetDisposalDTO.ViewDTO>>
     */
@@ -390,8 +388,8 @@ public class AssetDisposalController extends BaseController {
 
     /**
     * 导出Excel数据
-    * @author wuht
-    * @date:  2025-10-11
+    * @author jack
+    * @date:  2025-10-29
     * @param dto
     * @param response
     * @return
@@ -403,8 +401,40 @@ public class AssetDisposalController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产处置单主表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetDisposalDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated AssetDisposalDTO.PagingParamDTO dto, HttpServletResponse response) {
         assetDisposalService.exportList(dto, response);
+        return success();
+    }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-10-10
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "资产处置单下载模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/assetDisposalTemplate.xlsx";
+        String standardExcelName = "assetDisposalTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
+    /**
+     *  导入
+     * @author jack
+     * @date:  2025-10-10
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入资产处置单")
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = assetDisposalService.importFile(dto);
+        return result ? success() : failure();
     }
 
 

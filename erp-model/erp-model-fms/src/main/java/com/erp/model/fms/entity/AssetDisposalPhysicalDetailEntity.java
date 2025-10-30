@@ -15,8 +15,8 @@ import com.common.business.enums.ApproveStatusEnum;
  * 资产处置单实物明细表
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -27,8 +27,8 @@ public class AssetDisposalPhysicalDetailEntity extends BaseEntity<AssetDisposalP
     /**
     * 来源明细ID
     */
-    @TableField("source_detail_id")
-    private String sourceDetailId;
+    @TableField("asset_disposal_detail_id")
+    private String assetDisposalDetailId;
     /**
     * 主表ID
     */
@@ -56,7 +56,7 @@ public class AssetDisposalPhysicalDetailEntity extends BaseEntity<AssetDisposalP
     private Integer qty;
 
 
-    public static final String SOURCE_DETAIL_ID = "source_detail_id";
+    public static final String ASSET_DISPOSAL_DETAIL_ID = "asset_disposal_detail_id";
 
     public static final String MAIN_ID = "main_id";
 
