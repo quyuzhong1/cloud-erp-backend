@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -13,9 +14,11 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
 import com.erp.server.scm.mapper.AssetPurchaseChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -28,7 +31,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import org.checkerframework.checker.units.qual.A;
 import org.jfree.util.Log;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -51,6 +53,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_PURCHASE_ORDER;
 
@@ -89,6 +93,9 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     private AssetPurchaseOrderSupplierService assetPurchaseOrderSupplierService;
 
     @Autowired
+    private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
+
+    @Autowired
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
@@ -102,6 +109,9 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -208,7 +218,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 // 缺失的状态补0
                 finalList.add(new AssetPurchaseChangeDTO.TabListDTO(
                         status,
-                        AssetNoticeTabListEnum.getName(status),
+                        AssetApproveStatusEnum.getName(status),
                         0
                 ));
             }
@@ -468,12 +478,19 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                         .update();
 
                 if (!updated) {
-                    result = false;
-                    Log.info("采购变更单更新失败");
+                    throw new ServiceException("采购变更单更新失败");
                 }
             }
         }
-
+        //推送金蝶
+        DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
+            }
+        });
         return result;
     }
 

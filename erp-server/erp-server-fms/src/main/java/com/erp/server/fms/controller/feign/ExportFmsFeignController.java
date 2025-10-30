@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.*;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
+import com.erp.server.fms.handler.AssetStocktakingPlanQueryHandler;
 import com.erp.server.fms.query.AssetDisposalQueryHandler;
 import com.erp.server.fms.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -77,6 +78,7 @@ public class ExportFmsFeignController {
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:export"
     )
+    @WebAdvanceQuery(handler = AssetStocktakingPlanQueryHandler.class)
     public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
         return assetStocktakingPlanService.getAssetStocktakingPlanPageData(dto);
     }

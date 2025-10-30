@@ -75,6 +75,12 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
     @Resource
+    private AssetPurchaseOrderSupplierService assetPurchaseOrderSupplierService;
+
+    @Resource
+    private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
+
+    @Resource
     private SupplierService supplierService;
 
     @Resource
@@ -355,7 +361,169 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 	}
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(AssetPurchaseOrderEntity entity, String operate) {
+        //生成任务
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+        }else {
+            return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+        }
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (AssetPurchaseOrderEntity entity, String operate, Map<String, Object> resultMap) {
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_ORDER.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        if(CollUtil.isEmpty(list)) {
+            //添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+
+        ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
+        scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        scmPushMsgEntity.setSourceId(entity.getId());
+        scmPushMsgEntity.setSourceCode(entity.getCode());
+        scmPushMsgEntity.setSyncOperate(operate);
+        scmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        scmPushMsgService.save(scmPushMsgEntity);
+
         return null;
+    }
+
+    @Override
+    public Map<String, Object> newSyncDataToKingdee(AssetPurchaseOrderEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
+
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getCode());
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+        //采购日期
+        resultMap.put("purchaseDate", LocalDateTimeUtil.format(entity.getPurchaseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+        //单据类型
+        resultMap.put("type",entity.getOrderType());
+
+        //查询采购供应商
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
+        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+            throw new ServiceException("未发现采购供应商信息");
+        }
+        SupplierEntity supplierEntity = supplierService.getById(purchaseOrderSupplierEntity.getSupplierId());
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException("未发现供应商信息");
+        }
+
+        //供应商编码
+        resultMap.put("supplierCode",supplierEntity.getCode());
+
+        //采购部门
+        resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
+
+        //获取用户部门id
+        if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getPurchaseDeptId());
+            dto.setOrgId(entity.getPurchaseOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtils.isNotEmpty(deptKingdee)) {
+                resultMap.put("purchaseDeptCode", deptKingdee.getKingdeeDeptCode());
+            }
+        }
+
+        //采购员编码
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(entity.getPurchaseOrgId());
+            findBusinessOperator.setUserId(entity.getPurchaseUserId());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //采购员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("purchaseUserCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
+            }
+        }
+        //供应商联系人
+        resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
+
+        if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPaymentCondition())) {
+            //付款条件
+            resultMap.put("paymentCondition",purchaseOrderSupplierEntity.getPaymentCondition());
+        }
+
+        //采购明细
+        List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId,entity.getId())
+                .orderByAsc(AssetPurchaseOrderDetailEntity::getId)
+                .list();
+        if (CollectionUtils.isEmpty(details)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //采购组织编码
+            String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("purchaseOrgCode", purchaseOrgCode);
+        }
+
+        List<JSONObject> list = new ArrayList<>();
+        for (AssetPurchaseOrderDetailEntity detailEntity : details) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",detailEntity.getId());
+            jsonObject.set("skuNo",detailEntity.getAssetCode());
+            jsonObject.set("purchaseQty",detailEntity.getPurchaseQty());
+            jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
+            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
+            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                //采购组织编码
+                String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("purchaseOrgCode", purchaseOrgCode);
+            }
+            jsonObject.set("detailRemark",detailEntity.getRemark());
+
+            list.add(jsonObject);
+        }
+        resultMap.put("list",list);
+        return resultMap;
     }
 }

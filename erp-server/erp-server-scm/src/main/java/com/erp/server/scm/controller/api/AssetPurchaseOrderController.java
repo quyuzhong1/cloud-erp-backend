@@ -617,7 +617,7 @@ public class AssetPurchaseOrderController extends BaseController {
     }
 
     /**
-     * 下推资产验收单弹窗显示
+     * 下推采购变更单弹窗显示
      * @author
      * @date:
      * @param dto 明细id

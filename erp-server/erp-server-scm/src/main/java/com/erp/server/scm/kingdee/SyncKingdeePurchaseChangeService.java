@@ -3,6 +3,7 @@ package com.erp.server.scm.kingdee;
 import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.scm.entity.AssetPurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 
 /**
@@ -23,4 +24,8 @@ public interface SyncKingdeePurchaseChangeService {
     DmpPushTaskEntity syncDataToKingdee(PurchaseChangeEntity entity, String operate);
     
     Map<String , Object> newSyncDataToKingdee(PurchaseChangeEntity entity, String operate);
+
+    DmpPushTaskEntity syncDataToKingdee(AssetPurchaseChangeEntity entity, String operate);
+
+    Map<String , Object> newSyncDataToKingdee(AssetPurchaseChangeEntity entity, String operate);
 }

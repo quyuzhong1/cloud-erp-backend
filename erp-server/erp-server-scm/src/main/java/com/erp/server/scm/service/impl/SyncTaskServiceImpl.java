@@ -78,6 +78,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private SyncKingdeeSupplierService syncKingdeeSupplierService;
 
     @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Resource
+    private AssetPurchaseChangeService assetPurchaseChangeService;
+
+    @Resource
     private DmpMqFeign dmpMqFeign;
 
     @Override
@@ -108,6 +114,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case SUPPLIER:
                 resultList = syncSupplier(sourceDetailList);
+                break;
+            case ASSET_PURCHASE_ORDER:
+                resultList = syncAssetPurchaseOrder(sourceDetailList);
+                break;
+            case ASSET_PURCHASE_CHANGE:
+                resultList = syncAssetPurchaseChange(sourceDetailList);
                 break;
             default:
                 break;
@@ -515,6 +527,54 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSupplierService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    /**
+     * 同步资产采购单
+     * @param sourceDetailList
+     * @return
+     */
+    private List<DmpPushTaskEntity> syncAssetPurchaseOrder (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncAssetPurchaseOrder >>>> 未找到数据！");
+            return Collections.EMPTY_LIST;
+        }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            AssetPurchaseOrderEntity assetPurchaseOrderEntity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(assetPurchaseOrderEntity)) {
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseOrderService.syncDataToKingdee(assetPurchaseOrderEntity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
+        }
+        return resultList;
+    }
+
+    /**
+     * 同步资产变更单
+     * @param sourceDetailList
+     * @return
+     */
+    private List<DmpPushTaskEntity> syncAssetPurchaseChange (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncAssetPurchaseChange >>>> 未找到数据！");
+            return Collections.EMPTY_LIST;
+        }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            AssetPurchaseChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
         return resultList;
     }
