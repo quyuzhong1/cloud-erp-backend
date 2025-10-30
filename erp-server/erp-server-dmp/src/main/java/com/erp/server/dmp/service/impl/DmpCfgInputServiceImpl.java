@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 输入信息 服务实现类
+ * 拉取配置 服务实现类
  * </p>
  *
  * @author Jim
@@ -86,22 +86,17 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         // 数据处理
         handleData(dmpCfgInputEntity);
 
-        log.info("开始新增输入信息");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        dmpCfgInputEntity.setCode(code);
+        log.info("开始新增拉取配置");
         boolean save = super.save(dmpCfgInputEntity);
         if(!save) {
-            throw new ServiceException("输入信息保存失败");
+            throw new ServiceException("拉取配置保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "输入信息" , dmpCfgInputEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拉取配置" , dmpCfgInputEntity.getCode());
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getCode(), "新增拉取配置数据");
 
-        return new BaseResultDTO.AddDTO(dmpCfgInputEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(dmpCfgInputEntity.getId(), dmpCfgInputEntity.getCode());
     }
 
     /**
@@ -111,22 +106,22 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     @Override
     public Boolean update(DmpCfgInputDTO.UpdateDTO updateDTO) {
         DmpCfgInputEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取配置"));
         DmpCfgInputEntity dmpCfgInputEntity =  BeanMapperUtils.map(DmpCfgInputEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpCfgInputEntity);
-        log.info("编辑 开始修改输入信息数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改拉取配置数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(dmpCfgInputEntity);
         if(!save) {
-            throw new ServiceException("输入信息保存失败");
+            throw new ServiceException("拉取配置保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录输入信息日志数据，单号：【{}】", dmpCfgInputEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputEntity.getCode(), "输入信息");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录拉取配置日志数据，单号：【{}】", dmpCfgInputEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputEntity.getCode(), "拉取配置");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getCode(), "更新拉取配置数据");
         return Boolean.TRUE;
     }
 
@@ -138,6 +133,28 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         // 验证数据 & 数据赋值
         if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem()) && StringUtils.isBlank(dmpCfgInputEntity.getExecUrl())) {
             throw new ServiceException("执行系统为RestCloud时，执行Url不能为空");
+        }
+        if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())) {
+            Integer count = lambdaQuery()
+                    .eq(DmpCfgInputEntity::getSystemId, dmpCfgInputEntity.getSystemId())
+                    .eq(DmpCfgInputEntity::getExecSystem, dmpCfgInputEntity.getExecSystem())
+                    .eq(DmpCfgInputEntity::getType, dmpCfgInputEntity.getType())
+                    .eq(DmpCfgInputEntity::getCode, dmpCfgInputEntity.getCode())
+                    .ne(null != dmpCfgInputEntity.getId(), DmpCfgInputEntity::getId, dmpCfgInputEntity.getId())
+                    .count();
+            if (count > 0) {
+                throw new ServiceException("执行系统是DMP下, 拉取系统/数据类型/数据编码不能重复");
+            }
+        } else if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem())) {
+            Integer count = lambdaQuery()
+                    .eq(DmpCfgInputEntity::getSystemId, dmpCfgInputEntity.getSystemId())
+                    .eq(DmpCfgInputEntity::getExecSystem, dmpCfgInputEntity.getExecSystem())
+                    .eq(DmpCfgInputEntity::getExecUrl, dmpCfgInputEntity.getExecUrl())
+                    .ne(null != dmpCfgInputEntity.getId(), DmpCfgInputEntity::getId, dmpCfgInputEntity.getId())
+                    .count();
+            if (count > 0) {
+                throw new ServiceException("执行系统是RestCloud下, 拉取系统/执行Url不能重复");
+            }
         }
     }
 
@@ -199,22 +216,22 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        DmpCfgInputEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到输入信息数据"));
+        DmpCfgInputEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拉取配置数据"));
         // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除输入信息主单数据，id：【{}】", id);
+        log.info("删除 开始删除拉取配置主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除输入信息日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "输入信息");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "删除输入信息数据");
+        log.info("删除 开始删除拉取配置日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "删除拉取配置数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
     public DmpCfgInputDTO.ViewDTO view(String id) {
-        DmpCfgInputEntity dmpCfgInputEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到输入信息数据"));
+        DmpCfgInputEntity dmpCfgInputEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到拉取配置数据"));
         DmpCfgInputDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgInputDTO.ViewDTO.class, dmpCfgInputEntity);
         // 数据填充处理
         fillOne(data);
@@ -259,7 +276,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
 
     @Override
     public DmpCfgInputEntity viewEntity(String id) {
-        return super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到输入信息数据"));
+        return super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到拉取配置数据"));
     }
 
 
