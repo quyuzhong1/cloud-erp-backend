@@ -23,7 +23,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @RestController
-@RequestMapping("/operateLog")
+@RequestMapping("/moduleOperateLog")
 public class OperateLogController extends BaseController {
 
     @Resource
