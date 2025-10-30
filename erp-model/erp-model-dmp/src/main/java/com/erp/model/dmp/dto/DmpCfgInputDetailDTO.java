@@ -255,6 +255,11 @@ public class DmpCfgInputDetailDTO implements Serializable {
         private String cfgInputName;
 
         /**
+         * 系统ID
+         */
+        private String systemId;
+
+        /**
          * 系统代号
          */
         private String systemCode;

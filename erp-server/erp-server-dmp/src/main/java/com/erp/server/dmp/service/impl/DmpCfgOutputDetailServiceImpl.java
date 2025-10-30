@@ -19,10 +19,15 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgOutputDetailMapper;
+import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -33,10 +38,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
- * 推送数据配置明细 服务实现类
+ * 推送调度 服务实现类
  * </p>
  *
  * @author shukai
@@ -50,7 +56,9 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -61,16 +69,15 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         // 数据处理
         handleData(dmpCfgOutputDetailEntity);
 
-        log.info("开始新增推送数据配置明细");
+        log.info("开始新增推送调度");
         boolean save = super.save(dmpCfgOutputDetailEntity);
         if(!save) {
-            throw new ServiceException("推送数据配置明细保存失败");
+            throw new ServiceException("推送调度保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "推送数据配置明细" , dmpCfgOutputDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "推送调度" , dmpCfgOutputDetailEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgOutputDetailEntity.getId(), "新增【推送调度】数据");
 
         return new BaseResultDTO.AddDTO(dmpCfgOutputDetailEntity.getId(), dmpCfgOutputDetailEntity.getId());
     }
@@ -82,22 +89,21 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     @Override
     public Boolean update(DmpCfgOutputDetailDTO.UpdateDTO updateDTO) {
         DmpCfgOutputDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送数据配置明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送调度"));
         DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity =  BeanMapperUtils.map(DmpCfgOutputDetailEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpCfgOutputDetailEntity);
-        log.info("编辑 开始修改推送数据配置明细数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改推送调度数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgOutputDetailEntity);
         if(!save) {
-            throw new ServiceException("推送数据配置明细保存失败");
+            throw new ServiceException("推送调度保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录推送数据配置明细日志数据，id：【{}】", dmpCfgOutputDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputDetailEntity.getId(), "推送数据配置明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录推送调度日志数据，id：【{}】", dmpCfgOutputDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputDetailEntity.getId(), "推送调度");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgOutputDetailEntity.getId(), "修改【推送调度】数据");
         return Boolean.TRUE;
     }
 
@@ -164,7 +170,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         // 删除日志数据
         log.info("删除 开始删除推送配置信息日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送配置信息");
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除推送配置信息数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "删除推送配置信息数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
@@ -196,11 +202,20 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         if(CollUtil.isEmpty(list)) {
             return;
         }
-
-        // 属性赋值
-        for(DmpCfgOutputDetailDTO.ListDTO data : list) {
-            // TODO 其他如需要显示名称的字段赋值
+        List<String> systemIds = list.stream().map(DmpCfgOutputDetailDTO.ListDTO::getSystemId).distinct().collect(Collectors.toList());
+        Map<String, DmpBasicSystemEntity> systemMap = dmpBasicSystemService.lambdaQuery()
+                .in(DmpBasicSystemEntity::getId, systemIds)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(DmpBasicSystemEntity::getId, Function.identity(), (v1, v2) -> v1));
+        for (DmpCfgOutputDetailDTO.ListDTO data : list) {
+            DmpBasicSystemEntity systemEntity = systemMap.get(data.getSystemId());
+            if (null != systemEntity) {
+                data.setSystemCode(systemEntity.getCode());
+                data.setSystemName(systemEntity.getName());
+            }
         }
+
     }
 
     @Override
@@ -209,6 +224,8 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
             entity.setDisabled(false);
             updateById(entity);
             // 可选：添加操作日志
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送调度");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "启用【推送调度】数据");
         } else {
             ServiceException.runError("该【推送调度】数据已启用，无需重复操作");
         }
@@ -221,6 +238,8 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
             entity.setDisabled(true);
             updateById(entity);
             // 可选：添加操作日志
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送调度");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "禁用【推送调度】数据");
         } else {
             ServiceException.runError("该【推送调度】数据已禁用，无需重复操作");
         }

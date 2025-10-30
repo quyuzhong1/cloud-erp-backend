@@ -86,6 +86,12 @@ public class DmpCfgOutputDetailDTO implements Serializable {
          */
         private String cfgOutputName;
 
+
+        /**
+         * 系统ID
+         */
+        private String systemId;
+
         /**
          * 系统代号
          */

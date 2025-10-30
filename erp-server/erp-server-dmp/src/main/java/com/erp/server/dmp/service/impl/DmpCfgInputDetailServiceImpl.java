@@ -22,15 +22,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
+import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -41,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -57,6 +61,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -99,12 +105,12 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         if(!save) {
             throw new ServiceException("外部系统接口明细保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
             log.info("编辑 开始记录外部系统接口明细日志数据，id：【{}】", dmpCfgInputDetailEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputDetailEntity.getId(), "外部系统接口明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgInputDetailEntity.getId(), "更新【拉取调度】数据");
         return Boolean.TRUE;
     }
 
@@ -199,7 +205,18 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        List<String> systemIds = list.stream().map(DmpCfgInputDetailDTO.ListDTO::getSystemId).distinct().collect(Collectors.toList());
+        Map<String, DmpBasicSystemEntity> systemMap = dmpBasicSystemService.lambdaQuery()
+                .in(DmpBasicSystemEntity::getId, systemIds)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(DmpBasicSystemEntity::getId, Function.identity(), (v1, v2) -> v1));
         for (DmpCfgInputDetailDTO.ListDTO data : list) {
+            DmpBasicSystemEntity systemEntity = systemMap.get(data.getSystemId());
+            if (null != systemEntity) {
+                data.setSystemCode(systemEntity.getCode());
+                data.setSystemName(systemEntity.getName());
+            }
             data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
         }
     }

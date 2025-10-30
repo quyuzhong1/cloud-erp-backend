@@ -23,13 +23,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.dmp.mapper.DmpCfgOutputMapper;
+import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -44,7 +49,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
- * 推送数据配置 服务实现类
+ * 推送配置 服务实现类
  * </p>
  *
  * @author shukai
@@ -61,6 +66,8 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     private WorkflowFeign workflowFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -72,16 +79,15 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         // 数据处理
         handleData(dmpCfgOutputEntity);
 
-        log.info("开始新增推送数据配置");
+        log.info("开始新增推送配置");
         boolean save = super.save(dmpCfgOutputEntity);
         if(!save) {
-            throw new ServiceException("推送数据配置保存失败");
+            throw new ServiceException("推送配置保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "推送数据配置" , dmpCfgOutputEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "推送配置" , dmpCfgOutputEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), dmpCfgOutputEntity.getId(), "新增【推送配置】数据");
 
         return new BaseResultDTO.AddDTO(dmpCfgOutputEntity.getId(), dmpCfgOutputEntity.getId());
     }
@@ -93,22 +99,23 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     @Override
     public Boolean update(DmpCfgOutputDTO.UpdateDTO updateDTO) {
         DmpCfgOutputEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送数据配置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送配置"));
         DmpCfgOutputEntity dmpCfgOutputEntity =  BeanMapperUtils.map(DmpCfgOutputEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpCfgOutputEntity);
-        log.info("编辑 开始修改推送数据配置数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改推送配置数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgOutputEntity);
         if(!save) {
-            throw new ServiceException("推送数据配置保存失败");
+            throw new ServiceException("推送配置保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录推送数据配置日志数据，id：【{}】", dmpCfgOutputEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputEntity.getId(), "推送数据配置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录推送配置日志数据，id：【{}】", dmpCfgOutputEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputEntity.getId(), "推送配置");
+        //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), dmpCfgOutputEntity.getId(), "修改【推送配置】数据");
+
         return Boolean.TRUE;
     }
 
@@ -159,23 +166,23 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        DmpCfgOutputEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到推送数据配置数据"));
+        DmpCfgOutputEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到推送配置数据"));
         // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除推送数据配置主单数据，id：【{}】", id);
+        log.info("删除 开始删除推送配置主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除推送数据配置日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送数据配置");
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除推送数据配置数据");
+        log.info("删除 开始删除推送配置日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送配置");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), entity.getId(), "删除推送配置数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
     @Override
     public DmpCfgOutputDTO.ViewDTO view(String id) {
-        DmpCfgOutputEntity dmpCfgOutputEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到推送数据配置数据"));
+        DmpCfgOutputEntity dmpCfgOutputEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到推送配置数据"));
         DmpCfgOutputDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgOutputDTO.ViewDTO.class, dmpCfgOutputEntity);
         // 数据填充处理
         fillOne(data);
@@ -198,9 +205,17 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             return;
         }
 
+        List<String> systemIds = list.stream().map(DmpCfgOutputDTO.ListDTO::getSystemId).distinct().collect(Collectors.toList());
+        Map<String, String> systemMap = dmpBasicSystemService.lambdaQuery()
+                .in(DmpBasicSystemEntity::getId, systemIds)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(DmpBasicSystemEntity::getId, DmpBasicSystemEntity::getName, (v1, v2) -> v1));
+
         // 属性赋值
         for(DmpCfgOutputDTO.ListDTO data : list) {
-            // TODO 其他如需要显示名称的字段赋值
+            data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
+            data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
         }
     }
 
@@ -210,7 +225,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             entity.setDisabled(false);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送配置");
-            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "启用【推送配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), entity.getId(), "启用【推送配置】数据");
         } else {
             ServiceException.runError("该【推送配置】数据已启用，无需重复操作");
         }
@@ -223,7 +238,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             entity.setDisabled(true);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "推送配置");
-            operateLogService.addModuleOperateLog(msg, null, entity.getId(), "禁用【推送配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), entity.getId(), "禁用【推送配置】数据");
         } else {
             ServiceException.runError("该【推送配置】数据已禁用，无需重复操作");
         }

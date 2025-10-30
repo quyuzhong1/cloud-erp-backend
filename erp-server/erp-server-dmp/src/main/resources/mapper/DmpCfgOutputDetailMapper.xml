@@ -45,6 +45,7 @@
             dco.flow_name as cfgOutputName,
             dco.exec_url as execUrl,
             dco.exec_system as execSystem,
+            dbs.id AS systemId,
             dbs.code AS systemCode,
             dbs.name AS systemName,
             dcod.main_id AS mainId,

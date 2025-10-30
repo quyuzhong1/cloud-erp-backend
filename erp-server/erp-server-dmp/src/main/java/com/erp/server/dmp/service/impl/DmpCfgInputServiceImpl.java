@@ -94,7 +94,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拉取配置" , dmpCfgInputEntity.getCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getCode(), "新增拉取配置数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getId(), "新增拉取配置数据");
 
         return new BaseResultDTO.AddDTO(dmpCfgInputEntity.getId(), dmpCfgInputEntity.getCode());
     }
@@ -121,7 +121,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         log.info("编辑 开始记录拉取配置日志数据，单号：【{}】", dmpCfgInputEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputEntity.getCode(), "拉取配置");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getCode(), "更新拉取配置数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getId(), "更新拉取配置数据");
         return Boolean.TRUE;
     }
 
@@ -225,7 +225,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         // 删除日志数据
         log.info("删除 开始删除拉取配置日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "删除拉取配置数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getId(), "删除拉取配置数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -296,11 +296,17 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             // 分组存在替换
             sourceTypeMap = sourceTypeList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         }
+        List<String> systemIds = list.stream().map(DmpCfgInputDTO.ListDTO::getSystemId).distinct().collect(Collectors.toList());
+        Map<String, String> systemMap = dmpBasicSystemService.lambdaQuery()
+                .in(DmpBasicSystemEntity::getId, systemIds)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(DmpBasicSystemEntity::getId, DmpBasicSystemEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for(DmpCfgInputDTO.ListDTO data : list) {
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
-            data.setSystemName(DmpBasicSystemCodeEnum.getName(data.getSystemId()));
+            data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
             data.setBillTypeName(sourceTypeMap.getOrDefault(data.getType(), ""));
         }
     }
@@ -311,7 +317,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             entity.setDisabled(false);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "启用【拉取配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getId(), "启用【拉取配置】数据");
         } else {
             ServiceException.runError("该【拉取配置】数据已启用，无需重复操作");
         }
@@ -324,7 +330,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             entity.setDisabled(true);
             updateById(entity);
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "拉取配置");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getCode(), "禁用【拉取配置】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), entity.getId(), "禁用【拉取配置】数据");
         } else {
             ServiceException.runError("该【拉取配置】数据已禁用，无需重复操作");
         }
