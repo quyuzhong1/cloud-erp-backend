@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -197,6 +198,73 @@ public class AssetCardDetailDTO implements Serializable {
         private String remark;
 
 
+    }
+
+
+    /**
+     * 模糊搜索参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        /**
+         * 卡片主表id
+         */
+        private String cardId;
+        /**
+         * 模糊搜索参数
+         */
+        private String searchKeyword;
+    }
+
+    /**
+     * 模糊搜索参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchCardDetailDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 主表ID
+         */
+        private String mainId;
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+        /**
+         * 资产位置ID
+         */
+        private String assetLocationId;
+        private String assetLocationName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 使用部门名称
+         */
+        private String useDeptName;
+        /**
+         * 使用部门ID
+         */
+        private String useDeptId;
+        /**
+         * 费用项目（折旧费）
+         */
+        private String costType;
     }
 
 
