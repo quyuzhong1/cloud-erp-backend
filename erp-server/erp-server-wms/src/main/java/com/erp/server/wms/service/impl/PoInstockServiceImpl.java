@@ -742,7 +742,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addList.add(addDTO);
         }
 
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
 
@@ -858,7 +858,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
         }
         if (CollectionUtils.isNotEmpty(needApproveDetailList)){
-            //自动生成功能打系统标识
+            //自动生成功能系统标识
             Boolean originalValue = UserContext.getIsUserSystem();
             UserContext.setIsUserSystem(Boolean.TRUE);
 
@@ -2134,7 +2134,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
 
