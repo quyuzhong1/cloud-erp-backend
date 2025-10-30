@@ -174,9 +174,9 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AliexpressOrderDTO aliexpressOrderDTO = convertToOrderDto(createOutboundReq);
         try {
-            log.warn("调用菜鸟仓出库单请求:{}", JSONObject.toJSONString(aliexpressOrderDTO));
+            log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(aliexpressOrderDTO));
             ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressOrderDTO);
-            log.warn("调用菜鸟仓出库单结果:{}", JSONObject.toJSONString(apiOrderResponseDTO));
+            log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(apiOrderResponseDTO));
             if(!apiOrderResponseDTO.isSuccess()){
                 log.error("创建菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
