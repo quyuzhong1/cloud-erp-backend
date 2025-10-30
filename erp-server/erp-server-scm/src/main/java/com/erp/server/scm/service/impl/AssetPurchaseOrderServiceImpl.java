@@ -1267,7 +1267,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
-        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
 
         byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
         String base = Base64.getEncoder().encodeToString(bytes);

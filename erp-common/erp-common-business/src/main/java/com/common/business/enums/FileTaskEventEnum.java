@@ -77,6 +77,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_ASSET_NOTICE("IMPORT_PLM_ASSET_NOTICE","资产通知单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetNotice",""),
     EXPORT_PLM_ASSET_PURCHASE_ORDER("EXPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导出","","",""),
     IMPORT_PLM_ASSET_PURCHASE_ORDER("IMPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetPurchaseOrder",""),
+    EXPORT_PLM_ASSET_PURCHASE_CHANGE("EXPORT_PLM_ASSET_PURCHASE_CHANGE","资产采购变更单导出","","",""),
 
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
@@ -341,6 +342,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_FMS_ASSET_ACCEPT("IMPORT_FMS_ASSET_ACCEPT","导入资产验收表","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetAccept",""),
     IMPORT_FMS_ASSET_CARD("IMPORT_FMS_ASSET_CARD","导入资产卡片","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetCard",""),
     IMPORT_FMS_ASSET_STOCKTAKING_PLAN("IMPORT_FMS_ASSET_STOCKTAKING_PLAN","导入资产盘点方案","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetStocktakingPlan",""),
+    EXPORT_FMS_ASSET_DISPOSAL("EXPORT_FMS_ASSET_DISPOSAL", "资产处置单导出","","",""),
+    IMPORT_FMS_ASSET_DISPOSAL("IMPORT_FMS_ASSET_DISPOSAL", "资产处置单导入","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetDisposal",""),
+
 
     DEFAULT("DEFAULT", "默认","","","");
     private final String code;

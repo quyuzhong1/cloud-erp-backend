@@ -14,8 +14,8 @@ import javax.validation.constraints.Size;
  * 资产处置单实物明细表请求响应实体
  * </p>
  *
- * @author wuht
- * @since 2025-10-11
+ * @author jack
+ * @since 2025-10-29
 */
 @Data
 @NoArgsConstructor
@@ -39,6 +39,11 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         /**
         * 来源明细ID
         */
+        private String assetDisposalDetailId;
+
+        /**
+         * 来源明细ID
+         */
         private String sourceDetailId;
 
         /**
@@ -89,7 +94,6 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -101,36 +105,35 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         /**
         * 来源明细ID
         */
+        private String assetDisposalDetailId;
+
+        /**
+         * 来源明细ID
+         */
         @NotBlank(message = "来源明细ID不能为空")
-        @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
         private String sourceDetailId;
 
         /**
         * 主表ID
         */
-        @NotBlank(message = "主表ID不能为空")
-        @Size(max = 19,message = "主表ID最大长度不能超过19位")
         private String mainId;
 
         /**
         * 资产编码
         */
         @NotBlank(message = "资产编码不能为空")
-        @Size(max = 50,message = "资产编码最大长度不能超过50位")
         private String assetCode;
 
         /**
         * 资产位置ID
         */
         @NotBlank(message = "资产位置ID不能为空")
-        @Size(max = 19,message = "资产位置ID最大长度不能超过19位")
         private String assetLocationId;
 
         /**
         * 资产位置名称
         */
         @NotBlank(message = "资产位置名称不能为空")
-        @Size(max = 100,message = "资产位置名称最大长度不能超过100位")
         private String assetLocationName;
 
         /**

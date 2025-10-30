@@ -183,7 +183,13 @@
             ac.code,
             ac.name,
             ac.type,
-            '' as typeName
+            '' as typeName,
+            ac.unit,
+            ac.qty,
+            ac.change_method,
+            ac.org_id,
+            ac.org_name,
+            ac.status
         FROM asset_card ac
         WHERE ac.is_deleted = false
         AND ac.approve_status = 'approve'

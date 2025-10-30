@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -133,7 +134,10 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
-
+        /**
+         * 关联SKU详情
+         */
+        private List<AssetPurchaseChangeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
     }
 
     /**
@@ -207,13 +211,13 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
          * 原税率
          */
-        @NotBlank(message = "税率不能为空")
-        private String oldTaxRate;
+        private BigDecimal oldTaxRate;
 
         /**
         * 新采购数量
         */
         @Digits(integer = 12, fraction = 4, message = "新采购数量整数位不能超过12位，小数位不能超过4位")
+        @NotNull(message = "采购数量不能为空")
         private BigDecimal purchaseQty;
 
         /**
@@ -231,8 +235,7 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
          * 税率
          */
-        @NotBlank(message = "税率不能为空")
-        private String taxRate;
+        private BigDecimal taxRate;
 
         /**
         * 币种
@@ -245,8 +248,6 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         */
         @NotBlank(message = "币种符号不能为空")
         private String currencySymbol;
-
-
 
         /**
         * 备注
@@ -267,5 +268,55 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 关联SKU详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AssetDetailRefSkuDTO {
 
+        /**
+         * 资产id
+         */
+        private String assetId;
+
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+
+        /**
+         * 资产名称
+         */
+        private String assetName;
+
+        /**
+         * 项目编号
+         */
+        private String projectCode;
+
+        /**
+         * 项目名称
+         */
+        private String projectName;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 用量
+         */
+        private BigDecimal skuQty;
+    }
 }
