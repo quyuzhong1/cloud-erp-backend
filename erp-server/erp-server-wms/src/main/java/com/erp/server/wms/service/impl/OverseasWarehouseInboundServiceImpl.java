@@ -42,6 +42,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -425,6 +426,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 mainEntity.setBase64Str(base64);
                 mainEntity.setFileName(updateDTO.getAttachNameList().get(0));
             }
+        }else{
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(updateDTO.getId()));
+            if(!CollectionUtils.isEmpty(attachmentList)){
+                byte[] content = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
+                if (content != null) {
+                    base64 = Base64.getEncoder().encodeToString(content);
+                    mainEntity.setBase64Str(base64);
+                    mainEntity.setFileName(attachmentList.get(0).getAttachName());
+                }
+            }
+
         }
         // 推送到第三方
         if (null != providerEntity) {
