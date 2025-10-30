@@ -571,4 +571,13 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
 
     }
 
+    @Override
+    public void deleteById(String id) {
+        if(CharSequenceUtil.isEmpty(id)){
+            return;
+        }
+        this.removeById(id);
+        detailService.removeByMainIds(Collections.singletonList(id));
+    }
+
 }

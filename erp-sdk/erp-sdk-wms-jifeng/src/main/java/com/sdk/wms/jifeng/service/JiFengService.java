@@ -367,6 +367,28 @@ public class JiFengService {
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }
+
+    /**
+     * 查询出库单
+     * @param authMap
+     * @param erpNo
+     * @return
+     */
+    public JiFengBaseResp<JiFengOutboundResp> getOutBound(Map<String,Object> authMap, String erpNo){
+        String path = "/api/order/get";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("erpNo",erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<JiFengOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengOutboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风获取入库单详情失败，返回结果为空");
+        }
+        return response;
+    }
+
     /**
      * 取消出库单
      * @param authMap
