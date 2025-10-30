@@ -801,6 +801,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
         for (String poId : poIds) {
             PurchaseOrderEntity entity = entityMap.get(poId);
@@ -821,6 +824,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 throw new ServiceException(ApiError.ERROR_98077);
             }
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1313,19 +1318,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      */
     private void autoGeneratePo(String id) {
 
-        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(Arrays.asList(id));
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(viewGeneratePoDTOS)) {
             return;
         }
         //生成采购订单
-        List<SubcontractOrderDTO.ViewGeneratePoDTO> addList = viewGeneratePoDTOS.stream().filter(obj -> obj.getIsGeneratePo()).collect(Collectors.toList());
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> addList = viewGeneratePoDTOS.stream().filter(SubcontractOrderDTO.ViewGeneratePoDTO::getIsGeneratePo).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(addList)) {
             return;
         }
         List<SubcontractOrderDTO.GeneratePoDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, addList);
         ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
         list.setList(resultList);
+
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         generatePo(list);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**

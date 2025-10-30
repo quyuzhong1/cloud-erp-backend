@@ -14,6 +14,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
@@ -376,11 +377,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         }
 
         List<BomCombinationDetailDTO.AddDTO> detailList = dto.getDetailList();
-        //新增产品信息
-        String id = commonProductDetail(dto, detailList.get(0).getSkuId());
-        //提交并审核
-        skuSubmitApprove(id);
-        return id;
+        //自动新增产品信息
+        return autoGenerateProductDetail(dto, detailList.get(0).getSkuId());
     }
 
 
@@ -424,10 +422,28 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             return productDetailDTO.getId();
         }
         List<BomCombinationDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        //自动新增产品信息
+        return autoGenerateProductDetail(dto, detailList.get(0).getSkuId());
+    }
+
+    /**
+     * 自动生成系统标识
+     * @author will
+     * @date 2025/10/29 14:58
+     * @param dto
+     * @param childSkuId
+     * @return String
+     */
+    private String autoGenerateProductDetail (BomCombinationDTO.CommonDTO dto,String childSkuId) {
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //新增产品信息
-        String id = commonProductDetail(dto, detailList.get(0).getSkuId());
+        String id = commonProductDetail(dto, childSkuId);
         //提交并审核
         skuSubmitApprove(id);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return id;
     }
 
@@ -677,7 +693,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         bomSkuDTO.setChildren(children);
         skuList.add(bomSkuDTO);
         updateBomDTO.setSkuList(skuList);
-        bomInfoService.edit(updateBomDTO);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               bomInfoService.edit(updateBomDTO);
 
         //自动提交并审核
         bomSubmitApprove(dto.getId());
