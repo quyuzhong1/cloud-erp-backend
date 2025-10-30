@@ -59,7 +59,6 @@ ad.reason AS reason
         add.id AS assetDisposalDetailId,
 add.source_id AS sourceId,
 add.source_code AS sourceCode,
-add.source_detail_id AS sourceDetailId,
 add.asset_name AS assetName,
 add.unit AS unit,
 add.qty AS qty,

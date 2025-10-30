@@ -13,6 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="asset_disposal_detail_id" property="assetDisposalDetailId" />
+       <result column="source_detail_id" property="sourceDetailId" />
        <result column="main_id" property="mainId" />
        <result column="asset_code" property="assetCode" />
        <result column="asset_location_id" property="assetLocationId" />
@@ -32,6 +33,7 @@ adpd.update_time AS updateTime,
 adpd.version AS version,
 adpd.is_deleted AS isDeleted,
 adpd.asset_disposal_detail_id AS assetDisposalDetailId,
+adpd.source_detail_id AS sourceDetailId,
 adpd.main_id AS mainId,
 adpd.asset_code AS assetCode,
 adpd.asset_location_id AS assetLocationId,
