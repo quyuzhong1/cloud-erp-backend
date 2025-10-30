@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -17,11 +16,9 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.fms.dto.AssetCardDTO;
@@ -54,7 +51,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -407,6 +403,12 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         for(AssetCardDTO.ApprovedCardDTO card : list) {
             if (StringUtils.isNotBlank(card.getType())) {
                 card.setTypeName(com.erp.model.fms.enums.AssetCategoryEnum.getName(card.getType()));
+                // 资产状态枚举转换
+                card.setStatusName(com.erp.model.fms.enums.AssetStatusEnum.getName(card.getStatus()));
+                // 变动方式枚举转换
+                card.setChangeMethodName(com.erp.model.fms.enums.ChangeMethodEnum.getName(card.getChangeMethod()));
+
+                card.setUnitName(com.erp.model.fms.enums.UnitEnum.getName(card.getUnit()));
             }
         }
         return list;

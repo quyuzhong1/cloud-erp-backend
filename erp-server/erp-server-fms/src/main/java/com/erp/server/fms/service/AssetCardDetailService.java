@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 资产卡片明细表 服务类
@@ -33,4 +35,5 @@ public interface AssetCardDetailService extends SuperService<AssetCardDetailEnti
     Boolean update(AssetCardDetailDTO.UpdateDTO dto);
 
 
+    List<AssetCardDetailDTO.SearchCardDetailDTO> searchAssetCardDetail(AssetCardDetailDTO.SearchDTO dto);
 }

@@ -4,7 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -173,5 +173,4 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     * @param dto
     */
     void importAssetCard(BaseDTO.ImportDTO dto);
-
 }

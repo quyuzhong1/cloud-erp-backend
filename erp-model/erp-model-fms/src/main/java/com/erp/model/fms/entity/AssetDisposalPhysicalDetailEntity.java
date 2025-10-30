@@ -25,10 +25,15 @@ import com.common.business.enums.ApproveStatusEnum;
 public class AssetDisposalPhysicalDetailEntity extends BaseEntity<AssetDisposalPhysicalDetailEntity> {
 
     /**
-    * 来源明细ID
+    * 资产处置单明细表id
     */
     @TableField("asset_disposal_detail_id")
     private String assetDisposalDetailId;
+    /**
+    * 来源明细ID
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
     /**
     * 主表ID
     */

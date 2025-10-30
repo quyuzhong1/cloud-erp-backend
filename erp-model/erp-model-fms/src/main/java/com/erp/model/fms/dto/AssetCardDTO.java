@@ -2,17 +2,17 @@ package com.erp.model.fms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -587,29 +587,55 @@ public class AssetCardDTO implements Serializable {
     @NoArgsConstructor
     public static class ApprovedCardDTO {
         /**
-        * 资产卡片ID
-        */
+         * 资产卡片ID
+         */
         private String id;
 
         /**
-        * 资产卡片编码
-        */
+         * 资产卡片编码
+         */
         private String code;
 
         /**
-        * 资产名称
-        */
+         * 资产名称
+         */
         private String name;
 
         /**
-        * 资产类型
-        */
+         * 资产类型
+         */
         private String type;
 
         /**
-        * 资产类型名称
-        */
+         * 资产类型名称
+         */
         private String typeName;
+        /**
+         * 资产组织ID
+         */
+        private String orgId;
+        /**
+         * 资产组织名称
+         */
+        private String orgName;
+        /**
+         * 资产状态（正常使用）
+         */
+        private String status;
+        private String statusName;
+        /**
+         * 变动方式（购入 盘盈）
+         */
+        private String changeMethod;
+        private String changeMethodName;
+        /**
+         * 计量单位
+         */
+        private String unit;
+        private String unitName;
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
-
 }

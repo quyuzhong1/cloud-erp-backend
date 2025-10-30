@@ -13,7 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-10-29 14:34:18
  */
 public enum AssetDisposalDetailInvoiceTypeEnum implements EnumMessage {
-	ORDINARY("ordinary", "普通发票"),
+    VALUE_ADDED_TAX("valueAddedTax", "增值税发票"),
+    INVOICE("invoice", "普通发票"),
     ;
     /**
      * 类型

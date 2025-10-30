@@ -35,11 +35,7 @@ public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEnt
     */
     @TableField("source_code")
     private String sourceCode;
-    /**
-    * 来源明细ID
-    */
-    @TableField("source_detail_id")
-    private String sourceDetailId;
+
     /**
     * 主表ID
     */
@@ -81,7 +77,7 @@ public class AssetDisposalDetailEntity extends BaseEntity<AssetDisposalDetailEnt
     @TableField("residual_value")
     private BigDecimal residualValue;
     /**
-    * 发票类型：ordinary=普通发票, addedValue增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
+    * 发票类型：invoice=普通发票, valueAddedTax增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
     */
     @TableField("invoice_type")
     private String invoiceType;
