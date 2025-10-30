@@ -1,9 +1,6 @@
 package com.erp.server.dmp.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpBasicSystemDTO;
@@ -47,7 +44,7 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
      * @Date 2024/9/5 18:42
      * @return java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>
      **/
-    List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem();
+    List<BaseDropDownDTO.DictDropDownDTO> listDmpBasicSystem();
 
     /**
      * 根据系统编号查询数据

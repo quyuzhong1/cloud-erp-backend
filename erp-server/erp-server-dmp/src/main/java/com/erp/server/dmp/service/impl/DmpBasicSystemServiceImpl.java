@@ -5,10 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -131,7 +128,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     }
 
     @Override
-    public List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem() {
+    public List<BaseDropDownDTO.DictDropDownDTO> listDmpBasicSystem() {
         return baseMapper.listDmpBasicSystem();
     }
 

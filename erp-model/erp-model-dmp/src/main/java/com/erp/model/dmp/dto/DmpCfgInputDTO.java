@@ -140,6 +140,13 @@ public class DmpCfgInputDTO implements Serializable {
         private String systemId;
 
         /**
+         * 数据代号
+         */
+        @NotBlank(message = "数据代号")
+        @Size(max = 50, message = "数据代号最大长度不能超过50位")
+        private String code;
+
+        /**
          * 数据名称
          */
         @NotBlank(message = "数据名称不能为空")
@@ -148,6 +155,7 @@ public class DmpCfgInputDTO implements Serializable {
 
         /**
          * 输入类型：api=接口拉取,mq=MQ订阅,db=DB直连
+         * /api/dmp/common/enumDropDown?type=DmpCfgInputType
          */
         @NotBlank(message = "输入类型：api=接口拉取,mq=MQ订阅,db=DB直连不能为空")
         @Size(max = 50, message = "输入类型：api=接口拉取,mq=MQ订阅,db=DB直连最大长度不能超过50位")
@@ -184,6 +192,7 @@ public class DmpCfgInputDTO implements Serializable {
 
         /**
          * 执行系统:默认:dmp
+         * /api/dmp/common/enumDropDown?type=DmpCfgInputExecSystem
          */
         private String execSystem;
 

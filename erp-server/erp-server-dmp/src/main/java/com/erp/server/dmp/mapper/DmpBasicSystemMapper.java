@@ -1,5 +1,6 @@
 package com.erp.server.dmp.mapper;
 import com.common.business.dto.TabListDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -31,7 +32,7 @@ public interface DmpBasicSystemMapper extends BaseMapper<DmpBasicSystemEntity> {
      * @Date 2024/9/5 18:45
      * @return java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>
      **/
-    List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem();
+    List<BaseDropDownDTO.DictDropDownDTO> listDmpBasicSystem();
 
     /**
      * 分页查询

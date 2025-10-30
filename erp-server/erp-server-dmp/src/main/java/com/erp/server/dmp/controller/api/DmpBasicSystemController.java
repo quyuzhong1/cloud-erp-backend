@@ -91,8 +91,8 @@ public class DmpBasicSystemController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>>
      **/
     @GetMapping("/listDmpBasicSystem")
-    public ApiResult<List<DictControllerDTO.DictDropDownDTO>> listDmpBasicSystem(){
-        List<DictControllerDTO.DictDropDownDTO> result = dmpBasicSystemService.listDmpBasicSystem();
+    public ApiResult<List<BaseDropDownDTO.DictDropDownDTO>> listDmpBasicSystem(){
+        List<BaseDropDownDTO.DictDropDownDTO> result = dmpBasicSystemService.listDmpBasicSystem();
         return success(result);
     }
 

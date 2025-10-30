@@ -205,4 +205,24 @@ public class BaseDropDownDTO implements Serializable {
          */
         private List<String> approveStatusList;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DictDropDownDTO {
+        /**
+         * 主键id
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
+    }
 }
