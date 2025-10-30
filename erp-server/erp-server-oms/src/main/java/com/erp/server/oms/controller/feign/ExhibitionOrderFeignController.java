@@ -44,4 +44,37 @@ public class ExhibitionOrderFeignController extends BaseController {
     public ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(@RequestBody String exhibitionOrderId){
         return exhibitionOrderService.generateDownstreamByExhibitionOrder(exhibitionOrderId);
     }
+
+    /**
+     * 展会订单审核
+     * @author jack
+     * @date:  2025-10-29
+     * @param baseApproveParamDTO
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/approve")
+    public List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(id);
+                approveOneDTO.setType(baseApproveParamDTO.getType());
+                approveOneDTO.setComment(baseApproveParamDTO.getComment());
+                approveResult = exhibitionOrderService.approve(approveOneDTO);
+            } catch (Exception e) {
+                log.error("展会订单审核失败", e);
+                ExhibitionOrderEntity entity = exhibitionOrderService.getById(id);
+                if (entity == null) {
+                    approveResult = BatchResultDTO.fail(id, id, "展会订单不存在, 审核失败");
+                } else {
+                    approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                }
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS;
+    }
 }
