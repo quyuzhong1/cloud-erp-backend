@@ -17,9 +17,9 @@ import javax.annotation.Resource;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_INVENTORY_TO_WMS_TOPIC,
-selectorExpression = RocketMqNewTag.DMP_PLATFORM_INVENTORY_TO_WMS_TAG,
-consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_INVENTORY_TO_WMS_GROUP,
+@RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_TOPIC,
+selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_TAG,
+consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
 public class RestCloudPlatformNewInventoryConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 	@Resource

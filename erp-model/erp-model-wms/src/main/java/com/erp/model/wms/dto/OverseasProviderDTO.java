@@ -107,6 +107,10 @@ public class OverseasProviderDTO implements Serializable {
          * shopAccount
          */
         private String shopAccount;
+
+        private String appId;
+
+        private String appSecret;
     }
     /**
     * 详情

@@ -283,6 +283,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
         authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
         authorizeViewDTO.setShopAccount(authJson.getOrDefault("shopAccount","").toString());
+        authorizeViewDTO.setAppId(authJson.getOrDefault("appId","").toString());
+        authorizeViewDTO.setAppSecret(authJson.getOrDefault("appSecret","").toString());
         return authorizeViewDTO;
     }
 
