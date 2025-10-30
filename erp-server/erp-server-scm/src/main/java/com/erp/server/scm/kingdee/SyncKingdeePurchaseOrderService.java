@@ -26,4 +26,7 @@ public interface SyncKingdeePurchaseOrderService {
     Map<String, Object> newSyncDataToKingdee(PurchaseOrderEntity entity, String operate);
 
     DmpPushTaskEntity syncDataToKingdee(AssetPurchaseOrderEntity entity, String operate);
+
+    Map<String, Object> newSyncDataToKingdee(AssetPurchaseOrderEntity entity, String operate);
+
 }
