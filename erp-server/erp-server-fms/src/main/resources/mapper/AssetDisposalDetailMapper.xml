@@ -14,7 +14,6 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
-       <result column="source_detail_id" property="sourceDetailId" />
        <result column="main_id" property="mainId" />
        <result column="asset_name" property="assetName" />
        <result column="unit" property="unit" />
@@ -41,7 +40,6 @@ add.version AS version,
 add.is_deleted AS isDeleted,
 add.source_id AS sourceId,
 add.source_code AS sourceCode,
-add.source_detail_id AS sourceDetailId,
 add.main_id AS mainId,
 add.asset_name AS assetName,
 add.unit AS unit,
