@@ -6,11 +6,13 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.entity.ExhibitionOrderEntity;
 import com.erp.server.oms.service.ExhibitionOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
