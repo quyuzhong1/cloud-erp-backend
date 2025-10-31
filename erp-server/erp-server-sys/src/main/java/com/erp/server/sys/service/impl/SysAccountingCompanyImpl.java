@@ -109,8 +109,14 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setUsciCode(dto.getUsciCode());
         if(Objects.isNull(dto.getVatRate())){
             entity.setVatRate(BigDecimal.ZERO);
+        }else{
+            entity.setVatRate(dto.getVatRate());
         }
-        entity.setTaxpayerType(dto.getTaxpayerType());
+        if(Objects.isNull(dto.getTaxpayerType())){
+            entity.setTaxpayerType("");
+        }else{
+            entity.setTaxpayerType(dto.getTaxpayerType());
+        }
         entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
