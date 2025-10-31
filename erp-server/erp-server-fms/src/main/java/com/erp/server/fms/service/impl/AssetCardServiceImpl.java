@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.entity.AssetCardDetailEntity;
@@ -379,7 +380,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Override
     public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(PagingDTO<AssetCardDTO.ExportDTO> dto) {
         // 调用现有的分页查询方法
-        IPage<AssetCardDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        Page<AssetAcceptDTO.ListDTO> page = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<AssetCardDTO.ListDTO> pageData = this.baseMapper.listExport(page,dto.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>();
         }

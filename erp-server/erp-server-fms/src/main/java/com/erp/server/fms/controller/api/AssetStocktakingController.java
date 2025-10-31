@@ -20,8 +20,10 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
+import com.erp.server.fms.handler.AssetStocktakingQueryHandler;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,8 +101,9 @@ public class AssetStocktakingController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktaking:paging",
-            tableAlias = ""
+            tableAlias = "ast"
     )
+    @WebAdvanceQuery(handler = AssetStocktakingQueryHandler.class)
     public ApiResult<PagingVO<AssetStocktakingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetStocktakingDTO.PagingParamDTO> dto) {
         return success(assetStocktakingService.paging(dto));
     }
@@ -405,6 +408,18 @@ public class AssetStocktakingController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产盘点表导出Excel数据")
     public void exportList(@RequestBody @Validated AssetStocktakingDTO.ExportDTO dto, HttpServletResponse response) {
         assetStocktakingService.exportList(dto, response);
+    }
+
+    /**
+    * 生成卡片编码
+    * @author wuht
+    * @date:  2025-10-31
+    * @return ApiResult<String>
+    */
+    @GetMapping("/generateCardCode")
+    public ApiResult<String> generateCardCode() {
+        String code = assetStocktakingService.generateCardCode();
+        return success(code);
     }
 
 

@@ -42,9 +42,19 @@ public class AssetStocktakingDTO implements Serializable {
          private String tabFlag;
 
          /**
+         * 类型名称
+         */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;
+
+         public TabListDTO(String tabFlag, Integer count) {
+             this.tabFlag = tabFlag;
+             this.count = count;
+         }
 
      }
      /**
@@ -107,9 +117,14 @@ public class AssetStocktakingDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 来源ID
+        * 来源ID（盘点方案ID）
         */
         private String sourceId;
+
+        /**
+        * 盘点方案名称（通过sourceId关联查询）
+        */
+        private String stocktakingPlanName;
 
         /**
         * 资产组织ID
@@ -202,9 +217,14 @@ public class AssetStocktakingDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 来源ID
+        * 来源ID（盘点方案ID）
         */
         private String sourceId;
+
+        /**
+        * 盘点方案名称（通过sourceId关联查询）
+        */
+        private String stocktakingPlanName;
 
         /**
         * 资产组织ID
@@ -221,6 +241,10 @@ public class AssetStocktakingDTO implements Serializable {
         */
         private String remark;
 
+        /**
+        * 明细列表
+        */
+        private List<AssetStocktakingDetailDTO.ViewDTO> detailList;
 
     }
 
@@ -297,6 +321,10 @@ public class AssetStocktakingDTO implements Serializable {
         @Size(max = 500,message = "描述最大长度不能超过500位")
         private String remark;
 
+        /**
+        * 明细列表
+        */
+        private List<AssetStocktakingDetailDTO.UpdateDTO> detailList;
 
     }
 
