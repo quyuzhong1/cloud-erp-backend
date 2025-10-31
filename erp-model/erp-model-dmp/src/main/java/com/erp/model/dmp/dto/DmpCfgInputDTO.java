@@ -466,4 +466,19 @@ public class DmpCfgInputDTO implements Serializable {
 
 
     }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SimplePagingParamDTO extends SortDTO {
+
+        /**
+         * 关键字
+         */
+        private String searchKey;
+
+
+    }
 }

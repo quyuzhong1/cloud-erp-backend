@@ -1,9 +1,12 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.server.dmp.query.DmpCfgInputQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -294,4 +297,32 @@ public class DmpCfgInputController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 拉取配置下拉列表
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @return ApiResult<PagingVO<DmpCfgInputDTO.ListDTO>>
+     */
+    @PostMapping("/simplePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgInput:paging",
+            tableAlias = ""
+    )
+    public ApiResult<PagingVO<DmpCfgInputDTO.ListDmpCfgInputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.SimplePagingParamDTO> dto) {
+        Page<DmpCfgInputEntity> page = dmpCfgInputService.lambdaQuery()
+                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgInputEntity::getName, dto.getParams().getSearchKey())
+                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgInputEntity::getCode, dto.getParams().getSearchKey())
+                .page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
+        // 快速复制page.getRecords()到List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList
+        List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList = page.getRecords().stream()
+                .map(entity -> {
+                    DmpCfgInputDTO.ListDmpCfgInputDTO dtoTemp = new DmpCfgInputDTO.ListDmpCfgInputDTO();
+                    BeanUtils.copyProperties(entity, dtoTemp);
+                    return dtoTemp;
+                })
+                .collect(Collectors.toList());
+        return success(new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage()));
+    }
 }

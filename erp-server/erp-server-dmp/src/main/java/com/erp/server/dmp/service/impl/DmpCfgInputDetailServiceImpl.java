@@ -48,7 +48,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
- * 外部系统接口明细 服务实现类
+ * 拉取调度 服务实现类
  * </p>
  *
  * @author Jim
@@ -74,16 +74,17 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         // 数据处理
         handleData(dmpCfgInputDetailEntity);
 
-        log.info("开始新增外部系统接口明细");
+        log.info("开始新增拉取调度");
         boolean save = super.save(dmpCfgInputDetailEntity);
         if(!save) {
-            throw new ServiceException("外部系统接口明细保存失败");
+            throw new ServiceException("拉取调度保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "外部系统接口明细" , dmpCfgInputDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拉取调度" , dmpCfgInputDetailEntity.getId());
+        //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        //  新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT_DETAIL.getCode(), dmpCfgInputDetailEntity.getId(), "新增【拉取调度】数据");
 
         return new BaseResultDTO.AddDTO(dmpCfgInputDetailEntity.getId(), dmpCfgInputDetailEntity.getId());
     }
@@ -95,20 +96,20 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     @Override
     public Boolean update(DmpCfgInputDetailDTO.UpdateDTO updateDTO) {
         DmpCfgInputDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统接口明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取调度"));
         DmpCfgInputDetailEntity dmpCfgInputDetailEntity =  BeanMapperUtils.map(DmpCfgInputDetailEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpCfgInputDetailEntity);
-        log.info("编辑 开始修改外部系统接口明细数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改拉取调度数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgInputDetailEntity);
         if(!save) {
-            throw new ServiceException("外部系统接口明细保存失败");
+            throw new ServiceException("拉取调度保存失败");
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录外部系统接口明细日志数据，id：【{}】", dmpCfgInputDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputDetailEntity.getId(), "外部系统接口明细");
+            log.info("编辑 开始记录拉取调度日志数据，id：【{}】", dmpCfgInputDetailEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputDetailEntity.getId(), "拉取调度");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgInputDetailEntity.getId(), "更新【拉取调度】数据");
         return Boolean.TRUE;
@@ -167,24 +168,24 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        DmpCfgInputDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到外部系统接口明细数据"));
+        DmpCfgInputDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拉取调度数据"));
         // 只有待提交数据允许删除
         // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除外部系统接口明细主单数据，id：【{}】", id);
+        log.info("删除 开始删除拉取调度主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除外部系统接口明细日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "外部系统接口明细");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "删除外部系统接口明细数据");
+        log.info("删除 开始删除拉取调度日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "拉取调度");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), entity.getId(), "删除拉取调度数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
     @Override
     public DmpCfgInputDetailDTO.ViewDTO view(String id) {
-        DmpCfgInputDetailEntity dmpCfgInputDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到外部系统接口明细数据"));
+        DmpCfgInputDetailEntity dmpCfgInputDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到拉取调度数据"));
         DmpCfgInputDetailDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgInputDetailDTO.ViewDTO.class, dmpCfgInputDetailEntity);
         // 数据填充处理
         fillOne(data);

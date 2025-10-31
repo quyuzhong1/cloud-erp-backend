@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -198,6 +199,17 @@ public class DmpCfgInputDetailDTO implements Serializable {
         * 扩展json
         */
         private String extendJson;
+
+        /**
+         * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间-延迟时间
+         */
+        @NotNull(message = "最大间隔时间不能为空")
+        private Integer maxIntervalTime;
+
+        /**
+         * 扩展json
+         */
+        private String remark;
 
 
     }
