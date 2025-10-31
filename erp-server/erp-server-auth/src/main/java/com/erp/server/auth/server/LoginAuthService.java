@@ -6,6 +6,7 @@ import java.util.Objects;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import com.common.business.vo.LoginUser;
 import org.springframework.stereotype.Component;
 
 import com.common.business.constant.RedisCacheConstants;
@@ -107,5 +108,24 @@ public class LoginAuthService {
 
         redisUtil.del(loginErrorKey);
         return ApiResult.success(sysLoginUserVO);
+    }
+
+    public SysLoginUserVO getByToken(String token) {
+        SysLoginUserVO result = new SysLoginUserVO();
+        LoginUser loginUser = authTokenService.getLoginUser(token);
+        if (Objects.isNull(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+        SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
+        result.setAccessToken(token);
+        result.setOverallMenuList(sysUser.getOverallMenuList());
+        result.setPermissionList(sysUser.getPermissionList());
+        result.setUserName(sysUser.getUserName());
+        result.setLeftMenuList(sysUser.getLeftMenuList());
+        result.setHeadIcon(sysUser.getHeadIcon());
+        result.setBindingPlatform(sysUser.getBindingPlatform());
+        result.setBindingState(sysUser.getBindingState());
+        result.setUserId(sysUser.getUid());
+        return result;
     }
 }
