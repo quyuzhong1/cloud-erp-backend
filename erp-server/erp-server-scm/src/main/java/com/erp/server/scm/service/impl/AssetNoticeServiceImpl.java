@@ -658,10 +658,28 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        assetNoticeDetailService.removeById(id,null);
+
+        List<AssetNoticeDetailEntity> list = assetNoticeDetailService.lambdaQuery()
+                .eq(AssetNoticeDetailEntity::getMainId, id)
+                .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        if (list.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95308);
+        }
+
+        List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+
+        //删除明细
+        assetNoticeDetailService.removeByIds(collect);
+
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除日志数据，id：【{}】", id);
+
+
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
