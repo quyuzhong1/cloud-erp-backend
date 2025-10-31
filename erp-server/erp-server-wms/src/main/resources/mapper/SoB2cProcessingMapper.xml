@@ -123,6 +123,7 @@
             sbdd.warehouse_id as warehouseId,
             sbdd.virtual_warehouse_id as virtualWarehouseId,
             sbd.create_time as frozenTime,
+            sbd.shop_id as shopId,
             sbdd.delivery_qty as frozenQty,
             '' as outstockOrderId,
             '' as outstockOrderStatus,
