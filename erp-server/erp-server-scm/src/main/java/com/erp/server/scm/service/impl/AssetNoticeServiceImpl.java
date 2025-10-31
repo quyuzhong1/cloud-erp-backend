@@ -130,13 +130,13 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // 数据处理
         handleData(assetNoticeEntity);
 
-        log.info("开始新增资产通知单");
+        log.info("开始新增开模通知单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL);
         assetNoticeEntity.setCode(code);
         boolean save = super.save(assetNoticeEntity);
         if(!save) {
-            throw new ServiceException("资产通知单保存失败");
+            throw new ServiceException("开模通知单保存失败");
         }
 
         hanleAddDetailData(assetNoticeEntity,addDTO.getAssetNoticeDetailDTO());
@@ -144,7 +144,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产通知单" , assetNoticeEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(assetNoticeEntity.getId(), code);
@@ -176,7 +176,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         assetNoticeDetailService.update(addOrUpdateDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "资产通知单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "开模通知单");
         moduleOperateLogService.addModuleOperateLogByObj(old, assetNoticeEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
@@ -248,7 +248,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Override
     public void exportList(AssetNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("资产通知单导出", EXPORT_PLM_ASSET_NOTICE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("开模通知单导出", EXPORT_PLM_ASSET_NOTICE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -267,7 +267,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单");
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), pairList, "提交");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
@@ -310,7 +310,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单", approveType.getName(), dto.getComment());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "审核");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -627,7 +627,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "反审核");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -658,13 +658,31 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        assetNoticeDetailService.removeById(id,null);
+
+        List<AssetNoticeDetailEntity> list = assetNoticeDetailService.lambdaQuery()
+                .eq(AssetNoticeDetailEntity::getMainId, id)
+                .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        if (list.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95308);
+        }
+
+        List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+
+        //删除明细
+        assetNoticeDetailService.removeByIds(collect);
+
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+
+
+        // 删除日志数据
+        log.info("删除 开始删除日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "删除");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -688,7 +706,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单");
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), pairList, "撤销");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -745,7 +763,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "资产通知单错误数据.xlsx";
+            String fileName = "开模通知单错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetNoticeImportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
@@ -759,7 +777,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     @Transactional
     public BatchResultDTO invalid(AssetNoticeEntity entity, String remark) {
-        super.getByIdOpt(entity.getId()).orElseThrow(() -> new ServiceException("未找到资产通知单"));
+        super.getByIdOpt(entity.getId()).orElseThrow(() -> new ServiceException("未找到开模通知单"));
 
         // 待提交或审核不通过并且未作废允许作废
         if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
@@ -769,14 +787,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             throw new ServiceException(ApiError.ERROR_98005);
         }
 
-        log.info("作废 开始修改资产通知单状态数据，id：【{}】", entity.getId());
+        log.info("作废 开始修改开模通知单状态数据，id：【{}】", entity.getId());
         lambdaUpdate().eq(AssetNoticeEntity::getId, entity.getId())
                 .set(AssetNoticeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(AssetNoticeEntity::getInvalidReason, remark)
                 .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", entity.getId());
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产通知单", remark);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "开模通知单", remark);
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "作废");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
@@ -975,7 +993,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 // 保存主表
                 boolean save = super.save(entity);
                 if (!save) {
-                    throw new ServiceException("资产通知单单头导入保存失败");
+                    throw new ServiceException("开模通知单单头导入保存失败");
                 }
 
                 // 处理明细数据
@@ -994,18 +1012,18 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 // 批量保存明细
                 boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
                 if (!saveDetail) {
-                    throw new ServiceException("资产通知单明细导入保存失败");
+                    throw new ServiceException("开模通知单明细导入保存失败");
                 }
 
                 // 记录操作日志
                 String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
                         UserContext.getDefaultLoginUser().getUserName(),
-                        "资产通知单",
+                        "开模通知单",
                         entity.getCode());
                 moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
             }
         } catch (Exception e) {
-            throw new ServiceException("资产通知单导入保存失败", e);
+            throw new ServiceException("开模通知单导入保存失败", e);
         }
     }
 

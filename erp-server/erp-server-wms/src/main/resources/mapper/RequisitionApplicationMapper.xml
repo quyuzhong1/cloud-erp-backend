@@ -251,8 +251,8 @@
         ra.code AS sourceCode,
         ra.requisition_warehouse_id AS deliveryWarehouseId,
         ra.requisition_warehouse_name AS deliveryWarehouseName,
-        ra.channel_id AS toWarehouseId,
-        ra.channel_name AS toWarehouseName,
+        ra.to_warehouse_id AS toWarehouseId,
+        w.name AS toWarehouseName,
         rad.sku_id,
         rad.sku_no,
         rad.approve_qty AS planQty,
@@ -268,6 +268,7 @@
         ra.fba_shipment_code
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        left join warehouse w on ra.to_warehouse_id = w.id
         where ra.is_deleted = false
         <if test="ids!=null and ids.size>0 ">
             AND ra.id IN

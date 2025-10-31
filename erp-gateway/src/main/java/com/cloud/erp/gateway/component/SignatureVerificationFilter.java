@@ -24,9 +24,13 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 
 import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -205,79 +209,115 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String timestampStr = parsedSignature[0];
             String signature = parsedSignature[1];
 
-            // 8. 验证签名
+            // 8. 响应式方式验证签名
+            final String finalUserId = userId;
+            final LoginUser finalLoginUser = loginUser;
+            final boolean finalSsoEnabled = ssoEnabled;
+            
             // 对于文件上传等接口，body 使用空字符串
-            String body = isEmptyBodyPath(uri) ? "" : getRequestBody(request);
-            boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, body);
-            if (!isValidSignature) {
-                log.warn("签名验证失败");
-                return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
+            if (isEmptyBodyPath(uri)) {
+                boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, "");
+                if (!isValidSignature) {
+                    log.warn("签名验证失败");
+                    return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
+                }
+                log.info("签名验证成功，URI: {}", uri);
+                return addHeadersAndContinue(exchange, chain, appId, finalUserId, signSessionId, finalLoginUser, finalSsoEnabled);
             }
 
-            log.info("签名验证成功，URI: {}", uri);
-
-            // 9. 处理用户信息并添加到请求头
-            if (ssoEnabled) {
-                // 将用户信息添加到请求头中
-                try {
-                    String token = headers.getFirst("Authorization");
-                    if (token.startsWith("Bearer ")) {
-                        token = token.substring(7);
+            // 对于其他接口，响应式读取body并验证签名
+            String finalSymmetricKey = symmetricKey;
+            return DataBufferUtils.join(request.getBody())
+                .defaultIfEmpty(exchange.getResponse().bufferFactory().allocateBuffer(0))
+                .flatMap(dataBuffer -> {
+                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                    dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
+                    String body = new String(bytes, StandardCharsets.UTF_8);
+                    
+                    log.debug("读取到请求体，长度: {}", body.length());
+                    
+                    // 验证签名
+                    boolean isValidSignature = verifySignature(request, signature, timestampStr, finalSymmetricKey, body);
+                    if (!isValidSignature) {
+                        log.warn("签名验证失败");
+                        return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
                     }
-                    loginUser.setAccessToken(token);
-                    request.mutate()
-                        .header("App-Id", appId)
-                        .header("User-Id", userId)
-                        .header("Sign-Session-Id", signSessionId)
-                        .header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8"))
-                        .build();
-                } catch (UnsupportedEncodingException e) {
-                    log.error("添加请求头失败", e);
-                }
-            } else {
-                // 未开启单点登录，只添加基础信息
-                try {
-                    request.mutate()
-                        .header("App-Id", appId)
-                        .header("User-Id", userId)
-                        .header("Sign-Session-Id", signSessionId)
-                        .build();
-                } catch (Exception e) {
-                    log.error("添加请求头失败", e);
-                }
-            }
+                    
+                    log.info("签名验证成功，URI: {}", uri);
+                    
+                    // 重新包装请求，让下游能读取body
+                    byte[] finalBytes = body.getBytes(StandardCharsets.UTF_8);
+                    ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(request) {
+                        @Override
+                        public Flux<DataBuffer> getBody() {
+                            return Flux.just(exchange.getResponse().bufferFactory().wrap(finalBytes));
+                        }
+                    };
+                    
+                    // 添加自定义请求头
+                    ServerHttpRequest.Builder builder = mutatedRequest.mutate()
+                            .header("App-Id", appId)
+                            .header("User-Id", finalUserId)
+                            .header("Sign-Session-Id", signSessionId);
+                    
+                    if (finalSsoEnabled && finalLoginUser != null) {
+                        try {
+                            String token = headers.getFirst("Authorization");
+                            if (token != null && token.startsWith("Bearer ")) {
+                                token = token.substring(7);
+                            }
+                            finalLoginUser.setAccessToken(token);
+                            builder.header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(finalLoginUser), "UTF-8"));
+                        } catch (UnsupportedEncodingException e) {
+                            log.error("添加tokenUserInfo请求头失败", e);
+                        }
+                    }
+                    
+                    ServerHttpRequest finalRequest = builder.build();
+                    return chain.filter(exchange.mutate().request(finalRequest).build());
+                })
+                .onErrorResume(e -> {
+                    log.error("处理请求体异常", e);
+                    return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
+                });
 
         } catch (Exception e) {
             log.error("签名验证异常", e);
             return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
         }
-
-        return chain.filter(exchange);
     }
-
+    
     /**
-     * 获取请求体内容
-     * @param request 请求对象
-     * @return 请求体字符串
+     * 添加自定义请求头并继续过滤链（用于无body的请求）
      */
-    private String getRequestBody(ServerHttpRequest request) {
+    private Mono<Void> addHeadersAndContinue(ServerWebExchange exchange, GatewayFilterChain chain,
+                                              String appId, String userId, String signSessionId,
+                                              LoginUser loginUser, boolean ssoEnabled) {
         try {
-            // 将Flux<DataBuffer>转换为字符串
-            return DataBufferUtils.join(request.getBody())
-                .map(dataBuffer -> {
-                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
-                    dataBuffer.read(bytes);
-                    DataBufferUtils.release(dataBuffer);
-                    return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-                })
-                .defaultIfEmpty("")
-                .block(); // 同步阻塞获取结果
-                
+            ServerHttpRequest.Builder builder = exchange.getRequest().mutate()
+                    .header("App-Id", appId)
+                    .header("User-Id", userId)
+                    .header("Sign-Session-Id", signSessionId);
+            
+            if (ssoEnabled && loginUser != null) {
+                HttpHeaders headers = exchange.getRequest().getHeaders();
+                String token = headers.getFirst("Authorization");
+                if (token != null && token.startsWith("Bearer ")) {
+                    token = token.substring(7);
+                }
+                loginUser.setAccessToken(token);
+                builder.header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8"));
+            }
+            
+            ServerHttpRequest finalRequest = builder.build();
+            return chain.filter(exchange.mutate().request(finalRequest).build());
         } catch (Exception e) {
-            log.warn("获取请求体失败", e);
-            return "";
+            log.error("添加请求头失败", e);
+            return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
         }
     }
+
 
     /**
      * 验证签名

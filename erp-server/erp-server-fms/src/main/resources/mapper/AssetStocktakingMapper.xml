@@ -43,7 +43,41 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetStocktakingDTO$ListDTO">
-
+        SELECT
+            ast.id,
+            ast.approve_status AS approveStatus,
+            ast.approve_user_id AS approveUserId,
+            ast.approve_user_name AS approveUserName,
+            ast.approve_time AS approveTime,
+            ast.invalid_status AS invalidStatus,
+            ast.invalid_remark AS invalidRemark,
+            ast.invalid_time AS invalidTime,
+            ast.code,
+            ast.source_code AS sourceCode,
+            ast.source_type AS sourceType,
+            ast.source_id AS sourceId,
+            asp.plan_name AS stocktakingPlanName,
+            ast.asset_org_id AS assetOrgId,
+            ast.asset_org_name AS assetOrgName,
+            ast.remark,
+            ast.create_time AS createTime,
+            ast.create_user_name AS createUserName
+        FROM asset_stocktaking ast
+        LEFT JOIN asset_stocktaking_plan asp ON ast.source_id = asp.id AND asp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND ast.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ast.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -51,7 +85,43 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.fms.dto.AssetStocktakingDTO$ListDTO">
-
+        SELECT
+            ast.id,
+            ast.approve_status AS approveStatus,
+            ast.approve_user_id AS approveUserId,
+            ast.approve_user_name AS approveUserName,
+            ast.approve_time AS approveTime,
+            ast.invalid_status AS invalidStatus,
+            ast.invalid_remark AS invalidRemark,
+            ast.invalid_time AS invalidTime,
+            ast.code,
+            ast.source_code AS sourceCode,
+            ast.source_type AS sourceType,
+            ast.source_id AS sourceId,
+            asp.plan_name AS stocktakingPlanName,
+            ast.asset_org_id AS assetOrgId,
+            ast.asset_org_name AS assetOrgName,
+            ast.remark,
+            ast.create_time AS createTime,
+            ast.create_user_name AS createUserName
+        FROM asset_stocktaking ast
+        LEFT JOIN asset_stocktaking_plan asp ON ast.source_id = asp.id AND asp.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND ast.is_deleted = false
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND ast.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY ast.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.fms.dto.AssetStocktakingDTO$TabListDTO">
         SELECT

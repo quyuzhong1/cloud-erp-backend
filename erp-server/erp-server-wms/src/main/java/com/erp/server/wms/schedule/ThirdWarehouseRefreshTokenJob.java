@@ -1,10 +1,6 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
@@ -43,9 +39,6 @@ public class ThirdWarehouseRefreshTokenJob {
 
     @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
-
-    @Resource
-    private RedisUtil redisUtil;
 
     /**
      * 刷新三方仓token
@@ -109,61 +102,23 @@ public class ThirdWarehouseRefreshTokenJob {
                     return false;
                 })
                 .collect(Collectors.toList());
-        List<OverseasProviderEntity> updateList = new ArrayList<>();
-        List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
+        if (CollectionUtils.isEmpty(overseasProviderEntityList)){
+            XxlJobHelper.log("[刷新三方仓token] 任务结束: 无需要刷新token的仓库--------------------------------------->");
+            return ReturnT.SUCCESS;
+        }
         for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
-            ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(overseasProviderEntity.getCode());
-            Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
-            ApiResult<String> result = thirdWarehouseService.refreshToken(overseasProviderEntity.getId(),authMap);
-            if(result.isSuccess()) {
-                XxlJobHelper.log("[刷新三方仓token] 刷新成功: shopId={}, PlatformCode={}", overseasProviderEntity.getId(), overseasProviderEntity.getCode());
-                overseasProviderEntity.setAuthJson(authMap);
-                updateList.add(overseasProviderEntity);
-                //同步刷新物流商token
-                List<LogisticsAuthEntity> logisticsAuthEntities = FeignQuery.create(LogisticsAuthEntity.class)
-                        .eq(LogisticsAuthEntity::getLogisticsPlatform, overseasProviderEntity.getCode())
-                        .list();
-                if(CollectionUtils.isEmpty(logisticsAuthEntities)){
-                    continue;
-                }
-                List<String> logisticAuthIds = logisticsAuthEntities.stream()
-                        .map(LogisticsAuthEntity::getId)
-                        .collect(Collectors.toList());
-                List<LogisticsAuthFieldEntity> logisticsAuthFieldEntities = FeignQuery.create(LogisticsAuthFieldEntity.class)
-                        .in(LogisticsAuthFieldEntity::getLogisticsAuthId, logisticAuthIds)
-                        .list();
-                if(CollectionUtils.isEmpty(logisticsAuthFieldEntities)){
-                    continue;
-                }
-                for (LogisticsAuthFieldEntity logisticsAuthFieldEntity : logisticsAuthFieldEntities) {
-                    if(authMap.containsKey(logisticsAuthFieldEntity.getFieldCode())){
-                        logisticsAuthFieldEntity.setFieldValue(authMap.get(logisticsAuthFieldEntity.getFieldCode()).toString());
-                        updateLogistic.add(logisticsAuthFieldEntity);
-                    }
-                }
-            }else{
-                XxlJobHelper.log("[刷新三方仓token] 刷新失败: shopId={}, PlatformCode={}， error={}",
+            try {
+                overseasProviderService.refreshToken(overseasProviderEntity);
+            }catch (Exception e){
+                String errorMsg = ExceptionUtil.getMessage(e);
+                XxlJobHelper.log("[刷新三方仓token] 异常: authId={}, Code={}，异常信息={}",
                         overseasProviderEntity.getId(),
                         overseasProviderEntity.getCode(),
-                        result.getMsg()
+                        errorMsg
                 );
+
             }
         }
-        if(CollectionUtils.isNotEmpty(updateList)){
-            overseasProviderService.updateBatchById(updateList);
-        }
-        if(CollectionUtils.isNotEmpty(updateLogistic)){
-            logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
-        }
-        //将三方仓的token封装到redis
-        List<OverseasProviderEntity> alreadyAuthList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
-        for (OverseasProviderEntity overseasProviderEntity : alreadyAuthList) {
-            String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, overseasProviderEntity.getCode(), overseasProviderEntity.getId());
-            Map<String,Object> map = overseasProviderEntity.getAuthJson();
-            map.put("ownerCode",overseasProviderEntity.getOwnerCode());
-            redisUtil.set(tokenKey, map, 86400);
-        }
-
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");
         return ReturnT.SUCCESS;
     }
