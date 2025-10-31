@@ -197,7 +197,8 @@
     <!-- 获取状态统计（支持数量为0不显示） -->
     <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleLedgerDTO$TabListDTO">
         SELECT 
-            'all' as status,
+            'all' as tabFlag,
+            '全部' as tabFlagName,
             COUNT(*) as count
         FROM sample_ledger sl
         WHERE sl.is_deleted = FALSE

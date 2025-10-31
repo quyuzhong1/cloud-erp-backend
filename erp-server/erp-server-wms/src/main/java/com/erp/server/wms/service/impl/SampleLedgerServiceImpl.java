@@ -18,6 +18,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
@@ -194,6 +195,32 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             };
         });
         return records;
+    }
+
+    /**
+     * 批量查询台账当前数量
+     * 
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到当前数量的映射
+     */
+    @Override
+    public Map<String, Integer> getLedgerQtyMap(List<String> sampleLedgerIds) {
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            return Collections.emptyMap();
+        }
+
+        // 查询台账实体
+        List<SampleLedgerEntity> ledgerList = this.lambdaQuery()
+                .in(SampleLedgerEntity::getId, sampleLedgerIds)
+                .list();
+
+        // 构建ID到数量的映射
+        return ledgerList.stream()
+                .collect(Collectors.toMap(
+                        SampleLedgerEntity::getId,
+                        SampleLedgerEntity::getQty,
+                        (existing, replacement) -> existing
+                ));
     }
 
 
@@ -598,8 +625,15 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
                 .eq(SampleLedgerEntity::getIsDeleted, false)
         );
 
-        // 获取用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 获取用户信息（包含禁用状态）
+        com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
+        com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> userResult = sysUserFeign.userList(searchDTO);
+        
+        List<FindUserDTO> userList = new ArrayList<>();
+        if (userResult != null && userResult.isSuccess() && userResult.getData() != null) {
+            userList = userResult.getData();
+        }
+        
         Map<String, FindUserDTO> userMap = userList.stream()
             .collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
 
@@ -626,19 +660,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         
         // 全部标签
         SampleLedgerDTO.TabListDTO allItem = new SampleLedgerDTO.TabListDTO();
-        allItem.setStatus("all");
+        allItem.setTabFlag("all");
+        allItem.setTabFlagName("全部");
         allItem.setCount(allLedgers.size());
         appList.add(allItem);
         
         // 启用标签
         SampleLedgerDTO.TabListDTO enabledItem = new SampleLedgerDTO.TabListDTO();
-        enabledItem.setStatus("enabled");
+        enabledItem.setTabFlag("enabled");
+        enabledItem.setTabFlagName("启用");
         enabledItem.setCount(enabledCount);
         appList.add(enabledItem);
         
         // 禁用标签
         SampleLedgerDTO.TabListDTO disabledItem = new SampleLedgerDTO.TabListDTO();
-        disabledItem.setStatus("disabled");
+        disabledItem.setTabFlag("disabled");
+        disabledItem.setTabFlagName("禁用");
         disabledItem.setCount(disabledCount);
         appList.add(disabledItem);
 
@@ -666,7 +703,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         }
         
         SampleLedgerDTO.ViewDTO viewDTO = new SampleLedgerDTO.ViewDTO();
-        BeanMapperUtils.copy(entity, viewDTO);
+        BeanUtils.copyProperties(entity, viewDTO);
         
         return viewDTO;
     }

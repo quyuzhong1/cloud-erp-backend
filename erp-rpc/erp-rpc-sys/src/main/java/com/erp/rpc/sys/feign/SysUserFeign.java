@@ -110,6 +110,15 @@ public interface SysUserFeign {
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
+     * 根据用户ID获取用户完整登录信息（包含权限和菜单）
+     * @param userId 用户ID
+     * @param userType 用户类型
+     * @return 用户信息（包含permissionList和leftMenuList）
+     */
+    @PostMapping("feign/user/getUserLoginInfo")
+    ApiResult<SysUserDTO> getUserLoginInfo(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
+
+    /**
      * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")
@@ -642,5 +651,16 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserByThirdIdList")
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    @PostMapping("feign/user/getFsUserUnionIdByAppId")
+    ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto);
 
 }

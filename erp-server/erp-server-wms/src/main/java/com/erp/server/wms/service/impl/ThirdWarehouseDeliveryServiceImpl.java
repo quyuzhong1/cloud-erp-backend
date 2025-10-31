@@ -159,6 +159,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             return null;
         }
         return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getSoId, soId)
+                .ne(ThirdWarehouseDeliveryEntity::getStatus,SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())
                 .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
     }
 
