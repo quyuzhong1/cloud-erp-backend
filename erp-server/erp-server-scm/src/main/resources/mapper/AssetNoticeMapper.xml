@@ -65,7 +65,8 @@
             an.create_time AS createTime,
             an.approve_status as approveStatus,
             an.invalid_status as invalidStatus,
-            and1.create_po_type as createPoType
+            and1.create_po_type as createPoType,
+            apos.supplier_name as supplierName
         FROM
             asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
@@ -88,7 +89,8 @@
             and1.plan_delivery_date,
             and1.apply_qty,
             and1.create_po_type,
-            and1.id
+            and1.id,
+            apos.supplier_name
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
