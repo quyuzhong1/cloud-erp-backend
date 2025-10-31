@@ -739,7 +739,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             }
         }
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
         qcInfoService.autoReceiveToQcDTO(addList);

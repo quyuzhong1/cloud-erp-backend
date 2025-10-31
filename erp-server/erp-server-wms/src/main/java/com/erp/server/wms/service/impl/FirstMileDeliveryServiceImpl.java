@@ -268,7 +268,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         .build();
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                        Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        Boolean autoGenerateResult;
+                        //自动生成功能系统标识
+                        Boolean originalValue = UserContext.getIsUserSystem();
+                        UserContext.setIsUserSystem(Boolean.TRUE);
+                        try {
+                            autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        } finally {
+                            //恢复系统标识
+                            UserContext.setIsUserSystem(originalValue);
+                        }
                         if(autoGenerateResult){
                             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                             updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -1091,13 +1100,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .build();
                     try {
                         if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                            //自动生成功能打系统标识
+                            BatchResultDTO autoGenerateResult;
+                            //自动生成功能系统标识
                             Boolean originalValue = UserContext.getIsUserSystem();
                             UserContext.setIsUserSystem(Boolean.TRUE);
-                            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-                            //恢复系统标识
-                            UserContext.setIsUserSystem(originalValue);
-
+                            try {
+                                 autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                            } finally {
+                                //恢复系统标识
+                                UserContext.setIsUserSystem(originalValue);
+                            }
                             if(autoGenerateResult.getSuccess()){
                                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                                 updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -1112,7 +1124,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
                     try {
                         if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                            Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                            Boolean autoGenerateResult;
+                            //自动生成功能系统标识
+                            Boolean originalValue = UserContext.getIsUserSystem();
+                            UserContext.setIsUserSystem(Boolean.TRUE);
+                            try {
+                                autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                            } finally {
+                                //恢复系统标识
+                                UserContext.setIsUserSystem(originalValue);
+                            }
                             if(autoGenerateResult){
                                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                                 updateStatusDTO.setIds(Collections.singletonList(entity.getId()));

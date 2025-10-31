@@ -546,7 +546,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto) {
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
 
