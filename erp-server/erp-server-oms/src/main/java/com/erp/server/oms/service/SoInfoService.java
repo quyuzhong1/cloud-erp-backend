@@ -552,4 +552,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return Boolean
      */
     Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
+
+    Boolean updateIsDeclare(SoB2cDTO.UpdateIsDeclareDTO dto);
 }

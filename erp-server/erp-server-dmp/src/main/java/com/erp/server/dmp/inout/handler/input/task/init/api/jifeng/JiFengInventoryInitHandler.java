@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -43,6 +44,9 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 
 	@Resource
 	private DmpThirdWarehouseInfoService dmpThirdWarehouseInfoService;
+
+	@Resource
+	private OverseasProviderFeign overseasProviderFeign;
 
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -80,13 +84,30 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 				return Collections.emptyList();
 			}
 			if(resp.getCode() != 0) {
-				throw new ServiceException("极风获取库存列表失败,code:"+resp.getCode()+",msg:"+resp.getMessage());
+				if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+					overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+					resp = jiFengService.getInventoryList(overseasProviderEntity.getAuthJson(),dmpThirdWarehouseInfoEntity.getWarehouseCode());
+					if(resp == null) {
+						return Collections.emptyList();
+					}
+					if(resp.getCode() != 0) {
+						throw new ServiceException("极风获取库存列表失败,code:"+resp.getCode()+",msg:"+resp.getMessage());
+					}
+					resp.getData().forEach(v->{
+						v.setWarehouseCode(dmpThirdWarehouseInfoEntity.getWarehouseCode());
+						v.setWarehouseName(dmpThirdWarehouseInfoEntity.getWarehouseName());
+					});
+					allResult.addAll(resp.getData());
+				}else{
+					throw new ServiceException("极风获取库存列表失败,code:"+resp.getCode()+",msg:"+resp.getMessage());
+				}
+			}else{
+				resp.getData().forEach(v->{
+					v.setWarehouseCode(dmpThirdWarehouseInfoEntity.getWarehouseCode());
+					v.setWarehouseName(dmpThirdWarehouseInfoEntity.getWarehouseName());
+				});
+				allResult.addAll(resp.getData());
 			}
-			resp.getData().forEach(v->{
-				v.setWarehouseCode(dmpThirdWarehouseInfoEntity.getWarehouseCode());
-				v.setWarehouseName(dmpThirdWarehouseInfoEntity.getWarehouseName());
-			});
-			allResult.addAll(resp.getData());
 		}
 
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
