@@ -41,4 +41,7 @@ public interface OverseasProviderFeign {
 
     @GetMapping("/feign/overseasProvider/listProviderWarehouseBySql")
     List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
+
+    @GetMapping("/feign/overseasProvider/refreshToken")
+    OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

@@ -3115,12 +3115,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(entity.getCode()));
         ApiResult<String> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, 0);
         log.warn("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
-        //直接更新订单状态
-        this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
-        soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
         if (!apiResult.isSuccess()){
             return;
         }
+        //成功更新订单状态
+        this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
         String shippingOrderNo = apiResult.getData();
         if (StringUtils.isNotBlank(shippingOrderNo)) {
             this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
