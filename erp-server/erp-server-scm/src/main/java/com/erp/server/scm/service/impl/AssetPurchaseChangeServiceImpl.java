@@ -136,7 +136,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         assetPurchaseChangeDetailService.saveBatch(detailList);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产采购变更单" , assetPurchaseChangeEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "模具采购变更单" , assetPurchaseChangeEntity.getCode());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PURCHASE_CHANGE.getCode(), assetPurchaseChangeEntity.getId(), "新增");
 
         return new BaseResultDTO.AddDTO(assetPurchaseChangeEntity.getId(), code);
@@ -170,8 +170,8 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseChangeEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseChangeEntity.getCode(), "资产采购单");
-        moduleOperateLogService.addModuleOperateLogByObj(old, assetPurchaseChangeEntity, ModuleTypeEnum.ASSET_PURCHASE_CHANGE.getCode(), assetPurchaseChangeEntity.getId(),"资产采购单", msg);
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseChangeEntity.getCode(), "模具采购单");
+        moduleOperateLogService.addModuleOperateLogByObj(old, assetPurchaseChangeEntity, ModuleTypeEnum.ASSET_PURCHASE_CHANGE.getCode(), assetPurchaseChangeEntity.getId(),"模具采购单", msg);
         return Boolean.TRUE;
     }
 
@@ -239,7 +239,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     @Override
     public void exportList(AssetPurchaseChangeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("资产采购变更单导出", EXPORT_PLM_ASSET_PURCHASE_ORDER.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("模具采购变更单导出", EXPORT_PLM_ASSET_PURCHASE_ORDER.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
