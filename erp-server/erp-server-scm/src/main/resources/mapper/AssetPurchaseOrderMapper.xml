@@ -15,7 +15,7 @@
        <result column="code" property="code" />
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
-       <result column="approve_user_time" property="approveUserTime" />
+       <result column="approve_time" property="approveTime" />
        <result column="approve_status" property="approveStatus" />
        <result column="contract_stamp_status" property="contractStampStatus" />
        <result column="order_type" property="orderType" />
