@@ -46,12 +46,12 @@ public class ImlService {
 
     private static final String APP_ID = "1929841041771364354";
     private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/query_refund_order_detail";
+    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/stock_age_query";
     private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
 
     public static void main(String[] args) {
         Map<String,Object> body = new HashMap<>();
-        body.put("code","WRI2025081500003");
+        body.put("platformCustomerCode","80565");
 //        body.put("pageSize",50);
         //查询前一天的时间戳的数据
         long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();

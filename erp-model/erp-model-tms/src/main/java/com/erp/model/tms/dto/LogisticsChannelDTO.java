@@ -433,6 +433,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isPushLabel;
         /**
+         * 推送交接文件类型
+         */
+        private String handoverDocType;
+        /**
          * 分拣码
          */
         private String sortingCode;
