@@ -823,7 +823,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<String> purchaseDetailIdList = new ArrayList<>();
 
             //审核通过-自动生成-委外退料单，purchaseDetailIdList用于取退货子级采购订单明细更新执行状态
-            List<PoReturnEntity> poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            List<PoReturnEntity> poReturnEntityList1;
+            try {
+                poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            } finally {
+                UserContext.setIsUserSystem(originalValue);
+            }
+
             if (CollectionUtils.isNotEmpty(poReturnEntityList1)){
                 poReturnEntityList1.add(entity);
             }else {
@@ -863,7 +871,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
             updateArrivalState(purchaseDetailIdList);
         }
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
         //自动生成补货采购订单
@@ -1680,24 +1688,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
 
-    /**
-     * 批量生成退货单
-     *
-     * @param list
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-04-25 11:09
-     */
-    @Override
-    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                this.add(item);
-            }
-        }
-        return Boolean.TRUE;
-
-    }
 
     /**
      * 修改到货状态

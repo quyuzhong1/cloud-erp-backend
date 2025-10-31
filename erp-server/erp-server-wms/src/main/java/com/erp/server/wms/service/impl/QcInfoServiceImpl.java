@@ -838,7 +838,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-20 14:55
      */
     private void autoBatchStockInBill(List<String> idList) {
-        //自动生成功能打系统标识
+        //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
 

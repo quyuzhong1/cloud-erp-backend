@@ -261,6 +261,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
         authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        //创建店铺同时创建客户
+        this.saveCustom(shop);
         return Collections.singletonList(shop);
 
     }
@@ -504,6 +506,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         addUserShopAuthDTO.setShopIdList(addList.stream().map(ShopInfoEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
         authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        //店铺创建并创建客户
+        for (ShopInfoEntity shop : addList) {
+            this.saveCustom(shop);
+        }
         return addList;
 
     }
@@ -667,11 +673,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
             if(Objects.isNull(shopAuthEntity)){
                 shopAuthEntity = new ShopAuthEntity();
-                shopAuthEntity.setShopId(shopInfo.getId());
-                shopAuthEntity.setToken(dto.getToken());
-                shopAuthEntity.setAccessToken(dto.getToken());
-                shopAuthService.saveOrUpdate(shopAuthEntity);
             }
+            shopAuthEntity.setShopId(shopInfo.getId());
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
         }
         //修改授权信息进行校验
         checkAuthInfo(dto,shopInfo);
@@ -1556,9 +1562,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }else{
             shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
         }
-        for (ShopInfoEntity shop : list) {
-            this.saveCustom(shop);
-        }
+//        for (ShopInfoEntity shop : list) {
+//            this.saveCustom(shop);
+//        }
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
     }
 

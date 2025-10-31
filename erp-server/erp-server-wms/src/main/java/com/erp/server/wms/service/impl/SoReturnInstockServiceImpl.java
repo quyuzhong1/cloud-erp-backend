@@ -1667,6 +1667,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             ids.add(entity.getId());
         }
 
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+
         //自动提交
         Boolean submit = machineInfoService.submit(ids);
         if (!submit) {
@@ -1690,6 +1694,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //自动生成直接调拨单或者采购退货单
         generateSubordinateOrder(ids);
+
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return Boolean.TRUE;
     }
 
