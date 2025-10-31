@@ -745,10 +745,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
-
-        srmPoReconciliationFeign.add(addList);
-        //恢复系统标识
-        UserContext.setIsUserSystem(originalValue);
+        try {
+            srmPoReconciliationFeign.add(addList);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
     }
 
     /**

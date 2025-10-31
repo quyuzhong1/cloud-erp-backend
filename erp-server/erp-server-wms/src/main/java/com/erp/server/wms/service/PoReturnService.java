@@ -210,15 +210,6 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
 
     
     /**
-     * 批量生成退货单
-     * @author yl
-     * @date 2023-04-25 11:09
-     * @param list
-     * @return java.lang.Boolean
-     */
-    Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
-
-    /**
      * 修改到货状态
      * @Author Luo_WG
      * @Date 2023/4/28 11:41
