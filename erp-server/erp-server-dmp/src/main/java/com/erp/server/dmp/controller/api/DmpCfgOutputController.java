@@ -1,9 +1,14 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.model.dmp.dto.DmpCfgInputDTO;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.server.dmp.query.DmpCfgOutputQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -252,5 +257,35 @@ public class DmpCfgOutputController extends BaseController {
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgOutputDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgOutputService.exportList(dto, response);
         return success(true);
+    }
+
+
+    /**
+     * 推送配置下拉列表
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @return ApiResult<PagingVO<DmpCfgInputDTO.ListDTO>>
+     */
+    @PostMapping("/simplePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgOutput:paging",
+            tableAlias = ""
+    )
+    public ApiResult<PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> dto) {
+        Page<DmpCfgOutputEntity> page = dmpCfgOutputService.lambdaQuery()
+                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
+                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
+                .page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
+        // 快速复制page.getRecords()到List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList
+        List<DmpCfgOutputDTO.ListDmpCfgOutputDTO> resultList = page.getRecords().stream()
+                .map(entity -> {
+                    DmpCfgOutputDTO.ListDmpCfgOutputDTO dtoTemp = new DmpCfgOutputDTO.ListDmpCfgOutputDTO();
+                    BeanUtils.copyProperties(entity, dtoTemp);
+                    return dtoTemp;
+                })
+                .collect(Collectors.toList());
+        return success(new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage()));
     }
 }

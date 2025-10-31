@@ -406,4 +406,32 @@ public class DmpCfgOutputDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDmpCfgOutputDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 单据名称
+         */
+        private String name;
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SimplePagingParamDTO extends SortDTO {
+
+        /**
+         * 关键字
+         */
+        private String searchKey;
+
+
+    }
 }
