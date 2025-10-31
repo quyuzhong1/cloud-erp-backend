@@ -19,8 +19,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.fms.dto.AssetCardDTO;
+import com.erp.server.fms.handler.AssetCardQueryHandler;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,8 +105,9 @@ public class AssetCardController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetCard:paging",
-            tableAlias = ""
+            tableAlias = "ac"
     )
+    @WebAdvanceQuery(handler = AssetCardQueryHandler.class)
     public ApiResult<PagingVO<AssetCardDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetCardDTO.PagingParamDTO> dto) {
         return success(assetCardService.paging(dto));
     }
