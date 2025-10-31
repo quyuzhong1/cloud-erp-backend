@@ -139,7 +139,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "channelId", source = "logisticsSaleChannel.platformChannelId"),
             @Mapping(target = "orderSource", source = "orderSource"),
             @Mapping(target = "orderNumber", source = "deliveryNo"),
-            @Mapping(target = "salesPlatform", source = "salesPlatformName"),
+            @Mapping(target = "salesPlatform", source = "dictPlatform"),
             @Mapping(target = "receiverInfo.name", source = "receiverInfoVO.contact"),
             @Mapping(target = "receiverInfo.country", source = "receiverInfoVO.country"),
             @Mapping(target = "receiverInfo.address", expression = "java(receiverInfoVO.getAddressFirst()+\" \"+receiverInfoVO.getAddressSecond()+\" \"+receiverInfoVO.getStreetAddress())"),

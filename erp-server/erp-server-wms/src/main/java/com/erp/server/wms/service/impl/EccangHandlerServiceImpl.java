@@ -107,6 +107,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         this.handleData(antuCreateOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考编号已存在")){
             return success(response.getOrderCode());
         }

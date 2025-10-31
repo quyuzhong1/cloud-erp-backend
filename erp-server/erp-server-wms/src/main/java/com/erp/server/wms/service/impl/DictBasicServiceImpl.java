@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -145,6 +146,5 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
-
 
 }
