@@ -10,6 +10,7 @@ import com.erp.model.fms.dto.*;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
 import com.erp.server.fms.handler.AssetStocktakingPlanQueryHandler;
+import com.erp.server.fms.handler.AssetStocktakingQueryHandler;
 import com.erp.server.fms.query.AssetDisposalQueryHandler;
 import com.erp.server.fms.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +44,9 @@ public class ExportFmsFeignController {
 
     @Resource
     private AssetDisposalService assetDisposalService;
+
+    @Resource
+    private AssetStocktakingService assetStocktakingService;
 
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -88,6 +92,17 @@ public class ExportFmsFeignController {
     @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)
     public PagingVO<AssetDisposalDTO.ListDTO> exportAssetDisposal(@RequestBody  PagingDTO<AssetDisposalDTO.PagingParamDTO> dto) {
         return assetDisposalService.paging(dto);
+    }
+
+    @PostMapping("/getAssetStocktakingPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "fms:assetStocktaking:export",
+            tableAlias = "ast"
+    )
+    @WebAdvanceQuery(handler = AssetStocktakingQueryHandler.class)
+    public PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(@RequestBody PagingDTO<AssetStocktakingDTO.ExportDTO> dto) {
+        return assetStocktakingService.getAssetStocktakingPageData(dto);
     }
 
 }

@@ -152,4 +152,21 @@ public interface AssetStocktakingService extends SuperService<AssetStocktakingEn
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetStocktakingEntity entity);
 
+    /**
+    * 生成卡片编码
+    * @author wuht
+    * @date: 2025-10-31
+    * @return String
+    */
+    String generateCardCode();
+
+    /**
+    * 获取资产盘点单分页数据（用于异步导出）
+    * @author wuht
+    * @date: 2025-10-31
+    * @param dto 分页参数
+    * @return PagingVO<AssetStocktakingDTO.ListDTO>
+    */
+    PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(PagingDTO<AssetStocktakingDTO.ExportDTO> dto);
+
 }
