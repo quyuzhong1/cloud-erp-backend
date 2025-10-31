@@ -104,6 +104,7 @@ public class SampleTransferInfoController extends BaseController {
             menuCode = "wms:sampleTransferInfo:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = SampleTransferInfoQueryHandler.class)
     public ApiResult<PagingVO<SampleTransferInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleTransferInfoDTO.PagingParamDTO> dto) {
         return success(sampleTransferInfoService.paging(dto));
     }

@@ -121,7 +121,6 @@ public class SampleTransferDetailDTO implements Serializable {
         /**
         * 关联转移单主表ID
         */
-        @NotBlank(message = "关联转移单主表ID不能为空")
         @Size(max = 19,message = "关联转移单主表ID最大长度不能超过19位")
         private String mainId;
 
@@ -140,12 +139,12 @@ public class SampleTransferDetailDTO implements Serializable {
         private String skuId;
 
         /**
-        * SKU编号 - 自动填充，不需要前端传
+        * SKU编号
         */
         private String skuNo;
 
         /**
-        * 产品名称 - 自动填充，不需要前端传
+        * 产品名称
         */
         private String productName;
 

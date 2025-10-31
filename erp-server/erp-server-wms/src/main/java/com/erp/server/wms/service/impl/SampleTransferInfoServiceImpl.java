@@ -495,8 +495,9 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         });
         
         // 在列表开头添加"全部"统计
-        list.add(0, new SampleTransferInfoDTO.TabListDTO("all", list.stream().mapToInt(SampleTransferInfoDTO.TabListDTO::getCount).sum()));
-        
+        SampleTransferInfoDTO.TabListDTO all = new SampleTransferInfoDTO.TabListDTO("all", list.stream().mapToInt(SampleTransferInfoDTO.TabListDTO::getCount).sum());
+        all.setTabFlagName("全部");
+        list.add(0,all);
         return list;
     }
 
