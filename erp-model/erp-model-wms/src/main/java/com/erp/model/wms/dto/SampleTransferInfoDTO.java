@@ -408,7 +408,6 @@ public class SampleTransferInfoDTO implements Serializable {
         /**
         * 转出人姓名
         */
-        @NotBlank(message = "转出人姓名不能为空")
         @Size(max = 32,message = "转出人姓名最大长度不能超过32位")
         private String transferOutUserName;
 
@@ -422,7 +421,6 @@ public class SampleTransferInfoDTO implements Serializable {
         /**
         * 转出人部门名称
         */
-        @NotBlank(message = "转出人部门名称不能为空")
         @Size(max = 32,message = "转出人部门名称最大长度不能超过32位")
         private String transferOutDeptName;
 
@@ -436,7 +434,6 @@ public class SampleTransferInfoDTO implements Serializable {
         /**
         * 转入人姓名
         */
-        @NotBlank(message = "转入人姓名不能为空")
         @Size(max = 32,message = "转入人姓名最大长度不能超过32位")
         private String transferInUserName;
 
@@ -450,7 +447,6 @@ public class SampleTransferInfoDTO implements Serializable {
         /**
         * 转入人部门名称
         */
-        @NotBlank(message = "转入人部门名称不能为空")
         @Size(max = 32,message = "转入人部门名称最大长度不能超过32位")
         private String transferInDeptName;
 
