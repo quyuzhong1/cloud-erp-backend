@@ -73,11 +73,11 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_MOLD_MONITOR_RETURN("EXPORT_PLM_MOLD_MONITOR_RETURN", "模具返还监控导出","","",""),
     EXPORT_PLM_MOLD_MONITOR_ALERT("EXPORT_PLM_MOLD_MONITOR_ALERT", "模具预警监控导出","","",""),
 
-    EXPORT_PLM_ASSET_NOTICE("EXPORT_PLM_ASSET_NOTICE","资产通知单导出","","",""),
-    IMPORT_PLM_ASSET_NOTICE("IMPORT_PLM_ASSET_NOTICE","资产通知单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetNotice",""),
-    EXPORT_PLM_ASSET_PURCHASE_ORDER("EXPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导出","","",""),
-    IMPORT_PLM_ASSET_PURCHASE_ORDER("IMPORT_PLM_ASSET_PURCHASE_ORDER","资产采购单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetPurchaseOrder",""),
-    EXPORT_PLM_ASSET_PURCHASE_CHANGE("EXPORT_PLM_ASSET_PURCHASE_CHANGE","资产采购变更单导出","","",""),
+    EXPORT_PLM_ASSET_NOTICE("EXPORT_PLM_ASSET_NOTICE","开模通知单导出","","",""),
+    IMPORT_PLM_ASSET_NOTICE("IMPORT_PLM_ASSET_NOTICE","开模通知单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetNotice",""),
+    EXPORT_PLM_ASSET_PURCHASE_ORDER("EXPORT_PLM_ASSET_PURCHASE_ORDER","模具采购单导出","","",""),
+    IMPORT_PLM_ASSET_PURCHASE_ORDER("IMPORT_PLM_ASSET_PURCHASE_ORDER","模具采购单导入","com.erp.rpc.plm.feign.ImportPlmFeign","importAssetPurchaseOrder",""),
+    EXPORT_PLM_ASSET_PURCHASE_CHANGE("EXPORT_PLM_ASSET_PURCHASE_CHANGE","模具采购变更单导出","","",""),
 
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),

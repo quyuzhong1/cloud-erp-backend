@@ -61,6 +61,7 @@ public enum ApiModuleTypeEnum {
     PAYABLE_INFO(48, "payableInfo", "采购对账","srm"),
 
     BD_RATE(49, "bdRate", "汇率","sys"),
+    ASSET_PURCHASE_ORDER(50, "assetPurchaseOrder", "资产采购订单","scm"),
     ;
     private Integer code;
 
