@@ -367,11 +367,25 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+
+        List<AssetPurchaseChangeDetailEntity> list = assetPurchaseChangeDetailService.lambdaQuery()
+                .eq(AssetPurchaseChangeDetailEntity::getMainId, id)
+                .eq(AssetPurchaseChangeDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        if (list.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95318);
+        }
+
+        List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+
+        //删除明细
+        assetPurchaseChangeDetailService.removeByIds(collect);
 
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
+
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "");
