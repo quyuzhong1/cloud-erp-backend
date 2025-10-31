@@ -6,9 +6,12 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -130,6 +133,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private FileFeign fileFeign;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -581,6 +588,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        
+        // 审核前先校验台账数量
+        validateSampleLedgerQtyWithLock(entity, approveType);
+        
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -623,6 +634,9 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品转移单主单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        
+        // 反审核前先校验台账数量
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1170,8 +1184,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 flowDetail.setSkuId(detail.getSkuId());
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
-                // 转入人会新增台账，所以不设置sampleLedgerId
-                flowDetail.setSampleLedgerId(null);
+                // 设置样品台账ID
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
                 flowDetails.add(flowDetail);
             }
 
@@ -1187,8 +1201,9 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             flowDTO.setUserId(entity.getTransferInUserId());
             flowDTO.setUserName(entity.getTransferInUserName());
             flowDTO.setDeptId(entity.getTransferInDeptId());
-            // 根据部门ID查询部门名称
             flowDTO.setDeptName(getDeptNameById(entity.getTransferInDeptId()));
+//            flowDTO.setUseUserId(entity.getTransferInUserId());
+//            flowDTO.setUseUserName(entity.getTransferInUserName());
             flowDTO.setDetailList(flowDetails);
 
             return flowDTO;
@@ -1462,5 +1477,164 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         String standardPath = "classpath:excel/sampleTransferInfoTemplate.xlsx";
         String standardExcelName = "样品转移单导入模板.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+    }
+
+    // ==================== 审核/反审核数量校验 ====================
+    
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     * 
+     * @param entity 样品转移单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleTransferInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品转移单明细
+        List<SampleTransferDetailEntity> detailList = sampleTransferDetailService.list(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SampleTransferDetailEntity>()
+                .eq(SampleTransferDetailEntity::getMainId, entity.getId())
+        );
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("样品转移单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            // 审核：校验转出人台账（sampleLedgerId）是否足够扣减
+            validateTransferOutUserLedger(entity, detailList);
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            // 反审核：校验转入人台账是否足够扣减
+            validateTransferInUserLedger(entity, detailList);
+        }
+    }
+    
+    /**
+     * 校验转出人台账数量（审核时）
+     * 审核通过后，转出人台账数量减少（-X），需要校验是否足够扣减
+     */
+    private void validateTransferOutUserLedger(SampleTransferInfoEntity entity, List<SampleTransferDetailEntity> detailList) {
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleTransferDetailEntity detail : detailList) {
+            if (StrUtil.isNotBlank(detail.getSampleLedgerId()) && detail.getTransferQty() != null) {
+                sampleLedgerIds.add(detail.getSampleLedgerId());
+                qtys.add(-detail.getTransferQty()); // 转出人减少库存
+                skuNos.add(detail.getSkuNo());
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的转出人台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验转出人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.PASS, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("转出人台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
+    }
+    
+    /**
+     * 校验转入人台账数量（反审核时）
+     * 反审核后，转入人台账数量减少（-X），需要校验是否足够扣减
+     * 转入人的台账使用方信息需要从转出人台账中获取（参考归还单逻辑）
+     */
+    private void validateTransferInUserLedger(SampleTransferInfoEntity entity, List<SampleTransferDetailEntity> detailList) {
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleTransferDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询转入人的所有台账（不限定 useUserId）
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getTransferInUserId());
+        searchDTO.setSkuIds(skuIds);
+        searchDTO.setType(SampleLedgerTypeEnum.TRANSFER.getCode());
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 userId-useUserId-skuId -> ledgerId 的映射
+        Map<String, String> ledgerKeyMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            for (SampleLedgerDTO.SkuAvailableQtyDTO ledger : ledgerList) {
+                String key = entity.getTransferInUserId() + "-" + ledger.getUseUserId() + "-" + ledger.getSkuId();
+                ledgerKeyMap.put(key, ledger.getSampleLedgerId());
+            }
+        }
+        
+        // 批量查询转出人台账：收集所有转移单明细中的 sampleLedgerId
+        List<String> transferOutLedgerIds = detailList.stream()
+                .map(SampleTransferDetailEntity::getSampleLedgerId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(transferOutLedgerIds)) {
+            log.warn("转移单明细中没有转出人台账ID，无法查询使用方信息，单据编号：{}", entity.getCode());
+            throw new ServiceException("转移单明细中没有转出人台账ID，无法反审核");
+        }
+        
+        // 一次性批量查询转出人台账，构建 ledgerId -> useUserId 的映射
+        List<SampleLedgerEntity> transferOutLedgerList = sampleLedgerService.listByIds(transferOutLedgerIds);
+        Map<String, String> ledgerIdToUseUserIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(transferOutLedgerList)) {
+            ledgerIdToUseUserIdMap = transferOutLedgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerEntity::getId,
+                            ledger -> StrUtil.isNotBlank(ledger.getUseUserId()) ? ledger.getUseUserId() : "",
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleTransferDetailEntity detail : detailList) {
+            // 从转出人台账中获取使用方ID
+            String useUserId = ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
+            if (StrUtil.isBlank(useUserId)) {
+                log.warn("未找到转出人台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}", 
+                    detail.getSampleLedgerId(), detail.getSkuNo(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的转出人台账使用方信息不存在，无法反审核", detail.getSkuNo()));
+            }
+            
+            // 拼接 key 从 map 中获取转入人台账ID
+            String key = entity.getTransferInUserId() + "-" + useUserId + "-" + detail.getSkuId();
+            String ledgerId = ledgerKeyMap.get(key);
+            
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(-detail.getTransferQty()); // 反审核时转入人减少库存
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到转入人台账，SKU：{}，转入人：{}，使用方ID：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getTransferInUserName(), useUserId, entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的转入人台账不存在，无法反审核", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的转入人台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验转入人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.DIS_APPROVE, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("转入人台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
     }
 }
