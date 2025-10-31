@@ -22,7 +22,7 @@ for _, v in ipairs(value) do
             beforetransactions = beforetransactions .. v;
             beforeinventorys = beforeinventorys .. currkey .. '==' .. currvalue;
         else
-            beforetransactions = beforetransactions .. v;
+            beforetransactions = beforetransactions .. ',,' .. v;
             beforeinventorys = beforeinventorys .. ',,' .. currkey .. '==' .. currvalue;
         end
         local uqty = 0;
