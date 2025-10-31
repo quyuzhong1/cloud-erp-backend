@@ -24,8 +24,13 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
 import com.erp.model.fms.dto.AssetStocktakingDetailDTO;
+import com.erp.model.fms.dto.AssetProfitLossDTO;
+import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
+import com.erp.model.fms.entity.AssetProfitLossEntity;
+import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
+import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -34,6 +39,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetStocktakingMapper;
 import com.erp.server.fms.service.AssetStocktakingService;
 import com.erp.server.fms.service.AssetStocktakingDetailService;
+import com.erp.server.fms.service.AssetProfitLossService;
+import com.erp.server.fms.service.AssetProfitLossDetailService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +76,10 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private AssetStocktakingDetailService assetStocktakingDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private AssetProfitLossService assetProfitLossService;
+    @Resource
+    private AssetProfitLossDetailService assetProfitLossDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -390,7 +401,9 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         AssetStocktakingEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产盘点单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+        
+        // 删除待提交状态的盘盈盘亏单
+        deletePendingProfitLossOrders(entity);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -406,7 +419,23 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+        
+        // 检查是否有关联的盘盈盘亏单已提交审核
+        List<AssetProfitLossEntity> profitLossList = assetProfitLossService.lambdaQuery()
+                .eq(AssetProfitLossEntity::getSourceId, entity.getId())
+                .eq(AssetProfitLossEntity::getSourceType, SourceTypeEnum.ASSET_INVENTORY_SHEET.getCode())
+                .list();
+        
+        if (CollUtil.isNotEmpty(profitLossList)) {
+            // 检查是否有已提交审核的盘盈盘亏单
+            boolean hasSubmitted = profitLossList.stream()
+                    .anyMatch(pl -> !ApproveStatusEnum.WAIT_SUBMIT.equals(pl.getApproveStatus()));
+            
+            if (hasSubmitted) {
+                throw new ServiceException("存在已提交审核的盘盈盘亏单，不允许反审核");
+            }
+        }
+        
         return true;
     }
 
@@ -497,7 +526,11 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        
+        // 审核通过时，生成盘盈盘亏单
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            generateProfitLossOrders(entity);
+        }
 
         return Boolean.TRUE;
     }
@@ -648,5 +681,144 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 审核通过后生成盘盈盘亏单
+     * 根据最终差异数量判断：正数为盘盈，负数为盘亏
+     * 如果勾选了复盘，则使用复盘差异数量；否则使用初盘差异数量
+     * 
+     * @param entity 资产盘点单主表实体
+     */
+    private void generateProfitLossOrders(AssetStocktakingEntity entity) {
+        // 查询盘点单明细
+        List<AssetStocktakingDetailEntity> detailList = assetStocktakingDetailService.lambdaQuery()
+                .eq(AssetStocktakingDetailEntity::getMainId, entity.getId())
+                .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.warn("资产盘点单明细为空，不生成盘盈盘亏单，盘点单ID：{}", entity.getId());
+            return;
+        }
+        
+        // 按盘盈盘亏分类明细
+        Map<String, List<AssetStocktakingDetailEntity>> groupedDetails = detailList.stream()
+                .filter(detail -> detail.getFinalDiffQty() != null && detail.getFinalDiffQty() != 0)
+                .collect(Collectors.groupingBy(detail -> 
+                    detail.getFinalDiffQty() > 0 ? AssetProfitLossTypeEnum.PROFIT.getCode() : AssetProfitLossTypeEnum.LOSS.getCode()
+                ));
+        
+        // 生成盘盈单
+        if (groupedDetails.containsKey(AssetProfitLossTypeEnum.PROFIT.getCode())) {
+            createProfitLossOrder(entity, groupedDetails.get(AssetProfitLossTypeEnum.PROFIT.getCode()), AssetProfitLossTypeEnum.PROFIT);
+        }
+        
+        // 生成盘亏单
+        if (groupedDetails.containsKey(AssetProfitLossTypeEnum.LOSS.getCode())) {
+            createProfitLossOrder(entity, groupedDetails.get(AssetProfitLossTypeEnum.LOSS.getCode()), AssetProfitLossTypeEnum.LOSS);
+        }
+    }
+    
+    /**
+     * 创建盘盈盘亏单
+     * 
+     * @param stocktakingEntity 盘点单主表实体
+     * @param detailList 盘点单明细列表
+     * @param type 单据类型（盘盈/盘亏）
+     */
+    private void createProfitLossOrder(AssetStocktakingEntity stocktakingEntity, 
+                                       List<AssetStocktakingDetailEntity> detailList, 
+                                       AssetProfitLossTypeEnum type) {
+        // 创建主表
+        AssetProfitLossEntity profitLossEntity = new AssetProfitLossEntity();
+        profitLossEntity.setSourceCode(stocktakingEntity.getCode());
+        profitLossEntity.setSourceType(SourceTypeEnum.ASSET_INVENTORY_SHEET.getCode());
+        profitLossEntity.setSourceId(stocktakingEntity.getId());
+        profitLossEntity.setDocType(type.getCode());
+        profitLossEntity.setPlanId(stocktakingEntity.getSourceId());
+        profitLossEntity.setPlanCode(stocktakingEntity.getSourceCode());
+        profitLossEntity.setAssetOrgId(stocktakingEntity.getAssetOrgId());
+        profitLossEntity.setAssetOrgName(stocktakingEntity.getAssetOrgName());
+        profitLossEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PYPKD);
+        profitLossEntity.setCode(code);
+        
+        assetProfitLossService.save(profitLossEntity);
+        log.info("生成{}单，单号：{}，来源盘点单：{}", type.getName(), code, stocktakingEntity.getCode());
+        
+        // 创建明细
+        List<AssetProfitLossDetailEntity> profitLossDetails = new ArrayList<>();
+        for (AssetStocktakingDetailEntity stocktakingDetail : detailList) {
+            AssetProfitLossDetailEntity profitLossDetail = new AssetProfitLossDetailEntity();
+            profitLossDetail.setSourceDetailId(stocktakingDetail.getId());
+            profitLossDetail.setMainId(profitLossEntity.getId());
+            profitLossDetail.setAssetCategory(stocktakingDetail.getAssetCategory());
+            profitLossDetail.setCardId(stocktakingDetail.getCardId());
+            profitLossDetail.setCardDetailId(stocktakingDetail.getCardDetailId());
+            profitLossDetail.setCardCode(stocktakingDetail.getCardCode());
+            profitLossDetail.setAssetId(stocktakingDetail.getAssetId());
+            profitLossDetail.setAssetName(stocktakingDetail.getAssetName());
+            profitLossDetail.setAssetCode(stocktakingDetail.getAssetCode());
+            profitLossDetail.setUnit(stocktakingDetail.getUnit());
+            profitLossDetail.setBookQty(stocktakingDetail.getBookQty());
+            
+            // 实际数量 = 账存数量 + 最终差异数量
+            Integer actualQty = (stocktakingDetail.getBookQty() != null ? stocktakingDetail.getBookQty() : 0) 
+                              + (stocktakingDetail.getFinalDiffQty() != null ? stocktakingDetail.getFinalDiffQty() : 0);
+            profitLossDetail.setActualQty(actualQty);
+            profitLossDetail.setDiffQty(stocktakingDetail.getFinalDiffQty());
+            
+            profitLossDetail.setBookLocation(stocktakingDetail.getBookLocation());
+            
+            // 根据是否复盘选择实际位置
+            // 如果是复盘（复盘变动位置不为空），使用复盘位置；否则使用初盘位置
+            String actualLocation = StringUtils.isNotBlank(stocktakingDetail.getRecountChangeLocation()) 
+                    ? stocktakingDetail.getRecountChangeLocation() 
+                    : stocktakingDetail.getFirstChangeLocation();
+            profitLossDetail.setActualLocation(actualLocation);
+            
+            profitLossDetails.add(profitLossDetail);
+        }
+        
+        assetProfitLossDetailService.saveBatch(profitLossDetails);
+        log.info("生成{}单明细，数量：{}", type.getName(), profitLossDetails.size());
+    }
+    
+    /**
+     * 删除待提交状态的盘盈盘亏单
+     * 
+     * @param entity 资产盘点单主表实体
+     */
+    private void deletePendingProfitLossOrders(AssetStocktakingEntity entity) {
+        // 查询待提交状态的盘盈盘亏单
+        List<AssetProfitLossEntity> profitLossList = assetProfitLossService.lambdaQuery()
+                .eq(AssetProfitLossEntity::getSourceId, entity.getId())
+                .eq(AssetProfitLossEntity::getSourceType, SourceTypeEnum.ASSET_INVENTORY_SHEET.getCode())
+                .eq(AssetProfitLossEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .list();
+        
+        if (CollUtil.isEmpty(profitLossList)) {
+            log.info("没有待删除的盘盈盘亏单，盘点单ID：{}", entity.getId());
+            return;
+        }
+        
+        List<String> profitLossIds = profitLossList.stream()
+                .map(AssetProfitLossEntity::getId)
+                .collect(Collectors.toList());
+        
+        // 删除盘盈盘亏单明细
+        assetProfitLossDetailService.lambdaUpdate()
+                .in(AssetProfitLossDetailEntity::getMainId, profitLossIds)
+                .set(AssetProfitLossDetailEntity::getIsDeleted, Boolean.TRUE)
+                .update();
+        log.info("删除盘盈盘亏单明细，主表ID列表：{}", profitLossIds);
+        
+        // 删除盘盈盘亏单主表
+        assetProfitLossService.removeByIds(profitLossIds);
+        log.info("删除待提交状态的盘盈盘亏单，数量：{}，单号：{}", 
+                profitLossList.size(), 
+                profitLossList.stream().map(AssetProfitLossEntity::getCode).collect(Collectors.joining(",")));
     }
 }
