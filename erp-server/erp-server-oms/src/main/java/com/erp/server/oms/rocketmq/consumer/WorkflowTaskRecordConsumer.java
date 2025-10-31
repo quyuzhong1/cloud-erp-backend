@@ -57,7 +57,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
 
         MDC.put("traceId", mqDTO.getTraceId());
 
-        List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, mqDTO.getSourceId()).orderByAsc(WorkflowTaskRecordEntity::getIndex).list();
+        List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, mqDTO.getSourceId()).eq(WorkflowTaskRecordEntity::getSourceType, mqDTO.getSourceTypeEnum().getCode()).orderByAsc(WorkflowTaskRecordEntity::getIndex).list();
         if(CollUtil.isEmpty(list)){
             log.error("根据sourceId未查询到任务记录，sourceId={}", mqDTO.getSourceId());
             return;

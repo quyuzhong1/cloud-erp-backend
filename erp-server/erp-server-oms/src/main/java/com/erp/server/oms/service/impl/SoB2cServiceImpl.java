@@ -2055,7 +2055,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "重试获取物流信息");
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "重试获取物流信息");
         }
         //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
