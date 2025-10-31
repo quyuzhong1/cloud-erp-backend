@@ -464,6 +464,35 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_95308);
         }
 
+        //回写通知单生成状态
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+            List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            //已采购总数
+            BigDecimal purchaseSumQty = assetPurchaseOrderDetailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .one();
+
+            if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) == 0) {
+                //采购总数量等于当前明细数量，状态改为未生成
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.NOT_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            } else if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
+                //采购总数量大于当前明细数量，状态改为未生成
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            }
+        }
+
         List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
 
         //删除明细
@@ -482,27 +511,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
 
-        //回写通知单生成状态
-        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
-            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .one();
-
-            //采购数量小于申请数量状态改为部分生成
-            if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(assetNoticeDetailEntity.getApplyQty()) < 0) {
-                assetNoticeDetailService.lambdaUpdate()
-                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
-                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
-                        .update();
-            } else {
-                //采购数量等于申请数量状态改为未生成
-                assetNoticeDetailService.lambdaUpdate()
-                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.NOT_GENERATED.getStatus())
-                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
-                        .update();
-            }
-        }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具采购订单");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "删除");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
