@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -149,10 +150,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     * 撤销
     * @author Luo_WG
     * @date: 2023-10-30
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel
@@ -381,4 +382,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds);
 
     BatchResultDTO generateFirstMileDeclare(String id);
+
+    /**
+     * 重新出库
+     * @author will
+     * @date 2025/8/6 17:01
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO retryOutstock(String id);
 }

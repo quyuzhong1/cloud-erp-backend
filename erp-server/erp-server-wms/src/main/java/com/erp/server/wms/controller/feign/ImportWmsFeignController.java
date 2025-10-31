@@ -8,6 +8,7 @@ import com.erp.server.wms.service.SampleRecipientService;
 import com.erp.server.wms.service.SampleScrapInfoService;
 import com.erp.server.wms.service.SampleBackInfoService;
 import com.erp.server.wms.service.SampleInitialLedgerService;
+import com.erp.server.wms.service.SampleTransferInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +36,9 @@ public class ImportWmsFeignController {
 
     @Resource
     private SampleInitialLedgerService sampleInitialLedgerService;
+
+    @Resource
+    private SampleTransferInfoService sampleTransferInfoService;
 
     @PostMapping("/sampleRecipient")
     public void importSampleRecipient(@RequestBody BaseDTO.ImportDTO dto) {
@@ -98,6 +102,20 @@ public class ImportWmsFeignController {
             sampleInitialLedgerService.importSampleInitialLedger(dto);
         } catch (Exception e) {
             log.error("导入样品期初台账失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importSampleTransfer")
+    public void importSampleTransfer(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            sampleTransferInfoService.importSampleTransfer(dto);
+        } catch (Exception e) {
+            log.error("导入样品转移单失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

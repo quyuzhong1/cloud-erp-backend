@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -538,7 +539,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcessEntity(PurchasePriceEntity entity) {
+    public BatchResultDTO cancelProcessEntity(ApproveDTO.CancelProcessDTO dto,PurchasePriceEntity entity) {
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = Stream.of(entity).filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
@@ -550,6 +551,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -622,7 +624,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
+                    item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
                 }
             }
         }

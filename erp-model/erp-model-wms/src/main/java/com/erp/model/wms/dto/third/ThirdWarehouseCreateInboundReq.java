@@ -44,6 +44,11 @@ public class ThirdWarehouseCreateInboundReq {
      * file base64
      */
     private String fileBase64;
+
+    /**
+     * file
+     */
+    private String fileName;
     /**
      * 交货方式 （自送，揽收）
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
@@ -314,5 +319,11 @@ public class ThirdWarehouseCreateInboundReq {
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
         private String weightUnit;
+
+        public Item(String productSku, String productSkuId, Integer quantity) {
+            this.productSku = productSku;
+            this.productSkuId = productSkuId;
+            this.quantity = quantity;
+        }
     }
 }

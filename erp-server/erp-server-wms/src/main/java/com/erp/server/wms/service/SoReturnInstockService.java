@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -79,10 +81,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/14 10:04
-     * @param ids ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoReturnInstockEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -115,6 +117,16 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     BatchResultDTO approve(SoReturnInstockEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
+     * 审核通过
+     * @author will
+     * @date 2025/10/22 16:25
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoReturnInstockEntity entity);
+
+    /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
@@ -129,10 +141,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废

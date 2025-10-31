@@ -43,6 +43,10 @@ public class WdtReturnOrderDTO extends UniqueDto {
      */
     private String approveUserName;
     /**
+     * 审核人Id
+     */
+    private String approveUserId;
+    /**
      * 审核时间
      */
     private LocalDateTime approveTime;
@@ -76,7 +80,10 @@ public class WdtReturnOrderDTO extends UniqueDto {
      * 创建人名称
      */
     private String createUserName;
-
+    /**
+     * 创建人Id
+     */
+    private String createUserId;
 
     private String shopName;
 

@@ -223,20 +223,6 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
                     // 回填使用方信息
                     excelDTO.setUseUserId(ledgerDTO.getUseUserId());
                     excelDTO.setUseUserName(ledgerDTO.getUseUserName());
-                    
-                    // 验证退回数量是否小于等于可退数量
-                    if (StringUtils.isNotBlank(excelDTO.getQty())) {
-                        try {
-                            Integer backQty = Integer.parseInt(excelDTO.getQty());
-                            Integer availableQty = ledgerDTO.getAvailableQty();
-                            
-                            if (backQty > availableQty) {
-                                errorMsgList.add("退回数量(" + backQty + ")不能大于可退数量(" + availableQty + ")");
-                            }
-                        } catch (NumberFormatException e) {
-                            errorMsgList.add("退回数量格式错误：" + excelDTO.getQty());
-                        }
-                    }
                 } else {
                     errorMsgList.add("台账中未找到该SKU的可退数量信息");
                 }

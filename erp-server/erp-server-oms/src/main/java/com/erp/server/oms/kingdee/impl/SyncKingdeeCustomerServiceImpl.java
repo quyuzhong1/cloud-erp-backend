@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.text.CharSequenceUtil;
+
+import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +26,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -45,6 +48,10 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
+import com.erp.model.oms.enums.CustomerInfoCheckTypeEnum;
+import com.erp.model.oms.enums.CustomerInfoPeriodSettingEnum;
+import com.erp.model.oms.enums.CustomerInfoTransactionalModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -373,8 +380,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		
 		String financialOrganization = entity.getFinancialOrganization();
 		String useOrgId = entity.getUseOrgId();
-		Map<String, String> orgIdCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization , useOrgId))
-			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
+		Map<String, BaseIdDTO.CodeDTO> orgIdCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization , useOrgId))
+			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, t -> t));
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -389,18 +396,28 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 			resultMap.put("sub_platform_name", sub_platform_code);
 		}
 		resultMap.put("shop_code", entity.getCode());
+		resultMap.put("accounting_customer_code", entity.getCode());
 		String countryId = entity.getCountryId();
 		resultMap.put("shop_site", countryId);
 		resultMap.put("shop_name", entity.getName());
 		resultMap.put("currency_code", entity.getTradeCurrency());
 		resultMap.put("settlement_currency_code", entity.getCurrency());
-		resultMap.put("business_mode", entity.getBusinessMode());
-		resultMap.put("transactional_mode", entity.getTransactionalMode());
-		resultMap.put("financial_organization_code", orgIdCodeMap.get(useOrgId));
-		resultMap.put("organization", orgIdCodeMap.get(financialOrganization));
-		resultMap.put("period_setting", entity.getPeriodSetting());
-		resultMap.put("check_type", entity.getCheckType());
-		resultMap.put("is_check", "是");
+		resultMap.put("business_mode", EnumMessage.getNameByCode(CustomerInfoBusinessModeEnum.class , entity.getBusinessMode()));
+		resultMap.put("transactional_mode", EnumMessage.getNameByCode(CustomerInfoTransactionalModeEnum.class , entity.getTransactionalMode()));
+		CodeDTO financialDto = orgIdCodeMap.get(useOrgId);
+		if(financialDto != null) {
+			resultMap.put("financial_organization_code", financialDto.getCode());
+			resultMap.put("financial_organization_name", financialDto.getCode() + "|" + financialDto.getName());
+			resultMap.put("organization_code", financialDto.getCode());
+			resultMap.put("organization_name", financialDto.getCode() + "|" + financialDto.getName());
+		}
+		CodeDTO orgDto = orgIdCodeMap.get(financialOrganization);
+		if(orgDto != null) {
+			resultMap.put("organization", orgDto.getCode());
+		}
+		resultMap.put("period_setting", EnumMessage.getNameByCode(CustomerInfoPeriodSettingEnum.class , entity.getPeriodSetting()));
+		resultMap.put("check_type", EnumMessage.getNameByCode(CustomerInfoCheckTypeEnum.class , entity.getCheckType()));
+		resultMap.put("is_check", "1");
 		List<ShopInfoEntity> shopInfoList = shopInfoService.lambdaQuery().eq(ShopInfoEntity::getCustomerId, entity.getId()).list();
 		if(CollUtil.isNotEmpty(shopInfoList)) {
 			ShopInfoEntity shopInfoEntity = shopInfoList.get(0);
@@ -417,6 +434,21 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		LocalDateTime downTime = entity.getDownTime();
 		if(downTime != null) {
 			resultMap.put("down_time", downTime.format(formatter));
+		}
+		
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("created_time", createTime.format(formatter));
+		}
+		LocalDateTime updateTime = entity.getUpdateTime();
+		if(updateTime != null) {
+			resultMap.put("modified_time", updateTime.format(formatter));
+		}
+		Boolean disabled = entity.getDisabled();
+		if(disabled != null && disabled) {
+			resultMap.put("is_enable", "停用");
+		}else {
+			resultMap.put("is_enable", "启用");
 		}
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {

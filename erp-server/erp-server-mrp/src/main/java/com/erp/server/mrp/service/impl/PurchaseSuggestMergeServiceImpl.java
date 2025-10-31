@@ -690,7 +690,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         purchaseApplicationDTO.setApplyDate(dto.getApplyDate());
         purchaseApplicationDTO.setApplyDeptId(dto.getApplyDeptId());
         purchaseApplicationDTO.setApplyUserId(dto.getApplyUserId());
-//        purchaseApplicationDTO.setIsFirstMassProduct(dto.getIsFirstMassProduct());
         purchaseApplicationDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();

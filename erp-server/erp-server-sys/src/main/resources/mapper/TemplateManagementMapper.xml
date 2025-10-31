@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.TemplateManagementMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.TemplateManagementEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="type" property="type" />
+       <result column="biz_type" property="bizType" />
+       <result column="status" property="status" />
+       <result column="length" property="length" />
+       <result column="width" property="width" />
+       <result column="content" property="content" />
+       <result column="template_version" property="templateVersion" />
+       <result column="is_default" property="isDefault" />
+       <result column="index" property="index" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tm.id as id,
+tm.create_user_id as createUserId,
+tm.create_user_name as createUserName,
+tm.create_time as createTime,
+tm.update_user_id as updateUserId,
+tm.update_user_name as updateUserName,
+tm.update_time as updateTime,
+tm.version as version,
+tm.is_deleted as isDeleted,
+tm.disabled as disabled,
+tm.code as code,
+tm.name as name,
+tm.type as type,
+tm.biz_type as bizType,
+tm.status as status,
+tm.length as length,
+tm.width as width,
+tm.content as content,
+tm.template_version as templateVersion,
+tm.is_default as isDefault,
+tm.index as index
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.sys.dto.TemplateManagementDTO$TabListDTO">
+        SELECT
+        tm.disabled AS tabFlag,
+        count(1)  AS count
+        FROM  template_management as tm
+        WHERE tm.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY tm.disabled
+    </select>
+
+    <select id="paging" resultType="com.erp.model.sys.dto.TemplateManagementDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+
+    <select id="pagingSelect" resultType="com.erp.model.sys.dto.TemplateManagementDTO$PageSelectDTO">
+        SELECT
+            tm.ID,
+            tm.code,
+            tm.NAME,
+            tm.is_default AS isDefault
+        FROM
+            template_management AS tm
+        WHERE
+            tm.is_deleted = FALSE
+          AND tm.disabled = FALSE
+          and tm.status = 'finished'
+          <if test="params.type!=null and params.type!=''">
+              and tm.type = #{params.type}
+          </if>
+          <if test="params.bizType!=null and params.bizType!=''">
+              and tm.biz_type = #{params.bizType}
+          </if>
+          <if test="params.searchKeyword!=null and params.searchKeyword!=''">
+            and  tm.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+          </if>
+        ORDER BY
+        <if test="params.searchKeyword!=null and params.searchKeyword!=''">
+            CASE
+            WHEN tm.name = #{params.searchKeyword}::text THEN 1
+            WHEN tm.name ILIKE concat(#{params.searchKeyword}::text, '%') THEN 2
+            WHEN tm.name ILIKE concat('%', #{params.searchKeyword}::text) THEN 3
+            WHEN tm.name ILIKE concat('%', #{params.searchKeyword}::text, '%') THEN 4
+            ELSE 5
+            END,
+        </if>
+        tm.update_time DESC
+    </select>
+
+    <sql id="paging_sql">
+        SELECT
+        tm.ID AS ID,
+        tm.create_user_id AS createUserId,
+        tm.create_user_name AS createUserName,
+        tm.create_time AS createTime,
+        tm.update_user_id AS updateUserId,
+        tm.update_user_name AS updateUserName,
+        tm.update_time AS updateTime,
+        tm.VERSION AS VERSION,
+        tm.is_deleted AS isDeleted,
+        tm.disabled AS disabled,
+        tm.code AS code,
+        tm.NAME AS NAME,
+        tm.TYPE AS TYPE,
+        tm.biz_type AS bizType,
+        tm.status AS status,
+        tm.LENGTH AS LENGTH,
+        tm.width AS width,
+        tm.CONTENT AS CONTENT,
+        tm.template_version AS templateVersion,
+        tm.is_default AS isDefault,
+        tm.INDEX AS INDEX
+        FROM
+        template_management AS tm
+        WHERE
+        ${params.sqlMap.default}
+        AND tm.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and tm.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tm.create_time DESC
+    </sql>
+
+</mapper>

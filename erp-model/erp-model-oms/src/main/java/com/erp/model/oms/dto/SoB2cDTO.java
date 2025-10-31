@@ -35,6 +35,19 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateIsDeclareDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -411,6 +424,10 @@ public class SoB2cDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
 
         /**
          * 付款状态
@@ -736,10 +753,6 @@ public class SoB2cDTO implements Serializable {
          */
         private String approveUserId;
         /**
-         * 审核人名称
-         */
-        private String approveUserName;
-        /**
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
@@ -804,7 +817,7 @@ public class SoB2cDTO implements Serializable {
 
         private String extendId;
         /**
-         * 要求发货时间
+         * 最晚发货时间/要求发货时间
          */
         private LocalDateTime requiredDeliveryTime;
         /**
@@ -853,6 +866,20 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
+
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
     }
 
     @Data
@@ -986,6 +1013,11 @@ public class SoB2cDTO implements Serializable {
          * 是否可送
          */
         private Boolean isDeliver;
+
+        /**
+         * 发票状态，SoB2cNfeStatusEnum枚举
+         */
+        private String invoiceStatus;
     }
 
 
@@ -2837,6 +2869,15 @@ public class SoB2cDTO implements Serializable {
          */
         private LocalDateTime createTime;
         /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 审批人名称
+         */
+        private String approveUserName;
+
+        /**
          * 销售订单明细id
          */
         private String detailId;
@@ -3441,6 +3482,12 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

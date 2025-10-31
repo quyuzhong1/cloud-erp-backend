@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +20,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 
 import com.common.business.enums.PlatformDictEnum;
+import cn.hutool.json.JSONUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
@@ -176,7 +178,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	List<String> currencyList = new ArrayList<>();
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getPayCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList);
+        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         	Map<String, String> currencyMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(listByCurrency)) {
         		currencyMap = listByCurrency.stream().collect(Collectors.toMap(ViewDTO::getId, ViewDTO::getName));
@@ -310,7 +312,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				}
 				shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
 				shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
-    			
+
     	        shudiyunB2cOrderDTO.setBiz_uni_key(thirdCode + dmpSoOutstockDetailEntity.getThirdDetailId());
     	        shudiyunB2cOrderDTO.setBiz_no(thirdBillNo);
     	        shudiyunB2cOrderDTO.setBiz_time(billDateFormat);
@@ -372,7 +374,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						}
 					}
 				}
-	            
+
 	            LocalDateTime estimateInvestmentTime = dmpSoOutstockDetailEntity.getEstimateInvestmentTime();
 	            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getEstimate_investment_time()) && estimateInvestmentTime != null) {
 	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -553,12 +555,12 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
 
-        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type()) 
-        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK") 
+        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type())
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK")
         		&& StringUtils.isNotBlank(s.getParent_node_no()))
         	.map(ShudiyunB2cOrderDTO::getParent_node_no).collect(Collectors.toList());
 
-        
+
         if(CollUtil.isNotEmpty(thirdCodeList)) {
         	List<String> mainIds = dmpSoInfoService.lambdaQuery()
         			.eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
@@ -584,7 +586,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	}
         }
     }
-	
+
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");

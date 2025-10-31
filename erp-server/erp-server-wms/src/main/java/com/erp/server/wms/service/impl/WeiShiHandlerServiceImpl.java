@@ -1,7 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -13,9 +14,6 @@ import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.wms.aliexpress.util.Constants;
-import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
-import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
-import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
 import com.sdk.wms.weishi.dto.response.WeiShiCreateOutboundResp;
@@ -162,9 +160,19 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return success();
+    }
+
+    @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if(Objects.isNull(resp)){
+            throw new ServiceException("纬狮创建出库单响应结果为空" + JSONUtil.toJsonStr(resp));
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }

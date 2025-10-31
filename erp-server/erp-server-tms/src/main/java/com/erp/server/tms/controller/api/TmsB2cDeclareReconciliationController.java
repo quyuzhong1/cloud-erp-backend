@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -326,7 +327,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = tmsB2cDeclareReconciliationService.cancelProcess(id);
+                cancelResult = tmsB2cDeclareReconciliationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("b2c报关对账单撤回流程失败",e);
                 TmsB2cDeclareReconciliationEntity entity = tmsB2cDeclareReconciliationService.getById(id);

@@ -2,10 +2,7 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -561,12 +558,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 撤销流程
      * @description
-     * @param id
+     * @param dto
      * @author Lambda
      * @return
      * @create 2024-01-09 12:06
      */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 反审核
@@ -907,7 +904,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
-     * @param skuId
+     * @param
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1074,15 +1071,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
-    /**
-     * 根据nfe发票状态
-     * @author will
-     * @date 2025/4/11 16:35
-     * @param soId
-     * @param nfeInvoiceStatus
-     * @return void
-     */
-    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     /**
      * 根据销售订单id和平台获取分区id
@@ -1107,6 +1095,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param extendDataDTO
      */
     void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
+
 
     /**
      * 根据物流id标识是否匹配渠道规则
@@ -1130,4 +1128,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soMultiChannelEntity
      */
     void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
+
+    /**
+     * 生成组包计划预览
+     * @param soIds
+     * @return
+     */
+    List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
+
+    BatchResultDTO retryPackagePlan(String soId);
 }

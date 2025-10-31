@@ -546,8 +546,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<String> nowSourceDetailIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getSourceDetailId).collect(Collectors.toList());
             List<SoB2cDetailEntity> notExist = oldDetailEntityList.stream().filter(v->!nowSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(notExist)){
-                notExist.forEach(v-> v.setQty(0));
-                this.saveOrUpdateBatch(notExist);
+                this.removeByIds(notExist.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList()));
             }
         }
         // 批量保存和更新

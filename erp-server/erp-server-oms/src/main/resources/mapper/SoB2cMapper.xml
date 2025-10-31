@@ -105,13 +105,17 @@
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
+        sb2c.create_user_name as createUserName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
         sb2c.nfe_invoice_status as nfeInvoiceStatus,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime,
         sb2c.multi_channel_type as multiChannelType
     </sql>
     <sql id="Full_Managed_Column_List">
         distinct sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
         sb2c.shop_id as shopId,
@@ -184,6 +188,8 @@
     <sql id="Export_Column_List">
         sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
+        sb2c.approve_user_name as approveUserName,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
@@ -268,12 +274,16 @@
 		sbd.finish_print_time as finishPrintTime,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime
     </sql>
     <!-- 通用查询结果列 -->
     <sql id="Export_Fully_managed_Column_List">
         sb2c.id,
         sb2c.code,
+        sb2c.create_user_name as createUserName,
+        sb2c.approve_user_name as approveUserName,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
@@ -378,6 +388,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
@@ -1113,6 +1124,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
@@ -1194,7 +1206,13 @@
                 ${params.permissionSql}
             </if>
         </where>
-        order by sb2c.id desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sb2c.id desc
     </select>
 
     <!-- 异常订单导出 -->
@@ -1456,6 +1474,7 @@ SELECT DISTINCT so.* FROM so_b2c so
         inner join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        inner JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         where
         ${params.sqlMap.default}
@@ -1472,11 +1491,12 @@ SELECT DISTINCT so.* FROM so_b2c so
     </select>
     <select id="listFullManagedCount" resultType="java.lang.Integer">
         select
-        count(sb2c.id)
+        count(distinct sb2c.id)
         from so_b2c sb2c
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_extend sbe on sb2c.id = sbe.main_id and sbe.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        inner JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.dict_platform = 'TikTokFully'
@@ -1537,6 +1557,20 @@ SELECT DISTINCT so.* FROM so_b2c so
           and sb2c.bill_status = 'waitShipped'
         and sbd.warehouse_id in
         <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="packagePlanPreview" resultType="com.erp.model.oms.dto.PackagePlanDTO$SoB2cDTO">
+        SELECT
+            id as soId,
+            code as soCode,
+            platform_code as platformCode,
+            shop_id as shopId,
+            platform_order_create_time as platformCreateTime
+        FROM so_b2c
+        WHERE is_deleted = false and invalid_status = false
+                and id in
+        <foreach collection="soIds" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
     </select>

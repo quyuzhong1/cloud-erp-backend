@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.DictBasicDTO;
 
 import java.util.List;
 
@@ -260,4 +261,8 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
 
     List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList);
+
+    LogisticsChannelEntity getChannelByCode(String channelCode, String logisticsType);
+
+    List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto);
 }

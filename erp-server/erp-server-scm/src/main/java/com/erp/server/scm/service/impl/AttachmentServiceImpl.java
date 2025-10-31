@@ -176,7 +176,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
             this.remove(queryWrapper);
             //批量删除fastdfs 数据
-            FastDFSClientUtil.deleteBatchFile(urlList);
+            fileFeign.deleteBatchFile(urlList);
         }
     }
 }

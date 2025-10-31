@@ -16,6 +16,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -24,24 +25,38 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.SptWarehouseStatusEnum;
 import com.erp.model.wms.enums.SptWarehouseTypeEnum;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
+import com.erp.model.wms.enums.SptWarehouseStatusEnum;
+import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +90,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private OperateLogService operateLogService;
 
     @Resource
+    private LogisticsAuthFeign logisticsAuthFeign;
+
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
@@ -88,6 +106,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Resource
     @Qualifier("thirdWarehouseExecutorPool")
@@ -145,7 +169,11 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
         if(CollUtil.isNotEmpty(warehouseList)){
             warehouseList.forEach(v->{
-                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
+                if (v.getPlatformWarehouseType().equals(SptWarehouseTypeEnum.TRANSIT.getCode())) {
+                    v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
+                }else{
+                    v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
+                }
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }
@@ -257,12 +285,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         OverseasProviderEntity entity = this.getById(dto.getId());
         OverseasProviderDTO.AuthorizeViewDTO authorizeViewDTO = BeanUtil.copyProperties(entity,OverseasProviderDTO.AuthorizeViewDTO.class);
         Map<String, Object> authJson = entity.getAuthJson();
-        authorizeViewDTO.setAppKey(authJson.get("appKey").toString());
-        authorizeViewDTO.setAppToken(authJson.get("appToken").toString());
+        authorizeViewDTO.setAppKey(authJson.getOrDefault("appKey","").toString());
+        authorizeViewDTO.setAppToken(authJson.getOrDefault("appToken","").toString());
         authorizeViewDTO.setEmail(authJson.getOrDefault("email","").toString());
         authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
         authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
         authorizeViewDTO.setShopAccount(authJson.getOrDefault("shopAccount","").toString());
+        authorizeViewDTO.setAppId(authJson.getOrDefault("appId","").toString());
+        authorizeViewDTO.setAppSecret(authJson.getOrDefault("appSecret","").toString());
         return authorizeViewDTO;
     }
 
@@ -435,6 +465,59 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 .one();
     }
 
+    @Override
+    public List<OverseasProviderEntity> listByAuthStatus(String code) {
+        if(StringUtils.isNotBlank(code)){
+            return lambdaQuery().eq(OverseasProviderEntity::getAuthStatus,code).list();
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public OverseasProviderEntity refreshToken(OverseasProviderEntity entity) {
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(entity.getCode());
+        Map<String,Object> authMap = entity.getAuthJson();
+        ApiResult<String> result = thirdWarehouseService.refreshToken(entity.getId(),authMap);
+        if(result.isSuccess()) {
+            entity.setAuthJson(authMap);
+            this.updateById(entity);
+            //同步刷新物流商token
+            List<LogisticsAuthEntity> logisticsAuthEntities = FeignQuery.create(LogisticsAuthEntity.class)
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, entity.getCode())
+                    .list();
+            if(CollectionUtils.isEmpty(logisticsAuthEntities)){
+                return entity;
+            }
+            List<String> logisticAuthIds = logisticsAuthEntities.stream()
+                    .map(LogisticsAuthEntity::getId)
+                    .collect(Collectors.toList());
+            List<LogisticsAuthFieldEntity> logisticsAuthFieldEntities = FeignQuery.create(LogisticsAuthFieldEntity.class)
+                    .in(LogisticsAuthFieldEntity::getLogisticsAuthId, logisticAuthIds)
+                    .list();
+            if(CollectionUtils.isEmpty(logisticsAuthFieldEntities)){
+                return entity;
+            }
+            List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
+            for (LogisticsAuthFieldEntity logisticsAuthFieldEntity : logisticsAuthFieldEntities) {
+                if(authMap.containsKey(logisticsAuthFieldEntity.getFieldCode())){
+                    logisticsAuthFieldEntity.setFieldValue(authMap.get(logisticsAuthFieldEntity.getFieldCode()).toString());
+                    updateLogistic.add(logisticsAuthFieldEntity);
+                }
+            }
+            if(CollectionUtils.isNotEmpty(updateLogistic)){
+                logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
+            }
+        }else{
+            log.error("[刷新三方仓token] 刷新失败: authId={}, PlatformCode={}， error={}",
+                    entity.getId(),
+                    entity.getCode(),
+                    result.getMsg()
+            );
+            throw new ServiceException("刷新三方仓token失败：" + result.getMsg());
+        }
+        return entity;
+    }
+
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform) || PlatformDictEnum.DA_MAI.getCode().equals(platform)){
             //邮政编码不能为空
@@ -456,6 +539,17 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 return Collections.emptyList();
             }
             return getAntuCalculateFeeReq(providerWarehouseEntity, params);
+        }else if (PlatformDictEnum.IML.getCode().equals(platform) ){
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                return Collections.emptyList();
+            }
+            if (CollUtil.isEmpty(params.getSkus())){
+                return Collections.emptyList();
+            }
+            if (CollUtil.isEmpty(params.getChannelCodeList())){
+                return Collections.emptyList();
+            }
+            return getImlCalculateFeeReq(providerWarehouseEntity, params);
         }
         return Collections.emptyList();
     }
@@ -479,6 +573,58 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                     .width(params.getWidth())
                     .height(params.getHeight())
                     .province(params.getProvince())
+                    .city(params.getCity()).build());
+        }
+        return list;
+    }
+
+
+    private List<ThirdWarehouseCalculateFeeReq> getImlCalculateFeeReq(OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
+        List<ThirdWarehouseCalculateFeeReq> list = new ArrayList<>();
+        List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> skuNoList = params.getSkus().stream().map(ShippingCalculationDTO.SkusDTO::getSkuNo).distinct().collect(Collectors.toList());
+        ListingInfoParamDTO dto = new ListingInfoParamDTO();
+        dto.setWarehouseIdList(Arrays.asList(params.getFromWarehouseId()));
+        dto.setSkuNoList(skuNoList);
+        dto.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        dto.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        dto.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(dto);
+        if(CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOS)){
+            throw new ServiceException("未找到对应的仓库产品映射关系");
+        }
+        List<ThirdWarehouseCalculateFeeReq.SkusDTO> skusDTOS = new ArrayList<>();
+        for (ShippingCalculationDTO.SkusDTO skus : params.getSkus()) {
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.stream()
+                    .filter(v -> v.getPlatformSkuNo().equals(skus.getSkuNo()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(listingInfoWithSkuMappingDTO)){
+                throw new ServiceException("未找到对应的仓库产品映射关系，SKU："+skus.getSkuNo());
+            }
+            ThirdWarehouseCalculateFeeReq.SkusDTO skusDTO = new ThirdWarehouseCalculateFeeReq.SkusDTO();
+            skusDTO.setPlatformSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+            skusDTO.setQty(skus.getQty());
+            skusDTOS.add(skusDTO);
+        }
+        List<String> channelCodeList = params.getChannelCodeList();
+        BigDecimal weight = params.getWeight();
+        if ("g".equals(params.getWeightUnit())){
+            weight = MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000));
+        }
+
+        for (String country : toCountryList){
+            list.add(ThirdWarehouseCalculateFeeReq.builder()
+                    .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
+                    .countryCode(country)
+                    .shippingMethod(channelCodeList)
+                    .postCode(params.getPostCode())
+                    .weight(weight)
+                    .length(params.getLength())
+                    .width(params.getWidth())
+                    .height(params.getHeight())
+                    .province(params.getProvince())
+                            .skus(skusDTOS)
                     .city(params.getCity()).build());
         }
         return list;

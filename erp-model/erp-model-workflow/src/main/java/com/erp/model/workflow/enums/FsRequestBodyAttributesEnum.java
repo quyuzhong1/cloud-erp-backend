@@ -35,7 +35,12 @@ public enum FsRequestBodyAttributesEnum {
     NODENAME("nodeName", "节点名称"),
     TASKLIST("taskList", "任务列表"),
     SERIALNUMBER("serialNumber", "序号"),
-    TYPE("type", "审批终止");
+    TYPE("type", "审批终止"),
+    TIMELINE("timeline", "审批动态"),
+    COMMENTLIST("commentList", "评论列表"),
+    COMMENT("comment", "评论"),
+    ;
+
 
 
     private final String code;

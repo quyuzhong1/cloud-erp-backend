@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -390,7 +391,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ProductChangeEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95163);
@@ -405,6 +407,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更");
         bomOperateLogService.saveOperate(entity.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(),msg );
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

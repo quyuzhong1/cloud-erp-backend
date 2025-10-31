@@ -60,5 +60,31 @@
         group by sl.class_path,sl.business_id,sl.create_time,sl.module_type
         order by sl.create_time desc
     </select>
+    <select id="getProductChangeHistory" resultType="com.erp.model.plm.dto.OperateLogShowDTO$HistoryDTO">
+        SELECT
+            id,
+            business_id,
+            pid,
+            field_name AS skuNo,
+            old_value,
+            new_value,
+            create_time,
+            create_user_name
+        FROM
+            operate_log
+        WHERE
+            "operation" = '产品经理变更'
+          <if test="params.ids != null and params.ids.size() > 0">
+              AND pid IN
+              <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                  #{id}
+              </foreach>
+          </if>
+        <if test="params.searchKey !=null and params.searchKey!=''">
+            and field_name ILIKE concat('%',#{params.searchKey}::text,'%')
+        </if>
+        ORDER BY
+        business_id,create_time DESC
+    </select>
 
 </mapper>

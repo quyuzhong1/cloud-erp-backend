@@ -10,6 +10,7 @@ package ${package.ServiceImpl};
 
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 </#if>
@@ -406,7 +407,8 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ${entity} entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到${docName}数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {

@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -10,7 +11,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.OperationLogUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -23,6 +26,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.OperateLogMapper;
 import com.erp.server.oms.service.*;
@@ -383,6 +387,20 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         return this.save(entity);
     }
 
+    @Override
+    public Boolean addModuleOperateLogBySystem(String content, String moduleType, String businessId,String operation) {
+        try {
+            UserContext.setIsUserSystem(true);
+            OperateLogEntity entity = new OperateLogEntity();
+            entity.setModuleType(moduleType)
+                    .setBusinessId(businessId)
+                    .setContent(content)
+                    .setOperation(operation);
+            return this.save(entity);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
+    }
 
     @Override
     public Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation) {

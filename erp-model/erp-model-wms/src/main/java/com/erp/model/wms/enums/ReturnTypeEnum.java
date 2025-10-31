@@ -12,6 +12,7 @@ public enum ReturnTypeEnum implements EnumMessage {
 	CUSTOMER_RETURNS("customerReturns","买家退货"),
     RETURNS_FROM_SERVICE_PROVIDERS("returnsFromServiceProviders","服务商退件"),
     CLAIM("claim","认领"),
+    OTHER("other","其他"),
     ;
 
     /**

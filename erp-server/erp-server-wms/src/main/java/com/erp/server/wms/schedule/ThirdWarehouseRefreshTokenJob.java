@@ -106,51 +106,18 @@ public class ThirdWarehouseRefreshTokenJob {
             XxlJobHelper.log("[刷新三方仓token] 任务结束: 无需要刷新token的仓库--------------------------------------->");
             return ReturnT.SUCCESS;
         }
-        List<OverseasProviderEntity> updateList = new ArrayList<>();
-        List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
         for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
-            ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(overseasProviderEntity.getCode());
-            Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
-            ApiResult<String> result = thirdWarehouseService.refreshToken(overseasProviderEntity.getId(),authMap);
-            if(result.isSuccess()) {
-                XxlJobHelper.log("[刷新三方仓token] 刷新成功: shopId={}, PlatformCode={}", overseasProviderEntity.getId(), overseasProviderEntity.getCode());
-                overseasProviderEntity.setAuthJson(authMap);
-                updateList.add(overseasProviderEntity);
-                //同步刷新物流商token
-                List<LogisticsAuthEntity> logisticsAuthEntities = FeignQuery.create(LogisticsAuthEntity.class)
-                        .eq(LogisticsAuthEntity::getLogisticsPlatform, overseasProviderEntity.getCode())
-                        .list();
-                if(CollectionUtils.isEmpty(logisticsAuthEntities)){
-                    continue;
-                }
-                List<String> logisticAuthIds = logisticsAuthEntities.stream()
-                        .map(LogisticsAuthEntity::getId)
-                        .collect(Collectors.toList());
-                List<LogisticsAuthFieldEntity> logisticsAuthFieldEntities = FeignQuery.create(LogisticsAuthFieldEntity.class)
-                        .in(LogisticsAuthFieldEntity::getLogisticsAuthId, logisticAuthIds)
-                        .list();
-                if(CollectionUtils.isEmpty(logisticsAuthFieldEntities)){
-                    continue;
-                }
-                for (LogisticsAuthFieldEntity logisticsAuthFieldEntity : logisticsAuthFieldEntities) {
-                    if(authMap.containsKey(logisticsAuthFieldEntity.getFieldCode())){
-                        logisticsAuthFieldEntity.setFieldValue(authMap.get(logisticsAuthFieldEntity.getFieldCode()).toString());
-                        updateLogistic.add(logisticsAuthFieldEntity);
-                    }
-                }
-            }else{
-                XxlJobHelper.log("[刷新三方仓token] 刷新失败: shopId={}, PlatformCode={}， error={}",
+            try {
+                overseasProviderService.refreshToken(overseasProviderEntity);
+            }catch (Exception e){
+                String errorMsg = ExceptionUtil.getMessage(e);
+                XxlJobHelper.log("[刷新三方仓token] 异常: authId={}, Code={}，异常信息={}",
                         overseasProviderEntity.getId(),
                         overseasProviderEntity.getCode(),
-                        result.getMsg()
+                        errorMsg
                 );
+
             }
-        }
-        if(CollectionUtils.isNotEmpty(updateList)){
-            overseasProviderService.updateBatchById(updateList);
-        }
-        if(CollectionUtils.isNotEmpty(updateLogistic)){
-            logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
         }
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");
         return ReturnT.SUCCESS;

@@ -131,4 +131,27 @@ public class WmsExecutorPoolConfig {
         service.setRejectedExecutionHandler(handler);
         return service;
     }
+    
+    
+    @Bean(name = "transactionIdToInventoryHisPool")
+    public ExecutorService transactionIdToInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(10000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
+    
+    @Bean(name = "inventoryTransactionToInventoryHisPool")
+    public ExecutorService inventoryTransactionToInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
 }

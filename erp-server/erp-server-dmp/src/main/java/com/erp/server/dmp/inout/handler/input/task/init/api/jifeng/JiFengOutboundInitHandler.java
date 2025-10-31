@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -61,6 +62,9 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 	@Resource
 	private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
+	@Resource
+	private OverseasProviderFeign overseasProviderFeign;
+
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
@@ -90,7 +94,24 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 		if(CollectionUtils.isEmpty(thirdWarehouseDeliveryEntityList)){
 			return Collections.emptyList();
 		}
+		List<String> allSoIds = thirdWarehouseDeliveryEntityList.stream().map(ThirdWarehouseDeliveryEntity::getSoId).distinct().collect(Collectors.toList());
+		//查询销售订单，过滤掉销售订单中shipping_order_no为空的数据
+		List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(allSoIds);
+		if(CollectionUtils.isEmpty(soB2cEntityList)){
+			return Collections.emptyList();
+		}
+		List<String> filterSoIds = soB2cEntityList.stream()
+				.filter(v-> StringUtils.isNotBlank(v.getShippingOrderNo()))
+				.map(SoB2cEntity::getId)
+				.collect(Collectors.toList());
+		thirdWarehouseDeliveryEntityList = thirdWarehouseDeliveryEntityList.stream()
+				.filter(v-> filterSoIds.contains(v.getSoId()))
+				.collect(Collectors.toList());
+		if(CollectionUtils.isEmpty(thirdWarehouseDeliveryEntityList)){
+			return Collections.emptyList();
+		}
 		List<String> allCodes = thirdWarehouseDeliveryEntityList.stream().map(ThirdWarehouseDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+
 		//分组，每组最多50个
 		List<JiFengOutboundResp> allResult = new ArrayList<>();
 		List<List<String>> partCodeList = ListUtils.partition(allCodes, 50);
@@ -101,10 +122,25 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 				throw new ServiceException("极风获取订单数据失败，响应结果为空");
 			}
 			if(resp.getCode() != 0){
-				log.warn("极风获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
-				throw new ServiceException("极风获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
+				if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+					overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+					resp = jiFengService.getOrder(overseasProviderEntity.getAuthJson(),codes);
+					if(Objects.isNull(resp)){
+						log.warn("极风获取订单数据失败，响应结果为空");
+						throw new ServiceException("极风获取订单数据失败，响应结果为空");
+					}
+					if(resp.getCode() != 0){
+						log.warn("极风获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+						throw new ServiceException("极风获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
+					}
+					allResult.addAll(resp.getData());
+				}else{
+					log.warn("极风获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+					throw new ServiceException("极风获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
+				}
+			}else{
+				allResult.addAll(resp.getData());
 			}
-			allResult.addAll(resp.getData());
 		}
 
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

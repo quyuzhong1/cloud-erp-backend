@@ -12,6 +12,33 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
 import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
+import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
+import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;

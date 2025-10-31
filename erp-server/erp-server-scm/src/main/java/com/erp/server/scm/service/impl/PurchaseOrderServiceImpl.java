@@ -17,6 +17,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -678,7 +679,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelProcess(PurchaseOrderEntity entity) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto,PurchaseOrderEntity entity) {
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -690,6 +691,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -720,11 +722,40 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        //主数据处理
+        //获取sku信息
+        List<String> skuIdList = list.stream().map(PurchaseOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+
+
+        //采购信息
+        //采购订单号
         exportPdfDTO.setCode(purchaseOrderEntity.getCode());
         exportPdfDTO.setCodeStr("合同号：" + purchaseOrderEntity.getCode());
-        //采购组织
+
+        //单据类型
+        exportPdfDTO.setType(purchaseOrderEntity.getType());
+        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.PURCHASE_ORDER_TYPE.getType());
+        String typeName = dictBasicList.stream().filter(obj -> obj.getValue().equals(purchaseOrderEntity.getType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        exportPdfDTO.setType(purchaseOrderEntity.getType());
+        exportPdfDTO.setTypeName(typeName);
+
+        //采购日期
+        exportPdfDTO.setPurchaseDate(purchaseOrderEntity.getPurchaseDate());
+        //采购部门
+        exportPdfDTO.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
+        //采购员名称
+        exportPdfDTO.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
+        //交货仓库名称
+        exportPdfDTO.setDeliveryWarehouseName(purchaseOrderEntity.getDeliveryWarehouseName());
+        //采购组织名称
         exportPdfDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+
+        //打印人
+        exportPdfDTO.setPrintName(UserContext.getDefaultLoginUser().getUserName());
+        //打印时间
+        exportPdfDTO.setPrintTime(LocalDate.now());
+
         //甲方签收日期
         exportPdfDTO.setFirstSignDate(purchaseOrderEntity.getCreateTime().toLocalDate());
         //乙方签收日期
@@ -767,8 +798,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             supplierAccountName = Objects.nonNull(supplierAccountEntity) ? supplierAccountEntity.getPayee() : "";
         }
         exportPdfDTO.setSupplierBankName(supplierBankName);
-        exportPdfDTO.setSupplierBankNo(supplierBankNo);
         exportPdfDTO.setSupplierAccountName(supplierAccountName);
+        exportPdfDTO.setSupplierBankNo(supplierBankNo);
 
         exportPdfDTO.setSupplierName(supplier.getName());
         exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
@@ -800,6 +831,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
             PurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new PurchaseOrderDetailDTO.ExportPdfDTO();
             BeanMapperUtils.copy(purchaseOrderDetailEntity, detailDTO);
+
+            SkuVO skuVO = skuMap.getOrDefault(purchaseOrderDetailEntity.getSkuId(), null);
+            if(Objects.nonNull(skuVO)){
+                //产品图片 主图
+                String skuImagesUrl = skuVO.getSkuImagesUrl();
+                if(StringUtils.isNotBlank(skuImagesUrl)){
+                    detailDTO.setImage(skuImagesUrl.split(",")[0]);
+                }
+                //spuNo
+                detailDTO.setSpuNo(skuVO.getSpuNo());
+            }
             //明细数据处理
             detailDTO.setUnitName("个");
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
@@ -815,6 +857,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //含税金额 增加千分位分割
             detailDTO.setPurchaseAmountStr(df2.format(detailDTO.getPurchaseAmount()));
             detailDTO.setTaxRate(MathUtil.multiplyWithTwo(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
+            //是否赠品
+            detailDTO.setIsGiftStr(detailDTO.getIsGift() ? "是" : "否");
+            //是否加急
+            detailDTO.setIsUrgentStr(detailDTO.getIsUrgent() ? "是" : "否");
+            //新品首批
+            detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailDTO.getFirstMassProduct()));
             details.add(detailDTO);
         }
         //含税金额合计
@@ -1648,7 +1696,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
             //确认类型
             obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));
@@ -3107,7 +3155,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
             //确认类型
             obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));

@@ -245,7 +245,6 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
     @TableField(value = "source_type")
     private String sourceType;
 
-
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
     public static final String PLATFORM_UPDATE_TIME = "platform_update_time";

@@ -13,6 +13,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MathUtil;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -59,10 +60,10 @@ public class SysUserFeignController extends BaseController {
     private SysRoleService sysRoleService;
 
     @Autowired
-    private SyncKingdeeService syncKingdeeService;
+    private SysRoleMenuService sysRoleMenuService;
 
     @Autowired
-    private SysRoleMenuService sysRoleMenuService;
+    private SyncKingdeeService syncKingdeeService;
 
     @Resource
     private AuthUserShopService authUserShopService;
@@ -174,6 +175,42 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户ID获取用户完整登录信息（包含权限和菜单）
+     *
+     * @param dto 用户登录信息请求DTO
+     * @return 用户信息（包含permissionList和leftMenuList）
+     */
+    @PostMapping("/getUserLoginInfo")
+    public ApiResult<SysUserDTO> getUserLoginInfo(@RequestBody @Validated SysFeignDTO.UserLoginInfoDTO dto) {
+        String userId = dto.getUserId();
+        String userType = dto.getUserType();
+        
+        // 1. 获取用户基本信息
+        FindUserDTO userByUserId = sysUserInfoService.getUserByUserId(userId);
+        if (userByUserId == null) {
+            return failure(ApiError.USER_NOT_EXIST, null);
+        }
+        
+        SysUserDTO sysUserDTO = new SysUserDTO();
+        org.springframework.beans.BeanUtils.copyProperties(userByUserId, sysUserDTO);
+        
+        // 2. 获取用户角色ID列表
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
+        
+        // 3. 根据角色获取菜单和权限（参考accountLogin方法）
+        List<com.erp.model.sys.vo.SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds, userType);
+        List<com.erp.model.sys.vo.SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds, MathUtil.ONE, userType);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE, userType);
+        
+        // 4. 设置到返回对象
+        sysUserDTO.setPermissionList(permissionList);
+        sysUserDTO.setOverallMenuList(overallMenuList);
+        sysUserDTO.setLeftMenuList(leftMenuList);
+        
+        return success(sysUserDTO);
+    }
+
+    /**
      * 更新用户更新时间
      * @author Will
      * @date: 2023/9/13 16:59
@@ -191,9 +228,8 @@ public class SysUserFeignController extends BaseController {
     public String getUserIdByThird(@RequestBody FindUserByThirdDTO thirdDTO) {
         SysUserInfoEntity userEntity = sysUserThirdService.getUserIdByThird(thirdDTO);
         if (!Objects.isNull(userEntity)) {
-            Integer deleteState = userEntity.getDeleteState();
             Integer userState = userEntity.getUserState();
-            if (SysConstant.YES_STATE.equals(deleteState) && SysConstant.YES_STATE.equals(userState)) {
+            if (SysConstant.YES_STATE.equals(userState)) {
                 return userEntity.getUid();
             }
         }
@@ -322,6 +358,17 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/listSuperiorByUserIds")
     public List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds) {
         return sysUserInfoService.listSuperiorByUserIds(userIds);
+    }
+    /**
+     * @param userIds
+     * @return List<UserDTO>
+     * @description: 根据用户id查询所有上级用户
+     * @author Will
+     * @date: 2023/1/9 10:24
+     */
+    @PostMapping("/listDeptByUserIds")
+    public List<UserSuperiorDTO> listDeptByUserIds(@RequestBody List<String> userIds) {
+        return sysUserInfoService.listDeptByUserIds(userIds);
     }
 
     /**
@@ -588,5 +635,23 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getUserByThirdIdList")
     public List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds)  {
         return sysUserThirdService.getUserByThirdIdList( platform,thirdIds);
+    }
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    @PostMapping("/getFsUserUnionIdByAppId")
+    public ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto) {
+        try {
+            String unionId = sysUserInfoService.getFsUserUnionIdByAppId(appId, dto);
+            return ApiResult.success(unionId);
+        } catch (Exception e) {
+            return ApiResult.error(500, "获取飞书用户UnionId失败：" + e.getMessage());
+        }
     }
 }

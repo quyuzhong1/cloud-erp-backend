@@ -1,18 +1,18 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OtherOutstockEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import com.common.business.dto.base.BaseIdDTO;
 
 /**
  * <p>
@@ -150,10 +150,10 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @description: 取消流程
      * @author Will
      * @date: 2023/5/18 17:54
-     * @param ids
+     * @param dto
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean

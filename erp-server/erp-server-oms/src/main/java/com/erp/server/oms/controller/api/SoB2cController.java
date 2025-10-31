@@ -6,14 +6,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -30,7 +29,6 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
@@ -285,6 +283,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:update",
+            serviceClass = SoB2cService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         //检查是否备案并修改状态
@@ -304,6 +307,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/submit")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:submit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -324,7 +332,10 @@ public class SoB2cController extends BaseController {
             try {
                 ApproveResultDTO submit1 = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
                 if (submit1.getSuccess() && !submit1.getIsExistProcess()){
-                    submit = soB2cService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核"), null, "");
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核");
+                    approveOneDTO.setIsSubmitAutoApprove(true);
+                    approveOneDTO.setIsNeedProcess(false);
+                    submit = soB2cService.approve(approveOneDTO, null, "");
                     //速卖通平台仓订单不走任何规则
                     if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
                         resultDTOS.add(submit);
@@ -353,6 +364,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/approve")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:approve",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -430,6 +446,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "B2C销售订单作废")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:invalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -461,6 +482,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/unInvalid")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "B2C销售订单取消作废")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:unInvalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -520,13 +546,18 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @LogAction(value = LogActionEnum.CANCEL, desc = "B2C销售订单撤销")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:cancelProcess",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soB2cService.cancelProcess(id);
+                resultDTO = soB2cService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("B2C销售订单撤销失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -554,6 +585,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/disApprove")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核B2C销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:disApprove",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();

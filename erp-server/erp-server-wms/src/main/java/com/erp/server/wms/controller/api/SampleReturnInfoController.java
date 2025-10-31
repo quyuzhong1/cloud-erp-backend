@@ -1,42 +1,36 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.threadlocal.UserContext;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
-import com.erp.model.wms.dto.SampleReturnDetailDTO;
-import com.erp.server.wms.query.SampleReturnInfoQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.SampleReturnInfoService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
+import com.erp.server.wms.query.SampleReturnInfoQueryHandler;
+import com.erp.server.wms.service.SampleReturnInfoService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 样品归还单
@@ -360,7 +354,7 @@ public class SampleReturnInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleReturnInfoService.cancelProcess(id, ClientTypeEnum.WEB);
+                cancelResult = sampleReturnInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id), ClientTypeEnum.WEB);
             }catch (Exception e){
                 log.error("样品归还单撤回流程失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);

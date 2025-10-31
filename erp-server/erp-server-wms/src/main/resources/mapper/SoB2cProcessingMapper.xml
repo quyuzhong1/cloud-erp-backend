@@ -123,6 +123,7 @@
             sbdd.warehouse_id as warehouseId,
             sbdd.virtual_warehouse_id as virtualWarehouseId,
             sbd.create_time as frozenTime,
+            sbd.shop_id as shopId,
             sbdd.delivery_qty as frozenQty,
             '' as outstockOrderId,
             '' as outstockOrderStatus,
@@ -133,6 +134,8 @@
         from so_b2c_delivery sbd
         inner join so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
         where sbd.is_deleted = false and sbdd.virtual_warehouse_id != '' and sbd.status != 'cancelDelivery'
+        --设置创建时间小于执行当天
+        and date_trunc('day', CURRENT_TIMESTAMP) > sbd.create_time
         <if test="startDate != null">
             and sbd.create_time >= #{startDate}
         </if>

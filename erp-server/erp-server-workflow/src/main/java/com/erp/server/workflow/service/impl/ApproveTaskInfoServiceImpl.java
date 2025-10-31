@@ -176,6 +176,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         Map<String, List<CfgQueryOptionEntity>> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getFieldBelongsType(),obj.getConditionField())));
 
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
+            detailDTO.setSysParentId(detailDTO.getEntityCode());
+            //唯一编码
+            detailDTO.setUniqueCode(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             //第三方类型名称
             detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
             //数大臣类型名称
@@ -214,7 +217,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             Map<String, List<ApproveTaskDetailEntity>> groupMap = list.stream()
                     .collect(Collectors.groupingBy(e -> ObjectUtil.isEmpty(e.getEntityCode()) ? "" : e.getEntityCode()));
             for (Map.Entry<String, List<ApproveTaskDetailEntity>> entry : groupMap.entrySet()) {
-                if ("".equals(entry.getKey())) {
+                if ("".equals(entry.getKey()) || "main".equals(entry.getKey())) {
                     //根据erp字段分组，存在重复的就给list
                     groupMapValue(entry.getValue(),detailMap);
                 } else {

@@ -63,9 +63,9 @@ public class MyCenterController extends BaseController {
         return success(loginUser);
     }
 
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号移除绑定第三方平台：平台={bindingThird}")
+//    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号移除绑定第三方平台：平台={bindingThird}")
     @RequestMapping("/removeThirdParty")
-    public ApiResult removeThirdParty(String bindingThird) {
+    public ApiResult removeThirdParty(@RequestParam(value = "bindingThird") String bindingThird) {
         boolean flag = sysUserThirdService.removeThirdParty(bindingThird);
         return flag == true ? success() : failure();
     }

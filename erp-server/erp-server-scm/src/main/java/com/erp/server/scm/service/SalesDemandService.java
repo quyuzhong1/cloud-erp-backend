@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -79,10 +80,10 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param ids
+     * @param dto
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean

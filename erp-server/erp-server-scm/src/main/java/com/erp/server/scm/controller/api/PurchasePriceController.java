@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -16,10 +17,8 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
@@ -27,7 +26,6 @@ import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -351,7 +349,7 @@ public class PurchasePriceController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchasePriceService.cancelProcessEntity((entity)));
+                resultDTOS.add(purchasePriceService.cancelProcessEntity(new ApproveDTO.CancelProcessDTO(id),entity));
             }catch (Exception e){
                 log.error("采购价目撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

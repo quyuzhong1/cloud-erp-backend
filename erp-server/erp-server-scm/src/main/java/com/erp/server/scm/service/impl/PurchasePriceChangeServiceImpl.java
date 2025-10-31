@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -66,6 +67,8 @@ import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -614,7 +617,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
     }
 
-
     /**
      * 采购价目变更 审核
      *
@@ -683,7 +685,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 取消流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-28 16:56
@@ -691,7 +693,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
@@ -702,6 +705,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -787,7 +791,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
+                    item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
                 }
 
                 //供应商

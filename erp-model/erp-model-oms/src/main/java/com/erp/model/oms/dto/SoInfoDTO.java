@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -278,6 +277,21 @@ public class SoInfoDTO implements Serializable {
         private String skuNo;
 
         /**
+         * SPU ID
+         */
+        private String spuId;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * SPU名称
+         */
+        private String spuName;
+
+        /**
          * 币种
          */
         private String currency;
@@ -333,6 +347,11 @@ public class SoInfoDTO implements Serializable {
          * 有效发货通知数量
          */
         private Integer effectiveNoticeQty;
+
+        /**
+         * 剩余发货通知数量
+         */
+        private Integer remainingNoticeQty;
 
         /**
          * 是否缺货

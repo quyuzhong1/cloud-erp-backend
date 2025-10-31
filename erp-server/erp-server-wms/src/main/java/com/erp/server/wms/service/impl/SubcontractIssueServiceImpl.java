@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -379,7 +380,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -394,6 +396,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -543,11 +546,17 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto) {
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+
         SubcontractIssueDTO.AddDTO addDTO = dto.getAddDTO();
         //新增
         BaseResultDTO.AddDTO add = this.add(addDTO);
         //无需审核
         if (!dto.getIsApprove()) {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
             return add;
         }
         //提交
@@ -564,6 +573,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (!approve.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return add;
     }
 

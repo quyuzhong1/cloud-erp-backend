@@ -3,9 +3,10 @@ package com.erp.server.oms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
@@ -17,7 +18,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.CfgSettingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
@@ -154,6 +158,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:update",
+            serviceClass = SoB2cService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         soB2cService.uploadLogisticsStatus(dto);
@@ -174,6 +183,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/submit")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:submit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -223,6 +237,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/approve")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核全平台销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:approve",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -294,6 +313,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废全平台销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:invalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -325,6 +349,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/unInvalid")
     @LogAction(value = LogActionEnum.CANCEL, desc = "取消作废全平台销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:unInvalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -384,13 +413,18 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程全平台销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:cancelProcess",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soB2cService.cancelProcess(id);
+                resultDTO = soB2cService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("全平台销售订单撤销失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -418,6 +452,11 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/disApprove")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核全平台销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:fully:disApprove",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();

@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -505,7 +506,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(SubcontractOrderEntity entity) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto,SubcontractOrderEntity entity) {
         // 只有待提交的数据允许撤销
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
@@ -517,6 +518,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -801,6 +803,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
         for (String poId : poIds) {
             PurchaseOrderEntity entity = entityMap.get(poId);
@@ -821,6 +826,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 throw new ServiceException(ApiError.ERROR_98077);
             }
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1313,19 +1320,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      */
     private void autoGeneratePo(String id) {
 
-        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(Arrays.asList(id));
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(viewGeneratePoDTOS)) {
             return;
         }
         //生成采购订单
-        List<SubcontractOrderDTO.ViewGeneratePoDTO> addList = viewGeneratePoDTOS.stream().filter(obj -> obj.getIsGeneratePo()).collect(Collectors.toList());
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> addList = viewGeneratePoDTOS.stream().filter(SubcontractOrderDTO.ViewGeneratePoDTO::getIsGeneratePo).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(addList)) {
             return;
         }
         List<SubcontractOrderDTO.GeneratePoDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, addList);
         ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
         list.setList(resultList);
+
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         generatePo(list);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**

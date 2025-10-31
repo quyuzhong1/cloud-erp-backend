@@ -121,8 +121,7 @@ public enum BusinessNoTypeEnum {
     CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC),
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
-    CODE_SKD(92, "SKD","收款单", BusinessNoConstant.SKD),
-    CODE_KHSX(93, "KHSX","客户授信", BusinessNoConstant.KHSX),
+    CODE_MB(92, "MB","模板管理",BusinessNoConstant.MB),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
     CODE_YPZF(97, "YPBF","样品作废单", BusinessNoConstant.YPBF),
@@ -131,6 +130,9 @@ public enum BusinessNoTypeEnum {
     CODE_ZHXS(100, "ZHXS","展会订单", BusinessNoConstant.ZHXS),
     CODE_YPTH(101, "YPTH","样品退回单", BusinessNoConstant.YPTH),
     CODE_QCTZ(102, "QCTZ","期初台账", BusinessNoConstant.QCTZ),
+    CODE_YPZY(103, "YPZY","样品转移单", BusinessNoConstant.YPZY),
+    CODE_SKD(92, "SKD","收款单", BusinessNoConstant.SKD),
+    CODE_KHSX(93, "KHSX","客户授信", BusinessNoConstant.KHSX),
 
     CODE_ZCWZ(103, "ZCWZ","资产位置", BusinessNoConstant.ZCWZ),
     CODE_YSD(104, "YSD","资产验收单", BusinessNoConstant.YSD),
@@ -141,6 +143,10 @@ public enum BusinessNoTypeEnum {
     CODE_PRODIS(109, "PRODIS","资产处置单", BusinessNoConstant.PRODIS),
 
     CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
+    CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
+
+    CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
+
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
     CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),
     CODE_MPOCC(113 ,"MPOCC","资产采购变更单",BusinessNoConstant.MPOCC)

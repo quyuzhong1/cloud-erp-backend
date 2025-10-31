@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -162,6 +161,22 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     @Override
     public void removeByBusinessIds(List<String> businessIds) {
         lambdaUpdate().in(ModuleOperateLogEntity::getBusinessId,businessIds).remove();
+    }
+
+    @Override
+    public void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
+        if (CollectionUtils.isNotEmpty(operateLogList)) {
+            List<ModuleOperateLogEntity> addList = new ArrayList<>(operateLogList.size());
+            for (OperateLogDTO.AddModuleOperateLogDTO item : operateLogList) {
+                ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+                entity.setModuleType(item.getModuleType())
+                        .setBusinessId(item.getBusinessId())
+                        .setContent(item.getContent())
+                        .setOperation(item.getOperation());
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
     }
 
 

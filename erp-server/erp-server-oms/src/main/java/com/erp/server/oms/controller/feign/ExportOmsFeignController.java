@@ -56,8 +56,6 @@ public class ExportOmsFeignController {
     @Resource
     private InvoiceInfoService invoiceInfoService;
     @Resource
-    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
-    @Resource
     private FullyManagedOrderService fullyManagedOrderService;
 
     @Resource
@@ -69,6 +67,12 @@ public class ExportOmsFeignController {
 
     @Resource
     private ExhibitionOrderService exhibitionOrderService;
+    @Resource
+    private PackagePlanService packagePlanService;
+
+
+    @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
     @Resource
     private SoReceiptService soReceiptService;
@@ -292,6 +296,7 @@ public class ExportOmsFeignController {
         return soPriceChangeService.exportSoPriceChange(dto);
     }
 
+
     @PostMapping("/soMultiChannel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -302,6 +307,16 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);
+    }
+    @PostMapping("/packagePlan")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:packagePlan:paging",
+            tableAlias = "pp"
+    )
+    @WebAdvanceQuery
+    public PagingVO<PackagePlanDTO.ExportDTO> exportPackagePlan(@RequestBody PagingDTO<PackagePlanDTO.PagingParamDTO> dto) {
+        return packagePlanService.exportPaging(dto);
     }
 
     /**

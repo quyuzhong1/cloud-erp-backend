@@ -33,8 +33,9 @@ public class DsfLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public DsfLogisticsHandlerImplTest(){
-        authMap.put("clientId","5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d");
-        authMap.put("clientSecret","b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad");
+        authMap.put("url","https://open.4px.com");
+        authMap.put("clientId","e4d8f282-5ab6-49ed-86e5-5fc7ea316703");
+        authMap.put("clientSecret","6c313d20-dbfd-4cc0-aaef-1c9d26f04461");
 //        authMap.put("clientId","fad2854e-93a7-4598-95ff-cb60557dbc0a");
 //        authMap.put("clientSecret","0e91ca81-22f8-4fce-95d1-18ed6269604b");
     }
@@ -147,14 +148,15 @@ public class DsfLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("1737775700695322626");
+        logisticsQueryVO2.setDeliveryNo("XSDS25101000003_2");
         logisticsQueryVO2.setIsPdn("Y");
         logisticsQueryVO2.setAuthMap(authMap);
         LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
-        logisticsChannelEntity.setCode("D5");
+        logisticsChannelEntity.setCode("OH");
         logisticsQueryVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = dsfLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
+
     }
 
     @Test

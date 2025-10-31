@@ -24,6 +24,9 @@ import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Component
 public class AliexpressWarehouseService {
@@ -166,6 +169,10 @@ public class AliexpressWarehouseService {
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
+        // 初始化分页参数
+        int pageSize = 100;
+        int currentPage = 1;
+        int totalCount = 0;
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("cainiao.cnap.returnorder.create");
@@ -187,13 +194,47 @@ public class AliexpressWarehouseService {
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
         IopClient client = new IopClientImpl(url, appKey, appSecret);
-        IopRequest request = new IopRequest();
-        request.setApiName("cainiao.cnap.stock.query");
-        request.addApiParameter("simplify", "true");
-        request.addApiParameter("owner_code", aliexpressAuthDTO.getOwnerCode());
-        request.addApiParameter("page_size", "20");
-        request.addApiParameter("page", "1");
-        IopResponse response = client.execute(request, accessToken, Protocol.TOP);
-        return JSON.parseObject(response.getBody(),new TypeReference<ApiInventoryResponseDTO>() {}.getType());
+        List<ApiInventoryResponseDTO.Result.Data.ItemsDTO> itemsDTOS = new ArrayList<>();
+        Integer pageSize = 100;
+        Integer currentPage = 1;
+        Integer totalCount = 0;
+        do {
+            IopRequest request = new IopRequest();
+            request.setApiName("cainiao.cnap.stock.query");
+            request.addApiParameter("simplify", "true");
+            request.addApiParameter("owner_code", aliexpressAuthDTO.getOwnerCode());
+            request.addApiParameter("page_size", String.valueOf(pageSize));
+            request.addApiParameter("page", String.valueOf(currentPage));
+
+            IopResponse response = client.execute(request, accessToken, Protocol.TOP);
+            ApiInventoryResponseDTO pageResponse = JSON.parseObject(
+                    response.getBody(),
+                    new TypeReference<ApiInventoryResponseDTO>() {}.getType()
+            );
+            if(!pageResponse.isSuccess()){
+                return pageResponse;
+            }
+
+            // 第一次请求时获取总记录数
+            if (totalCount == 0 && pageResponse.getResult().getData().getTotalCount() > 0) {
+                totalCount = pageResponse.getResult().getData().getTotalCount();
+            }
+
+            // 合并当页数据
+            if (pageResponse.getResult().getData().getItems() != null) {
+                itemsDTOS.addAll(pageResponse.getResult().getData().getItems());
+            }
+
+            // 计算剩余页数
+            int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+            if (currentPage >= totalPages) break;
+
+            currentPage++;  // 翻到下一页
+
+        } while (true);
+        ApiInventoryResponseDTO apiInventoryResponseDTO = new ApiInventoryResponseDTO();
+        apiInventoryResponseDTO.setDataList(itemsDTOS);
+        apiInventoryResponseDTO.setResult(new ApiInventoryResponseDTO.Result(new ApiInventoryResponseDTO.Result.Data(),true));
+        return apiInventoryResponseDTO;
     }
 }

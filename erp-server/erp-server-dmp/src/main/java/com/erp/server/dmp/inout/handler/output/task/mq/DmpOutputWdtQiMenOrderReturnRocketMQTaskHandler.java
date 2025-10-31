@@ -19,6 +19,8 @@ public class DmpOutputWdtQiMenOrderReturnRocketMQTaskHandler extends DmpOutputWd
 		if(resultEntity != null) {
 			resultEntity.setApproveUserName("qimen");
     		resultEntity.setCreateUserName("qimen");
+			resultEntity.setCreateUserId("1808810116456153089");
+			resultEntity.setApproveUserId("1808810116456153089");
     	}
 		return resultEntity;
 	}

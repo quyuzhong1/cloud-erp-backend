@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -354,7 +355,7 @@ public class TransferApplicationController extends BaseController {
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = transferApplicationService.cancelProcess(dto.getIds());
+        Boolean result = transferApplicationService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result == true ? success() : failure();
     }
 
@@ -385,8 +386,8 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:viewGenerateTransferInfo",
             tableAlias = "ta"
     )
-    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferInfo(dto.getIds());
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferInfo(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferInfo(dto.getDetailIdList());
         return success(list);
     }
 
@@ -417,8 +418,8 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:viewGenerateTransferOut",
             tableAlias = "ta"
     )
-    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferOut(dto.getIds());
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferOut(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferOut(dto.getDetailIdList());
         return success(list);
     }
 

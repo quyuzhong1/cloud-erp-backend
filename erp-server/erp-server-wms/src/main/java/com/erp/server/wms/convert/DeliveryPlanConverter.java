@@ -22,7 +22,6 @@ public interface DeliveryPlanConverter {
     DeliveryPlanConverter INSTANCE = Mappers.getMapper(DeliveryPlanConverter.class);
 
     @Mappings({
-            @Mapping(target = "toWarehouseId", constant = ""),
             @Mapping(target = "toWarehouseName", constant = ""),
             @Mapping(target = "fromWarehouseId", constant = ""),
             @Mapping(target = "fromWarehouseName", constant = ""),

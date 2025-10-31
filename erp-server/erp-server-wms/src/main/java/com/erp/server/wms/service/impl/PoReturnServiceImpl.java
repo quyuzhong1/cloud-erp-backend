@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -822,7 +823,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<String> purchaseDetailIdList = new ArrayList<>();
 
             //审核通过-自动生成-委外退料单，purchaseDetailIdList用于取退货子级采购订单明细更新执行状态
-            List<PoReturnEntity> poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            List<PoReturnEntity> poReturnEntityList1;
+            try {
+                poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            } finally {
+                UserContext.setIsUserSystem(originalValue);
+            }
+
             if (CollectionUtils.isNotEmpty(poReturnEntityList1)){
                 poReturnEntityList1.add(entity);
             }else {
@@ -862,10 +871,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
             updateArrivalState(purchaseDetailIdList);
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //自动生成补货采购订单
         autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
         //审核通过生成对账明细
         autoAddPoReconciliationDetail(poReturnEntityList1);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1421,14 +1435,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 取消流程
      *
-     * @param ids ids
+     * @param dto ids
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<PoReturnEntity> poReturnEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -1673,24 +1688,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
 
-    /**
-     * 批量生成退货单
-     *
-     * @param list
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-04-25 11:09
-     */
-    @Override
-    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                this.add(item);
-            }
-        }
-        return Boolean.TRUE;
-
-    }
 
     /**
      * 修改到货状态

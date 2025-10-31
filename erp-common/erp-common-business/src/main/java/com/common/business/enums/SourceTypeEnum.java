@@ -26,8 +26,8 @@ public enum SourceTypeEnum {
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
     SUPPLIER("supplier", "供应商列表","supplier"),
-    CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
+    CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     SUPPLIER_PHASE("supplierPhase", "供应商阶段审核列表","supplier_phase"),
 
 
@@ -98,6 +98,7 @@ public enum SourceTypeEnum {
     SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
     SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
     SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+    SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
 
 
     //OMS
@@ -129,6 +130,9 @@ public enum SourceTypeEnum {
     EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
 
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
+    SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
+
+
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
@@ -238,6 +242,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE("thirdWarehouseUploadHandoverFile", "第三方仓上传交接文件","dmp_push_task"),
     THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),

@@ -2,8 +2,12 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.PlatformB2bOrderDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
@@ -160,12 +164,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:51
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量删除
@@ -356,7 +360,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @description: 更新明细备注
      * @author Will
      * @date: 2023/7/19 15:15
-     * @param dto
+     * @param ids
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);;
@@ -364,7 +368,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @description: 更新备注
      * @author Will
      * @date: 2023/7/20 9:58
-     * @param dto
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO updateRemark(SoInfoEntity entity, String remark);
@@ -484,8 +488,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void sdyFieldOrderHandler(String soId, String operateEnum);
 
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
-
-    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
     /**
      * 下推销售退货订单-列表查询-计算退货金额
      * @param dto dto
@@ -494,6 +496,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Date 2024-11-25
      **/
     List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
 
 
     /**
@@ -548,4 +552,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return Boolean
      */
     Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
+
+    Boolean updateIsDeclare(SoB2cDTO.UpdateIsDeclareDTO dto);
 }

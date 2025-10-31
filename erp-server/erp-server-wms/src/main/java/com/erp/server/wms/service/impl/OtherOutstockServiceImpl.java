@@ -18,9 +18,9 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -51,11 +51,12 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
+import com.erp.model.wms.dto.OtherOutstockDTO;
+import com.erp.model.wms.dto.OtherOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.event.OtherOutstockStatusChangeEvent;
-import java.time.LocalDateTime;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -65,6 +66,7 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.event.OtherOutstockStatusChangeEvent;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -611,7 +613,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             }else {
                 syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }
-            
+
             // 发布状态变更事件
             publishStatusChangeEvent(entity, ApproveTypeEnum.PASS.getStatus());
         }
@@ -655,16 +657,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //操作日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("反审核了一个其他出库单【{}】",entity.getCode()), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "反审核操作");
-        
+
         // 发布状态变更事件
         publishStatusChangeEvent(entity, ApproveTypeEnum.DIS_APPROVE.getStatus());
-        
+
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单反审核");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<OtherOutstockEntity> list = getList(ids);
         //审核中允许审核
@@ -678,6 +681,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -714,10 +718,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private void publishStatusChangeEvent(OtherOutstockEntity entity, String newStatus) {
         try {
             log.info("发布其他出库单状态变更事件，出库单ID：{}，状态：{}", entity.getId(), newStatus);
-            
+
             // 获取明细变更信息
             List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> detailChanges = getDetailChangesForEvent(entity.getId());
-            
+
                                     // 创建事件
                         OtherOutstockStatusChangeEvent event = new OtherOutstockStatusChangeEvent();
                         event.setOutboundOrderId(entity.getId());
@@ -727,7 +731,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         event.setChangeTime(LocalDateTime.now());
                         event.setSourceType(entity.getSourceType());
                         event.setDetailChanges(detailChanges);
-            
+
             // 发布事件
             applicationEventPublisher.publishEvent(event);
             log.info("成功发布其他出库单状态变更事件，出库单ID：{}", entity.getId());
@@ -743,20 +747,20 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
      */
     private List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> getDetailChangesForEvent(String outboundOrderId) {
         List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> detailChanges = new ArrayList<>();
-        
+
         try {
             // 查询其他出库单主表信息
             OtherOutstockEntity outboundOrder = this.getById(outboundOrderId);
             if (outboundOrder == null) {
                 return detailChanges;
             }
-            
+
             // 查询其他出库单明细
             List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(outboundOrderId);
-            
+
             if (CollUtil.isNotEmpty(detailList)) {
                 for (OtherOutstockDetailEntity detail : detailList) {
-                    OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent detailChange = 
+                    OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent detailChange =
                         new OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent();
                     detailChange.setDetailId(detail.getId());
                     detailChange.setSkuId(detail.getSkuId());
@@ -769,7 +773,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         } catch (Exception e) {
             log.error("获取明细变更信息失败，出库单ID：{}，错误：{}", outboundOrderId, e.getMessage(), e);
         }
-        
+
         return detailChanges;
     }
 
@@ -853,7 +857,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
         }
     }
@@ -1681,7 +1685,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
-        
+
         // 获取所有SKU ID
         List<String> skuIds = records.stream()
                 .map(OtherOutstockDTO.ListDTO::getSkuNo)
@@ -1702,13 +1706,13 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 log.warn("获取SKU信息失败，错误：{}", e.getMessage());
             }
         }
-        
+
         // 查询流程id判断是否存在流程
         Map<String, String> finalProductNameMap = productNameMap;
         records.forEach(obj -> {
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
-            
+
             // 设置产品名称
             if (Objects.nonNull(obj.getSkuId())) {
                 String productName =

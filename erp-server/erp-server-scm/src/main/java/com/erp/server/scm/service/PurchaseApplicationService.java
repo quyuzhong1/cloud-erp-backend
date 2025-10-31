@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -168,10 +169,10 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 撤销流程
      * @author Will
      * @date: 2023/3/22 10:18
-     * @param ids
+     * @param dto
      * @return Boolean
      */
-    BatchResultDTO cancelProcess(PurchaseApplicationEntity entity);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto,PurchaseApplicationEntity entity);
     /**
      * @description: 修改并提交
      * @author Will

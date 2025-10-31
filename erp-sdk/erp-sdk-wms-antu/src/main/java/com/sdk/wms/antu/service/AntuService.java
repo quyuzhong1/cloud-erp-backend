@@ -1,5 +1,6 @@
 package com.sdk.wms.antu.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
@@ -19,7 +20,6 @@ import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -44,10 +44,10 @@ public class AntuService {
     public AntuResponse<List<AntuWarehouseResp>> getWarehouse(AntuBaseRequest antuBaseRequest,OmsPlatformEnum platformEnum){
         String apiResponse = AntuUtils.callService(platformEnum,AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
         AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
-        if(CollectionUtils.isNotEmpty(response.getData())){
-            //只要标准的仓库
-            response.setData(response.getData().stream().filter(v->"0".equals(v.getWarehouseType())).collect(Collectors.toList()));
-        }
+//        if(CollectionUtils.isNotEmpty(response.getData())){
+//            //只要标准的仓库
+//            response.setData(response.getData().stream().filter(v->"0".equals(v.getWarehouseType())).collect(Collectors.toList()));
+//        }
         return response;
     }
     /**
@@ -56,9 +56,9 @@ public class AntuService {
     public AntuResponse<List<AntuWarehouseResp>> getTransferWarehouse(AntuBaseRequest antuBaseRequest,OmsPlatformEnum platformEnum){
         String apiResponse = AntuUtils.callService(platformEnum,AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
         AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
-        if(CollectionUtils.isNotEmpty(response.getData())){
-            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
-        }
+//        if(CollectionUtils.isNotEmpty(response.getData())){
+//            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
+//        }
         return response;
     }
 
@@ -94,6 +94,19 @@ public class AntuService {
         return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuOutboundResp>>>() {}.getType());
     }
 
+
+    /**
+     * 根据参考号获取出库订单信息
+     * @param antuGetOutboundRefReq
+     * @param platformEnum
+     * @return
+     */
+    public AntuResponse<AntuOutboundResp> getOrderByRefCode(AntuGetOutboundRefReq antuGetOutboundRefReq,OmsPlatformEnum platformEnum){
+        log.warn("getOrderByRefCode request :{}", JSONUtil.toJsonStr(antuGetOutboundRefReq));
+        String response = AntuUtils.callService(platformEnum,AntuConstants.GET_ORDER_BY_REF_CODE,antuGetOutboundRefReq);
+        log.warn("getOrderByRefCode response :{}", response);
+        return JSON.parseObject(response,new TypeReference<AntuResponse<AntuOutboundResp>>() {}.getType());
+    }
     /**
      * 获取物流产品
      */

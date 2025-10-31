@@ -2,9 +2,8 @@ package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
@@ -37,13 +36,15 @@ import com.erp.server.wms.service.MachineInfoService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -136,7 +137,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
-                machineInfoService.cancelProcess(Collections.singletonList(machineInfoEntity.getId()));
+                machineInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(machineInfoEntity.getId())));
             }
             if(!Objects.equals(machineInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
                 // 作废

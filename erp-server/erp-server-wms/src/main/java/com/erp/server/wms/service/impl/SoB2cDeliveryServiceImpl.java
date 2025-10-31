@@ -114,6 +114,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_DELIVERY_ORDER;
 
@@ -214,6 +215,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private AuthDataFeign authDataFeign;
     @Resource
     private TikTokFullService tikTokFullService;
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -384,18 +387,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
 
         }
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                // 调用第三方平台SDK标记发货(独立事务)
-                String businessDesc = "发货单手动发货";
-                asyncService.asyncShipOrder(soB2cEntity.getId(),
-                        soB2cEntity.getCode(),
-                        soB2cEntity.getDictPlatform(),
-                        soB2cEntity.convertSubmitPlatformUniqueKey(),
-                        id,
-                        businessDesc, false, false);
-            } else {
-                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
-            }
+        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "发货单手动发货";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    id,
+                    businessDesc, false, false);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
 //        }
 
         //获取一个当前时间当作发货时间
@@ -551,8 +554,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = new ArrayList<>();
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(pickingIds)){
+            throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", deliveryEntityList.stream().map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList())));
+        }
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
-
+        List<String> warehouseIds = list.stream().map(PickingListsEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByWarehouseIds(warehouseIds);
         //波次列表信息
         List<String> sourceIdList = list.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
         List<WaveListDTO.WaveDeliveryDTO> waveDeliveryList = waveListService.listByDeliverIds(sourceIdList);
@@ -579,6 +586,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isEmpty(viewDTO.getWarehouseLocation())) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
+            //库位名称
+            WarehouseLocationEntity locationEntity = locationEntityList.stream()
+                    .filter(req -> req.getWarehouseId().equals(pickingLists.getWarehouseId()))
+                    .filter(req -> req.getCode().equals(viewDTO.getWarehouseLocation()))
+                    .findFirst().orElse(null);
+            viewDTO.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
             if (isAddWave){
                 //波次信息
                 WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
@@ -607,14 +620,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return printPickingViewList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
                         .thenComparing((s1, s2) -> {
-                            if (CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && !CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            if (CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && !CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return 1;
-                            } else if (!CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            } else if (!CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return -1;
-                            } else if (CharSequenceUtil.isBlank(s1.getWarehouseLocation()) && CharSequenceUtil.isBlank(s2.getWarehouseLocation())) {
+                            } else if (CharSequenceUtil.isBlank(s1.getWarehouseLocationName()) && CharSequenceUtil.isBlank(s2.getWarehouseLocationName())) {
                                 return 0;
                             } else {
-                                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+                                return s1.getWarehouseLocationName().compareTo(s2.getWarehouseLocationName());
                             }
                         }))
                 .collect(Collectors.toList());
@@ -1086,7 +1099,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货单
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
-           throw new ServiceException("未发现发货单信息");
+            throw new ServiceException("未发现发货单信息");
         }
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cDeliveryEntity.getSourceId()));
@@ -1645,6 +1658,43 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if(soB2cEntity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
             throw new ServiceException("生成销售出库单失败,请查看订单异常");
         }
+    }
+
+    /**
+     * 根据源ID列表获取deliveryCode映射
+     * @param sourceIds 源ID列表
+     * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
+     */
+    @Override
+    public Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds) {
+        if(CollUtil.isEmpty(sourceIds)){
+            return Collections.emptyMap();
+        }
+
+        // 查询SoB2cDeliveryEntity中的有效配送记录
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).list();
+        Map<String, String> sourceIdToCodesMap = soB2cDeliveryEntities.stream()
+                .collect(Collectors.groupingBy(
+                        SoB2cDeliveryEntity::getSourceId,
+                        Collectors.mapping(SoB2cDeliveryEntity::getCode, Collectors.joining(","))
+                ));
+
+        // 查询ThirdWarehouseDeliveryEntity中的有效配送记录
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntities = thirdWarehouseDeliveryService.lambdaQuery().in(ThirdWarehouseDeliveryEntity::getSoId, sourceIds).ne(ThirdWarehouseDeliveryEntity::getStatus, SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()).list();
+        Map<String, String> soIdToCodesMap = thirdWarehouseDeliveryEntities.stream()
+                .collect(Collectors.groupingBy(
+                        ThirdWarehouseDeliveryEntity::getSoId,
+                        Collectors.mapping(ThirdWarehouseDeliveryEntity::getCode, Collectors.joining(","))
+                ));
+
+        // 合并两个 map，当 key 相同时优先使用 soIdToCodesMap 的值
+        Map<String, String> resultMap = Stream.concat(sourceIdToCodesMap.entrySet().stream(), soIdToCodesMap.entrySet().stream())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existingValue, newValue) -> newValue // 冲突时使用 newValue（来自 soIdToCodesMap）
+                ));
+        return resultMap;
     }
 
     @Override
@@ -2289,7 +2339,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return SoB2cDeliveryEntity
      */
     private SoB2cDeliveryEntity getBySoCode (String soCode) {
-       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).last("limit 1").one();
+        return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).last("limit 1").one();
     }
 
 
@@ -2297,7 +2347,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
         try {
-           soB2cDeliveryService.pushTransferInfo(entity);
+            soB2cDeliveryService.pushTransferInfo(entity);
         } catch (Exception e) {
             String soB2cId = entity.getSourceId();
             String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
@@ -2357,7 +2407,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return Boolean.FALSE;
         }
         //生成直接调拨单
-         Boolean  isPush =  soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
+        Boolean  isPush =  soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
         //推送成功则继续自动下推销售出库
         if (isPush) {
             soB2cDeliveryService.generateB2cSoOutstock(soB2cDeliveryList.get(0));

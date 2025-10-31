@@ -31,4 +31,7 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportAfterSale")
     PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto);
+    
+    @PostMapping("/feign/export/exportRestcloudPushTask")
+    PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportRestcloudPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
 }

@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -120,6 +121,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
+    public static void main(String[] args) {
+        String a = "{\n" +
+                "  \"authId\": \"1976194554104430593\",\n" +
+                "  \"provider\": \"iml\",\n" +
+                "  \"orderCode\": \"OT80565-20251021-000001\",\n" +
+                "  \"referenceNo\": \"WFHD20251021001\",\n" +
+                "  \"orderStatus\": \"waitShipped\",\n" +
+                "  \"interceptStatus\": \"\",\n" +
+                "  \"thirdOrderStatus\": \"WAIT_OUTBOUND\",\n" +
+                "  \"outBoundTime\": \"\",\n" +
+                "  \"trackNo\": \"123456\",\n" +
+                "  \"abnormalProblemReason\": \"\"\n" +
+                "}";
+        PlatformOutboundDTO dto = JSONUtil.toBean(a, PlatformOutboundDTO.class);
+        System.out.println(dto);
+    }
     @Override
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
@@ -227,9 +244,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
                 mainEntity.setIsIntercept(false);
+                mainEntity.setIsFrozen(false);
                 mainEntity.setRemark("三方仓出库单废弃,拦截成功");
                 if(mainEntity.getIsCancel()){
                     mainEntity.setInvalidStatus(Boolean.TRUE);
+                    mainEntity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
                     mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
                 }
                 soB2cFeign.updateStatus(mainEntity);

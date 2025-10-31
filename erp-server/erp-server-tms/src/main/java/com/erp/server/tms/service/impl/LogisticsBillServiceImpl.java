@@ -500,6 +500,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
+                && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
@@ -634,7 +635,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setPlatformCode(dto.getPlatformCode());
         cancelOrderVO.setReason(dto.getReason());
         cancelOrderVO.setOrderId(dto.getOrderId());
-        cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (ObjectUtil.isEmpty(billBase) || Objects.isNull(billBase.getId())) {
@@ -644,6 +644,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),dto.getShopId(), auth.getLogisticsPlatform());
         cancelOrderVO.setAuthMap(authMap);
+        cancelOrderList.add(cancelOrderVO);
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);

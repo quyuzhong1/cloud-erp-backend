@@ -42,4 +42,9 @@ public class MoldRefSkuApproveHandler extends AbstractApproveHandler {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return moldRefSkuService.approveEnd(approveOne,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

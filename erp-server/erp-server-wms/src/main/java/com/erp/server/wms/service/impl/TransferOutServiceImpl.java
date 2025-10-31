@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -523,7 +524,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void cancel(List<String> ids) {
+    public void cancel(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         // 只有审核中的数据允许撤销
@@ -537,6 +539,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -583,8 +586,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
+    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(detailIdList);
         if(CollUtil.isEmpty(dataList)) {
             return null;
         }
@@ -710,15 +713,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(TransferOutEntity::getId,businessId)
-                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
-    }
-
-
-    @Override
     public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId) {
         List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(detailId);
         if(CollUtil.isNotEmpty(putawayDetailDTOS)){
@@ -744,6 +738,15 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
         return putawayDetailDTOS;
     }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferOutEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
 
     /**
      * 更新审核状态

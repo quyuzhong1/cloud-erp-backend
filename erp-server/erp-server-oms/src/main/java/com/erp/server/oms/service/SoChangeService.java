@@ -1,18 +1,17 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -115,10 +114,10 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * 撤销流程
      * @author yl
      * @date 2023-05-25 11:01
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 删除销售变更单

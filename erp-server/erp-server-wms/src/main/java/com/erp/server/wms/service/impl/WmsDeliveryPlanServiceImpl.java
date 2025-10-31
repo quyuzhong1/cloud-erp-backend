@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -225,7 +226,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -447,7 +448,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -464,6 +466,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.DELIVERY_PLAN.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -657,9 +660,14 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
-            }else{
+            }else if(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
+            }else if(DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.ALIEXPRESS.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.ALIEXPRESS.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }
 
             //来源类型
@@ -1264,10 +1272,17 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())
+                ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
             }
+            //明细中的fnsku不能为空
+            long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getFnSku())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+            }
+
             ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(wmsDeliveryPlanEntity.getShopId());
             wmsDeliveryPlanEntity.setShopName(shopInfoEntity.getName());
             wmsDeliveryPlanEntity.setCountry(shopInfoEntity.getDictCountryCode());

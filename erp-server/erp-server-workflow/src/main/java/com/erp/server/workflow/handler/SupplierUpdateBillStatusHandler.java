@@ -10,7 +10,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -20,7 +19,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -31,11 +29,11 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.DictCredentialEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
@@ -45,10 +43,8 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Instant;
@@ -95,6 +91,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Resource
+    private FsInstancesService fsInstancesService;
 
     @Override
     public boolean isMatch(String event) {
@@ -107,8 +105,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
@@ -122,14 +118,9 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             return;
         }
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
-            String createUserId = jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
-            JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
-            JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
-            String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
-            Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
-            LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
 
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
@@ -140,82 +131,18 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
             //批量处理多选数据
             handleSupplierMultipleData(map);
-
-            //值映射
-            SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
-
-            //第一条账户设置成默认
-            if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
-                addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
-            }
-            addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
-            addDTO.setThirdApprovalUserId(lastUserId);
-            addDTO.setThirdApproveTime(approveTime);
-
-            //生成三方生成查询主表数据
-            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS,thirdProcessEntity.getBussinessKey());
-            //查询三方生成查询
-            ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
-            if (ObjectUtil.isNotEmpty(taskInfoEntity)) {
-                SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfoEntity.getBussinessId());
-                if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                    log.warn(CharSequenceUtil.format("供应商【{}】已存在，直接标记消费成功",supplierEntity.getCode()));
-                    return;
-                }
-                //判断是否存在三方生成查询数据，存在则删除
-                approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
-            }
-            // 第二步：保存供应商信息
-            BatchResultDTO batchResultDTO = new BatchResultDTO();
-            String reason = "";
-            String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
-            try {
-                //查找创建人
-                addCreateUser(createUserId,addDTO);
-                //添加供应商
-                ValidatorUtil.validateEntity(addDTO);
-                batchResultDTO = supplierFeign.add(addDTO);
-            } catch (Exception e) {
-                taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
-                reason = e.getMessage();
-            }
-            taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
-            taskInfo.setBussinessCode(batchResultDTO.getCode());
-            taskInfo.setBussinessId(batchResultDTO.getId());
-            taskInfo.setHappenTime(LocalDateTime.now());
-            taskInfo.setStatus(taskStatus);
-            taskInfo.setReason(reason);
-            approveTaskInfoService.add(taskInfo);
-            //添加三方流程记录
-            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
-                thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
-            }
+            //新增供应商
+            fsInstancesService.addFreshGenerate(jsonObject,map,thirdProcessEntity, addDTOS);
         }
     }
 
     /**
-     * 创建人
+     * 批量数据处理
      * @author will
-     * @date 2025/9/29 10:19
-     * @param createUserId
-     * @return FindUserDTO
+     * @date 2025/10/23 15:49
+     * @param map
+     * @return void
      */
-    private void addCreateUser (String createUserId,SupplierDTO.InsertDTO addDTO) {
-        SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), createUserId);
-        if (Objects.isNull(userByThird)) {
-            throw new ServiceException("飞书创建人未绑定，请绑定后重新生成,thirdUserId:"+createUserId);
-        }
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
-        if (ObjUtil.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
-        }
-        addDTO.setCreateUserId(findUserDTO.getUserId());
-        addDTO.setCreateUserName(findUserDTO.getUserName());
-        addDTO.setUpdateUserId(findUserDTO.getUserId());
-        addDTO.setUpdateUserName(findUserDTO.getUserName());
-    }
-
-
     private void handleSupplierMultipleData(Map<String, Object> map) {
         //供应商属性
         Object propertyJson = map.get("propertyJson");
@@ -400,8 +327,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     attachList.addAll(processJsonElement(element));
                 }
             }
-            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
-
+//            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+            List<DictCredentialEntity> disabledList = FeignQuery.create(DictCredentialEntity.class).eq(DictCredentialEntity::getDisabled, false).list();
             for (Map<String,Object> attachMap : attachList) {
                 Map<String, Object> detailAttachMap = new HashMap<>();
 
@@ -409,7 +336,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
                         filter(req -> CharSequenceUtil.equals(fieldName,req.getName()))
-                        .map(DictBasicEntity::getValue)
+                        .map(DictCredentialEntity::getId)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
@@ -509,7 +436,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
             try {
                 //查找创建人
-                addCreateUser(createUserId,addDTO);
+                fsInstancesService.addCreateUser(createUserId,addDTO);
                 // 第二步：保存供应商信息
                 ValidatorUtil.validateEntity(addDTO);
                 batchResultDTO = supplierFeign.add(addDTO);
@@ -531,6 +458,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
     }
+
 
     @Override
     public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {

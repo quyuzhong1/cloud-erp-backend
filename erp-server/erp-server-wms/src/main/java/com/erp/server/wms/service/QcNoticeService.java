@@ -1,14 +1,14 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.QcNoticeDetailDTO;
-import com.erp.model.wms.entity.QcNoticeEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.QcNoticeDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcNoticeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -127,10 +127,10 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     * 撤销
     * @author jack
     * @date: 2025-04-21
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

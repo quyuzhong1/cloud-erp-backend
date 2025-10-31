@@ -155,8 +155,6 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
 
     public static final String CERTIFICATE_PASSWORD = "certificate_password";
 
-    public static final String TOKEN = "token";
-
     @Override
     public Serializable pkVal() {
         return null;

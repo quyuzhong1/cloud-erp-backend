@@ -1,5 +1,6 @@
 package com.erp.server.srm.listener;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
@@ -115,18 +116,18 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
         List<String> sourceCodes = dataList.stream().map(DeliveryOrderImportExcelDTO::getSourceCode).distinct().collect(Collectors.toList());
         List<PurchaseOrderEntity> allPurchaseOrderList = scmTaskFeign.getPurchaseOrderByCodes(sourceCodes);
         List<String> allPurchaseIds = allPurchaseOrderList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> allPurchaseDetailList = scmTaskFeign.listByPurchaseOrderIds(allPurchaseIds);
+        List<PurchaseOrderDetailEntity> allPurchaseDetailList = CollUtil.isEmpty(allPurchaseIds) ? Collections.emptyList() : scmTaskFeign.listByPurchaseOrderIds(allPurchaseIds);
         List<String> allPurchaseDetailIds = allPurchaseDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         //送货信息
-        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = deliveryOrderDetailService.listDetailDTOByDetailSourceIds(allPurchaseDetailIds);
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = CollUtil.isEmpty(allPurchaseDetailIds) ? Collections.emptyList() : deliveryOrderDetailService.listDetailDTOByDetailSourceIds(allPurchaseDetailIds);
         //入库信息
-        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(allPurchaseDetailIds);
+        List<PoInstockDetailEntity> stockInDetailList = CollUtil.isEmpty(allPurchaseDetailIds) ? Collections.emptyList() : wmsTaskFeign.listPurchaseStockInDetailByPodIds(allPurchaseDetailIds);
         //退货信息
-        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(allPurchaseDetailIds);
+        List<PoReturnDetailEntity> returnOrderDetailList = CollUtil.isEmpty(allPurchaseDetailIds) ? Collections.emptyList() : wmsTaskFeign.listReturnOrderDetailByPodIds(allPurchaseDetailIds);
 
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(allPurchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = CollUtil.isEmpty(allPurchaseIds) ? Collections.emptyList() : wmsTaskFeign.getReceiveListByPurchaseOrderIds(allPurchaseIds);
 
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveAllList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(allPurchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveAllList = CollUtil.isEmpty(allPurchaseIds) ? Collections.emptyList() : wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(allPurchaseIds);
 
         Map<String,List<DeliveryOrderImportExcelDTO>> map = dataList.stream().collect(Collectors.groupingBy(DeliveryOrderImportExcelDTO::getSourceCode));
         map.forEach((key,value)->{

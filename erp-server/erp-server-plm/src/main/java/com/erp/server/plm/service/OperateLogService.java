@@ -54,19 +54,6 @@ public interface OperateLogService extends IService<OperateLogEntity> {
     Boolean addSysLogBySave(String content,String classPath,String businessId,String pid);
 
     /**
-     * @description: 新增时保存日志
-     * @author Will
-     * @date: 2022/12/6 14:08
-     * @param content
-     * @param classPath
-     * @param moduleType
-     * @param businessId
-     * @param pid
-     * @return Boolean
-     */
-    Boolean addOperateLogBySave(String content,String classPath,String moduleType,String businessId,String pid);
-
-    /**
      * @description: 新增时批量保存日志
      * @author Will
      * @date: 2022/12/6 14:08
@@ -99,4 +86,11 @@ public interface OperateLogService extends IService<OperateLogEntity> {
      * @return List<OperateLogShowDTO>
      */
     List<OperateLogShowDTO> listSysLog(OperateLogSelectDTO dto);
+
+    /***
+     * 操作日志-产品变更历史分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto);
 }

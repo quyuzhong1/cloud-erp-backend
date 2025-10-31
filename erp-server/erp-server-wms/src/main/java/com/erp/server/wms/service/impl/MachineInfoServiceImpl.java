@@ -8,8 +8,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -29,14 +33,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.wms.dto.MachineDetailDTO;
-import com.erp.model.wms.dto.MachineInfoDTO;
-import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
@@ -695,7 +691,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<MachineInfoEntity> list = getList(ids);
         //审核中允许审核

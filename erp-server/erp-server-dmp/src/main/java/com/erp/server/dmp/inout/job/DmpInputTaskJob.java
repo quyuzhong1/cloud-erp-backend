@@ -115,6 +115,7 @@ public class DmpInputTaskJob {
 				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+				.eq(DmpInputTaskEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 				.and(d -> d.isNull(DmpInputTaskEntity::getNextExecTime).or().le(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now()))
 				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
 				.orderByAsc(DmpInputTaskEntity::getUpdateTime)

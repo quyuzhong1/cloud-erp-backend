@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -18,11 +18,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcRuleDTO;
 import com.erp.model.wms.entity.QcRuleEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -30,7 +28,6 @@ import com.erp.server.wms.mapper.QcRuleMapper;
 import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -363,7 +360,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
      * @date 2023-04-13 15:33
      */
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<QcRuleEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {

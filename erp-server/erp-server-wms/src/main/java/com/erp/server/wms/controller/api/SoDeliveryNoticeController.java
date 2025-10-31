@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -15,6 +16,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -162,9 +164,23 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:submit",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soDeliveryNoticeService.submit(dto.getIds(),Boolean.TRUE);
-        return flag == true ? success() : failure();
+    public  ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soDeliveryNoticeService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("发货通知单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -291,7 +307,7 @@ public class SoDeliveryNoticeController extends BaseController {
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soDeliveryNoticeService.cancelProcess(dto.getIds());
+        Boolean flag = soDeliveryNoticeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 
@@ -600,5 +616,7 @@ public class SoDeliveryNoticeController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
 }
 
