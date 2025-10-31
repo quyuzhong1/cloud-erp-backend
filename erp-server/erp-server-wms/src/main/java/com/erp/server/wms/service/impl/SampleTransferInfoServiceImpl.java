@@ -11,6 +11,7 @@ import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -1543,6 +1544,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     /**
      * 校验转入人台账数量（反审核时）
      * 反审核后，转入人台账数量减少（-X），需要校验是否足够扣减
+     * 转入人的台账使用方信息需要从转出人台账中获取（参考归还单逻辑）
      */
     private void validateTransferInUserLedger(SampleTransferInfoEntity entity, List<SampleTransferDetailEntity> detailList) {
         // 批量查询台账：收集所有需要查询的SKU ID
@@ -1551,22 +1553,43 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .distinct()
                 .collect(Collectors.toList());
         
-        // 一次性批量查询转入人的所有台账
+        // 一次性批量查询转入人的所有台账（不限定 useUserId）
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getTransferInUserId());
-        searchDTO.setUseUserId(entity.getTransferInUserId()); // 转入人的使用方就是自己
         searchDTO.setSkuIds(skuIds);
         searchDTO.setType(SampleLedgerTypeEnum.TRANSFER.getCode());
         
         List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
         
-        // 构建 skuId -> ledgerId 的映射
-        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        // 构建 userId-useUserId-skuId -> ledgerId 的映射
+        Map<String, String> ledgerKeyMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
-            skuIdToLedgerIdMap = ledgerList.stream()
+            for (SampleLedgerDTO.SkuAvailableQtyDTO ledger : ledgerList) {
+                String key = entity.getTransferInUserId() + "-" + ledger.getUseUserId() + "-" + ledger.getSkuId();
+                ledgerKeyMap.put(key, ledger.getSampleLedgerId());
+            }
+        }
+        
+        // 批量查询转出人台账：收集所有转移单明细中的 sampleLedgerId
+        List<String> transferOutLedgerIds = detailList.stream()
+                .map(SampleTransferDetailEntity::getSampleLedgerId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(transferOutLedgerIds)) {
+            log.warn("转移单明细中没有转出人台账ID，无法查询使用方信息，单据编号：{}", entity.getCode());
+            throw new ServiceException("转移单明细中没有转出人台账ID，无法反审核");
+        }
+        
+        // 一次性批量查询转出人台账，构建 ledgerId -> useUserId 的映射
+        List<SampleLedgerEntity> transferOutLedgerList = sampleLedgerService.listByIds(transferOutLedgerIds);
+        Map<String, String> ledgerIdToUseUserIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(transferOutLedgerList)) {
+            ledgerIdToUseUserIdMap = transferOutLedgerList.stream()
                     .collect(Collectors.toMap(
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            SampleLedgerEntity::getId,
+                            ledger -> StrUtil.isNotBlank(ledger.getUseUserId()) ? ledger.getUseUserId() : "",
                             (existing, replacement) -> existing
                     ));
         }
@@ -1577,14 +1600,25 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         List<String> skuNos = new ArrayList<>();
         
         for (SampleTransferDetailEntity detail : detailList) {
-            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            // 从转出人台账中获取使用方ID
+            String useUserId = ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
+            if (StrUtil.isBlank(useUserId)) {
+                log.warn("未找到转出人台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}", 
+                    detail.getSampleLedgerId(), detail.getSkuNo(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的转出人台账使用方信息不存在，无法反审核", detail.getSkuNo()));
+            }
+            
+            // 拼接 key 从 map 中获取转入人台账ID
+            String key = entity.getTransferInUserId() + "-" + useUserId + "-" + detail.getSkuId();
+            String ledgerId = ledgerKeyMap.get(key);
+            
             if (StrUtil.isNotBlank(ledgerId)) {
                 sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getTransferQty()); // 反审核时转入人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到转入人台账，SKU：{}，转入人：{}，单据编号：{}", 
-                    detail.getSkuNo(), entity.getTransferInUserName(), entity.getCode());
+                log.warn("未找到转入人台账，SKU：{}，转入人：{}，使用方ID：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getTransferInUserName(), useUserId, entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的转入人台账不存在，无法反审核", detail.getSkuNo()));
             }
         }
