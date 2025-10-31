@@ -203,10 +203,10 @@ public class ImlServiceTest {
     public void createInboundBill() {
         ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
                 .needCustomerAudit("N")
-                .platformOrderNo("FHD251029000001")
+                .platformOrderNo("FHD2510119000101")
                 .bizType("TOC")
                 .destWarehouseCode("RUS2")
-//                .customsType("SEPARATE_TAX")
+                .customsType("SEPARATE_TAX")
                 .inboundType("DIRECT")
                 .expectedDate(LocalDateTimeUtil.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .attachments(Arrays.asList(
@@ -218,7 +218,7 @@ public class ImlServiceTest {
                 ))
                 .boxs(Arrays.asList(
                         ImlCreateInboundReq.BoxsDTO.builder()
-//                                .boxNo("ceshi11211111324")
+                                .boxNo("FHD2510119000101 - ceshi11211111324")
                                 .boxWeight(new BigDecimal(1.5))
                                 .boxLength(new BigDecimal(1.5))
                                 .boxWidth(new BigDecimal(1.5))
@@ -237,6 +237,7 @@ public class ImlServiceTest {
                         .trackingNumber("354345")
                         .build()
         );
+        System.out.println(JSONObject.toJSONString(imlCreateInboundReq));
 
         ImlBaseResp<ImlInboundResp>  resp = imlService.createInboundBill(imlCreateInboundReq);
         System.out.println(JSONObject.toJSONString(resp));

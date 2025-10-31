@@ -1650,6 +1650,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     
     /**
      * 校验借入人台账数量（反审核时）
+     * 借入人的台账使用方信息需要从借出人台账中获取（参考归还单逻辑）
      */
     private void validateBorrowUserLedger(SampleBorrowInfoEntity entity, List<SampleBorrowDetailEntity> detailList) {
         // 批量查询台账：收集所有需要查询的SKU ID
@@ -1658,22 +1659,43 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 .distinct()
                 .collect(Collectors.toList());
         
-        // 一次性批量查询所有台账
+        // 一次性批量查询借入人的所有台账（不限定 useUserId）
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getBorrowUserId());
-        searchDTO.setUseUserId(entity.getBorrowUserId()); // 借入人的使用方就是自己
         searchDTO.setSkuIds(skuIds);
         searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
         
         List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
         
-        // 构建 skuId -> ledgerId 的映射
-        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        // 构建 userId-useUserId-skuId -> ledgerId 的映射
+        Map<String, String> ledgerKeyMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
-            skuIdToLedgerIdMap = ledgerList.stream()
+            for (SampleLedgerDTO.SkuAvailableQtyDTO ledger : ledgerList) {
+                String key = entity.getBorrowUserId() + "-" + ledger.getUseUserId() + "-" + ledger.getSkuId();
+                ledgerKeyMap.put(key, ledger.getSampleLedgerId());
+            }
+        }
+        
+        // 批量查询借出人台账：收集所有借用单明细中的 sampleLedgerId
+        List<String> lendLedgerIds = detailList.stream()
+                .map(SampleBorrowDetailEntity::getSampleLedgerId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(lendLedgerIds)) {
+            log.warn("借用单明细中没有借出人台账ID，无法查询使用方信息，单据编号：{}", entity.getCode());
+            throw new ServiceException("借用单明细中没有借出人台账ID，无法反审核");
+        }
+        
+        // 一次性批量查询借出人台账，构建 ledgerId -> useUserId 的映射
+        List<SampleLedgerEntity> lendLedgerList = sampleLedgerService.listByIds(lendLedgerIds);
+        Map<String, String> ledgerIdToUseUserIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(lendLedgerList)) {
+            ledgerIdToUseUserIdMap = lendLedgerList.stream()
                     .collect(Collectors.toMap(
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
-                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            SampleLedgerEntity::getId,
+                            ledger -> StrUtil.isNotBlank(ledger.getUseUserId()) ? ledger.getUseUserId() : "",
                             (existing, replacement) -> existing
                     ));
         }
@@ -1684,14 +1706,25 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<String> skuNos = new ArrayList<>();
         
         for (SampleBorrowDetailEntity detail : detailList) {
-            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            // 从借出人台账中获取使用方ID
+            String useUserId = ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
+            if (StrUtil.isBlank(useUserId)) {
+                log.warn("未找到借出人台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}", 
+                    detail.getSampleLedgerId(), detail.getSkuNo(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的借出人台账使用方信息不存在，无法反审核", detail.getSkuNo()));
+            }
+            
+            // 拼接 key 从 map 中获取借入人台账ID
+            String key = entity.getBorrowUserId() + "-" + useUserId + "-" + detail.getSkuId();
+            String ledgerId = ledgerKeyMap.get(key);
+            
             if (StrUtil.isNotBlank(ledgerId)) {
                 sampleLedgerIds.add(ledgerId);
                 qtys.add(-detail.getBorrowQty()); // 反审核时借入人减少库存
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到借入人台账，SKU：{}，借入人：{}，单据编号：{}", 
-                    detail.getSkuNo(), entity.getBorrowUserName(), entity.getCode());
+                log.warn("未找到借入人台账，SKU：{}，借入人：{}，使用方ID：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getBorrowUserName(), useUserId, entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的借入人台账不存在，无法反审核", detail.getSkuNo()));
             }
         }

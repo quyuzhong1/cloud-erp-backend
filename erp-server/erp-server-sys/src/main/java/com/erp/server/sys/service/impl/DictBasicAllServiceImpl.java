@@ -170,12 +170,29 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
 		}
-		feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).eq("id", id);
-		Map<String, Object> old = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
+		
+		PagingDTO<DictBasicAllDTO.PagingParamDTO> pageDto = new PagingDTO<>();
+	   	pageDto.setPageSize(-1);
+	   	DictBasicAllDTO.PagingParamDTO pDto = new DictBasicAllDTO.PagingParamDTO();
+	   	Map<String,String> sqlMap = new HashMap<>();
+	   	sqlMap.put("default", " t.id = '" + id + "' ");
+	   	pDto.setSqlMap(sqlMap);
+	   	AdvanceQueryDTO advanceQueryDTO = new AdvanceQueryDTO();
+	   	advanceQueryDTO.setField("systemCode");
+	   	advanceQueryDTO.setValue(systemCode);
+	   	pDto.setAdvanceQueryDTOList(Arrays.asList(advanceQueryDTO));
+	   	pageDto.setParams(pDto);
+	   	PagingVO<ViewDTO> paging = paging(pageDto);
+	   	List<ViewDTO> pagingList = paging.getList();
+	   	DictBasicEntity oldEntity = BeanUtil.copyProperties(pagingList.get(0), DictBasicEntity.class);
+	   	
 		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
-		Map<String, Object> newEntity = BeanUtil.beanToMap(FeignQuery.list(feignBuilder).get(0));
-        operateLogService.addModuleOperateLogByObj(JSON.parseObject(JSON.toJSONString(old) , DictBasicEntity.class), JSON.parseObject(JSON.toJSONString(newEntity) , DictBasicEntity.class), ModuleTypeEnum.DICT_BASIC.getCode(), id, msg);
+		paging = paging(pageDto);
+	   	pagingList = paging.getList();
+	   	DictBasicEntity newEntity = BeanUtil.copyProperties(pagingList.get(0), DictBasicEntity.class);
+	   	
+        operateLogService.addModuleOperateLogByObj(oldEntity, newEntity, ModuleTypeEnum.DICT_BASIC.getCode(), id, msg);
 	}
 
     @Transactional(rollbackFor = Exception.class)

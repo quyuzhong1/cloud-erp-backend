@@ -119,6 +119,11 @@ public class PlatformInventoryDTO extends UniqueDto {
          * 拉取日期
          */
         private LocalDate pullDate;
+
+        /**
+         * 库龄
+         */
+        private Integer inventoryAge;
     }
 
 }

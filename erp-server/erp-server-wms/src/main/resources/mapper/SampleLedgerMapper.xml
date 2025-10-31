@@ -98,6 +98,18 @@
             </if>
             GROUP BY ssd.sample_ledger_id ) as aa on aa.sample_ledger_id = sl.id
         </if>
+        <if test="params.type != null and params.type == 'transfer'">
+            left join (
+            select ssd.sample_ledger_id , sum(ssd.transfer_qty) as freezeQty  from  sample_transfer_info ssi
+            inner join sample_transfer_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+            where ssi.is_deleted = false
+            and ssi.invalid_status = false
+            and ssi.approve_status !='approve'
+            <if test="params.type != null and params.type == 'transfer' and params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+            GROUP BY ssd.sample_ledger_id ) as aa on aa.sample_ledger_id = sl.id
+        </if>
         WHERE
         sl.is_deleted = FALSE
         <if test="params.userId != null and params.userId != ''">
