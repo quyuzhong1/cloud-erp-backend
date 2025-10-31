@@ -177,12 +177,12 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.createSupply(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("创建大包号:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             }
         } catch (Exception e) {
             log.error("创建大包号失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("创建大包号:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
@@ -211,12 +211,12 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.addBoxToSupply(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("往大包中添加箱子:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             }
         } catch (Exception e) {
             log.error("往大包中添加箱子失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("往大包中添加箱子:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
@@ -236,14 +236,14 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.addOrderToSupply(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("往大包中添加订单:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             } else {
                 soB2cErrorService.removeErrorOrder(soId, SoB2cErrorTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
             }
         } catch (Exception e) {
             log.error("往大包中添加订单失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("往大包中添加订单:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
@@ -263,12 +263,12 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.getOrderSticker(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("获取跟踪号和订单标签:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             }
         } catch (Exception e) {
             log.error("获取跟踪号和订单标签失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("获取跟踪号和订单标签:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
@@ -288,12 +288,12 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.moveSupplyToDelivery(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("将供货单转入已完成:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             }
         } catch (Exception e) {
             log.error("将供货单转入已完成失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("将供货单转入已完成:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
@@ -313,14 +313,14 @@ public class PackagePlanController extends BaseController {
             result = packagePlanService.getCrossSticker(dto);
             if (CharSequenceUtil.isNotBlank(result.getErrorMsg())) {
                 //添加异常
-                addException("获取跨境运输标签:" + result.getErrorMsg(), soId, errorType, dto);
+                addException(result.getErrorMsg(), soId, errorType, dto);
             } else {
                 soB2cErrorService.removeErrorOrder(soId, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             }
         } catch (Exception e) {
             log.error("获取跨境运输标签失败>>>>>{}", e.getMessage());
             //添加异常
-            addException("获取跨境运输标签:" + e.getMessage(), soId, errorType, dto);
+            addException(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage(), soId, errorType, dto);
         }
         return result;
     }
