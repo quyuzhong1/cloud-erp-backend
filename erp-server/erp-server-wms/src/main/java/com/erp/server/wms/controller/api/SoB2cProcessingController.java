@@ -47,7 +47,7 @@ public class SoB2cProcessingController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbp.warehouse_id",
-            shopTableField = "sb2c.shop_id",
+            shopTableField = "sbp.shop_id",
             menuCode = "wms:soB2cProcessing:paging"
     )
     @WebAdvanceQuery
