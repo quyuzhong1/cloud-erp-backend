@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -453,15 +454,55 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
+
+        List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, id)
+                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        if (list.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95308);
+        }
+
+        List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+
         //删除明细
-        assetPurchaseOrderDetailService.removeById(id,null);
+        assetPurchaseOrderDetailService.removeByIds(collect);
+
+        //删除供应商关联表
+        assetPurchaseOrderSupplierService.lambdaUpdate()
+                .set(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.TRUE)
+                .set(AssetPurchaseOrderSupplierEntity::getUpdateTime, LocalDateTime.now())
+                .set(AssetPurchaseOrderSupplierEntity::getUpdateUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(AssetPurchaseOrderSupplierEntity::getUpdateUserName, UserContext.getDefaultLoginUser().getUserName())
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId,id)
+                .update();
 
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
-        // 删除日志数据
-        log.info("删除 开始删除日志数据，id：【{}】", id);
 
+        //回写通知单生成状态
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .one();
+
+            //采购数量小于申请数量状态改为部分生成
+            if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(assetNoticeDetailEntity.getApplyQty()) < 0) {
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            } else {
+                //采购数量等于申请数量状态改为未生成
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.NOT_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            }
+        }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产采购订单");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "删除");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
@@ -826,12 +867,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         //默认资产采购单
         if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getOrderType())) {
-            String orderType = AssetPurchaseOrderTypeEnum.getNameByCode(assetPurchaseOrderEntity.getOrderType());
-            if (StringUtils.isNotBlank(orderType)) {
-                assetPurchaseOrderEntity.setOrderType(orderType);
-            } else {
-                assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
-            }
+            assetPurchaseOrderEntity.setOrderType(assetPurchaseOrderEntity.getOrderType());
+            //String orderType = AssetPurchaseOrderTypeEnum.getNameByCode(assetPurchaseOrderEntity.getOrderType());
+//            if (StringUtils.isNotBlank(orderType)) {
+//                assetPurchaseOrderEntity.setOrderType(assetPurchaseOrderEntity.getOrderType());
+//            } else {
+//                assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
+//            }
         } else {
             assetPurchaseOrderEntity.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
         }
