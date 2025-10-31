@@ -487,7 +487,6 @@ public class AssetCardDTO implements Serializable {
         /**
         * 来源ID
         */
-        @NotBlank(message = "来源ID不能为空")
         @Size(max = 19,message = "来源ID最大长度不能超过19位")
         private String sourceId;
 
