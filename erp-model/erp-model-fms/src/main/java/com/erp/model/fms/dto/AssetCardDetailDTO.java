@@ -133,7 +133,6 @@ public class AssetCardDetailDTO implements Serializable {
         /**
         * 主表ID
         */
-        @NotBlank(message = "主表ID不能为空")
         @Size(max = 19,message = "主表ID最大长度不能超过19位")
         private String mainId;
 
@@ -193,7 +192,6 @@ public class AssetCardDetailDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
