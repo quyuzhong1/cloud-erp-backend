@@ -866,6 +866,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                         String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
                         // 3.更新url
                         nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , uploadUrl);
+                          // 直接使用中台处理替换后的fastDFSUrl
+                          nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , fileUrl);
                     } catch (Exception e) {
                         throw new RuntimeException("文件下载处理失败"+e);
                     }

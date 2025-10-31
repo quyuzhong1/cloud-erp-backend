@@ -252,4 +252,10 @@ public interface RedisCacheConstants {
      */
     String DMP_OUTPUT_RECORD_HIS_COUNT = "dmp:output:record:his:count";
 
+
+    /**
+     * 飞书接口请求缓存响应信息:fei_shu_api_result:businessTypeName:请求的唯一key
+     */
+    String FEI_SHU_RESULT_PREFIX = "fei_shu_api_result:{}:{}";
+
 }
