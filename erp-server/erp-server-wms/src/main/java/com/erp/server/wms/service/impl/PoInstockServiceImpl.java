@@ -2136,10 +2136,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
-        //自动生成功能系统标识
-        Boolean originalValue = UserContext.getIsUserSystem();
-        UserContext.setIsUserSystem(Boolean.TRUE);
-
         for (PoInstockEntity poInstockEntity : resultList) {
             //入库明细信息
             List<PoInstockDetailEntity> thisPoDetailList = poInstockDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), poInstockEntity.getId())).collect(Collectors.toList());
@@ -2189,8 +2185,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 subcontractIssueService.autoAdd(autoAddDTO);
             }
         }
-        //恢复系统标识
-        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
