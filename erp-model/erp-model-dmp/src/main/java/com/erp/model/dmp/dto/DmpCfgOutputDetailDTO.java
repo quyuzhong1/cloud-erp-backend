@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -84,7 +83,7 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         /**
          * 输出信息名称
          */
-        private String cfgOutputName;
+        private String name;
 
 
         /**
@@ -218,6 +217,11 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 输出配置名称
+         */
+        private String name;
 
         /**
         * 输出信息id

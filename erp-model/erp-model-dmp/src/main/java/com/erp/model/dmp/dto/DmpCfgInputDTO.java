@@ -235,6 +235,10 @@ public class DmpCfgInputDTO implements Serializable {
          * 单据名称
          */
         private String name;
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
     }
 
     /**

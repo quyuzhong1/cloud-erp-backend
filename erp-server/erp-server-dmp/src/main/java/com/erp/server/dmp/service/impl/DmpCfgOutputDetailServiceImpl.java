@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,23 +16,21 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgOutputDetailMapper;
-import com.erp.server.dmp.service.DmpBasicSystemService;
-import com.erp.server.dmp.service.DmpCfgOutputDetailService;
-import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +57,8 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpBasicSystemService dmpBasicSystemService;
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -67,7 +68,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         BeanMapperUtils.copy(addDTO, dmpCfgOutputDetailEntity);
 
         // 数据处理
-        handleData(dmpCfgOutputDetailEntity);
+        handleData(dmpCfgOutputDetailEntity, addDTO);
 
         log.info("开始新增推送调度");
         boolean save = super.save(dmpCfgOutputDetailEntity);
@@ -93,7 +94,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity =  BeanMapperUtils.map(DmpCfgOutputDetailEntity.class, updateDTO);
 
         // 数据处理
-        handleData(dmpCfgOutputDetailEntity);
+        handleData(dmpCfgOutputDetailEntity, updateDTO);
         log.info("编辑 开始修改推送调度数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgOutputDetailEntity);
         if(!save) {
@@ -111,8 +112,17 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     /**
     * 新增修改处理数据
     */
-    private void handleData(DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity, DmpCfgOutputDetailDTO.CommonDTO addDTO) {
+       // 验证数据 & 数据赋值
+        if (StringUtils.isBlank(addDTO.getExtendJson())) {
+            dmpCfgOutputDetailEntity.setExtendJson("{}");
+        } else {
+            // 校验是否json格式
+            if (!JSON.isValid(addDTO.getExtendJson())) {
+                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+            }
+            dmpCfgOutputDetailEntity.setExtendJson(addDTO.getExtendJson());
+        }
     }
 
 
@@ -191,6 +201,10 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     private void fillOne(DmpCfgOutputDetailDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        DmpCfgOutputEntity outputEntity = dmpCfgOutputService.getById(data.getMainId());
+        if (null != outputEntity){
+            data.setName(outputEntity.getFlowName());
         }
     }
 

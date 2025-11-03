@@ -79,7 +79,7 @@
         select
             dcid.id AS id,
             dci.code as cfgInputCode,
-            dci.name as cfgInputName,
+            dci.name as name,
             dci.system_id as systemId,
             dbs.code as systemCode,
             dbs.name as systemName,

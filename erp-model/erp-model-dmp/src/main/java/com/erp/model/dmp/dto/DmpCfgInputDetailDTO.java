@@ -50,6 +50,11 @@ public class DmpCfgInputDetailDTO implements Serializable {
         private String  id;
 
         /**
+         * 调度配置名称
+         */
+        private String name;
+
+        /**
         * 输入信息id
         */
         private String mainId;
