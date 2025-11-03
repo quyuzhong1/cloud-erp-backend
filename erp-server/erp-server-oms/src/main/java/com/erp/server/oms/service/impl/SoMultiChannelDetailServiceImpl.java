@@ -149,7 +149,27 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-        detailList.forEach(this::update);
+        detailList.forEach(e -> {
+            SoMultiChannelDetailEntity old = super.getById(e.getId());
+            old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
+            SoMultiChannelDetailEntity soMultiChannelDetailEntity = BeanMapperUtils.map(SoMultiChannelDetailEntity.class, e);
+            // 数据处理
+            handleData(soMultiChannelDetailEntity);
+            log.info("编辑 开始修改多渠道订单明细数据，id：【{}】", old.getId());
+            boolean save = this.lambdaUpdate()
+                    .set(SoMultiChannelDetailEntity::getPlatformSkuNo, soMultiChannelDetailEntity.getPlatformSkuNo())
+                    .set(SoMultiChannelDetailEntity::getPlatformProductName, soMultiChannelDetailEntity.getPlatformProductName())
+                    .set(SoMultiChannelDetailEntity::getPlatformSpuNo, soMultiChannelDetailEntity.getPlatformSpuNo())
+                    .eq(SoMultiChannelDetailEntity::getId, soMultiChannelDetailEntity.getId()).update();
+            if (!save) {
+                throw new ServiceException("多渠道订单明细保存失败");
+            }
+            // 记录主单操作日志
+            log.info("编辑 多渠道订单明细日志数据，平台sku由【{}】改为【{}】", old.getPlatformSkuNo(), soMultiChannelDetailEntity.getPlatformSkuNo());
+            String msg = StrUtil.format("用户【{}】编辑平台sku由【{}】改为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getPlatformSkuNo(), soMultiChannelDetailEntity.getPlatformSkuNo(), "多渠道订单明细");
+            // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelDetailEntity.getMainId(), "编辑明细");
+        });
     }
 
     /**
