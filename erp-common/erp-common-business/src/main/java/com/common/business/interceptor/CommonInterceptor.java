@@ -47,8 +47,8 @@ public class CommonInterceptor implements HandlerInterceptor {
         List<String> pathList = Arrays.asList(AuthPassPath.PASS_PATH_LIST.split(";"));
         if (!pathList.contains(uri)) {
             UserContext.clear();
-            UserContext.clearIsUserSystem();
         }
+        UserContext.clearIsUserSystem();
         HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
     }
 }

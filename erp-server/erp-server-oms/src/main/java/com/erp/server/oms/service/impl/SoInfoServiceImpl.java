@@ -1529,8 +1529,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //修改 订单详情
             soDetailService.updateSoDetail(soInfo, dto.getIsTax(), dto.getDetailList(),old);
-            //更新收款单信息
-            soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+            try {
+                UserContext.setIsUserSystem(true);
+                //更新收款单信息
+                soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
+
             return id;
         }
         return "";

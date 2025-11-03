@@ -163,6 +163,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             existMapping.getThirdName(), "");
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            existMapping.getThirdName(), "");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -190,6 +194,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             oldEntity.getThirdName(), existMapping.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            oldEntity.getThirdName(), existMapping.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -213,6 +221,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
                             "", newEntity.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                } else if ("platform".equals(newEntity.getType())){
+                        // 操作日志
+                        String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
+                                "", newEntity.getThirdName());
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),

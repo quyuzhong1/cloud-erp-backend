@@ -420,7 +420,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         //生成装箱任务
-        packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
+        try {
+            UserContext.setIsUserSystem(true);
+            packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         return soDeliveryNoticeEntity.getId();
     }
 

@@ -438,6 +438,10 @@ public class AssetCardDTO implements Serializable {
         */
         private String remark;
 
+        /**
+        * 明细列表
+        */
+        private List<AssetCardDetailDTO.ViewDTO> detailList;
 
     }
 

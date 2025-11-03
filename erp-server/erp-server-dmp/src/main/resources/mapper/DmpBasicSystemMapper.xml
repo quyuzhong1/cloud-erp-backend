@@ -32,13 +32,48 @@
         code, name, type, disabled
     </sql>
 
-    <select id="listDmpBasicSystem" resultType="com.erp.model.plm.dto.DictControllerDTO$DictDropDownDTO">
+    <select id="listDmpBasicSystem" resultType="com.common.business.dto.base.BaseDropDownDTO$DictDropDownDTO">
         SELECT
             id AS code,
-            name
+            name,
+            disabled
         FROM dmp_basic_system
         WHERE is_deleted = FALSE
     </select>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_basic_system
+        where
+            ${params.sqlMap.default}
+            and is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_basic_system where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$ListDTO">
+
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_basic_system
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
 
 </mapper>

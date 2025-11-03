@@ -190,8 +190,17 @@ public enum ModuleTypeEnum {
     ASSET_PURCHASE_ORDER("154","资产采购单"),
     ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
     DICT_BASIC("150", "字典数据"),
+    // DMP配置
+    DMP_BASIC_SYSTEM("1000", "平台管理"),
+    DMP_CFG_INPUT("1001", "拉取配置"),
+    DMP_CFG_INPUT_DETAIL("1002", "拉取调度"),
+    DMP_INPUT_TASK("1003", "拉取任务"),
+    DMP_CFG_ETL("1004", "清洗调度"),
+    DMP_ETL_TASK("1005", "清洗任务"),
+    DMP_CFG_OUTPUT("1006", "推送配置"),
+    DMP_CFG_OUTPUT_DETAIL("1007", "推送调度"),
+    DMP_OUTPUT_TASK("1008", "推送任务"),
     ;
-
 
 
 
