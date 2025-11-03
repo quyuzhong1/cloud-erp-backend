@@ -46,7 +46,7 @@ public class ThirdWarehouseRefreshTokenJob {
     @XxlJob("refreshThirdWarehouseToken")
     public ReturnT<String> refreshThirdWarehouseToken() {
         XxlJobHelper.log("[刷新三方仓token] 任务开始--------------------------------------->");
-        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.list();
+        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
         //refreshToken过期的，将状态更新为未授权
         List<OverseasProviderEntity> refreshTokenExpireList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
@@ -81,7 +81,6 @@ public class ThirdWarehouseRefreshTokenJob {
         if(CollectionUtils.isNotEmpty(refreshTokenExpireList)){
             overseasProviderService.updateBatchById(refreshTokenExpireList);
         }
-        overseasProviderEntityList = overseasProviderService.list();
         overseasProviderEntityList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
                     Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
