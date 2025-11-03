@@ -126,7 +126,11 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 AssetCardDetailEntity detailEntity = new AssetCardDetailEntity();
                 detailEntity.setMainId(assetCardEntity.getId());
                 detailEntity.setSourceDetailId(detailDTO.getSourceDetailId());
-                detailEntity.setAssetCode(detailDTO.getAssetCode());
+                
+                // 自动生成资产编码：ZC + 年月日(YYMMDD) + 6位流水号
+                String assetCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC);
+                detailEntity.setAssetCode(assetCode);
+                
                 detailEntity.setAssetLocationId(detailDTO.getAssetLocationId());
                 detailEntity.setQty(detailDTO.getQty());
                 detailEntity.setSupplierId(detailDTO.getSupplierId());
@@ -226,7 +230,11 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                     AssetCardDetailEntity newDetail = new AssetCardDetailEntity();
                     newDetail.setMainId(addOrUpdateDTO.getId());
                     newDetail.setSourceDetailId(detailDTO.getSourceDetailId());
-                    newDetail.setAssetCode(detailDTO.getAssetCode());
+                    
+                    // 自动生成资产编码：ZC + 年月日(YYMMDD) + 6位流水号
+                    String assetCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC);
+                    newDetail.setAssetCode(assetCode);
+                    
                     newDetail.setAssetLocationId(detailDTO.getAssetLocationId());
                     newDetail.setQty(detailDTO.getQty());
                     newDetail.setSupplierId(detailDTO.getSupplierId());
