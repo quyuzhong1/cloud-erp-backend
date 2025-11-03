@@ -128,7 +128,7 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
 
     @Override
     public List<ApproveTaskDetailEntity> listByMainId(String id) {
-        return lambdaQuery().eq(ApproveTaskDetailEntity::getMianId,id).list();
+        return baseMapper.listByMainId(id);
     }
 
     @Override
