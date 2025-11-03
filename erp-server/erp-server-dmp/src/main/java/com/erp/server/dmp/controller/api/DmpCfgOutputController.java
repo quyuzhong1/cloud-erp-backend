@@ -6,6 +6,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.server.dmp.query.DmpCfgOutputQueryHandler;
+import com.erp.server.dmp.service.DmpCfgInputConvertService;
+import com.erp.server.dmp.service.DmpCfgInputService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -48,6 +50,8 @@ public class DmpCfgOutputController extends BaseController {
 
     @Resource
     private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
 
     /**
     * 新增
@@ -234,9 +238,26 @@ public class DmpCfgOutputController extends BaseController {
             menuCode = "dmp:dmpCfgOutput:view",
             serviceClass = DmpCfgOutputService.class,
             keyIdName = "id")
-    @LogViewService
     public ApiResult<DmpCfgOutputDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(dmpCfgOutputService.view(id));
+    }
+
+    /**
+     * 详情(切面使用)
+     * @author Jim
+     * @date:  2025-10-23
+     * @param id
+     * @return ApiResult<DmpCfgInputDTO.ViewDTO>>
+     */
+    @GetMapping("/viewEntity")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:dmpCfgOutput:view",
+            serviceClass = DmpCfgOutputService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<DmpCfgOutputEntity> viewEntity(@RequestParam("id") String id) {
+        return success(dmpCfgOutputService.viewEntity(id));
     }
 
     /**

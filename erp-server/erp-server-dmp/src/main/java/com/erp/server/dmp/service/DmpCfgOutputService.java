@@ -84,4 +84,6 @@ public interface DmpCfgOutputService extends SuperService<DmpCfgOutputEntity> {
     BatchResultDTO enable(DmpCfgOutputEntity entity);
 
     BatchResultDTO disable(DmpCfgOutputEntity entity);
+
+    DmpCfgOutputEntity viewEntity(String id);
 }
