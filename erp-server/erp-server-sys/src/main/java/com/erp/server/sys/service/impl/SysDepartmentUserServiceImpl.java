@@ -1,5 +1,7 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -179,9 +181,13 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public List<UserSuperiorDTO> listSuperiorByUserId(String userId) {
         List<UserSuperiorDTO> resultList = baseMapper.listSuperiorByUserId(userId);
-        // 如果不包含自己, 则过滤掉包含自己的上级
-        if (CollectionUtils.isNotEmpty(resultList)) {
-            resultList = resultList.stream().filter(x -> !userId.equals(x.getUserId())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(resultList)) {
+            return resultList;
+        }
+        // 统计是否包含自己，如果只有自己，则直接返回，否则过滤掉包含自己的上级
+        long count = resultList.stream().filter(x -> CharSequenceUtil.isNotBlank(x.getUserId()) && !userId.equals(x.getUserId())).count();
+        if (count > 0) {
+            return resultList.stream().filter(x -> !userId.equals(x.getUserId())).collect(Collectors.toList());
         }
         return resultList;
     }

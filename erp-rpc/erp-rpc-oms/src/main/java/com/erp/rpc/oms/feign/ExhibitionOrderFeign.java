@@ -1,6 +1,8 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -23,5 +25,13 @@ public interface ExhibitionOrderFeign {
 
     @PostMapping("/feign/exhibitionOrder/generateDownstreamByExhibitionOrder")
     ExhibitionOrderDTO.DownstreamDTO generateDownstreamByExhibitionOrder(@RequestBody String exhibitionOrderId);
+
+    /**
+     * 展会订单审核
+     * @param baseApproveParamDTO
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/feign/exhibitionOrder/approve")
+    List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
 }

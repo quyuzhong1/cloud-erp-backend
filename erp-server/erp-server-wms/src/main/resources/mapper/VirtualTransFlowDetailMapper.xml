@@ -143,129 +143,59 @@
     <!-- 按sku显示冻结库存差异 -->
     <select id="listDiffSkuSendNotice"
             resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$SendNoticeSkuDTO">
-        select * from (
-        WITH virtualInventoryDetailHis AS (
         select
-            vid.sku_id,
-            vid.warehouse_id,
-            vid.virtual_warehouse_id,
-            sum(vidh.wait_qty * vidh.inventory_age_days) as backInventoryAgeQty,
-            sum(vidh.qty * vidh.inventory_age_days) as inventoryAgeQty
-        from virtual_inventory_detail_his vidh
-        left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-        where vidh.is_deleted = false and vidh.date = CURRENT_DATE - INTERVAL '1 day'
-        group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
-        ),VirtualInventoryHis AS (
-        SELECT
-            vi.sku_id,
-            vi.warehouse_id,
-            vi.virtual_warehouse_id,
-            SUM(vih.qty) AS virtualQty,
-            SUM(CASE WHEN vi.dict_inventory_status = 'usable' THEN vih.qty ELSE 0 END) AS virtualUsableQty,
-            SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
-        FROM
-        virtual_inventory_his vih
-        left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
-        WHERE
-        vih.is_deleted = false and vih.date = CURRENT_DATE - INTERVAL '1 day'
-        GROUP BY
-        vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
-        ),CombinedProcessing AS (
-        SELECT
-        sku_id,
-        warehouse_id,
-        virtual_warehouse_id,
-        SUM(frozen_qty) AS frozenQty
-        FROM (
-        SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM first_mile_processing WHERE is_deleted = false
-        UNION ALL
-        SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2b_processing WHERE is_deleted = false
-        UNION ALL
-        SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2c_processing WHERE is_deleted = false
-        ) AS combined
-        GROUP BY sku_id, warehouse_id, virtual_warehouse_id
-        )
-        select
-        vidh.sku_id as skuId,
-        pd.sku_no as skuNo,
-        vidh.warehouse_id as warehouseId,
-        wh."name" as warehouseName,
-        vidh.virtual_warehouse_id as virtualWarehouseId,
-        vw.code as virtualWarehouseCode,
-        vw.name as virtualWarehouseName,
-        vih.virtualFrozenQty,
-        COALESCE(cp.frozenQty,0) as billFrozenQty,
-        case when vih.virtualFrozenQty = COALESCE(cp.frozenQty,0) then false else true end as frozenIsDiff
-        from virtualInventoryDetailHis vidh
-        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
-        and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
-        left join CombinedProcessing cp on vidh.sku_id = cp.sku_id and vidh.warehouse_id = cp.warehouse_id and vidh.virtual_warehouse_id = cp.virtual_warehouse_id
-        left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
-        ) as all_data
-        where  frozenIsDiff = true
+            vidh.date as date,
+            vidh.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as productName,
+            vidh.warehouse_id as warehouseId,
+            wh."name" as warehouseName,
+            vidh.virtual_warehouse_id as virtualWarehouseId,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
+            vidh.update_time as updateTime,
+            vidh.virtual_qty as virtualQty,
+            vidh.virtual_usable_qty as virtualUsableQty,
+            vidh.virtual_frozen_qty as virtualFrozenQty,
+            vidh.avg_inventory_age as avgInventoryAge,
+            vidh.back_avg_inventory_age as backAvgInventoryAge,
+            vidh.is_diff as isDiff,
+            vidh.frozen_qty as billFrozenQty,
+            vidh.frozen_is_diff as frozenIsDiff
+        from virtual_inventory_age vidh
+            left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
+            left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
+            left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where vidh.frozen_is_diff = true and date = CURRENT_DATE - INTERVAL '1 day'
     </select>
 
     <!-- 按汇总显示冻结库存差异 -->
     <select id="listDiffTotalSendNotice"
             resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$SendNoticeTotalDTO">
-        select * from (
-          WITH virtualInventoryDetailHis AS (
-              select
-                  vid.sku_id,
-                  vid.virtual_warehouse_id,
-                  sum(vidh.wait_qty * vidh.inventory_age_days) as backInventoryAgeQty,
-                  sum(vidh.qty * vidh.inventory_age_days) as inventoryAgeQty
-              from virtual_inventory_detail_his vidh
-                       left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-              where vidh.is_deleted = false and vidh.date = CURRENT_DATE - INTERVAL '1 day'
-          group by vid.sku_id,vid.virtual_warehouse_id
-      ),VirtualInventoryHis AS (
-        SELECT
-            vi.sku_id,
-            vi.virtual_warehouse_id,
-            SUM(vih.qty) AS virtualQty,
-            SUM(CASE WHEN vi.dict_inventory_status = 'usable' THEN vih.qty ELSE 0 END) AS virtualUsableQty,
-            SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
-        FROM
-            virtual_inventory_his vih
-                left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
-        WHERE
-            vih.is_deleted = false and vih.date = CURRENT_DATE - INTERVAL '1 day'
-        GROUP BY
-            vi.sku_id, vi.virtual_warehouse_id
-            ),CombinedProcessing AS (
-        SELECT
-            sku_id,
-            virtual_warehouse_id,
-            SUM(frozen_qty) AS frozenQty
-        FROM (
-            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM first_mile_processing WHERE is_deleted = false
-            UNION ALL
-            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2b_processing WHERE is_deleted = false
-            UNION ALL
-            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2c_processing WHERE is_deleted = false
-            ) AS combined
-        GROUP BY sku_id, virtual_warehouse_id
-            )
         select
+            vidh.date as date,
             vidh.sku_id as skuId,
             pd.sku_no as skuNo,
+            pd.name as productName,
+            vidh.warehouse_id as warehouseId,
+            wh."name" as warehouseName,
             vidh.virtual_warehouse_id as virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
-            vih.virtualFrozenQty,
-            COALESCE(cp.frozenQty,0) as billFrozenQty,
-            case when vih.virtualFrozenQty = COALESCE(cp.frozenQty,0) then false else true end as frozenIsDiff
-        from virtualInventoryDetailHis vidh
-                 left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
-             and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
-                 left join CombinedProcessing cp on vidh.sku_id = cp.sku_id  and vidh.virtual_warehouse_id = cp.virtual_warehouse_id
-                 left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
-                 left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
-            ) as all_data
-        where  frozenIsDiff = true
+            vidh.update_time as updateTime,
+            vidh.virtual_qty as virtualQty,
+            vidh.virtual_usable_qty as virtualUsableQty,
+            vidh.virtual_frozen_qty as virtualFrozenQty,
+            vidh.avg_inventory_age as avgInventoryAge,
+            vidh.back_avg_inventory_age as backAvgInventoryAge,
+            vidh.is_diff as isDiff,
+            vidh.frozen_qty as billFrozenQty,
+            vidh.frozen_is_diff as frozenIsDiff
+        from virtual_inventory_age vidh
+            left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
+            left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
+            left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where vidh.frozen_is_diff = true and date = CURRENT_DATE - INTERVAL '1 day'
     </select>
 
 

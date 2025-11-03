@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -133,4 +134,5 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
     }
+
 }

@@ -330,9 +330,10 @@ public class CfgQueryConditionDTO implements Serializable {
     @NoArgsConstructor
     public static class Option {
 
-        private Objects code;
+        //[{"label":"","value":""}]
+        private Object label;
 
-        private String name;
+        private String value;
     }
 
     /**

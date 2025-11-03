@@ -22,7 +22,6 @@ public interface CommonService {
 
     public List<FindUserDTO> getAllUser();
 
-
     String getUidByUnionId(String fsPlatform, String fsUnionId);
 
     /**
