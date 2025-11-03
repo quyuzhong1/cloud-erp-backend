@@ -4,7 +4,8 @@ import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
-
+import com.common.business.vo.PagingVO;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -44,4 +45,54 @@ public interface DmpCfgInputDetailService extends SuperService<DmpCfgInputDetail
      * @return 可执行的任务列表-明细维度
      */
     List<DmpInoutDTO.ListDTO> listBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
+
+    /**
+     * 分页列表查询
+     * @author Jim
+     * @date: 2025-10-23
+     * @param pagingParamDTO
+     * @return PagingVO<DmpCfgInputDetailDTO.ListDTO>>
+     */
+    PagingVO<DmpCfgInputDetailDTO.ListDTO> paging(PagingDTO<DmpCfgInputDetailDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 状态统计
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @return List<DmpCfgInputDetailDTO.TabListDTO>>
+     */
+    List<DmpCfgInputDetailDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 详情
+     * @author Jim
+     * @date: 2025-10-23
+     * @param id
+     * @return
+     */
+    DmpCfgInputDetailDTO.ViewDTO view(String id);
+
+    /**
+     * 删除
+     * @author Jim
+     * @date: 2025-10-23
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 导出Excel
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @param response
+     * @return
+     */
+    void exportList(DmpCfgInputDetailDTO.ExportDTO dto, HttpServletResponse response);
+
+    BatchResultDTO enable(DmpCfgInputDetailEntity entity);
+
+    BatchResultDTO disable(DmpCfgInputDetailEntity entity);
 }
