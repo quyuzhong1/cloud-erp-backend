@@ -27,6 +27,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.constant.*;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -667,8 +668,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             CustomerB2cEntity cutomer = customerB2cService.getByIdOrName(addDTO.getReceiverDTO().getCustomerId());
             if (Objects.isNull(cutomer)) {
                 CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO, soB2cEntity.getId());
-                String customerId = customerB2cService.add(dto);
-                addDTO.getReceiverDTO().setCustomerId(customerId);
+                try {
+                    UserContext.setIsUserSystem(true);
+                    String customerId = customerB2cService.add(dto);
+                    addDTO.getReceiverDTO().setCustomerId(customerId);
+                }finally {
+                    UserContext.clearIsUserSystem();
+                }
             }
             //新增买家信息
             soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
@@ -719,6 +725,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverDTO.AddDTO receiverDTO = addDTO.getReceiverDTO();
         CustomerB2CDTO.AddDTO add = CustomerInfoConverter.INSTANCE.soB2cAddToCustomerBase(addDTO, id);
         add.setApproveStatus(ApproveStatusEnum.APPROVE);
+        add.setApproveUserName(UserStateConstants.USER_SYSTEM);
         //联系人信息
         CustomerContactDTO.AddDTO contact = CustomerInfoConverter.INSTANCE.soB2cAddReceiveToContact(receiverDTO);
         add.setContactList(Collections.singletonList(contact));
@@ -733,6 +740,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverDTO.UpdateDTO receiverDTO = updateDTO.getReceiverDTO();
         CustomerB2CDTO.AddDTO add = CustomerInfoConverter.INSTANCE.soB2cUpdateToCustomerBase(updateDTO);
         add.setApproveStatus(ApproveStatusEnum.APPROVE);
+        add.setApproveUserName(UserStateConstants.USER_SYSTEM);
         //联系人信息
         CustomerContactDTO.AddDTO contact = CustomerInfoConverter.INSTANCE.soB2cUpdateReceiveToContact(receiverDTO);
         add.setContactList(Collections.singletonList(contact));
@@ -1460,8 +1468,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus(), isMatch,dto);
         if (ApproveStatusEnum.APPROVE.getCode().equals(approveStatus.getStatus())){
-            //生成nf-e发票
-            cfgInvoiceSettingDetailService.generateNfeInvoice (entity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+            try {
+                //生成nf-e发票
+                UserContext.setIsUserSystem(true);
+                cfgInvoiceSettingDetailService.generateNfeInvoice (entity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
         }
 
         //推送到DMP
@@ -2012,6 +2025,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if (Boolean.TRUE.equals(isDelivery)) {
                 try {
+                    UserContext.setIsUserSystem(true);
                     //提交发货
                     submitDelivery(id, "");
                 }catch (Exception e){
@@ -2022,6 +2036,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addError.setMainId(id);
                     addError.setMessage(e.getMessage());
                     soB2cErrorService.add(addError);
+                }finally {
+                    UserContext.clearIsUserSystem();
                 }
             }
 
@@ -9956,10 +9972,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //生成发货单和出库单
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())).findFirst().orElse(new SoB2cReceiverEntity());
             try {
+                UserContext.setIsUserSystem(true);
                 soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity,detailEntityList,dto,soB2cLogisticsEntity,soB2cReceiverEntity);
             } catch (Exception e) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage())));
                 continue;
+            }finally {
+                UserContext.clearIsUserSystem();
             }
             updateLogisticList.add(soB2cLogisticsEntity);
             if (dto.getPlatformShipFlag() && this.checkPlatformShipOrder(soB2cEntity.getId()) && !soB2cEntity.hasPlatformWarehouseOrder()) {
