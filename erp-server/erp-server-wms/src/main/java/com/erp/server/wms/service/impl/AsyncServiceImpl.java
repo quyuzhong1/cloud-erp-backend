@@ -255,11 +255,16 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void syncAutoOut(SoB2cDeliveryEntity entity) {
-        //生成直接调拨单
-        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-        if (isPush) {
-            //出库
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
+        try {
+            UserContext.setIsUserSystem(true);
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+            if (isPush) {
+                //出库
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+        }finally {
+            UserContext.clearIsUserSystem();
         }
     }
 

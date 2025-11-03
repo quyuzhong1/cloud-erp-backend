@@ -2064,7 +2064,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         pickingListsService.add(addDTO);
         requisitionApplicationDetailService.updateBatchById(updateDetails);
         //生成装箱任务
-        packingTaskService.addPackingByRequisition(application);
+        try {
+            UserContext.setIsUserSystem(true);
+            packingTaskService.addPackingByRequisition(application);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         //回写要货申请的拣货单生成状态
         writeBackRequisitionPickPushDownStatus(application.getId());
         return Collections.emptyList();

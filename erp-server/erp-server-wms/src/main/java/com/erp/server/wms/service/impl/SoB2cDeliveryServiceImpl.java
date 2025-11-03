@@ -2093,7 +2093,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
             List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
             if (CollectionUtils.isNotEmpty(skus)) {
-                generateReplenish(detailEntities, entity, skus);
+                try {
+                    UserContext.setIsUserSystem(true);
+                    generateReplenish(detailEntities, entity, skus);
+                }finally {
+                    UserContext.clearIsUserSystem();
+                }
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
                 dto.getIds().remove(entity.getId());

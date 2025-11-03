@@ -1907,21 +1907,26 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveCustom(ShopInfoEntity shopInfoEntity) {
-        if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
-            //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
-            CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
-            if (Objects.nonNull(customerInfoEntity)) {
-                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
-                if (Objects.isNull( approveStatus) || Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
-                    List<String> ids = Arrays.asList(customerInfoEntity.getId());
-                    //提交
-                    Boolean submitResult = customerInfoService.submit(ids);
+        try {
+            UserContext.setIsUserSystem(true);
+            if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
+                //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
+                CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
+                if (Objects.nonNull(customerInfoEntity)) {
+                    ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+                    if (Objects.isNull( approveStatus) || Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
+                        List<String> ids = Arrays.asList(customerInfoEntity.getId());
+                        //提交
+                        Boolean submitResult = customerInfoService.submit(ids);
 //                    if (submitResult) {
 //                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
 //                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
 //                    }
+                    }
                 }
             }
+        }finally {
+            UserContext.clearIsUserSystem();
         }
     }
 

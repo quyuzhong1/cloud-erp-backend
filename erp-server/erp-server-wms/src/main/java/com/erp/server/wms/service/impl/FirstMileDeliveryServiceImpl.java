@@ -1713,10 +1713,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 continue;
             }
             try {
+                UserContext.setIsUserSystem(true);
                 resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
             }catch (Exception e){
                 log.error("加工单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }finally {
+                UserContext.clearIsUserSystem();
             }
         }
         return resultDTOS;

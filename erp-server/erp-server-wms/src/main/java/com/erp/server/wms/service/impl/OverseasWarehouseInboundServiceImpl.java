@@ -685,17 +685,22 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     || OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("已经自动完结或手动完结，不能手动完结");
             }
-            //签收数小于发货数情况下手动完结生成其他出库单（报损）在途仓
-            List<OverseasWarehouseInboundDetailEntity> lossDetailList = detailEntityList.stream().filter(v->v.getDiffQty()<0).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(lossDetailList)){
-                updateDetailEntityList.addAll(lossDetailList);
-                otherOutstockService.generateByOverseasInbound(entity,lossDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
-            }
-            //签收数大于发货数情况下自动完结再签收再手动完结生成其他入库单（报溢）在途仓
-            List<OverseasWarehouseInboundDetailEntity> profitDetailList = detailEntityList.stream().filter(v->v.getDiffQty()>0).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(profitDetailList)){
-                updateDetailEntityList.addAll(profitDetailList);
-                otherInstockService.generateByOverseasInbound(entity,profitDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
+            try {
+                UserContext.setIsUserSystem(true);
+                //签收数小于发货数情况下手动完结生成其他出库单（报损）在途仓
+                List<OverseasWarehouseInboundDetailEntity> lossDetailList = detailEntityList.stream().filter(v->v.getDiffQty()<0).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(lossDetailList)){
+                    updateDetailEntityList.addAll(lossDetailList);
+                    otherOutstockService.generateByOverseasInbound(entity,lossDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
+                }
+                //签收数大于发货数情况下自动完结再签收再手动完结生成其他入库单（报溢）在途仓
+                List<OverseasWarehouseInboundDetailEntity> profitDetailList = detailEntityList.stream().filter(v->v.getDiffQty()>0).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(profitDetailList)){
+                    updateDetailEntityList.addAll(profitDetailList);
+                    otherInstockService.generateByOverseasInbound(entity,profitDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
+                }
+            }finally {
+                UserContext.clearIsUserSystem();
             }
         }
         entity.setInstockStatus(OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode());
