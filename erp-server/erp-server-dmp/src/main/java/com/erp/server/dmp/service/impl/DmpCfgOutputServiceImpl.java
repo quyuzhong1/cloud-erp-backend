@@ -26,19 +26,22 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
+import com.erp.model.dmp.dto.DmpRestCloudDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.dmp.mapper.DmpCfgOutputMapper;
-import com.erp.server.dmp.service.DmpBasicSystemService;
-import com.erp.server.dmp.service.DmpCfgOutputService;
-import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +71,10 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpBasicSystemService dmpBasicSystemService;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -186,7 +193,6 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         DmpCfgOutputDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgOutputDTO.ViewDTO.class, dmpCfgOutputEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
 
@@ -194,6 +200,48 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     private void fillOne(DmpCfgOutputDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        DmpBasicSystemEntity systemEntity = dmpBasicSystemService.getById(data.getSystemId());
+        if (ObjectUtil.isEmpty(systemEntity)) {
+            data.setSystemName("");
+        } else {
+            data.setSystemName(systemEntity.getName());
+        }
+
+        // restCloud获取流程信息
+        if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(data.getExecSystem())) {
+            if (StringUtils.isNotBlank(data.getExecUrl())) {
+                DmpRestCloudDTO.PagingParamDTO paramDTO = new DmpRestCloudDTO.PagingParamDTO();
+                // 判断ExecUrl是否有/？
+                if (data.getExecUrl().startsWith("/")){
+                    paramDTO.setFlowUrl(data.getExecUrl());
+                } else {
+                    paramDTO.setFlowUrl("/" + data.getExecUrl());
+                }
+                paramDTO.setTaskCfgType("output");
+                PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto = new PagingDTO<>();
+                dto.setCurrPage(1);
+                dto.setPageSize(1);
+                dto.setParams(paramDTO);
+                PagingVO<DmpRestCloudDTO.ListDTO> pagingVO = dmpRestCloudService.flowPaging(dto);
+                if (CollectionUtils.isNotEmpty(pagingVO.getList())) {
+                    DmpRestCloudDTO.ListDTO flowData = pagingVO.getList().get(0);
+                    data.setFlowName(flowData.getFlowName());
+                    data.setFlowCode(flowData.getFlowCode());
+                    data.setFullName(flowData.getFullName());
+                    data.setAppId(flowData.getAppId());
+                }
+            }
+        }  else {
+            // DMP
+            if (StringUtils.isNotBlank(data.getExecUrl())) {
+                DmpCfgInputConvertEntity inputConvertEntity = dmpCfgInputConvertService.getById(data.getInputConvertId());
+                if (null != inputConvertEntity) {
+                    data.setInputConvertType(inputConvertEntity.getType());
+                    data.setInputConvertClass(inputConvertEntity.getConvertClass());
+                }
+            }
+
         }
     }
 
@@ -243,5 +291,10 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             ServiceException.runError("该【推送配置】数据已禁用，无需重复操作");
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public DmpCfgOutputEntity viewEntity(String id) {
+        return this.getById(id);
     }
 }
