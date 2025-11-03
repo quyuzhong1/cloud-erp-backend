@@ -346,5 +346,28 @@ public class AssetStocktakingPlanDTO implements Serializable {
 
     }
 
+    /**
+    * 下拉列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+
+        /**
+        * 主键id
+        */
+        private String id;
+
+        /**
+        * 盘点方案名称
+        */
+        private String planName;
+
+        /**
+        * 是否禁用
+        */
+        private Boolean disabled;
+
+    }
 
 }

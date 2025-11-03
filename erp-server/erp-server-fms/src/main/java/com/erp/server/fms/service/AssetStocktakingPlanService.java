@@ -176,4 +176,13 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
     */
     void importAssetStocktakingPlan(BaseDTO.ImportDTO dto);
 
+    /**
+    * 获取盘点方案下拉列表
+    * @author wuht
+    * @date: 2025-11-03
+    * @param keyword 关键字（支持方案名称模糊查询）
+    * @return List<AssetStocktakingPlanDTO.DropDownDTO>
+    */
+    List<AssetStocktakingPlanDTO.DropDownDTO> dropDownList(String keyword);
+
 }
