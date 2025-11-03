@@ -224,9 +224,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     ? detailDTO.getAssetCardStatus() 
                     : AssetCardStatusEnum.NOT_GENERATED.getStatus();
                 detailEntity.setAssetCardStatus(assetCardStatus);
-                detailEntity.setPendingQty(detailDTO.getPendingQty());
+                // DTO使用新字段名，Entity使用旧字段名进行映射
+                detailEntity.setPendingQty(detailDTO.getPendingAcceptQty());
                 detailEntity.setAcceptedQty(detailDTO.getAcceptedQty());
-                detailEntity.setAcceptableQty(detailDTO.getAcceptableQty());
+                detailEntity.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                 detailEntity.setAssetLocationId(detailDTO.getAssetLocationId());
                 detailEntity.setUseDeptName(detailDTO.getUseDeptName());
                 detailEntity.setUseDeptId(detailDTO.getUseDeptId());
@@ -454,9 +455,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                             ? existingDetail.getAssetCardStatus() 
                             : AssetCardStatusEnum.NOT_GENERATED.getStatus());
                     existingDetail.setAssetCardStatus(assetCardStatus);
-                    existingDetail.setPendingQty(detailDTO.getPendingQty());
+                    // DTO使用新字段名，Entity使用旧字段名进行映射
+                    existingDetail.setPendingQty(detailDTO.getPendingAcceptQty());
                     existingDetail.setAcceptedQty(detailDTO.getAcceptedQty());
-                    existingDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    existingDetail.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                     existingDetail.setAssetLocationId(detailDTO.getAssetLocationId());
                     existingDetail.setUseDeptName(detailDTO.getUseDeptName());
                     existingDetail.setUseDeptId(detailDTO.getUseDeptId());
@@ -476,9 +478,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         ? detailDTO.getAssetCardStatus() 
                         : AssetCardStatusEnum.NOT_GENERATED.getStatus();
                     newDetail.setAssetCardStatus(assetCardStatus);
-                    newDetail.setPendingQty(detailDTO.getPendingQty());
+                    // DTO使用新字段名，Entity使用旧字段名进行映射
+                    newDetail.setPendingQty(detailDTO.getPendingAcceptQty());
                     newDetail.setAcceptedQty(detailDTO.getAcceptedQty());
-                    newDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    newDetail.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                     newDetail.setAssetLocationId(detailDTO.getAssetLocationId());
                     newDetail.setUseDeptName(detailDTO.getUseDeptName());
                     newDetail.setUseDeptId(detailDTO.getUseDeptId());
@@ -925,6 +928,15 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         data.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
+        
+        // 查询相关的附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            data.setAttachmentNameList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachmentUrlList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
+        
         return data;
     }
     /**
@@ -1200,16 +1212,19 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                             }
 
                             // 注释：
+                            // 0. 采购数量
+                            detailView.setPurchaseQty(purchaseQty);
+                            
                             // 1. 已验收数量 = 已审核资产验收单验收数量
                             detailView.setAcceptedQty(approvedAcceptQty);
                             
                             // 2. 待验收数量 = 采购数量 - 已验收数量
                             int pendingAcceptQty = purchaseQty - approvedAcceptQty;
-                            detailView.setPendingQty(Math.max(pendingAcceptQty, 0));
+                            detailView.setPendingAcceptQty(Math.max(pendingAcceptQty, 0));
                             
                             // 3. 可验收数量 = 待验收数量 - 待提交、审核中、审核不通过的资产验收单验收数量
                             int availableAcceptQty = pendingAcceptQty - processingAcceptQty;
-                            detailView.setAcceptableQty(Math.max(availableAcceptQty, 0));
+                            detailView.setAvailableAcceptQty(Math.max(availableAcceptQty, 0));
                         }
                         
                         return detailView;
@@ -1846,9 +1861,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 detailDTO.setProductName(importDTO.getProductName());
                 detailDTO.setAcceptQty(importDTO.getAcceptQty());
                 detailDTO.setAssetCardStatus(AssetCardStatusEnum.NOT_GENERATED.getStatus());
-                detailDTO.setPendingQty(0);
+                // DTO使用新字段名
+                detailDTO.setPurchaseQty(0);
+                detailDTO.setPendingAcceptQty(0);
                 detailDTO.setAcceptedQty(0);
-                detailDTO.setAcceptableQty(importDTO.getAcceptQty());
+                detailDTO.setAvailableAcceptQty(importDTO.getAcceptQty());
                 detailDTO.setAssetLocationId(importDTO.getAssetLocationId());
                 detailDTO.setUseDeptName(importDTO.getUseDeptName());
                 detailDTO.setUseDeptId(importDTO.getUseDeptId());

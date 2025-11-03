@@ -73,9 +73,14 @@ public class AssetAcceptDetailDTO implements Serializable {
         private String assetCardStatus;
 
         /**
+        * 采购数量
+        */
+        private Integer purchaseQty;
+
+        /**
         * 待验收数量
         */
-        private Integer pendingQty;
+        private Integer pendingAcceptQty;
 
         /**
         * 已验收数量
@@ -85,7 +90,7 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 可验收数量
         */
-        private Integer acceptableQty;
+        private Integer availableAcceptQty;
 
         /**
         * 资产位置ID
@@ -195,9 +200,14 @@ public class AssetAcceptDetailDTO implements Serializable {
         }
 
         /**
+        * 采购数量
+        */
+        private Integer purchaseQty;
+
+        /**
         * 待验收数量
         */
-        private Integer pendingQty;
+        private Integer pendingAcceptQty;
 
         /**
         * 已验收数量
@@ -207,7 +217,7 @@ public class AssetAcceptDetailDTO implements Serializable {
         /**
         * 可验收数量
         */
-        private Integer acceptableQty;
+        private Integer availableAcceptQty;
 
         /**
         * 资产位置ID
