@@ -194,7 +194,7 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void getSupplyQrCode() {
-        String supplyId = "WB-GI-SAND-8316";
+        String supplyId = "WB-GI-SAND-9373";
         String addOrderToSupplyResponse = wildberriesSDKService.getSupplyQrCode(WildberriesConstant.TOKEN, supplyId);
     }
 
