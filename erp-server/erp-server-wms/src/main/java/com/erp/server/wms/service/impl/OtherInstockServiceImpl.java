@@ -20,6 +20,7 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -48,7 +49,6 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -103,8 +103,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -121,7 +119,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
 
 /**
@@ -724,7 +721,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
         //审核中允许审核
@@ -738,6 +736,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.OTHER_INSTOCK.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -843,7 +842,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
         }
     }
@@ -1727,7 +1726,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         Map<String, Object> data = dto.getData();
         //校验data是否为空
@@ -1783,13 +1782,23 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             List<String> soOutstockIds = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
 
             //提审
-            soOutstockService.submit(soOutstockIds,Boolean.FALSE);
+            soOutstockService.submit(soOutstockEntities.get(0),Boolean.FALSE);
+
+
+            //审核通过
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(soOutstockIds.get(0));
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setComment(comment);
+            BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
+            if (!approve.getSuccess()) {
+                throw new ServiceException(approve.getMsg());
+            }
 
             Map<String, Object> map = new HashMap<>();
             map.put("otherInstockId", otherInstockId);
             map.put("soOutstockId", soOutstockIds.get(0));
             mqResponseDTO.setData(map);
-
         }catch (Exception e){
             log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
@@ -1913,59 +1922,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
 
         mqResponseDTO.setData(data);
-        return mqResponseDTO;
-    }
-
-    /**
-     * 生成其他入库单和销售出库单并审批流程
-     *
-     * @param dto MQ请求数据传输对象，包含流程审批所需的数据
-     * @return MQ响应数据传输对象，包含处理结果和错误信息
-     */
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
-        WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
-        Map<String, Object> data = dto.getData();
-        //校验data是否为空
-        if (ObjectUtil.isEmpty(data)) {
-            mqResponseDTO.setErrorMsg("data为空");
-            return mqResponseDTO;
-        }
-
-        if(!data.containsKey("otherInstockId") || Objects.isNull(data.get("otherInstockId")) || !data.containsKey("soOutstockId") || Objects.isNull(data.get("soOutstockId")) ){
-            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId为空");
-            return mqResponseDTO;
-        }
-        String otherInstockId;
-        String soOutstockId;
-        try {
-            otherInstockId = String.valueOf(data.get("otherInstockId"));
-            soOutstockId = String.valueOf(data.get("soOutstockId"));
-        } catch (Exception e) {
-            mqResponseDTO.setErrorMsg("otherInstockId或soOutstockId类型转换失败");
-            log.warn("otherInstockId 类型转换失败: {} 或 soOutstockId 类型转换失败: {}", data.get("otherInstockId"),data.get("soOutstockId"));
-            return mqResponseDTO;
-        }
-
-        try{
-
-            String comment = "展会订单自动审核通过";
-            //审核通过
-            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-            approveOneDTO.setId(soOutstockId);
-            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            approveOneDTO.setComment(comment);
-            BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
-            if (!approve.getSuccess()) {
-                throw new ServiceException(approve.getMsg());
-            }
-        }catch (Exception e){
-            log.error("生成其他入库单和销售出库单失败，otherInstockId: {}，soOutstockId: {}", otherInstockId,soOutstockId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
-            return mqResponseDTO;
-        }
         return mqResponseDTO;
     }
 }

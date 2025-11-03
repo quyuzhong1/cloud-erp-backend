@@ -26,6 +26,7 @@ public enum ApiError implements Serializable {
 
     ERROR_403(403, "您未登录,请登录后操作"),
     ERROR_401(401, "Unauthorized"),
+    ERROR_429(429, "访问频率过高，请稍后再试"),
 
     /**
      * 高级查询异常
@@ -120,13 +121,18 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
+
+    ERROR_CREATE_UPDATE_WRAPPER_ERROR(1065,"创建UpdateWrapper异常"),
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
-    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
-    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{}未找到"),
     ERROR_HAS_EXIST(1068,"{}已存在"),
     ERROR_1069(1069,"只有已禁用数据支持删除"),
@@ -191,10 +197,9 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
     MOBILE_IS_EXIST(9054,"手机号已注册"),
-
-
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_9057(9057, "【{}】模板类型已存在默认合同"),
     ERROR_DICT_BANK_IS_EXIST(9057,"银行名称【{}】不能重复"),
 
 
@@ -299,6 +304,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
+    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
 
     /**
      * PLM 错误
@@ -605,9 +611,9 @@ public enum ApiError implements Serializable {
     ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
 
-    ERROR_95291(95291,"审核中不支持上传"),
-
     ERROR_95290(95290,"【{}】已存在【{}】国家"),
+
+    ERROR_95291(95291,"审核中不支持上传"),
 
     ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
     ERROR_EXIST_SKU(95293,"SKU【{}】已存在,不允许反审核"),
@@ -875,6 +881,7 @@ public enum ApiError implements Serializable {
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
+    ERROR_CONTACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
     ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
     ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
@@ -1273,6 +1280,7 @@ public enum ApiError implements Serializable {
     ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
     ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
     ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
+    ERROR_CHANNEL_NOTFOUND(92208,"渠道编码在平台【{}】不存在【{}】"),
     ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),
     ERROR_FROM_TO_VM_SAME(92209,"调入虚拟仓和调出虚拟仓需不同"),
     ERROR_TOVM_NOTFOUND(92210,"调入虚拟仓不存在"),
@@ -1367,10 +1375,18 @@ public enum ApiError implements Serializable {
 
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+    ERROR_FBA_FNSKU_NOT_EXIST(92280, "平台SKU【{}】未匹配到FNSKU，请检查SKU是否已绑定FNSKU"),
+
+
+
+
+
+
 
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
-
+    ERROR_TRANSFER_NOT_RETRY_OUTSTOCK(92288, "发货单已调拨出库，不允许重新出库"),
+    ERROR_FBA_FNSKU_NOT_BLANK(92289, "FNSKU不能为空"),
 
     /**
      * OMS 错误
@@ -1833,6 +1849,18 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
+
+    // 单点登录相关错误码
+    SSO_APP_NOT_FOUND(20001, "应用不存在"),
+    SSO_DISABLED(20002, "单点登录功能已禁用"),
+    SSO_DECRYPT_FAILED(20003, "解密失败"),
+    SSO_PARSE_PAYLOAD_FAILED(20004, "解析payload失败"),
+    SSO_INVALID_PAYLOAD(20005, "payload内容无效"),
+    SSO_USER_NOT_BOUND(20006, "用户未绑定ERP"),
+    SSO_SYSTEM_ERROR(20007, "系统异常：{}"),
+
+    // 会话密钥相关错误码
+    SESSION_EXPIRED(29999, "会话过期，请重新协商密钥"),
     ;
 
     public Integer code;

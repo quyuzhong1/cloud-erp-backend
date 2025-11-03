@@ -92,7 +92,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             //找到集合中unique为true的元素
             Map<String, Object> map = null;
             try {
-                map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+                map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.PURCHASEORDER.getCode());
             }catch (Exception e){
                 throw new ServiceException("获取单据失败：{}", e.getMessage());
             }

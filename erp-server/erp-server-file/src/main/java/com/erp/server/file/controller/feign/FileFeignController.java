@@ -2,7 +2,9 @@ package com.erp.server.file.controller.feign;
 
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
+import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
 import org.springframework.http.MediaType;
@@ -15,7 +17,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/feign/file")
@@ -69,5 +73,13 @@ public class FileFeignController {
         while ((bytesRead = input.read(buffer)) != -1) {
             out.write(buffer, 0, bytesRead);
         }
+    }
+    @PostMapping(value = "/uploadFileByBase64")
+    public String uploadFileByBase64(@RequestParam("base64Str")String base64Str){
+        FileService fileService = fileRegistry.getHandler();
+        String[] parts = base64Str.split(",");
+        byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
+        String fileName = UUID.randomUUID().toString();
+        return fileService.uploadFile(bytes,fileName,null);
     }
 }

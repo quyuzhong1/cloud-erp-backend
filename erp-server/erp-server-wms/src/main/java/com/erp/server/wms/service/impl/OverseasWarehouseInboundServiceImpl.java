@@ -42,6 +42,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -157,8 +158,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
             providerEntity = null;
         }
+        if (FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(deliveryEntity.getDemandType())) {
+            providerEntity = null;
+        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
-
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         // 数据处理
@@ -211,11 +214,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (content != null) {
                 base64 = Base64.getEncoder().encodeToString(content);
                 mainEntity.setBase64Str(base64);
+                mainEntity.setFileName(addDTO.getAttachNameList().get(0));
             }
         }
 
         // 推送到第三方草稿
-        if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
+        if (null != providerEntity) {
             // 推送到第三方草稿
             ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
@@ -290,6 +294,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .shopId(shopId)
                 .ownerCode(providerEntity.getOwnerCode())
                 .fileBase64(mainEntity.getBase64Str())
+                .fileName(mainEntity.getFileName())
                 // 交货方式，0自送，1揽收
                 .incomeType(collectingService)
                 .receivingType(inStockType)
@@ -380,9 +385,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         // 发货单明细
@@ -418,7 +420,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (content != null) {
                 base64 = Base64.getEncoder().encodeToString(content);
                 mainEntity.setBase64Str(base64);
+                mainEntity.setFileName(updateDTO.getAttachNameList().get(0));
             }
+        }else{
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(updateDTO.getId()));
+            if(!CollectionUtils.isEmpty(attachmentList)){
+                byte[] content = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
+                if (content != null) {
+                    base64 = Base64.getEncoder().encodeToString(content);
+                    mainEntity.setBase64Str(base64);
+                    mainEntity.setFileName(attachmentList.get(0).getAttachName());
+                }
+            }
+
         }
         // 推送到第三方
         if (null != providerEntity) {
@@ -836,10 +850,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-            isApi = false;
-        }
+
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
@@ -903,10 +914,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public List<String> getReceiptNumbersForStatus(List<String> statusList, String platform) {
+    public List<String> getReceiptNumbersForStatus(List<String> statusList, String authId) {
+        //查询授权信息下有关联erp仓库的数据
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Arrays.asList(authId));
+        overseasProviderWarehouseEntities = overseasProviderWarehouseEntities.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId()) && !v.getDisabled()).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(overseasProviderWarehouseEntities)){
+            return Collections.emptyList();
+        }
+        List<String> warehouseIds = overseasProviderWarehouseEntities.stream().map(OverseasProviderWarehouseEntity::getWarehouseId).distinct().collect(Collectors.toList());
         return this.list(Wrappers.<OverseasWarehouseInboundEntity>lambdaQuery()
                         .in(OverseasWarehouseInboundEntity::getInstockStatus, statusList)
-                        .eq(OverseasWarehouseInboundEntity::getDictPlatform,platform))
+                        .in(OverseasWarehouseInboundEntity::getToWarehouseId,warehouseIds))
                 .stream()
                 .map(OverseasWarehouseInboundEntity::getCode)
                 .distinct()

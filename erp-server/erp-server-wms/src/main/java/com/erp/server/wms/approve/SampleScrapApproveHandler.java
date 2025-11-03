@@ -22,7 +22,7 @@ public class SampleScrapApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO result = sampleScrapInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
+        BatchResultDTO result = sampleScrapInfoService.cancelProcess(dto, ClientTypeEnum.WEB);
         return result.getSuccess();
     }
 
@@ -38,5 +38,10 @@ public class SampleScrapApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleScrapInfoService.approveEnd(approveOneDTO,entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

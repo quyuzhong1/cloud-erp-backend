@@ -2,19 +2,23 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -22,22 +26,28 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import org.springframework.beans.BeanUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.core.utils.ExcelUtil;
@@ -48,8 +58,9 @@ import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -65,11 +76,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BACK_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_BACK_INFO;
 
 /**
  * <p>
@@ -106,19 +120,21 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     private WmsAttachmentService attachmentService;
 
     @Autowired
-    private OtherOutstockService otherOutstockService;
+    private OtherInstockService otherInstockService;
 
     @Autowired
-    private OtherOutstockDetailService otherOutstockDetailService;
+    private OtherInstockDetailService otherInstockDetailService;
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
     @Autowired
     private WarehouseService warehouseService;
-
     @Autowired
     private FileFeign fileFeign;
+
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -131,6 +147,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         handleData(sampleBackInfoEntity);
 
         log.info("开始新增样品退回单");
+
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品退回单明细不能为空");
+        }
+
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
         sampleBackInfoEntity.setCode(code);
@@ -523,9 +545,11 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单");
         }
-        BeanMapperUtils.copy(entity, viewDTO);
+        BeanUtils.copyProperties(entity, viewDTO);
 
         viewDTO.setApproveStatus(entity.getApproveStatus().getCode());
+        viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         // 设置明细列表到ViewDTO中
         List<SampleBackDetailEntity> detailEntities = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id));
         
@@ -631,6 +655,31 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
 
+        //最新审核人：如果approveUserId或approveUserName为空则去查询
+        if (StringUtils.isBlank(viewDTO.getApproveUserId()) || StringUtils.isBlank(viewDTO.getApproveUserName())) {
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BACK_INFO.getCode(), viewDTO.getId()));
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+            if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(viewDTO.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveId = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
+                        .collect(Collectors.joining(","));
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(viewDTO.getApproveUserId())) {
+                        viewDTO.setApproveUserId(curApproveId);
+                    }
+                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(viewDTO.getApproveUserName())) {
+                        viewDTO.setApproveUserName(curApproveName);
+                    }
+                }
+            }
+        }
 
         return viewDTO;
     }
@@ -758,8 +807,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
-        return this.cancelProcess(id,ClientTypeEnum.WEB);
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        return this.cancelProcess(dto,ClientTypeEnum.WEB);
     }
 
     @Override
@@ -771,14 +820,14 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         
-        // 审核通过后自动生成其他出库单
+        // 审核通过后自动生成其他入库单
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
             try {
-                generateOtherOutboundOrder(entity);
-                log.info("样品退回单审核通过，自动生成其他出库单成功，单据编号：{}", entity.getCode());
+                generateOtherInboundOrder(entity);
+                log.info("样品退回单审核通过，自动生成其他入库单成功，单据编号：{}", entity.getCode());
             } catch (Exception e) {
-                log.error("样品退回单审核通过，自动生成其他出库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-                throw new ServiceException("样品退回单审核通过，自动生成其他出库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+                log.error("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
             }
         }
         
@@ -920,8 +969,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(CharSequenceUtil.isNotBlank(curApprove) ? curApprove : data.getApproveUserName());
             }
         }
     }
@@ -935,14 +985,14 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         }
         
         // 校验明细SKU退回数量是否小于等于台账数量
-        validateSampleBackQty(entity);
+        validateQty(entity);
     }
     
     /**
      * 校验样品退回数量
      * @param entity 样品退回单实体
      */
-    private void validateSampleBackQty(SampleBackInfoEntity entity) {
+    private void validateQty(SampleBackInfoEntity entity) {
         // 获取样品退回单明细
         List<SampleBackDetailEntity> detailList = sampleBackDetailService.list(
             new LambdaQueryWrapper<SampleBackDetailEntity>()
@@ -952,43 +1002,31 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-        
+
+        List<String> skuIds = detailList.stream().map(SampleBackDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
+        // 为每个明细查询对应的台账数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
+        searchDTO.setChildId(entity.getId()); // 排除当前单据
+        searchDTO.setSkuIds(skuIds); // 查询SKU
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        Map<String, Integer> ledgerMap = ledgerList.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, SampleLedgerDTO.SkuAvailableQtyDTO::getLedgerQty, (o1, o2) -> o1));
+
         // 校验每个明细的退回数量（需要按明细查询台账，因为每个明细的使用方不同）
         for (SampleBackDetailEntity detail : detailList) {
-            String skuId = detail.getSkuId();
-            String useUserId = detail.getUseUserId();
             Integer backQty = detail.getQty();
-            
             if (backQty == null || backQty <= 0) {
                 continue; // 跳过无效数量
             }
-            
-            // 为每个明细查询对应的台账数量
-            SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-            searchDTO.setUserId(entity.getUserId());
-            searchDTO.setUseUserId(useUserId); // 设置使用方ID
-            searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
-            searchDTO.setChildId(entity.getId()); // 排除当前单据
-            searchDTO.setSkuIds(Arrays.asList(skuId)); // 只查询当前SKU
-            
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-            
-            // 计算该SKU的可用数量
-            Integer ledgerQty = 0;
-            if (CollUtil.isNotEmpty(ledgerList)) {
-                for (SampleLedgerDTO.SkuAvailableQtyDTO dto : ledgerList) {
-                    if (skuId.equals(dto.getSkuId()) && 
-                        entity.getUserId().equals(dto.getUserId()) && 
-                        useUserId.equals(dto.getUseUserId())) {
-                        ledgerQty += (dto.getAvailableQty() != null ? dto.getAvailableQty() : 0);
-                    }
-                }
-            }
-            
+            Integer ledgerQty = ledgerMap.getOrDefault(detail.getSampleLedgerId(), 0);
             if (backQty > ledgerQty) {
                 throw new ServiceException(StrUtil.format("SKU【{}】退回数量【{}】不能大于台账数量【{}】", 
                     detail.getSkuNo(), backQty, ledgerQty));
             }
+            //防止明细里还有重复
+            ledgerMap.put(detail.getSampleLedgerId(),ledgerQty - backQty);
         }
     }
 
@@ -1178,65 +1216,63 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     }
 
     /**
-     * 根据样品退回单生成其他出库单
+     * 根据样品退回单生成其他入库单
      * @param sampleBackInfo 样品退回单
      */
-    private void generateOtherOutboundOrder(SampleBackInfoEntity sampleBackInfo) {
+    private void generateOtherInboundOrder(SampleBackInfoEntity sampleBackInfo) {
         // 查询样品退回单明细
         List<SampleBackDetailEntity> detailList = sampleBackDetailService.listByMainId(sampleBackInfo.getId());
         if (CollUtil.isEmpty(detailList)) {
-            log.warn("样品退回单明细为空，无法生成其他出库单，单据编号：{}", sampleBackInfo.getCode());
+            log.warn("样品退回单明细为空，无法生成其他入库单，单据编号：{}", sampleBackInfo.getCode());
             return;
         }
 
-        List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        // 构建其他入库单明细列表
+        List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (SampleBackDetailEntity detail : detailList) {
-            OtherOutstockDetailDTO.AddDTO detailAddDTO = new OtherOutstockDetailDTO.AddDTO();
+            OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
             detailAddDTO.setSkuId(detail.getSkuId());
             detailAddDTO.setSkuNo(detail.getSkuNo());
             detailAddDTO.setActualQty(detail.getQty());
+            detailAddDTO.setRemark(detail.getRemark());
+            detailAddDTO.setSourceDetailId(detail.getId());
             detailAddDTOList.add(detailAddDTO);
         }
 
         // 构建其他入库单主表DTO
-        OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
-        //业务类型默认物料领用
-        addDTO.setType("0");
-        //出库类型默认样品领用
-        addDTO.setOutType(OutstockTypeEnum.SAMPLE_COLLECTION.getName());
+        OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
         addDTO.setBillDate(sampleBackInfo.getBackDate());
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         addDTO.setWarehouseId(sampleBackInfo.getWarehouseId());
-        addDTO.setInventoryDirection(InventoryDirectionEnum.RETURN_GOODS.getCode());
-        addDTO.setReceiverId(sampleBackInfo.getUserId());
-        addDTO.setReceiveOrgId(sampleBackInfo.getOrgId());
         addDTO.setDeptId(sampleBackInfo.getDeptId());
-        addDTO.setProcessApplyCode(sampleBackInfo.getCode());
-        addDTO.setSourceCode(sampleBackInfo.getCode());
+        addDTO.setType(InstockTypeEnum.SAMPLE_BACK.getCode());
         addDTO.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
         addDTO.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
         addDTO.setSourceId(sampleBackInfo.getId());
+        addDTO.setSourceCode(sampleBackInfo.getCode());
         addDTO.setDetailList(detailAddDTOList);
 
-        String otherOutstockId = otherOutstockService.add(addDTO);
-        if (StrUtil.isBlank(otherOutstockId)) {
+        // 调用其他入库单服务的新增方法
+        String otherInstockId = otherInstockService.add(addDTO);
+        if (StrUtil.isBlank(otherInstockId)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         
-        if (StrUtil.isNotBlank(otherOutstockId)) {
+        if (StrUtil.isNotBlank(otherInstockId)) {
             // 设置来源字段到其他入库单主表
-            OtherOutstockEntity otherOutstock = otherOutstockService.getById(otherOutstockId);
+            OtherInstockEntity otherInstock = otherInstockService.getById(otherInstockId);
             // 提交其他入库单
-            otherOutstockService.submit(otherOutstockId,Boolean.FALSE);
+            otherInstockService.submit(otherInstockId, Boolean.FALSE);
 
             // 审核通过其他入库单
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Collections.singletonList(otherOutstockId));
+            baseApproveParamDTO.setIds(Collections.singletonList(otherInstockId));
             baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
             baseApproveParamDTO.setComment("样品退回单自动审核通过");
-            otherOutstockService.approve(otherOutstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
+            otherInstockService.approve(otherInstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(),false);
 
-            log.info("样品退回单生成其他出库单并审核通过成功，样品退回单号：{}，其他出库单号：{}",
-                    sampleBackInfo.getCode(), otherOutstock.getCode());
+            log.info("样品退回单生成其他入库单并审核通过成功，样品退回单号：{}，其他入库单号：{}",
+                    sampleBackInfo.getCode(), otherInstock.getCode());
         }
     }
 
@@ -1246,58 +1282,59 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
      */
     private void handleAssociatedOtherInboundOrder(SampleBackInfoEntity entity) {
         // 查询关联的其他入库单（通过来源字段匹配）
-        List<OtherOutstockEntity> otherOutstocks = otherOutstockService.list(new LambdaQueryWrapper<OtherOutstockEntity>()
-                .eq(OtherOutstockEntity::getSourceCode, entity.getCode())
-                .eq(OtherOutstockEntity::getInvalidStatus, false)
-                .eq(OtherOutstockEntity::getIsDeleted , false));
+        List<OtherInstockEntity> otherInstocks = otherInstockService.list(new LambdaQueryWrapper<OtherInstockEntity>()
+                .eq(OtherInstockEntity::getSourceType, SourceTypeEnum.SAMPLE_BACK_INFO.getCode())
+                .eq(OtherInstockEntity::getSourceId, entity.getId())
+                .eq(OtherInstockEntity::getSourceCode, entity.getCode())
+                .eq(OtherInstockEntity::getInvalidStatus, false));
 
-        if (CollUtil.isNotEmpty(otherOutstocks)) {
-            log.info("找到关联的其他出库单，数量：{}，样品退回单号：{}", otherOutstocks.size(), entity.getCode());
+        if (CollUtil.isNotEmpty(otherInstocks)) {
+            log.info("找到关联的其他入库单，数量：{}，样品退回单号：{}", otherInstocks.size(), entity.getCode());
             
             // 先同步反审核其他入库单
-            for (OtherOutstockEntity otherOutstock : otherOutstocks) {
+            for (OtherInstockEntity otherInstock : otherInstocks) {
                 try {
                     // 如果其他入库单是已审核状态，需要先反审核
-                    if (ApproveStatusEnum.APPROVE.getStatus().equals(otherOutstock.getApproveStatus())) {
-                        log.info("开始反审核其他出库单，单号：{}，样品退回单号：{}", otherOutstock.getCode(), entity.getCode());
+                    if (ApproveStatusEnum.APPROVE.getStatus().equals(otherInstock.getApproveStatus())) {
+                        log.info("开始反审核其他入库单，单号：{}，样品退回单号：{}", otherInstock.getCode(), entity.getCode());
                         
                         // 调用其他入库单的反审核方法
-                        otherOutstockService.disApprove(otherOutstock.getId());
+                        otherInstockService.disApprove(otherInstock.getId(),false);
                         
-                        log.info("其他出库单反审核成功，单号：{}，样品退回单号：{}", otherOutstock.getCode(), entity.getCode());
+                        log.info("其他入库单反审核成功，单号：{}，样品退回单号：{}", otherInstock.getCode(), entity.getCode());
                     } else {
-                        log.info("其他出库单状态为：{}，无需反审核，单号：{}，样品退回单号：{}",
-                                otherOutstock.getApproveStatus(), otherOutstock.getCode(), entity.getCode());
+                        log.info("其他入库单状态为：{}，无需反审核，单号：{}，样品退回单号：{}",
+                                otherInstock.getApproveStatus(), otherInstock.getCode(), entity.getCode());
                     }
                 } catch (Exception e) {
-                    log.error("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
-                            otherOutstock.getCode(), entity.getCode(), e.getMessage(), e);
-                    throw new ServiceException("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
-                            otherOutstock.getCode(), entity.getCode(), e.getMessage());
+                    log.error("其他入库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
+                            otherInstock.getCode(), entity.getCode(), e.getMessage(), e);
+                    throw new ServiceException("其他入库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
+                            otherInstock.getCode(), entity.getCode(), e.getMessage());
                 }
             }
             
             // 反审核完成后，删除其他入库单主表
-            List<String> otherOutstockIds = otherOutstocks.stream()
-                    .map(OtherOutstockEntity::getId)
+            List<String> otherInstockIds = otherInstocks.stream()
+                    .map(OtherInstockEntity::getId)
                     .collect(Collectors.toList());
-            otherOutstockService.removeByIds(otherOutstockIds);
+            otherInstockService.removeByIds(otherInstockIds);
 
             // 删除其他入库单明细
-            List<String> otherOutstockDetailIds = otherOutstocks.stream()
-                    .flatMap(otherOutstock -> otherOutstockDetailService.list(new LambdaQueryWrapper<OtherOutstockDetailEntity>()
-                            .eq(OtherOutstockDetailEntity::getMainId, otherOutstock.getId())).stream()
-                            .map(OtherOutstockDetailEntity::getId))
+            List<String> otherInstockDetailIds = otherInstocks.stream()
+                    .flatMap(otherInstock -> otherInstockDetailService.list(new LambdaQueryWrapper<OtherInstockDetailEntity>()
+                            .eq(OtherInstockDetailEntity::getMainId, otherInstock.getId())).stream()
+                            .map(OtherInstockDetailEntity::getId))
                     .collect(Collectors.toList());
             
-            if (CollUtil.isNotEmpty(otherOutstockDetailIds)) {
-                otherOutstockDetailService.removeByIds(otherOutstockDetailIds);
+            if (CollUtil.isNotEmpty(otherInstockDetailIds)) {
+                otherInstockDetailService.removeByIds(otherInstockDetailIds);
             }
             
-            log.info("成功删除关联的其他出库单，主表ID：{}，明细ID：{}，样品退回单号：{}",
-                    otherOutstockIds, otherOutstockDetailIds, entity.getCode());
+            log.info("成功删除关联的其他入库单，主表ID：{}，明细ID：{}，样品退回单号：{}",
+                    otherInstockIds, otherInstockDetailIds, entity.getCode());
         } else {
-            log.info("未找到关联的其他出库单，样品退回单号：{}", entity.getCode());
+            log.info("未找到关联的其他入库单，样品退回单号：{}", entity.getCode());
         }
     }
 
@@ -1461,7 +1498,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         searchParam.setPermissionSql(dto.getPermissionSql());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 使用一个SQL查询获取所有状态的统计数量
-        List<SampleBackInfoDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+        List<SampleBackInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
 
         // 移动端特殊处理：合并待提交和不通过
         List<SampleBackInfoDTO.TabListDTO> appList = new ArrayList<>();
@@ -1580,6 +1617,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -1603,6 +1644,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+
+        // 使用分布式锁进行数量校验（反审核时也需要校验）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 同步反审核并删除关联的其他入库单
         try {
@@ -1688,7 +1732,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, ClientTypeEnum clientType) {
+        String id = dto.getId();
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
 
         // 检查单据是否已作废
@@ -1711,6 +1756,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         String msg = StrUtil.format(clientType.getName()+"用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -1772,6 +1818,30 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         
         Map<String, String> ledgerIdMap = getSampleLedgerIdMap(userId, useUserId, Collections.singletonList(skuId));
         return ledgerIdMap.get(skuId);
+    }
+
+    /**
+     * 使用分布式锁进行样品台账数量校验
+     * 实现一锁二判三放行的逻辑
+     *
+     * @param entity 样品退回单实体
+     * @param approveType 审核类型
+     */
+    private void validateSampleLedgerQtyWithLock(SampleBackInfoEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品退回单明细
+        List<SampleBackDetailEntity> detailList = sampleBackDetailService.list(
+            new LambdaQueryWrapper<SampleBackDetailEntity>()
+                .eq(SampleBackDetailEntity::getMainId, entity.getId())
+        );
+
+        // 使用通用工具类进行数量校验
+        sampleDocumentAuditUtil.validateSampleDocumentQty(
+            entity.getCode(),
+            "样品退回单",
+            detailList,
+            approveType,
+            sampleLedgerService::getLedgerQtyMap
+        );
     }
 
 }

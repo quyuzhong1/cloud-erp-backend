@@ -6,6 +6,7 @@ package com.erp.server.plm.service;/**
  * @Created by yl
  */
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -109,10 +110,10 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @description: 撤销流程
      * @author Will
      * @date: 2024/3/18 18:38
-     * @param id
+     * @param dto
      * @return BatchResultDTO
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
     /**
      * @description: 审核
      * @author Will

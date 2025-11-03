@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -294,7 +295,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         }
         AssetPurchaseChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -364,7 +365,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     public BatchResultDTO delete(String id) {
         AssetPurchaseChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
 
@@ -477,9 +478,21 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .in(AssetPurchaseOrderDetailEntity::getId, sourceIds)
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
+        
+        Boolean result = Boolean.FALSE;
+        if (dto.getType().equals(ApproveType.PASS)) {
+            result = updatePurchaseOrderData(entity, changeDetailMap, orderDetails);
+            //推送金蝶
+            syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            
+        }
+        
+        return result;
+    }
 
+
+    public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,List<AssetPurchaseOrderDetailEntity> orderDetails){
         // 批量更新
-        boolean result = true;
         for (AssetPurchaseOrderDetailEntity orderDetail : orderDetails) {
             AssetPurchaseChangeDetailEntity changeDetail = changeDetailMap.get(orderDetail.getId());
             if (changeDetail != null) {
@@ -496,16 +509,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 }
             }
         }
-        //推送金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
-            }
-        });
-        return result;
+        return Boolean.TRUE;
     }
 
 

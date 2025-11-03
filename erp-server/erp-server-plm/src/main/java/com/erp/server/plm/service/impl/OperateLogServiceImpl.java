@@ -207,23 +207,6 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     }
 
     @Override
-    public Boolean addOperateLogBySave(String content, String classPath, String moduleType, String businessId, String pid) {
-        OperateLogEntity entity = new OperateLogEntity();
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        String userName = loginUser.getUserName();
-        String userId = loginUser.getUid();
-        entity.setClassPath(classPath)
-                .setModuleType(moduleType)
-                .setBusinessId(businessId)
-                .setPid(pid)
-                .setContent(content)
-                .setOperation("新增信息")
-                .setCreateUserId(userId)
-                .setCreateUserName(userName);
-        return this.save(entity);
-    }
-
-    @Override
     public Boolean addSysLogByBatchSave(List<OperateLogEntity> list) {
 
         LoginUser loginUser = UserContext.getDefaultLoginUser();
@@ -268,5 +251,13 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     @Override
     public List<OperateLogShowDTO> listSysLog(OperateLogSelectDTO dto) {
         return baseMapper.listSysLog(dto);
+    }
+
+    @Override
+    public PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+        Page<OperateLogShowDTO.HistoryDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        OperateLogShowDTO.PagingParamDTO params = dto.getParams();
+        IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
+        return new PagingVO(pageData);
     }
 }

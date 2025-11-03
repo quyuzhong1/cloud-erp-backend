@@ -133,6 +133,6 @@ public class CaiNiaoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
     
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("receivingCode");
+    	return Arrays.asList("sourceCode");
     }
 }

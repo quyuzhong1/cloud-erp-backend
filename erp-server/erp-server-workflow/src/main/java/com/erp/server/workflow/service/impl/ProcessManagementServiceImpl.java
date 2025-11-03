@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -34,8 +35,10 @@ import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.JsonPathUtil;
+import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -91,6 +94,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
+import com.common.business.annotation.DistributeLocker;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -175,6 +179,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
 
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessId")
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);
@@ -434,6 +439,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
+    /**
+     * 校验创建审核人是否一致
+     */
+    private void checkApproveUserSame (Map<String,Object> variablesMap) {
+        //创建人
+        String createUserId = (String) variablesMap.get("createUserId");
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(createUserId,userInfo.getUid())) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
@@ -446,6 +464,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
+            //未启动流程需要判断创建人和当前登陆人是否一致
+            //checkApproveUserSame(dto.getVariablesMap());
+
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -851,7 +872,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         //判断是否走飞书流程
         Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
-        if (isFsApprove) {
+        if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getExecuteSystem())) {
             throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
         }
 
@@ -1562,6 +1583,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     public void completeTaskHandle(DelegateTask taskDelegate) {
         log.debug("completeTaskHandle finish ");
+        /*// 审批任务填充审批信息
+        DelegateExecution execution = taskDelegate.getExecution();
+        //审核人不能和创建人一样
+        String createUserId = "" + execution.getVariable("createUserId");
+        if (CharSequenceUtil.equals(createUserId,taskDelegate.getAssignee())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
+        }*/
     }
 
     /**

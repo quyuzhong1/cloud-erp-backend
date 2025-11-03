@@ -130,4 +130,12 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     SampleLedgerDTO.ViewDTO view(String id);
 
     List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(SampleLedgerDTO.SearchAllDTO dto);
+
+    /**
+     * 批量查询台账当前数量
+     * 
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到当前数量的映射
+     */
+    Map<String, Integer> getLedgerQtyMap(List<String> sampleLedgerIds);
 }

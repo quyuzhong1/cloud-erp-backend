@@ -17,10 +17,7 @@ import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.antu.dto.request.*;
-import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
-import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
-import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
+import com.sdk.wms.antu.dto.response.*;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
@@ -107,6 +104,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         this.handleData(antuCreateOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考编号已存在")){
             return success(response.getOrderCode());
         }
@@ -133,6 +131,11 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return success();
+    }
+
+    @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         AntuResponse<String> response = antuService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason(),getPlatForm());
         if(!isSuccess(response.getAsk())){
@@ -151,7 +154,11 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        throw new ServiceException("查询eccang出库单失败");
+        AntuGetOutboundRefReq antuGetOutboundReq = AntuGetOutboundRefReq.builder()
+                .referenceNo(queryOutboundReq.getErpOrderCode())
+                .build();
+        AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(antuGetOutboundReq, getPlatForm());
+        return Objects.nonNull(response.getData()) ? success(response.getData().getOrderCode()) : failure(response.getMessage());
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {

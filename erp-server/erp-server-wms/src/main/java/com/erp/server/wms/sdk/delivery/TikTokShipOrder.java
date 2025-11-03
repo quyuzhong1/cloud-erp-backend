@@ -31,10 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.dto.tiktok.ship.SelfShipmentBean;
-import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
-import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUS;
-import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUSParam;
+import com.sdk.oms.tiktok.dto.tiktok.ship.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -202,7 +199,13 @@ public class TikTokShipOrder extends AbstractShipOrder {
                     selfShipmentBean.setTrackingNumber(trackingNumber);
                     selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
                     paramDTO.setSelfShipment(selfShipmentBean);
-                    tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, detailEntity.getPlatformPackageId(), paramDTO);
+                    ShipOrderOther shipOrderOther = tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, detailEntity.getPlatformPackageId(), paramDTO);
+                    if (shipOrderOther.getCode() != 0) {
+                        if (!"Package has been shipped. Please not ship the package again.".equalsIgnoreCase(shipOrderOther.getMessage())
+                                && !"fulfillment not allow forward".equalsIgnoreCase(shipOrderOther.getMessage())) {
+                            throw new ServiceException(shipOrderOther.getMessage());
+                        }
+                    }
                 }
                 resultDetailIds.addAll(detailIdList);
             }

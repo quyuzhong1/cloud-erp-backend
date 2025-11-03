@@ -34,13 +34,6 @@ public interface TmsFirstMileLogisticFeign {
     @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileLogistic")
     BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
 
-
-    /**
-     * 获取有预警的物流单
-     **/
-    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
-    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
-
     /**
      * 根据来源id和业务类型查询头程费用分摊记录
      * @param detailDTO
@@ -56,4 +49,11 @@ public interface TmsFirstMileLogisticFeign {
      */
     @PostMapping("/feign/tmsFirstMileLogistic/getRecordBySkuIdAndCode")
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO);
+
+
+    /**
+     * 获取有预警的物流单
+     **/
+    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
 }

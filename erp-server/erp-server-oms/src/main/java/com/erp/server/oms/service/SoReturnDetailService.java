@@ -124,7 +124,6 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @Date 2024-11-08
      **/
     SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto);
-
     /**
      * 退货详情页，根据skuId + customerId查询销售出库单来获取以下字段 ：币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
      * @param dto dto

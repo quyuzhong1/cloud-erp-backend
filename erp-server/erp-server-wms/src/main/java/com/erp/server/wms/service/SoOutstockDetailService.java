@@ -188,8 +188,6 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      */
     List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
 
-    void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
-
     /**
      * 根据skuId查询Doris最新出库时间
      * @author Jim
@@ -197,4 +195,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return
      */
     Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds);
+
+    void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
+
 }

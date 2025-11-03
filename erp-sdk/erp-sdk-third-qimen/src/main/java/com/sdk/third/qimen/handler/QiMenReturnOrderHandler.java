@@ -126,7 +126,9 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             dto.setBillDate(approveTime.toLocalDate());
             dto.setInvalidStatus(false);
             dto.setApproveUserName("qimen");
+            dto.setApproveUserId("1808810116456153089");
             dto.setCreateUserName("qimen");
+            dto.setCreateUserId("1808810116456153089");
             dto.setApproveTime(approveTime);
             //店铺id
             dto.setShopId(String.valueOf(orderEntity.getShopId()));

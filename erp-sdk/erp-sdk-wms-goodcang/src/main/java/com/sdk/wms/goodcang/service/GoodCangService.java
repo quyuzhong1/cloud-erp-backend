@@ -1,9 +1,8 @@
 package com.sdk.wms.goodcang.service;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
@@ -185,7 +184,7 @@ public class GoodCangService {
         GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
         if(Objects.isNull(respDto)){
             log.error("谷仓创建出库单返回数据为空,返回值:{}", response);
-            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+            throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
         }
         if(Objects.nonNull(respDto.getOrderCode())){
             respDto.setData(respDto.getOrderCode());

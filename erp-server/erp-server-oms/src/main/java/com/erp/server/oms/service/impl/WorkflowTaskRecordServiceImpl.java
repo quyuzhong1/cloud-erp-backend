@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -101,12 +102,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     @Override
     public List<WorkflowTaskRecordEntity> listErrorTask() {
-        return baseMapper.listErrorTask();
+        return baseMapper.listErrorTask("");
     }
 
     @Override
-    public void WorkflowTaskRecordRetryJob() {
-        List<WorkflowTaskRecordEntity> list = baseMapper.listErrorTask();
+    public void WorkflowTaskRecordRetryJob(String id) {
+        List<WorkflowTaskRecordEntity> list = baseMapper.listErrorTask(id);
         if (CollectionUtil.isEmpty(list)) {
             return ;
         }
@@ -137,5 +138,24 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     public List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport() {
         return  baseMapper.getTaskErrorReport();
+    }
+
+    @Override
+    public void removeBySourceIdAndSourceType(String sourceId, String sourceType) {
+        if (CharSequenceUtil.isAllNotBlank(sourceId,sourceType)){
+            this.lambdaUpdate().eq(WorkflowTaskRecordEntity::getSourceId,sourceId)
+                    .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                    .remove();
+        }
+    }
+
+    @Override
+    public List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType) {
+        if (CharSequenceUtil.isBlank(soId)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
+                .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                .list();
     }
 }

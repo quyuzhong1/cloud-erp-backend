@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -97,7 +98,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
                 transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE, Boolean.TRUE);
             }
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(oldTransferInfo.getApproveStatus())) {
-                transferInfoService.cancelProcess(Collections.singletonList(oldTransferInfo.getId()));
+                transferInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(oldTransferInfo.getId())));
             }
             //存在则更新
             TransferInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(TransferInfoDTO.UpdateDTO.class, newTransferInfo);

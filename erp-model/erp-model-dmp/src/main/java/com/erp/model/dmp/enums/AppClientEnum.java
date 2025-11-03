@@ -29,6 +29,7 @@ public enum AppClientEnum  {
     MERCADO_LOCAL_ACCESS_TOKEN("mercadoLocalAccessToken","sales","mercadolibreLocal"),
     TIKTOK_AUTHORIZE("tikTokAuthorize","sales","TikTok"),
     TIKTOK_ACCESS_TOKEN("tikTokAccessToken","sales","TikTok"),
+    WILDBERRIES_ACCESS_TOKEN("wildberriesAccessToken","sales","wildberries"),
 
     TIKTOK_FULLY_AUTHORIZE("tikTokAuthorize","sales","TikTokFully"),
     TIKTOK_FULLY_ACCESS_TOKEN("tikTokAccessToken","sales","TikTokFully"),

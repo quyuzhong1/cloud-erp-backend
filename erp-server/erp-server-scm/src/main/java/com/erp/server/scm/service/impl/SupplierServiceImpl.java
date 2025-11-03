@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -196,6 +197,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DictCredentialService dictCredentialService;
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
@@ -681,7 +684,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
             SupplierConfigVO configVO = configVOMap.get(item.getId());
             if (Objects.nonNull(configVO)){
@@ -1488,7 +1491,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<SupplierEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -1505,6 +1509,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -2260,6 +2265,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierAccountEntity> accountList = supplierAccountService.list();
         //资质信息
         List<SupplierCredentialEntity> credentialList = supplierCredentialService.list();
+        //资质字典表
+        List<DictCredentialDTO.ListDTO> dictCredentialList = dictCredentialService.listAll();
+        Map<String, String> dictCredentialMap = dictCredentialList.stream().collect(Collectors.toMap(DictCredentialDTO.ListDTO::getName, DictCredentialDTO.ListDTO::getId, (o1, o2) -> o1));
 
         for (SupplierImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -2295,7 +2303,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierAccountDTO.ImportAddDTO accountAddDTO = checkImportAccount(dictBasicList,bankList,accountList,excelDTO, addDTO, errorMsgList, isUpdatePart);
 
             //账户信息
-            SupplierCredentialDTO.ImportAddDTO credentialAddDTO = checkImportCredential(credentialList,excelDTO, addDTO, errorMsgList, isUpdatePart);
+            SupplierCredentialDTO.ImportAddDTO credentialAddDTO = checkImportCredential(dictCredentialMap,credentialList,excelDTO, addDTO, errorMsgList, isUpdatePart);
 
             //存在错误数据则直接返回
             if (errorMsgList.size() > 0) {
@@ -2400,6 +2408,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 资质信息处理
      * @author will
      * @date 2025/7/24 16:26
+     * @param dictCredentialMap
      * @param credentialList
      * @param excelDTO
      * @param addDTO
@@ -2407,7 +2416,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param isUpdatePart
      * @return ImportAddDTO
      */
-    private SupplierCredentialDTO.ImportAddDTO checkImportCredential (List<SupplierCredentialEntity> credentialList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
+    private SupplierCredentialDTO.ImportAddDTO checkImportCredential (Map<String, String> dictCredentialMap,List<SupplierCredentialEntity> credentialList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
             ,List<String> errorMsgList,boolean isUpdatePart) {
         //资质信息
         SupplierCredentialDTO.ImportAddDTO credential = new SupplierCredentialDTO.ImportAddDTO();
@@ -2426,6 +2435,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             errorMsgList.add("资质不存在,不支持部分更新");
             return null;
         }
+
+        String dictCredentialId = dictCredentialMap.getOrDefault(excelDTO.getCredentialName(), "");
+        if(StringUtils.isBlank(dictCredentialId)){
+            errorMsgList.add("资质不存在");
+            return null;
+        }
+        credential.setCode(dictCredentialId);
         credential.setName(excelDTO.getCredentialName());
         //资质备注
         if (CharSequenceUtil.isNotBlank(excelDTO.getCredentialRemark())) {

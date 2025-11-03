@@ -24,7 +24,7 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return supplierPhaseService.cancelProcess(Collections.singletonList(dto.getId()));
+        return supplierPhaseService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override
@@ -40,5 +40,10 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         return supplierPhaseService.approveEnd(new ApproveOneDTO(entity.getId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -16,6 +17,7 @@ import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
+import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
@@ -155,9 +157,16 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
+
+    @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(jiFengCreateOutboundRequest));
         JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMessage());
         }
@@ -170,7 +179,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         jiFengCreateOutboundRequest.setErpNo(createOutboundReq.getReferenceNo());
         jiFengCreateOutboundRequest.setPlatform(PlatformDictEnum.getNameByCode(createOutboundReq.getPlatform()));
         jiFengCreateOutboundRequest.setPlatformOrderNo(createOutboundReq.getPlatformCode());
-        jiFengCreateOutboundRequest.setBuyerName(createOutboundReq.getReceiverInfo().getBuyerName());
+        jiFengCreateOutboundRequest.setBuyerName(createOutboundReq.getReceiverInfo().getName());
         jiFengCreateOutboundRequest.setBuyerPhone(createOutboundReq.getReceiverInfo().getPhone());
         jiFengCreateOutboundRequest.setRecipientCountry(createOutboundReq.getReceiverInfo().getCountryCode());
         jiFengCreateOutboundRequest.setRecipientProvince(createOutboundReq.getReceiverInfo().getProvince());
@@ -216,7 +225,11 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        return ApiResult.error("查询jifeng仓出库单失败");
+        JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
+        if(!isSuccess(outBound)){
+            return failure(outBound.getMessage());
+        }
+        return Objects.nonNull(outBound.getData()) ? success(outBound.getData().getOrderNo()) : failure(outBound.getMessage());
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {

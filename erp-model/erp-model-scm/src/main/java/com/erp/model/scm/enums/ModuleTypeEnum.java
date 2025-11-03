@@ -129,14 +129,17 @@ public enum ModuleTypeEnum {
     RULE_PROMPT_WORD("115", "汉化管理"),
     CFG_VAT_INVOICE("116", "VAT发票设置"),
     INVOICE_INFO("117", "发票上传记录"),
+
     CFG_SETTING("118", "系统配置"),
     SO_B2C_EXTEND("119", "销售订单扩展信息"),
     SO_PRICE("118", "销售价目表"),
     SO_PRICE_CHANGE("119", "销售调目表"),
-    AFTER_SALE("118", "售后申请"),
+
+    AFTER_SALE("120", "售后申请"),
     INVOICE_SETTING("121", "发票设置"),
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
     INVOICE_INVALID("123", "发票设置明细"),
+
     QC_NOTICE("124", "质检通知"),
     FIRST_MILE_CHANGE_RECORD("125", "头程调整记录"),
     CFG_RULE_INVOICE("126", "开票规则"),
@@ -153,6 +156,7 @@ public enum ModuleTypeEnum {
     LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
     CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
     DICT_HS_CODE("133", "出口申报要素"),
+    TEMPLATE_MANAGEMENT("132", "模板管理"),
     SKU_STD_COST_DETAIL("140", "SKU标准成本"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
@@ -169,8 +173,10 @@ public enum ModuleTypeEnum {
     SAMPLE_BACK_INFO("135", "样品退回单"),
     SAMPLE_LEDGER("136", "样品台账"),
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
+    PACKAGE_PLAN("138", "组包计划"),
+    SAMPLE_TRANSFER_INFO("146", "样品转移单"),
     PAYABLE_INFO("145", "应付单"),
-
+    SO_B2C_REFUND("146", "售后订单"),
 
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),
@@ -183,6 +189,7 @@ public enum ModuleTypeEnum {
     ASSET_NOTICE("153","资产通知单"),
     ASSET_PURCHASE_ORDER("154","资产采购单"),
     ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
+    DICT_BASIC("150", "字典数据"),
     ;
 
 

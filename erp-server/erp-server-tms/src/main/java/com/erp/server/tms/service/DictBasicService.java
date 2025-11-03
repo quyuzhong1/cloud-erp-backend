@@ -1,7 +1,7 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.alibaba.fastjson.JSONObject;
 import com.erp.model.tms.dto.DictBasicDTO;
 
 import java.util.List;
@@ -16,7 +16,9 @@ import java.util.List;
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
 
-
+	boolean saveJsonObject(JSONObject jsonObject);
+	
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
 
     /**
     * 修改

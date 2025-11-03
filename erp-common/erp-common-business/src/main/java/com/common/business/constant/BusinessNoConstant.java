@@ -182,9 +182,9 @@ public interface BusinessNoConstant {
     String XSJM = "XSJM";
     String XSTJ = "XSTJ";
 
-    String ZJTZ = "ZJTZ";
     //售后
     String SHSQ = "SHSQ";
+    String ZJTZ = "ZJTZ";
     String TCTZ = "TCTZ";
 
     //委托审批
@@ -200,6 +200,7 @@ public interface BusinessNoConstant {
 
     //合同管理
     String GYSHT = "GYSHT";
+    String MB = "MB";
     //样品作废单
     String YPBF = "YPBF";
     //样品借用单
@@ -213,6 +214,12 @@ public interface BusinessNoConstant {
     String YPTH="YPTH";
     //期初台账
     String QCTZ="QCTZ";
+    //样品转移单
+    String YPZY="YPZY";
+    //资质字典
+    String DC="DC";
+    //组包计划
+    String ZBJH="ZBJH";
 
     //资产位置
     String ZCWZ="ZCWZ";

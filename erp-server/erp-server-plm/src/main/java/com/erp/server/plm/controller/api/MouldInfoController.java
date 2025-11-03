@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -148,7 +149,7 @@ public class MouldInfoController extends BaseController {
         for (String id : ids) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = mouldInfoService.cancelProcess(id);
+                cancelResult = mouldInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("模具撤回流程失败",e);
                 MouldInfoEntity entity = mouldInfoService.getById(id);

@@ -2,10 +2,9 @@ package com.erp.server.dmp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -306,7 +305,7 @@ public class AfterSaleController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = afterSaleService.cancelProcess(id);
+                cancelResult = afterSaleService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("售后申请单撤回流程失败",e);
                 AfterSaleEntity entity = idEntityMap.get(id);

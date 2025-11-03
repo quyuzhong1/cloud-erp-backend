@@ -62,4 +62,11 @@ public interface ThirdWarehouseFeign {
      */
     @PostMapping("feign/thirdWarehouse/uploadOrderLabel")
     ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@RequestBody ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq);
+
+    /**
+     * 上传交接文件
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/uploadHandoverFile")
+    ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@RequestBody ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) ;
 }

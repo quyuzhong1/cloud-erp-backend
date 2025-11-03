@@ -54,10 +54,11 @@
             twdd.delivery_qty as qty,
             twdd.warehouse_id as warehouseId,
             twd.create_time as createTime,
-            sb.so_outstock_date as outstockDate,
+            so.bill_date as outstockDate,
             sb.sign_order_error as signOrderError
         from third_warehouse_delivery twd
         inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
+        left join so_outstock so on so.source_id = twd.id and so.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
             inner join erp_oms.so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
             inner join erp_oms.so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false

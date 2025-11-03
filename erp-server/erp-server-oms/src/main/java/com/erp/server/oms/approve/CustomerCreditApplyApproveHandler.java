@@ -21,7 +21,7 @@ public class CustomerCreditApplyApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = customerCreditApplyService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = customerCreditApplyService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 
@@ -38,5 +38,10 @@ public class CustomerCreditApplyApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
         return customerCreditApplyService.approveEnd(approveOneDTO,entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

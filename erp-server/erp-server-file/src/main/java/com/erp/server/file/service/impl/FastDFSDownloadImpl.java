@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -47,6 +48,11 @@ public class FastDFSDownloadImpl implements FileService {
     @Override
     public String uploadFile(File file, String fileName) {
         return FastDFSClientUtil.uploadFile(file, fileName);
+    }
+
+    @Override
+    public String uploadFile(byte[] buff, String fileName, Map<String, String> metaList) {
+        return FastDFSClientUtil.uploadFile(buff, fileName, metaList);
     }
 
     @Override

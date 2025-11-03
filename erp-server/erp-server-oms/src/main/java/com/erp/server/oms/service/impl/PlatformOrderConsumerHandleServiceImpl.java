@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -20,9 +21,10 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformRefundOrderConsumerService;
@@ -81,7 +83,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
-    private DmpMongoDbFeign dmpMongoDbFeign;
+    private SysUserFeign sysUserFeign;
     @Resource
     private DictBasicService dictBasicService;
     @Resource
@@ -110,11 +112,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
-    @Resource
-    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private SoB2cCoreService soB2cCoreService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
@@ -122,6 +124,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         String oldBillStatus = dto.getBillStatus();
+        //币种转换
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(dto.getDictPlatform()) && CharSequenceUtil.isNotBlank(dto.getCurrency())){
+            DictCurrencyEntity currencyByNum = sysUserFeign.getCurrencyByNum(dto.getCurrency());
+            if (Objects.isNull(currencyByNum)){
+                throw new ServiceException("平台【{}】对应币代码【{}】不存在", dto.getDictPlatform(), dto.getCurrency());
+            }
+            dto.setCurrency(currencyByNum.getId());
+        }
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单

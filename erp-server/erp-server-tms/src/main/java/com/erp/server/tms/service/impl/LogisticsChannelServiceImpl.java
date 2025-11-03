@@ -28,6 +28,7 @@ import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -698,6 +699,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(platform)
                     && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(platform)
                     && !LogisticsPlatformEnum.CAINIAO.getCode().equals(platform)
+                    && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(platform)
                     && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
@@ -812,19 +814,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled) {
-        return baseMapper.listChannelWarehouse(platform,authStatus,warehousePlatformType,disabled);
-    }
-
-    @Override
-    public Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode) {
-        if(StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(country) || StringUtils.isBlank(postCode)){
-            return false;
-        }
-        return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
-    }
-
-    @Override
     public PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto) {
         LogisticsChannelDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
@@ -835,6 +824,19 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             pagingViewDTO.setTypeName(pagingViewDTO.getType().getName());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled) {
+        return baseMapper.listChannelWarehouse(platform,authStatus,warehousePlatformType,disabled);
+    }
+
+    @Override
+    public Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode) {
+        if(StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(country) || StringUtils.isBlank(postCode)){
+            return false;
+        }
+        return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
     }
 
     @Override
@@ -935,5 +937,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformCode(platformCodeList);
+    }
+
+    @Override
+    public LogisticsChannelEntity getChannelByCode(String channelCode, String logisticsPlatform) {
+        if (CharSequenceUtil.isEmpty(channelCode) || CharSequenceUtil.isEmpty(logisticsPlatform)){
+            throw new ServiceException("渠道编码和物流类型不能为空");
+        }
+        return baseMapper.getChannelByCode(channelCode,logisticsPlatform);
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
+        return baseMapper.getByPlatformWarehouseAndType(dto);
     }
 }

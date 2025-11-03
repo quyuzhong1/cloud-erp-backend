@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -258,7 +258,7 @@ public class TransferOutController extends BaseController {
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        transferOutService.cancel(dto.getIds());
+        transferOutService.cancel(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return  success();
     }
 
@@ -284,8 +284,8 @@ public class TransferOutController extends BaseController {
             menuCode = "wms:transfer:out:viewGenerateTransferIn",
             tableAlias = "tfo"
     )
-    public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getIds());
+    public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getDetailIdList());
         return success(list);
     }
 

@@ -4,6 +4,7 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -397,7 +398,7 @@ public class SkuStdCostDetailController extends BaseController {
                 continue;
             }
             try {
-                resultItem = skuStdCostDetailService.cancelProcess(id, entity, mainEntity);
+                resultItem = skuStdCostDetailService.cancelProcess(new ApproveDTO.CancelProcessDTO(id), entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单撤回流程失败", e);
                 resultItem = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());

@@ -18,6 +18,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import org.springframework.beans.BeanUtils;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
@@ -134,21 +135,37 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     /**
      * 根据用户ID查询台账列表
-     * @param dto 查询条件对象，包含用户ID、SKU编号等查询参数
+     * @param params 查询条件对象，包含用户ID、SKU编号等查询参数
      * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
      */
     @Override
-    public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto){
-        if(Objects.isNull(dto)){
+    public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(SampleLedgerDTO.SearchDTO params){
+        if(Objects.isNull(params)){
             return Collections.emptyList();
         }
-        if(StringUtils.isBlank(dto.getUserId())){
+        if(StringUtils.isBlank(params.getUserId())){
             return Collections.emptyList();
         }
-        if(CollUtil.isNotEmpty(dto.getSkuNos()) && dto.getSkuNos().size() == 1){
-            dto.setSkuNo(dto.getSkuNos().get(0));
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
+            params.setSkuNo(params.getSkuNos().get(0));
         }
-        return this.baseMapper.listSkuAvailableQtyByUserId(dto);
+
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
+            params.setSkuNo(params.getSkuNos().get(0));
+        }
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        //处理展会冻结库存数量
+        handleExhibitionFreezeQty(params, records);
+        //小于0则赋值为0
+        records.forEach(e -> {
+            if(e.getAvailableQty() < 0){
+                e.setAvailableQty(0);
+            };
+            if(e.getLedgerQty() < 0){
+                e.setLedgerQty(0);
+            };
+        });
+        return records;
     }
 
     /**
@@ -162,9 +179,48 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         if(Objects.isNull(searchAllDTO) || StringUtils.isBlank(searchAllDTO.getType())){
             return Collections.emptyList();
         }
-        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-        dto.setType(searchAllDTO.getType());
-        return this.baseMapper.listSkuAvailableQtyByUserId(dto);
+        SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
+        params.setType(searchAllDTO.getType());
+
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        //处理展会冻结库存数量
+        handleExhibitionFreezeQty(params, records);
+        //小于0则赋值为0
+        records.forEach(e -> {
+            if(e.getAvailableQty() < 0){
+                e.setAvailableQty(0);
+            };
+            if(e.getLedgerQty() < 0){
+                e.setLedgerQty(0);
+            };
+        });
+        return records;
+    }
+
+    /**
+     * 批量查询台账当前数量
+     * 
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到当前数量的映射
+     */
+    @Override
+    public Map<String, Integer> getLedgerQtyMap(List<String> sampleLedgerIds) {
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            return Collections.emptyMap();
+        }
+
+        // 查询台账实体
+        List<SampleLedgerEntity> ledgerList = this.lambdaQuery()
+                .in(SampleLedgerEntity::getId, sampleLedgerIds)
+                .list();
+
+        // 构建ID到数量的映射
+        return ledgerList.stream()
+                .collect(Collectors.toMap(
+                        SampleLedgerEntity::getId,
+                        SampleLedgerEntity::getQty,
+                        (existing, replacement) -> existing
+                ));
     }
 
 
@@ -184,6 +240,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
         //处理展会冻结库存数量
         handleExhibitionFreezeQty(params, records);
+
         //小于0则赋值为0
         records.forEach(e -> {
             if(e.getAvailableQty() < 0){
@@ -219,36 +276,37 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * @param records
      */
     private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, List<SampleLedgerDTO.SkuAvailableQtyDTO> records) {
-        // 提取所有记录的SKU并去重
-        List<String> sampleLedgerIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId).distinct().collect(Collectors.toList());
-        List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
+        if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())) {
+            // 提取所有记录的SKU并去重
+            List<String> sampleLedgerIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId).distinct().collect(Collectors.toList());
+            List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
 
-        // 构造展会订单查询条件并获取冻结库存数量
-        ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
-        dto.setSkuIds(skuIds);
-        dto.setSampleLedgerIds(sampleLedgerIds);
-        // 判断查询类型是否为展会类型
-        if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())){
+            // 构造展会订单查询条件并获取冻结库存数量
+            ExhibitionOrderDTO.SearchDTO dto = new ExhibitionOrderDTO.SearchDTO();
+            dto.setSkuIds(skuIds);
+            dto.setSampleLedgerIds(sampleLedgerIds);
+            // 判断查询类型是否为展会类型
             dto.setChildId(params.getChildId());
-        }
-        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
-        // 如果存在冻结库存数据，则更新可用库存数量
-        if(CollUtil.isNotEmpty(freezeQtyBySkus)){
-            // 将冻结库存数据转换为Map便于快速查找
-            Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSampleLedgerId, Function.identity(),(o1,o2)->o1));
 
-            // 遍历所有记录，扣除冻结库存数量
-            for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
-                ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSampleLedgerId(), null);
-                if(Objects.nonNull(freezeQtyBySku)){
-                    Integer freezeQty = freezeQtyBySku.getFreezeQty();
-                    if(Objects.nonNull(freezeQty) && freezeQty > 0){
-                        Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
-                        record.setAvailableQty(availableQty - freezeQty);
+            List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+            // 如果存在冻结库存数据，则更新可用库存数量
+            if (CollUtil.isNotEmpty(freezeQtyBySkus)) {
+                // 将冻结库存数据转换为Map便于快速查找
+                Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSampleLedgerId, Function.identity(), (o1, o2) -> o1));
+
+                // 遍历所有记录，扣除冻结库存数量
+                for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
+                    ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSampleLedgerId(), null);
+                    if (Objects.nonNull(freezeQtyBySku)) {
+                        Integer freezeQty = freezeQtyBySku.getFreezeQty();
+                        if (Objects.nonNull(freezeQty) && freezeQty > 0) {
+                            Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
+                            record.setAvailableQty(availableQty - freezeQty);
+                        }
+                        record.setMaxPrice(freezeQtyBySku.getMaxPrice());
+                        record.setMinPrice(freezeQtyBySku.getMinPrice());
+                        record.setAvgPrice(freezeQtyBySku.getAvgPrice());
                     }
-                    record.setMaxPrice(freezeQtyBySku.getMaxPrice());
-                    record.setMinPrice(freezeQtyBySku.getMinPrice());
-                    record.setAvgPrice(freezeQtyBySku.getAvgPrice());
                 }
             }
         }
@@ -275,14 +333,23 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setIds(ids);
         params.setType(SampleLedgerTypeEnum.SCRAP.getCode());
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
-        if(CollUtil.isEmpty(detailList)){
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        if(CollUtil.isEmpty(records)){
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"报废单");
         }
+        //小于0则赋值为0
+        records.forEach(e -> {
+            if(e.getAvailableQty() < 0){
+                e.setAvailableQty(0);
+            };
+            if(e.getLedgerQty() < 0){
+                e.setLedgerQty(0);
+            };
+        });
 
         viewDTO.setScrapUserId(sampleLedgerEntities.get(0).getUserId());
         viewDTO.setScrapUserName(sampleLedgerEntities.get(0).getUserName());
-        viewDTO.setDetailList(detailList);
+        viewDTO.setDetailList(records);
         return viewDTO;
     }
 
@@ -309,17 +376,25 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setIds(ids);
         params.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
-        if(CollUtil.isEmpty(detailList)){
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        if(CollUtil.isEmpty(records)){
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"展会订单");
         }
-
         //处理展会冻结库存数量
-        handleExhibitionFreezeQty(params, detailList);
+        handleExhibitionFreezeQty(params, records);
+        //小于0则赋值为0
+        records.forEach(e -> {
+            if(e.getAvailableQty() < 0){
+                e.setAvailableQty(0);
+            };
+            if(e.getLedgerQty() < 0){
+                e.setLedgerQty(0);
+            };
+        });
 
         viewDTO.setRecipientUserId(sampleLedgerEntities.get(0).getUserId());
         viewDTO.setRecipientUserName(sampleLedgerEntities.get(0).getUserName());
-        viewDTO.setDetailList(detailList);
+        viewDTO.setDetailList(records);
         return viewDTO;
     }
 
@@ -344,14 +419,23 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setIds(ids);
         params.setType(SampleLedgerTypeEnum.BACK.getCode());
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
-        if(CollUtil.isEmpty(detailList)){
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        if(CollUtil.isEmpty(records)){
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"退回单");
         }
+        //小于0则赋值为0
+        records.forEach(e -> {
+            if(e.getAvailableQty() < 0){
+                e.setAvailableQty(0);
+            };
+            if(e.getLedgerQty() < 0){
+                e.setLedgerQty(0);
+            };
+        });
 
         viewDTO.setBackUserId(sampleLedgerEntities.get(0).getUserId());
         viewDTO.setBackUserName(sampleLedgerEntities.get(0).getUserName());
-        viewDTO.setDetailList(detailList);
+        viewDTO.setDetailList(records);
         return viewDTO;
     }
 
@@ -541,8 +625,15 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
                 .eq(SampleLedgerEntity::getIsDeleted, false)
         );
 
-        // 获取用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 获取用户信息（包含禁用状态）
+        com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
+        com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> userResult = sysUserFeign.userList(searchDTO);
+        
+        List<FindUserDTO> userList = new ArrayList<>();
+        if (userResult != null && userResult.isSuccess() && userResult.getData() != null) {
+            userList = userResult.getData();
+        }
+        
         Map<String, FindUserDTO> userMap = userList.stream()
             .collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
 
@@ -569,19 +660,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         
         // 全部标签
         SampleLedgerDTO.TabListDTO allItem = new SampleLedgerDTO.TabListDTO();
-        allItem.setStatus("all");
+        allItem.setTabFlag("all");
+        allItem.setTabFlagName("全部");
         allItem.setCount(allLedgers.size());
         appList.add(allItem);
         
         // 启用标签
         SampleLedgerDTO.TabListDTO enabledItem = new SampleLedgerDTO.TabListDTO();
-        enabledItem.setStatus("enabled");
+        enabledItem.setTabFlag("enabled");
+        enabledItem.setTabFlagName("启用");
         enabledItem.setCount(enabledCount);
         appList.add(enabledItem);
         
         // 禁用标签
         SampleLedgerDTO.TabListDTO disabledItem = new SampleLedgerDTO.TabListDTO();
-        disabledItem.setStatus("disabled");
+        disabledItem.setTabFlag("disabled");
+        disabledItem.setTabFlagName("禁用");
         disabledItem.setCount(disabledCount);
         appList.add(disabledItem);
 
@@ -609,7 +703,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         }
         
         SampleLedgerDTO.ViewDTO viewDTO = new SampleLedgerDTO.ViewDTO();
-        BeanMapperUtils.copy(entity, viewDTO);
+        BeanUtils.copyProperties(entity, viewDTO);
         
         return viewDTO;
     }

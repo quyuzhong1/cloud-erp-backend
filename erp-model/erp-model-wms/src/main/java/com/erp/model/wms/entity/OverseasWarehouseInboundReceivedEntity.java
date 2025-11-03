@@ -49,17 +49,17 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
     @TableField("receive_time")
     private LocalDateTime receiveTime;
     /**
-     * 数据来源
-     * SignSourceTypeEnum
-     */
-    @TableField("source_type")
-    private String sourceType;
-    /**
      * 流水ID
      */
     @TableField("flow_id")
     private String flowId;
 
+    /**
+     * 数据来源
+     * SignSourceTypeEnum
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String DETAIL_ID = "detail_id";
 

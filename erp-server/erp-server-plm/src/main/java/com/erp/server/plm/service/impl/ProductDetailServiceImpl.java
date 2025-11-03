@@ -9,6 +9,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -20,6 +22,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -56,8 +59,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
@@ -107,7 +112,6 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +137,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
 import static cn.hutool.core.text.CharSequenceUtil.*;
@@ -737,9 +742,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY,keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
-        return this.baseMapper.getNoInventorySku();
+        //存在则直接取缓存
+        if (redisUtil.hasKey(RedisKeyConstant.CACHE_SKU_NO_INVENTORY)) {
+            Object object = redisUtil.get(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+            return JSON.parseObject(object.toString(),new TypeReference<List<SkuVO>>(){});
+        }
+        List<SkuVO> noInventorySku = this.baseMapper.getNoInventorySku();
+        if (ObjectUtil.isEmpty(noInventorySku)) {
+            return Collections.emptyList();
+        }
+        redisUtil.set(RedisKeyConstant.CACHE_SKU_NO_INVENTORY,noInventorySku,0);
+        return noInventorySku;
     }
 
     @Override
@@ -1051,6 +1065,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
+        ProductDetailEntity oldEntity = CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId()) ? this.getById(productSkuBaseInfoDTO.getId()) : null;
         //校验sku必填项
         ProductDetailDTO detailDTO = new ProductDetailDTO();
         BeanMapper.copy(productSkuBaseInfoDTO, detailDTO);
@@ -1059,7 +1074,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         detailEntity.setIsChange(IsConstant.NO);
         productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
-
+        if (CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId())){
+            if (Objects.nonNull(oldEntity) && !oldEntity.getChargeId().equals(productSkuBaseInfoDTO.getChargeId())){
+                addChargeLog(oldEntity.getChargeId(), productSkuBaseInfoDTO.getChargeId(), oldEntity.getId(), oldEntity.getProductId(),oldEntity.getSkuNo());
+            }
+        }
         return detailEntity.getId();
     }
 
@@ -2332,6 +2351,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
                 BeanUtil.copyProperties(byId,productCostDTO);
             }
+            //操作日志
+            addProductCostLog(productCostDTO, id);
             productCostService.saveOrUpdate(productCostDTO);
         }
 
@@ -2366,6 +2387,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
                 BeanUtil.copyProperties(byId,productSaleDTO);
             }
+            //操作日志
+            addProductSaleLog(productSaleDTO, id);
             productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
@@ -2378,6 +2401,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productLogisticsDTO, byId);
                 BeanUtil.copyProperties(byId,productLogisticsDTO);
             }
+            //操作日志
+            addProductLogisticsLog(productLogisticsDTO, id);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
@@ -3845,7 +3870,60 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
+        if (!oldEntity.getChargeId().equals(productSkuBaseInfoDTO.getChargeId())){
+            addChargeLog(oldEntity.getChargeId(), productSkuBaseInfoDTO.getChargeId(), businessId, pid,oldEntity.getSkuNo());
+        }
         operateLogService.addSysLogByUpdate(oldDto, productSkuBaseInfoDTO, SKUCLASSPATH, businessId, pid, String.format("SKU[%s]", oldEntity.getSkuNo()));
+    }
+
+    /**
+     * 添加产品经理变更记录
+     * @param oldChargeId
+     * @param newChargeId
+     * @param businessId
+     * @param pid
+     * @param skuNo
+     */
+    private void addChargeLog(String oldChargeId, String newChargeId, String businessId, String pid, String skuNo) {
+        List<String> oldChargeIds = CharSequenceUtil.isNotBlank(oldChargeId) ? Arrays.asList(oldChargeId.split(",")) : new ArrayList<>();
+        List<String> newChargeIds = CharSequenceUtil.isNotBlank(newChargeId) ? Arrays.asList(newChargeId.split(",")) : new ArrayList<>();
+        List<String> chargeIds = Stream.concat(oldChargeIds.stream(), newChargeIds.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FindUserDTO> findUserDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.getUserListByUserIds(chargeIds) : new ArrayList<>();
+        List<UserSuperiorDTO> userSuperiorDTOS = CollUtil.isNotEmpty(chargeIds) ? sysUserFeign.listDeptByUserIds(chargeIds) : new ArrayList<>();
+        String oldChargeLog = getChargeNameLog(oldChargeId,findUserDTOS,userSuperiorDTOS);
+        String newChargeLog = getChargeNameLog(newChargeId,findUserDTOS, userSuperiorDTOS);
+        OperateLogEntity operateLogEntity = new OperateLogEntity();
+        operateLogEntity.setBusinessId(businessId);
+        operateLogEntity.setPid(pid);
+        operateLogEntity.setClassPath(SKUCLASSPATH);
+        operateLogEntity.setFieldName(skuNo);
+        operateLogEntity.setModuleType(ModuleTypeEnum.PRODUCT_DETAIL.getCode());
+        operateLogEntity.setOperation("产品经理变更");
+        operateLogEntity.setOldValue(oldChargeLog);
+        operateLogEntity.setNewValue(newChargeLog);
+        operateLogEntity.setContent(String.format("产品经理变更，由[%s]变更为[%s]", oldChargeLog, newChargeLog));
+        operateLogService.save(operateLogEntity);
+    }
+
+    private String getChargeNameLog(String chargeIdStr, List<FindUserDTO> findUserDTOS, List<UserSuperiorDTO> userSuperiorDTOS) {
+        //姓名[];姓名[]
+        if (CharSequenceUtil.isBlank(chargeIdStr) || CollUtil.isEmpty(findUserDTOS)){
+            return "";
+        }
+        String[] chargeIds = chargeIdStr.split(",");
+        StringBuilder sb = new StringBuilder();
+        for (String chargeId : chargeIds) {
+            if (CharSequenceUtil.isNotBlank(sb.toString())){
+                sb.append(";");
+            }
+            FindUserDTO findUserDTO = findUserDTOS.stream().filter(e -> chargeId.equals(e.getUserId())).findFirst().orElse(null);
+            String userName = findUserDTO != null ? findUserDTO.getUserName() : "";
+            //根据level组装部门名称中间使用>
+            String deptName = userSuperiorDTOS.stream().filter(e -> chargeId.equals(e.getCurrentUserId())).sorted(Comparator.comparing(UserSuperiorDTO::getLevel).reversed()).map(UserSuperiorDTO::getDeptName).collect(Collectors.joining(">"));
+            deptName = CharSequenceUtil.isNotBlank(deptName) ? deptName : "无部门";
+            sb.append(String.format("%s[%s]", userName, deptName));
+        }
+        return sb.toString();
     }
 
     /**
@@ -3856,7 +3934,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-
+        if (!oldEntity.getChargeId().equals(productDetailDTO.getChargeId())){
+            addChargeLog(oldEntity.getChargeId(), productDetailDTO.getChargeId(), businessId, pid,oldEntity.getSkuNo());
+        }
         operateLogService.addSysLogByUpdate(oldDto, productDetailDTO, SKUCLASSPATH, businessId, pid, String.format("SKU[%s]", oldEntity.getSkuNo()));
     }
 
@@ -4182,6 +4262,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 syncWangDianProductDetailService.syncDataToWangDian(entity);
             }
             syncLingXingProductDetailService.syncDataToLingxing(entity);
+            //清楚redis标识
+            cleanRedisNoInventorySku(entity);
         } else {
             //新增审核不通过意见
             ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
@@ -4191,6 +4273,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return Boolean.TRUE;
     }
+
+    /**
+     * 清除服务、费用类sku的redis缓存
+     * @author will
+     * @date 2025/8/22 15:12
+     * @param entity
+     * @return void
+     */
+    private void cleanRedisNoInventorySku (ProductDetailEntity entity) {
+        //如果审核的数据再缓存中存在或者是费用、服务类型则需要清空费用、服务类SKU的缓存
+        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+        if (ObjectUtil.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Object object = redisUtil.get(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+        if (object != null) {
+            // 将Object转换为String，然后解析为List<Map>
+            String jsonString = object.toString();
+            List<Map> resultList = JSON.parseObject(jsonString, new TypeReference<List<Map>>(){});
+            List<String> skuIdList = resultList.stream().map(m -> m.get("skuId").toString()).collect(Collectors.toList());
+            if (skuIdList.contains(entity.getId())) {
+                //如果缓存中存在该SKU则清除
+                redisUtil.del(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+                return;
+            }
+        }
+        // 如果是费用、服务类产品则清除缓存
+        if (productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_SERVICE) ||
+                productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_COST)) {
+            //清除redis中费用、服务类SKU缓存
+            redisUtil.del(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+        }
+    }
+
 
     /**
      * 更新审核状态
@@ -4226,6 +4342,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .eq(ProductDetailEntity::getId, entity.getId())
                 .update();
+        //清除服务、费用类sku的redis标识
+        cleanRedisNoInventorySku(entity);
         //发送金蝶
         sendSinglePushTask(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");
@@ -4234,7 +4352,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -4250,6 +4369,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("取消流程SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_COMMIT.getName() + "]"));
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_DETAIL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -4362,7 +4482,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                 //发送消息
                 handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
-
+                //记录日志
+                entityList.forEach(oldEntity -> {
+                    if (!Objects.equals(oldEntity.getChargeId(),dto.getValues().toString())){
+                        addChargeLog(oldEntity.getChargeId(), dto.getValues().toString(), oldEntity.getId(), oldEntity.getProductId(),oldEntity.getSkuNo());
+                    }
+                });
             }
             if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
                 productInfoService.lambdaUpdate()
@@ -4719,6 +4844,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isBlank(insurancePropertyName)) {
 //            errorMsgList.add("保险属性不能为空");
             return null;
+        }
+
+        if(InsurancePropertyEnum.NOT.getName().equals(insurancePropertyName)){
+            BasicDictEntity entity = mapById.get(insurancePropertyName);
+            if (Objects.isNull(entity)) {
+                errorMsgList.add("保险属性【" + insurancePropertyName + "】在系统中未找到");
+                return "";
+            }
+            return entity.getValue();
         }
 
         if(InsurancePropertyEnum.NOT.getName().equals(insurancePropertyName)){
@@ -6591,24 +6725,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(StringUtils.isBlank(v.getProductPropertyId())){
                 return;
             }
+            List<String> markList = new ArrayList<>();
             List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
             List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
             propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电") && !t.contains("充电盒")));
             propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电") && !t.contains("充电盒")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsElectric()) markList.add("电");
             propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
             propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsMagnetism()) markList.add("磁");
             propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
             propertyDTO.setLiquidName(propertyNameList.stream().filter(t->t.contains("液体")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsLiquid()) markList.add("液");
             propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.contains("木")));
             propertyDTO.setWoodName(propertyNameList.stream().filter(t->t.contains("木")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsWood()) markList.add("木");
             propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.contains("粉末")));
             propertyDTO.setPowderName(propertyNameList.stream().filter(t->t.contains("粉末")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsPowder()) markList.add("粉");
             propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.contains("膏体")));
             propertyDTO.setPlasterName(propertyNameList.stream().filter(t->t.contains("膏体")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsPlaster()) markList.add("膏");
             propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.contains("刀具")));
             propertyDTO.setCuttingToolName(propertyNameList.stream().filter(t->t.contains("刀具")).collect(Collectors.joining(",")));
+            if (propertyDTO.getIsCuttingTool()) markList.add("刀");
             propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.contains("CCC")));
             propertyDTO.setOtherName(propertyNameList.stream().filter(t->t.contains("CCC")).collect(Collectors.joining(",")));
+            propertyDTO.setMarkList(markList);
         });
     }
 

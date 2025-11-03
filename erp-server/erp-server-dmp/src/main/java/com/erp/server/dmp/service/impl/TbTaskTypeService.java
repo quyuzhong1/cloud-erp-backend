@@ -366,6 +366,7 @@ public class TbTaskTypeService {
         addDTO.setMaxRetryCount(3);
         addDTO.setExecTimeout(1200);
         addDTO.setDealyTime(60);
+        addDTO.setExtendJson(dmpCfgInputEntity.getExtendJson());
         addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpCfgInputDetailService.add(addDTO);
         if(!isCaiNiaoOutbound){
@@ -378,6 +379,7 @@ public class TbTaskTypeService {
             addHistoryDTO.setIntervalTime(21600);
             addHistoryDTO.setOverrideTime(0);
             addHistoryDTO.setMaxRetryCount(3);
+            addHistoryDTO.setExtendJson(dmpCfgInputEntity.getExtendJson());
             addHistoryDTO.setExecTimeout(1200);
             addHistoryDTO.setDealyTime(86400);
             addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());

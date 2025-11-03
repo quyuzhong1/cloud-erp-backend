@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -316,7 +317,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     SupplierEntity getSupplierByUid(String uid);
 

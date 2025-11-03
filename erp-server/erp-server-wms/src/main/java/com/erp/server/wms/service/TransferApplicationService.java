@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -177,7 +178,7 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean
@@ -190,18 +191,18 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 下推直接调拨单
      * @author Will
      * @date: 2023/5/10 18:57
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids);
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> detailIdList);
     /**
      * @description: 下推分布式调出
      * @author Will
      * @date: 2023/5/10 18:57
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids);
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> detailIdList);
     /**
      * @description: 下推直接调拨单保存
      * @author Will

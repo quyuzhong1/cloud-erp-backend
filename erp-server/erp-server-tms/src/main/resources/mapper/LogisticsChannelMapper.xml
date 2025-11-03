@@ -261,6 +261,25 @@
         GROUP BY channelName
         ORDER BY total desc
     </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingViewDTO">
+        select ls.id,
+               ls.supplier_name as name,
+               ls.short_name as shortName,
+               ls.type,
+               lc.id as channelId,
+               lc.name as channelName
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        where ${params.sqlMap.default}
+        and ls.is_deleted = false
+        and lc.disabled = false
+        and ls.disabled = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+
     <select id="listChannelWarehouse"
             resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ChannelWarehouseDTO">
         select
@@ -318,24 +337,6 @@
                        LIMIT 1
                    )
     </select>
-    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingViewDTO">
-        select ls.id,
-               ls.supplier_name as name,
-               ls.short_name as shortName,
-               ls.type,
-               lc.id as channelId,
-               lc.name as channelName
-        from logistics_supplier ls
-        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
-        where ${params.sqlMap.default}
-        and ls.is_deleted = false
-        and lc.disabled = false
-        and ls.disabled = false
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-    </select>
-
     <select id="listWarehouseChannel"
             resultMap="warehouseChannelMap">
         SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
@@ -362,6 +363,24 @@
         <foreach collection="platformCodeList" separator="," open="(" close=")" item="item">
             #{item}
         </foreach>
+    </select>
+    <select id="getChannelByCode" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        SELECT
+            lc.id,
+            lc.code,
+            lc."name"
+        FROM logistics_channel lc
+                 LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
+        where lc.is_deleted= false
+          and lc.code = #{channelCode}
+          and la.logistics_platform = #{logisticsPlatform}
+    </select>
+    <select id="getByPlatformWarehouseAndType" resultType="com.erp.model.wms.dto.DictBasicDTO$DropDownDTO">
+        select  lc.code,lc.cn_name as name,true as status from logistics_sale_channel lc
+        where lc.is_deleted = false and lc.overseas_warehouse_id = #{dto.platformWarehouseId}
+        <if test="dto.channelType != null and dto.channelType != ''">
+            and lc.channel_type = #{dto.channelType}
+        </if>
     </select>
 
 

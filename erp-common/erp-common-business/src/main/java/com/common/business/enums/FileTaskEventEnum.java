@@ -34,6 +34,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PUSH_TASK("EXPORT_PUSH_TASK","中台推送任务表","","",""),
     EXPORT_PULL_TASK("EXPORT_PULL_TASK","中台拉取任务表","","",""),
     EXPORT_NEW_DMP_PUSH_TASK("EXPORT_NEW_DMP_PUSH_TASK","中台推送任务表","","",""),
+    EXPORT_RESTCLOUD_PUSH_TASK("EXPORT_RESTCLOUD_PUSH_TASK","谷云推送任务表","","",""),
     EXPORT_DMP_AFTER_SALE("EXPORT_DMP_AFTER_SALE","售后申请表","","",""),
 
     //plm
@@ -103,8 +104,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
-    EXPORT_OMS_B2B_PLATFORM_SKU("EXPORT_OMS_B2B_PLATFORM_SKU","b2b平台sku对照列表","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
+    EXPORT_OMS_B2B_PLATFORM_SKU("EXPORT_OMS_B2B_PLATFORM_SKU","b2b平台sku对照列表","","",""),
+    EXPORT_OMS_PACKAGE_PLAN("EXPORT_OMS_PACKAGE_PLAN","组包计划导出","","",""),
 
     EXPORT_OMS_EXHIBITION_ORDER("EXPORT_OMS_EXHIBITION_ORDER", "展会订单导出","","",""),
     IMPORT_OMS_EXHIBITION_ORDER("IMPORT_OMS_EXHIBITION_ORDER","展会订单导入","com.erp.rpc.oms.feign.ImportOmsFeign","importExhibitionOrder",""),
@@ -147,6 +149,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_GLOBAL_AREA("EXPORT_SYS_GLOBAL_AREA","区域Excel导出","","",""),
     EXPORT_SYS_THIRD_NOTICE("EXPORT_SYS_THIRD_NOTICE", "三方通知配置导出","","",""),
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
+    EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
+
+    EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
@@ -254,6 +259,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_SAMPLE_BACK_INFO("IMPORT_WMS_SAMPLE_BACK_INFO","导入样品退回单","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleBackInfo",""),
     EXPORT_WMS_SAMPLE_INITIAL_LEDGER_REPORT("EXPORT_WMS_SAMPLE_INITIAL_LEDGER_REPORT", "样品期初台账导出","","",""),
     IMPORT_WMS_SAMPLE_INITIAL_LEDGER("IMPORT_WMS_SAMPLE_INITIAL_LEDGER","样品期初台账导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleInitialLedger",""),
+    EXPORT_WMS_SAMPLE_TRANSFER_INFO_REPORT("EXPORT_WMS_SAMPLE_TRANSFER_INFO_REPORT", "样品转移单导出","","",""),
+    IMPORT_WMS_SAMPLE_TRANSFER_INFO("IMPORT_WMS_SAMPLE_TRANSFER_INFO","样品转移单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleTransfer",""),
 
 
     //tms

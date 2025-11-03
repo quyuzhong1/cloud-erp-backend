@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -128,10 +129,10 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -209,15 +210,6 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 
     
-    /**
-     * 批量生成退货单
-     * @author yl
-     * @date 2023-04-25 11:09
-     * @param list
-     * @return java.lang.Boolean
-     */
-    Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
-
     /**
      * 修改到货状态
      * @Author Luo_WG

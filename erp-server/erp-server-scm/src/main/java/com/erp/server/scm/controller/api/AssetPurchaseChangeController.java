@@ -398,8 +398,9 @@ public class AssetPurchaseChangeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetPurchaseChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated AssetPurchaseChangeDTO.ExportDTO dto, HttpServletResponse response) {
         assetPurchaseChangeService.exportList(dto, response);
+        return success();
     }
 
 

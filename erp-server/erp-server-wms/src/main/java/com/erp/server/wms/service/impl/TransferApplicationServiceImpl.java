@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -29,7 +30,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -609,7 +609,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<TransferApplicationEntity> list = getList(ids);
         //审核中允许审核
@@ -624,6 +625,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -646,14 +648,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
@@ -971,11 +973,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @description: 下推数据查询
      * @author Will
      * @date: 2023/5/12 9:12
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(ids);
+    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(detailIdList);
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
@@ -1195,7 +1197,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
         }
     }

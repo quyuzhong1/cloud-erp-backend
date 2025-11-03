@@ -62,8 +62,6 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/exportInvoice")
     PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
 
-    @PostMapping("/feign/export/exportInvoiceInvalid")
-    PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
     //收款单导出
     @PostMapping("/feign/export/exportSoReceipt")
     PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto);
@@ -79,8 +77,12 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/exportExhibitionOrder")
     PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/exportInvoiceInvalid")
+    PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/soMultiChannel")
     PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/packagePlan")
+    PagingVO<PackagePlanDTO.ExportDTO> exportPackagePlan(@RequestBody PagingDTO<PackagePlanDTO.PagingParamDTO> dto);
 
     /**
      * b2b平台sku对照表信息导出

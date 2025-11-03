@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -84,7 +85,7 @@ public class BatchApproveService {
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = approveHandler.cancelProcess(id);
+                resultDTO = approveHandler.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 String code = approveHandler.getCodeById(id);
                 if (Objects.isNull(code)) {

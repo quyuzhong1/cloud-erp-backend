@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -354,7 +355,7 @@ public class ExhibitionOrderController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = exhibitionOrderService.cancelProcess(id);
+                cancelResult = exhibitionOrderService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("展会订单信息撤回流程失败",e);
                 ExhibitionOrderEntity entity = idEntityMap.get(id);

@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,24 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 import java.io.IOException;
-import java.util.Objects;
-
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 /**
- * The request body schema for the putListingsItem operation.
+ * The request body schema for the &#x60;putListingsItem&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class ListingsItemPutRequest {
   @SerializedName("productType")
   private String productType = null;
@@ -37,10 +39,11 @@ public class ListingsItemPutRequest {
    */
   @JsonAdapter(RequirementsEnum.Adapter.class)
   public enum RequirementsEnum {
+    @SerializedName("LISTING")
     LISTING("LISTING"),
-    
+    @SerializedName("LISTING_PRODUCT_ONLY")
     LISTING_PRODUCT_ONLY("LISTING_PRODUCT_ONLY"),
-    
+    @SerializedName("LISTING_OFFER_ONLY")
     LISTING_OFFER_ONLY("LISTING_OFFER_ONLY");
 
     private String value;
@@ -48,7 +51,6 @@ public class ListingsItemPutRequest {
     RequirementsEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -57,35 +59,31 @@ public class ListingsItemPutRequest {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static RequirementsEnum fromValue(String text) {
+    public static RequirementsEnum fromValue(String input) {
       for (RequirementsEnum b : RequirementsEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<RequirementsEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final RequirementsEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public RequirementsEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return RequirementsEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return RequirementsEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("requirements")
+  }  @SerializedName("requirements")
   private RequirementsEnum requirements = null;
 
   @SerializedName("attributes")
-  private Object attributes = null;
+  private Map<String, Object> attributes = new HashMap<String, Object>();
 
   public ListingsItemPutRequest productType(String productType) {
     this.productType = productType;
@@ -96,7 +94,7 @@ public class ListingsItemPutRequest {
    * The Amazon product type of the listings item.
    * @return productType
   **/
-
+  
   public String getProductType() {
     return productType;
   }
@@ -114,7 +112,7 @@ public class ListingsItemPutRequest {
    * The name of the requirements set for the provided data.
    * @return requirements
   **/
-
+  
   public RequirementsEnum getRequirements() {
     return requirements;
   }
@@ -123,21 +121,26 @@ public class ListingsItemPutRequest {
     this.requirements = requirements;
   }
 
-  public ListingsItemPutRequest attributes(Object attributes) {
+  public ListingsItemPutRequest attributes(Map<String, Object> attributes) {
     this.attributes = attributes;
     return this;
   }
 
+  public ListingsItemPutRequest putAttributesItem(String key, Object attributesItem) {
+    this.attributes.put(key, attributesItem);
+    return this;
+  }
+
    /**
-   * JSON object containing structured listings item attribute data keyed by attribute name.
+   * A JSON object containing structured listings item attribute data keyed by attribute name.
    * @return attributes
   **/
-
-  public Object getAttributes() {
+  
+  public Map<String, Object> getAttributes() {
     return attributes;
   }
 
-  public void setAttributes(Object attributes) {
+  public void setAttributes(Map<String, Object> attributes) {
     this.attributes = attributes;
   }
 
@@ -186,4 +189,3 @@ public class ListingsItemPutRequest {
   }
 
 }
-

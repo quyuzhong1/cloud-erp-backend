@@ -21,6 +21,7 @@ import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -435,13 +436,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
-    /**
-     * 查询b2c流水
-     * @author will
-     * @date 2025/3/31 11:56
-     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
-     */
-    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 
     /**
      * 打印条码列表展示
@@ -470,6 +464,20 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
+    /**
+     * 查询b2c流水
+     * @author will
+     * @date 2025/3/31 11:56
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 
     void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    /**
+     * 根据源ID列表获取deliveryCode映射
+     * @param sourceIds 源ID列表
+     * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
+     */
+    Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds);
 }

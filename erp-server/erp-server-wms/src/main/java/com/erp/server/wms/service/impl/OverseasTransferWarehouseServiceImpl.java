@@ -25,10 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -137,13 +134,28 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (null == providerEntity){
             return Collections.emptyList();
         }
-        // 安兔,iml返回所有
-        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())
-        || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(providerEntity.getCode())){
+        // 安兔返回所有
+        if (OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(providerEntity.getCode())){
             List<OverseasTransferWarehouseEntity> list = lambdaQuery()
                     .eq(OverseasTransferWarehouseEntity::getDictPlatform, providerEntity.getCode())
                     .list();
             return convertResult(list);
+        }
+
+        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())){
+            List<OverseasProviderWarehouseEntity> list = overseasProviderWarehouseService.lambdaQuery()
+                    .eq(OverseasProviderWarehouseEntity::getMainId, entity.getMainId())
+                    .eq(OverseasProviderWarehouseEntity::getPlatformWarehouseType,"1")
+                    .eq(OverseasProviderWarehouseEntity::getDisabled,false)
+                    .list();
+            if (CollectionUtils.isEmpty(list)){
+                return Collections.emptyList();
+            }
+            List<BaseSelectDTO> baseSelectDTOS = new ArrayList<>();
+            for (OverseasProviderWarehouseEntity warehouseEntity : list) {
+                baseSelectDTOS.add(new BaseSelectDTO(warehouseEntity.getId(),warehouseEntity.getPlatformWarehouseCode(),warehouseEntity.getPlatformWarehouseName()));
+            }
+            return baseSelectDTOS;
         }
 
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()

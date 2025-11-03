@@ -181,6 +181,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         PlatformDictEnum amazon = PlatformDictEnum.AMAZON;
         //shopify
         PlatformDictEnum shopify = PlatformDictEnum.SHOPIFY;
+        //wildberries
+        PlatformDictEnum wildberries = PlatformDictEnum.WILDBERRIES;
         //检查店铺是否存在
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //检测仓库
@@ -195,6 +197,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 throw new ServiceException("域名不能为空");
             }
             checkDomain("", dto.getDomain());
+        }
+        if (wildberries.getCode().equals(dictPlatform)){
+            if (CharSequenceUtil.isBlank(dto.getToken())){
+                throw new ServiceException("店铺授权不能为空");
+            }
         }
         if(CollectionUtils.isNotEmpty(dto.getDictCountryCodeList())){
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(dto.getDictCountryCodeList());
@@ -254,6 +261,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
         authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        //创建店铺同时创建客户
+        this.saveCustom(shop);
         return Collections.singletonList(shop);
 
     }
@@ -497,6 +506,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         addUserShopAuthDTO.setShopIdList(addList.stream().map(ShopInfoEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
         authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        //店铺创建并创建客户
+        for (ShopInfoEntity shop : addList) {
+            this.saveCustom(shop);
+        }
         return addList;
 
     }
@@ -511,7 +524,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
         String shopAuthorizeUrl = "";
         //temu全托管通过用户输入的信息检验授权
-        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) || PlatformDictEnum.WILDBERRIES.getCode().equals(entity.getDictPlatform())){
             ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
             shopAuthorizeDTO.setShopId(entity.getId());
             shopAuthorizeDTO.setPlatformCode(entity.getDictPlatform());
@@ -590,7 +603,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
         			errorFlag = true;
         		}
-                if(!shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId())) {
+                if(!shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId()) && !"ALL".equals(customerInfoEntity.getCountryId())) {
                     errorFlag = true;
                 }
         		if(errorFlag) {
@@ -626,9 +639,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
         shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
+        shopInfo.setEoriTaxNo(dto.getEoriTaxNo());
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+
+
+        shopInfo.setDictCountryCode(dto.getDictCountryCode());
         shopInfo.setBusinessModel(dto.getBusinessModel());
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
@@ -656,11 +673,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
             if(Objects.isNull(shopAuthEntity)){
                 shopAuthEntity = new ShopAuthEntity();
-                shopAuthEntity.setShopId(shopInfo.getId());
-                shopAuthEntity.setToken(dto.getToken());
-                shopAuthEntity.setAccessToken(dto.getToken());
-                shopAuthService.saveOrUpdate(shopAuthEntity);
             }
+            shopAuthEntity.setShopId(shopInfo.getId());
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
         }
         //修改授权信息进行校验
         checkAuthInfo(dto,shopInfo);
@@ -999,7 +1016,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
-
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
         if (CharSequenceUtil.isNotBlank(shop.getBusinessModel()) && PlatformDictEnum.MERCADOLIBRE.getCode().equals(shop.getDictPlatform())) {
             DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
             if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
@@ -1018,7 +1035,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
             view.setClientId(clientId);
             view.setClientSecret(clientSecret);
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
+            if(Objects.nonNull(shopAuth)){
+                view.setToken(shopAuth.getAccessToken());
+            }
+        }
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(dictPlatform)){
             if(Objects.nonNull(shopAuth)){
                 view.setToken(shopAuth.getAccessToken());
             }
@@ -1485,6 +1506,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return baseMapper.listByParam(platformList,permissionSql);
     }
 
+
     @Override
     public List<ShopInfoEntity> listShopByAmazon() {
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
@@ -1532,7 +1554,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         String shopAuthorizeUrl = "";
         //temu全托管通过用户输入的信息检验授权
-        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) || PlatformDictEnum.WILDBERRIES.getCode().equals(infoEntity.getDictPlatform())){
             ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
             shopAuthorizeDTO.setShopId(infoEntity.getId());
             shopAuthorizeDTO.setPlatformCode(infoEntity.getDictPlatform());
@@ -1540,9 +1562,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }else{
             shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
         }
-        for (ShopInfoEntity shop : list) {
-            this.saveCustom(shop);
-        }
+//        for (ShopInfoEntity shop : list) {
+//            this.saveCustom(shop);
+//        }
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
     }
 

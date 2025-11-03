@@ -108,6 +108,8 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
 
     List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@Param("warehouseId") String warehouseId,@Param("platformSkuNoList") List<String> platformSkuNoList);
 
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
+
     /**
      * 根据参数查询sku映射记录
      * @param params
@@ -123,8 +125,8 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
+    boolean existOtherListing(String listingId, String authId, String productSkuId);
 
-    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
     /**
      * b2b平台分页列表
      * @author will

@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
@@ -222,7 +224,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         DaMaiCreateOrderRequest daMaiCreateOrderRequest = this.buildOrderDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
@@ -295,6 +299,10 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .soSkuList(soSkuList)
                 .build();
         return daMaiCreateOrderRequest;
+    }
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
     }
 
     @Override

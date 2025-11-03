@@ -9,6 +9,7 @@ import com.common.business.dto.base.*;
 import ${package.Dto}.${table.dtoName};
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.common.business.vo.PagingVO;
+import com.common.business.dto.ApproveDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 </#if>
@@ -144,7 +145,7 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     * @param id
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

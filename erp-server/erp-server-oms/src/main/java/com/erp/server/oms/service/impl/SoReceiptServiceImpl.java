@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.business.dto.PlatformReceiptDetailDTO;
@@ -423,7 +424,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean cancelProcess(String id) {
+    public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SoReceiptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到收款单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -435,6 +437,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         String msg = StrUtil.format("用户【{}】【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), "收款单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SO_RECEIPT.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -586,7 +589,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             SoReceiptDetailEntity soReceiptDetailEntity = soReceiptDetailEntityList.stream().filter(v -> v.getId().equals(update.getDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单明细数据"));
             SoReceiptEntity soReceiptEntity = soReceiptEntityList.stream().filter(v -> v.getId().equals(soReceiptDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                continue;
+                throw new ServiceException("收款单状态不允许修改");
             }
             SoReceiptDTO.UpdateDTO updateDTO = new SoReceiptDTO.UpdateDTO();
             updateDTO.setId(update.getId());
@@ -615,7 +618,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         for (SoReceiptDetailEntity deleteDetailEntity : deleteDetailList) {
             SoReceiptEntity soReceiptEntity = handleDelEntityList.stream().filter(v -> v.getId().equals(deleteDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                continue;
+                throw new ServiceException("只有待提交或审核不通过的收款单允许删除");
             }
             this.deleteByDetail(soReceiptEntity,deleteDetailEntity);
         }
@@ -929,7 +932,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
             //如果是审核中，撤销审核
             if(ApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                this.cancelProcess(exist.getId());
+                this.cancelProcess(new ApproveDTO.CancelProcessDTO(exist.getId()));
             }
             //如果是已审核，反审核
             if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){

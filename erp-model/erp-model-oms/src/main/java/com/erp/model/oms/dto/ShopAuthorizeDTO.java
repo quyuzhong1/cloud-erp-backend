@@ -102,6 +102,10 @@ public class ShopAuthorizeDTO implements Serializable {
             }
             throw new ServiceException("提交的平台类型不存在:"+ this.platformCode);
         }
+        // wildberries
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(this.platformCode)){
+            return this;
+        }
         // 亚马逊
         if (StringUtils.isNotBlank(this.spapi_oauth_code)){
             this.setPlatformCode(PlatformDictEnum.AMAZON.getCode());

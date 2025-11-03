@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -30,6 +31,8 @@ public interface ThirdWarehouseDeliveryFeign {
     @PostMapping("feign/thirdWarehouseDelivery/getLatestBySoId")
     ThirdWarehouseDeliveryEntity getLatestBySoId(@RequestBody String soId);
 
+    @PostMapping("feign/thirdWarehouseDelivery/deleteById")
+    void deleteById(@RequestBody String id);
     @PostMapping("feign/thirdWarehouseDelivery/update")
     boolean update(@RequestBody ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
 

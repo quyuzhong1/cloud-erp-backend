@@ -302,6 +302,11 @@ public class SampleRecipientDTO implements Serializable {
          */
         private String detailRemark;
 
+        /**
+         * 商品种类
+         */
+        private String skuCount;
+
     }
 
     /**
@@ -329,10 +334,54 @@ public class SampleRecipientDTO implements Serializable {
         private String  id;
 
         /**
+        * 创建人id
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 修改人id
+        */
+        private String updateUserId;
+
+        /**
+        * 修改人名称
+        */
+        private String updateUserName;
+
+        /**
+        * 更新时间
+        */
+        private LocalDateTime updateTime;
+
+        /**
         * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回) /wms/drop/down/approveStatus/list
         */
         private String approveStatus;
 
+        /**
+        * 审批时间
+        */
+        private LocalDateTime approveTime;
+
+        /**
+        * 审批人ID
+        */
+        private String approveUserId;
+
+        /**
+        * 审批人姓名
+        */
+        private String approveUserName;
 
         /**
         * 样品领用单号
@@ -437,6 +486,22 @@ public class SampleRecipientDTO implements Serializable {
          * 产品列表
          */
         private List<ProductDTO>detailList;
+
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废状态(false:有效,true:已作废)
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
 
     }

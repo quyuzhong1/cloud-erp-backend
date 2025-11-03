@@ -40,11 +40,24 @@ public class RocketMqNewTopic {
      * 新中台平台商品
      */
     public static final String DMP_PLATFORM_PRODUCT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_product_to_oms_topic";
+    /**
+     * restcloud平台商品
+     */
+    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_topic";
 
     /**
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_topic";
+    /**
+     * restcloud平台订单
+     */
+    public static final String RESTCLOUD_PLATFORM_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_order_to_oms_topic";
+
+    /**
+     * restcloud平台退货订单
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_order_to_oms_topic";
 
     /**
      * 新中台Track123
@@ -189,9 +202,9 @@ public class RocketMqNewTopic {
     public static final String DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_approvals_to_workflow_topic";
 
     /**
-     * restcloud平台商品
+     * 新中台同步飞书审批详情
      */
-    public static final String RESTCLOUD_PLATFORM_PRODUCT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_product_to_oms_topic";
+    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_topic";
 
     /**
      * restcloudb2b订单
@@ -203,8 +216,32 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_PLATFORM_RECEIPT_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_receipt_to_oms_topic";
 
+
     /**
-     * 新中台同步飞书审批详情
+     * restcloud同步平台仓库
      */
-    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_topic";
+    public static final String RESTCLOUD_PLATFORM_WAREHOUSE_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_warehouse_to_wms_topic";
+
+    /**
+     * restcloud同步平台入库
+     */
+    public static final String RESTCLOUD_PLATFORM_INBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inbound_to_wms_topic";
+
+
+    /**
+     * restcloud平台入库
+     */
+    public static final String RESTCLOUD_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_outbound_to_wms_topic";
+
+
+    /**
+     * 新中台平台库存
+     */
+    public static final String RESTCLOUD_PLATFORM_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_inventory_to_wms_topic";
+
+    /**
+     * 新中台退货入库
+     */
+    public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_topic";
+
 }
