@@ -364,7 +364,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     public BatchResultDTO delete(String id) {
         AssetPurchaseChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
 
