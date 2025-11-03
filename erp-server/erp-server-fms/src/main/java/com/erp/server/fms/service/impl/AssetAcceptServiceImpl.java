@@ -1097,27 +1097,119 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 }
             }
             
+            // 查询采购订单明细（用于获取采购数量）
+            Map<String, Integer> purchaseQtyMap = new HashMap<>();
+            if (StringUtils.isNotBlank(data.getSourceId())) {
+                try {
+                    ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> apiResult =
+                            assetPurchaseOrderFeign.queryDetailsForAccept(data.getSourceId());
+                    if (apiResult.isSuccess() && CollUtil.isNotEmpty(apiResult.getData())) {
+                        purchaseQtyMap = apiResult.getData().stream()
+                                .filter(d -> StringUtils.isNotBlank(d.getId()) && d.getPurchaseQty() != null)
+                                .collect(Collectors.toMap(
+                                        AssetPurchaseOrderDTO.DetailForAcceptDTO::getId,
+                                        AssetPurchaseOrderDTO.DetailForAcceptDTO::getPurchaseQty,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("查询采购订单明细失败", e);
+                }
+            }
+            
+            // 查询所有关联相同采购订单的验收单明细（用于计算数量）
+            List<AssetAcceptDetailEntity> allAcceptDetailList = new ArrayList<>();
+            Map<String, String> acceptStatusMap = new HashMap<>();
+            if (StringUtils.isNotBlank(data.getSourceId())) {
+                // 查询所有来自同一采购订单的验收单
+                List<AssetAcceptEntity> allAcceptList = this.lambdaQuery()
+                        .eq(AssetAcceptEntity::getSourceId, data.getSourceId())
+                        .eq(AssetAcceptEntity::getIsDeleted, false)
+                        .list();
+                
+                if (CollUtil.isNotEmpty(allAcceptList)) {
+                    List<String> allAcceptIds = allAcceptList.stream()
+                            .map(AssetAcceptEntity::getId)
+                            .collect(Collectors.toList());
+                    
+                    // 构建审核状态映射
+                    acceptStatusMap = allAcceptList.stream()
+                            .collect(Collectors.toMap(AssetAcceptEntity::getId, x -> x.getApproveStatus().getStatus()));
+                    
+                    // 查询所有验收明细
+                    allAcceptDetailList = assetAcceptDetailService.lambdaQuery()
+                            .in(AssetAcceptDetailEntity::getMainId, allAcceptIds)
+                            .eq(AssetAcceptDetailEntity::getIsDeleted, false)
+                            .list();
+                }
+            }
+            
             // 创建副本用于lambda使用
             final Map<String, String> finalAssetLocationMap = assetLocationMap;
             final Map<String, String> finalDeptMap = deptMap;
+            final Map<String, Integer> finalPurchaseQtyMap = purchaseQtyMap;
+            final List<AssetAcceptDetailEntity> finalAllAcceptDetailList = allAcceptDetailList;
+            final Map<String, String> finalAcceptStatusMap = acceptStatusMap;
             
             List<AssetAcceptDetailDTO.ViewDTO> detailViewList = detailList.stream()
                     .map(detail -> {
                         AssetAcceptDetailDTO.ViewDTO detailView = new AssetAcceptDetailDTO.ViewDTO();
-                        BeanMapperUtils.copy(detail, detailView);
+                        BeanUtil.copyProperties(detail, detailView);
                         
-                        // 填充资产位置名称（如果明细DTO有这个字段的话）
+                        // 填充资产位置名称
                         if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
                             String locationName = finalAssetLocationMap.get(detail.getAssetLocationId());
                             if (StringUtils.isNotBlank(locationName)) {
-                                // 注意：AssetAcceptDetailDTO.ViewDTO可能没有assetLocationName字段
-                                // 如果有的话可以设置：detailView.setAssetLocationName(locationName);
+                                detailView.setAssetLocationName(locationName);
                             }
                         }
                         
                         // 填充部门名称
                         if (StringUtils.isNotBlank(detail.getUseDeptId()) && StringUtils.isBlank(detail.getUseDeptName())) {
                             detailView.setUseDeptName(finalDeptMap.get(detail.getUseDeptId()));
+                        }
+                        
+                        // 计算数量（参考queryMoldPurchaseOrderDetails的逻辑）
+                        if (StringUtils.isNotBlank(detail.getSourceDetailId())) {
+                            int purchaseQty = finalPurchaseQtyMap.getOrDefault(detail.getSourceDetailId(), 0);
+                            int approvedAcceptQty = 0;  // 已审核的验收数量
+                            int processingAcceptQty = 0; // 待提交、审核中、审核不通过的验收数量
+
+                            for (AssetAcceptDetailEntity acceptDetail : finalAllAcceptDetailList) {
+                                if (!detail.getSourceDetailId().equals(acceptDetail.getSourceDetailId())) {
+                                    continue;
+                                }
+
+                                String approveStatus = finalAcceptStatusMap.get(acceptDetail.getMainId());
+                                if (approveStatus == null) {
+                                    continue;
+                                }
+
+                                Integer acceptQty = acceptDetail.getAcceptQty() != null ? acceptDetail.getAcceptQty() : 0;
+
+                                // 已审核
+                                if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus)) {
+                                    approvedAcceptQty += acceptQty;
+                                }
+                                // 待提交、审核中、审核不通过
+                                else if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(approveStatus) 
+                                        || ApproveStatusEnum.APPROVE_ING.getStatus().equals(approveStatus) 
+                                        || ApproveStatusEnum.REJECT.getStatus().equals(approveStatus)) {
+                                    processingAcceptQty += acceptQty;
+                                }
+                            }
+
+                            // 注释：
+                            // 1. 已验收数量 = 已审核资产验收单验收数量
+                            detailView.setAcceptedQty(approvedAcceptQty);
+                            
+                            // 2. 待验收数量 = 采购数量 - 已验收数量
+                            int pendingAcceptQty = purchaseQty - approvedAcceptQty;
+                            detailView.setPendingQty(Math.max(pendingAcceptQty, 0));
+                            
+                            // 3. 可验收数量 = 待验收数量 - 待提交、审核中、审核不通过的资产验收单验收数量
+                            int availableAcceptQty = pendingAcceptQty - processingAcceptQty;
+                            detailView.setAcceptableQty(Math.max(availableAcceptQty, 0));
                         }
                         
                         return detailView;
