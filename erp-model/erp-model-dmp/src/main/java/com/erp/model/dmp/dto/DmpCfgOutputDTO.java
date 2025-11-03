@@ -280,7 +280,7 @@ public class DmpCfgOutputDTO implements Serializable {
         private String inputConvertClass;
 
         /**
-         * 外部系统接口转换类型名称
+         * (转内数据)外部系统接口转换类型名称
          */
         private String inputConvertType;
 
@@ -295,7 +295,7 @@ public class DmpCfgOutputDTO implements Serializable {
         private String typeId;
 
         /**
-         * 输入类型名称
+         * 输出类型名称
          */
         private String typeName;
 
@@ -315,20 +315,20 @@ public class DmpCfgOutputDTO implements Serializable {
         private Integer pushRate;
 
         /**
-         * 输出处理类
+         * 输出类型类
          */
         private String outputClass;
 
         /**
-         * 应用id
+         * restcloud应用id
          */
         private String appId;
         /**
-         * 流程编号
+         * restcloud流程编码
          */
         private String flowCode;
         /**
-         * 流程名称
+         * restcloud流程名称
          */
         private String flowName;
         /**
