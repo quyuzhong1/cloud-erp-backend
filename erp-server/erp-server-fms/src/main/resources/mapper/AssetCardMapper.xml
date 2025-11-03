@@ -194,7 +194,7 @@
         WHERE ac.is_deleted = false
         AND ac.approve_status = 'approve'
         <if test="params.code != null and params.code != ''">
-            AND ac.code LIKE CONCAT('%', #{params.code}, '%')
+            AND ac.code LIKE '%' || #{params.code} || '%'
         </if>
         <if test="params.startCode != null and params.startCode != ''">
             AND ac.code &gt;= #{params.startCode}
