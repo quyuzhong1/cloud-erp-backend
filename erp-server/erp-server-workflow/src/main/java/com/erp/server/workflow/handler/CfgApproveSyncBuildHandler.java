@@ -88,7 +88,6 @@ public class CfgApproveSyncBuildHandler {
         ThirdUnionDTO thirdUnionDTO = thirdUnionMap.getOrDefault(createUserId, null);
         if(Objects.isNull(thirdUnionDTO)){
             userName = "";
-            //todo 推送记录  失败  创建人未绑定飞书
             errorReason= "创建人未绑定飞书";
             syncRecordEntity.setErrorReason( errorReason);
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
@@ -97,7 +96,6 @@ public class CfgApproveSyncBuildHandler {
             syncRecordEntity.setReceiverId(createUserId);
             syncRecordEntity.setReceiverName(thirdUnionDTO.getUserName());
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
-                //todo 推送记录  失败  创建人未绑定飞书
                 errorReason= "创建人未绑定飞书";
                 syncRecordEntity.setErrorReason( errorReason);
                 approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
@@ -136,18 +134,16 @@ public class CfgApproveSyncBuildHandler {
                 .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                 .updateTime(updateTimeMillis)//审批实例最近更新时间
                 .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
-                .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                 .build();
 
         //任务列表数组  最大长度：300
         if(CollUtil.isEmpty(processTaskManagementEntities)){
-            //todo 推送记录  失败
             errorReason= "审批任务不能为空";
             syncRecordEntity.setErrorReason( errorReason);
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
         }else {
             if(processTaskManagementEntities.size() > 300){
-                //todo 推送记录  失败
                 errorReason= "飞书平台任务列表数不能超过300";
                 syncRecordEntity.setErrorReason( errorReason);
                 approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
@@ -197,7 +193,6 @@ public class CfgApproveSyncBuildHandler {
 
         }else {
             if(processTaskCcEntities.size() > 200){
-                //todo 推送记录  失败
                 errorReason= "飞书平台抄送列表数不能超过200";
                 syncRecordEntity.setErrorReason( errorReason);
                 approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
