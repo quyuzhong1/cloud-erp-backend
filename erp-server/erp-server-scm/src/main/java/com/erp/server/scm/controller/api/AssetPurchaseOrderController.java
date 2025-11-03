@@ -498,8 +498,9 @@ public class AssetPurchaseOrderController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetPurchaseOrderDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated AssetPurchaseOrderDTO.ExportDTO dto, HttpServletResponse response) {
         assetPurchaseOrderService.exportList(dto, response);
+        return success();
     }
 
     /**

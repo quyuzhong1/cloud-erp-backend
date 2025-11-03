@@ -487,8 +487,9 @@ public class AssetNoticeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetNoticeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated AssetNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         assetNoticeService.exportList(dto, response);
+        return success();
     }
 
 
