@@ -58,6 +58,11 @@ public class AssetCardDetailDTO implements Serializable {
         private String assetLocationId;
 
         /**
+        * 资产位置名称
+        */
+        private String assetLocationName;
+
+        /**
         * 数量
         */
         private Integer qty;
@@ -86,6 +91,11 @@ public class AssetCardDetailDTO implements Serializable {
         * 费用项目（折旧费）
         */
         private String costType;
+
+        /**
+        * 费用项目名称
+        */
+        private String costTypeName;
 
         /**
         * 备注

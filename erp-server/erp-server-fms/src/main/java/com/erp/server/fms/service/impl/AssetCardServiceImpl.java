@@ -30,6 +30,7 @@ import com.erp.model.fms.entity.AssetDisposalDetailEntity;
 import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
+import com.erp.model.fms.enums.DepreciationChargeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -720,10 +721,81 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 .list();
 
         if (CollUtil.isNotEmpty(detailList)) {
+            // 收集所有需要查询的资产位置ID和部门ID
+            List<String> assetLocationIds = detailList.stream()
+                    .map(AssetCardDetailEntity::getAssetLocationId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            List<String> useDeptIds = detailList.stream()
+                    .map(AssetCardDetailEntity::getUseDeptId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 批量查询资产位置信息
+            Map<String, String> assetLocationMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(assetLocationIds)) {
+                try {
+                    List<com.erp.model.fms.entity.AssetLocationEntity> locationList = assetLocationService.listByIds(assetLocationIds);
+                    if (CollUtil.isNotEmpty(locationList)) {
+                        assetLocationMap = locationList.stream()
+                                .filter(loc -> StringUtils.isNotBlank(loc.getId()) && StringUtils.isNotBlank(loc.getAddress()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.fms.entity.AssetLocationEntity::getId,
+                                        com.erp.model.fms.entity.AssetLocationEntity::getAddress,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询资产位置信息失败", e);
+                }
+            }
+            
+            // 批量查询部门信息
+            Map<String, String> deptMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(useDeptIds)) {
+                try {
+                    List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(useDeptIds);
+                    if (CollUtil.isNotEmpty(deptList)) {
+                        deptMap = deptList.stream()
+                                .filter(dept -> StringUtils.isNotBlank(dept.getId()) && StringUtils.isNotBlank(dept.getName()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getId,
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getName,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询部门信息失败", e);
+                }
+            }
+            
+            // 创建副本用于后续查询
+            final Map<String, String> finalAssetLocationMap = assetLocationMap;
+            final Map<String, String> finalDeptMap = deptMap;
+            
             List<AssetCardDetailDTO.ViewDTO> detailViewList = detailList.stream()
                     .map(detail -> {
                         AssetCardDetailDTO.ViewDTO detailView = new AssetCardDetailDTO.ViewDTO();
                         BeanMapperUtils.copy(detail, detailView);
+                        
+                        // 填充资产位置名称
+                        if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
+                            detailView.setAssetLocationName(finalAssetLocationMap.get(detail.getAssetLocationId()));
+                        }
+                        
+                        // 填充部门名称
+                        if (StringUtils.isNotBlank(detail.getUseDeptId())) {
+                            detailView.setUseDeptName(finalDeptMap.get(detail.getUseDeptId()));
+                        }
+                        
+                        // 填充费用项目名称（枚举转换）
+                        if (StringUtils.isNotBlank(detail.getCostType())) {
+                            detailView.setCostTypeName(DepreciationChargeEnum.getName(detail.getCostType()));
+                        }
+                        
                         return detailView;
                     })
                     .collect(Collectors.toList());
