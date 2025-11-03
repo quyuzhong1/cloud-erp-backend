@@ -1,5 +1,6 @@
 package com.erp.server.oms.schedule;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.oms.dto.PackagePlanDTO;
 import com.erp.server.oms.service.InvoiceInfoService;
 import com.erp.server.oms.service.PackagePlanService;
@@ -36,8 +37,11 @@ public class PackagePlanJob {
         XxlJobHelper.log("获取组包计划的交接标签开始执行");
         //无交接标签 有物流跟踪号 平台是 wildberries 组包状态是已组包
         String jobParam = XxlJobHelper.getJobParam();
-        XxlJobHelper.log("获取组包计划的交接标签开始执行，参数为：{}", jobParam);
-        List<String> codeList = Arrays.asList(jobParam.split(","));
+        List<String> codeList = null;
+        if (CharSequenceUtil.isNotBlank(jobParam)){
+            XxlJobHelper.log("获取组包计划的交接标签开始执行，参数为：{}", jobParam);
+            codeList = Arrays.asList(jobParam.split(","));
+        }
         List<PackagePlanDTO.LabelDTO> list = packagePlanService.getNoHandoverLabel(codeList);
         XxlJobHelper.log("获取组包计划的交接标签开始执行，需要获取的订单数：{}", list.size());
         list.forEach(item -> {
