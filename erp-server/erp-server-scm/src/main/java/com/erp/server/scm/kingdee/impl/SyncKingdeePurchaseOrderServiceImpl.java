@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -374,8 +375,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
     /**
      * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
      * @param entity
      * @param operate
      * @param resultMap
@@ -383,7 +382,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private DmpPushTaskEntity saveTask (AssetPurchaseOrderEntity entity, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_ORDER.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();
@@ -392,7 +391,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
             taskFeignDTO.setSourceId(entity.getId());
             taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
             taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
@@ -404,7 +403,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
         ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
         scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         scmPushMsgEntity.setSourceId(entity.getId());
         scmPushMsgEntity.setSourceCode(entity.getCode());
         scmPushMsgEntity.setSyncOperate(operate);
@@ -435,14 +434,16 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseDate", LocalDateTimeUtil.format(entity.getPurchaseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //单据类型
-        resultMap.put("type",entity.getOrderType());
+        //resultMap.put("type",entity.getOrderType());
 
         //查询采购供应商
-        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
-        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+        AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, entity.getId())
+                .one();
+        if (ObjectUtils.isEmpty(assetPurchaseOrderSupplierEntity)) {
             throw new ServiceException("未发现采购供应商信息");
         }
-        SupplierEntity supplierEntity = supplierService.getById(purchaseOrderSupplierEntity.getSupplierId());
+        SupplierEntity supplierEntity = supplierService.getById(assetPurchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
             throw new ServiceException("未发现供应商信息");
         }
@@ -479,11 +480,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             }
         }
         //供应商联系人
-        resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
+        resultMap.put("contactName",assetPurchaseOrderSupplierEntity.getContactName());
 
-        if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPaymentCondition())) {
+        if (ObjectUtils.isNotEmpty(assetPurchaseOrderSupplierEntity.getPaymentCondition())) {
             //付款条件
-            resultMap.put("paymentCondition",purchaseOrderSupplierEntity.getPaymentCondition());
+            resultMap.put("paymentCondition",assetPurchaseOrderSupplierEntity.getPaymentCondition());
         }
 
         //采购明细
