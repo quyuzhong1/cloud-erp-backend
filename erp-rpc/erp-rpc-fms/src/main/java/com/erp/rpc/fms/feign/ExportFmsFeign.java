@@ -42,10 +42,16 @@ public interface ExportFmsFeign {
     PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto);
 
     /**
-     * 导出资产盘点方案
+     * 导出资产处置单
      */
     @PostMapping("/feign/export/exportAssetDisposal")
     PagingVO<AssetDisposalDTO.ListDTO> exportAssetDisposal(@RequestBody PagingDTO<AssetDisposalDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出资产盘点单
+     */
+    @PostMapping("/feign/export/getAssetStocktakingPageData")
+    PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(@RequestBody PagingDTO<AssetStocktakingDTO.ExportDTO> dto);
 
 }
 

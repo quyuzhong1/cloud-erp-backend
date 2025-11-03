@@ -294,7 +294,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         }
         AssetPurchaseChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核

@@ -9,7 +9,7 @@ package com.erp.model.scm.enums;
  **/
 public enum AssetPurchaseOrderTypeEnum {
 
-    ASSET_PURCHASE("assetPurchase", "资产采购单");
+    ASSET_PURCHASE("assetPurchase", "资产采购订单");
 
     private String code;
     private String name;
