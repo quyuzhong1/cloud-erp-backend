@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -935,5 +936,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformCode(platformCodeList);
+    }
+
+    @Override
+    public List<LogisticsChannelEntity> getChannelByCode(String channelCode) {
+        if (StringUtils.isBlank(channelCode)){
+            return Collections.emptyList();
+        }
+        return baseMapper.selectList(new LambdaQueryWrapper<LogisticsChannelEntity>().eq(LogisticsChannelEntity::getCode,channelCode));
     }
 }

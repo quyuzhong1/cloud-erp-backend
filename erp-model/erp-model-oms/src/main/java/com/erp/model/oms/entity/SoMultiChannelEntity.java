@@ -240,6 +240,11 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
      */
     @TableField("full_address")
     private String fullAddress;
+    /**
+     *平台物流（亚马逊物流）
+     */
+    @TableField("platform_channel_code")
+    private String platformChannelCode;
 
     public static final String CODE = "code";
 

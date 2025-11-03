@@ -25,13 +25,26 @@ public interface SoMultiChannelFeign {
     void updateSoMultiChannel(@RequestBody SoMultiChannelDTO.CreateResultDTO createResultDTO);
 
     /**
+     * 更新多渠道订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    @PostMapping("/feign/soMultiChannel/updateSoMultiChannelById")
+    void updateSoMultiChannelById(@RequestBody SoMultiChannelEntity soMultiChannelEntity);
+
+    /**
      * 根据发货单编号查询多渠道订单
      * @param deliveryCode
      * @return
      */
     @GetMapping("/feign/soMultiChannel/getByDeliveryCode")
     SoMultiChannelEntity getByDeliveryCode(@RequestParam("deliveryCode") String deliveryCode);
-
+    /**
+     * 根据销售订单id查询多渠道订单
+     * @param soId
+     * @return
+     */
+    @GetMapping("/feign/soMultiChannel/getBySoId")
+    SoMultiChannelEntity getBySoId(@RequestParam("soId") String soId);
     /**
      * 根据发货单编号查询销售出库单生成DTO
      * @param deliveryCode

@@ -473,7 +473,10 @@ public class SoMultiChannelDTO implements Serializable {
         */
         private String outstockStatus;
         private String outstockStatusName;
-
+        /**
+         *平台物流（亚马逊物流）
+         */
+        private String platformChannelCode;
 
         /**
          * 收货人id
@@ -743,6 +746,10 @@ public class SoMultiChannelDTO implements Serializable {
         */
 //        @NotBlank(message = "订单备注不能为空")
         private String remark;
+        /**
+         *平台物流（亚马逊物流）
+         */
+        private String platformChannelCode;
 
         /**
          * 收货人id

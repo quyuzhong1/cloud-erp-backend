@@ -57,6 +57,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -140,8 +141,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private SkuMappingService skuMappingService;
-    @Resource
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
     @Resource
     private SoB2cDetailService soB2cDetailService;
@@ -151,6 +150,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cLogisticsService soB2cLogisticsService;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -813,6 +814,17 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelEntity old = this.getById(soMultiChannelEntity.getId());
         soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
         soMultiChannelEntity.setTrackNo(bean.getTrackNo());
+        LogisticsChannelEntity logisticsChannelEntity = null;
+        if (CharSequenceUtil.isNotBlank(bean.getChannelCode())) {
+            soMultiChannelEntity.setPlatformChannelCode(bean.getChannelCode());
+            List<LogisticsChannelEntity> channelEntityList = logisticsFeign.getChannelByCode(bean.getChannelCode());
+            if (CollUtil.isNotEmpty(channelEntityList)){
+                logisticsChannelEntity = channelEntityList.get(0);
+                soMultiChannelEntity.setLogisticsChannelId(logisticsChannelEntity.getId());
+                soMultiChannelEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
+                //更新销售订单
+            }
+        }
         soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(bean.getOrderStatus()) ? bean.getOrderStatus() : "");
         soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus()) ? bean.getDeliveryStatus() : "");
         soMultiChannelEntity.setShipmentCode(bean.getShipmentId());
@@ -827,9 +839,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoB2cLogisticsEntity::getTrackNo, bean.getTrackNo())
                     .set(SoB2cLogisticsEntity::getCode, bean.getTrackNo())
                     .set(Objects.nonNull(bean.getDeliveryTime()), SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
+                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelId, logisticsChannelEntity.getId())
+                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelName, logisticsChannelEntity.getName())
                     .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
                     .update();
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
+            String msg = "";
+            if (Objects.nonNull(logisticsChannelEntity)){
+                msg = CharSequenceUtil.format("多渠道订单物流更新从【{}】为【{}】", old.getLogisticsChannelName(), logisticsChannelEntity.getName());
+            }
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()) + msg, ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
         }
     }
 

@@ -109,6 +109,15 @@ public class LogisticsFeignController {
         return logisticsChannelService.getChannelByName(channelName);
     }
     /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @return
+     */
+    @PostMapping("/getChannelByCode")
+    public List<LogisticsChannelEntity> getChannelByCode(@RequestBody String channelCode){
+        return logisticsChannelService.getChannelByCode(channelCode);
+    }
+    /**
      * 获取渠道 根据渠道名称
      * @param channelNameList
      * @return

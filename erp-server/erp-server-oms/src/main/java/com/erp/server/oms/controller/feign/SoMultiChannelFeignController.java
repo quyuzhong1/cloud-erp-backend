@@ -31,7 +31,14 @@ public class SoMultiChannelFeignController {
     public void updateSoMultiChannel(@RequestBody SoMultiChannelDTO.CreateResultDTO createResultDTO){
         soMultiChannelService.updateSoMultiChannel(createResultDTO);
     }
-
+    /**
+     * 更新多渠道订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    @PostMapping("/updateSoMultiChannelById")
+    public void updateSoMultiChannelById(@RequestBody SoMultiChannelEntity soMultiChannelEntity){
+        soMultiChannelService.updateById(soMultiChannelEntity);
+    }
     /**
      * 根据发货单编号查询多渠道订单
      * @param deliveryCode
@@ -41,7 +48,15 @@ public class SoMultiChannelFeignController {
     public SoMultiChannelEntity getByDeliveryCode(@RequestParam("deliveryCode") String deliveryCode){
         return soMultiChannelService.getByDeliveryCode(deliveryCode);
     }
-
+    /**
+     * 根据销售订单编号查询多渠道订单
+     * @param soId
+     * @return
+     */
+    @GetMapping("/getBySoId")
+    public SoMultiChannelEntity getBySoId(@RequestParam("soId") String soId){
+        return soMultiChannelService.getBySoId(soId, Boolean.FALSE);
+    }
     /**
      * 根据发货单编号查询销售出库单生成DTO
      * @param deliveryCode
