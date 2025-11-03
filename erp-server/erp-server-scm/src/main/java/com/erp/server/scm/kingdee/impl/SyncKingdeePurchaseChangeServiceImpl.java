@@ -402,7 +402,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //供应商
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
                 .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, entity.getSourceId())
-                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         SupplierEntity supplierEntity = supplierService.getById(assetPurchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
@@ -456,7 +455,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //变更明细
         List<AssetPurchaseChangeDetailEntity> detailList = assetPurchaseChangeDetailService.lambdaQuery()
                 .eq(AssetPurchaseChangeDetailEntity::getMainId, entity.getId())
-                .eq(AssetPurchaseChangeDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (CollectionUtils.isEmpty(detailList)) {
             log.error("未找到资产变更明细，changeId = {}",entity.getId());
