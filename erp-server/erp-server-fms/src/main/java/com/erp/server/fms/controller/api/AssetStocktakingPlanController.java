@@ -471,4 +471,16 @@ public class AssetStocktakingPlanController extends BaseController {
         return success(assetStocktakingPlanService.importFile(dto));
     }
 
+    /**
+    * 获取盘点方案下拉列表
+    * @author wuht
+    * @date: 2025-11-03
+    * @param keyword 关键字（支持方案编号和名称模糊查询）
+    * @return ApiResult<List<AssetStocktakingPlanDTO.DropDownDTO>>
+    */
+    @GetMapping("/dropDownList")
+    public ApiResult<List<AssetStocktakingPlanDTO.DropDownDTO>> dropDownList(@RequestParam(value = "keyword", required = false) String keyword) {
+        return success(assetStocktakingPlanService.dropDownList(keyword));
+    }
+
 }
