@@ -112,6 +112,10 @@ public class AssetAcceptDetailDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 资产位置名称
+         */
+        private String assetLocationName;
 
     }
 
