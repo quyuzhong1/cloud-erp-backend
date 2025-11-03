@@ -430,6 +430,20 @@ public class AssetCardController extends BaseController {
     }
 
     /**
+    * 下载导入模板
+    * @author wuht
+    * @date: 2025-11-03
+    * @param response
+    * @return ApiResult<Object>
+    */
+    @GetMapping("/downloadTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产卡片导入模板")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        assetCardService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
     * 获取已审核资产卡片列表（用于盘点方案）
     * @author wuht
     * @date: 2025-10-24

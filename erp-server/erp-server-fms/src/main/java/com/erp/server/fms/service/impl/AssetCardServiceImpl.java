@@ -52,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -490,8 +491,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_CARD.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -658,8 +658,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_CARD.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_CARD.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -682,6 +681,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     public AssetCardDTO.ViewDTO view(String id) {
         AssetCardEntity assetCardEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产卡片主单数据"));
         AssetCardDTO.ViewDTO data = BeanMapperUtils.map(AssetCardDTO.ViewDTO.class, assetCardEntity);
+        data.setApproveStatus(assetCardEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
         // TODO 查询明细数据（如果有的话）
@@ -711,6 +711,23 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     private void fillOne(AssetCardDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        String id = data.getId();
+
+        // 查询明细数据
+        List<AssetCardDetailEntity> detailList = assetCardDetailService.lambdaQuery()
+                .eq(AssetCardDetailEntity::getMainId, id)
+                .list();
+
+        if (CollUtil.isNotEmpty(detailList)) {
+            List<AssetCardDetailDTO.ViewDTO> detailViewList = detailList.stream()
+                    .map(detail -> {
+                        AssetCardDetailDTO.ViewDTO detailView = new AssetCardDetailDTO.ViewDTO();
+                        BeanMapperUtils.copy(detail, detailView);
+                        return detailView;
+                    })
+                    .collect(Collectors.toList());
+            data.setDetailList(detailViewList);
         }
     }
 
@@ -853,5 +870,15 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/assetCardTemplate.xlsx";
+        String excelName = "资产卡片导入模板.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
     }
 }
