@@ -766,7 +766,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         try {
             BaseResponse response = wildberriesSDKService.signDelivery(authEntity.getToken(), packageNo);
-            if (!"204".equals(response.getCode())) {
+            if (CharSequenceUtil.isNotBlank(response.getCode()) && !"SupplyClosed".equals(response.getStatus())) {
                 mqResponseDTO.setErrorMsg("将供货单转入已完成失败:" + JSONUtil.toJsonStr(response));
                 return mqResponseDTO;
             }
