@@ -310,6 +310,9 @@ public class CustomerB2CDTO implements Serializable {
          * 审核状态
          */
         private ApproveStatusEnum approveStatus;
+
+
+        private String approveUserName;
         /**
          * 结算方
          */
