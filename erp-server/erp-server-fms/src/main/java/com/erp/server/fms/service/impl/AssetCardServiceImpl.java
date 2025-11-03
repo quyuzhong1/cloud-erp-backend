@@ -681,11 +681,11 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Override
     public AssetCardDTO.ViewDTO view(String id) {
         AssetCardEntity assetCardEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产卡片主单数据"));
-        AssetCardDTO.ViewDTO data = BeanMapperUtils.map(AssetCardDTO.ViewDTO.class, assetCardEntity);
+        AssetCardDTO.ViewDTO data = new AssetCardDTO.ViewDTO();
+        BeanUtil.copyProperties(assetCardEntity,data);
         data.setApproveStatus(assetCardEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**

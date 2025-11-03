@@ -101,6 +101,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private FileFeign fileFeign;
     @Autowired
     private SysUserFeign sysUserFeign;
+    @Autowired
+    private AssetLocationService assetLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -918,7 +920,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Override
     public AssetAcceptDTO.ViewDTO view(String id) {
         AssetAcceptEntity assetAcceptEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产验收单数据"));
-        AssetAcceptDTO.ViewDTO data = BeanMapperUtils.map(AssetAcceptDTO.ViewDTO.class, assetAcceptEntity);
+        AssetAcceptDTO.ViewDTO data = new AssetAcceptDTO.ViewDTO();
+        BeanUtil.copyProperties(assetAcceptEntity, data);
         data.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
@@ -973,6 +976,54 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
         String id = data.getId();
 
+        // 填充验收组织名称
+        if (StringUtils.isNotBlank(data.getAcceptOrgId()) && StringUtils.isBlank(data.getAcceptOrgName())) {
+            try {
+                List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getAcceptOrgId()));
+                if (CollUtil.isNotEmpty(orgList)) {
+                    data.setAcceptOrgName(orgList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收组织信息失败，orgId: {}", data.getAcceptOrgId(), e);
+            }
+        }
+
+        // 填充验收人姓名
+        if (StringUtils.isNotBlank(data.getAcceptUserId()) && StringUtils.isBlank(data.getAcceptUserName())) {
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserId(data.getAcceptUserId());
+                if (ObjectUtil.isNotEmpty(user)) {
+                    data.setAcceptUserName(user.getUserName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收人信息失败，userId: {}", data.getAcceptUserId(), e);
+            }
+        }
+
+        // 填充验收部门名称
+        if (StringUtils.isNotBlank(data.getAcceptDeptId()) && StringUtils.isBlank(data.getAcceptDeptName())) {
+            try {
+                List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Arrays.asList(data.getAcceptDeptId()));
+                if (CollUtil.isNotEmpty(deptList)) {
+                    data.setAcceptDeptName(deptList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收部门信息失败，deptId: {}", data.getAcceptDeptId(), e);
+            }
+        }
+
+        // 填充审核人姓名
+        if (StringUtils.isNotBlank(data.getApproveUserId()) && StringUtils.isBlank(data.getApproveUserName())) {
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserId(data.getApproveUserId());
+                if (ObjectUtil.isNotEmpty(user)) {
+                    data.setApproveUserName(user.getUserName());
+                }
+            } catch (Exception e) {
+                log.error("查询审核人信息失败，userId: {}", data.getApproveUserId(), e);
+            }
+        }
+
         // 查询验收人员数据
         List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
                 .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
@@ -995,10 +1046,80 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 .list();
 
         if (CollUtil.isNotEmpty(detailList)) {
+            // 收集所有需要查询的资产位置ID和部门ID
+            List<String> assetLocationIds = detailList.stream()
+                    .map(AssetAcceptDetailEntity::getAssetLocationId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            List<String> useDeptIds = detailList.stream()
+                    .map(AssetAcceptDetailEntity::getUseDeptId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 批量查询资产位置信息
+            Map<String, String> assetLocationMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(assetLocationIds)) {
+                try {
+                    List<com.erp.model.fms.entity.AssetLocationEntity> locationList = assetLocationService.listByIds(assetLocationIds);
+                    if (CollUtil.isNotEmpty(locationList)) {
+                        assetLocationMap = locationList.stream()
+                                .filter(loc -> StringUtils.isNotBlank(loc.getId()) && StringUtils.isNotBlank(loc.getAddress()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.fms.entity.AssetLocationEntity::getId,
+                                        com.erp.model.fms.entity.AssetLocationEntity::getAddress,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询资产位置信息失败", e);
+                }
+            }
+            
+            // 批量查询部门信息
+            Map<String, String> deptMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(useDeptIds)) {
+                try {
+                    List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(useDeptIds);
+                    if (CollUtil.isNotEmpty(deptList)) {
+                        deptMap = deptList.stream()
+                                .filter(dept -> StringUtils.isNotBlank(dept.getId()) && StringUtils.isNotBlank(dept.getName()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getId,
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getName,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询部门信息失败", e);
+                }
+            }
+            
+            // 创建副本用于lambda使用
+            final Map<String, String> finalAssetLocationMap = assetLocationMap;
+            final Map<String, String> finalDeptMap = deptMap;
+            
             List<AssetAcceptDetailDTO.ViewDTO> detailViewList = detailList.stream()
                     .map(detail -> {
                         AssetAcceptDetailDTO.ViewDTO detailView = new AssetAcceptDetailDTO.ViewDTO();
                         BeanMapperUtils.copy(detail, detailView);
+                        
+                        // 填充资产位置名称（如果明细DTO有这个字段的话）
+                        if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
+                            String locationName = finalAssetLocationMap.get(detail.getAssetLocationId());
+                            if (StringUtils.isNotBlank(locationName)) {
+                                // 注意：AssetAcceptDetailDTO.ViewDTO可能没有assetLocationName字段
+                                // 如果有的话可以设置：detailView.setAssetLocationName(locationName);
+                            }
+                        }
+                        
+                        // 填充部门名称
+                        if (StringUtils.isNotBlank(detail.getUseDeptId()) && StringUtils.isBlank(detail.getUseDeptName())) {
+                            detailView.setUseDeptName(finalDeptMap.get(detail.getUseDeptId()));
+                        }
+                        
                         return detailView;
                     })
                     .collect(Collectors.toList());
