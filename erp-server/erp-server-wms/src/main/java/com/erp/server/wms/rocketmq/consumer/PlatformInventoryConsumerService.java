@@ -207,7 +207,7 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                         daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
                     }
 
-                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
+                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate()) && v.getInventoryAge().equals(daysBetween)).findFirst().orElse(null);
                     if(null == oldDetail){
                         OverseasInventoryAgeDetailEntity detailEntity = new OverseasInventoryAgeDetailEntity();
                         BeanMapper.copy(ageDTO, detailEntity);

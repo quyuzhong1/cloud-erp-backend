@@ -2437,6 +2437,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if(Objects.nonNull(warehouseEntity)){
                     channelName =  warehouseEntity.getName();
                 }
+                if(StringUtils.isBlank(requisitionApplicationEntity.getToWarehouseId())){
+                    requisitionApplicationEntity.setToWarehouseId(requisitionApplicationEntity.getChannelId());
+                }
             }
             requisitionApplicationEntity.setChannelName(channelName);
         }
