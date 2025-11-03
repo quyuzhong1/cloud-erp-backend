@@ -180,12 +180,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        ImlCreateInboundReq imlCreateInboundReq =  this.buildInboundDto(createInboundReq);
-        ImlBaseResp<ImlInboundResp> imlInboundRespImlBaseResp = imlService.editInboundBill(imlCreateInboundReq);
-        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
-            return failure(imlInboundRespImlBaseResp.getMessage());
-        }
-        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
+        throw new ServiceException("该仓库入库单不允许修改，请取消入库单后重新创建");
     }
 
     @Override

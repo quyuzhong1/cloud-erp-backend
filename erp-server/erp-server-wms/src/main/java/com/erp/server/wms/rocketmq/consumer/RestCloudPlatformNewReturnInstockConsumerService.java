@@ -117,7 +117,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	 * 海外仓入库平台处理
 	 */
 	public void overseasWarehouseHandle(PlatformReturnInstockDTO dto) {
-		if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAuthId())|| CharSequenceUtil.isBlank(dto.getWarehouseCode())){
+		if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAuthId())){
 			return;
 		}
 
@@ -172,12 +172,12 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())){
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
-			}
-			List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
-			if(CollectionUtils.isNotEmpty(soB2cDetailEntityList)){
-				String warehouseId = soB2cDetailEntityList.get(0).getWarehouseId();
-				if(StringUtils.isNotBlank(warehouseId)){
-					warehouseEntity = warehouseService.getById(warehouseId);
+				List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
+				if(CollectionUtils.isNotEmpty(soB2cDetailEntityList)){
+					String warehouseId = soB2cDetailEntityList.get(0).getWarehouseId();
+					if(StringUtils.isNotBlank(warehouseId)){
+						warehouseEntity = warehouseService.getById(warehouseId);
+					}
 				}
 			}
 		}else{
@@ -288,8 +288,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setSourceId(dto.getSourceId());
 		//组织信息
-		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
-		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+			soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
+		}
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
 		soReturnInstockEntity.setSourceCode(Objects.nonNull(soB2cEntity)?soB2cEntity.getCode():dto.getOrderReferenceNo());
