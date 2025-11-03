@@ -1,7 +1,11 @@
 package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
@@ -9,26 +13,30 @@ import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.fms.dto.AssetDisposalDetailDTO;
 import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
-import com.erp.model.fms.entity.AssetDisposalDetailEntity;
-import com.erp.model.fms.entity.AssetDisposalPhysicalDetailEntity;
+import com.erp.model.fms.dto.AssetLocationDTO;
+import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
+import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.wms.dto.SampleBorrowDetailDTO;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
+import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
-import com.erp.server.fms.service.AssetDisposalDetailService;
-import com.erp.server.fms.service.AssetDisposalPhysicalDetailService;
+import com.erp.server.fms.listener.AssetDisposalExcelListener;
+import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.erp.server.fms.mapper.AssetDisposalMapper;
-import com.erp.server.fms.service.AssetDisposalService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.fms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -37,6 +45,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.fms.dto.AssetDisposalDTO;
@@ -50,8 +59,11 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
 
@@ -59,6 +71,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_FMS_ASSET_DISPOSAL;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_FMS_ASSET_DISPOSAL;
 
 /**
  * <p>
@@ -85,6 +98,16 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private AssetLocationService assetLocationService;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private AssetCardService assetCardService;
+    @Resource
+    private AssetCardDetailService assetCardDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -682,6 +705,117 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("资产处置单导入", IMPORT_FMS_ASSET_DISPOSAL.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetDisposal(BaseDTO.ImportDTO dto) {
+        //处置方式
+        AssetDisposalDisposalMethodEnum[] values = AssetDisposalDisposalMethodEnum.values();
+        //组织
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        Map<String, String> companyMap = companyList.stream().collect(Collectors.toMap(BaseIdDTO::getName, BaseIdDTO::getId, (o1, o2) -> o1));
+        //币种
+        List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
+        //资产位置
+        List<AssetLocationDTO.DropDownDTO> assetLocationEntities = assetLocationService.dropDownList("");
+        Map<String, String> assetLocationMap = assetLocationEntities.stream().collect(Collectors.toMap(AssetLocationDTO.DropDownDTO::getAddress, AssetLocationDTO.DropDownDTO::getId, (o1, o2) -> o1));
+
+        //资产卡片
+        List<AssetCardEntity> assetCardEntities = assetCardService.lambdaQuery().eq(AssetCardEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode()).list();
+        Map<String, String> assetCardMap = assetCardEntities.stream().collect(Collectors.toMap(AssetCardEntity::getAssetCode, AssetCardEntity::getId, (o1, o2) -> o1));
+
+        List<AssetCardDetailEntity> assetCardDetailEntities = assetCardDetailService.list();
+        Map<String, List<AssetCardDetailEntity>> assetCardDetailMap = assetCardDetailEntities.stream().collect(Collectors.groupingBy(AssetCardDetailEntity::getMainId));
+
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        AssetDisposalExcelListener excelListenerUtil = new AssetDisposalExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),companyMap,dictCurrencyEntities,assetLocationMap,assetCardMap,assetCardDetailMap);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetDisposalImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetDisposalImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "资产处置单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetDisposalImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void handleImportSuccessList(List<AssetDisposalImportExcelDTO> successList, List<String> errorNoList, List<AssetDisposalImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+
+            //全部返回到错误列表
+            List<AssetDisposalImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        AssetDisposalServiceImpl bean = ApplicationContextUtils.getBean(AssetDisposalServiceImpl.class);
+        //按序号分组
+        Map<String, List<AssetDisposalImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(AssetDisposalImportExcelDTO::getNo));
+        for (Map.Entry<String, List<AssetDisposalImportExcelDTO>> entry : collect.entrySet()) {
+            List<AssetDisposalImportExcelDTO> value = entry.getValue();
+            AssetDisposalImportExcelDTO importMainDTO = value.get(0);
+            AssetDisposalDTO.AddDTO addDTO = new AssetDisposalDTO.AddDTO();
+            BeanMapper.copy(importMainDTO,addDTO);
+
+            //资产明细
+            List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList = BeanMapper.copyList(value, AssetDisposalDetailDTO.UpdateDTO.class);
+
+            //value再按卡片编码进行分组
+            Map<String, List<AssetDisposalImportExcelDTO>> detailCollect = value.stream().collect(Collectors.groupingBy(AssetDisposalImportExcelDTO::getSourceCode));
+
+            //遍历资产明细
+            for (AssetDisposalDetailDTO.UpdateDTO disposalImportExcelDTO : assetDisposalDetailDTOList) {
+                disposalImportExcelDTO.setAssetDisposalPhysicalDetailDTOList(BeanMapper.copyList(detailCollect.get(disposalImportExcelDTO.getSourceCode()), AssetDisposalPhysicalDetailDTO.UpdateDTO.class));
+            }
+
+            addDTO.setAssetDisposalDetailDTOList(assetDisposalDetailDTOList);
+
+            //执行新增
+            bean.add(addDTO);
+        }
     }
 }

@@ -125,7 +125,7 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         private String assetCode;
 
         /**
-        * 资产位置ID
+        * 资产位置ID http://172.16.100.11:3002/project/163/interface/api/39465  /fms/assetLocation/drop/down/list
         */
         @NotBlank(message = "资产位置ID不能为空")
         private String assetLocationId;

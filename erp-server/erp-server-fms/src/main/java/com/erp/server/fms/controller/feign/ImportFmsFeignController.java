@@ -1,10 +1,9 @@
 package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
-import com.erp.server.fms.service.AssetAcceptService;
-import com.erp.server.fms.service.AssetCardService;
-import com.erp.server.fms.service.AssetLocationService;
-import com.erp.server.fms.service.AssetStocktakingPlanService;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.fms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +23,9 @@ import javax.annotation.Resource;
 public class ImportFmsFeignController {
 
     @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
     private AssetLocationService assetLocationService;
 
     @Resource
@@ -34,6 +36,18 @@ public class ImportFmsFeignController {
     
     @Resource
     private AssetStocktakingPlanService assetStocktakingPlanService;
+
+
+    @Resource
+    private AssetDisposalService assetDisposalService;
+
+    private void updateTask(String taskId, Exception e) {
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+        importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
 
     /**
      * 导入资产位置
@@ -46,6 +60,7 @@ public class ImportFmsFeignController {
             assetLocationService.importAssetLocation(dto);
         } catch (Exception e) {
             log.error("导入资产位置失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            updateTask(dto.getTaskId(), e);
             throw e;
         }
     }
@@ -61,6 +76,7 @@ public class ImportFmsFeignController {
             assetAcceptService.importAssetAccept(dto);
         } catch (Exception e) {
             log.error("导入资产验收表失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            updateTask(dto.getTaskId(), e);
             throw e;
         }
     }
@@ -76,6 +92,7 @@ public class ImportFmsFeignController {
             assetCardService.importAssetCard(dto);
         } catch (Exception e) {
             log.error("导入资产卡片失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            updateTask(dto.getTaskId(), e);
             throw e;
         }
     }
@@ -91,7 +108,21 @@ public class ImportFmsFeignController {
             assetStocktakingPlanService.importAssetStocktakingPlan(dto);
         } catch (Exception e) {
             log.error("导入资产盘点方案失败，任务ID：{}，错误：{}", dto.getTaskId(), e.getMessage(), e);
+            updateTask(dto.getTaskId(), e);
             throw e;
         }
     }
+
+
+    @PostMapping("/importAssetDisposal")
+    public void importAssetDisposal(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            assetDisposalService.importAssetDisposal(dto);
+        } catch (Exception e) {
+            log.error("导入模具档案失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+
 }

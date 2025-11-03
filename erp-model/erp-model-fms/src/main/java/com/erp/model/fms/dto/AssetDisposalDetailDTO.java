@@ -176,7 +176,7 @@ public class AssetDisposalDetailDTO implements Serializable {
         private Integer disposalQty;
 
         /**
-        * 处置币类
+        * 处置币类 /sys/currency/list
         */
 //        @NotBlank(message = "处置币类不能为空")
         private String disposalCurrency;
@@ -196,7 +196,7 @@ public class AssetDisposalDetailDTO implements Serializable {
         private BigDecimal residualValue;
 
         /**
-         发票类型：invoice=普通发票, valueAddedTax增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum
+         发票类型：invoice=普通发票, valueAddedTax增值发票  枚举：AssetDisposalDetailInvoiceTypeEnum  /fms/common/enumDropDown?type = AssetDisposalDetailInvoiceType
         */
 //        @NotBlank(message = "发票类型：ordinary=普通发票, addedValue增值发票不能为空")
         private String invoiceType;

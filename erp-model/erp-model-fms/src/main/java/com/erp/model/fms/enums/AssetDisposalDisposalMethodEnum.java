@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-10-29 14:34:18
  */
 public enum AssetDisposalDisposalMethodEnum implements EnumMessage {
-	SCRAP("scrap", "报废"),
-	LOSS("loss", "盘亏"),
+	SCRAP("scrap", "报废","assetCard"),
+	LOSS("loss", "盘亏","stocktakingTaskProfitLoss"),
     ;
     /**
      * 类型
@@ -27,9 +27,15 @@ public enum AssetDisposalDisposalMethodEnum implements EnumMessage {
      */
     private String name;
 
-    AssetDisposalDisposalMethodEnum(String code, String name) {
+    /**
+     * 来源类型
+     */
+    private String sourceType;
+
+    AssetDisposalDisposalMethodEnum(String code, String name,String sourceType) {
         this.code = code;
         this.name = name;
+        this.sourceType = sourceType;
     }
 
     @Override
@@ -42,6 +48,10 @@ public enum AssetDisposalDisposalMethodEnum implements EnumMessage {
         return name;
     }
 
+    public String getSourceType() {
+        return sourceType;
+    }
+
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
@@ -52,5 +62,17 @@ public enum AssetDisposalDisposalMethodEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static AssetDisposalDisposalMethodEnum getEnumByName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (AssetDisposalDisposalMethodEnum statusEnum : AssetDisposalDisposalMethodEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum;
+            }
+        }
+        return null;
     }
 }

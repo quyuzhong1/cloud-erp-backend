@@ -398,7 +398,7 @@ public class AssetDisposalController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetDisposal:export",
-            tableAlias = ""
+            tableAlias = "ad"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产处置单主表导出Excel数据")
     @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)

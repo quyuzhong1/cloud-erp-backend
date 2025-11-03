@@ -351,13 +351,13 @@ public class AssetDisposalDTO implements Serializable {
         private LocalDate businessDate;
 
         /**
-        * 处置方式：scrap=报废，loss=盘亏
+        * 处置方式：scrap=报废，loss=盘亏   /fms/common/enumDropDown?type = AssetDisposalDisposalMethod
         */
         @NotBlank(message = "处置方式不能为空")
         private String disposalMethod;
 
         /**
-        * 资产组织ID
+        * 资产组织ID  /sys/company/list
         */
         @NotBlank(message = "资产组织ID不能为空")
         private String assetOrgId;

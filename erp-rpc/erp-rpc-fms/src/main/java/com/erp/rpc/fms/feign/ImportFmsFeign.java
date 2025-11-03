@@ -26,5 +26,8 @@ public interface ImportFmsFeign {
     @PostMapping("/feign/import/assetStocktakingPlan")
     void importAssetStocktakingPlan(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importAssetDisposal")
+    void importAssetDisposal(@RequestBody BaseDTO.ImportDTO dto);
+
 }
 
