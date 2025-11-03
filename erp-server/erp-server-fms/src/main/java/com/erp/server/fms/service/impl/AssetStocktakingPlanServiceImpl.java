@@ -850,4 +850,39 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }
+
+    @Override
+    public List<AssetStocktakingPlanDTO.DropDownDTO> dropDownList(String keyword) {
+        // 构建查询条件
+        LambdaQueryChainWrapper<AssetStocktakingPlanEntity> queryWrapper = this.lambdaQuery()
+                .eq(AssetStocktakingPlanEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(AssetStocktakingPlanEntity::getInvalidStatus, false)
+                .eq(AssetStocktakingPlanEntity::getIsDeleted, false);
+
+        // 如果有关键字，添加模糊查询条件
+        if (StrUtil.isNotBlank(keyword)) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(AssetStocktakingPlanEntity::getCode, keyword)
+                    .or()
+                    .like(AssetStocktakingPlanEntity::getPlanName, keyword)
+            );
+        }
+
+        // 按编码升序排列
+        queryWrapper.orderByAsc(AssetStocktakingPlanEntity::getCode);
+
+        List<AssetStocktakingPlanEntity> entityList = queryWrapper.list();
+
+        if (CollUtil.isEmpty(entityList)) {
+            return new ArrayList<>();
+        }
+
+        return entityList.stream().map(entity -> {
+            AssetStocktakingPlanDTO.DropDownDTO dto = new AssetStocktakingPlanDTO.DropDownDTO();
+            dto.setId(entity.getId());
+            dto.setPlanName(entity.getPlanName());
+            dto.setDisabled(false);
+            return dto;
+        }).collect(Collectors.toList());
+    }
 }
