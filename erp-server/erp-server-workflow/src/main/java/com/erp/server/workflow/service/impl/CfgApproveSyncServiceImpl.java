@@ -746,9 +746,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             del( cfgApproveSyncEntity,ids);
 
         }
-
-
-
     }
 
     public void del(CfgApproveSyncEntity cfgApproveSyncEntity,List<String> ids){
@@ -783,7 +780,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                     .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                     .updateTime(updateTimeMillis)//审批实例最近更新时间
                     .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
-                    .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                    .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                     .build();
 
             //国际化文案数组
