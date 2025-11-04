@@ -6,6 +6,7 @@ import com.erp.model.oms.entity.SoReturnEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -254,6 +255,8 @@ public class SoReturnDTO {
         /**
          * 明细信息
          */
+        @NotEmpty(message = "明细信息不能为空")
+        @Valid
         private List<SoReturnDetailDTO.Add> detailList;
         /**
          * 汇率
@@ -303,6 +306,8 @@ public class SoReturnDTO {
         /**
          * 明细信息
          */
+        @Valid
+        @NotEmpty(message = "明细信息不能为空")
         private List<SoReturnDetailDTO.Update> detailList;
         /**
          * 汇率

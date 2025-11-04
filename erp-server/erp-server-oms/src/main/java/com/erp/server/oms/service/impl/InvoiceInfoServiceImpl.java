@@ -99,8 +99,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private SoB2cService soB2cService;
     @Resource
-    private CfgRuleInvoiceService cfgRuleInvoiceService;
-    @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
@@ -945,6 +943,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 ruleResultDTO.setIsMatch(Boolean.TRUE);
                 CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = detailEntityList.stream().filter(e -> e.getMainId().equals(ruleInvoiceProductAmountEntity.getCfgId())).findFirst().orElse(null);
                 ruleResultDTO.setInvoiceSettingDetail(cfgInvoiceSettingDetailEntity);
+                ruleResultDTO.setInvoiceSetting(cfgInvoiceSettingService.getById(cfgInvoiceSettingDetailEntity.getMainId()));
                 ruleResultDTO.setDictInvoiceRule(ruleInvoiceProductAmountEntity.getDictInvoiceRule());
                 ruleResultDTO.setRatio(ruleInvoiceProductAmountEntity.getRatio());
                 return ruleResultDTO;
@@ -1269,6 +1268,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceInfoEntity.setId(IdWorker.getIdStr());
         invoiceInfoEntity.setCode(businessNo);
         invoiceInfoEntity.setCfgId(cfgVatInvoiceEntity.getId());
+        invoiceInfoEntity.setCompanyName(cfgVatInvoiceEntity.getCompanyName());
+        invoiceInfoEntity.setSellerTaxNo(cfgVatInvoiceEntity.getVatNo());
         invoiceInfoEntity.setInvoiceType(InvoiceInfoInvoiceTypeEnum.VAT.getCode());
         invoiceInfoEntity.setShopId(soB2cEntity.getShopId());
         invoiceInfoEntity.setSoId(soB2cEntity.getId());

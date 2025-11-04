@@ -67,6 +67,11 @@ public class DmpPlatformSoDeliveryEntity extends BaseEntity<DmpPlatformSoDeliver
     @TableField("order_status")
     private String orderStatus;
     /**
+     * 渠道编码
+     */
+    @TableField("channel_code")
+    private String channelCode;
+    /**
      * 输入任务ID
      */
     @TableField("input_task_id")

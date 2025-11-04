@@ -82,6 +82,11 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private String skuNo;
         /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
+        /**
          * 是否关闭
          */
         private Boolean isClose;
@@ -134,6 +139,10 @@ public class SoDeliveryNoticeDetailDTO {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String unitName;
         /**
          * 产品名称
          */

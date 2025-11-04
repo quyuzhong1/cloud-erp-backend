@@ -565,6 +565,8 @@ public class SoChangeDTO implements Serializable {
         /**
          * 产品信息
          */
+        @Valid
+        @NotEmpty
         private List<SoChangeDetailDTO.UpdateDTO> detailList;
     }
 

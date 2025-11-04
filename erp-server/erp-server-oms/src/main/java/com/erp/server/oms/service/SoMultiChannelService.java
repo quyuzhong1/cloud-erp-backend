@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -164,9 +165,10 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @param shopInfoEntity
      * @param soB2cEntity
      * @param channelEntity
+     * @param receiverEntity
      * @return
      */
-    SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity);
+    SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity, SoB2cReceiverEntity receiverEntity);
 
     /**
      * 更新多渠道订单创建状态

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -38,6 +39,8 @@ import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
@@ -53,6 +56,9 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -136,8 +142,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private SkuMappingService skuMappingService;
-    @Resource
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
     @Resource
     private SoB2cDetailService soB2cDetailService;
@@ -145,6 +149,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
+    @Resource
+    private SysDictFeign sysDictFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -238,12 +246,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!save) {
             throw new ServiceException("多渠道订单主单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        // 修改明细数据（包含增删改）（如果有明细的话）
+        soMultiChannelDetailService.updateDetail(soMultiChannelEntity, addOrUpdateDTO.getDetailList());
         // 记录主单操作日志
         log.info("编辑 开始记录多渠道订单主单日志数据，单号：【{}】", soMultiChannelEntity.getDeliveryCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelEntity.getDeliveryCode(), "多渠道订单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        //此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -269,15 +277,24 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<SoMultiChannelDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<SoMultiChannelDTO.TabListDTO> list1 = new ArrayList<>();
-        SoMultiChannelDTO.TabListDTO tabListDTO = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO) ? tabListDTO : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO1 = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO1) ? tabListDTO1 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO2 = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO2) ? tabListDTO2 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), ApproveStatusEnum.APPROVE.getName(), 0));
-        SoMultiChannelDTO.TabListDTO tabListDTO3 = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getTabFlag())).findFirst().orElse(null);
-        list1.add(Objects.nonNull(tabListDTO3) ? tabListDTO3 : new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName(), 0));
-        list1.forEach(e -> e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag())));
+        //待提交
+        int waitSubmitCount = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName(),"",null,"", waitSubmitCount));
+        //审核中
+        int approveIngCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName(),"",null,"", approveIngCount));
+        //创建中
+        int approveCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.CREATING.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.CREATING.getCode(), CreateStatusEnum.CREATING.getName(),"",null,"", approveCount));
+        //创建成功
+        int successCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.SUCCESS.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.SUCCESS.getCode(), CreateStatusEnum.SUCCESS.getName(),"",null,"", successCount));
+        //审核不通过
+        int rejectCount = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName(),"",null,"", rejectCount));
+        //已作废
+        int voidedCount = list.stream().filter(e -> InvalidStatusEnum.VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        list1.add(new SoMultiChannelDTO.TabListDTO(InvalidStatusEnum.VOIDED.getStatus().toString(), InvalidStatusEnum.VOIDED.getName(),"",null,"", voidedCount));
         return list1;
     }
 
@@ -539,8 +556,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     @Override
-    public SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity) {
-        SoMultiChannelDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.soB2cToAddDTO(dto, shopInfoEntity, soB2cEntity, channelEntity);
+    public SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity, SoB2cReceiverEntity receiverEntity) {
+        SoMultiChannelDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.soB2cToAddDTO(dto, shopInfoEntity, soB2cEntity, channelEntity, receiverEntity);
         List<SoMultiChannelDTO.SoViewDTO> detailList1 = dto.getDetailList().stream().filter(e -> e.getSoId().equals(id)).collect(Collectors.toList());
         List<SoMultiChannelDetailDTO.AddDTO> detailList = SoMultiChannelConverter.INSTANCE.soB2cDetailToAddDTO(detailList1);
         addDTO.setDetailList(detailList);
@@ -800,6 +817,17 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelEntity old = this.getById(soMultiChannelEntity.getId());
         soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
         soMultiChannelEntity.setTrackNo(bean.getTrackNo());
+        LogisticsChannelEntity logisticsChannelEntity = null;
+        if (CharSequenceUtil.isNotBlank(bean.getChannelCode())) {
+            soMultiChannelEntity.setPlatformChannelCode(bean.getChannelCode());
+            List<LogisticsChannelEntity> channelEntityList = logisticsFeign.getChannelByCode(bean.getChannelCode());
+            if (CollUtil.isNotEmpty(channelEntityList)){
+                logisticsChannelEntity = channelEntityList.get(0);
+                soMultiChannelEntity.setLogisticsChannelId(logisticsChannelEntity.getId());
+                soMultiChannelEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
+                //更新销售订单
+            }
+        }
         soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(bean.getOrderStatus()) ? bean.getOrderStatus() : "");
         soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus()) ? bean.getDeliveryStatus() : "");
         soMultiChannelEntity.setShipmentCode(bean.getShipmentId());
@@ -814,9 +842,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoB2cLogisticsEntity::getTrackNo, bean.getTrackNo())
                     .set(SoB2cLogisticsEntity::getCode, bean.getTrackNo())
                     .set(Objects.nonNull(bean.getDeliveryTime()), SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
+                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelId, logisticsChannelEntity.getId())
+                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelName, logisticsChannelEntity.getName())
                     .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
                     .update();
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
+            String msg = "";
+            if (Objects.nonNull(logisticsChannelEntity)){
+                msg = CharSequenceUtil.format("多渠道订单物流更新从【{}】为【{}】", old.getLogisticsChannelName(), logisticsChannelEntity.getName());
+            }
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()) + msg, ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
         }
     }
 
@@ -994,6 +1028,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setDictPlatformName(dictPlatformName);
         String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setDeliveryPlatformName(deliveryPlatformName);
+        if (CharSequenceUtil.isNotBlank(data.getCountry())){
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(data.getCountry()));
+            if (CollectionUtil.isNotEmpty(dictCountryEntities)){
+                data.setCountryName(dictCountryEntities.get(0).getNameCn());
+            }
+        }
     }
 
     /**

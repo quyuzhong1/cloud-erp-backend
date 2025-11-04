@@ -178,6 +178,74 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     @TableField("delivery_shop_name")
     private String deliveryShopName;
 
+    /**
+     * 收货人id
+     */
+    @TableField("receiver_id")
+    private String receiverId;
+    /**
+     * 收货人名称
+     */
+    @TableField("receiver_name")
+    private String receiverName;
+    /**
+     * 国家二字码
+     */
+    @TableField("country")
+    private String country;
+
+    /**
+     * 州/省
+     */
+    @TableField("province_name")
+    private String provinceName;
+    /**
+     * 区
+     */
+    @TableField("district_name")
+    private String districtName;
+
+    /**
+     * 城市
+     */
+    @TableField("city_name")
+    private String cityName;
+
+    /**
+     * 邮编
+     */
+    @TableField("post_code")
+    private String postCode;
+
+    /**
+     * 收货人电话
+     */
+    @TableField("receiver_tel_number")
+    private String receiverTelNumber;
+
+    /**
+     * 地址1
+     */
+    @TableField("first_address")
+    private String firstAddress;
+
+    /**
+     * 地址2
+     */
+    @TableField("second_address")
+    private String secondAddress;
+
+    /**
+     * 地址3
+     */
+    @TableField("full_address")
+    private String fullAddress;
+    /**
+     *平台物流（亚马逊物流）
+     */
+    @TableField("platform_channel_code")
+    private String platformChannelCode;
+
     public static final String CODE = "code";
 
     public static final String DELIVERY_CODE = "delivery_code";

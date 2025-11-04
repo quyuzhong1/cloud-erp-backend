@@ -65,6 +65,8 @@
         id.sku_no as skuNo,
         si.name as shopName,
         i.invoice_nature as invoiceNature,
+        i.company_name as companyName,
+        i.seller_tax_no as sellerTaxNo,
         i.platform_invoice_no as platformInvoiceNo
         FROM invoice_info i
         left join invoice_detail id on i.id = id.main_id and id.is_deleted = false

@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -91,7 +92,10 @@ public class SoMultiChannelDetailDTO implements Serializable {
         */
         private String fnSku;
 
-
+        /**
+         * fba库存id
+         */
+        private String fbaInventoryId;
     }
 
     /**
@@ -133,14 +137,14 @@ public class SoMultiChannelDetailDTO implements Serializable {
         /**
         * 单据明细id
         */
-        @NotBlank(message = "单据明细id不能为空")
+//        @NotBlank(message = "单据明细id不能为空")
         @Size(max = 19,message = "单据明细id最大长度不能超过19位")
         private String soDetailId;
 
         /**
         * skuId
         */
-        @NotBlank(message = "skuId不能为空")
+//        @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
         private String skuNo;
@@ -169,32 +173,36 @@ public class SoMultiChannelDetailDTO implements Serializable {
         /**
         * 销售订单数量
         */
-        @NotNull(message = "销售订单数量不能为空")
+//        @NotNull(message = "销售订单数量不能为空")
         private Integer qty;
 
         /**
         * 发货数量
         */
-        @NotNull(message = "发货数量不能为空")
+//        @NotNull(message = "发货数量不能为空")
         private Integer deliveryQty;
 
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
+//        @NotBlank(message = "产品名称不能为空")
         @Size(max = 100,message = "产品名称最大长度不能超过100位")
         private String productName;
 
         /**
         * FNSKU
         */
-        @NotBlank(message = "FNSKU不能为空")
+//        @NotBlank(message = "FNSKU不能为空")
         @Size(max = 100,message = "FNSKU最大长度不能超过100位")
         private String fnSku;
         /**
          * 出库状态
          */
         private String outstockStatus;
+        /**
+         * fba库存id
+         */
+        private String fbaInventoryId;
     }
 
 

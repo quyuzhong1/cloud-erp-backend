@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -344,6 +346,8 @@ public class SoDeliveryNoticeDTO {
         /**
          * 明细信息
          */
+        @NotEmpty
+        @Valid
         private List<SoDeliveryNoticeDetailDTO.Add> detailList;
     }
 

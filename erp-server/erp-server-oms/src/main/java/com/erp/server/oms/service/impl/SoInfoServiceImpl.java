@@ -752,6 +752,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                viewDTO.setUnitName(skuVO.getUnitName());
             }
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -28,6 +29,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -284,9 +286,25 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if(Objects.isNull(orderHandleContent)){
             return orderCode;
         }
-        //订单号替换开关
-        if (orderHandleContent.isOrderCodeSwitch()){
-            return orderCode.replace(orderHandleContent.getOrderCodeWaitReplaceText(), orderHandleContent.getOrderCodeReplaceText());
+        //处理订单号
+        if(orderHandleContent.isOrderCodeSwitch()){
+            RuleOrderHandleEnum.OrderCodeRuleContentEnum orderCodeRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.OrderCodeRuleContentEnum.class,orderHandleContent.getHandleOrderCodeRule());
+            if(Objects.nonNull(orderCodeRuleContentEnum)) {
+                switch (orderCodeRuleContentEnum) {
+                    case CUSTOM_REPLACE:
+                        orderCode =  orderCode.replace(orderHandleContent.getOrderCodeWaitReplaceText(), orderHandleContent.getOrderCodeReplaceText());
+                        break;
+                    case TRANSFER:
+                        if (StringUtils.isNotBlank(orderCode) && CollUtil.isNotEmpty(orderHandleContent.getOrderCodeTransferDTOList())) {
+                            String finalOrderCode = orderCode;
+                            CfgRuleOrderHandleDTO.TransferDTO transferDTO = orderHandleContent.getOrderCodeTransferDTOList().stream().filter(e -> e.getWaitReplaceText().equals(finalOrderCode)).findFirst().orElse(null);
+                            orderCode = Objects.isNull(transferDTO) ? orderCode : transferDTO.getReplaceText();
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
         return orderCode;
     }
@@ -310,6 +328,22 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         return createOutboundReq;
     }
 
+    @Override
+    public SoMultiChannelDTO.ReceiverInfo handleRuleOrderSoMultiChannel(SoMultiChannelDTO.ReceiverInfo receiverInfo, Map<String, Object> map) {
+        log.warn("处理第三方仓订单，参数为=========={}", map);
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
+        if(Boolean.TRUE.equals(ruleMatchDTO.getApproveSuccess())){
+            //处理地址
+            this.handleAddressRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理电话
+            this.handlePhoneRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理邮编
+            this.handleZipCodeRule(receiverInfo,ruleMatchDTO.getRuleContent());
+            //处理收货人
+            this.handleReceiveRule(receiverInfo,ruleMatchDTO.getRuleContent());
+        }
+        return receiverInfo;
+    }
 
 
     /**
@@ -379,6 +413,12 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                             receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }
                         break;
+                    case TRANSFER:
+                        if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && CollUtil.isNotEmpty(addressHandleContent.getProvinceTransferDTOList())) {
+                            CfgRuleOrderHandleDTO.TransferDTO transferDTO = addressHandleContent.getProvinceTransferDTOList().stream().filter(e -> e.getWaitReplaceText().equals(receiverInfoVO.getProvince())).findFirst().orElse(null);
+                            receiverInfoVO.setProvince(Objects.isNull(transferDTO) ? receiverInfoVO.getProvince() : transferDTO.getReplaceText());
+                        }
+                        break;
                     case CUSTOMIZE:
                         receiverInfoVO.setProvince(CharSequenceUtil.isNotBlank(receiverInfoVO.getProvince()) ? receiverInfoVO.getProvince() : addressHandleContent.getProvinceFillText());
                         break;
@@ -402,6 +442,12 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                     case CUSTOM_REPLACE:
                         if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && receiverInfoVO.getCity().equals(addressHandleContent.getCityWaitReplaceText())) {
                             receiverInfoVO.setCity(addressHandleContent.getCityReplaceText());
+                        }
+                        break;
+                    case TRANSFER:
+                        if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && CollUtil.isNotEmpty(addressHandleContent.getCityTransferDTOList())) {
+                            CfgRuleOrderHandleDTO.TransferDTO transferDTO = addressHandleContent.getCityTransferDTOList().stream().filter(e -> e.getWaitReplaceText().equals(receiverInfoVO.getCity())).findFirst().orElse(null);
+                            receiverInfoVO.setCity(Objects.isNull(transferDTO) ? receiverInfoVO.getCity() : transferDTO.getReplaceText());
                         }
                         break;
                     case CUSTOMIZE:

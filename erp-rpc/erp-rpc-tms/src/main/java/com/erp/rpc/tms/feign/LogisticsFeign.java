@@ -77,6 +77,13 @@ public interface LogisticsFeign {
     List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName);
 
     /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @return
+     */
+    @PostMapping("/feign/logistics/getChannelByCode")
+    List<LogisticsChannelEntity> getChannelByCode(@RequestBody String channelCode);
+    /**
      * 获取渠道 根据渠道名称
      * @param channelNameList
      * @return

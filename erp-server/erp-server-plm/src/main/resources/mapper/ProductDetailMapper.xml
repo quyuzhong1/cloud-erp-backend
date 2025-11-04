@@ -836,6 +836,7 @@
         pd.status,
         pp.moq,
         pp.main_supplier,
+        pp.ean,
         ppk.box_qty,
         pc.retail_price
         FROM product_detail pd

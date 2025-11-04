@@ -329,6 +329,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          */
         private String provinceReplaceText;
         /**
+         * 省/州 转换列表
+         */
+        private List<TransferDTO> provinceTransferDTOList;
+        /**
          * 省/州为空填充文本
          */
         private String provinceFillText;
@@ -346,6 +350,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 城市待替换文本
          */
         private String cityWaitReplaceText;
+        /**
+         * 城市 转换列表
+         */
+        private List<TransferDTO> cityTransferDTOList;
 
         /**
          * 城市替换为。。。
@@ -524,14 +532,18 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private String handleOrderCodeRule;
 
         /**
-         * 省/州待替换文本
+         * 订单号 待替换文本
          */
         private String orderCodeWaitReplaceText;
 
         /**
-         * 省/州替换为。。。
+         * 订单号 替换为。。。
          */
         private String orderCodeReplaceText;
+        /**
+         * 订单号 转换列表
+         */
+        private List<TransferDTO> orderCodeTransferDTOList;
     }
 
     /**
@@ -556,5 +568,17 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          */
         private RuleContent ruleContent;
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class TransferDTO{
+        /**
+         * 待转换文本
+         */
+        private String waitReplaceText;
+        /**
+         * 转换为文本
+         */
+        private String replaceText;
     }
 }

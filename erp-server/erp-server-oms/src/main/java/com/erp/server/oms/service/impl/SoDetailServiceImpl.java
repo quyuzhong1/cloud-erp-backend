@@ -269,6 +269,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             addDetailView.setProductName(productDetailEntity.getName());
             addDetailView.setVariantProperty(productDetailEntity.getVariantProperty());
+            addDetailView.setUnitName(productDetailEntity.getUnitName());
             //获取退货数量
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDetailView.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //获取已出库数量
@@ -357,6 +358,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
             item.setUnit(unit);
+            item.setUnitName(unit);
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -880,6 +882,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.setQty(0);
         result.setProductName(skuName);
         result.setUnit(sku.getUnitName());
+        result.setUnitName(sku.getUnitName());
         result.setSkuNo(skuNo);
 
         //即时库存
@@ -1043,7 +1046,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
             item.setUnit(unit);
-            
+            item.setUnitName(unit);
+
             // 设置SPU信息
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (skuVO != null) {
@@ -1544,10 +1548,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 skuId = item.getSkuId();
                 result.setProductName(item.getSkuName());
                 result.setUnit(item.getUnitName());
+                result.setUnitName(item.getUnitName());
                 result.setSkuNo(item.getSkuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
+                result.setUnitName("");
                 result.setSkuNo("");
             }
 
@@ -2008,7 +2014,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     throw new ServiceException( CharSequenceUtil.format("SKU【{}】销售数量不能小于冻结数量",soDetailEntity.getSkuNo()));
                 }
             }
-            
+
             //有更新sku或者变更虚拟仓则需要释放库存
             if ((!CharSequenceUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) || isChangeVirtual ) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
@@ -2021,12 +2027,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (count > 0) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
             }
-            
+
             //B2B销售订单明细行冻结库存检查 - 删除时不允许删除已冻结库存的明细行
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】已冻结数量【{}】，不允许删除，如需删除请联系PMC释放库存后操作",soDetailEntity.getSkuNo(), soDetailEntity.getFrozenQty()));
             }
-            
+
             //删除明细释放库存
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
