@@ -352,6 +352,10 @@ public class SupplierDTO implements Serializable {
          * 分类id
          */
         private String categoryId;
+        /**
+         * 分类名
+         */
+        private String categoryName;
 
         /**
          * 等级id
