@@ -43,13 +43,13 @@
 
 <select id="queryDbInventoryCheckSame" resultType="com.erp.model.wms.dto.InventoryTransactionDTO$CheckInventoryDTO">
         select t.id inventoryId,t.a_qty inventoryQty,t.b_qty flowSumQty,t.c_qty hisQty,t.d_qty lastFlowQty from (
-select t.id,t.a_qty,t.b_qty,t.c_qty,g.cur_inventory_qty d_qty from (
+select t.id,case when t.a_qty is null then 0 else t.a_qty end a_qty,case when t.b_qty is null then 0 else t.b_qty end b_qty,case when t.c_qty is null then 0 else t.c_qty end c_qty,case when g.cur_inventory_qty is null then 0 else g.cur_inventory_qty end d_qty from (
 select case when t.id is null then g.info_id else t.id end id,t.a_qty,t.b_qty,g.qty c_qty from (
 select case when t.id is null then g.inventory_id else t.id end id,t.qty a_qty,g.qty b_qty from (select * from inventory where is_deleted = false) t 
 full join (select inventory_id,sum(qty) qty from transaction_flow where is_deleted = false group by inventory_id) g on t.id = g.inventory_id) t 
 full join (select * from inventory_his where is_deleted = false and (info_id , bill_date) in (select info_id,max(bill_date) from inventory_his where is_deleted = false group by info_id)) g on t.id = g.info_id) t
 full join (select * from transaction_flow where id in (select max(id) from transaction_flow where is_deleted = false and (inventory_id,bill_date) in (select inventory_id,max(bill_date) from transaction_flow where is_deleted = false group by inventory_id) group by inventory_id,bill_date)) g on t.id = g.inventory_id) t
-where (t.b_qty != t.a_qty or t.b_qty != t.c_qty or t.b_qty != t.d_qty)  
+where (t.b_qty != t.a_qty or t.b_qty != t.c_qty or t.b_qty != t.d_qty) 
         <if test="ids != null and ids.size > 0">
             and t.id in
             <foreach collection="ids" item="item" open="(" separator="," close=")">
