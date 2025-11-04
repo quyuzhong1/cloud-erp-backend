@@ -19,6 +19,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogStatusEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -578,5 +579,82 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     */
     private void handleData(AssetProfitLossEntity assetProfitLossEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(String id) {
+        // 查询主单信息
+        AssetProfitLossEntity mainEntity = super.getById(id);
+        if (mainEntity == null) {
+            throw new ServiceException("盘盈盘亏单不存在");
+        }
+        
+        // 校验单据状态：只有已审核的单据才能下推
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(mainEntity.getApproveStatus().getStatus())) {
+            throw new ServiceException("只有已审核的盘盈单才能下推到资产卡片");
+        }
+
+        // 校验单据状态：只有已审核的单据才能下推
+        if (!AssetProfitLossTypeEnum.PROFIT.getCode().equals(mainEntity.getDocType())) {
+            throw new ServiceException("只有盘盈类型才允许下推资产卡片");
+        }
+        
+        // 查询明细列表
+        List<AssetProfitLossDetailEntity> detailList = assetProfitLossDetailService.lambdaQuery()
+                .eq(AssetProfitLossDetailEntity::getMainId, id)
+                .eq(AssetProfitLossDetailEntity::getIsDeleted, false)
+                .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.warn("盘盈盘亏单【{}】没有明细数据", mainEntity.getCode());
+            return Collections.emptyList();
+        }
+        
+        // 获取资产类别字典
+        Map<String, String> assetCategoryMap = new HashMap<>();
+        List<DictBasicDTO.DropDownDTO> assetCategoryList = dictBasicService.listByType("assetCategory","");
+        if (CollUtil.isNotEmpty(assetCategoryList)) {
+            assetCategoryMap = assetCategoryList.stream()
+                    .collect(Collectors.toMap(DictBasicDTO.DropDownDTO::getCode, DictBasicDTO.DropDownDTO::getName, (v1, v2) -> v1));
+        }
+        
+        // 组装返回数据
+        List<AssetProfitLossDTO.PushToCardListDTO> resultList = new ArrayList<>(detailList.size());
+        Map<String, String> finalAssetCategoryMap = assetCategoryMap;
+        
+        for (AssetProfitLossDetailEntity detail : detailList) {
+            AssetProfitLossDTO.PushToCardListDTO dto = new AssetProfitLossDTO.PushToCardListDTO();
+            
+            // 主单信息
+            dto.setCode(mainEntity.getCode());
+            dto.setSourceCode(mainEntity.getSourceCode());
+            dto.setDocType(mainEntity.getDocType());
+            dto.setDocTypeName(AssetProfitLossTypeEnum.getName(mainEntity.getDocType()));
+            dto.setAssetOrgId(mainEntity.getAssetOrgId());
+            dto.setAssetOrgName(mainEntity.getAssetOrgName());
+            
+            // 明细信息
+            dto.setDetailId(detail.getId());
+            dto.setAssetCategory(detail.getAssetCategory());
+            dto.setAssetCategoryName(finalAssetCategoryMap.get(detail.getAssetCategory()));
+            dto.setCardCode(detail.getCardCode());
+            dto.setAssetName(detail.getAssetName());
+            dto.setAssetCode(detail.getAssetCode());
+            dto.setUnit(detail.getUnit());
+            dto.setQty(detail.getDiffQty());  // 使用差异数量
+            dto.setActualLocation(detail.getActualLocation());
+            // actualLocationName 需要通过位置服务查询，暂时不设置
+            
+            // 使用部门和费用项目留空，等待用户选择
+            dto.setUseDeptId(null);
+            dto.setUseDeptName(null);
+            dto.setCostType(null);
+            dto.setCostTypeName(null);
+            
+            resultList.add(dto);
+        }
+        
+        log.info("获取盘盈盘亏单【{}】下推列表成功，明细数量：{}", mainEntity.getCode(), resultList.size());
+        return resultList;
     }
 }

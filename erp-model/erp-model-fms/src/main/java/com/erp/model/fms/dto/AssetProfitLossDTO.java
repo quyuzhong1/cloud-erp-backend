@@ -394,5 +394,113 @@ public class AssetProfitLossDTO implements Serializable {
 
     }
 
+    /**
+     * 下推到资产卡片前的列表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushToCardListDTO {
+        
+        /**
+         * 盘盈盘亏单号
+         */
+        private String code;
+        
+        /**
+         * 来源单号（资产盘点表单号）
+         */
+        private String sourceCode;
+        
+        /**
+         * 单据类型（盘盈/盘亏）
+         */
+        private String docType;
+        
+        /**
+         * 单据类型名称
+         */
+        private String docTypeName;
+        
+        /**
+         * 资产组织ID
+         */
+        private String assetOrgId;
+        
+        /**
+         * 资产组织名称
+         */
+        private String assetOrgName;
+        
+        /**
+         * 明细ID
+         */
+        private String detailId;
+        
+        /**
+         * 资产类别
+         */
+        private String assetCategory;
+        
+        /**
+         * 资产类别名称
+         */
+        private String assetCategoryName;
+        
+        /**
+         * 卡片编码
+         */
+        private String cardCode;
+        
+        /**
+         * 资产名称
+         */
+        private String assetName;
+        
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+        
+        /**
+         * 计量单位
+         */
+        private String unit;
+        
+        /**
+         * 数量（差异数量）
+         */
+        private Integer qty;
+        
+        /**
+         * 实际资产位置ID
+         */
+        private String actualLocation;
+        
+        /**
+         * 实际资产位置名称
+         */
+        private String actualLocationName;
+        
+        /**
+         * 使用部门ID
+         */
+        private String useDeptId;
+        
+        /**
+         * 使用部门名称
+         */
+        private String useDeptName;
+        
+        /**
+         * 费用项目
+         */
+        private String costType;
+        
+        /**
+         * 费用项目名称
+         */
+        private String costTypeName;
+    }
+
 
 }
