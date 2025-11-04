@@ -60,7 +60,12 @@ public class InventoryTransactionController extends BaseController {
       */
      @PostMapping("/overrideRedisInventory")
      @LogAction(value = LogActionEnum.INSERT, desc = "redis库存重算")
-     public ApiResult<?> overrideRedisInventory(@RequestBody BaseIdsDTO.IdsDTO dto) {
-    	 return success(inventoryTransactionService.overrideRedisInventory(dto.getIds()));
+     public ApiResult<?> overrideRedisInventory(@RequestBody BaseIdsDTO.StatusDTO dto) {
+    	 boolean isCheck = false;
+    	 String status = dto.getStatus();
+    	 if("check".equals(status)) {
+    		 isCheck = true;
+    	 }
+    	 return success(inventoryTransactionService.overrideRedisInventory(dto.getIds() , isCheck));
      }
 }
