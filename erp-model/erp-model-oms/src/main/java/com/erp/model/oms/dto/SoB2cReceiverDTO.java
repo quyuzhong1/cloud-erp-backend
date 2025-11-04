@@ -163,6 +163,7 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
         * 收货人电话
         */
+        @NotBlank(message = "收货人电话不能为空")
         @Size(max = 32,message = "收货人电话最大长度不能超过32位")
         private String receiverTelNumber;
 
