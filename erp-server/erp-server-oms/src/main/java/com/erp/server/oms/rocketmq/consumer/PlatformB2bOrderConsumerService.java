@@ -187,7 +187,7 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 				platformB2bOrderDetailDTO.setTaxRate(BigDecimal.ZERO);
 			}
 			//计算含税单价
-			BigDecimal taxRate = platformB2bOrderDetailDTO.getTaxRate();
+			BigDecimal taxRate = platformB2bOrderDetailDTO.getTaxRate().divide(new BigDecimal("100"),2, RoundingMode.HALF_UP);
 			BigDecimal taxPrice = platformB2bOrderDetailDTO.getTaxPrice();
 			BigDecimal onePlusTax = BigDecimal.ONE.add(taxRate);
 			BigDecimal price = taxPrice.divide(onePlusTax, 2, RoundingMode.HALF_UP);
