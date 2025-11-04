@@ -584,6 +584,24 @@ public class AssetCardDTO implements Serializable {
     }
 
     /**
+    * 模糊搜索参数
+    */
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO {
+        /**
+        * 资产卡片编码批量
+        */
+        private List<String> codes;
+
+
+        /**
+         * 资产卡片编码（模糊查询）
+         */
+        private String searchKeyword;
+    }
+
+    /**
     * 已审核资产卡片返回结果
     */
     @Data

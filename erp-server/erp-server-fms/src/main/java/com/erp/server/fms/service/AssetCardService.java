@@ -181,4 +181,6 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     * @param response
     */
     void downloadTemplate(javax.servlet.http.HttpServletResponse response);
+
+    List<AssetCardDTO.ApprovedCardDTO> searchApprovedCard(AssetCardDTO.SearchParamDTO dto);
 }

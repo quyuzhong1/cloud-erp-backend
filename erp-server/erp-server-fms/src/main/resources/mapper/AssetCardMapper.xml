@@ -203,4 +203,36 @@
         LIMIT 100
     </select>
 
+
+    <select id="searchApprovedCard" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDTO">
+        SELECT
+        ac.id,
+        ac.code,
+        ac.name,
+        ac.type,
+        ac.unit,
+        ac.qty,
+        ac.change_method,
+        ac.org_id,
+        ac.org_name,
+        ac.status
+        FROM asset_card ac
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="params.codes != null and params.codes.size() > 0">
+            AND ac.code IN
+            <foreach collection="params.codes" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ac.code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            ORDER BY
+            case when ac.code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when ac.code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when ac.code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , ac.code
+        </if>
+    </select>
+
 </mapper>

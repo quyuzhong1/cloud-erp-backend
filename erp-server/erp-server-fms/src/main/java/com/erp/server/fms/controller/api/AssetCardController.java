@@ -455,4 +455,17 @@ public class AssetCardController extends BaseController {
         return success(assetCardService.getApprovedCardList(dto));
     }
 
+
+    /**
+     * 模糊搜索
+     * @author jack
+     * @date: 2025-11-04
+     * @param dto
+     * @return
+     */
+    @PostMapping("/searchApprovedCard")
+    public ApiResult<List<AssetCardDTO.ApprovedCardDTO>> searchApprovedCard(@RequestBody AssetCardDTO.SearchParamDTO dto) {
+        return success(assetCardService.searchApprovedCard(dto));
+    }
+
 }
