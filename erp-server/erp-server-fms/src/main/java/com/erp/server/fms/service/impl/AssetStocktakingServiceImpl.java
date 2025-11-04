@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -820,5 +821,41 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         log.info("删除待提交状态的盘盈盘亏单，数量：{}，单号：{}", 
                 profitLossList.size(), 
                 profitLossList.stream().map(AssetProfitLossEntity::getCode).collect(Collectors.joining(",")));
+    }
+
+    @Override
+    public List<AssetStocktakingDTO.DropDownDTO> dropDownList(String keyword) {
+        // 构建查询条件：只查询已审核且未作废的盘点单
+        LambdaQueryChainWrapper<AssetStocktakingEntity> queryWrapper = this.lambdaQuery()
+                .eq(AssetStocktakingEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(AssetStocktakingEntity::getInvalidStatus, false)
+                .eq(AssetStocktakingEntity::getIsDeleted, false);
+
+        // 如果有关键字，添加模糊查询条件（盘点单号、来源单号）
+        if (StrUtil.isNotBlank(keyword)) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(AssetStocktakingEntity::getCode, keyword)
+                    .or()
+                    .like(AssetStocktakingEntity::getSourceCode, keyword)
+            );
+        }
+
+        // 按编码升序排列
+        queryWrapper.orderByAsc(AssetStocktakingEntity::getCode);
+
+        List<AssetStocktakingEntity> entityList = queryWrapper.list();
+
+        if (CollUtil.isEmpty(entityList)) {
+            return new ArrayList<>();
+        }
+
+        // 转换为DTO
+        return entityList.stream()
+                .map(entity -> new AssetStocktakingDTO.DropDownDTO(
+                        entity.getId(),
+                        entity.getCode(),
+                        entity.getSourceCode()
+                ))
+                .collect(Collectors.toList());
     }
 }

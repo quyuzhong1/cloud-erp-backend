@@ -422,5 +422,17 @@ public class AssetStocktakingController extends BaseController {
         return success(code);
     }
 
+    /**
+    * 资产盘点表下拉列表
+    * @author wuht
+    * @date: 2025-11-04
+    * @param keyword 关键字（支持盘点单号、来源单号模糊查询）
+    * @return ApiResult<List<AssetStocktakingDTO.DropDownDTO>>
+    */
+    @GetMapping("/dropDownList")
+    public ApiResult<List<AssetStocktakingDTO.DropDownDTO>> dropDownList(@RequestParam(value = "keyword", required = false) String keyword) {
+        return success(assetStocktakingService.dropDownList(keyword));
+    }
+
 
 }

@@ -347,6 +347,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_FMS_ASSET_DISPOSAL("EXPORT_FMS_ASSET_DISPOSAL", "资产处置单导出","","",""),
     IMPORT_FMS_ASSET_DISPOSAL("IMPORT_FMS_ASSET_DISPOSAL", "资产处置单导入","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetDisposal",""),
     EXPORT_FMS_ASSET_STOCKTAKING("EXPORT_FMS_ASSET_STOCKTAKING","资产盘点单导出","","","ExportFmsAssetStocktakingHandler"),
+    EXPORT_FMS_ASSET_PROFIT_LOSS("EXPORT_FMS_ASSET_PROFIT_LOSS","盘盈盘亏单导出","","","ExportFmsAssetProfitLossHandler"),
 
 
     DEFAULT("DEFAULT", "默认","","","");
