@@ -160,6 +160,7 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
                     .set(SoMultiChannelDetailEntity::getPlatformSkuNo, soMultiChannelDetailEntity.getPlatformSkuNo())
                     .set(SoMultiChannelDetailEntity::getPlatformProductName, soMultiChannelDetailEntity.getPlatformProductName())
                     .set(SoMultiChannelDetailEntity::getPlatformSpuNo, soMultiChannelDetailEntity.getPlatformSpuNo())
+                    .set(SoMultiChannelDetailEntity::getFbaInventoryId, soMultiChannelDetailEntity.getFbaInventoryId())
                     .eq(SoMultiChannelDetailEntity::getId, soMultiChannelDetailEntity.getId()).update();
             if (!save) {
                 throw new ServiceException("多渠道订单明细保存失败");
