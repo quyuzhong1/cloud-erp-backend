@@ -46,9 +46,11 @@
         from asset_card_detail
         where
         is_deleted = false
-        AND approve_status = 'approve'
-        <if test="params.cardId != null and params.cardId != ''">
-            and main_id = #{params.cardId}
+        <if test="params.cardIds != null and params.cardIds != ''">
+            and main_id in
+            <foreach collection="params.cardIds" item="cardId" open="(" separator="," close=")">
+                #{cardId}
+            </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND
@@ -64,6 +66,44 @@
             end , code
         </if>
 
+    </select>
+
+    <!-- 根据盘点方案的资产范围查询符合条件的资产卡片明细（使用JOIN关联查询，避免大量ID的IN查询） -->
+    <select id="queryCardDetailsByScopeWithJoin" resultMap="BaseResultMap">
+        SELECT
+            d.id,
+            d.create_user_id,
+            d.create_user_name,
+            d.create_time,
+            d.update_user_id,
+            d.update_user_name,
+            d.update_time,
+            d.version,
+            d.is_deleted,
+            d.source_detail_id,
+            d.main_id,
+            d.asset_code,
+            d.asset_location_id,
+            d.qty,
+            d.supplier_id,
+            d.supplier_name,
+            d.use_dept_name,
+            d.use_dept_id,
+            d.cost_type,
+            d.remark
+        FROM
+            asset_card_detail d
+        INNER JOIN asset_card c ON d.main_id = c.id
+        WHERE
+            d.is_deleted = false
+            AND c.is_deleted = false
+            AND c.approve_status = 'approve'
+            <if test="cardCodeStart != null and cardCodeStart != ''">
+                AND c.code &gt;= #{cardCodeStart}
+            </if>
+            <if test="cardCodeEnd != null and cardCodeEnd != ''">
+                AND c.code &lt;= #{cardCodeEnd}
+            </if>
     </select>
 
 
