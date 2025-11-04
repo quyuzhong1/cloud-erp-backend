@@ -964,6 +964,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public SoMultiChannelDTO.ViewDTO view(String id) {
         SoMultiChannelEntity soMultiChannelEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         SoMultiChannelDTO.ViewDTO data = BeanMapperUtils.map(SoMultiChannelDTO.ViewDTO.class, soMultiChannelEntity);
+        data.setApproveStatus(soMultiChannelEntity.getApproveStatus().getStatus());
+        data.setApproveStatusName(soMultiChannelEntity.getApproveStatus().getName());
         // 数据填充处理
         fillOne(data);
         // 查询明细数据（如果有的话）
