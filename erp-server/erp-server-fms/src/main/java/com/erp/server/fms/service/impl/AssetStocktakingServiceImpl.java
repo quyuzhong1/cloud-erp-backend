@@ -31,6 +31,8 @@ import com.erp.model.fms.entity.AssetStocktakingEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
 import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
+import com.erp.model.fms.entity.AssetCardEntity;
+import com.erp.model.fms.entity.AssetCardDetailEntity;
 import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -42,6 +44,8 @@ import com.erp.server.fms.service.AssetStocktakingService;
 import com.erp.server.fms.service.AssetStocktakingDetailService;
 import com.erp.server.fms.service.AssetProfitLossService;
 import com.erp.server.fms.service.AssetProfitLossDetailService;
+import com.erp.server.fms.service.AssetCardService;
+import com.erp.server.fms.service.AssetCardDetailService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +85,10 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private AssetProfitLossService assetProfitLossService;
     @Resource
     private AssetProfitLossDetailService assetProfitLossDetailService;
+    @Resource
+    private AssetCardService assetCardService;
+    @Resource
+    private AssetCardDetailService assetCardDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -155,6 +163,73 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         List<AssetStocktakingDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         if (CollUtil.isEmpty(detailList)) {
             return;
+        }
+        
+        // ===== 对于新增的明细（id为空，即页面新增的）进行卡片编码和资产编码的唯一性校验 =====
+        List<AssetStocktakingDetailDTO.UpdateDTO> newDetailList = detailList.stream()
+                .filter(detail -> StringUtils.isBlank(detail.getId()))
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isNotEmpty(newDetailList)) {
+            // 收集需要校验的卡片编码
+            List<String> cardCodesToCheck = newDetailList.stream()
+                    .map(AssetStocktakingDetailDTO.UpdateDTO::getCardCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 收集需要校验的资产编码
+            List<String> assetCodesToCheck = newDetailList.stream()
+                    .map(AssetStocktakingDetailDTO.UpdateDTO::getAssetCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 校验卡片编码唯一性
+            if (CollUtil.isNotEmpty(cardCodesToCheck)) {
+                Integer existCardCodeCount = assetCardService.lambdaQuery()
+                        .eq(AssetCardEntity::getIsDeleted, false)
+                        .eq(AssetCardEntity::getInvalidStatus, false)
+                        .in(AssetCardEntity::getCode, cardCodesToCheck)
+                        .count();
+                
+                if (existCardCodeCount > 0) {
+                    // 查询具体哪些编码已存在
+                    List<String> existingCodes = assetCardService.lambdaQuery()
+                            .eq(AssetCardEntity::getIsDeleted, false)
+                            .eq(AssetCardEntity::getInvalidStatus, false)
+                            .in(AssetCardEntity::getCode, cardCodesToCheck)
+                            .select(AssetCardEntity::getCode)
+                            .list()
+                            .stream()
+                            .map(AssetCardEntity::getCode)
+                            .collect(Collectors.toList());
+                    
+                    throw new ServiceException(StrUtil.format("卡片编码【{}】已存在，请勿重复添加", String.join("、", existingCodes)));
+                }
+            }
+            
+            // 校验资产编码唯一性
+            if (CollUtil.isNotEmpty(assetCodesToCheck)) {
+                Integer existAssetCodeCount = assetCardDetailService.lambdaQuery()
+                        .eq(AssetCardDetailEntity::getIsDeleted, false)
+                        .in(AssetCardDetailEntity::getAssetCode, assetCodesToCheck)
+                        .count();
+                
+                if (existAssetCodeCount > 0) {
+                    // 查询具体哪些编码已存在
+                    List<String> existingCodes = assetCardDetailService.lambdaQuery()
+                            .eq(AssetCardDetailEntity::getIsDeleted, false)
+                            .in(AssetCardDetailEntity::getAssetCode, assetCodesToCheck)
+                            .select(AssetCardDetailEntity::getAssetCode)
+                            .list()
+                            .stream()
+                            .map(AssetCardDetailEntity::getAssetCode)
+                            .collect(Collectors.toList());
+                    
+                    throw new ServiceException(StrUtil.format("资产编码【{}】已存在，请勿重复添加", String.join("、", existingCodes)));
+                }
+            }
         }
         
         // 查询旧的明细列表
