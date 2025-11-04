@@ -10,11 +10,10 @@ import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.Resource;
 import java.util.List;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_NOTICE;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_NOTICE;
 
 /**
  * @Author: wtr
@@ -49,6 +48,6 @@ public class ExportScmAssetNoticeHandler extends AbstractPageFileEventHandler<As
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_PLM_ASSET_NOTICE;
+        return EXPORT_SCM_ASSET_NOTICE;
     }
 }

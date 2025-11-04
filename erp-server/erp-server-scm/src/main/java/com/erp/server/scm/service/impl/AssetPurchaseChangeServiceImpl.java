@@ -54,10 +54,7 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
 
 
 /**
@@ -240,7 +237,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     @Override
     public void exportList(AssetPurchaseChangeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("模具采购变更单导出", EXPORT_PLM_ASSET_PURCHASE_ORDER.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("模具采购变更单导出", EXPORT_SCM_ASSET_PURCHASE_ORDER.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
