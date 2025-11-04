@@ -33,6 +33,7 @@ import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
@@ -317,8 +318,20 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 平台明细行
         detailDTO.setPlatformLineNumber(String.join(",", thirdDetailIdList));
 
+        // 当前明细标签
+        Map<String, Object> lableMap = new HashMap<>();
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("refundedLineItemIds") != null) {
+            List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
+            if (!CollectionUtils.isEmpty(refundedLineItemIds) &&    refundedLineItemIds.stream().anyMatch(thirdDetailIdList::contains)) {
+                lableMap.put("isRefunded", true);
+                detailDTO.setIsDetailRefund(true);
+            } else {
+                lableMap.put("isRefunded", false);
+            }
+        }
         // 标签json
-        detailDTO.setLabelJson("");
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
         // 库存组织id
         detailDTO.setWarehouseOrgId("");
