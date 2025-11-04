@@ -53,5 +53,11 @@ public interface ExportFmsFeign {
     @PostMapping("/feign/export/getAssetStocktakingPageData")
     PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(@RequestBody PagingDTO<AssetStocktakingDTO.ExportDTO> dto);
 
+    /**
+     * 导出盘盈盘亏单
+     */
+    @PostMapping("/feign/export/getAssetProfitLossPageData")
+    PagingVO<AssetProfitLossDTO.ListDTO> getAssetProfitLossPageData(@RequestBody PagingDTO<AssetProfitLossDTO.ExportDTO> dto);
+
 }
 

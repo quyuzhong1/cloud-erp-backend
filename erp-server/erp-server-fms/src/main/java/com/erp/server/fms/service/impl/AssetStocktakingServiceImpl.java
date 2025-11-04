@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -30,6 +31,8 @@ import com.erp.model.fms.entity.AssetStocktakingEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
 import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
+import com.erp.model.fms.entity.AssetCardEntity;
+import com.erp.model.fms.entity.AssetCardDetailEntity;
 import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -41,6 +44,8 @@ import com.erp.server.fms.service.AssetStocktakingService;
 import com.erp.server.fms.service.AssetStocktakingDetailService;
 import com.erp.server.fms.service.AssetProfitLossService;
 import com.erp.server.fms.service.AssetProfitLossDetailService;
+import com.erp.server.fms.service.AssetCardService;
+import com.erp.server.fms.service.AssetCardDetailService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +85,10 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private AssetProfitLossService assetProfitLossService;
     @Resource
     private AssetProfitLossDetailService assetProfitLossDetailService;
+    @Resource
+    private AssetCardService assetCardService;
+    @Resource
+    private AssetCardDetailService assetCardDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -93,18 +102,19 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
 
         log.info("开始新增资产盘点单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZCPDB);
         assetStocktakingEntity.setCode(code);
         boolean save = super.save(assetStocktakingEntity);
         if(!save) {
             throw new ServiceException("资产盘点单保存失败");
         }
 
+        // 保存明细数据
+        saveDetailList(addDTO.getDetailList(), assetStocktakingEntity);
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产盘点单" , assetStocktakingEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_INVENTORY_SHEET.getCode(), assetStocktakingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetStocktakingEntity.getId(), code);
     }
@@ -144,6 +154,146 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     }
     
     /**
+     * 保存新增盘点单的明细数据
+     * 
+     * @param detailList 明细列表
+     * @param mainEntity 主表实体
+     */
+    private void saveDetailList(List<AssetStocktakingDetailDTO.UpdateDTO> detailList, AssetStocktakingEntity mainEntity) {
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("明细列表为空，跳过保存");
+            return;
+        }
+        
+        // 校验卡片编码和资产编码的唯一性
+        validateDetailUniqueness(detailList);
+        
+        LoginUser currentUser = UserContext.getDefaultLoginUser();
+        LocalDate currentDate = LocalDate.now();
+        
+        List<AssetStocktakingDetailEntity> detailEntities = new ArrayList<>();
+        for (AssetStocktakingDetailDTO.UpdateDTO detailDTO : detailList) {
+            AssetStocktakingDetailEntity detailEntity = BeanMapperUtils.map(AssetStocktakingDetailEntity.class, detailDTO);
+            detailEntity.setMainId(mainEntity.getId());
+            
+            // 计算初盘差异：初盘数量 - 账存数量
+            if (detailDTO.getFirstCountQty() != null && detailDTO.getBookQty() != null) {
+                detailEntity.setFirstDiffQty(detailDTO.getFirstCountQty() - detailDTO.getBookQty());
+            }
+            
+            // 设置初盘人和初盘日期
+            detailEntity.setFirstCountUserId(currentUser.getUid());
+            detailEntity.setFirstCountUserName(currentUser.getUserName());
+            detailEntity.setFirstCountDate(currentDate);
+            
+            // 如果需要复盘
+            if (Boolean.TRUE.equals(detailDTO.getIsRecount())) {
+                // 计算复盘差异：复盘数量 - 账存数量
+                if (detailDTO.getRecountQty() != null && detailDTO.getBookQty() != null) {
+                    detailEntity.setRecountDiffQty(detailDTO.getRecountQty() - detailDTO.getBookQty());
+                }
+                
+                // 设置复盘人和复盘日期
+                detailEntity.setRecountUserId(currentUser.getUid());
+                detailEntity.setRecountUserName(currentUser.getUserName());
+                detailEntity.setRecountDate(currentDate);
+                
+                // 最终差异 = 复盘差异
+                detailEntity.setFinalDiffQty(detailEntity.getRecountDiffQty());
+            } else {
+                // 最终差异 = 初盘差异
+                detailEntity.setFinalDiffQty(detailEntity.getFirstDiffQty());
+            }
+            
+            detailEntities.add(detailEntity);
+        }
+        
+        // 批量保存明细
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            assetStocktakingDetailService.saveBatch(detailEntities);
+            log.info("新增资产盘点单明细成功，主单ID：{}，明细数量：{}", mainEntity.getId(), detailEntities.size());
+        }
+    }
+    
+    /**
+     * 校验明细数据的卡片编码和资产编码唯一性
+     * 只校验 cardDetailId 为空的明细（手工新增的明细）
+     * 
+     * @param detailList 明细列表
+     */
+    private void validateDetailUniqueness(List<AssetStocktakingDetailDTO.UpdateDTO> detailList) {
+        // 只对 cardDetailId 为空的明细进行校验（说明是手工新增的，不是从资产卡片关联的）
+        List<AssetStocktakingDetailDTO.UpdateDTO> manualDetailList = detailList.stream()
+                .filter(detail -> StringUtils.isBlank(detail.getCardDetailId()))
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(manualDetailList)) {
+            log.info("所有明细都是从资产卡片关联的，无需校验唯一性");
+            return;
+        }
+        
+        // 收集需要校验的卡片编码
+        List<String> cardCodesToCheck = manualDetailList.stream()
+                .map(AssetStocktakingDetailDTO.UpdateDTO::getCardCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 收集需要校验的资产编码
+        List<String> assetCodesToCheck = manualDetailList.stream()
+                .map(AssetStocktakingDetailDTO.UpdateDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 校验卡片编码唯一性
+        if (CollUtil.isNotEmpty(cardCodesToCheck)) {
+            Integer existCardCodeCount = assetCardService.lambdaQuery()
+                    .eq(AssetCardEntity::getIsDeleted, false)
+                    .eq(AssetCardEntity::getInvalidStatus, false)
+                    .in(AssetCardEntity::getCode, cardCodesToCheck)
+                    .count();
+            
+            if (existCardCodeCount > 0) {
+                // 查询具体哪些编码已存在
+                List<String> existingCodes = assetCardService.lambdaQuery()
+                        .eq(AssetCardEntity::getIsDeleted, false)
+                        .eq(AssetCardEntity::getInvalidStatus, false)
+                        .in(AssetCardEntity::getCode, cardCodesToCheck)
+                        .select(AssetCardEntity::getCode)
+                        .list()
+                        .stream()
+                        .map(AssetCardEntity::getCode)
+                        .collect(Collectors.toList());
+                
+                throw new ServiceException(StrUtil.format("卡片编码【{}】已存在，请勿重复添加", String.join("、", existingCodes)));
+            }
+        }
+        
+        // 校验资产编码唯一性
+        if (CollUtil.isNotEmpty(assetCodesToCheck)) {
+            Integer existAssetCodeCount = assetCardDetailService.lambdaQuery()
+                    .eq(AssetCardDetailEntity::getIsDeleted, false)
+                    .in(AssetCardDetailEntity::getAssetCode, assetCodesToCheck)
+                    .count();
+            
+            if (existAssetCodeCount > 0) {
+                // 查询具体哪些编码已存在
+                List<String> existingCodes = assetCardDetailService.lambdaQuery()
+                        .eq(AssetCardDetailEntity::getIsDeleted, false)
+                        .in(AssetCardDetailEntity::getAssetCode, assetCodesToCheck)
+                        .select(AssetCardDetailEntity::getAssetCode)
+                        .list()
+                        .stream()
+                        .map(AssetCardDetailEntity::getAssetCode)
+                        .collect(Collectors.toList());
+                
+                throw new ServiceException(StrUtil.format("资产编码【{}】已存在，请勿重复添加", String.join("、", existingCodes)));
+            }
+        }
+    }
+    
+    /**
      * 更新资产盘点单明细数据
      * 处理明细的增删改，并根据规则计算差异
      *
@@ -154,6 +304,15 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         List<AssetStocktakingDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         if (CollUtil.isEmpty(detailList)) {
             return;
+        }
+        
+        // ===== 对于新增的明细（id为空，即页面新增的）进行卡片编码和资产编码的唯一性校验 =====
+        List<AssetStocktakingDetailDTO.UpdateDTO> newDetailList = detailList.stream()
+                .filter(detail -> StringUtils.isBlank(detail.getId()))
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isNotEmpty(newDetailList)) {
+            validateDetailUniqueness(newDetailList);
         }
         
         // 查询旧的明细列表
@@ -820,5 +979,41 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         log.info("删除待提交状态的盘盈盘亏单，数量：{}，单号：{}", 
                 profitLossList.size(), 
                 profitLossList.stream().map(AssetProfitLossEntity::getCode).collect(Collectors.joining(",")));
+    }
+
+    @Override
+    public List<AssetStocktakingDTO.DropDownDTO> dropDownList(String keyword) {
+        // 构建查询条件：只查询已审核且未作废的盘点单
+        LambdaQueryChainWrapper<AssetStocktakingEntity> queryWrapper = this.lambdaQuery()
+                .eq(AssetStocktakingEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(AssetStocktakingEntity::getInvalidStatus, false)
+                .eq(AssetStocktakingEntity::getIsDeleted, false);
+
+        // 如果有关键字，添加模糊查询条件（盘点单号、来源单号）
+        if (StrUtil.isNotBlank(keyword)) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(AssetStocktakingEntity::getCode, keyword)
+                    .or()
+                    .like(AssetStocktakingEntity::getSourceCode, keyword)
+            );
+        }
+
+        // 按编码升序排列
+        queryWrapper.orderByAsc(AssetStocktakingEntity::getCode);
+
+        List<AssetStocktakingEntity> entityList = queryWrapper.list();
+
+        if (CollUtil.isEmpty(entityList)) {
+            return new ArrayList<>();
+        }
+
+        // 转换为DTO
+        return entityList.stream()
+                .map(entity -> new AssetStocktakingDTO.DropDownDTO(
+                        entity.getId(),
+                        entity.getCode(),
+                        entity.getSourceCode()
+                ))
+                .collect(Collectors.toList());
     }
 }

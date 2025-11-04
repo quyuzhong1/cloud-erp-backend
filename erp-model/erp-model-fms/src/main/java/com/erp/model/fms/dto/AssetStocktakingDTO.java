@@ -328,5 +328,30 @@ public class AssetStocktakingDTO implements Serializable {
 
     }
 
+    /**
+    * 下拉列表DTO
+    */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DropDownDTO {
+
+        /**
+        * 主键id
+        */
+        private String id;
+
+        /**
+        * 盘点单号
+        */
+        private String code;
+
+        /**
+        * 来源单号
+        */
+        private String sourceCode;
+
+    }
+
 
 }
