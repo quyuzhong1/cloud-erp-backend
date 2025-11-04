@@ -248,6 +248,8 @@
             resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$GenerateDeliverViewDTO">
         select ra.id AS sourceId,
         rad.id AS sourceDetailId,
+        ra.channel_id as channelId,
+        ra.channel_name as channelName,
         ra.code AS sourceCode,
         ra.requisition_warehouse_id AS deliveryWarehouseId,
         ra.requisition_warehouse_name AS deliveryWarehouseName,
