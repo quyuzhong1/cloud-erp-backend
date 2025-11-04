@@ -488,21 +488,20 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         }
 
         //采购明细
-        List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery()
-                .eq(AssetPurchaseOrderDetailEntity::getMainId,entity.getId())
-                .orderByAsc(AssetPurchaseOrderDetailEntity::getId)
-                .list();
+        List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery().eq(AssetPurchaseOrderDetailEntity::getMainId, entity.getId()).list();
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getPurchaseOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //采购组织编码
             String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("receiveOrgCode", purchaseOrgCode);
             resultMap.put("purchaseOrgCode", purchaseOrgCode);
         }
+
 
         List<JSONObject> list = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity detailEntity : details) {
@@ -513,13 +512,18 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            //新品首批
+            //jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
+
             jsonObject.set("taxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 //采购组织编码
                 String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("receiveOrgCode", purchaseOrgCode);
                 jsonObject.set("purchaseOrgCode", purchaseOrgCode);
             }
+            jsonObject.set("isGift",Boolean.FALSE);
             jsonObject.set("detailRemark",detailEntity.getRemark());
 
             list.add(jsonObject);

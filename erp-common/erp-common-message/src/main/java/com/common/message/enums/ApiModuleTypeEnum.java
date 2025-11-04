@@ -62,6 +62,8 @@ public enum ApiModuleTypeEnum {
 
     BD_RATE(49, "bdRate", "汇率","sys"),
     ASSET_PURCHASE_ORDER(50, "assetPurchaseOrder", "资产采购订单","scm"),
+    ASSET_PURCHASE_CHANGE(51, "assetPurchaseChange", "资产采购变更单","scm"),
+
     ;
     private Integer code;
 

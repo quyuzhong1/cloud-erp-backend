@@ -1,4 +1,5 @@
 package com.erp.server.fms.service;
+import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -156,4 +157,8 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
     Map<String, Object> getVariablesMap(AssetDisposalEntity entity);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importAssetDisposal(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<AssetDisposalImportExcelDTO> successList, List<String> errorNoList, List<AssetDisposalImportExcelDTO> errorList2, String importType);
 }

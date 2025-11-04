@@ -243,5 +243,7 @@ public interface BusinessNoConstant {
     String MPO="MPO";
     //资产采购变更单
     String MPOCC="MPOCC";
+    //资产编码
+    String ZC="ZC";
 
 }

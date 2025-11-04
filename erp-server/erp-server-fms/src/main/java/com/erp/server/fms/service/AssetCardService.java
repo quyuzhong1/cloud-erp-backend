@@ -173,4 +173,12 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     * @param dto
     */
     void importAssetCard(BaseDTO.ImportDTO dto);
+
+    /**
+    * 下载导入模板
+    * @author wuht
+    * @date: 2025-11-03
+    * @param response
+    */
+    void downloadTemplate(javax.servlet.http.HttpServletResponse response);
 }

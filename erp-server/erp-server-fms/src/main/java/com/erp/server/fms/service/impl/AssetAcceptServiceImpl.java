@@ -101,6 +101,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private FileFeign fileFeign;
     @Autowired
     private SysUserFeign sysUserFeign;
+    @Autowired
+    private AssetLocationService assetLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -222,9 +224,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     ? detailDTO.getAssetCardStatus() 
                     : AssetCardStatusEnum.NOT_GENERATED.getStatus();
                 detailEntity.setAssetCardStatus(assetCardStatus);
-                detailEntity.setPendingQty(detailDTO.getPendingQty());
+                // DTO使用新字段名，Entity使用旧字段名进行映射
+                detailEntity.setPendingQty(detailDTO.getPendingAcceptQty());
                 detailEntity.setAcceptedQty(detailDTO.getAcceptedQty());
-                detailEntity.setAcceptableQty(detailDTO.getAcceptableQty());
+                detailEntity.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                 detailEntity.setAssetLocationId(detailDTO.getAssetLocationId());
                 detailEntity.setUseDeptName(detailDTO.getUseDeptName());
                 detailEntity.setUseDeptId(detailDTO.getUseDeptId());
@@ -452,9 +455,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                             ? existingDetail.getAssetCardStatus() 
                             : AssetCardStatusEnum.NOT_GENERATED.getStatus());
                     existingDetail.setAssetCardStatus(assetCardStatus);
-                    existingDetail.setPendingQty(detailDTO.getPendingQty());
+                    // DTO使用新字段名，Entity使用旧字段名进行映射
+                    existingDetail.setPendingQty(detailDTO.getPendingAcceptQty());
                     existingDetail.setAcceptedQty(detailDTO.getAcceptedQty());
-                    existingDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    existingDetail.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                     existingDetail.setAssetLocationId(detailDTO.getAssetLocationId());
                     existingDetail.setUseDeptName(detailDTO.getUseDeptName());
                     existingDetail.setUseDeptId(detailDTO.getUseDeptId());
@@ -474,9 +478,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         ? detailDTO.getAssetCardStatus() 
                         : AssetCardStatusEnum.NOT_GENERATED.getStatus();
                     newDetail.setAssetCardStatus(assetCardStatus);
-                    newDetail.setPendingQty(detailDTO.getPendingQty());
+                    // DTO使用新字段名，Entity使用旧字段名进行映射
+                    newDetail.setPendingQty(detailDTO.getPendingAcceptQty());
                     newDetail.setAcceptedQty(detailDTO.getAcceptedQty());
-                    newDetail.setAcceptableQty(detailDTO.getAcceptableQty());
+                    newDetail.setAcceptableQty(detailDTO.getAvailableAcceptQty());
                     newDetail.setAssetLocationId(detailDTO.getAssetLocationId());
                     newDetail.setUseDeptName(detailDTO.getUseDeptName());
                     newDetail.setUseDeptId(detailDTO.getUseDeptId());
@@ -918,10 +923,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Override
     public AssetAcceptDTO.ViewDTO view(String id) {
         AssetAcceptEntity assetAcceptEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到资产验收单数据"));
-        AssetAcceptDTO.ViewDTO data = BeanMapperUtils.map(AssetAcceptDTO.ViewDTO.class, assetAcceptEntity);
+        AssetAcceptDTO.ViewDTO data = new AssetAcceptDTO.ViewDTO();
+        BeanUtil.copyProperties(assetAcceptEntity, data);
         data.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
+        
+        // 查询相关的附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            data.setAttachmentNameList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachmentUrlList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
+        
         return data;
     }
     /**
@@ -973,6 +988,54 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
         String id = data.getId();
 
+        // 填充验收组织名称
+        if (StringUtils.isNotBlank(data.getAcceptOrgId()) && StringUtils.isBlank(data.getAcceptOrgName())) {
+            try {
+                List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getAcceptOrgId()));
+                if (CollUtil.isNotEmpty(orgList)) {
+                    data.setAcceptOrgName(orgList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收组织信息失败，orgId: {}", data.getAcceptOrgId(), e);
+            }
+        }
+
+        // 填充验收人姓名
+        if (StringUtils.isNotBlank(data.getAcceptUserId()) && StringUtils.isBlank(data.getAcceptUserName())) {
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserId(data.getAcceptUserId());
+                if (ObjectUtil.isNotEmpty(user)) {
+                    data.setAcceptUserName(user.getUserName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收人信息失败，userId: {}", data.getAcceptUserId(), e);
+            }
+        }
+
+        // 填充验收部门名称
+        if (StringUtils.isNotBlank(data.getAcceptDeptId()) && StringUtils.isBlank(data.getAcceptDeptName())) {
+            try {
+                List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Arrays.asList(data.getAcceptDeptId()));
+                if (CollUtil.isNotEmpty(deptList)) {
+                    data.setAcceptDeptName(deptList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.error("查询验收部门信息失败，deptId: {}", data.getAcceptDeptId(), e);
+            }
+        }
+
+        // 填充审核人姓名
+        if (StringUtils.isNotBlank(data.getApproveUserId()) && StringUtils.isBlank(data.getApproveUserName())) {
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserId(data.getApproveUserId());
+                if (ObjectUtil.isNotEmpty(user)) {
+                    data.setApproveUserName(user.getUserName());
+                }
+            } catch (Exception e) {
+                log.error("查询审核人信息失败，userId: {}", data.getApproveUserId(), e);
+            }
+        }
+
         // 查询验收人员数据
         List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
                 .eq(AssetAcceptPersonEntity::getAssetAcceptId, id)
@@ -995,10 +1058,175 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 .list();
 
         if (CollUtil.isNotEmpty(detailList)) {
+            // 收集所有需要查询的资产位置ID和部门ID
+            List<String> assetLocationIds = detailList.stream()
+                    .map(AssetAcceptDetailEntity::getAssetLocationId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            List<String> useDeptIds = detailList.stream()
+                    .map(AssetAcceptDetailEntity::getUseDeptId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // 批量查询资产位置信息
+            Map<String, String> assetLocationMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(assetLocationIds)) {
+                try {
+                    List<com.erp.model.fms.entity.AssetLocationEntity> locationList = assetLocationService.listByIds(assetLocationIds);
+                    if (CollUtil.isNotEmpty(locationList)) {
+                        assetLocationMap = locationList.stream()
+                                .filter(loc -> StringUtils.isNotBlank(loc.getId()) && StringUtils.isNotBlank(loc.getAddress()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.fms.entity.AssetLocationEntity::getId,
+                                        com.erp.model.fms.entity.AssetLocationEntity::getAddress,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询资产位置信息失败", e);
+                }
+            }
+            
+            // 批量查询部门信息
+            Map<String, String> deptMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(useDeptIds)) {
+                try {
+                    List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(useDeptIds);
+                    if (CollUtil.isNotEmpty(deptList)) {
+                        deptMap = deptList.stream()
+                                .filter(dept -> StringUtils.isNotBlank(dept.getId()) && StringUtils.isNotBlank(dept.getName()))
+                                .collect(Collectors.toMap(
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getId,
+                                        com.erp.model.sys.entity.SysDepartmentEntity::getName,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("批量查询部门信息失败", e);
+                }
+            }
+            
+            // 查询采购订单明细（用于获取采购数量）
+            Map<String, Integer> purchaseQtyMap = new HashMap<>();
+            if (StringUtils.isNotBlank(data.getSourceId())) {
+                try {
+                    ApiResult<List<AssetPurchaseOrderDTO.DetailForAcceptDTO>> apiResult =
+                            assetPurchaseOrderFeign.queryDetailsForAccept(data.getSourceId());
+                    if (apiResult.isSuccess() && CollUtil.isNotEmpty(apiResult.getData())) {
+                        purchaseQtyMap = apiResult.getData().stream()
+                                .filter(d -> StringUtils.isNotBlank(d.getId()) && d.getPurchaseQty() != null)
+                                .collect(Collectors.toMap(
+                                        AssetPurchaseOrderDTO.DetailForAcceptDTO::getId,
+                                        AssetPurchaseOrderDTO.DetailForAcceptDTO::getPurchaseQty,
+                                        (v1, v2) -> v1
+                                ));
+                    }
+                } catch (Exception e) {
+                    log.error("查询采购订单明细失败", e);
+                }
+            }
+            
+            // 查询所有关联相同采购订单的验收单明细（用于计算数量）
+            List<AssetAcceptDetailEntity> allAcceptDetailList = new ArrayList<>();
+            Map<String, String> acceptStatusMap = new HashMap<>();
+            if (StringUtils.isNotBlank(data.getSourceId())) {
+                // 查询所有来自同一采购订单的验收单
+                List<AssetAcceptEntity> allAcceptList = this.lambdaQuery()
+                        .eq(AssetAcceptEntity::getSourceId, data.getSourceId())
+                        .eq(AssetAcceptEntity::getIsDeleted, false)
+                        .list();
+                
+                if (CollUtil.isNotEmpty(allAcceptList)) {
+                    List<String> allAcceptIds = allAcceptList.stream()
+                            .map(AssetAcceptEntity::getId)
+                            .collect(Collectors.toList());
+                    
+                    // 构建审核状态映射
+                    acceptStatusMap = allAcceptList.stream()
+                            .collect(Collectors.toMap(AssetAcceptEntity::getId, x -> x.getApproveStatus().getStatus()));
+                    
+                    // 查询所有验收明细
+                    allAcceptDetailList = assetAcceptDetailService.lambdaQuery()
+                            .in(AssetAcceptDetailEntity::getMainId, allAcceptIds)
+                            .eq(AssetAcceptDetailEntity::getIsDeleted, false)
+                            .list();
+                }
+            }
+            
+            // 创建副本用于lambda使用
+            final Map<String, String> finalAssetLocationMap = assetLocationMap;
+            final Map<String, String> finalDeptMap = deptMap;
+            final Map<String, Integer> finalPurchaseQtyMap = purchaseQtyMap;
+            final List<AssetAcceptDetailEntity> finalAllAcceptDetailList = allAcceptDetailList;
+            final Map<String, String> finalAcceptStatusMap = acceptStatusMap;
+            
             List<AssetAcceptDetailDTO.ViewDTO> detailViewList = detailList.stream()
                     .map(detail -> {
                         AssetAcceptDetailDTO.ViewDTO detailView = new AssetAcceptDetailDTO.ViewDTO();
-                        BeanMapperUtils.copy(detail, detailView);
+                        BeanUtil.copyProperties(detail, detailView);
+                        
+                        // 填充资产位置名称
+                        if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
+                            String locationName = finalAssetLocationMap.get(detail.getAssetLocationId());
+                            if (StringUtils.isNotBlank(locationName)) {
+                                detailView.setAssetLocationName(locationName);
+                            }
+                        }
+                        
+                        // 填充部门名称
+                        if (StringUtils.isNotBlank(detail.getUseDeptId()) && StringUtils.isBlank(detail.getUseDeptName())) {
+                            detailView.setUseDeptName(finalDeptMap.get(detail.getUseDeptId()));
+                        }
+                        
+                        // 计算数量（参考queryMoldPurchaseOrderDetails的逻辑）
+                        if (StringUtils.isNotBlank(detail.getSourceDetailId())) {
+                            int purchaseQty = finalPurchaseQtyMap.getOrDefault(detail.getSourceDetailId(), 0);
+                            int approvedAcceptQty = 0;  // 已审核的验收数量
+                            int processingAcceptQty = 0; // 待提交、审核中、审核不通过的验收数量
+
+                            for (AssetAcceptDetailEntity acceptDetail : finalAllAcceptDetailList) {
+                                if (!detail.getSourceDetailId().equals(acceptDetail.getSourceDetailId())) {
+                                    continue;
+                                }
+
+                                String approveStatus = finalAcceptStatusMap.get(acceptDetail.getMainId());
+                                if (approveStatus == null) {
+                                    continue;
+                                }
+
+                                Integer acceptQty = acceptDetail.getAcceptQty() != null ? acceptDetail.getAcceptQty() : 0;
+
+                                // 已审核
+                                if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus)) {
+                                    approvedAcceptQty += acceptQty;
+                                }
+                                // 待提交、审核中、审核不通过
+                                else if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(approveStatus) 
+                                        || ApproveStatusEnum.APPROVE_ING.getStatus().equals(approveStatus) 
+                                        || ApproveStatusEnum.REJECT.getStatus().equals(approveStatus)) {
+                                    processingAcceptQty += acceptQty;
+                                }
+                            }
+
+                            // 注释：
+                            // 0. 采购数量
+                            detailView.setPurchaseQty(purchaseQty);
+                            
+                            // 1. 已验收数量 = 已审核资产验收单验收数量
+                            detailView.setAcceptedQty(approvedAcceptQty);
+                            
+                            // 2. 待验收数量 = 采购数量 - 已验收数量
+                            int pendingAcceptQty = purchaseQty - approvedAcceptQty;
+                            detailView.setPendingAcceptQty(Math.max(pendingAcceptQty, 0));
+                            
+                            // 3. 可验收数量 = 待验收数量 - 待提交、审核中、审核不通过的资产验收单验收数量
+                            int availableAcceptQty = pendingAcceptQty - processingAcceptQty;
+                            detailView.setAvailableAcceptQty(Math.max(availableAcceptQty, 0));
+                        }
+                        
                         return detailView;
                     })
                     .collect(Collectors.toList());
@@ -1633,9 +1861,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 detailDTO.setProductName(importDTO.getProductName());
                 detailDTO.setAcceptQty(importDTO.getAcceptQty());
                 detailDTO.setAssetCardStatus(AssetCardStatusEnum.NOT_GENERATED.getStatus());
-                detailDTO.setPendingQty(0);
+                // DTO使用新字段名
+                detailDTO.setPurchaseQty(0);
+                detailDTO.setPendingAcceptQty(0);
                 detailDTO.setAcceptedQty(0);
-                detailDTO.setAcceptableQty(importDTO.getAcceptQty());
+                detailDTO.setAvailableAcceptQty(importDTO.getAcceptQty());
                 detailDTO.setAssetLocationId(importDTO.getAssetLocationId());
                 detailDTO.setUseDeptName(importDTO.getUseDeptName());
                 detailDTO.setUseDeptId(importDTO.getUseDeptId());

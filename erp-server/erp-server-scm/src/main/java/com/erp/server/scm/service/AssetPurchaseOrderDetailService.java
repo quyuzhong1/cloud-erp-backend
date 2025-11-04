@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import cn.hutool.json.JSONArray;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.entity.AssetPurchaseOrderDetailEntity;
 import com.common.business.service.SuperService;
@@ -41,5 +42,9 @@ public interface AssetPurchaseOrderDetailService extends SuperService<AssetPurch
 
     void update(AssetPurchaseOrderDTO.UpdateDTO updateDTO, String assetPurchaseOrderId);
 
-
+    /**
+     * 更新明细金蝶id
+     * @param list
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }
