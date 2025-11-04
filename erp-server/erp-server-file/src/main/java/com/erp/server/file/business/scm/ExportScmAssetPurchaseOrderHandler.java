@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
 
 /**
  * @Author: wtr
@@ -47,7 +47,7 @@ public class ExportScmAssetPurchaseOrderHandler extends AbstractPageFileEventHan
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_PLM_ASSET_PURCHASE_ORDER;
+        return EXPORT_SCM_ASSET_PURCHASE_ORDER;
     }
 }
 
