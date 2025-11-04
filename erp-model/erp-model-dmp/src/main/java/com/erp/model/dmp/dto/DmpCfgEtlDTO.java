@@ -280,7 +280,7 @@ public class DmpCfgEtlDTO implements Serializable {
         private String flowName;
 
         /**
-         * 分类
+         * 流程分类
          */
         private String appCategory;
 
@@ -320,7 +320,7 @@ public class DmpCfgEtlDTO implements Serializable {
         private Integer dealyTime;
 
         /**
-         * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间-延迟时间
+         * 最大间隔时间, 0=按interval_time，-1=按当前时间-延迟时间
          */
         private Integer maxIntervalTime;
 
@@ -348,6 +348,11 @@ public class DmpCfgEtlDTO implements Serializable {
          * 修改时间【可排序】
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 执行路径
+         */
+        private String execUrl;
     }
 
     /**
