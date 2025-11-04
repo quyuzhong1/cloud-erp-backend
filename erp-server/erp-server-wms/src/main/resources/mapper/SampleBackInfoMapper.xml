@@ -198,7 +198,7 @@
         LEFT JOIN sample_back_detail sbd ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         WHERE sbi.is_deleted = false
         <if test="permissionSql != null and permissionSql != ''">
-            AND ${permissionSql}
+            ${permissionSql}
         </if>
         GROUP BY 
             CASE 

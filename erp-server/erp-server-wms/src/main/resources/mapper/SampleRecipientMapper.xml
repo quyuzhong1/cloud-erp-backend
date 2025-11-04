@@ -107,7 +107,7 @@
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -241,7 +241,7 @@
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size > 0">
             AND sr.id in
@@ -316,7 +316,7 @@
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

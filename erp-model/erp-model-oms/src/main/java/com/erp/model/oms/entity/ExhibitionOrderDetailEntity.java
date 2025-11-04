@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 
 
 /**
@@ -23,7 +24,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("exhibition_order_detail")
-public class ExhibitionOrderDetailEntity extends BaseEntity<ExhibitionOrderDetailEntity> {
+public class ExhibitionOrderDetailEntity extends BaseEntity<ExhibitionOrderDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 台账id

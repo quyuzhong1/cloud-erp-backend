@@ -174,7 +174,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         jiFengCreateOutboundRequest.setErpNo(createOutboundReq.getReferenceNo());
         jiFengCreateOutboundRequest.setPlatform(PlatformDictEnum.getNameByCode(createOutboundReq.getPlatform()));
         jiFengCreateOutboundRequest.setPlatformOrderNo(createOutboundReq.getPlatformCode());
-        jiFengCreateOutboundRequest.setBuyerName(createOutboundReq.getReceiverInfo().getBuyerName());
+        jiFengCreateOutboundRequest.setBuyerName(createOutboundReq.getReceiverInfo().getName());
         jiFengCreateOutboundRequest.setBuyerPhone(createOutboundReq.getReceiverInfo().getPhone());
         jiFengCreateOutboundRequest.setRecipientCountry(createOutboundReq.getReceiverInfo().getCountryCode());
         jiFengCreateOutboundRequest.setRecipientProvince(createOutboundReq.getReceiverInfo().getProvince());

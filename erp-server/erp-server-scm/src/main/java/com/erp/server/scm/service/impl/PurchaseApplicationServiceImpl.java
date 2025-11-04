@@ -1879,6 +1879,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException(ApiError.ERROR_98049);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(PurchaseApplicationDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgentTotal", isUrgent);
+        //新品首批
+        String firstMassProduct = detailList.stream().map(PurchaseApplicationDetailEntity::getFirstMassProduct).collect(Collectors.joining(","));
+        variablesMap.put("firstMassProductTotal", firstMassProduct);
         return variablesMap;
     }
 }

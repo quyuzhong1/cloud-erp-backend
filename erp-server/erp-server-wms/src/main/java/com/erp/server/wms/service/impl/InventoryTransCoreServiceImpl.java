@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
@@ -16,6 +17,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -43,8 +45,6 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Resource
     private InventoryService inventoryService;
     @Resource
-    private InventoryTradingService tradingService;
-    @Resource
     private CfgTransactionRulesService cfgTransactionRulesService;
     @Resource
     private TransactionFlowService transactionFlowService;
@@ -54,6 +54,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     private WarehouseLocationService warehouseLocationService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -88,8 +90,14 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         this.checkRule(param.getRules());
         //解析库存交易数据
         List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionFromTransfer(param.getBusinessType(),param.getParamList(),param.getRules());
+        
         //执行库存交易
-        tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(InventoryTradingServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -104,7 +112,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         //解析库存交易数据
         List<InventoryTransactionDTO> transactionDtoList=this.parseTranactionFromInOut(param.getBusinessType(),param.getParamList(),param.getRules());
         //执行库存交易
-        tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(InventoryTradingServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -112,7 +125,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void unApprove(InventoryUnApproveDTO param) {
         List< TransactionFlowEntity> transactionFlowList = this.queryTransactionFlowList(param.getSourceType(),param.getBillId());
         List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionForUnApprove(transactionFlowList);
-        tradingService.doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(InventoryTradingServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(InventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        }
     }
 
     @Override
