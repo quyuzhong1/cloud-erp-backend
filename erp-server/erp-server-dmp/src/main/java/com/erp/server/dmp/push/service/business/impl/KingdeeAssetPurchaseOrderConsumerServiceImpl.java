@@ -21,7 +21,6 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeAssetPurchaseOrderConsumerService;
-import com.erp.server.dmp.push.service.business.KingdeePurchaseOrderConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -140,7 +139,7 @@ public class KingdeeAssetPurchaseOrderConsumerServiceImpl implements KingdeeAsse
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            saveOrUpdate(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),json,param);
+            saveOrUpdate(apiUtils,platformEntity,map,ApiModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),json,param);
         }
     }
 
@@ -157,7 +156,7 @@ public class KingdeeAssetPurchaseOrderConsumerServiceImpl implements KingdeeAsse
      */
     public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
         //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),operate);
         return;
     }
 
@@ -225,7 +224,7 @@ public class KingdeeAssetPurchaseOrderConsumerServiceImpl implements KingdeeAsse
     public void updateKingdeeDetailId (JSONArray jsonArray) {
         //更新业务单据状态
         Map<String,Object> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString());
+        params.put("code",ApiModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode().toString());
         params.put("details",jsonArray);
         scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
