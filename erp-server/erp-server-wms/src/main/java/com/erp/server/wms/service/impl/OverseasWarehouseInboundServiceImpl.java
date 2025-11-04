@@ -581,11 +581,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (null == commonDTO.getCustomsType()) {
                     throw new ServiceException("【customsType】报关方式不能为空");
                 }
-                OverseasCustomsTypeNewEnum customsTypeNewEnum = OverseasCustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
-                if (null == customsTypeNewEnum) {
-                    throw new ServiceException("【customsType】报关方式不存在");
+                if (!OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                    OverseasCustomsTypeNewEnum customsTypeNewEnum = OverseasCustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
+                    if (null == customsTypeNewEnum) {
+                        throw new ServiceException("【customsType】报关方式不存在");
+                    }
+                    commonDTO.setCustomsTypeName(customsTypeNewEnum.getName());
                 }
-                commonDTO.setCustomsTypeName(customsTypeNewEnum.getName());
+
                 // 谷仓校验
                 if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform)) {
                     if (CharSequenceUtil.isBlank(commonDTO.getLogisticsProductCode())) {
@@ -622,8 +625,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 区
                 commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
                 // iml
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
-                || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
                     // 查询关联
                     Map<String, DictThirdCity> thirdCityEntityMap = sysDictService.mapAndCheckThirdCityIds(
                             commonDTO.getDictProvinceId(),

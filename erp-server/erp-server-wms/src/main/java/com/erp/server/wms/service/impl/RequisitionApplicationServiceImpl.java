@@ -1318,15 +1318,10 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<String> shopIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getToWarehouseId).distinct().collect(Collectors.toList());
+        List<String> shopIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getChannelId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
 
-            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())) {
-                ShopInfoEntity shopInfo = shopInfoEntities.stream().filter(v -> v.getId().equals(viewDTO.getToWarehouseId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
-                viewDTO.setToWarehouseId(shopInfo.getWarehouseId());
-                viewDTO.setToWarehouseName(shopInfo.getWarehouseName());
-            }
             WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
                     .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanId()))
                     .findFirst()
@@ -1334,6 +1329,17 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
             viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
+                ShopInfoEntity shopInfo = shopInfoEntities.stream()
+                        .filter(req -> req.getId().equals(viewDTO.getChannelId()))
+                        .findFirst()
+                        .orElse(new ShopInfoEntity());
+                viewDTO.setShopId(viewDTO.getChannelId());
+                viewDTO.setShopName(viewDTO.getChannelName());
+                viewDTO.setCountry(shopInfo.getDictCountryCode());
+            }
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
