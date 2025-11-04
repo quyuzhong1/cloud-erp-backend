@@ -806,6 +806,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             .set(AssetPurchaseOrderEntity::getApproveUserId, userInfo.getUid())
             .set(AssetPurchaseOrderEntity::getApproveUserName, userInfo.getUserName())
             .set(AssetPurchaseOrderEntity::getApproveStatus, approveStatus)
+            .set(AssetPurchaseOrderEntity::getApproveTime, LocalDateTime.now())
             .update(new AssetPurchaseOrderEntity());
      }
 
