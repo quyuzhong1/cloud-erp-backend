@@ -127,9 +127,19 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     }
 
 	@Override
-	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds) {
+	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck) {
 		Map<String , Boolean> result = new HashMap<>();
-		List<CheckInventoryDTO> redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
+		List<CheckInventoryDTO> redisCheckInventoryList = null;
+		if(isCheck) {
+			redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
+		}else {
+			List<InventoryEntity> list = inventoryService.lambdaQuery().eq(InventoryEntity::getIsDeleted, false).select(InventoryEntity::getId).list();
+			redisCheckInventoryList = list.stream().map(l -> {
+				CheckInventoryDTO dto = new CheckInventoryDTO();
+				dto.setInventoryId(l.getId());
+				return dto;
+			}).collect(Collectors.toList());
+		}
 		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
 			List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(redisCheckInventoryList.size());
 			for(CheckInventoryDTO dto : redisCheckInventoryList) {
