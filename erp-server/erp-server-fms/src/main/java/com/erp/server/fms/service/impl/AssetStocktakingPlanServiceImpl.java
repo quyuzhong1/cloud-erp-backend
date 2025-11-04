@@ -87,6 +87,8 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     @Autowired
     private AssetStocktakingDetailService assetStocktakingDetailService;
     @Autowired
+    private com.erp.server.fms.mapper.AssetCardDetailMapper assetCardDetailMapper;
+    @Autowired
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private FileFeign fileFeign;
@@ -527,78 +529,11 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
      * @return 资产卡片明细列表
      */
     private List<AssetCardDetailEntity> queryCardDetailsByScope(AssetStocktakingPlanEntity planEntity) {
-        // 构建查询条件
-        LambdaQueryChainWrapper<AssetCardDetailEntity> query = assetCardDetailService.lambdaQuery();
-        
-        // 连接主表查询，只查询已审核的资产卡片
-        List<String> approvedCardIds = assetCardService.lambdaQuery()
-                .eq(AssetCardEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
-                .eq(AssetCardEntity::getIsDeleted, false)
-                .list()
-                .stream()
-                .map(AssetCardEntity::getId)
-                .collect(Collectors.toList());
-        
-        if (CollUtil.isEmpty(approvedCardIds)) {
-            return Collections.emptyList();
-        }
-        
-        query.in(AssetCardDetailEntity::getMainId, approvedCardIds);
-        
-        // 按资产类别筛选
-        if (StringUtils.isNotBlank(planEntity.getAssetCategories())) {
-            List<String> categoryList = Arrays.asList(planEntity.getAssetCategories().split(","));
-            // 需要关联主表查询资产类别
-            List<String> categoryCardIds = assetCardService.lambdaQuery()
-                    .in(AssetCardEntity::getType, categoryList)
-                    .in(AssetCardEntity::getId, approvedCardIds)
-                    .list()
-                    .stream()
-                    .map(AssetCardEntity::getId)
-                    .collect(Collectors.toList());
-            
-            if (CollUtil.isNotEmpty(categoryCardIds)) {
-                query.in(AssetCardDetailEntity::getMainId, categoryCardIds);
-            } else {
-                return Collections.emptyList();
-            }
-        }
-        
-        // 按使用部门筛选
-        if (StringUtils.isNotBlank(planEntity.getUseDeptIds())) {
-            List<String> deptList = Arrays.asList(planEntity.getUseDeptIds().split(","));
-            query.in(AssetCardDetailEntity::getUseDeptId, deptList);
-        }
-        
-        // 按资产位置筛选
-        if (StringUtils.isNotBlank(planEntity.getAssetLocationIds())) {
-            List<String> locationList = Arrays.asList(planEntity.getAssetLocationIds().split(","));
-            query.in(AssetCardDetailEntity::getAssetLocationId, locationList);
-        }
-        
-        // 按卡片编码范围筛选
-        if (StringUtils.isNotBlank(planEntity.getCardCodeStart()) || StringUtils.isNotBlank(planEntity.getCardCodeEnd())) {
-            List<String> rangeCardIds = assetCardService.lambdaQuery()
-                    .in(AssetCardEntity::getId, approvedCardIds)
-                    .apply(StringUtils.isNotBlank(planEntity.getCardCodeStart()), 
-                            "code >= {0}", planEntity.getCardCodeStart())
-                    .apply(StringUtils.isNotBlank(planEntity.getCardCodeEnd()), 
-                            "code <= {0}", planEntity.getCardCodeEnd())
-                    .list()
-                    .stream()
-                    .map(AssetCardEntity::getId)
-                    .collect(Collectors.toList());
-            
-            if (CollUtil.isNotEmpty(rangeCardIds)) {
-                query.in(AssetCardDetailEntity::getMainId, rangeCardIds);
-            } else {
-                return Collections.emptyList();
-            }
-        }
-        
-        query.eq(AssetCardDetailEntity::getIsDeleted, false);
-        
-        return query.list();
+        // 使用JOIN关联查询，避免查询大量ID导致的内存和性能问题
+        return assetCardDetailMapper.queryCardDetailsByScopeWithJoin(
+                planEntity.getCardCodeStart(),
+                planEntity.getCardCodeEnd()
+        );
     }
 
     @Override
