@@ -196,6 +196,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             assetPurchaseOrderDetailEntity.setIsUrgent(addDTO1.getIsUrgent());
             assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(addDTO1.getSourceDetailId()) ? addDTO1.getSourceDetailId() : null);
             assetPurchaseOrderDetailEntity.setTag(addDTO1.getTag());
+            assetPurchaseOrderDetailEntity.setRemark(StringUtils.isNotBlank(addDTO1.getRemark()) ? addDTO1.getRemark() : null);
 
             for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
                 if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
@@ -280,7 +281,8 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanUtils.copyProperties(updateDTO.getAssetPurchaseOrderDetailDTOList(),detailEntityList);
+            BeanUtils.copyProperties(dto,assetPurchaseOrderDetailEntity);
+
             assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
             assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
 
