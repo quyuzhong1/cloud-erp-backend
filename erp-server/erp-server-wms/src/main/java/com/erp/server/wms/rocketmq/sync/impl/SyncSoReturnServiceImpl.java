@@ -358,7 +358,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         }
         inStockEntity.setId(IdWorker.getIdStr());
         //平台订单号
-        inStockEntity.setPlatformOrderCode(dto.getSourceId());
+        inStockEntity.setPlatformOrderCode(dto.getPlatformOrderCode());
         inStockEntity.setReturnLogisticCode(dto.getLogisticsNo());
         for (SoReturnInstockDetailEntity detailEntity : detailList) {
             detailEntity.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());

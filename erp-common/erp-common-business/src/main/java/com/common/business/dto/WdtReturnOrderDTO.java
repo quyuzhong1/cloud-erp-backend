@@ -85,6 +85,10 @@ public class WdtReturnOrderDTO extends UniqueDto {
     private LocalDateTime created;
     
     private LocalDateTime modified;
+    /**
+     * 平台订单编号
+     */
+    private String platformOrderCode;
 
     private List<WdtReturnOrderDetailDTO> detailList;
 }
