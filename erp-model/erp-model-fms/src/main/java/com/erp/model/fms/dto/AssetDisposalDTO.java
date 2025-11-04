@@ -10,9 +10,12 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import org.springframework.validation.annotation.Validated;
+
 import java.util.Map;
 
 /**
@@ -375,7 +378,7 @@ public class AssetDisposalDTO implements Serializable {
 
 
         @NotEmpty(message = "资产明细不能为空")
-        private List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList;
+        private List<AssetDisposalDetailDTO.@Valid UpdateDTO> assetDisposalDetailDTOList;
     }
 
 

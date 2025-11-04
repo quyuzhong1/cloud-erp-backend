@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 /**
@@ -185,14 +186,14 @@ public class AssetDisposalDetailDTO implements Serializable {
         * 清理费用
         */
 //        @NotNull(message = "清理费用不能为空")
-        @Digits(integer = 13, fraction = 2, message = "清理费用整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 13, fraction = 2, message = "清理费用整数位不能超过13位，小数位不能超过2位")
         private BigDecimal cleanupCost;
 
         /**
         * 残值收入 含税
         */
 //        @NotNull(message = "残值收入 含税不能为空")
-        @Digits(integer = 13, fraction = 2, message = "残值收入 含税整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 13, fraction = 2, message = "残值收入 含税整数位不能超过13位，小数位不能超过2位")
         private BigDecimal residualValue;
 
         /**
@@ -205,20 +206,20 @@ public class AssetDisposalDetailDTO implements Serializable {
         * 税率
         */
 //        @NotNull(message = "税率不能为空")
-        @DecimalMin(value = "0",inclusive = false, message = "税率不能小于0")
-        @DecimalMax(value = "100",inclusive = true, message = "税率不能大于100")
+//        @DecimalMin(value = "0",inclusive = false, message = "税率不能小于0")
+//        @DecimalMax(value = "100",inclusive = true, message = "税率不能大于100")
         private BigDecimal taxRate;
 
         /**
         * 税额
         */
 //        @NotNull(message = "税额不能为空")
-        @Digits(integer = 13, fraction = 2, message = "税额整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 13, fraction = 2, message = "税额整数位不能超过13位，小数位不能超过2位")
         private BigDecimal taxAmount;
 
 
         @NotEmpty(message = "资产实物明细不能为空")
-        private List<AssetDisposalPhysicalDetailDTO.UpdateDTO> assetDisposalPhysicalDetailDTOList;
+        private List<AssetDisposalPhysicalDetailDTO. @Valid  UpdateDTO> assetDisposalPhysicalDetailDTOList;
 
     }
 
