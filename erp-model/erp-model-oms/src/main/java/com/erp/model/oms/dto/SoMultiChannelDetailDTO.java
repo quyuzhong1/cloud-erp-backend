@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -91,7 +92,10 @@ public class SoMultiChannelDetailDTO implements Serializable {
         */
         private String fnSku;
 
-
+        /**
+         * fba库存id
+         */
+        private String fbaInventoryId;
     }
 
     /**
@@ -195,6 +199,10 @@ public class SoMultiChannelDetailDTO implements Serializable {
          * 出库状态
          */
         private String outstockStatus;
+        /**
+         * fba库存id
+         */
+        private String fbaInventoryId;
     }
 
 
