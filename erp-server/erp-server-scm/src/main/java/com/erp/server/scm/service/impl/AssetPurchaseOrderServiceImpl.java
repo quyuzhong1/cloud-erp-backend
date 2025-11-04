@@ -1593,6 +1593,14 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         return viewGeneratePurchaseChangeOrderDTO;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(AssetPurchaseOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), AssetPurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
+
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(
             List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList,
             String purchaseOrgId,

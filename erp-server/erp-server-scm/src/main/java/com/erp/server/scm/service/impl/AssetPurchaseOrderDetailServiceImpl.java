@@ -2,6 +2,9 @@ package com.erp.server.scm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.AssetPurchaseOrderReceiveEnum;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.entity.AssetNoticeDetailEntity;
@@ -299,6 +302,22 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         }
 
         super.updateBatchById(detailEntityList);
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(AssetPurchaseOrderDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(AssetPurchaseOrderDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 
 

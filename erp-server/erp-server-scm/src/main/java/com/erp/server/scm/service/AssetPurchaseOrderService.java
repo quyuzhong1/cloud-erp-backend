@@ -207,4 +207,6 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto);
 
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
+
 }
