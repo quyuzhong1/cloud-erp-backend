@@ -42,6 +42,11 @@ public class AssetProfitLossDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 类型名称
+          */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;
@@ -148,14 +153,59 @@ public class AssetProfitLossDTO implements Serializable {
         private String invalidStatusName;
 
         /**
+        * 单据类型名称（盘盈/盘亏）
+        */
+        private String docTypeName;
+
+        /**
+        * 盘点方案名称
+        */
+        private String planName;
+
+        /**
+        * 资产类别
+        */
+        private String assetCategory;
+
+        /**
+        * 资产类别名称
+        */
+        private String assetCategoryName;
+
+        /**
+        * 卡片编码
+        */
+        private String cardCode;
+
+        /**
+        * 资产名称
+        */
+        private String assetName;
+
+        /**
+        * 资产编码
+        */
+        private String assetCode;
+
+        /**
+        * 计量单位
+        */
+        private String unit;
+
+        /**
+        * 数量
+        */
+        private Integer qty;
+
+        /**
+        * 创建人
+        */
+        private String createUserName;
+
+        /**
         * 创建时间
         */
         private LocalDateTime createTime;
-
-        /**
-        * 创建人名称
-        */
-        private String createUserName;
     }
 
     /**
@@ -241,6 +291,21 @@ public class AssetProfitLossDTO implements Serializable {
         */
         private String assetOrgName;
 
+        /**
+        * 单据类型名称（盘盈/盘亏）
+        */
+        private String docTypeName;
+
+        /**
+        * 盘点方案名称
+        */
+        private String planName;
+
+        /**
+        * 明细列表
+        */
+        private List<AssetProfitLossDetailDTO.ViewDTO> detailList;
+
 
     }
 
@@ -278,21 +343,18 @@ public class AssetProfitLossDTO implements Serializable {
         /**
         * 来源单号
         */
-        @NotBlank(message = "来源单号不能为空")
         @Size(max = 100,message = "来源单号最大长度不能超过100位")
         private String sourceCode;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
         @Size(max = 200,message = "来源类型最大长度不能超过200位")
         private String sourceType;
 
         /**
         * 来源ID
         */
-        @NotBlank(message = "来源ID不能为空")
         @Size(max = 19,message = "来源ID最大长度不能超过19位")
         private String sourceId;
 
@@ -313,7 +375,6 @@ public class AssetProfitLossDTO implements Serializable {
         /**
         * 盘点方案code
         */
-        @NotBlank(message = "盘点方案code不能为空")
         @Size(max = 32,message = "盘点方案code最大长度不能超过32位")
         private String planCode;
 
@@ -327,7 +388,6 @@ public class AssetProfitLossDTO implements Serializable {
         /**
         * 资产组织名称
         */
-        @NotBlank(message = "资产组织名称不能为空")
         @Size(max = 50,message = "资产组织名称最大长度不能超过50位")
         private String assetOrgName;
 

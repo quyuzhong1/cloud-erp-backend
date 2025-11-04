@@ -169,4 +169,13 @@ public interface AssetStocktakingService extends SuperService<AssetStocktakingEn
     */
     PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(PagingDTO<AssetStocktakingDTO.ExportDTO> dto);
 
+    /**
+    * 资产盘点表下拉列表
+    * @author wuht
+    * @date: 2025-11-04
+    * @param keyword 关键字（支持盘点单号、来源单号模糊查询）
+    * @return List<AssetStocktakingDTO.DropDownDTO>
+    */
+    List<AssetStocktakingDTO.DropDownDTO> dropDownList(String keyword);
+
 }

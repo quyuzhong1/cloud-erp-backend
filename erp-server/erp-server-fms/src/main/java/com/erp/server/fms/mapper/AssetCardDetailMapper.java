@@ -21,4 +21,15 @@ import java.util.List;
 public interface AssetCardDetailMapper extends BaseMapper<AssetCardDetailEntity> {
 
     List<AssetCardDetailDTO.SearchCardDetailDTO> searchAssetCardDetail(@Param("params") AssetCardDetailDTO.SearchDTO dto);
+
+    /**
+     * 根据盘点方案的资产范围查询符合条件的资产卡片明细（关联查询）
+     * @param cardCodeStart 卡片编码起始值
+     * @param cardCodeEnd 卡片编码结束值
+     * @return 资产卡片明细列表
+     */
+    List<AssetCardDetailEntity> queryCardDetailsByScopeWithJoin(
+            @Param("cardCodeStart") String cardCodeStart,
+            @Param("cardCodeEnd") String cardCodeEnd
+    );
 }
