@@ -524,7 +524,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 jsonObject.set("purchaseOrgCode", purchaseOrgCode);
             }
             jsonObject.set("isGift",Boolean.FALSE);
-            jsonObject.set("tag",StringUtils.isNotBlank(detailEntity.getTag()) ? detailEntity.getTag() : null);
+            jsonObject.set("tag",detailEntity.getTag());
+            jsonObject.set("endReceive",detailEntity.getEndReceive());
             jsonObject.set("detailRemark",detailEntity.getRemark());
 
             list.add(jsonObject);
