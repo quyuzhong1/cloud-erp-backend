@@ -65,6 +65,11 @@ public class DmpCfgEtlDTO implements Serializable {
         private String flowName;
 
         /**
+         * 流程分类
+         */
+        private String appCategory;
+
+        /**
         * 最后成功时间
         */
         private LocalDateTime lastTime;
@@ -109,7 +114,15 @@ public class DmpCfgEtlDTO implements Serializable {
         */
         private String extendJson;
 
+        /**
+         * 执行路径
+         */
+        private String execUrl;
 
+        /**
+         * 执行路径 + 名称
+         */
+        private String fullName;
     }
 
     /**
@@ -151,22 +164,25 @@ public class DmpCfgEtlDTO implements Serializable {
         * 应用id
         */
         @NotBlank(message = "应用id不能为空")
-        @Size(max = 50,message = "应用id最大长度不能超过50位")
         private String appId;
 
         /**
         * 流程编号
         */
         @NotBlank(message = "流程编号不能为空")
-        @Size(max = 50,message = "流程编号最大长度不能超过50位")
         private String flowCode;
 
         /**
         * 流程名称
         */
         @NotBlank(message = "流程名称不能为空")
-        @Size(max = 100,message = "流程名称最大长度不能超过100位")
         private String flowName;
+
+        /**
+         * 流程分类
+         */
+        @NotBlank(message = "流程分类不能为空")
+        private String appCategory;
 
         /**
         * 最后成功时间
@@ -219,7 +235,12 @@ public class DmpCfgEtlDTO implements Serializable {
         */
         private String extendJson;
 
-
+        /**
+         * 执行路径
+         */
+        @NotBlank(message = "执行路径不能为空")
+        @Size(max = 255,message = "执行路径最大长度不能超过255位")
+        private String execUrl;
     }
 
     /**
