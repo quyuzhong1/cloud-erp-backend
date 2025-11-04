@@ -23,7 +23,7 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
 	
 	Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId);
 	
-	Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds);
+	Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck);
 	
 	/**
      * 库存id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存

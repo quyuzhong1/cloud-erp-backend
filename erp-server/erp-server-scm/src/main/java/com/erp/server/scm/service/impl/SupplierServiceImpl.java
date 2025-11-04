@@ -407,7 +407,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //产品分类名称名称
         String productCategoryNames = supplier.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,Boolean.TRUE)).collect(Collectors.joining(","));
         result.setProductCategoryNames(productCategoryNames);
-
+        //根据 key list 获取到对应数据
+        List<String> keyList = new ArrayList<>(1);
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+        result.setCategoryName(getCategoryName(dictMap,result.getCategoryId(),Boolean.TRUE));
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
@@ -581,7 +586,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        List<String> keyList = new ArrayList<>(3);
+        List<String> keyList = new ArrayList<>(5);
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
