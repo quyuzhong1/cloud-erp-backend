@@ -66,7 +66,7 @@ import java.util.stream.Stream;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ASSET_NOTICE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_NOTICE;
 
 /**
  * <p>
@@ -115,7 +115,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
-    
+
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
@@ -248,7 +248,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Override
     public void exportList(AssetNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("开模通知单导出", EXPORT_PLM_ASSET_NOTICE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("开模通知单导出", EXPORT_SCM_ASSET_NOTICE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
