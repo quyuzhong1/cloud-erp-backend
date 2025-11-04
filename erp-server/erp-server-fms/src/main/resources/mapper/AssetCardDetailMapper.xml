@@ -46,7 +46,6 @@
         from asset_card_detail
         where
         is_deleted = false
-        AND approve_status = 'approve'
         <if test="params.cardIds != null and params.cardIds != ''">
             and main_id in
             <foreach collection="params.cardIds" item="cardId" open="(" separator="," close=")">
