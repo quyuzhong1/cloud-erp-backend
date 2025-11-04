@@ -46,9 +46,11 @@
         from asset_card_detail
         where
         is_deleted = false
-        AND approve_status = 'approve'
-        <if test="params.cardId != null and params.cardId != ''">
-            and main_id = #{params.cardId}
+        <if test="params.cardIds != null and params.cardIds != ''">
+            and main_id in
+            <foreach collection="params.cardIds" item="cardId" open="(" separator="," close=")">
+                #{cardId}
+            </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND
