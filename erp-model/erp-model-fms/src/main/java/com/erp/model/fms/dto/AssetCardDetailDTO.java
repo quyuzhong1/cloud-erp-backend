@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -218,7 +219,7 @@ public class AssetCardDetailDTO implements Serializable {
         /**
          * 卡片主表id
          */
-        private String cardId;
+        private List<String> cardIds;
         /**
          * 模糊搜索参数
          */
