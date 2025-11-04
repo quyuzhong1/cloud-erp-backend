@@ -186,7 +186,7 @@ public class SoMultiChannelDetailDTO implements Serializable {
         * 产品名称
         */
 //        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 100,message = "产品名称最大长度不能超过100位")
+//        @Size(max = 100,message = "产品名称最大长度不能超过200位")
         private String productName;
 
         /**
