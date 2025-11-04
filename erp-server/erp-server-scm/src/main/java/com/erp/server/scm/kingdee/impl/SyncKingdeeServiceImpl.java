@@ -50,6 +50,12 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private PurchaseChangeService purchaseChangeService;
 
+    @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Resource
+    private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -106,5 +112,15 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SUBCONTRACT_CHAGE.getCode().toString().equals(code)) {
             subcontractChangeService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
+        //资产采购订单
+        if (ApiModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                assetPurchaseOrderDetailService.updateKingdeeDetailId(list);
+                return;
+            }
+            assetPurchaseOrderService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+
     }
 }
