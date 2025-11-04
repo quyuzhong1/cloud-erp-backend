@@ -133,7 +133,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		if(isCheck) {
 			redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
 		}else {
-			List<InventoryEntity> list = inventoryService.lambdaQuery().eq(InventoryEntity::getIsDeleted, false).select(InventoryEntity::getId).list();
+			List<InventoryEntity> list = inventoryService.lambdaQuery().in(CollUtil.isNotEmpty(inventoryIds) , InventoryEntity::getId ,inventoryIds).eq(InventoryEntity::getIsDeleted, false).select(InventoryEntity::getId).list();
 			redisCheckInventoryList = list.stream().map(l -> {
 				CheckInventoryDTO dto = new CheckInventoryDTO();
 				dto.setInventoryId(l.getId());
