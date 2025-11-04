@@ -1,9 +1,12 @@
 package com.erp.model.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -20,8 +23,8 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("mq_consumer_record")
-public class WorkflowMqConsumerRecordEntity extends BaseEntity<WorkflowMqConsumerRecordEntity> {
+@TableName(value  = "mq_consumer_record", autoResultMap = true)
+public class MqConsumerRecordEntity extends BaseEntity<MqConsumerRecordEntity> {
 
     /**
     * 消费topic
@@ -41,8 +44,8 @@ public class WorkflowMqConsumerRecordEntity extends BaseEntity<WorkflowMqConsume
     /**
     * 原始消息内容
     */
-    @TableField("data_json")
-    private String dataJson;
+    @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> dataJson;
     /**
     * 备注
     */

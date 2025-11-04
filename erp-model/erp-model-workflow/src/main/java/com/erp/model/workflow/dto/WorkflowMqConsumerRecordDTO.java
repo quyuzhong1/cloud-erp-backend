@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -19,73 +21,42 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class WorkflowMqConsumerRecordDTO implements Serializable {
 
-
-
-
     /**
-    * 详情
-    */
+     *
+     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class MqDTO  {
+        /**
+         * 单据数据
+         */
+        private Map<String, Object> dataJson;
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 单据类型
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String businessKey;
 
         /**
-        * 消费topic
-        */
+         * 消费topic
+         */
+        @NotBlank(message = "消费topic不能为空")
         private String topic;
 
         /**
-        * 消费tag
-        */
+         * 消费tag
+         */
+        @NotBlank(message = "消费tag不能为空")
         private String tag;
 
         /**
-        * 消费者group
-        */
+         * 消费者group
+         */
+        @NotBlank(message = "消费者group不能为空")
         private String consumerGroup;
-
-        /**
-        * 原始消息内容
-        */
-        private String dataJson;
-
-        /**
-        * 备注
-        */
-        private String remark;
-
-
     }
 
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-    }
 
     @Data
     @NoArgsConstructor
