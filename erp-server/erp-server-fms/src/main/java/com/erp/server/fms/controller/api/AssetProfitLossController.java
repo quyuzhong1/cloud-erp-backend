@@ -20,8 +20,12 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
+import com.erp.server.fms.handler.AssetProfitLossQueryHandler;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.business.enums.FileTaskEventEnum;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,37 +46,40 @@ public class AssetProfitLossController extends BaseController {
     @Resource
     private AssetProfitLossService assetProfitLossService;
 
-    /**
-    * 新增
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "盘盈盘亏单主表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AssetProfitLossDTO.AddDTO dto) {
-        return success(assetProfitLossService.add(dto));
-    }
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
-    /**
-    * 修改
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "盘盈盘亏单主表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "fms:assetProfitLoss:update",
-        serviceClass = AssetProfitLossService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated AssetProfitLossDTO.UpdateDTO dto) {
-        assetProfitLossService.update(dto);
-        return success();
-    }
+//    /**
+//    * 新增
+//    * @author wuht
+//    * @date:  2025-10-11
+//    * @param dto
+//    * @return ApiResult<String>
+//    */
+//    @PostMapping("/add")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "盘盈盘亏单主表新增")
+//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AssetProfitLossDTO.AddDTO dto) {
+//        return success(assetProfitLossService.add(dto));
+//    }
+//
+//    /**
+//    * 修改
+//    * @author wuht
+//    * @date:  2025-10-11
+//    * @param dto
+//    * @return ApiResult
+//    */
+//    @PostMapping("/update")
+//    @LogAction(value = LogActionEnum.UPDATE, desc = "盘盈盘亏单主表修改")
+//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//        tableField = "create_user_id",
+//        menuCode = "fms:assetProfitLoss:update",
+//        serviceClass = AssetProfitLossService.class,
+//        keyIdName = "id")
+//    public ApiResult<?> update(@RequestBody @Validated AssetProfitLossDTO.UpdateDTO dto) {
+//        assetProfitLossService.update(dto);
+//        return success();
+//    }
 
     /**
     * 获取状态统计
@@ -101,40 +108,41 @@ public class AssetProfitLossController extends BaseController {
             menuCode = "fms:assetProfitLoss:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = AssetProfitLossQueryHandler.class)
     public ApiResult<PagingVO<AssetProfitLossDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetProfitLossDTO.PagingParamDTO> dto) {
         return success(assetProfitLossService.paging(dto));
     }
+//
+//    /**
+//    * 新增并提交审核
+//    * @author wuht
+//    * @date:  2025-10-11
+//    * @param dto
+//    * @return ApiResult<Void>
+//    */
+//    @PostMapping("/addAndSubmit")
+//    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetProfitLossDTO.AddDTO dto) {
+//        BaseResultDTO.AddDTO result = assetProfitLossService.addAndSubmit(dto);
+//        return success(result);
+//    }
 
-    /**
-    * 新增并提交审核
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetProfitLossDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO result = assetProfitLossService.addAndSubmit(dto);
-        return success(result);
-    }
-
-    /**
-    * 修改并提交审核
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/updateAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "fms:assetProfitLoss:updateAndSubmit",
-            serviceClass = AssetProfitLossService.class,
-            keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetProfitLossDTO.UpdateDTO dto) {
-        assetProfitLossService.updateAndSubmit(dto);
-        return success();
-    }
+//    /**
+//    * 修改并提交审核
+//    * @author wuht
+//    * @date:  2025-10-11
+//    * @param dto
+//    * @return ApiResult<Void>
+//    */
+//    @PostMapping("/updateAndSubmit")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "fms:assetProfitLoss:updateAndSubmit",
+//            serviceClass = AssetProfitLossService.class,
+//            keyIdName = "id")
+//    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetProfitLossDTO.UpdateDTO dto) {
+//        assetProfitLossService.updateAndSubmit(dto);
+//        return success();
+//    }
 
     /**
     * 提交审核
@@ -254,44 +262,44 @@ public class AssetProfitLossController extends BaseController {
     }
 
 
-    /**
-    * 删除
-    * @author wuht
-    * @date:  2025-10-11
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "fms:assetProfitLoss:delete",
-            serviceClass = AssetProfitLossService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "盘盈盘亏单主表删除")
-    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<AssetProfitLossEntity> list = assetProfitLossService.lambdaQuery().in(AssetProfitLossEntity::getId, ids).list();
-		Map<String, AssetProfitLossEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetProfitLossEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = assetProfitLossService.delete(id);
-            }catch (Exception e){
-                log.error("盘盈盘亏单主单删除失败",e);
-                AssetProfitLossEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "盘盈盘亏单主单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
+//    /**
+//    * 删除
+//    * @author wuht
+//    * @date:  2025-10-11
+//    * @param dto
+//    * @return ApiResult<List<BatchResultDTO>>
+//    */
+//    @PostMapping("/delete")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "fms:assetProfitLoss:delete",
+//            serviceClass = AssetProfitLossService.class,
+//            keyIdName = "ids")
+//    @LogAction(value = LogActionEnum.DELETE, desc = "盘盈盘亏单主表删除")
+//    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+//        List<String> ids = dto.getIds();
+//		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+//		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+//		List<AssetProfitLossEntity> list = assetProfitLossService.lambdaQuery().in(AssetProfitLossEntity::getId, ids).list();
+//		Map<String, AssetProfitLossEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetProfitLossEntity::getId, w -> w));
+//        for (String id : dto.getIds()) {
+//            BatchResultDTO deleteResult;
+//            try {
+//                deleteResult = assetProfitLossService.delete(id);
+//            }catch (Exception e){
+//                log.error("盘盈盘亏单主单删除失败",e);
+//                AssetProfitLossEntity entity = idEntityMap.get(id);
+//                if (ObjectUtil.isEmpty(entity)) {
+//                    deleteResult = BatchResultDTO.fail(id, id, "盘盈盘亏单主单不存在, 删除失败");
+//                    resultDTOS.add(deleteResult);
+//                    continue;
+//                }
+//                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+//            }
+//            resultDTOS.add(deleteResult);
+//        }
+//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+//    }
     /**
     * 作废
     * @author wuht
@@ -403,8 +411,10 @@ public class AssetProfitLossController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "盘盈盘亏单主表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetProfitLossDTO.ExportDTO dto, HttpServletResponse response) {
-        assetProfitLossService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetProfitLossDTO.ExportDTO dto, HttpServletResponse response) {
+        // 异步导出任务
+        downloadTaskFeign.saveDownloadTask("盘盈盘亏单导出", FileTaskEventEnum.EXPORT_FMS_ASSET_PROFIT_LOSS.getCode(), dto);
+        return success(true);
     }
 
 

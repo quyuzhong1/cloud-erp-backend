@@ -11,6 +11,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -24,25 +25,33 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
+import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
+import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
+import com.erp.model.fms.dto.DictBasicDTO;
+import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
+import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
+import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetProfitLossMapper;
+import com.erp.server.fms.service.AssetProfitLossDetailService;
 import com.erp.server.fms.service.AssetProfitLossService;
+import com.erp.server.fms.service.AssetStocktakingPlanService;
+import com.erp.server.fms.service.DictBasicService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -61,6 +70,12 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private DictBasicService dictBasicService;
+    @Autowired
+    private AssetProfitLossDetailService assetProfitLossDetailService;
+    @Autowired
+    private AssetStocktakingPlanService assetStocktakingPlanService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -74,8 +89,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         log.info("开始新增盘盈盘亏单主单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_LOSS);
         assetProfitLossEntity.setCode(code);
         boolean save = super.save(assetProfitLossEntity);
         if(!save) {
@@ -84,8 +98,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "盘盈盘亏单主单" , assetProfitLossEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, assetProfitLossEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetProfitLossEntity.getId(), code);
@@ -118,8 +131,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录主单操作日志
             log.info("编辑 开始记录盘盈盘亏单主单日志数据，单号：【{}】", assetProfitLossEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetProfitLossEntity.getCode(), "盘盈盘亏单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, null, assetProfitLossEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -141,41 +153,63 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     public List<AssetProfitLossDTO.TabListDTO> tabList(PermissionsDTO param) {
         AssetProfitLossDTO.PagingParamDTO searchParam = new AssetProfitLossDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        
+        // 使用一个SQL查询获取所有状态的统计数量
         List<AssetProfitLossDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
+        
+        // 设置tabFlagName
+        list.stream().forEach(e -> {
+            e.setTabFlagName(ApproveStatusEnum.getTableName(e.getTabFlag()));
+        }); 
+        
+        // 获取状态列表，确保所有状态都存在
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AssetProfitLossDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        
+        // 不存在的状态赋值为0
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new AssetProfitLossDTO.TabListDTO(status, 0));
-        }
+                AssetProfitLossDTO.TabListDTO newTab = new AssetProfitLossDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
+                list.add(newTab);
+            }
         });
-        list.add(new AssetProfitLossDTO.TabListDTO("all", list.stream().mapToInt(AssetProfitLossDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        
+        // 按照指定顺序排序：待提交、审核中、已审核、不通过
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approve", "reject");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
+        // 计算合计数量并添加"全部"标签
+        int totalCount = list.stream().mapToInt(AssetProfitLossDTO.TabListDTO::getCount).sum();
+        AssetProfitLossDTO.TabListDTO allTab = new AssetProfitLossDTO.TabListDTO("all", "全部", totalCount);
+        list.add(0, allTab); // 添加到第一位
+        
         return list;
     }
 
     @Override
     public void exportList(AssetProfitLossDTO.ExportDTO param, HttpServletResponse response) {
-        List<AssetProfitLossDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+        // 使用异步导出，不再直接导出
+        // 该方法保留是为了向后兼容，但实际应该调用 Controller 中的异步导出
+        log.warn("exportList 方法已废弃，请使用异步导出方式");
+    }
+
+    @Override
+    public PagingVO<AssetProfitLossDTO.ListDTO> getAssetProfitLossPageData(PagingDTO<AssetProfitLossDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<AssetProfitLossDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/assetProfitLoss.xlsx";
-        String name = "盘盈盘亏单主单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -196,8 +230,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录操作日志
         log.info("提交 开始记录盘盈盘亏单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -239,8 +272,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -286,8 +318,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -338,8 +369,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -364,8 +394,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
@@ -392,9 +421,21 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     public AssetProfitLossDTO.ViewDTO view(String id) {
         AssetProfitLossEntity assetProfitLossEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到盘盈盘亏单主单数据"));
         AssetProfitLossDTO.ViewDTO data = BeanMapperUtils.map(AssetProfitLossDTO.ViewDTO.class, assetProfitLossEntity);
+        
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        
+        // 查询明细数据
+        List<AssetProfitLossDetailEntity> detailEntities = assetProfitLossDetailService.lambdaQuery()
+                .eq(AssetProfitLossDetailEntity::getMainId, id)
+                .eq(AssetProfitLossDetailEntity::getIsDeleted, false)
+                .list();
+        
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            List<AssetProfitLossDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(AssetProfitLossDetailDTO.ViewDTO.class,detailEntities);
+            data.setDetailList(detailList);
+        }
+        
         return data;
     }
     /**
@@ -422,6 +463,19 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private void fillOne(AssetProfitLossDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        
+        // 填充单据类型名称
+        if (StringUtils.isNotBlank(data.getDocType())) {
+            data.setDocTypeName(AssetProfitLossTypeEnum.getName(data.getDocType()));
+        }
+        
+        // 填充盘点方案名称
+        if (StringUtils.isNotBlank(data.getPlanId())) {
+            AssetStocktakingPlanEntity planEntity = assetStocktakingPlanService.getById(data.getPlanId());
+            if (planEntity != null) {
+                data.setPlanName(planEntity.getPlanName());
+            }
         }
     }
 
@@ -474,11 +528,38 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
            return;
         }
 
+        // 获取资产类别字典数据
+        Map<String, String> assetCategoryMap = new HashMap<>();
+        List<String> assetCategoryList = list.stream()
+                .map(AssetProfitLossDTO.ListDTO::getAssetCategory)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isNotEmpty(assetCategoryList)) {
+            // 调用字典服务获取资产类别名称
+            List<DictBasicDTO.DropDownDTO> assetCategory = dictBasicService.listByType("assetCategory", null);
+            assetCategoryMap=assetCategory.stream().collect(Collectors.toMap(DictBasicDTO.DropDownDTO::getCode, DictBasicDTO.DropDownDTO::getName,(v1,v2)->v1));
+        }
+        
+        final Map<String, String> finalAssetCategoryMap = assetCategoryMap;
+        
         // 属性赋值
         for(AssetProfitLossDTO.ListDTO data : list) {
+            // 审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            // 作废状态名称
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            
+            // 单据类型名称（盘盈/盘亏）
+            if (StringUtils.isNotBlank(data.getDocType())) {
+                data.setDocTypeName(AssetProfitLossTypeEnum.getName(data.getDocType()));
+            }
+            
+            // 资产类别名称
+            if (StringUtils.isNotBlank(data.getAssetCategory())) {
+                data.setAssetCategoryName(finalAssetCategoryMap.get(data.getAssetCategory()));
+            }
         }
     }
     /**

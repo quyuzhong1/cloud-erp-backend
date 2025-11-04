@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.*;
 import com.erp.server.fms.handler.AssetLocationQueryHandler;
 import com.erp.server.fms.handler.AssetAcceptQueryHandler;
+import com.erp.server.fms.handler.AssetProfitLossQueryHandler;
 import com.erp.server.fms.handler.AssetStocktakingPlanQueryHandler;
 import com.erp.server.fms.handler.AssetStocktakingQueryHandler;
 import com.erp.server.fms.query.AssetDisposalQueryHandler;
@@ -47,6 +48,9 @@ public class ExportFmsFeignController {
 
     @Resource
     private AssetStocktakingService assetStocktakingService;
+
+    @Resource
+    private AssetProfitLossService assetProfitLossService;
 
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -103,6 +107,17 @@ public class ExportFmsFeignController {
     @WebAdvanceQuery(handler = AssetStocktakingQueryHandler.class)
     public PagingVO<AssetStocktakingDTO.ListDTO> getAssetStocktakingPageData(@RequestBody PagingDTO<AssetStocktakingDTO.ExportDTO> dto) {
         return assetStocktakingService.getAssetStocktakingPageData(dto);
+    }
+
+    @PostMapping("/getAssetProfitLossPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "fms:assetProfitLoss:export",
+            tableAlias = "apl"
+    )
+    @WebAdvanceQuery(handler = AssetProfitLossQueryHandler.class)
+    public PagingVO<AssetProfitLossDTO.ListDTO> getAssetProfitLossPageData(@RequestBody PagingDTO<AssetProfitLossDTO.ExportDTO> dto) {
+        return assetProfitLossService.getAssetProfitLossPageData(dto);
     }
 
 }

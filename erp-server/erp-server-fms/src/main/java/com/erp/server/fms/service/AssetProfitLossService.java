@@ -152,4 +152,13 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
     */
     Boolean approveEnd(ApproveOneDTO dto, AssetProfitLossEntity entity);
 
+    /**
+    * 获取盘盈盘亏单分页数据（用于异步导出）
+    * @author wuht
+    * @date: 2025-11-04
+    * @param dto 分页参数
+    * @return PagingVO<AssetProfitLossDTO.ListDTO>
+    */
+    PagingVO<AssetProfitLossDTO.ListDTO> getAssetProfitLossPageData(PagingDTO<AssetProfitLossDTO.ExportDTO> dto);
+
 }

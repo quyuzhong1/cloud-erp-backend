@@ -45,7 +45,44 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetProfitLossDTO$ListDTO">
-
+        SELECT
+            apl.id,
+            apl.approve_status,
+            apl.approve_user_id,
+            apl.approve_user_name,
+            apl.approve_time,
+            apl.invalid_status,
+            apl.invalid_remark,
+            apl.invalid_time,
+            apl.source_code,
+            apl.source_type,
+            apl.source_id,
+            apl.code,
+            apl.doc_type,
+            apl.plan_id,
+            apl.plan_code,
+            apl.asset_org_id,
+            apl.asset_org_name,
+            apl.create_time,
+            apl.create_user_name,
+            apld.id as detailId,
+            apld.asset_category,
+            apld.card_code,
+            apld.asset_name,
+            apld.asset_code,
+            apld.unit,
+            apld.qty,
+            asp.plan_name
+        FROM asset_profit_loss apl
+        LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
+        LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND apl.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY apl.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
