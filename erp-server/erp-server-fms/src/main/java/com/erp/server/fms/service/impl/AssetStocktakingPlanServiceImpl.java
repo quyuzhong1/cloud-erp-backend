@@ -25,6 +25,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
+import com.erp.model.fms.dto.AssetStocktakingDetailDTO;
 import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
@@ -462,21 +463,6 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
             return;
         }
         
-        // 创建资产盘点表主单
-        AssetStocktakingDTO.AddDTO addDTO = new AssetStocktakingDTO.AddDTO();
-        addDTO.setSourceCode(planEntity.getCode());
-        addDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
-        addDTO.setSourceId(planEntity.getId());
-        addDTO.setAssetOrgId(planEntity.getAssetOrgId());
-        addDTO.setAssetOrgName(planEntity.getAssetOrgName());
-        addDTO.setRemark(planEntity.getRemark());
-        
-        // 创建资产盘点表
-        BaseResultDTO.AddDTO addResult = assetStocktakingService.add(addDTO);
-        
-        // 批量创建盘点明细
-        List<AssetStocktakingDetailEntity> stocktakingDetailList = new ArrayList<>(cardDetailList.size());
-        
         // 获取资产卡片主表信息
         List<String> cardIds = cardDetailList.stream()
                 .map(AssetCardDetailEntity::getMainId)
@@ -492,35 +478,48 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
                     .collect(Collectors.toMap(AssetCardEntity::getId, card -> card));
         }
         
+        // 构建盘点明细 DTO 列表
+        List<AssetStocktakingDetailDTO.UpdateDTO> detailDTOList = new ArrayList<>(cardDetailList.size());
+        
         for (AssetCardDetailEntity detail : cardDetailList) {
             AssetCardEntity card = cardMap.get(detail.getMainId());
             if (card == null) {
                 continue;
             }
             
-            AssetStocktakingDetailEntity stocktakingDetail = new AssetStocktakingDetailEntity();
-            stocktakingDetail.setMainId(addResult.getId());
-            stocktakingDetail.setAssetCategory(card.getType());
-            stocktakingDetail.setCardId(card.getId());
-            stocktakingDetail.setCardDetailId(detail.getId());
-            stocktakingDetail.setCardCode(card.getCode());
-            stocktakingDetail.setAssetId(card.getId());
-            stocktakingDetail.setAssetName(card.getName());
-            stocktakingDetail.setUnit(card.getUnit());
-            stocktakingDetail.setAssetStatus(card.getStatus());
-            stocktakingDetail.setAssetCode(detail.getAssetCode());
-            stocktakingDetail.setBookQty(detail.getQty());
-            stocktakingDetail.setBookLocation(detail.getAssetLocationId());
+            AssetStocktakingDetailDTO.UpdateDTO detailDTO = new AssetStocktakingDetailDTO.UpdateDTO();
+            detailDTO.setAssetCategory(card.getType());
+            detailDTO.setCardId(card.getId());
+            detailDTO.setCardDetailId(detail.getId());  // 关键字段：标识从资产卡片关联的明细
+            detailDTO.setCardCode(card.getCode());
+            detailDTO.setAssetId(card.getId());
+            detailDTO.setAssetName(card.getName());
+            detailDTO.setUnit(card.getUnit());
+            detailDTO.setAssetStatus(card.getStatus());
+            detailDTO.setAssetCode(detail.getAssetCode());
+            detailDTO.setBookQty(detail.getQty());
+            detailDTO.setBookLocation(detail.getAssetLocationId());
+            detailDTO.setFirstCountQty(0);  // 初盘数量默认为0，等待用户填写
+            detailDTO.setIsRecount(false);  // 默认不需要复盘
             
-            stocktakingDetailList.add(stocktakingDetail);
+            detailDTOList.add(detailDTO);
         }
         
-        // 批量保存盘点明细
-        if (CollUtil.isNotEmpty(stocktakingDetailList)) {
-            assetStocktakingDetailService.saveBatch(stocktakingDetailList);
-            log.info("成功生成资产盘点表，方案编号：{}，盘点表编号：{}，明细数量：{}", 
-                    planEntity.getCode(), addResult.getCode(), stocktakingDetailList.size());
-        }
+        // 创建资产盘点表主单（包含明细）
+        AssetStocktakingDTO.AddDTO addDTO = new AssetStocktakingDTO.AddDTO();
+        addDTO.setSourceCode(planEntity.getCode());
+        addDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
+        addDTO.setSourceId(planEntity.getId());
+        addDTO.setAssetOrgId(planEntity.getAssetOrgId());
+        addDTO.setAssetOrgName(planEntity.getAssetOrgName());
+        addDTO.setRemark(planEntity.getRemark());
+        addDTO.setDetailList(detailDTOList);  // 设置明细列表
+        
+        // 创建资产盘点表（add 方法会自动保存主表和明细）
+        BaseResultDTO.AddDTO addResult = assetStocktakingService.add(addDTO);
+        
+        log.info("成功生成资产盘点表，方案编号：{}，盘点表编号：{}，明细数量：{}", 
+                planEntity.getCode(), addResult.getCode(), detailDTOList.size());
     }
 
     /**
