@@ -103,7 +103,7 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
@@ -237,7 +237,7 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
@@ -312,7 +312,7 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
