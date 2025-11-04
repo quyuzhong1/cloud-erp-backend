@@ -41,5 +41,62 @@
         disabled, app_id, flow_code, flow_name, last_time, next_time, interval_time, override_time, max_retry_count, exec_timeout, dealy_time, max_interval_time, extend_json
     </sql>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$ListDTO">
+        select
+            dce.id AS id,
+            dce.create_time AS createTime,
+            dce.update_time AS updateTime,
+            dce.create_user_name AS createUserName,
+            dce.create_user_id AS createUserId,
+            dce.update_user_name AS updateUserName,
+            dce.update_user_id AS updateUserId,
+            dce.version AS version,
+            dce.is_deleted AS isDeleted,
+            dce.disabled AS disabled,
+            dce.app_category AS appCategory,
+            dce.app_id AS appId,
+            dce.flow_code AS flowCode,
+            dce.flow_name AS flowName,
+            dce.last_time AS lastTime,
+            dce.next_time AS nextTime,
+            dce.interval_time AS intervalTime,
+            dce.override_time AS overrideTime,
+            dce.max_retry_count AS maxRetryCount,
+            dce.exec_timeout AS execTimeout,
+            dce.dealy_time AS dealyTime,
+            dce.max_interval_time AS maxIntervalTime,
+            dce.extend_json AS extendJson,
+            dce.exec_url AS execUrl
+        from dmp_cfg_etl dce
+        where
+        ${params.sqlMap.default}
+        and dce.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by dce.update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_etl where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$ListDTO">
+
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgEtlDTO$TabListDTO">
+        SELECT
+        disabled AS tabFlag,
+        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_cfg_etl
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
+    </select>
 
 </mapper>

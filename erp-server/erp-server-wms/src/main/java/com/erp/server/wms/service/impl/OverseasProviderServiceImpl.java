@@ -593,10 +593,19 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOS)){
             throw new ServiceException("未找到对应的仓库产品映射关系");
         }
+        if(Objects.isNull(params.getLength()) || Objects.isNull(params.getWidth()) || Objects.isNull(params.getHeight())){
+            throw new ServiceException("尺寸不能为空");
+        }
+        List<String> channelCodeList = params.getChannelCodeList();
+        if(CollUtil.isEmpty(channelCodeList)){
+            throw new ServiceException("渠道编码不能为空");
+        }
+        String channelCode = channelCodeList.get(0);
+
         List<ThirdWarehouseCalculateFeeReq.SkusDTO> skusDTOS = new ArrayList<>();
         for (ShippingCalculationDTO.SkusDTO skus : params.getSkus()) {
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.stream()
-                    .filter(v -> v.getPlatformSkuNo().equals(skus.getSkuNo()))
+                    .filter(v -> v.getProductSkuNo().equals(skus.getSkuNo()))
                     .findFirst()
                     .orElse(null);
             if(Objects.isNull(listingInfoWithSkuMappingDTO)){
@@ -607,7 +616,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             skusDTO.setQty(skus.getQty());
             skusDTOS.add(skusDTO);
         }
-        List<String> channelCodeList = params.getChannelCodeList();
         BigDecimal weight = params.getWeight();
         if ("g".equals(params.getWeightUnit())){
             weight = MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000));
@@ -617,6 +625,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             list.add(ThirdWarehouseCalculateFeeReq.builder()
                     .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                     .countryCode(country)
+                    .channelCode(channelCode)
                     .shippingMethod(channelCodeList)
                     .postCode(params.getPostCode())
                     .weight(weight)

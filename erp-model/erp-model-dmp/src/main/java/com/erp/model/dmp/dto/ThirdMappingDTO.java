@@ -282,7 +282,7 @@ public class ThirdMappingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 类型  warehouse 仓库 shop 店铺
+         * 类型  warehouse 仓库 shop 店铺 logistics 物流渠道 platform 平台
          */
         @NotBlank(message = "类型(warehouse 仓库 shop 店铺)不能为空")
         @Size(max = 20, message = "类型  warehouse 仓库 shop 店铺最大长度不能超过20位")

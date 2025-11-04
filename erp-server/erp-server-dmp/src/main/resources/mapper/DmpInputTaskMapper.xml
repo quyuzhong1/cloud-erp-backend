@@ -84,4 +84,69 @@
                                        and is_deleted = false
                                        and extend_json @> jsonb_build_object( CAST(#{key} AS text), CAST(#{value} AS text))
     </select>
+
+    <!-- DmpInputTask -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpInputTaskDTO$ListDTO">
+        select
+            dit.id AS id,
+            dit.cfg_input_id AS cfgInputId,
+            dci.name as cfgInputName,
+            dit.next_level_id AS nextLevelId,
+            dit.start_time AS startTime,
+            dit.end_time AS endTime,
+            dit.status AS status,
+            dit.error_message AS errorMessage,
+            dit.task_type AS taskType,
+            dit.create_time AS createTime,
+            dit.update_time AS updateTime,
+            dit.create_user_name AS createUserName,
+            dit.create_user_id AS createUserId,
+            dit.update_user_name AS updateUserName,
+            dit.update_user_id AS updateUserId,
+            dit.version AS version,
+            dit.is_deleted AS isDeleted,
+            dit.error_count AS errorCount,
+            dit.parent_task_id AS parentTaskId,
+            dit.exec_timeout AS execTimeout,
+            dit.extend_json AS extendJson,
+            dit.exec_system AS execSystem,
+            dit.instance_id AS instanceId,
+            dit.next_exec_time AS nextExecTime
+        from dmp_input_task dit
+        left join dmp_cfg_input dci on dit.cfg_input_id = dci.id
+        where
+            ${params.sqlMap.default}
+        and dit.is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by dit.update_time desc
+    </select>
+
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpInputTaskDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpInputTaskDTO$TabListDTO">
+        SELECT
+        CASE
+        WHEN status IN ('init', 'fds', 'mongo', 'dmp') THEN 'waitFinish'
+        WHEN status = 'error' THEN 'error'
+        WHEN status = 'finish' THEN 'finish'
+        ELSE status
+        END AS tabFlag,
+        CASE
+        WHEN status IN ('init', 'fds', 'mongo', 'dmp') THEN '待完成'
+        WHEN status = 'error' THEN '异常'
+        WHEN status = 'finish' THEN '完成'
+        ELSE status
+        END AS tabFlagName,
+        COUNT(*) AS count
+        FROM dmp_input_task
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY tabFlag, tabFlagName
+    </select>
 </mapper>

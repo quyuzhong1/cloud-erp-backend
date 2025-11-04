@@ -450,6 +450,10 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String instockStatus;
 
         /**
+         * 海外仓库ID
+         */
+        private String overseasWarehouseId;
+        /**
          * 入库状态名称
          */
         private String instockStatusName;

@@ -15,6 +15,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -950,5 +951,16 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Override
     public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
         return baseMapper.getByPlatformWarehouseAndType(dto);
+    }
+
+    @Override
+    public LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(String logisticsProductCode, String transferWarehouseId) {
+        if(StringUtils.isBlank(logisticsProductCode) || StringUtils.isBlank(transferWarehouseId)){
+            return null;
+        }
+        return logisticsSaleChannelService.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,logisticsProductCode)
+                .eq(LogisticsSaleChannelEntity::getOverseasWarehouseId,transferWarehouseId)
+                .last(SqlConstants.LIMIT_1)
+                .one();
     }
 }

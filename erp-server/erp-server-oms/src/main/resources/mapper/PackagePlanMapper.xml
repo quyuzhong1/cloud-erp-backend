@@ -128,10 +128,13 @@
         and pp.handover_label_url = ''
         and pp.is_handover_download= false
         and pp.package_status='already'
-        and pp.code in
-        <foreach collection="codeList" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        and ppd.is_deleted= false
+        <if test="codeList!=null and codeList.size>0">
+            and pp.code in
+            <foreach collection="codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         order by pp.create_time DESC
     </select>
 

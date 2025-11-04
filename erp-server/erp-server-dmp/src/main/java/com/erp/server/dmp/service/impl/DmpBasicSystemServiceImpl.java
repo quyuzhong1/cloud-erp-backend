@@ -1,42 +1,67 @@
 package com.erp.server.dmp.service.impl;
 
-
-import java.util.List;
-import java.util.Optional;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpBasicSystemDTO;
+import com.erp.model.dmp.dto.DmpCfgInputDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.plm.dto.DictControllerDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.erp.model.scm.entity.ContractInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.mapper.DmpBasicSystemMapper;
+import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.service.DmpCfgOutputService;
+import com.erp.server.dmp.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpBasicSystemDTO;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.server.dmp.mapper.DmpBasicSystemMapper;
-import com.erp.server.dmp.service.DmpBasicSystemService;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
 /**
  * <p>
- * 外部系统 服务实现类
+ * 平台管理 服务实现类
  * </p>
  *
- * @author shukai
- * @since 2024-06-11
+ * @author Jim
+ * @since 2025-10-23
  */
 @Slf4j
 @Service
 public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMapper, DmpBasicSystemEntity> implements DmpBasicSystemService {
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -45,67 +70,187 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         DmpBasicSystemEntity dmpBasicSystemEntity = new DmpBasicSystemEntity();
         BeanMapperUtils.copy(addDTO, dmpBasicSystemEntity);
 
+        Integer count = lambdaQuery().eq(DmpBasicSystemEntity::getCode, addDTO.getCode()).count();
+        if (count > 0) {
+            ServiceException.runError("平台编码已存在，请修改后重新添加");
+        }
+
         // 数据处理
         handleData(dmpBasicSystemEntity);
 
-        log.info("开始新增外部系统");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        dmpBasicSystemEntity.setCode(code);
+        log.info("开始新增平台管理");
         boolean save = super.save(dmpBasicSystemEntity);
-        if(!save) {
-            throw new ServiceException("外部系统保存失败");
+        if (!save) {
+            throw new ServiceException("平台管理保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "外部系统" , dmpBasicSystemEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台管理", dmpBasicSystemEntity.getCode());
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "新增平台管理数据");
 
-        return new BaseResultDTO.AddDTO(dmpBasicSystemEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(dmpBasicSystemEntity.getId(), dmpBasicSystemEntity.getCode());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(DmpBasicSystemDTO.UpdateDTO updateDTO) {
         DmpBasicSystemEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统"));
-        DmpBasicSystemEntity dmpBasicSystemEntity =  BeanMapperUtils.map(DmpBasicSystemEntity.class, updateDTO);
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "平台管理"));
+        DmpBasicSystemEntity dmpBasicSystemEntity = BeanMapperUtils.map(DmpBasicSystemEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpBasicSystemEntity);
-        log.info("编辑 开始修改外部系统数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改平台管理数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(dmpBasicSystemEntity);
-        if(!save) {
-            throw new ServiceException("外部系统保存失败");
+        if (!save) {
+            throw new ServiceException("平台管理保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录外部系统日志数据，单号：【{}】", dmpBasicSystemEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "外部系统");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录平台管理日志数据，单号：【{}】", dmpBasicSystemEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "平台管理");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "更新平台管理数据");
+
         return Boolean.TRUE;
     }
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(DmpBasicSystemEntity dmpBasicSystemEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 验证数据 & 数据赋值
     }
 
     @Override
-    public List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem() {
+    public List<BaseDropDownDTO.DictDropDownDTO> listDmpBasicSystem() {
         return baseMapper.listDmpBasicSystem();
     }
 
     @Override
     public DmpBasicSystemEntity listByCode(String code) {
         return lambdaQuery().eq(DmpBasicSystemEntity::getCode, code).last("LIMIT 1").one();
+    }
+
+
+    @Override
+    public PagingVO<DmpBasicSystemDTO.ListDTO> paging(PagingDTO<DmpBasicSystemDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpBasicSystemDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<DmpBasicSystemDTO.TabListDTO> tabList(PermissionsDTO param) {
+        DmpBasicSystemDTO.PagingParamDTO searchParam = new DmpBasicSystemDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<DmpBasicSystemDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<DmpBasicSystemDTO.TabListDTO> resultList = new LinkedList<>();
+//        resultList.add(new DmpBasicSystemDTO.TabListDTO("all", "全部", list.stream().mapToInt(DmpBasicSystemDTO.TabListDTO::getCount).sum()));
+        resultList.addAll(list);
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(DmpBasicSystemDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<String> tabList = Arrays.asList("f", "t");
+        tabList.forEach(status -> {
+            if (!existStatusList.contains(status)) {
+                resultList.add(new DmpBasicSystemDTO.TabListDTO(status, "t".equals(status) ? "停用" : "启用", 0));
+            }
+        });
+        // 计算合计数量
+        return resultList;
+    }
+
+    @Override
+    public void exportList(DmpBasicSystemDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("平台管理Excel导出", FileTaskEventEnum.EXPORT_DMP_BASIC_SYSTEM.getCode(), dto);
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO delete(String id) {
+        DmpBasicSystemEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到平台管理数据"));
+        Integer inputCount = dmpCfgInputService.lambdaQuery().eq(DmpCfgInputEntity::getSystemId, id).count();
+        if (inputCount > 0) {
+            ServiceException.runError("该平台管理已被拉取配置使用，无法删除");
+        }
+        Integer outputCount = dmpCfgOutputService.lambdaQuery().eq(DmpCfgOutputEntity::getSystemId, id).count();
+        if (outputCount > 0) {
+            ServiceException.runError("该平台管理已被推送配置使用，无法删除");
+        }
+
+        // 删除主单数据
+        log.info("删除 开始删除平台管理主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除平台管理日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "删除平台管理数据");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+
+    @Override
+    public DmpBasicSystemDTO.ViewDTO view(String id) {
+        DmpBasicSystemEntity dmpBasicSystemEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到平台管理数据"));
+        DmpBasicSystemDTO.ViewDTO data = BeanMapperUtils.map(DmpBasicSystemDTO.ViewDTO.class, dmpBasicSystemEntity);
+        // 数据填充处理
+        fillOne(data);
+        // TODO 查询明细数据（如果有的话）
+        return data;
+    }
+
+    private void fillOne(DmpBasicSystemDTO.ViewDTO data) {
+
+    }
+
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<DmpBasicSystemDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+
+    }
+
+    @Override
+    public BatchResultDTO enable(DmpBasicSystemEntity entity) {
+        if (entity.getDisabled()) {
+            entity.setDisabled(false);
+            updateById(entity);
+            // 日志
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "启用【平台管理】数据");
+        } else {
+            ServiceException.runError("该【平台管理】数据已启用，无需重复操作");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO disable(DmpBasicSystemEntity entity) {
+        if (!entity.getDisabled()) {
+            entity.setDisabled(true);
+            updateById(entity);
+            // 日志
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "平台管理");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), entity.getId(), "禁用【平台管理】数据");
+        } else {
+            ServiceException.runError("该【平台管理】数据已禁用，无需重复操作");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 }

@@ -1,15 +1,14 @@
 package com.erp.server.dmp.service;
-import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.dto.DmpInoutDTO;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpInputTaskDTO;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.dto.DmpInputTaskDTO;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -57,4 +56,53 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
     DmpInputTaskEntity getByInputIdAndExtendJson(String inputId, String key, String value);
     
     void createNewTask(DmpInputTaskEntity dmpInputTaskEntity);
+
+    /**
+     * 分页列表查询
+     * @author Jim
+     * @date: 2025-10-23
+     * @param pagingParamDTO
+     * @return PagingVO<DmpInputTaskDTO.ListDTO>>
+     */
+    PagingVO<DmpInputTaskDTO.ListDTO> paging(PagingDTO<DmpInputTaskDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 状态统计
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @return List<DmpInputTaskDTO.TabListDTO>>
+     */
+    List<DmpInputTaskDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    @Transactional(rollbackFor = Exception.class)
+    BatchResultDTO delete(String id);
+
+    /**
+     * 详情
+     * @author Jim
+     * @date: 2025-10-23
+     * @param id
+     * @return
+     */
+    DmpInputTaskDTO.ViewDTO view(String id);
+
+    /**
+     * 导出Excel
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @param response
+     * @return
+     */
+    void exportList(DmpInputTaskDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 重试
+     * @author Jim
+     * @date: 2025-10-23
+     * @param entity
+     * @return
+     */
+    BatchResultDTO retry(DmpInputTaskEntity entity);
 }

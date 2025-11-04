@@ -79,7 +79,6 @@
         select
         <include refid="Base_Column_List" />
         from so_b2c_processing sbp
-        left join so_b2c sb2c on sbp.b2c_so_id = sb2c.id and sb2c.is_deleted = false
         left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on sbp.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on sbp.virtual_warehouse_id = vw.id and vw.is_deleted = false
