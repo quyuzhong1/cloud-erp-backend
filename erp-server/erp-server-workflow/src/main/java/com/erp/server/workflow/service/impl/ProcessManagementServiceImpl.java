@@ -3,7 +3,6 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -36,6 +35,7 @@ import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -60,6 +60,7 @@ import com.erp.server.workflow.service.*;
 import io.netty.util.internal.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.camunda.bpm.engine.*;
@@ -171,6 +172,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private FsService fsService;
     @Resource
     private ThirdProcessManagementService thirdProcessManagementService;
+    @Resource
+    private MqConsumerRecordService workflowMqConsumerRecordService;
 
 
 
@@ -557,8 +560,33 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID(),1);
+
+            //保存mq消费记录
+            if (addMqConsumerRecord(mqDto)) return;
+
+            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
         }
+    }
+
+    private boolean addMqConsumerRecord(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
+        log.info("addMqConsumerRecord开始 保存MQ消费记录, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+        //保存mq消费记录
+        Map<String, Object> convertedMap = BeanUtil.beanToMap(mqDto);
+
+        // 构建DTO
+        WorkflowMqConsumerRecordDTO.MqDTO dto = new WorkflowMqConsumerRecordDTO.MqDTO();
+        dto.setDataJson(convertedMap);
+        dto.setBusinessKey(mqDto.getBusinessKey());
+        dto.setTopic(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC);
+        dto.setConsumerGroup(RocketMqConsumerGroup.WORKFLOW_SYNC_FS_INSTANCE_CONSUMER);
+        dto.setTag(RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName());
+        String id = workflowMqConsumerRecordService.addMqRecord(dto);
+        if (StringUtils.isBlank(id)) {
+            log.error("addMqConsumerRecord 保存MQ消费记录失败, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+            return true;
+        }
+        log.info("addMqConsumerRecord结束 保存MQ消费记录");
+        return false;
     }
 
     //    @Transactional(rollbackFor = Exception.class)
@@ -925,6 +953,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+
+            //保存mq消费记录
+            addMqConsumerRecord(mqDto);
+
             mqSyncFsHandler.handler(mqDto);
         }
         // 删除本地流程任务数据
