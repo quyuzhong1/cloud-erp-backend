@@ -81,7 +81,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
@@ -143,7 +143,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
@@ -245,7 +245,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
