@@ -161,4 +161,11 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
     */
     PagingVO<AssetProfitLossDTO.ListDTO> getAssetProfitLossPageData(PagingDTO<AssetProfitLossDTO.ExportDTO> dto);
 
+    /**
+     * 获取盘盈盘亏单下推到资产卡片前的列表数据
+     * @param id 盘盈盘亏单主键ID
+     * @return 下推前的列表数据
+     */
+    List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(String id);
+
 }
