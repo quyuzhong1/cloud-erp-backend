@@ -655,6 +655,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(logisticsChannelEntity.getLastMileCarrier())){
             logisticsChannelEntity.setLastMileCarrier("");
         }
+        if(StringUtils.isBlank(logisticsChannelEntity.getHandoverDocType())){
+            logisticsChannelEntity.setHandoverDocType("");
+        }
         logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
         BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();
         if (Objects.isNull(minCustomsAmount)) {

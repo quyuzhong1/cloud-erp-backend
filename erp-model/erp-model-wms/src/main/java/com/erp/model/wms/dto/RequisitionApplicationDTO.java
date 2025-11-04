@@ -1493,6 +1493,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 发货计划id
          */
         private String deliveryPlanId;
+
+        private String channelName;
+
+        private String channelId;
         /**
          * 发货计划明细id
          */
