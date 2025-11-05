@@ -46,8 +46,7 @@ adpd.qty AS qty
         <include refid="Base_Column_List"></include>
         FROM
         asset_disposal_physical_detail adpd
-        where
-        AND adpd.is_deleted = FALSE
+        where adpd.is_deleted = FALSE
         <if test="mainId != null and mainId != ''">
             AND adpd.main_id = #{mainId}
         </if>
