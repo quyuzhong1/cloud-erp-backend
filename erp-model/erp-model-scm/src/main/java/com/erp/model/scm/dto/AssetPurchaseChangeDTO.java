@@ -405,17 +405,17 @@ public class AssetPurchaseChangeDTO implements Serializable {
         @NotBlank(message = "模具采购单id不能为空")
         private String assetPurchaseOrderId;
 
-        /**
-         * 采购组织id
-         */
-        @NotBlank(message = "采购组织id不能为空")
-        private String purchaseOrgId;
-
-        /**
-         * 采购组织名称
-         */
-        @NotBlank(message = "采购组织名称不能为空")
-        private String purchaseOrgName;
+//        /**
+//         * 采购组织id
+//         */
+//        @NotBlank(message = "采购组织id不能为空")
+//        private String purchaseOrgId;
+//
+//        /**
+//         * 采购组织名称
+//         */
+//        @NotBlank(message = "采购组织名称不能为空")
+//        private String purchaseOrgName;
 
         /**
          * 供应商信息

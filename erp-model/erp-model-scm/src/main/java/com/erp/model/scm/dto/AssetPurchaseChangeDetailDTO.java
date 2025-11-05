@@ -207,7 +207,6 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
         * 原价税合计
         */
-        @NotNull(message = "原价税合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "原价税合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldTotalAmount;
 
