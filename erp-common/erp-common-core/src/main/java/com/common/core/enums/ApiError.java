@@ -225,6 +225,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
+    ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{}】"),
 
     /**
      * 工作流错误 workflow
