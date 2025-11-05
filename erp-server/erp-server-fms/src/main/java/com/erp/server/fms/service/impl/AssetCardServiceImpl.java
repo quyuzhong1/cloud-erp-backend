@@ -127,8 +127,12 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 detailEntity.setMainId(assetCardEntity.getId());
                 detailEntity.setSourceDetailId(detailDTO.getSourceDetailId());
                 
-                // 自动生成资产编码：ZC + 年月日(YYMMDD) + 6位流水号
-                String assetCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC);
+                // 资产编码：如果DTO中已有编码则使用，否则自动生成
+                String assetCode = detailDTO.getAssetCode();
+                if (StringUtils.isBlank(assetCode)) {
+                    // 自动生成资产编码：ZC + 年月日(YYMMDD) + 6位流水号
+                    assetCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC);
+                }
                 detailEntity.setAssetCode(assetCode);
                 
                 detailEntity.setAssetLocationId(detailDTO.getAssetLocationId());

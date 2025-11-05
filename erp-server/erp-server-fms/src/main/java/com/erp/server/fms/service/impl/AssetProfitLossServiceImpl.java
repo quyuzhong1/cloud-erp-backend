@@ -13,6 +13,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -25,10 +26,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.fms.dto.AssetCardDTO;
+import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
 import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
+import com.erp.model.fms.enums.AssetStatusEnum;
+import com.erp.model.fms.enums.ChangeMethodEnum;
 import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
 import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
@@ -51,6 +56,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,6 +83,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private AssetProfitLossDetailService assetProfitLossDetailService;
     @Autowired
     private AssetStocktakingPlanService assetStocktakingPlanService;
+    @Autowired
+    private com.erp.server.fms.service.AssetCardService assetCardService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -99,7 +107,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "盘盈盘亏单主单" , assetProfitLossEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), assetProfitLossEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetProfitLossEntity.getId(), code);
@@ -132,7 +140,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录主单操作日志
             log.info("编辑 开始记录盘盈盘亏单主单日志数据，单号：【{}】", assetProfitLossEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetProfitLossEntity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -231,7 +239,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录操作日志
         log.info("提交 开始记录盘盈盘亏单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -273,7 +281,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -287,8 +295,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -319,7 +326,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -370,7 +377,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", remark);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -395,11 +402,10 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -451,8 +457,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -650,11 +655,155 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             dto.setUseDeptName(null);
             dto.setCostType(null);
             dto.setCostTypeName(null);
-            
+            dto.setSupplierId(null);
+            dto.setSupplierName(null);
+
             resultList.add(dto);
         }
         
         log.info("获取盘盈盘亏单【{}】下推列表成功，明细数量：{}", mainEntity.getCode(), resultList.size());
         return resultList;
+    }
+
+    @Override
+    public List<BatchResultDTO> pushToCard(AssetProfitLossDTO.PushToCardDTO dto) {
+        if (CollUtil.isEmpty(dto.getCardList())) {
+            throw new ServiceException("下推资产卡片列表不能为空");
+        }
+        
+        log.info("开始执行盘盈盘亏单下推资产卡片，明细数量：{}", dto.getCardList().size());
+        
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getCardList().size());
+        
+        // 遍历明细列表，每个明细独立处理（可能来自不同的盘盈盘亏单）
+        for (AssetProfitLossDTO.PushToCardListDTO item : dto.getCardList()) {
+            BatchResultDTO result;
+            try {
+                // 1. 查询该明细所属的主单
+                AssetProfitLossEntity mainEntity = null;
+                AssetProfitLossDetailEntity detailEntity = null;
+                
+                if (StrUtil.isNotBlank(item.getDetailId())) {
+                    detailEntity = assetProfitLossDetailService.getById(item.getDetailId());
+                    if (detailEntity != null) {
+                        mainEntity = super.getById(detailEntity.getMainId());
+                    }
+                }
+                
+                // 如果通过明细ID找不到，尝试通过盘盈盘亏单号查询
+                if (mainEntity == null && StrUtil.isNotBlank(item.getCode())) {
+                    mainEntity = super.lambdaQuery()
+                            .eq(AssetProfitLossEntity::getCode, item.getCode())
+                            .one();
+                }
+                
+                if (mainEntity == null) {
+                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), "所属盘盈盘亏单不存在");
+                    resultDTOS.add(result);
+                    log.warn("明细【{}】所属盘盈盘亏单不存在", item.getAssetName());
+                    continue;
+                }
+                
+                // 2. 校验单据类型必须是盘盈
+                if (!AssetProfitLossTypeEnum.PROFIT.getCode().equals(mainEntity.getDocType())) {
+                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                            StrUtil.format("所属单据【{}】不是盘盈类型", mainEntity.getCode()));
+                    resultDTOS.add(result);
+                    log.warn("明细【{}】所属单据【{}】不是盘盈类型", item.getAssetName(), mainEntity.getCode());
+                    continue;
+                }
+                
+                // 3. 校验单据必须已审核
+                if (!ApproveStatusEnum.APPROVE.getStatus().equals(mainEntity.getApproveStatus().getStatus())) {
+                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                            StrUtil.format("所属单据【{}】未审核", mainEntity.getCode()));
+                    resultDTOS.add(result);
+                    log.warn("明细【{}】所属单据【{}】未审核", item.getAssetName(), mainEntity.getCode());
+                    continue;
+                }
+                
+                // 4. 校验该明细是否已经下推过
+                if (detailEntity != null && StrUtil.isNotBlank(detailEntity.getCardId())) {
+                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                            StrUtil.format("已下推过资产卡片【{}】", detailEntity.getCardCode()));
+                    resultDTOS.add(result);
+                    log.warn("明细【{}】已经下推过资产卡片【{}】", item.getAssetName(), detailEntity.getCardCode());
+                    continue;
+                }
+                // 5. 创建资产卡片主表（一个明细对应一个卡片）
+                AssetCardDTO.AddDTO cardDTO = new AssetCardDTO.AddDTO();
+                
+                // 基础信息（根据字段映射表）
+                cardDTO.setSourceCode(mainEntity.getCode()); // 来源单号
+                cardDTO.setSourceType(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode()); // 卡片来源类型：盘盈盘亏单
+                cardDTO.setSourceId(mainEntity.getId()); // 来源ID
+                cardDTO.setOrgId(mainEntity.getAssetOrgId()); // 资产组织ID
+                cardDTO.setOrgName(mainEntity.getAssetOrgName()); // 资产组织名称
+                cardDTO.setUnit(item.getUnit()); // 计量单位
+                cardDTO.setType(item.getAssetCategory()); // 资产类别
+                cardDTO.setStatus(AssetStatusEnum.NORMAL.getCode()); // 资产状态：正常使用
+                cardDTO.setChangeMethod(ChangeMethodEnum.PROFIT.getCode()); // 变动方式：盘盈
+                cardDTO.setName(item.getAssetName()); // 资产名称
+                cardDTO.setStartUseDate(LocalDate.now()); // 开始使用日期：当前日期
+                cardDTO.setQty(item.getQty()); // 数量
+                
+                // 6. 创建资产卡片明细（一个卡片只有一个明细，包含一个资产编码）
+                List<AssetCardDetailDTO.AddDTO> detailList = new ArrayList<>();
+                AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
+                
+                // 资产编码：自动生成新编码
+                String assetCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC);
+                detailDTO.setAssetCode(assetCode);
+                
+                detailDTO.setAssetLocationId(item.getActualLocation()); // 资产位置
+                detailDTO.setQty(item.getQty()); // 数量
+                detailDTO.setSupplierId(item.getSupplierId()); // 供应商ID
+                detailDTO.setSupplierName(item.getSupplierName()); // 供应商名称
+                detailDTO.setUseDeptId(item.getUseDeptId()); // 使用部门ID
+                detailDTO.setUseDeptName(item.getUseDeptName()); // 使用部门名称
+                detailDTO.setCostType(item.getCostType()); // 费用项目
+                
+                detailList.add(detailDTO);
+                cardDTO.setDetailList(detailList);
+                
+                // 7. 调用资产卡片Service创建卡片并提交审核
+                BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardDTO);
+                
+                log.info("成功创建并提交审核资产卡片，单号：{}，卡片编号：{}，资产编码：{}", 
+                        mainEntity.getCode(), cardResult.getCode(), assetCode);
+                
+                // 8. 更新盘盈盘亏单明细的关联信息
+                if (StrUtil.isNotBlank(item.getDetailId())) {
+                    AssetProfitLossDetailEntity updateDetailEntity = new AssetProfitLossDetailEntity();
+                    updateDetailEntity.setId(item.getDetailId());
+                    updateDetailEntity.setCardId(cardResult.getId());
+                    updateDetailEntity.setCardCode(cardResult.getCode());
+                    assetProfitLossDetailService.updateById(updateDetailEntity);
+                }
+                
+                // 9. 记录该明细操作日志
+                String msg = StrUtil.format("用户【{}】将盘盈盘亏单【{}】的资产【{}】下推为资产卡片【{}】", 
+                        UserContext.getDefaultLoginUser().getUserName(), 
+                        mainEntity.getCode(),
+                        item.getAssetName(),
+                        cardResult.getCode());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(),
+                        mainEntity.getId(), "下推资产卡片操作");
+                
+                result = BatchResultDTO.success(item.getDetailId(), item.getAssetName(), OperationTypeEnum.UPDATE);
+                
+            } catch (Exception e) {
+                log.error("创建资产卡片失败，资产名称：{}", item.getAssetName(), e);
+                result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        
+        log.info("盘盈盘亏单下推资产卡片完成，总计：{}张，成功：{}张，失败：{}张", 
+                resultDTOS.size(),
+                resultDTOS.stream().filter(BatchResultDTO::getSuccess).count(),
+                resultDTOS.stream().filter(r -> !r.getSuccess()).count());
+        
+        return resultDTOS;
     }
 }

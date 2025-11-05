@@ -168,4 +168,11 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
      */
     List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(String id);
 
+    /**
+     * 下推到资产卡片
+     * @param dto 下推请求参数
+     * @return 下推结果列表（每个明细一个结果）
+     */
+    List<BatchResultDTO> pushToCard(AssetProfitLossDTO.PushToCardDTO dto);
+
 }

@@ -434,6 +434,19 @@ public class AssetProfitLossController extends BaseController {
         return success(assetProfitLossService.getPushToCardList(id));
     }
 
+    /**
+     * 下推到资产卡片（明细维度的参数列表）
+     * @author wuht
+     * @date:  2025-11-05
+     * @param dto 下推请求参数
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/pushToCard")
+    public ApiResult<List<BatchResultDTO>> pushToCard(@RequestBody @Validated AssetProfitLossDTO.PushToCardDTO dto) {
+        List<BatchResultDTO> resultDTOS = assetProfitLossService.pushToCard(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
 
 }
