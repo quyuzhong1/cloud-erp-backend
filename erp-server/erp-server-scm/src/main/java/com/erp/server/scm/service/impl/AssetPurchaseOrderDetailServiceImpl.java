@@ -10,6 +10,7 @@ import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.entity.AssetNoticeDetailEntity;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.enums.AssetApproveStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.AssetPurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
@@ -126,6 +127,13 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         if (CollectionUtils.isEmpty(oldList)) {
             throw new ServiceException(ApiError.ERROR_95298);
         }
+        //只有已审核的采购单才可以结束验收
+        List<String> purchaseOrderIdList = oldList.stream().map(obj -> obj.getMainId()).collect(Collectors.toList());
+        List<AssetPurchaseOrderEntity> assetPurchaseOrderEntityList = assetPurchaseOrderService.listByIds(purchaseOrderIdList);
+        long count = assetPurchaseOrderEntityList.stream().filter(obj -> !obj.getApproveStatus().equals(AssetApproveStatusEnum.APPROVE.getCode())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95319);
+        }
 
         // 过滤需更新的记录（未结束接收的明细）
         List<AssetPurchaseOrderDetailEntity> toUpdateList = oldList.stream()
@@ -150,7 +158,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                         updatedEntity,
                         ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
                         updatedEntity.getId(),
-                        "资产采购单",
+                        "模具采购单",
                         msg
                 );
             }
