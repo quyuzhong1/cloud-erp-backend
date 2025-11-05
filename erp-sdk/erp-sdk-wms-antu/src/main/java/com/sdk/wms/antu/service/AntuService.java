@@ -1,5 +1,6 @@
 package com.sdk.wms.antu.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
@@ -94,6 +95,19 @@ public class AntuService {
         return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuOutboundResp>>>() {}.getType());
     }
 
+
+    /**
+     * 根据参考号获取出库订单信息
+     * @param antuGetOutboundRefReq
+     * @param platformEnum
+     * @return
+     */
+    public AntuResponse<AntuOutboundResp> getOrderByRefCode(AntuGetOutboundRefReq antuGetOutboundRefReq,OmsPlatformEnum platformEnum){
+        log.warn("getOrderByRefCode request :{}", JSONUtil.toJsonStr(antuGetOutboundRefReq));
+        String response = AntuUtils.callService(platformEnum,AntuConstants.GET_ORDER_BY_REF_CODE,antuGetOutboundRefReq);
+        log.warn("getOrderByRefCode response :{}", response);
+        return JSON.parseObject(response,new TypeReference<AntuResponse<AntuOutboundResp>>() {}.getType());
+    }
     /**
      * 获取物流产品
      */

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -223,9 +224,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         DaMaiCreateOrderRequest daMaiCreateOrderRequest = this.buildOrderDto(createOutboundReq);
-        log.warn("调用达迈仓出库单请求:{}", JSONObject.toJSONString(createOutboundReq));
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
-        log.warn("调用达迈仓出库单结果:{}", JSONObject.toJSONString(resp));
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }

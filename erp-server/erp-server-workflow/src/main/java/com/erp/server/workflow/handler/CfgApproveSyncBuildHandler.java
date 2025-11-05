@@ -166,13 +166,7 @@ public class CfgApproveSyncBuildHandler {
                                     Integer i = num.get();
                                     String taskTitle = "@i18n@taskTitle" + i;
                                     //撤销操作
-                                    if(e.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-                                        values.put(taskTitle, StrUtil.format("审核通知：【{}】提交的审核名称({})待你审核", userName, cfgApproveSyncEntity.getTitle()));
-                                    }else if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
-                                        values.put(taskTitle, StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
-                                    }else if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
-                                        values.put(taskTitle, StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
-                                    }
+                                    values.put(taskTitle, cfgApproveSyncEntity.getTitle());
 
                                     return ExternalInstanceTaskNode.newBuilder()
                                             .taskId(e.getId())
@@ -215,14 +209,13 @@ public class CfgApproveSyncBuildHandler {
             if(FSApprovalStatusEnum.CANCELED.getCode().equals(status)){
 
             }else{
-                String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
                 CcNode[] ccList = processTaskCcEntities.stream()
                         .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
                         .map(e ->
                                 CcNode.newBuilder()
                                         .ccId(e.getId())
                                         .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
-                                        .title(ccTitle)
+                                        .title(cfgApproveSyncEntity.getTitle())
                                         .links(ExternalInstanceLink.newBuilder()
                                                 .pcLink(pcLinkByEnv)
                                                 .mobileLink(pcLinkByEnv)

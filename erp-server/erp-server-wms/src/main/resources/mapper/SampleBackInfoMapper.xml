@@ -81,7 +81,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
@@ -91,7 +91,7 @@
         <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
             1=1
         </if>
-        AND sbd.is_deleted = false
+        AND sbi.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -143,7 +143,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
@@ -153,7 +153,7 @@
         <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
             1=1
         </if>
-        AND sbd.is_deleted = false
+        AND sbi.is_deleted = false
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size > 0">
             AND sbi.id in
@@ -245,7 +245,7 @@
             sbd.remark AS detailRemark
         FROM sample_back_info sbi
         LEFT JOIN sample_back_detail sbd
-        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        ON sbd.main_id = sbi.id AND sbd.is_deleted = false
         LEFT JOIN warehouse w
         ON w.id = sbi.warehouse_id AND w.is_deleted = false
         WHERE
@@ -255,7 +255,7 @@
         <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
             1=1
         </if>
-        AND sbd.is_deleted = false
+        AND sbi.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
