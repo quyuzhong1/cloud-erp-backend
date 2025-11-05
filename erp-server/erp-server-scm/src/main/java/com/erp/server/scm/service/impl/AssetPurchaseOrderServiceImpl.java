@@ -1607,7 +1607,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDate.now())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
                     .update();
-        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) < 0) {
+        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) > 0) {
             assetPurchaseOrderDetailService.lambdaUpdate()
                     .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
