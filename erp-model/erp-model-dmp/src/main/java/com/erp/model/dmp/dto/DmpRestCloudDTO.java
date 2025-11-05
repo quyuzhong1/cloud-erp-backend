@@ -56,6 +56,10 @@ public class DmpRestCloudDTO implements Serializable {
          */
         private String appId;
 
+        /**
+         * 流程分类（流程应用分类）
+         */
+        private String appCategory;
 
 
     }

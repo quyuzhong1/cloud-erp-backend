@@ -57,6 +57,9 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	MOLD_INFO("moldInfo", "模具档案"),
 	MOLD_REF_SKU("moldRefSku", "模具关联SKU"),
 	ASSET_DISPOSAL("assetDisposal", "资产处置单"),
+	SAMPLE_RECIPIENT("sampleRecipient","样品领用单"),
+	SAMPLE_BACK_INFO("sampleBackInfo","样品退回单"),
+	SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账"),
     ;
     /**
      * 类型

@@ -10,6 +10,7 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
+import com.erp.model.workflow.enums.FSTaskApprovalStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.*;
@@ -43,6 +44,18 @@ public class CfgApproveSyncBuildHandler {
     private CfgQueryOptionExtService cfgQueryOptionExtService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
+
+
+    // 定义映射关系
+    private static final Map<ApproveStatusEnum, String> STATUS_MAPPING = new HashMap<>();
+
+    static {
+        STATUS_MAPPING.put(ApproveStatusEnum.APPROVE_ING, FSTaskApprovalStatusEnum.PENDING.getCode());
+        STATUS_MAPPING.put(ApproveStatusEnum.APPROVE, FSTaskApprovalStatusEnum.APPROVED.getCode());
+        STATUS_MAPPING.put(ApproveStatusEnum.REJECT, FSTaskApprovalStatusEnum.REJECTED.getCode());
+    }
+
+
     /**
      * 构建三方审批同步
      * @author jack
@@ -142,87 +155,78 @@ public class CfgApproveSyncBuildHandler {
             errorReason= "审批任务不能为空";
             syncRecordEntity.setErrorReason( errorReason);
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
+            return null;
         }else {
             if(processTaskManagementEntities.size() > 300){
                 errorReason= "飞书平台任务列表数不能超过300";
                 syncRecordEntity.setErrorReason( errorReason);
                 approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
+                return null;
             }
 
-            String status = mqDto.getFSApprovalStatusEnum().getCode();
-            //撤销操作
-            if(FSApprovalStatusEnum.CANCELED.getCode().equals(status)){
+            AtomicReference<Integer> num = new AtomicReference<>(0);
+            ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
+                    .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
+                    .map(e -> {
+                                num.updateAndGet(v -> v + 1);
+                                Integer i = num.get();
+                                String taskTitle = "@i18n@taskTitle" + i;
+                                //撤销操作
+                                values.put(taskTitle, cfgApproveSyncEntity.getTitle());
 
-            }else {
-                AtomicReference<Integer> num = new AtomicReference<>(0);
-                ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
-                        .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
-                        .map(e -> {
-                                    num.updateAndGet(v -> v + 1);
-                                    Integer i = num.get();
-                                    String taskTitle = "@i18n@taskTitle" + i;
-                                    //撤销操作
-                                    values.put(taskTitle, cfgApproveSyncEntity.getTitle());
+                        // 使用映射获取状态码
+                        ApproveStatusEnum taskStatus = e.getTaskStatus();
+                        String status = STATUS_MAPPING.getOrDefault(taskStatus, "");
 
-                                    return ExternalInstanceTaskNode.newBuilder()
-                                            .taskId(e.getId())
-                                            .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
-                                            .title(taskTitle)
-                                            .links(ExternalInstanceLink.newBuilder()
-                                                    .pcLink(pcLinkByEnv)
-                                                    .mobileLink(pcLinkByEnv)
-                                                    .build())
-                                            .status(status)
-                                            .createTime(createTimeMillis)
-                                            .endTime(endTimeMillis)
-                                            .updateTime(updateTimeMillis)
-                                            .actionConfigs(getActionConfigs())
-                                            .displayMethod("BROWSER")
-                                            .excludeStatistics(false)
-                                            .build();
-                                }
-                        ).toArray(ExternalInstanceTaskNode[]::new);
+                        return ExternalInstanceTaskNode.newBuilder()
+                                        .taskId(e.getId())
+                                        .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
+                                        .title(taskTitle)
+                                        .links(ExternalInstanceLink.newBuilder()
+                                                .pcLink(pcLinkByEnv)
+                                                .mobileLink(pcLinkByEnv)
+                                                .build())
+                                        .status(status)
+                                        .createTime(createTimeMillis)
+                                        .endTime(endTimeMillis)
+                                        .updateTime(updateTimeMillis)
+                                        .actionConfigs(getActionConfigs())
+                                        .displayMethod("BROWSER")
+                                        .excludeStatistics(false)
+                                        .build();
+                            }
+                    ).toArray(ExternalInstanceTaskNode[]::new);
 
-                externalInstance.setTaskList(taskList);
-            }
+            externalInstance.setTaskList(taskList);
         }
 
 
         //抄送列表数组 最大长度：200
-        if(CollUtil.isEmpty(processTaskCcEntities)){
-
-        }else {
+        if(CollUtil.isNotEmpty(processTaskCcEntities)){
             if(processTaskCcEntities.size() > 200){
                 errorReason= "飞书平台抄送列表数不能超过200";
                 syncRecordEntity.setErrorReason( errorReason);
                 approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
                 return null;
             }
-
-            String status = mqDto.getFSApprovalStatusEnum().getCode();
-            //撤销操作
-            if(FSApprovalStatusEnum.CANCELED.getCode().equals(status)){
-
-            }else{
-                CcNode[] ccList = processTaskCcEntities.stream()
-                        .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
-                        .map(e ->
-                                CcNode.newBuilder()
-                                        .ccId(e.getId())
-                                        .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
-                                        .title(cfgApproveSyncEntity.getTitle())
-                                        .links(ExternalInstanceLink.newBuilder()
-                                                .pcLink(pcLinkByEnv)
-                                                .mobileLink(pcLinkByEnv)
-                                                .build())
-                                        .readStatus("UNREAD")
-                                        .createTime(createTimeMillis)
-                                        .updateTime(updateTimeMillis)
-                                        .displayMethod("BROWSER")
-                                        .build()
-                        ).toArray(CcNode[]::new);
-                externalInstance.setCcList(ccList);
-            }
+            CcNode[] ccList = processTaskCcEntities.stream()
+                    .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
+                    .map(e ->
+                            CcNode.newBuilder()
+                                    .ccId(e.getId())
+                                    .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
+                                    .title(cfgApproveSyncEntity.getTitle())
+                                    .links(ExternalInstanceLink.newBuilder()
+                                            .pcLink(pcLinkByEnv)
+                                            .mobileLink(pcLinkByEnv)
+                                            .build())
+                                    .readStatus("UNREAD")
+                                    .createTime(createTimeMillis)
+                                    .updateTime(updateTimeMillis)
+                                    .displayMethod("BROWSER")
+                                    .build()
+                    ).toArray(CcNode[]::new);
+            externalInstance.setCcList(ccList);
         }
 
         //推送消息 (快接审批)

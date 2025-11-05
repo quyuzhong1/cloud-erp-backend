@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import com.alibaba.fastjson.JSON;
@@ -65,19 +66,27 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                         .map(e -> JSON.parseObject(JSON.toJSONString(e)))
                         .map(e -> new DmpRestCloudDTO.ListDTO(e.getString("configName").concat(e.getString("mapUrl")),
                                 e.getString("configName"),
-                                e.getString("mapUrl"),
-                                CharSequenceUtil.subAfter(e.getString("mapUrl"), "/", true),
-                                e.getString("appId")
+                                e.getString("mapUrl").toLowerCase(),
+                                CharSequenceUtil.subAfter(e.getString("mapUrl").toLowerCase(), "/", true),
+                                e.getString("appId").toLowerCase(),
+                                parseAppCategory(e.getString("appId"))
                         )).collect(Collectors.toList());
-                PagingVO<DmpRestCloudDTO.ListDTO>  restCloudPaging =  new PagingVO<>(resultList,
+                return new PagingVO<>(resultList,
                         responseJson.getInteger("total"),
                         responseJson.getInteger("pageSize"),
                         responseJson.getInteger("pageNo")
                 );
-                return restCloudPaging;
             }else {
                 throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
             }
         }
+    }
+
+    private String parseAppCategory(String appId) {
+        if (StrUtil.isBlank(appId)) {
+            return "";
+        }
+        // 截取_前面字段
+        return StrUtil.subBefore(appId, "_", false).toLowerCase();
     }
 }
