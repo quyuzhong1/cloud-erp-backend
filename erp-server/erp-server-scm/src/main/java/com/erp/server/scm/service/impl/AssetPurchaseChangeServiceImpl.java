@@ -920,10 +920,6 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     public void fillViewList(List<AssetPurchaseChangeDetailDTO.ViewDTO> dtoList){
 
         for (AssetPurchaseChangeDetailDTO.ViewDTO detailDTO : dtoList) {
-            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetNoticeDetailRefSkuDTOS = plmTaskFeign.searchMoldRefSkuByAssetId(detailDTO.getAssetId());
-            //关联sku信息
-            List<AssetPurchaseChangeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS = BeanMapperUtils.copyList(AssetPurchaseChangeDetailDTO.AssetDetailRefSkuDTO.class, assetNoticeDetailRefSkuDTOS);
-            detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
 

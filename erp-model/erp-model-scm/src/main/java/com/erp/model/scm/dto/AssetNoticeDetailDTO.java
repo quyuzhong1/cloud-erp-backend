@@ -94,11 +94,6 @@ public class AssetNoticeDetailDTO implements Serializable {
         */
         private String remark;
 
-        /**
-         * 关联SKU详情
-         */
-        private List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
-
     }
 
 

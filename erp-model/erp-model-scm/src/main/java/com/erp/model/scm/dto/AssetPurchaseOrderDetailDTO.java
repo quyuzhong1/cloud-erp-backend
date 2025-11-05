@@ -134,11 +134,6 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         * 来源明细id
         */
         private String sourceDetailId;
-
-        /**
-         * 关联SKU详情
-         */
-        private List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
     }
 
     /**
@@ -676,9 +671,5 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
          */
         private String sourceDetailId;
 
-        /**
-         * 关联SKU详情
-         */
-        private List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
     }
 }

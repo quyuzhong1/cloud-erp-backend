@@ -750,10 +750,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public void fillViewList(List<AssetPurchaseOrderDetailDTO.ViewDTO> dtoList){
 
         for (AssetPurchaseOrderDetailDTO.ViewDTO detailDTO : dtoList) {
-            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetNoticeDetailRefSkuDTOS = plmTaskFeign.searchMoldRefSkuByAssetId(detailDTO.getAssetId());
-            //关联sku信息
-            List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO.class, assetNoticeDetailRefSkuDTOS);
-            detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
 
@@ -1584,12 +1580,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             viewGeneratePurchaseChangeOrderDTO1.setOldPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
             viewGeneratePurchaseChangeOrderDTO1.setOldTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
             viewGeneratePurchaseChangeOrderDTO1.setOldTaxRate(assetPurchaseOrderDetailEntity.getTaxRate());
-
-            //关联sku详情
-            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetNoticeDetailRefSkuDTOS = plmTaskFeign.searchMoldRefSkuByAssetId(assetPurchaseOrderDetailEntity.getAssetId());
-            List<AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOS =
-                    BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.AssetDetailRefSkuDTO.class, assetNoticeDetailRefSkuDTOS);
-            viewGeneratePurchaseChangeOrderDTO1.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOS);
 
             viewGeneratePurchaseChangeOrderDTOList.add(viewGeneratePurchaseChangeOrderDTO1);
         }

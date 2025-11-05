@@ -820,8 +820,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     public void fillViewList(List<AssetNoticeDetailDTO.ViewDTO> dtoList){
 
         for (AssetNoticeDetailDTO.ViewDTO detailDTO : dtoList) {
-            List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList = plmTaskFeign.searchMoldRefSkuByAssetId(detailDTO.getAssetId());
-            detailDTO.setAssetDetailRefSkuDTOList(assetDetailRefSkuDTOList);
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
 
