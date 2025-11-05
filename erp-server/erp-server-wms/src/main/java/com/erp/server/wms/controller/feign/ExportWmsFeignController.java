@@ -30,9 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import com.erp.server.wms.query.SampleLedgerQueryHandler;
-import com.erp.server.wms.service.SampleLedgerFlowService;
-import com.erp.server.wms.query.SampleLedgerFlowQueryHandler;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -961,7 +958,7 @@ public class ExportWmsFeignController {
     @PostMapping("/exportSoB2cProcessing")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbp.warehouse_id",
-            shopTableField = "sb2c.shop_id",
+            shopTableField = "sbp.shop_id",
             menuCode = "wms:soB2cProcessing:paging"
     )
     @WebAdvanceQuery
