@@ -14,6 +14,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -48,6 +49,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.business.enums.FileTaskStatusEnum;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -305,7 +307,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.INVENTORY_PLAN.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -557,7 +559,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.INVENTORY_PLAN.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -609,7 +611,10 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetStocktakingPlanEntity::getId, id)
+        .set(AssetStocktakingPlanEntity::getApproveUserId, "")
+        .set(AssetStocktakingPlanEntity::getApproveUserName, "")
         .set(AssetStocktakingPlanEntity::getApproveStatus, approveStatus)
+        .set(AssetStocktakingPlanEntity::getApproveTime, null)
         .update(new AssetStocktakingPlanEntity());
     }
 
@@ -621,11 +626,32 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
            return;
         }
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.INVENTORY_PLAN.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         // 属性赋值
         for(AssetStocktakingPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
     /**
@@ -698,7 +724,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 检查是否已经生成过资产盘点表
         long existCount = assetStocktakingService.lambdaQuery()
                 .eq(AssetStocktakingEntity::getSourceId, planEntity.getId())
-                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.STOCKTAKING_PLAN.getCode())
+                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.INVENTORY_PLAN.getCode())
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .count();
         
@@ -712,7 +738,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 查询刚生成的资产盘点表并提交
         List<AssetStocktakingEntity> stocktakingList = assetStocktakingService.lambdaQuery()
                 .eq(AssetStocktakingEntity::getSourceId, planEntity.getId())
-                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.STOCKTAKING_PLAN.getCode())
+                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.INVENTORY_PLAN.getCode())
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .list();
         

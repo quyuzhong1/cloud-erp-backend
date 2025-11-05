@@ -16,21 +16,18 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.LogStatusEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
-import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
 import com.erp.model.fms.enums.AssetStatusEnum;
 import com.erp.model.fms.enums.ChangeMethodEnum;
@@ -50,6 +47,7 @@ import com.erp.server.fms.service.DictBasicService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -98,7 +96,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         log.info("开始新增盘盈盘亏单主单");
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_LOSS);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PYPKD);
         assetProfitLossEntity.setCode(code);
         boolean save = super.save(assetProfitLossEntity);
         if(!save) {
@@ -522,7 +520,10 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetProfitLossEntity::getId, id)
+        .set(AssetProfitLossEntity::getApproveUserId, "")
+        .set(AssetProfitLossEntity::getApproveUserName, "")
         .set(AssetProfitLossEntity::getApproveStatus, approveStatus)
+        .set(AssetProfitLossEntity::getApproveTime, null)
         .update(new AssetProfitLossEntity());
     }
 
@@ -532,6 +533,20 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private void fillList(List<AssetProfitLossDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
            return;
+        }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
         }
 
         // 获取资产类别字典数据
@@ -566,6 +581,14 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             if (StringUtils.isNotBlank(data.getAssetCategory())) {
                 data.setAssetCategoryName(finalAssetCategoryMap.get(data.getAssetCategory()));
             }
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
     /**
@@ -587,32 +610,45 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     }
 
     @Override
-    public List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(String id) {
-        // 查询主单信息
-        AssetProfitLossEntity mainEntity = super.getById(id);
-        if (mainEntity == null) {
-            throw new ServiceException("盘盈盘亏单不存在");
+    public List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(List<String> detailIds) {
+        if (CollUtil.isEmpty(detailIds)) {
+            throw new ServiceException("明细ID列表不能为空");
         }
         
-        // 校验单据状态：只有已审核的单据才能下推
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(mainEntity.getApproveStatus().getStatus())) {
-            throw new ServiceException("只有已审核的盘盈单才能下推到资产卡片");
-        }
-
-        // 校验单据状态：只有已审核的单据才能下推
-        if (!AssetProfitLossTypeEnum.PROFIT.getCode().equals(mainEntity.getDocType())) {
-            throw new ServiceException("只有盘盈类型才允许下推资产卡片");
-        }
-        
-        // 查询明细列表
+        // 根据明细ID查询明细列表
         List<AssetProfitLossDetailEntity> detailList = assetProfitLossDetailService.lambdaQuery()
-                .eq(AssetProfitLossDetailEntity::getMainId, id)
+                .in(AssetProfitLossDetailEntity::getId, detailIds)
                 .eq(AssetProfitLossDetailEntity::getIsDeleted, false)
                 .list();
         
         if (CollUtil.isEmpty(detailList)) {
-            log.warn("盘盈盘亏单【{}】没有明细数据", mainEntity.getCode());
+            log.warn("未找到明细数据");
             return Collections.emptyList();
+        }
+        
+        // 获取所有关联的主单ID
+        List<String> mainIds = detailList.stream()
+                .map(AssetProfitLossDetailEntity::getMainId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 查询主单信息
+        List<AssetProfitLossEntity> mainEntityList = super.lambdaQuery()
+                .in(AssetProfitLossEntity::getId, mainIds)
+                .list();
+        
+        Map<String, AssetProfitLossEntity> mainEntityMap = mainEntityList.stream()
+                .collect(Collectors.toMap(AssetProfitLossEntity::getId, v -> v));
+        
+        // 校验单据状态：只有已审核的单据才能下推
+        for (AssetProfitLossEntity mainEntity : mainEntityList) {
+            if (!ApproveStatusEnum.APPROVE.getStatus().equals(mainEntity.getApproveStatus().getStatus())) {
+                throw new ServiceException("单据【" + mainEntity.getCode() + "】未审核，只有已审核的盘盈单才能下推到资产卡片");
+            }
+            
+            if (!AssetProfitLossTypeEnum.PROFIT.getCode().equals(mainEntity.getDocType())) {
+                throw new ServiceException("单据【" + mainEntity.getCode() + "】不是盘盈类型，只有盘盈类型才允许下推资产卡片");
+            }
         }
         
         // 获取资产类别字典
@@ -629,6 +665,13 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         
         for (AssetProfitLossDetailEntity detail : detailList) {
             AssetProfitLossDTO.PushToCardListDTO dto = new AssetProfitLossDTO.PushToCardListDTO();
+            
+            // 获取该明细对应的主单信息
+            AssetProfitLossEntity mainEntity = mainEntityMap.get(detail.getMainId());
+            if (mainEntity == null) {
+                log.warn("明细【{}】对应的主单不存在，跳过", detail.getId());
+                continue;
+            }
             
             // 主单信息
             dto.setCode(mainEntity.getCode());
@@ -661,22 +704,22 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             resultList.add(dto);
         }
         
-        log.info("获取盘盈盘亏单【{}】下推列表成功，明细数量：{}", mainEntity.getCode(), resultList.size());
+        log.info("获取盘盈盘亏单下推列表成功，明细数量：{}", resultList.size());
         return resultList;
     }
 
     @Override
     public List<BatchResultDTO> pushToCard(AssetProfitLossDTO.PushToCardDTO dto) {
-        if (CollUtil.isEmpty(dto.getCardList())) {
+        if (CollUtil.isEmpty(dto.getDetailList())) {
             throw new ServiceException("下推资产卡片列表不能为空");
         }
         
-        log.info("开始执行盘盈盘亏单下推资产卡片，明细数量：{}", dto.getCardList().size());
+        log.info("开始执行盘盈盘亏单下推资产卡片，明细数量：{}", dto.getDetailList().size());
         
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getCardList().size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailList().size());
         
         // 遍历明细列表，每个明细独立处理（可能来自不同的盘盈盘亏单）
-        for (AssetProfitLossDTO.PushToCardListDTO item : dto.getCardList()) {
+        for (AssetProfitLossDTO.PushToCardListDTO item : dto.getDetailList()) {
             BatchResultDTO result;
             try {
                 // 1. 查询该明细所属的主单

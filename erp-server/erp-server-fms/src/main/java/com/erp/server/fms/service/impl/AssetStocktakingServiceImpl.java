@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -49,6 +50,7 @@ import com.erp.server.fms.service.AssetCardDetailService;
 import com.erp.server.fms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -778,7 +780,10 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetStocktakingEntity::getId, id)
+        .set(AssetStocktakingEntity::getApproveUserId, "")
+        .set(AssetStocktakingEntity::getApproveUserName, "")
         .set(AssetStocktakingEntity::getApproveStatus, approveStatus)
+        .set(AssetStocktakingEntity::getApproveTime, null)
         .update(new AssetStocktakingEntity());
     }
 
@@ -790,11 +795,32 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
            return;
         }
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_INVENTORY_SHEET.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         // 属性赋值
         for(AssetStocktakingDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
     /**

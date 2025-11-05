@@ -17,6 +17,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -49,6 +50,7 @@ import com.erp.server.fms.mapper.AssetAcceptMapper;
 import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
@@ -1298,7 +1300,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetAcceptEntity::getId, id)
+        .set(AssetAcceptEntity::getApproveUserId, "")
+        .set(AssetAcceptEntity::getApproveUserName, "")
         .set(AssetAcceptEntity::getApproveStatus, approveStatus)
+        .set(AssetAcceptEntity::getApproveTime, null)
         .update(new AssetAcceptEntity());
     }
 
@@ -1308,6 +1313,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     private void fillList(List<AssetAcceptDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
            return;
+        }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_ACCEPTANCE.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
         }
 
         // 属性赋值
@@ -1325,6 +1344,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             
             // 设置资产卡片关联状态名称（使用枚举）
             data.setAssetCardStatusName(AssetCardStatusEnum.getName(data.getAssetCardStatus()));
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
     /**
