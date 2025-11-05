@@ -6,7 +6,6 @@ import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -15,7 +14,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -32,7 +30,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import org.jfree.util.Log;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,8 +105,6 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
-    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -487,7 +482,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         return result;
     }
 
-
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,List<AssetPurchaseOrderDetailEntity> orderDetails){
         // 批量更新
         for (AssetPurchaseOrderDetailEntity orderDetail : orderDetails) {
@@ -711,8 +706,8 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         //校验采购订单是否符合下推条件
         checkPoPushDown(addDTO,list,assetPurchaseChangeId);
 
-        //校验价格
-        checkPurchasePrice(addDTO,list,assetPurchaseChangeId);
+        //不校验价格，资产变更单允许随便更改价格
+        fillPurchasePrice(addDTO,list,assetPurchaseChangeId);
 
         return list;
     }
@@ -737,7 +732,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
         //明细条数不允许增加
         List<AssetPurchaseOrderDetailEntity> detailList = assetPurchaseOrderDetailService.lambdaQuery()
-                .eq(AssetPurchaseOrderDetailEntity::getMainId, addDTO.getSourceId())
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, addDTO.getAssetPurchaseOrderId())
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (addDTO.getAssetPurchaseChangeDetailDTOList().size() > detailList.size()) {
@@ -781,34 +776,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     }
 
 
-    public void checkPurchasePrice (AssetPurchaseChangeDTO.AddDTO addDTO,List<AssetPurchaseChangeDetailEntity> list,String purchaseChangeId) {
-        //采购价目表查询
-        List<PurchasePriceDTO.PriceDTO> convertList = convertAssetPurchaseChangeDTOToPriceDTO(addDTO);
-
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-        if (priceDTOList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
-        }
-
-        for (AssetPurchaseChangeDetailEntity assetPurchaseChangeDetailEntity : list) {
-            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOList) {
-                if (priceDTO.getSkuId().equals(assetPurchaseChangeDetailEntity.getAssetId())) {
-                    assetPurchaseChangeDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                    assetPurchaseChangeDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                    assetPurchaseChangeDetailEntity.setTaxRate(priceDTO.getTaxRate());
-                }
-            }
-
-        }
-
-        AssetPurchaseChangeDetailEntity assetPurchaseChangeDetailEntity = list.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
-                .findFirst()
-                .orElse(null);
-
-        if (Objects.nonNull(assetPurchaseChangeDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseChangeDetailEntity.getAssetCode());
-        }
+    public void fillPurchasePrice (AssetPurchaseChangeDTO.AddDTO addDTO,List<AssetPurchaseChangeDetailEntity> list,String purchaseChangeId) {
 
         //获取原明细行数据
         for (AssetPurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
@@ -821,27 +789,27 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 throw new ServiceException(ApiError.ERROR_95308);
             }
 
-            purchaseChangeDetailEntity.setOldPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
-            purchaseChangeDetailEntity.setOldTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
-            purchaseChangeDetailEntity.setOldTotalAmount(assetPurchaseOrderDetailEntity.getTotalAmount());
-            purchaseChangeDetailEntity.setOldTaxRate(assetPurchaseOrderDetailEntity.getTaxRate());
+            if (purchaseChangeDetailEntity.getSourceDetailId().equals(assetPurchaseOrderDetailEntity.getId())) {
+                purchaseChangeDetailEntity.setOldPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
+                purchaseChangeDetailEntity.setOldTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
+                purchaseChangeDetailEntity.setOldTotalAmount(assetPurchaseOrderDetailEntity.getTotalAmount());
+                purchaseChangeDetailEntity.setOldTaxRate(assetPurchaseOrderDetailEntity.getTaxRate());
+            }
+
+            for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
+                if (dto.getSourceDetailId().equals(purchaseChangeDetailEntity.getSourceDetailId())) {
+                    purchaseChangeDetailEntity.setPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
+                    purchaseChangeDetailEntity.setTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
+                    purchaseChangeDetailEntity.setTotalAmount(assetPurchaseOrderDetailEntity.getPurchaseQty().multiply(assetPurchaseOrderDetailEntity.getTaxPrice()));
+                    //税率暂定不变
+                    purchaseChangeDetailEntity.setTaxRate(assetPurchaseOrderDetailEntity.getTaxRate());
+                }
+            }
         }
+
+
     }
 
-    public List<PurchasePriceDTO.PriceDTO> convertAssetPurchaseChangeDTOToPriceDTO(AssetPurchaseChangeDTO.AddDTO addDTO) {
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
-
-        for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
-            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
-            priceDTO.setPurchaseOrgId(addDTO.getPurchaseOrgId());
-            priceDTO.setSkuId(dto.getAssetId());
-            priceDTO.setSupplierId(addDTO.getSupplierId());
-            priceDTO.setQty(dto.getPurchaseQty().intValue());
-            priceDTOList.add(priceDTO);
-        }
-
-        return priceDTOList;
-    }
 
     private AssetPurchaseChangeEntity handleUpdateData(AssetPurchaseChangeEntity entity){
         if (entity.getChangeDate().compareTo(LocalDate.now()) < 0) {
@@ -878,13 +846,6 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     public List<AssetPurchaseChangeDetailEntity> handleUpdateDetailData(AssetPurchaseChangeDTO.UpdateDTO updateDTO){
         List<AssetPurchaseChangeDetailEntity> detailList = new ArrayList<>();
-
-        //获取新价格
-        List<PurchasePriceDTO.PriceDTO> convertList = convertAssetPurchaseChangeDTOToPriceDTO(updateDTO);
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-        if (priceDTOList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
-        }
 
         for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseChangeDetailDTOList()) {
             AssetPurchaseChangeDetailEntity detailEntity = new AssetPurchaseChangeDetailEntity();
@@ -924,14 +885,8 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 }
             }
 
-            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOList) {
-                if (priceDTO.getSkuId().equals(dto.getAssetId())) {
-                    detailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                    detailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                    detailEntity.setTaxRate(priceDTO.getTaxRate());
-                }
-            }
-
+            detailEntity.setTotalAmount(dto.getPurchaseQty().multiply(dto.getTaxPrice()));
+            detailEntity.setOldTotalAmount(dto.getOldPurchaseQty().multiply(dto.getOldTaxPrice()));
             detailList.add(detailEntity);
         }
 

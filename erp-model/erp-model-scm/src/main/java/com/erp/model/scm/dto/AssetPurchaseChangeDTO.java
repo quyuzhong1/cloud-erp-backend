@@ -406,18 +406,6 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private String assetPurchaseOrderId;
 
         /**
-         * 供应商id
-         */
-        @NotBlank(message = "供应商id不能为空")
-        private String supplierId;
-
-        /**
-         * 供应商名称
-         */
-        @NotBlank(message = "供应商名称不能为空")
-        private String supplierName;
-
-        /**
          * 采购组织id
          */
         @NotBlank(message = "采购组织id不能为空")
@@ -428,6 +416,11 @@ public class AssetPurchaseChangeDTO implements Serializable {
          */
         @NotBlank(message = "采购组织名称不能为空")
         private String purchaseOrgName;
+
+        /**
+         * 供应商信息
+         */
+        private AssetPurchaseChangeDTO.SupplierDTO assetPurchaseChangeSupplierDTO;
 
 
         /**
@@ -443,7 +436,58 @@ public class AssetPurchaseChangeDTO implements Serializable {
     @NoArgsConstructor
     public static class SupplierDTO {
 
+        /**
+         * id
+         */
+        private String id;
 
+
+        /**
+         * 资产采购单id
+         */
+        private String assetPurchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        private String supplierName;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 结算币种
+         */
+        private String payCurrency;
+
+        /**
+         * 供应商联系人id
+         */
+        private String contactId;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String contactName;
+
+        /**
+         * 供应商电话
+         */
+        private String contactTelNumber;
 
     }
 

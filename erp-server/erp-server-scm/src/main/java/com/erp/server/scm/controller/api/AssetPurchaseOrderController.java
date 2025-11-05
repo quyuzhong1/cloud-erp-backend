@@ -630,8 +630,8 @@ public class AssetPurchaseOrderController extends BaseController {
             menuCode = "scm:assetNotice:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-       AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO = assetPurchaseOrderService.viewGeneratePurchaseChangeOrder(dto);
+    public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+       AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrderDTO = assetPurchaseOrderService.viewGeneratePurchaseChangeOrder(dto);
         return success(viewGeneratePurchaseChangeOrderDTO);
     }
 

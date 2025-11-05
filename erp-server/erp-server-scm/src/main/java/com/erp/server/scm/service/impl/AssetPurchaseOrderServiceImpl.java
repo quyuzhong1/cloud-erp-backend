@@ -1521,7 +1521,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
-    public AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto) {
+    public AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto) {
         List<String> detailList = dto.getIds();
 
         List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
@@ -1547,18 +1547,22 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_95309);
         }
 
-        AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeOrderDTO();
+        AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO();
         BeanUtils.copyProperties(assetPurchaseOrderEntity,viewGeneratePurchaseChangeOrderDTO);
-        viewGeneratePurchaseChangeOrderDTO.setChangeDate(LocalDate.now());
 
+        viewGeneratePurchaseChangeOrderDTO.setSourceCode(assetPurchaseOrderEntity.getCode());
+        viewGeneratePurchaseChangeOrderDTO.setChangeDate(LocalDate.now());
         viewGeneratePurchaseChangeOrderDTO.setChangeUserId(UserContext.getDefaultLoginUser().getUid());
         viewGeneratePurchaseChangeOrderDTO.setChangeUserName(UserContext.getDefaultLoginUser().getUserName());
+
         SysDepartmentUserNumberDTO deptDTO = sysUserFeign.getDeptByUserId(UserContext.getDefaultLoginUser().getUid());
         if (Objects.nonNull(deptDTO)) {
             viewGeneratePurchaseChangeOrderDTO.setChangeDeptId(deptDTO.getDepartmentId());
             viewGeneratePurchaseChangeOrderDTO.setChangeDeptName(deptDTO.getDepartmentName());
         }
-        viewGeneratePurchaseChangeOrderDTO.setSourceCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC));
+
+
+        viewGeneratePurchaseChangeOrderDTO.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC));
 
         //关联供应商
         AssetPurchaseOrderDTO.SupplierDTO supplierDTO = new AssetPurchaseOrderDTO.SupplierDTO();
@@ -1573,9 +1577,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseSupplierDTO(supplierDTO);
 
         //明细信息
-        List<AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO> viewGeneratePurchaseChangeOrderDTOList = new ArrayList<>();
+        List<AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeDTO> viewGeneratePurchaseChangeOrderDTOList = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
-            AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO viewGeneratePurchaseChangeOrderDTO1 = new AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeOrderDTO();
+            AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrderDTO1 = new AssetPurchaseOrderDetailDTO.ViewGeneratePurchaseChangeDTO();
             BeanUtils.copyProperties(assetPurchaseOrderDetailEntity,viewGeneratePurchaseChangeOrderDTO1);
             viewGeneratePurchaseChangeOrderDTO1.setOldPurchaseQty(assetPurchaseOrderDetailEntity.getPurchaseQty());
             viewGeneratePurchaseChangeOrderDTO1.setOldTaxPrice(assetPurchaseOrderDetailEntity.getTaxPrice());
@@ -1589,7 +1593,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
             viewGeneratePurchaseChangeOrderDTOList.add(viewGeneratePurchaseChangeOrderDTO1);
         }
-        viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseChangeOrderDetailDTOList(viewGeneratePurchaseChangeOrderDTOList);
+        viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseChangeDetailDTOList(viewGeneratePurchaseChangeOrderDTOList);
         return viewGeneratePurchaseChangeOrderDTO;
     }
 
