@@ -716,9 +716,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Override
     public SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(String deliveryCode) {
-        SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
-        if (Objects.isNull(soMultiChannelEntity)) {
+        List<SoMultiChannelEntity> list = this.lambdaQuery().eq(SoMultiChannelEntity::getDeliveryCode, deliveryCode).list();
+        if (CollUtil.isEmpty(list)) {
             throw new ServiceException("多渠道订单不存在");
+        }
+        SoMultiChannelEntity soMultiChannelEntity = list.stream().filter(e -> e.getInvalidStatus().equals(Boolean.FALSE)).findFirst().orElse(null);
+        if (Objects.isNull(soMultiChannelEntity)) {
+            throw new ServiceException("多渠道订单已作废");
         }
         SoB2cEntity soB2cEntity = soB2cService.getById(soMultiChannelEntity.getSoId());
         if (Objects.isNull(soB2cEntity)) {
