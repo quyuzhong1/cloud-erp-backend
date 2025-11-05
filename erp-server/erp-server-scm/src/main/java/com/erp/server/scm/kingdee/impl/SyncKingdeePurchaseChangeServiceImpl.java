@@ -372,6 +372,9 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
 
+        //变更类型
+        resultMap.put("orderType",entity.getOrderType());
+
         resultMap.put("sourceType", KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
 
         //变更人
