@@ -892,22 +892,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     private void handleSupplierData(AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity,AssetPurchaseOrderEntity assetPurchaseOrderEntity) {
-        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getSupplierId())) {
-            throw new ServiceException("供应商id不允许为空");
-        }
-
-        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayMethodId())) {
-            throw new ServiceException("结算方式不允许为空");
-        }
-
-        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPaymentCondition())) {
-            throw new ServiceException("付款条件不允许为空");
-        }
-
-        if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayee())) {
-            throw new ServiceException("账户名称不允许为空");
-        }
-
         //付款条件
         List<KingdeePaymentConditionEntity>  paymentConditionList =  kingdeePaymentConditionService.list();
         Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(KingdeePaymentConditionEntity::getCode, KingdeePaymentConditionEntity::getName,(o1,o2)->o1));
@@ -919,13 +903,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderSupplierEntity.setPayMethodName(settleDictMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPayMethodId(),""));
 
         //收款银行,银行账号
-
         List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS =
                 supplierService.listDefaultBySupplierIdList(Arrays.asList(assetPurchaseOrderSupplierEntity.getSupplierId()));
         SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
         assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
         assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
 
+        //关联采购单id
         assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
     }
 
@@ -1529,8 +1513,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_95308);
         }
 
-        long count = list.stream().map(obj -> obj.getMainId()).count();
-        if (count > 1) {
+        long count = list.stream().filter(obj -> !obj.getMainId().equals(list.get(0).getMainId())).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95316);
         }
 
