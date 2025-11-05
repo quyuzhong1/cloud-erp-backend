@@ -1512,8 +1512,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_95308);
         }
 
-        long count = list.stream().map(obj -> obj.getMainId()).count();
-        if (count > 1) {
+        long count = list.stream().filter(obj -> !obj.getMainId().equals(list.get(0).getMainId())).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95316);
         }
 
