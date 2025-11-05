@@ -60,7 +60,7 @@ public class AssetPurchaseOrderFeignController extends BaseController {
     }
 
 
-    @PostMapping("/feign/assetPurchaseOrder/rewriteAssetPurchaseOrder")
+    @PostMapping("/rewriteAssetPurchaseOrder")
     public ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO){
         return success(assetPurchaseOrderService.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO));
     }
