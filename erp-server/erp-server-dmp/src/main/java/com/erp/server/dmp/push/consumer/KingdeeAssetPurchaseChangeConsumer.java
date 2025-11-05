@@ -40,9 +40,9 @@ public class KingdeeAssetPurchaseChangeConsumer<T extends DmpSyncTaskIdDTO> exte
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_POXCHANGE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "POC23100700001"));
+        queryFilters.add(String.format("FBillNo = '%s'", "MPOCC251030000031"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPKIDX,FSrcBillNo,FPOOrderEntry_Link_FSId,FPOOrderEntry_Link_FSBillId,FDEMANDBILLNO,FDEMANDBILLENTRYSEQ,FDEMANDBILLENTRYID";
+        String fieldKeys = "FId,FChangeReason";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         queryList.forEach(req -> {
             System.out.println(req);

@@ -412,7 +412,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             resultMap.put("purchaseOrgCode", purchaseOrgCode);
         }
         //变更原因
-        resultMap.put("changeReason","资产采购订单变更");
+        resultMap.put("changeReason",entity.getChangeReason());
 
         //获取用户部门id
         if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId())) {
