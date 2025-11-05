@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,19 +16,23 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgEtlDTO;
+import com.erp.model.dmp.dto.DmpRestCloudDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgEtlEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgEtlMapper;
 import com.erp.server.dmp.service.DmpCfgEtlService;
+import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +55,8 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -59,7 +66,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         BeanMapperUtils.copy(addDTO, dmpCfgEtlEntity);
 
         // 数据处理
-        handleData(dmpCfgEtlEntity);
+        handleData(dmpCfgEtlEntity, addDTO);
 
         log.info("开始新增etl配置信息");
         boolean save = super.save(dmpCfgEtlEntity);
@@ -87,7 +94,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         DmpCfgEtlEntity dmpCfgEtlEntity =  BeanMapperUtils.map(DmpCfgEtlEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(dmpCfgEtlEntity);
+        handleData(dmpCfgEtlEntity, addOrUpdateDTO);
         log.info("编辑 开始修改etl配置信息数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgEtlEntity);
         if(!save) {
@@ -98,8 +105,8 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         // 记录主单操作日志
             log.info("编辑 开始记录etl配置信息日志数据，id：【{}】", dmpCfgEtlEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgEtlEntity.getId(), "etl配置信息");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, dmpCfgEtlEntity, null, dmpCfgEtlEntity.getId(), msg);
+        //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, dmpCfgEtlEntity, ModuleTypeEnum.DMP_CFG_ETL.getCode(), dmpCfgEtlEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -107,8 +114,24 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     /**
     * 新增修改处理数据
     */
-    private void handleData(DmpCfgEtlEntity dmpCfgEtlEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(DmpCfgEtlEntity dmpCfgEtlEntity, DmpCfgEtlDTO.CommonDTO addDTO) {
+        // 验证数据 & 数据赋值
+        if (StringUtils.isBlank(addDTO.getExtendJson())) {
+            dmpCfgEtlEntity.setExtendJson("{}");
+        } else {
+            // 校验是否json格式
+            if (!JSON.isValid(addDTO.getExtendJson())) {
+                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+            }
+            dmpCfgEtlEntity.setExtendJson(addDTO.getExtendJson());
+        }
+        Integer count = lambdaQuery()
+                .eq(DmpCfgEtlEntity::getExecUrl, dmpCfgEtlEntity.getExecTimeout())
+                .ne(StringUtils.isNotBlank(dmpCfgEtlEntity.getId()), DmpCfgEtlEntity::getId, dmpCfgEtlEntity.getId())
+                .count();
+        if (count > 0) {
+            throw new ServiceException("流程路径配置已存在");
+        }
     }
 
 
@@ -158,7 +181,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
 //        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
 //            throw new ServiceException(ApiError.ERROR_98032);
 //        }
-        // TODO 删除明细数据（如果有明细数据的话）
+        //  删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
         log.info("删除 开始删除etl配置信息主单数据，id：【{}】", id);
@@ -166,7 +189,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         // 删除日志数据
         log.info("删除 开始删除etl配置信息日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "etl配置信息");
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除etl配置信息数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_ETL.getCode(), entity.getId(), "删除etl配置信息数据");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
@@ -180,13 +203,33 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         DmpCfgEtlDTO.ViewDTO data = BeanMapperUtils.map(DmpCfgEtlDTO.ViewDTO.class, dmpCfgEtlEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
    
     private void fillOne(DmpCfgEtlDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+        // restCloud获取流程信息
+        DmpRestCloudDTO.PagingParamDTO paramDTO = new DmpRestCloudDTO.PagingParamDTO();
+        // 判断ExecUrl是否有/？
+        if (data.getExecUrl().startsWith("/")){
+            paramDTO.setFlowUrl(data.getExecUrl());
+        } else {
+            paramDTO.setFlowUrl("/" + data.getExecUrl());
+        }
+        paramDTO.setTaskCfgType("input");
+        PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto = new PagingDTO<>();
+        dto.setCurrPage(1);
+        dto.setPageSize(1);
+        dto.setParams(paramDTO);
+        PagingVO<DmpRestCloudDTO.ListDTO> pagingVO = dmpRestCloudService.flowPaging(dto);
+        if (CollectionUtils.isNotEmpty(pagingVO.getList())) {
+            DmpRestCloudDTO.ListDTO flowData = pagingVO.getList().get(0);
+            data.setFullName(flowData.getFullName());
         }
     }
     
@@ -212,7 +255,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
             updateById(entity);
             // 日志
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】启用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getExecUrl(), "清洗调度");
-            operateLogService.addModuleOperateLog(msg, null, entity.getExecUrl(), "启用【清洗调度】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_ETL.getCode(), entity.getExecUrl(), "启用【清洗调度】数据");
         } else {
             ServiceException.runError("该【清洗调度】数据已启用，无需重复操作");
         }
@@ -226,7 +269,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
             updateById(entity);
             // 日志
             String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】禁用操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getExecUrl(), "清洗调度");
-            operateLogService.addModuleOperateLog(msg, null, entity.getExecUrl(), "禁用【清洗调度】数据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_ETL.getCode(), entity.getExecUrl(), "禁用【清洗调度】数据");
         } else {
             ServiceException.runError("该【清洗调度】数据已禁用，无需重复操作");
         }

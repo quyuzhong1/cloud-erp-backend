@@ -76,38 +76,11 @@ public class MQSyncFsHandler {
         }
 
         //构建三方审批同步实例请求体
-        //审批状态
+        //审批状态 默认审批中
         String approveType = dto.getApproveType();
-        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);//默认审批中
-        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())
-                && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
-            //审核通过并且流程已经完成
-            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
-            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
-        } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())
-                && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
-            //审核不通过并且流程已经完成
-            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
-            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
-        } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {
-            //撤销
-            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.CANCELED);
-            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
-        } else if(Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())){//转交
-
-        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){
-            //强制通过
-            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
-            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
-        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){
-            //强制驳回
-            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
-            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
-        } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){
-            //暂停
-        } else if(Objects.equals(approveType, FsActionStatusEnum.RESTORE.getCode())){
-            //恢复
-        }
+        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);
+        //转换审核装填
+        handlerApproveStatus(dto, approveType, processManagementEntity, syncRecordEntity);
 
         //任务
         List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(dto.getInstanceId());
@@ -204,7 +177,6 @@ public class MQSyncFsHandler {
         CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
         log.info("MQSyncFsInstanceConsumerService 同步三方审批实例响应参数: {}" ,  new Gson().toJson(resp));
 
-        //todo 判断是否成功，无论成功失败都记录推送记录，
         if (!resp.success()) {
             String msg = String.format("同步三方审批实例失败:code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
             log.error("{}", msg);
@@ -215,36 +187,60 @@ public class MQSyncFsHandler {
             }
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
         } else {
-            //获取操作的taskId
-            String curTaskId = dto.getCurTaskId();
-            if(StringUtils.isBlank(curTaskId)){
-                //根据创建时间来判断最近的节点的taskId
-                //使用stream根据创建时间进行倒序
-                processTaskManagementEntities = processTaskManagementEntities.stream().sorted(Comparator.comparing(ProcessTaskManagementEntity::getCreateTime).reversed())
-                        .collect(Collectors.toList());
-                curTaskId = processTaskManagementEntities.get(0).getTaskId();
-            }
-
-            //过滤出当前任务ID的审批记录
-            String finalCurTaskId = curTaskId;
-            processTaskManagementEntities = processTaskManagementEntities.stream()
-                    .filter(item -> item.getTaskId().equals(finalCurTaskId))
-                    .collect(Collectors.toList());
-
             //更新消息
-            cfgApproveSyncSendHandler.updateNotice(dto,curTaskId,processTaskManagementEntities,syncRecordEntity);
+            cfgApproveSyncSendHandler.updateNotice(dto,processTaskManagementEntities,syncRecordEntity);
 
             //消息推送
             cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
 
-            //校验三方审批实例
-            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
-            log.info("MQSyncFsInstanceConsumerService 校验三方审批实例请求参数: {}" ,  new Gson().toJson(checkExternalInstanceReq));
-
-            CheckExternalInstanceResp checkExternalInstanceResp = fsService.checkExternalInstance(checkExternalInstanceReq);
-            log.info("MQSyncFsInstanceConsumerService 校验三方审批实例响应参数: {}" ,  new Gson().toJson(checkExternalInstanceResp));
+//            //校验三方审批实例
+//            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
+//            log.info("MQSyncFsInstanceConsumerService 校验三方审批实例请求参数: {}" ,  new Gson().toJson(checkExternalInstanceReq));
+//
+//            CheckExternalInstanceResp checkExternalInstanceResp = fsService.checkExternalInstance(checkExternalInstanceReq);
+//            log.info("MQSyncFsInstanceConsumerService 校验三方审批实例响应参数: {}" ,  new Gson().toJson(checkExternalInstanceResp));
         }
         return false;
+    }
+
+    /**
+     * 根据审批类型和流程状态处理审批状态，并设置相应的同步记录通知节点。
+     *
+     * @param dto                     同步数据传输对象，用于设置审批状态
+     * @param approveType             审批操作类型（如通过、拒绝、撤销等）
+     * @param processManagementEntity 流程管理实体，包含当前流程的状态信息
+     * @param syncRecordEntity        审批同步记录实体，用于设置通知节点
+     */
+    private static void handlerApproveStatus(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto, String approveType, ProcessManagementEntity processManagementEntity, ApproveSyncRecordEntity syncRecordEntity) {
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())
+                && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
+            // 审核通过并且流程已经完成
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
+            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())
+                && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
+            // 审核不通过并且流程已经完成
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
+            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {
+            // 撤销操作
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.CANCELED);
+            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
+        } else if(Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())){
+            // 转交操作，暂无具体处理逻辑
+        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){
+            // 强制通过操作
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
+            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){
+            // 强制驳回操作
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
+            syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){
+            // 暂停操作，暂无具体处理逻辑
+        } else if(Objects.equals(approveType, FsActionStatusEnum.RESTORE.getCode())){
+            // 恢复操作，暂无具体处理逻辑
+        }
     }
 
     //构建一个失败的记录模板

@@ -19,6 +19,9 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -86,6 +89,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -161,6 +165,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private SampleLedgerQtyValidator sampleLedgerQtyValidator;
     @Autowired
     private SampleLedgerService sampleLedgerService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Autowired
     @Lazy
     private SampleRecipientService _this;
@@ -586,6 +592,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 根据样本领用单
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleRecipientEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
@@ -661,7 +681,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -1183,7 +1203,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()

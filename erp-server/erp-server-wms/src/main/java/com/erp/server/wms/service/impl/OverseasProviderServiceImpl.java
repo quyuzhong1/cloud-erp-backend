@@ -600,7 +600,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(CollUtil.isEmpty(channelCodeList)){
             throw new ServiceException("渠道编码不能为空");
         }
-        String channelCode = channelCodeList.get(0);
 
         List<ThirdWarehouseCalculateFeeReq.SkusDTO> skusDTOS = new ArrayList<>();
         for (ShippingCalculationDTO.SkusDTO skus : params.getSkus()) {
@@ -622,19 +621,21 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
 
         for (String country : toCountryList){
-            list.add(ThirdWarehouseCalculateFeeReq.builder()
-                    .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
-                    .countryCode(country)
-                    .channelCode(channelCode)
-                    .shippingMethod(channelCodeList)
-                    .postCode(params.getPostCode())
-                    .weight(weight)
-                    .length(params.getLength())
-                    .width(params.getWidth())
-                    .height(params.getHeight())
-                    .province(params.getProvince())
-                            .skus(skusDTOS)
-                    .city(params.getCity()).build());
+            for (String channelCode : channelCodeList) {
+                list.add(ThirdWarehouseCalculateFeeReq.builder()
+                        .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
+                        .countryCode(country)
+                        .channelCode(channelCode)
+                        .shippingMethod(channelCodeList)
+                        .postCode(params.getPostCode())
+                        .weight(weight)
+                        .length(params.getLength())
+                        .width(params.getWidth())
+                        .height(params.getHeight())
+                        .province(params.getProvince())
+                        .skus(skusDTOS)
+                        .city(params.getCity()).build());
+            }
         }
         return list;
     }
