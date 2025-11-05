@@ -1985,7 +1985,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         List<AssetAcceptDetailEntity> assetAcceptDetailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO generateAssetAcceptDTO : dtoList) {
             AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
-            BeanUtils.copyProperties(generateAssetAcceptDTO,detailEntity);
+            BeanUtils.copyProperties(generateAssetAcceptDTO,detailEntity,"id");
             detailEntity.setMainId(assetAcceptEntity.getId());
             detailEntity.setSourceDetailId(generateAssetAcceptDTO.getDetailId());
             detailEntity.setSkuId(generateAssetAcceptDTO.getAssetId());
