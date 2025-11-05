@@ -39,5 +39,29 @@
         mian_id, third_field, third_field_type, third_field_value, third_field_required, third_desc, sys_field_name, sys_field, sys_field_type, sys_field_required, sys_field_value
     </sql>
 
+    <!-- 根据主表ID查询详情列表 -->
+    <select id="listByMainId" resultType="com.erp.model.workflow.entity.ApproveTaskDetailEntity">
+        SELECT
+            <include refid="Base_Column_List" />,
+            CASE
+            WHEN entity_code = '' OR entity_code = 'main' THEN 1
+            ELSE 2
+            END as sort_level1,
+            CASE
+            WHEN third_field = '默认值' THEN 2
+            ELSE 1
+            END as sort_level2,
+            CASE
+            WHEN third_field = '' AND sys_field = '' THEN 2
+            ELSE 1
+            END as sort_level3
+        FROM approve_task_detail
+        where is_deleted = false and mian_id = #{mainId}
+        ORDER BY
+        sort_level1,
+        sort_level2,
+        sort_level3
+    </select>
+
 
 </mapper>
