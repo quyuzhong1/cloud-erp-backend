@@ -134,10 +134,6 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
-        /**
-         * 关联SKU详情
-         */
-        private List<AssetPurchaseChangeDetailDTO.AssetDetailRefSkuDTO> assetDetailRefSkuDTOList;
     }
 
     /**
