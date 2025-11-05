@@ -344,7 +344,6 @@ public class AssetDisposalDTO implements Serializable {
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
         /**
@@ -368,7 +367,6 @@ public class AssetDisposalDTO implements Serializable {
         /**
         * 资产组织名称
         */
-        @NotBlank(message = "资产组织名称不能为空")
         private String assetOrgName;
 
         /**

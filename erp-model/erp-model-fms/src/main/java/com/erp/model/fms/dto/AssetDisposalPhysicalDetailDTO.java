@@ -110,7 +110,6 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         /**
          * 来源明细ID
          */
-        @NotBlank(message = "来源明细ID不能为空")
         private String sourceDetailId;
 
         /**
@@ -133,7 +132,6 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         /**
         * 资产位置名称
         */
-        @NotBlank(message = "资产位置名称不能为空")
         private String assetLocationName;
 
         /**
