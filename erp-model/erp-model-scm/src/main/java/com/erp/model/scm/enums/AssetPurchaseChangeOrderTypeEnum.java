@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
  **/
 public enum AssetPurchaseChangeOrderTypeEnum {
 
-    MODIFY_CHANGE("modifyChange", "修改变更"),
-    CHANGE_CHANGE("changeChange","更换变更"),
+    MODIFY_CHANGE("modifyChange", "修模变更"),
+    CHANGE_CHANGE("changeChange","改模变更"),
     OTHER_CHANGE("otherChange","其他变更");
 
     private String code;
