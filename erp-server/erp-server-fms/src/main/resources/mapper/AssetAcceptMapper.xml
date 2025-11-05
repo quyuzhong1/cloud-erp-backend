@@ -24,7 +24,6 @@
        <result column="source_type" property="sourceType" />
        <result column="source_id" property="sourceId" />
        <result column="accept_date" property="acceptDate" />
-       <result column="purchase_code" property="purchaseCode" />
        <result column="is_need_seal" property="isNeedSeal" />
        <result column="accept_org_id" property="acceptOrgId" />
        <result column="accept_org_name" property="acceptOrgName" />
@@ -48,7 +47,7 @@
         update_time,
         version,
         is_deleted,
-        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, source_code, source_type, source_id, accept_date, purchase_code, is_need_seal, accept_org_id, accept_org_name, accept_user_id, accept_user_name, accept_dept_id, accept_dept_name, supplier_id, supplier_name, accept_desc
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, source_code, source_type, source_id, accept_date, is_need_seal, accept_org_id, accept_org_name, accept_user_id, accept_user_name, accept_dept_id, accept_dept_name, supplier_id, supplier_name, accept_desc
     </sql>
 
     <select id="paging" resultType="com.erp.model.fms.dto.AssetAcceptDTO$ListDTO">
@@ -66,7 +65,6 @@
             aa.source_type,
             aa.source_id,
             aa.accept_date,
-            aa.purchase_code,
             aa.is_need_seal,
             aa.accept_org_id,
             aa.accept_org_name,
@@ -114,7 +112,6 @@
             aa.source_type,
             aa.source_id,
             aa.accept_date,
-            aa.purchase_code,
             aa.is_need_seal,
             aa.accept_org_id,
             aa.accept_org_name,

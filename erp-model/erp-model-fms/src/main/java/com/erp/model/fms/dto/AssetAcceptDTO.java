@@ -123,11 +123,6 @@ public class AssetAcceptDTO implements Serializable {
         private LocalDate acceptDate;
 
         /**
-        * 采购单号
-        */
-        private String purchaseCode;
-
-        /**
         * 是否需要盖章
         */
         private Boolean isNeedSeal;
@@ -298,11 +293,6 @@ public class AssetAcceptDTO implements Serializable {
         private LocalDate acceptDate;
 
         /**
-        * 采购单号
-        */
-        private String purchaseCode;
-
-        /**
         * 是否需要盖章
         */
         private Boolean isNeedSeal;
@@ -427,13 +417,6 @@ public class AssetAcceptDTO implements Serializable {
         * 验收日期
         */
         private LocalDate acceptDate;
-
-        /**
-        * 采购单号
-        */
-        @NotBlank(message = "采购单号不能为空")
-        @Size(max = 32,message = "采购单号最大长度不能超过32位")
-        private String purchaseCode;
 
         /**
         * 是否需要盖章

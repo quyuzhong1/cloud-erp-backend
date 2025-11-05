@@ -56,11 +56,23 @@ public class AssetAcceptExcelDTO implements Serializable {
     private LocalDate acceptDate;
 
     /**
-     * 模具采购单号
+     * 来源单号（模具采购单号）
      */
     @ExcelProperty(value = "模具采购单号", index = 2)
     @ColumnWidth(20)
-    private String purchaseCode;
+    private String sourceCode;
+
+    /**
+     * 来源类型（默认为模具采购订单，不需要导入）
+     */
+    @ExcelIgnore
+    private String sourceType;
+
+    /**
+     * 来源ID（根据来源单号查询，不需要导入）
+     */
+    @ExcelIgnore
+    private String sourceId;
 
     /**
      * 是否盖章（字符串格式）
