@@ -1643,7 +1643,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 .map(SampleBorrowDetailEntity::getSkuId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         // 一次性批量查询借入人的所有台账（不限定 useUserId）
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getBorrowUserId());
@@ -1651,7 +1651,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         searchDTO.setType(SampleLedgerTypeEnum.BORROW.getCode());
 
         List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-        
+
         // 构建 userId-useUserId-skuId -> ledgerId 的映射
         Map<String, String> ledgerKeyMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
@@ -1684,12 +1684,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                             (existing, replacement) -> existing
                     ));
         }
-        
+
         // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
-        
+
         for (SampleBorrowDetailEntity detail : detailList) {
             // 从借出人台账中获取使用方ID
             String useUserId = ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
