@@ -343,7 +343,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.MOLD_INFO.getCode(), obj.getId()));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_DISPOSAL.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -362,10 +362,12 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             data.setDisposalCurrencyName(CurrencyEnum.getNameByCode(data.getDisposalCurrency()));
             data.setInvoiceTypeName(AssetDisposalDetailInvoiceTypeEnum.getName(data.getInvoiceType()));
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
             }
         }
     }
@@ -680,7 +682,10 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetDisposalEntity::getId, id)
+                .set(AssetDisposalEntity::getApproveUserId, "")
+                .set(AssetDisposalEntity::getApproveUserName, "")
                 .set(AssetDisposalEntity::getApproveStatus, approveStatus)
+                .set(AssetDisposalEntity::getApproveTime, null)
                 .update(new AssetDisposalEntity());
     }
 
