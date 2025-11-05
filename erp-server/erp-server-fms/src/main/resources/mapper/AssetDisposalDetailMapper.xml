@@ -58,8 +58,7 @@ add.tax_amount AS taxAmount
         <include refid="Base_Column_List"></include>
         FROM
         asset_disposal_detail add
-        where
-        AND add.is_deleted = FALSE
+        where add.is_deleted = FALSE
         <if test="mainId != null and mainId != ''">
             AND add.main_id = #{mainId}
         </if>
