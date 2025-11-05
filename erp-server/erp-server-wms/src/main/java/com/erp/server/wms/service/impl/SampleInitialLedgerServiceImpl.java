@@ -547,6 +547,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 data.setUserName(user.getUserName());
             }
         }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(curApprove)) {
+                data.setApproveUserName(curApprove);
+            }
+        }
     }
 
     /**
@@ -646,10 +660,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 data.setUserName(userName);
             }
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
             }
         }
     }
