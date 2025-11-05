@@ -421,17 +421,17 @@ public class AssetProfitLossController extends BaseController {
      * 获取盘盈盘亏单下推到资产卡片前的列表数据
      * @author wuht
      * @date:  2025-11-04
-     * @param id 盘盈盘亏单主键ID
+     * @param dto 盘盈盘亏单明细ID数组
      * @return ApiResult<List<AssetProfitLossDTO.PushToCardListDTO>>
      */
-    @GetMapping("/getPushToCardList")
+    @PostMapping("/getPushToCardList")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
 //            menuCode = "fms:assetProfitLoss:view",
 //            serviceClass = AssetProfitLossService.class,
-//            keyIdName = "id")
-    public ApiResult<List<AssetProfitLossDTO.PushToCardListDTO>> getPushToCardList(@RequestParam("id") String id) {
-        return success(assetProfitLossService.getPushToCardList(id));
+//            keyIdName = "ids")
+    public ApiResult<List<AssetProfitLossDTO.PushToCardListDTO>> getPushToCardList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(assetProfitLossService.getPushToCardList(dto.getIds()));
     }
 
     /**

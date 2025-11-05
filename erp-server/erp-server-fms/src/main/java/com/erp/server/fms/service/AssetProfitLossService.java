@@ -163,10 +163,10 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
 
     /**
      * 获取盘盈盘亏单下推到资产卡片前的列表数据
-     * @param id 盘盈盘亏单主键ID
+     * @param detailIds 盘盈盘亏单明细ID数组
      * @return 下推前的列表数据
      */
-    List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(String id);
+    List<AssetProfitLossDTO.PushToCardListDTO> getPushToCardList(List<String> detailIds);
 
     /**
      * 下推到资产卡片
