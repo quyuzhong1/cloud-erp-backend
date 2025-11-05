@@ -1465,6 +1465,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             viewGeneratePurchaseOrderDTO.setId(assetPurchaseOrderEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetPurchaseOrderEntity.getCode());
 
+            viewGeneratePurchaseOrderDTO.setDetailId(assetPurchaseOrderDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setAssetId(assetPurchaseOrderDetailEntity.getAssetId());
             viewGeneratePurchaseOrderDTO.setAssetCode(assetPurchaseOrderDetailEntity.getAssetCode());
             viewGeneratePurchaseOrderDTO.setAssetName(assetPurchaseOrderDetailEntity.getAssetName());
@@ -1497,6 +1498,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
         return assetAceptFeign.generateAssetAccept(dtoList);
     }
@@ -1578,6 +1580,32 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), AssetPurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public Boolean rewriteAssetPurchaseOrder(AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO) {
+
+        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getId, rewritePurchaseOrderDTO.getDetailId())
+                .one();
+
+        log.info("资产验收单回写模具采购订单明细id:{},已验收总数:{}",rewritePurchaseOrderDTO.getDetailId(),rewritePurchaseOrderDTO.getAcceptedQty());
+
+        if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) == 0) {
+            assetPurchaseOrderDetailService.lambdaUpdate()
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDate.now())
+                    .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
+                    .update();
+        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) < 0) {
+            assetPurchaseOrderDetailService.lambdaUpdate()
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode())
+                    .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
+                    .update();
+        } else {
+            throw new ServiceException(ApiError.ERROR_100000);
+        }
+        return Boolean.TRUE;
     }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(

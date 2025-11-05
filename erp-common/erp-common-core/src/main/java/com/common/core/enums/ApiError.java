@@ -1834,8 +1834,11 @@ public enum ApiError implements Serializable {
     ERROR__VERIFY_START_DATE(97037,"开始日期不能早于选中数据试算开始日期"),
     ERROR__CALC_SIZE(97038,"一个模板下，以“SKU*店铺”计算，最多支持999999条任务"),
 
-
-
+    /**
+     * FMS 错误
+     * 从100000 开始
+     */
+    ERROR_100000(100000,"资产验收单验收数量超过模具采购单采购数量"),
 
 
 
