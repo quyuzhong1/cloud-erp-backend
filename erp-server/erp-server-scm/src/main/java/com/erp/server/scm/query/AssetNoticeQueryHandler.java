@@ -18,7 +18,7 @@ import java.util.Arrays;
 public class AssetNoticeQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("an.tab".equals(field)){
+        if("tab".equals(field)){
             String status = value.toString();
             if("waitSubmit".equals(status)){
                 super.buildDefaultDTO("an.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getStatus());
