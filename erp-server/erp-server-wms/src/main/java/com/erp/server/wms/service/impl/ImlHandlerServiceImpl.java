@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.utils.RedisUtil;
@@ -312,7 +313,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         imlCancelOutboundReq.setOrderNo(cancelOutboundReq.getOrderCode());
         ImlBaseResp<String> response = imlService.cancelOutboundBill(imlCancelOutboundReq);
         if(!isSuccess(response.getCode())){
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+            return failure(response.getMessage());
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
@@ -335,12 +336,16 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        String type = uploadHandoverFileReq.getDictPlatform();
+        if(PlatformDictEnum.WILDBERRIES.getCode().equals(uploadHandoverFileReq.getDictPlatform())){
+            type = PlatformDictEnum.WILDBERRIES.getName();
+        }
         ImlUploadFileReq imlUploadLabelReq = ImlUploadFileReq.builder()
                 .platformCustomerCode(uploadHandoverFileReq.getOwnerCode())
                 .fileNumber(uploadHandoverFileReq.getFileName())
                 .fileName(uploadHandoverFileReq.getFileName())
                 .filePath(uploadHandoverFileReq.getFileUrl())
-                .type(uploadHandoverFileReq.getDictPlatform())
+                .type(type)
                 .orderList( Arrays.asList(
                         ImlUploadFileReq.OrderListDTO.builder()
                                 .orderNo(uploadHandoverFileReq.getOrderCode())
@@ -348,8 +353,10 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 ))
                 .build();
         ImlBaseResp<String> resp = imlService.uploadFile(imlUploadLabelReq);
-
-        return null;
+        if(!isSuccess(resp.getCode())){
+            return failure(resp.getMessage());
+        }
+        return success(new ThirdWarehouseUploadHandoverFileResponse(uploadHandoverFileReq.getOrderCode()));
     }
 
 }
