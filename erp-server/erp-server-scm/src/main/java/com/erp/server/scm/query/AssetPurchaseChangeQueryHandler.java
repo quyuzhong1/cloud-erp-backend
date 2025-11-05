@@ -16,7 +16,7 @@ public class AssetPurchaseChangeQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("apc.tab".equals(field)){
+        if("tab".equals(field)){
             String status = value.toString();
             if("waitSubmit".equals(status)){
                 super.buildDefaultDTO("apc.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getStatus());
