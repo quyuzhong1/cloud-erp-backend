@@ -694,6 +694,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         operateLogService.addModuleOperateLog(String.format("提交了一个销售退货订单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN.getCode(), entity.getId(), "提交操作");
         //更新审核状态
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoReturnEntity::getApproveUserId,"")
+                .set(SoReturnEntity::getApproveUserName,"")
+                .set(SoReturnEntity::getApproveTime,null)
                 .eq(SoReturnEntity::getId, entity.getId())
                 .update(new SoReturnEntity());
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -823,9 +826,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(ApproveOneDTO dto, SoReturnEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //意见
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnEntity::getApproveUserId, userInfo.getUid())
@@ -838,6 +842,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoReturnEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoReturnEntity::getId, entity.getId())
                     .update(new SoReturnEntity());
         }
@@ -1086,6 +1093,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnEntity::getApproveUserId,"")
+                .set(SoReturnEntity::getApproveUserName,"")
+                .set(SoReturnEntity::getApproveTime,null)
                 .in(SoReturnEntity::getId, ids)
                 .update(new SoReturnEntity());
         //推送到DMP
@@ -1123,6 +1133,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         });
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnEntity::getApproveUserId,"")
+                .set(SoReturnEntity::getApproveUserName,"")
+                .set(SoReturnEntity::getApproveTime,null)
                 .in(SoReturnEntity::getId, ids)
                 .update(new SoReturnEntity());
 

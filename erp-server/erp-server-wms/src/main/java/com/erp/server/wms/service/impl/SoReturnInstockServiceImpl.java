@@ -743,6 +743,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //更新审核状态
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoReturnInstockEntity::getApproveUserId,"")
+                .set(SoReturnInstockEntity::getApproveUserName,"")
+                .set(SoReturnInstockEntity::getApproveTime,null)
                 .eq(SoReturnInstockEntity::getId, entity.getId())
                 .update();
         pushThirdWarehouse(Collections.singletonList(entity.getId()), Collections.singletonList(entity));
@@ -910,9 +913,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(ApproveOneDTO dto, SoReturnInstockEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //意见
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnInstockEntity::getApproveUserId, userInfo.getUid())
@@ -933,6 +937,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoReturnInstockEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnInstockEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnInstockEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoReturnInstockEntity::getId, entity.getId())
                     .update();
         }
@@ -954,6 +961,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 //        }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnInstockEntity::getApproveUserId,"")
+                .set(SoReturnInstockEntity::getApproveUserName,"")
+                .set(SoReturnInstockEntity::getApproveTime,null)
                 .eq(SoReturnInstockEntity::getId, entity.getId())
                 .update();
         //回滚库存
@@ -1003,6 +1013,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         });
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnInstockEntity::getApproveUserId,"")
+                .set(SoReturnInstockEntity::getApproveUserName,"")
+                .set(SoReturnInstockEntity::getApproveTime,null)
                 .in(SoReturnInstockEntity::getId, ids)
                 .update();
         //操作日志

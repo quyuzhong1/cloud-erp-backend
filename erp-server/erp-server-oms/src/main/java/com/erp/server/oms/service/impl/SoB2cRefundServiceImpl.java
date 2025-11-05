@@ -179,6 +179,9 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
 
         //更新审核状态
         lambdaUpdate().set(SoB2cRefundEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoB2cRefundEntity::getApproveUserId,"")
+                .set(SoB2cRefundEntity::getApproveUserName,"")
+                .set(SoB2cRefundEntity::getApproveTime,null)
                 .eq(SoB2cRefundEntity::getId, entity.getId())
                 .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -253,9 +256,10 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(ApproveOneDTO dto, SoB2cRefundEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //意见
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoB2cRefundEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoB2cRefundEntity::getApproveUserId, userInfo.getUid())
@@ -266,6 +270,9 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
         } else {
             //审核不通过
             lambdaUpdate().set(SoB2cRefundEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoB2cRefundEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoB2cRefundEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoB2cRefundEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoB2cRefundEntity::getId, entity.getId())
                     .update();
         }
@@ -318,6 +325,9 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
         log.info("撤销 开始修改售后订单状态，id：【{}】", entity.getId());
         //修改状态为待提交
         lambdaUpdate().set(SoB2cRefundEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoB2cRefundEntity::getApproveUserId,"")
+                .set(SoB2cRefundEntity::getApproveUserName,"")
+                .set(SoB2cRefundEntity::getApproveTime,null)
                 .eq(SoB2cRefundEntity::getId, entity.getId())
                 .update();
 
