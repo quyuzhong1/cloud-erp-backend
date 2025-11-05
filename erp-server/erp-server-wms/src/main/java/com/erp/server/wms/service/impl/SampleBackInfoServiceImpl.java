@@ -661,28 +661,20 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
 
-        //最新审核人：如果approveUserId或approveUserName为空则去查询
-        if (StringUtils.isBlank(viewDTO.getApproveUserId()) || StringUtils.isBlank(viewDTO.getApproveUserName())) {
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BACK_INFO.getCode(), viewDTO.getId()));
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-            if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
-                    .filter(e -> e.getBusinessId().equals(viewDTO.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
-                    .collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(curApproveList)) {
-                    String curApproveId = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
-                        .collect(Collectors.joining(","));
-                    String curApproveName = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
-                        .collect(Collectors.joining(","));
-                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(viewDTO.getApproveUserId())) {
-                        viewDTO.setApproveUserId(curApproveId);
-                    }
-                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(viewDTO.getApproveUserName())) {
-                        viewDTO.setApproveUserName(curApproveName);
-                    }
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BACK_INFO.getCode(), viewDTO.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(viewDTO.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(curApproveList)) {
+                String curApproveName = curApproveList.stream()
+                    .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                    .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApproveName)) {
+                    viewDTO.setApproveUserName(curApproveName);
                 }
             }
         }
@@ -973,11 +965,19 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 data.setWarehouseName(warehouseName != null ? warehouseName : "");
             }
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(CharSequenceUtil.isNotBlank(curApprove) ? curApprove : data.getApproveUserName());
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
             }
         }
     }
