@@ -408,9 +408,22 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         operateLogService.addModuleOperateLogByObj(old, exhibitionOrderEntity, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), exhibitionOrderEntity.getId(), msg);
 
         //这是删除的
+//        if(CollUtil.isNotEmpty(oldDetailList)){
+//            List<String> detailIds = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//            // 处理删除的数据
+//            List<ExhibitionOrderDetailEntity> remove = oldDetailList.stream()
+//                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
+//                    .collect(Collectors.toList());
+//            if(CollUtil.isNotEmpty(remove)){
+//                sampleBorrowDetailService.removeByIds(remove.stream().map(ExhibitionOrderDetailEntity::getId).collect(Collectors.toList()));
+//                //添加日志
+//                List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
+//                operateLogService.batchAddModuleOperateLog(addOrUpdateDTO.getClientType().getName()+"删除SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), removePairList, "编辑操作");
+//            }
+//        }
         List<String> deleteIdList = getDeleteIds(updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList()), oldDetailList);
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            this.removeByIds(deleteIdList);
+            exhibitionOrderDetailService.removeByIds(deleteIdList);
             List<ExhibitionOrderDetailEntity> removeList = oldDetailList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
             //删除日志
             List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(id, obj.getSkuNo())).collect(Collectors.toList());

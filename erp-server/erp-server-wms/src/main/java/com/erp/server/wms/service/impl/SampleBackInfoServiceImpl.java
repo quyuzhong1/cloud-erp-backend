@@ -1500,62 +1500,42 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
         SampleBackInfoDTO.PagingParamDTO searchParam = new SampleBackInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(dto.getPermissionSql());
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 使用一个SQL查询获取所有状态的统计数量
         List<SampleBackInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
 
-        // 移动端特殊处理：合并待提交和不通过
+        // 将查询结果转换为Map，方便后续取值
+        Map<String, Integer> countMap = list.stream()
+            .collect(Collectors.toMap(
+                SampleBackInfoDTO.TabListDTO::getTabFlag, 
+                SampleBackInfoDTO.TabListDTO::getCount,
+                (v1, v2) -> v1  // 如果有重复key，保留第一个
+            ));
+
+        // 移动端特殊处理：固定返回三个标签（待提交/不通过、审核中、已审核）
         List<SampleBackInfoDTO.TabListDTO> appList = new ArrayList<>();
         
-        // 计算待提交/不通过的总数
-        int waitSubmitCount = 0;
-        int rejectCount = 0;
-        SampleBackInfoDTO.TabListDTO waitSubmitItem = null;
-        SampleBackInfoDTO.TabListDTO rejectItem = null;
+        // 1. 待提交/不通过（合并）
+        int waitSubmitCount = countMap.getOrDefault("waitSubmit", 0);
+        int rejectCount = countMap.getOrDefault("reject", 0);
+        SampleBackInfoDTO.TabListDTO mergedItem = new SampleBackInfoDTO.TabListDTO();
+        mergedItem.setTabFlag("waitSubmitOrReject");
+        mergedItem.setTabFlagName("待提交/不通过");
+        mergedItem.setCount(waitSubmitCount + rejectCount);
+        appList.add(mergedItem);
         
-        for (SampleBackInfoDTO.TabListDTO item : list) {
-            if ("waitSubmit".equals(item.getTabFlag())) {
-                waitSubmitCount = item.getCount();
-                waitSubmitItem = item;
-            } else if ("reject".equals(item.getTabFlag())) {
-                rejectCount = item.getCount();
-                rejectItem = item;
-            }
-        }
+        // 2. 审核中
+        SampleBackInfoDTO.TabListDTO approveIngItem = new SampleBackInfoDTO.TabListDTO();
+        approveIngItem.setTabFlag("approveIng");
+        approveIngItem.setTabFlagName("审核中");
+        approveIngItem.setCount(countMap.getOrDefault("approveIng", 0));
+        appList.add(approveIngItem);
         
-        // 创建合并后的待提交/不通过标签
-        if (waitSubmitItem != null || rejectItem != null) {
-            SampleBackInfoDTO.TabListDTO mergedItem = new SampleBackInfoDTO.TabListDTO();
-            mergedItem.setTabFlag("waitSubmitOrReject");
-            mergedItem.setTabFlagName("待提交/不通过");
-            mergedItem.setCount(waitSubmitCount + rejectCount);
-            appList.add(mergedItem);
-        }
-        
-        // 添加其他标签（审核中、已审核）
-        for (SampleBackInfoDTO.TabListDTO item : list) {
-            if (!"waitSubmit".equals(item.getTabFlag()) && !"reject".equals(item.getTabFlag())) {
-                // 设置正确的标签名称
-                if ("approveIng".equals(item.getTabFlag())) {
-                    item.setTabFlagName("审核中");
-                } else if ("approve".equals(item.getTabFlag())) {
-                    item.setTabFlagName("已审核");
-                } else {
-                    item.setTabFlagName(ApproveStatusEnum.getName(item.getTabFlag()));
-                }
-                appList.add(item);
-            }
-        }
-
-        // 按照移动端指定顺序排序：待提交/不通过、审核中、已审核
-        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "approve");
-        appList.sort((a, b) -> {
-            int indexA = orderList.indexOf(a.getTabFlag());
-            int indexB = orderList.indexOf(b.getTabFlag());
-            if (indexA == -1) indexA = Integer.MAX_VALUE;
-            if (indexB == -1) indexB = Integer.MAX_VALUE;
-            return Integer.compare(indexA, indexB);
-        });
+        // 3. 已审核
+        SampleBackInfoDTO.TabListDTO approveItem = new SampleBackInfoDTO.TabListDTO();
+        approveItem.setTabFlag("approve");
+        approveItem.setTabFlagName("已审核");
+        approveItem.setCount(countMap.getOrDefault("approve", 0));
+        appList.add(approveItem);
 
         return appList;
     }

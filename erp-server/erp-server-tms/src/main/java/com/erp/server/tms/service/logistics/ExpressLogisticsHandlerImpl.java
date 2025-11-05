@@ -22,6 +22,7 @@ import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -45,6 +46,15 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     ExpressShipperService expressShipperService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
+
+    @Value("${tms.sf-express.templateCode}")
+    private String templateCode;
+
+    @Value("${tms.sf-express.version}")
+    private String version;
+
+    @Value("${tms.sf-express.fileType}")
+    private String fileType;
 
     /**
      * 创建订单
@@ -408,11 +418,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             //支持单个取消
             OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
 //                    .templateCode("fm_76130_standard_{clientcode}")
-                    .templateCode("fm_100_vips_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
+                    .templateCode(templateCode + logisticsGetLabelVO.getAuthMap().get("clientId"))
 //                    .templateCode("fm_210_standard_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
                     .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsGetLabelVO.getTransportNo()).build()))
-                    .version("2.0")
-                    .fileType("pdf")
+                    .version(version)
+                    .fileType(fileType)
                     .sync(true)
                     .build();
             try {

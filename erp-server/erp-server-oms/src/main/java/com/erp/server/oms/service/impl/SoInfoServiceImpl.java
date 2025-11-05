@@ -46,6 +46,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
@@ -105,6 +106,7 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -245,6 +247,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private FileTemplateFeign fileTemplateFeign;
 
+    @Autowired
     @Resource
     private LogisticsFeign logisticsFeign;
 
@@ -3678,6 +3681,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
+                detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
+                detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
@@ -3752,6 +3757,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
+                detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
+                detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -3934,6 +3941,30 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //更新明细表平台订单Id
         soDetailService.updatePlatformOrderIdByMainId(soInfoEntity.getId(),dto.getPlatformDetailIdList());
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateIsDeclare(SoB2cDTO.UpdateIsDeclareDTO dto) {
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(dto.getIds());
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
+        List<SoInfoEntity> updateList = new ArrayList<>();
+        soInfoEntityList.forEach(v->{
+            if(!v.getIsDeclare().equals(dto.getIsDeclare())){
+                String content = String.format("将销售订单【%s】的是否报关修改为【%s】",v.getCode(), dto.getIsDeclare() ? "是" : "否");
+                OperateLogDTO.AddModuleOperateLogDTO logDto = new OperateLogDTO.AddModuleOperateLogDTO(content,ModuleTypeEnum.SO.getCode(),v.getId(),"是否报关");
+                operateLogList.add(logDto);
+                v.setIsDeclare(dto.getIsDeclare());
+                updateList.add(v);
+            }
+        });
+        if(CollUtil.isNotEmpty(operateLogList)){
+            operateLogService.batchAddModuleOperateLog(operateLogList);
+        }
+        if(CollUtil.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        return true;
     }
 
     /**

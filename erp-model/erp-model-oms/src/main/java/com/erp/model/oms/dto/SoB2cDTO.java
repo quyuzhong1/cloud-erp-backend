@@ -35,6 +35,19 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateIsDeclareDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
+    }
+
 
     @Data
     @NoArgsConstructor
