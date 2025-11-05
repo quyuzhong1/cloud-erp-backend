@@ -923,7 +923,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         return Boolean.TRUE;
     }
 
-    void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
+    public void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
 
         List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
                 .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
@@ -938,6 +938,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             int totalAcceptedQty = sameSoureDetailList.stream()
                     .mapToInt(obj -> obj.getAcceptedQty())
                     .sum();
+            totalAcceptedQty += detailEntity.getAcceptQty();
             rewritePurchaseOrderDTO.setDetailId(detailEntity.getSourceDetailId());
             rewritePurchaseOrderDTO.setAcceptedQty(new BigDecimal(totalAcceptedQty));
             assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO);
