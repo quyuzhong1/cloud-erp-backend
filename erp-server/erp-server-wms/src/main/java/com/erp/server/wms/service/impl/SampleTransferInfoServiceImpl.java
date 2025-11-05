@@ -889,6 +889,20 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(curApprove)) {
+                data.setApproveUserName(curApprove);
+            }
+        }
     }
 
     /**
@@ -928,7 +942,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleTransferInfoEntity::getId, id)
+        .set(SampleTransferInfoEntity::getApproveUserId, "")
+        .set(SampleTransferInfoEntity::getApproveUserName, "")
         .set(SampleTransferInfoEntity::getApproveStatus, approveStatus)
+        .set(SampleTransferInfoEntity::getApproveTime, null)
         .update(new SampleTransferInfoEntity());
     }
 
@@ -962,13 +979,15 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             // 设置作废状态名称
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             
-            // 设置最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())&&StringUtils.isBlank(data.getApproveUserName())) {
+            // 最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream()
                         .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
                         .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
                         .collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
             }
         }
     }
