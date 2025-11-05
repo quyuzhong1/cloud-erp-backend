@@ -905,7 +905,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         }
         
         lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
-        .set(SampleBackInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleBackInfoEntity::getApproveUserId, "")
+                .set(SampleBackInfoEntity::getApproveUserName, "")
+                .set(SampleBackInfoEntity::getApproveStatus, approveStatus)
+                .set(SampleBackInfoEntity::getApproveTime, null)
         .update(new SampleBackInfoEntity());
     }
 

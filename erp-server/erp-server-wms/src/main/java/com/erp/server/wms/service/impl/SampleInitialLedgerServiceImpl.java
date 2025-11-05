@@ -621,7 +621,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleInitialLedgerEntity::getId, id)
-        .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveUserId, "")
+                .set(SampleInitialLedgerEntity::getApproveUserName, "")
+                .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveTime, null)
         .update(new SampleInitialLedgerEntity());
     }
 

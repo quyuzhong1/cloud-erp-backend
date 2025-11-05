@@ -1269,7 +1269,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleRecipientEntity::getId, id)
-        .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveUserId, "")
+                .set(SampleRecipientEntity::getApproveUserName, "")
+                .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveTime, null)
         .update(new SampleRecipientEntity());
     }
 
