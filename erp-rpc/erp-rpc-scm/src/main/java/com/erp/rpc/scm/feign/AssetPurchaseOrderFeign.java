@@ -45,4 +45,13 @@ public interface AssetPurchaseOrderFeign {
      */
     @PostMapping("/feign/assetPurchaseOrder/getByCode")
     ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> getByCode(@RequestBody String code);
+
+    /**
+     * 回写采购订单验收状态
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/feign/assetPurchaseOrder/rewriteAssetPurchaseOrder")
+    ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO);
 }

@@ -64,6 +64,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static com.common.core.controller.vo.ApiResult.success;
 
 /**
@@ -916,8 +918,31 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
+        rewriteAssetPurchaseOrder(entity);
 
         return Boolean.TRUE;
+    }
+
+    void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
+
+        List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+                .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
+                .list();
+        for (AssetAcceptDetailEntity detailEntity : detailList) {
+            AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO = new AssetPurchaseOrderDTO.rewritePurchaseOrderDTO();
+            //计算同一采购明细行的已验收数量
+            List<AssetAcceptDetailEntity> sameSoureDetailList = assetAcceptDetailService.lambdaQuery()
+                    .eq(AssetAcceptDetailEntity::getSourceDetailId, detailEntity.getSourceDetailId())
+                    .list();
+
+            int totalAcceptedQty = sameSoureDetailList.stream()
+                    .mapToInt(obj -> obj.getAcceptedQty())
+                    .sum();
+            rewritePurchaseOrderDTO.setDetailId(detailEntity.getSourceDetailId());
+            rewritePurchaseOrderDTO.setAcceptedQty(new BigDecimal(totalAcceptedQty));
+            assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO);
+        }
+
     }
 
     @Override
@@ -1962,7 +1987,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
             BeanUtils.copyProperties(generateAssetAcceptDTO,detailEntity);
             detailEntity.setMainId(assetAcceptEntity.getId());
-            detailEntity.setSourceDetailId(generateAssetAcceptDTO.getId());
+            detailEntity.setSourceDetailId(generateAssetAcceptDTO.getDetailId());
             detailEntity.setSkuId(generateAssetAcceptDTO.getAssetId());
             detailEntity.setSkuNo(generateAssetAcceptDTO.getAssetCode());
             detailEntity.setProductName(generateAssetAcceptDTO.getAssetName());

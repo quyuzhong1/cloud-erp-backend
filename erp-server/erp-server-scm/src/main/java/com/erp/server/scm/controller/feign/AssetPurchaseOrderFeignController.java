@@ -58,5 +58,11 @@ public class AssetPurchaseOrderFeignController extends BaseController {
     public ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> getByCode(@RequestBody String code) {
         return success(assetPurchaseOrderService.getByCode(code));
     }
+
+
+    @PostMapping("/feign/assetPurchaseOrder/rewriteAssetPurchaseOrder")
+    public ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO){
+        return success(assetPurchaseOrderService.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO));
+    }
 }
 

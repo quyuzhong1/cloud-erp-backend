@@ -209,4 +209,6 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
 
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
+    Boolean rewriteAssetPurchaseOrder(AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO);
+
 }
