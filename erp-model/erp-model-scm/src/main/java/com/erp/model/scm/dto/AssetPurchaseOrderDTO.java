@@ -998,6 +998,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String id;
 
         /**
+         * 资产采购单明细id
+         */
+        private String detailId;
+
+        /**
          * 资产采购单code
          */
         private String code;
@@ -1082,6 +1087,12 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 资产采购单明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
 
         /**
          * 资产采购单编码
@@ -1350,4 +1361,20 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String contactTelNumber;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class rewritePurchaseOrderDTO{
+
+        /**
+         * 采购明细id
+         */
+        private String detailId;
+
+        /**
+         * 已验收总数
+         */
+        private BigDecimal acceptedQty;
+
+    }
 }
