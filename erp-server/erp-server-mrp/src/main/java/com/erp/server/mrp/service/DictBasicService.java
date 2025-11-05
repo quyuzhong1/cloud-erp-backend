@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.DictBasicDTO;
 import com.erp.model.mrp.entity.DictBasicEntity;
@@ -16,7 +17,9 @@ import java.util.List;
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
 
-
+	boolean saveJsonObject(JSONObject jsonObject);
+	
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
 
     /**
     * 修改

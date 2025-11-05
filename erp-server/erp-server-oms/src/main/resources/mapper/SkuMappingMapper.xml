@@ -330,6 +330,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
@@ -430,7 +433,9 @@
         <if test="params.isExpire != null">
             AND sm.is_expire = #{params.isExpire}
         </if>
-
+        <if test="params.authId != null and params.authId != ''">
+            and li.auth_id = #{params.authId}
+        </if>
         <!--sku mapping id-->
         <if test="params.skuMappingIds !=null and params.skuMappingIds.size>0">
             AND sm.id IN
@@ -768,7 +773,7 @@
         SELECT
         sm.ID,
         sm.shop_id,
-        si.customer_id,
+        li.auth_id as customerId,
         sm.listing_id,
         sm.dict_platform,
         sm.platform_name,
@@ -777,16 +782,19 @@
         sm.product_name AS skuName,
         li.platform_sku_no,
         li.platform_sku_name
-        from
-        sku_mapping sm
-        INNER JOIN shop_info si ON sm.shop_id = si.ID  AND si.is_deleted =FALSE
-        INNER JOIN listing_info li ON sm.listing_id = li.ID AND li.is_deleted = FALSE
-        INNER JOIN customer_info ci ON si.customer_id = ci.ID AND ci.is_deleted = FALSE
+        FROM sku_mapping sm
+        INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE
             sm.is_deleted=FALSE
         AND sm.is_expire=FALSE
         <if test="params.cutomerId != null and params.cutomerId != ''">
-            and si.customer_id = #{params.cutomerId}
+            and li.auth_id = #{params.cutomerId}
+        </if>
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        <if test="params.matchResult != null and params.matchResult!=''">
+            AND li.match_result = #{params.matchResult}
         </if>
         <if test="params.skuIdList !=null and params.skuIdList.size>0">
             AND sm.product_sku_id IN

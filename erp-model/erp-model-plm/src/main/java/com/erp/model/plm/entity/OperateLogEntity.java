@@ -1,9 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.common.core.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
@@ -15,12 +13,16 @@ import java.time.LocalDateTime;
  * @date 2022/12/5 17:17
  */
 @Data
-@TableName("sys_log")
+@TableName("operate_log")
 @Accessors(chain = true)
-public class SysLogEntity {
+public class OperateLogEntity {
 
     private static final long serialVersionUID = 1L;
-
+    /**
+     * 类型
+     */
+    @TableField("module_type")
+    private String moduleType;
     /**
      * 类路径
      */
@@ -123,10 +125,4 @@ public class SysLogEntity {
      */
     @TableField(exist = false)
     private String description;
-
-    /**
-     * 类型
-     */
-    @TableField("module_type")
-    private String moduleType;
 }

@@ -171,6 +171,7 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PAYABLE_INFO("145", "应付单"),
 
+    DICT_BASIC("150", "字典数据"),
     // DMP配置
     DMP_BASIC_SYSTEM("1000", "平台管理"),
     DMP_CFG_INPUT("1001", "拉取配置"),

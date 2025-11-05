@@ -13,8 +13,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.server.wms.query.SampleLedgerQueryHandler;
 import com.erp.server.wms.service.SampleLedgerService;
+import com.erp.server.wms.service.SampleLedgerFlowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,6 +44,9 @@ public class SampleLedgerFeignController extends BaseController {
     @Resource
     private SampleLedgerService sampleLedgerService;
 
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
+
     /**
      * 添加产品
      * @author jack
@@ -65,6 +70,18 @@ public class SampleLedgerFeignController extends BaseController {
     @PostMapping("/listLedgerAll")
     public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerAll(@RequestBody SampleLedgerDTO.SearchAllDTO dto) {
         return sampleLedgerService.listLedgerAll(dto);
+    }
+
+    /**
+     * 添加样品台账流水
+     * @author wuhaotian
+     * @date: 2025-10-21
+     * @param addDTO 台账流水新增参数
+     * @return 是否成功
+     */
+    @PostMapping("/addSampleLedgerFlow")
+    public Boolean addSampleLedgerFlow(@RequestBody SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+        return sampleLedgerFlowService.addSampleLedgerFlow(addDTO);
     }
 
 }

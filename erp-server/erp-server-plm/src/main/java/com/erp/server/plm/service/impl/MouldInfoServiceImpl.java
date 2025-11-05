@@ -99,7 +99,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private MouldDetailService mouldDetailService;
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private BasicCategoryService basicCategoryService;
@@ -297,17 +297,17 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         logDTO.setProjectNo(dto.getProjectNo());
         logDTO.setCategoryName(categoryMap.get(dto.getCategoryId()));
         logDTO.setProductManagerName(userMap.get(dto.getProductManagerId()));
-        sysLogService.addSysLogByUpdate(oldLogDTO, logDTO, String.valueOf(MouldInfoDTO.LogDTO.class), id, "", "模具信息");
+        operateLogService.addSysLogByUpdate(oldLogDTO, logDTO, String.valueOf(MouldInfoDTO.LogDTO.class), id, "", "模具信息");
 
         List<MouldDetailDTO.ViewDTO> viewDTOList = Optional.ofNullable(view.getDetailList()).orElse(new ArrayList<>()).stream()
                 .filter(v -> dto.getDetailList().stream().noneMatch(e -> Objects.equals(v.getId(), e.getId())))
                 .collect(Collectors.toList());
         for (MouldDetailDTO.ViewDTO viewDTO : viewDTOList) {
-            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了明细{}", viewDTO.getMouldNo()), String.valueOf(MouldDetailDTO.ViewDTO.class), id, "");
+            operateLogService.addSysLogBySave(CharSequenceUtil.format("删除了明细{}", viewDTO.getMouldNo()), String.valueOf(MouldDetailDTO.ViewDTO.class), id, "");
         }
         for (MouldDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
             if (ObjectUtils.isEmpty(updateDTO.getId())) {
-                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getMouldNo()), String.valueOf(MouldDetailDTO.UpdateDTO.class), id, "");
+                operateLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getMouldNo()), String.valueOf(MouldDetailDTO.UpdateDTO.class), id, "");
             } else {
                 MouldDetailDTO.ViewDTO viewDTO = Optional.ofNullable(view.getDetailList()).orElse(new ArrayList<>())
                         .stream()
@@ -373,7 +373,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                             .collect(Collectors.joining(","));
                     logDetailDTO.setRefProductList(refProductList);
 
-                    sysLogService.addSysLogByUpdate(oldDetailDTO, logDetailDTO, String.valueOf(MouldInfoDTO.LogDetailDTO.class), id, "", CharSequenceUtil.format("模具明细信息{}", updateDTO.getMouldNo()));
+                    operateLogService.addSysLogByUpdate(oldDetailDTO, logDetailDTO, String.valueOf(MouldInfoDTO.LogDetailDTO.class), id, "", CharSequenceUtil.format("模具明细信息{}", updateDTO.getMouldNo()));
                 }
             }
         }
@@ -381,11 +381,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .filter(v -> dto.getDetailList().stream().noneMatch(e -> Objects.equals(v.getId(), e.getId())))
                 .collect(Collectors.toList());
         for (MouldDocInfoDTO.ViewDTO viewDTO : docDTOList) {
-            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了文件{}", viewDTO.getDocName()), String.valueOf(MouldDocInfoDTO.ViewDTO.class), id, "");
+            operateLogService.addSysLogBySave(CharSequenceUtil.format("删除了文件{}", viewDTO.getDocName()), String.valueOf(MouldDocInfoDTO.ViewDTO.class), id, "");
         }
         for (MouldDocInfoDTO.UpdateDTO updateDTO : dto.getDocList()) {
             if (ObjectUtils.isEmpty(updateDTO.getId())) {
-                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了文件{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
+                operateLogService.addSysLogBySave(CharSequenceUtil.format("新增了文件{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
             } else {
                 MouldDocInfoDTO.ViewDTO viewDTO = Optional.ofNullable(view.getDocList()).orElse(new ArrayList<>())
                         .stream()
@@ -407,7 +407,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     docDTO.setDocName(updateDTO.getDocName());
                     docDTO.setExtLink(updateDTO.getExtLink());
                     docDTO.setRemark(updateDTO.getRemark());
-                    sysLogService.addSysLogByUpdate(oldDocDTO, docDTO, String.valueOf(MouldInfoDTO.LogDocDTO.class), id, "", "模具文档信息");
+                    operateLogService.addSysLogByUpdate(oldDocDTO, docDTO, String.valueOf(MouldInfoDTO.LogDocDTO.class), id, "", "模具文档信息");
                 }
             }
         }
@@ -482,7 +482,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus(), null);
         // 记录操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具");
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         //发送通知
         Map<String, Object> data = new HashMap<>();
         FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
@@ -616,7 +616,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         workflowFeign.revokeProcess(revokeDTO);
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
         String msg = CharSequenceUtil.format("模具【{}】撤销流程", entity.getMouldCategoryCode());
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "撤销流程");
     }
 
@@ -636,7 +636,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         approveProcess(entity, dto);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具", approveType.getName(), dto.getComment());
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
 
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -697,7 +697,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         }
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
         String msg = CharSequenceUtil.format("模具【{}】反审核流程", entity.getMouldCategoryCode());
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "反审核流程");
     }
 
@@ -722,7 +722,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具", remark);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.INVALID);
     }
 
@@ -739,7 +739,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         mouldDetailService.updateById(detail);
         // 操作日志备注
         String msg = CharSequenceUtil.format("模具【{}】更新了备注，由【{}】更新为【{}】", detail.getMouldNo(), detail.getRemark(), remark);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(detail.getId(), detail.getMouldNo(), OperationTypeEnum.UPDATE);
     }
 
@@ -770,7 +770,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldStoreLocationDTO.ChangeDTO oldLocation = BeanMapperUtils.map(MouldStoreLocationDTO.ChangeDTO.class, old);
         oldLocation.setWarehouseName(warehouseMap.get(oldLocation.getWarehouseId()));
         oldLocation.setWarehouseLocationName(getLocationName(oldLocation.getWarehouseId(), oldLocation.getWarehouseLocation(), locationList));
-        sysLogService.addSysLogByUpdate(oldLocation, newLocation, String.valueOf(MouldStoreLocationDTO.ChangeDTO.class), entity.getId(), "", CharSequenceUtil.format("模具【{}】的存放位置", detail.getMouldNo()));
+        operateLogService.addSysLogByUpdate(oldLocation, newLocation, String.valueOf(MouldStoreLocationDTO.ChangeDTO.class), entity.getId(), "", CharSequenceUtil.format("模具【{}】的存放位置", detail.getMouldNo()));
         mouldDetailService.updateById(detail);
         return BatchResultDTO.success(detail.getId(), detail.getMouldNo(), OperationTypeEnum.UPDATE);
     }
@@ -797,7 +797,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         mouldDetailService.updateById(detail);
         // 操作日志备注
         String msg = CharSequenceUtil.format("模具【{}】更新了启用时间，由【{}】更新为【{}】", detail.getMouldNo(), detail.getEnableDate(), enableTime);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(detail.getId(), detail.getMouldNo(), OperationTypeEnum.UPDATE);
     }
 
