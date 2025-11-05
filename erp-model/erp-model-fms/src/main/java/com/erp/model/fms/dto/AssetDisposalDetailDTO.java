@@ -139,13 +139,11 @@ public class AssetDisposalDetailDTO implements Serializable {
         /**
         * 来源ID
         */
-        @NotBlank(message = "来源ID不能为空")
         private String sourceId;
 
         /**
         * 来源单号
         */
-        @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
 
 
