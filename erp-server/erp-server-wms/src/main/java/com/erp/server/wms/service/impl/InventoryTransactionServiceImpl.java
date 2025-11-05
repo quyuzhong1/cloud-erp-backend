@@ -656,6 +656,14 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 	}
 	
 	private List<CheckInventoryDTO> checkDbInventorySame(List<String> inventoryIds) {
+		return this.checkInventorySame(inventoryIds, true);
+	}
+	
+	private List<CheckInventoryDTO> checkRedisInventorySame(List<String> inventoryIds) {
+		return this.checkInventorySame(inventoryIds, false);
+	}
+	
+	private List<CheckInventoryDTO> checkInventorySame(List<String> inventoryIds , boolean isDb) {
 		List<CheckInventoryDTO> checkInventoryList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(inventoryIds)) {
 			for(String inventoryId : inventoryIds) {
@@ -665,8 +673,13 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			}
 		}
     	int i = 0;
-    	while(i < 3) {
-    		checkInventoryList = baseMapper.queryDbInventoryCheckSame(checkInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
+    	while(i < 5) {
+    		List<String> ids = checkInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList());
+    		if(isDb) {
+				checkInventoryList = baseMapper.queryDbInventoryCheckSame(ids);
+    		}else {
+    			checkInventoryList = this.inventoryCheckRedisSame(ids);
+    		}
     		if(CollUtil.isEmpty(checkInventoryList)) {
     			break;
     		}else {
@@ -677,22 +690,8 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	return checkInventoryList;
 	}
 	
-	private List<CheckInventoryDTO> checkRedisInventorySame(List<String> inventoryIds) {
+	private List<CheckInventoryDTO> inventoryCheckRedisSame(List<String> inventoryIds){
 		Integer pageSize = 1000;
-    	List<CheckInventoryDTO> redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , inventoryIds);
-		
-		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
-			int i = 0;
-			while(i < 3) {
-				redisCheckInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
-				redisCheckInventoryList = this.inventoryCheckRedisSame(pageSize , redisCheckInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList()));
-				i = i + 1;
-			}
-		}
-		return redisCheckInventoryList;
-	}
-	
-	private List<CheckInventoryDTO> inventoryCheckRedisSame(Integer pageSize , List<String> inventoryIds){
 		List<CheckInventoryDTO> redisCheckInventoryList = new ArrayList<>();
     	String lastInventoryId = "0";
     	while(true) {
