@@ -334,29 +334,16 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
     private DmpPushTaskEntity saveTask (AssetPurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_CHANGE.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();
         if(CollUtil.isEmpty(list)) {
-            //添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_CHANGE.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_CHANGE_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            taskFeignDTO.setSyncOperate(operate);
-            taskFeignDTO.setParentId(entity.getSourceId());
-            return dmpMqFeign.saveTask(taskFeignDTO);
+            throw new ServiceException(ApiError.ERROR_CFG_SETTING_NOTFOUND,SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
         }
-
         ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
         scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_CHANGE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
         scmPushMsgEntity.setSourceId(entity.getId());
         scmPushMsgEntity.setSourceCode(entity.getCode());
         scmPushMsgEntity.setSyncOperate(operate);
@@ -425,7 +412,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             resultMap.put("purchaseOrgCode", purchaseOrgCode);
         }
         //变更原因
-        resultMap.put("changeReason","资产采购订单变更");
+        resultMap.put("changeReason",entity.getChangeReason());
 
         //获取用户部门id
         if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId())) {

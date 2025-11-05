@@ -193,18 +193,21 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         /**
         * 原采购数量
         */
+        @NotNull(message = "原采购数量不能为空")
         @Digits(integer = 12, fraction = 4, message = "原采购数量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldPurchaseQty;
 
         /**
         * 原含税单价
         */
+        @NotNull(message = "原含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "原含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldTaxPrice;
 
         /**
         * 原价税合计
         */
+        @NotNull(message = "原价税合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "原价税合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal oldTotalAmount;
 
@@ -217,12 +220,13 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         * 新采购数量
         */
         @Digits(integer = 12, fraction = 4, message = "新采购数量整数位不能超过12位，小数位不能超过4位")
-        @NotNull(message = "采购数量不能为空")
+        @NotNull(message = "新采购数量不能为空")
         private BigDecimal purchaseQty;
 
         /**
         * 新含税单价
         */
+        @NotNull(message = "新含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "新含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal taxPrice;
 

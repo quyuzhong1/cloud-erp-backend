@@ -599,7 +599,7 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewGeneratePurchaseChangeOrderDTO{
+    public static class ViewGeneratePurchaseChangeDTO{
 
         /**
          * 主键id
