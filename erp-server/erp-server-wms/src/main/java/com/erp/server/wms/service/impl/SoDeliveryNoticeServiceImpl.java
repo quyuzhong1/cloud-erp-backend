@@ -604,6 +604,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //更新审核状态
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
                 .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -795,6 +798,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
                 .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
 //        //回滚库存
@@ -835,6 +841,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         });
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
 

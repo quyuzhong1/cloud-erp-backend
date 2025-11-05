@@ -450,6 +450,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         //更新审核状态
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
                 .eq(SoReturnReceiveEntity::getId, entity.getId())
                 .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -571,9 +574,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(ApproveOneDTO dto, SoReturnReceiveEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //意见
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -587,6 +591,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnReceiveEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnReceiveEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoReturnReceiveEntity::getId, entity.getId())
                     .update();
         }
@@ -708,6 +715,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
                 .eq(SoReturnReceiveEntity::getId, entity.getId())
                 .update();
         //操作日志
@@ -742,6 +752,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         //修改状态为待提交
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
                 .in(SoReturnReceiveEntity::getId, ids)
                 .update();
         //操作日志

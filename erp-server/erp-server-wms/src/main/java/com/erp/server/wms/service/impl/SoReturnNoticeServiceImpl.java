@@ -573,6 +573,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         operateLogService.addModuleOperateLog(String.format("提交了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "提交操作");
         //更新审核状态
         lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoReturnNoticeEntity::getApproveUserId,"")
+                .set(SoReturnNoticeEntity::getApproveUserName,"")
+                .set(SoReturnNoticeEntity::getApproveTime,null)
                 .eq(SoReturnNoticeEntity::getId, entity.getId())
                 .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -694,9 +697,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(ApproveOneDTO dto, SoReturnNoticeEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //意见
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnNoticeEntity::getApproveUserId, userInfo.getUid())
@@ -707,6 +711,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoReturnNoticeEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnNoticeEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnNoticeEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoReturnNoticeEntity::getId, entity.getId())
                     .update();
         }
@@ -730,6 +737,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnNoticeEntity::getApproveUserId,"")
+                .set(SoReturnNoticeEntity::getApproveUserName,"")
+                .set(SoReturnNoticeEntity::getApproveTime,null)
                 .eq(SoReturnNoticeEntity::getId, entity.getId())
                 .update();
 
@@ -764,6 +774,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         });
         //修改状态为待提交
         lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnNoticeEntity::getApproveUserId,"")
+                .set(SoReturnNoticeEntity::getApproveUserName,"")
+                .set(SoReturnNoticeEntity::getApproveTime,null)
                 .in(SoReturnNoticeEntity::getId, ids)
                 .update();
         //操作日志

@@ -497,6 +497,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //更新审核状态
         lambdaUpdate().set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoOutstockEntity::getApproveUserName,"")
+                .set(SoOutstockEntity::getApproveTime,null)
                 .eq(SoOutstockEntity::getId, entity.getId())
                 .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
