@@ -1500,7 +1500,18 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
-        return assetAceptFeign.generateAssetAccept(dtoList);
+        //按单分组下推
+        List<List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO>> groupList = dtoList.stream()
+                .collect(Collectors.groupingBy(
+                        AssetPurchaseOrderDTO.GenerateAssetAcceptDTO::getId
+                ))
+                .values()
+                .stream()
+                .collect(Collectors.toList());
+        for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {
+            assetAceptFeign.generateAssetAccept(generateAssetAcceptDTOList);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
