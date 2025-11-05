@@ -961,4 +961,34 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         String excelName = "资产卡片导入模板.xlsx";
         ExcelUtil.downloadTemplate(path, excelName, response);
     }
+
+    @Override
+    public List<AssetCardDTO.ApprovedCardDTO> searchApprovedCard(AssetCardDTO.SearchParamDTO dto) {
+        List<String> codes = dto.getCodes();
+        if(CollUtil.isNotEmpty(codes)){
+            if(codes.size() == 1){
+                dto.setSearchKeyword(codes.get(0));
+                dto.setCodes(new ArrayList<>());
+            }else {
+                dto.setSearchKeyword("");
+            }
+        }
+        List<AssetCardDTO.ApprovedCardDTO> list = this.baseMapper.searchApprovedCard(dto);
+        if(CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        // 填充资产类型名称
+        for(AssetCardDTO.ApprovedCardDTO card : list) {
+            if (StringUtils.isNotBlank(card.getType())) {
+                card.setTypeName(com.erp.model.fms.enums.AssetCategoryEnum.getName(card.getType()));
+                // 资产状态枚举转换
+                card.setStatusName(com.erp.model.fms.enums.AssetStatusEnum.getName(card.getStatus()));
+                // 变动方式枚举转换
+                card.setChangeMethodName(com.erp.model.fms.enums.ChangeMethodEnum.getName(card.getChangeMethod()));
+
+                card.setUnitName(com.erp.model.fms.enums.UnitEnum.getName(card.getUnit()));
+            }
+        }
+        return list;
+    }
 }
