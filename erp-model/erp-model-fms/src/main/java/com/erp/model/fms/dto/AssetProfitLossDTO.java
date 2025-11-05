@@ -500,6 +500,30 @@ public class AssetProfitLossDTO implements Serializable {
          * 费用项目名称
          */
         private String costTypeName;
+        
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+        
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+    }
+
+    /**
+     * 下推到资产卡片请求DTO（明细维度的参数列表）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushToCardDTO {
+        
+        /**
+         * 下推的资产卡片列表（必须是用户已选择并填写完整的数据）
+         */
+        @NotEmpty(message = "下推资产卡片列表不能为空")
+        private List<PushToCardListDTO> cardList;
     }
 
 

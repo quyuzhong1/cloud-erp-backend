@@ -15,7 +15,12 @@ public enum ChangeMethodEnum {
     /**
      * 购入
      */
-    PURCHASE("purchase", "购入");
+    PURCHASE("purchase", "购入"),
+
+    /**
+     * 盘盈
+     */
+    PROFIT("profit", "盘盈");
     
     /**
      * 变动方式编码
