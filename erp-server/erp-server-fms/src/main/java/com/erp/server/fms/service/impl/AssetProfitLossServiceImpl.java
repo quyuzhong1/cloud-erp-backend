@@ -21,17 +21,13 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.LogStatusEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
-import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
 import com.erp.model.fms.enums.AssetStatusEnum;
 import com.erp.model.fms.enums.ChangeMethodEnum;
@@ -714,16 +710,16 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
     @Override
     public List<BatchResultDTO> pushToCard(AssetProfitLossDTO.PushToCardDTO dto) {
-        if (CollUtil.isEmpty(dto.getCardList())) {
+        if (CollUtil.isEmpty(dto.getDetailList())) {
             throw new ServiceException("下推资产卡片列表不能为空");
         }
         
-        log.info("开始执行盘盈盘亏单下推资产卡片，明细数量：{}", dto.getCardList().size());
+        log.info("开始执行盘盈盘亏单下推资产卡片，明细数量：{}", dto.getDetailList().size());
         
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getCardList().size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailList().size());
         
         // 遍历明细列表，每个明细独立处理（可能来自不同的盘盈盘亏单）
-        for (AssetProfitLossDTO.PushToCardListDTO item : dto.getCardList()) {
+        for (AssetProfitLossDTO.PushToCardListDTO item : dto.getDetailList()) {
             BatchResultDTO result;
             try {
                 // 1. 查询该明细所属的主单

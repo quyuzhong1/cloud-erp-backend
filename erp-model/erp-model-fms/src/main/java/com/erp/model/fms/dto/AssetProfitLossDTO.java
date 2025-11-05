@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
@@ -523,7 +521,7 @@ public class AssetProfitLossDTO implements Serializable {
          * 下推的资产卡片列表（必须是用户已选择并填写完整的数据）
          */
         @NotEmpty(message = "下推资产卡片列表不能为空")
-        private List<PushToCardListDTO> cardList;
+        private List<PushToCardListDTO> detailList;
     }
 
 
