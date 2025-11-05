@@ -17,7 +17,7 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("apo.tab".equals(field)){
+        if("tab".equals(field)){
             String status = value.toString();
             if("waitSubmit".equals(status)){
                 super.buildDefaultDTO("apo.approve_status", AssetPurchaseOrderTabListEnum.WAIT_SUBMIT.getStatus());
@@ -28,7 +28,7 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
             }else if ("allReceive".equals(status)){
                 super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.ALL_RECEIVE.getStatus());
             }else if ("close".equals(status)){
-                super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.CLOSE.getStatus());
+                super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.CLOSE.getStatus());
             }else if ("reject".equals(status)){
                 super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.REJECT.getStatus());
             }else {
