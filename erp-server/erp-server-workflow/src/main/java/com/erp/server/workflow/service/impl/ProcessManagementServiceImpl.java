@@ -470,8 +470,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
             //未启动流程需要判断创建人和当前登陆人是否一致
-            //checkApproveUserSame(dto.getVariablesMap());
-
+            checkApproveUserSame(dto.getVariablesMap());
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -1617,14 +1616,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     public void completeTaskHandle(DelegateTask taskDelegate) {
         log.debug("completeTaskHandle finish ");
-        /*// 审批任务填充审批信息
+        // 审批任务填充审批信息
         DelegateExecution execution = taskDelegate.getExecution();
         //审核人不能和创建人一样
         String createUserId = "" + execution.getVariable("createUserId");
         if (CharSequenceUtil.equals(createUserId,taskDelegate.getAssignee())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
             throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
-        }*/
+        }
     }
 
     /**
