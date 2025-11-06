@@ -178,6 +178,9 @@ public class AssetAcceptExcelListener extends AnalysisEventListener<AssetAcceptE
      */
     private void validateAndResolveIds(AssetAcceptExcelDTO data, List<String> errorMsgList) {
         
+        // 设置来源类型为模具采购订单（默认值，导入时不需要填写）
+        data.setSourceType(com.common.business.enums.SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+        
         // 验证验收组织名称是否存在并解析组织ID
         String acceptOrgId = getOrgIdByName(data.getAcceptOrgName());
         if (StrUtil.isBlank(acceptOrgId)) {

@@ -119,13 +119,12 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
-        assetAcceptEntity.setSourceCode(addDTO.getPurchaseCode());
 
         // 如果填写了模具采购订单号，查询订单信息并设置来源（只在新增时且有订单号时才查询）
-        if (StringUtils.isNotBlank(addDTO.getPurchaseCode())) {
+        if (StringUtils.isNotBlank(addDTO.getSourceCode())) {
             try {
                 ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
-                    assetPurchaseOrderFeign.getByCode(addDTO.getPurchaseCode());
+                    assetPurchaseOrderFeign.getByCode(addDTO.getSourceCode());
                 
                 if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
                     AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
@@ -142,11 +141,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     }
                 } else {
                     log.warn("根据模具采购订单号{}查询订单失败: {}", 
-                        addDTO.getPurchaseCode(), 
+                        addDTO.getSourceCode(), 
                         orderResult != null ? orderResult.getMsg() : "返回结果为空");
                 }
             } catch (Exception e) {
-                log.error("查询模具采购订单{}失败", addDTO.getPurchaseCode(), e);
+                log.error("查询模具采购订单{}失败", addDTO.getSourceCode(), e);
             }
         }
 
@@ -925,7 +924,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         return Boolean.TRUE;
     }
 
-    void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
+    public void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
 
         List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
                 .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
@@ -940,6 +939,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             int totalAcceptedQty = sameSoureDetailList.stream()
                     .mapToInt(obj -> obj.getAcceptedQty())
                     .sum();
+            totalAcceptedQty += detailEntity.getAcceptQty();
             rewritePurchaseOrderDTO.setDetailId(detailEntity.getSourceDetailId());
             rewritePurchaseOrderDTO.setAcceptedQty(new BigDecimal(totalAcceptedQty));
             assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO);
@@ -1794,16 +1794,16 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 // 设置验收日期
                 addDTO.setAcceptDate(importMainDTO.getAcceptDate());
                 // 模具采购订单号：如果为空则设置默认值（因为是必填字段）
-                addDTO.setPurchaseCode(StringUtils.isNotBlank(importMainDTO.getPurchaseCode()) 
-                    ? importMainDTO.getPurchaseCode() 
+                addDTO.setSourceCode(StringUtils.isNotBlank(importMainDTO.getSourceCode())
+                    ? importMainDTO.getSourceCode() 
                     : "手动创建");
 
             // 如果填写了模具采购订单号，查询订单信息并设置来源
             Map<String, String> skuToDetailIdMap = new HashMap<>();
-            if (StringUtils.isNotBlank(importMainDTO.getPurchaseCode())) {
+            if (StringUtils.isNotBlank(importMainDTO.getSourceCode())) {
                 try {
                     ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
-                        assetPurchaseOrderFeign.getByCode(importMainDTO.getPurchaseCode());
+                        assetPurchaseOrderFeign.getByCode(importMainDTO.getSourceCode());
                     
                     if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
                         AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
@@ -1831,11 +1831,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         }
                     } else {
                         log.warn("根据模具采购订单号{}查询订单失败: {}", 
-                            importMainDTO.getPurchaseCode(), 
+                            importMainDTO.getSourceCode(), 
                             orderResult != null ? orderResult.getMsg() : "返回结果为空");
                     }
                 } catch (Exception e) {
-                    log.error("查询模具采购订单{}失败", importMainDTO.getPurchaseCode(), e);
+                    log.error("查询模具采购订单{}失败", importMainDTO.getSourceCode(), e);
                 }
             }
             addDTO.setIsNeedSeal(importMainDTO.getIsNeedSeal());

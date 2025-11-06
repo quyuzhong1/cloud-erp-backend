@@ -66,11 +66,6 @@ public class AssetAcceptEntity extends BaseEntity<AssetAcceptEntity> {
     @TableField("accept_date")
     private LocalDate acceptDate;
     /**
-    * 采购单号
-    */
-    @TableField("purchase_code")
-    private String purchaseCode;
-    /**
     * 是否需要盖章
     */
     @TableField("is_need_seal")
@@ -145,8 +140,6 @@ public class AssetAcceptEntity extends BaseEntity<AssetAcceptEntity> {
     public static final String SOURCE_ID = "source_id";
 
     public static final String ACCEPT_DATE = "accept_date";
-
-    public static final String PURCHASE_CODE = "purchase_code";
 
     public static final String IS_NEED_SEAL = "is_need_seal";
 

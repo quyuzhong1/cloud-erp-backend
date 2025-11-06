@@ -1473,7 +1473,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             viewGeneratePurchaseOrderDTO.setPurchaseUserName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseUserName()) ? assetPurchaseOrderEntity.getPurchaseUserName() : null);
             viewGeneratePurchaseOrderDTO.setPurchaseDeptId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId()) ? assetPurchaseOrderEntity.getPurchaseDeptId() : null);
             viewGeneratePurchaseOrderDTO.setPurchaseDeptName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptName()) ? assetPurchaseOrderEntity.getPurchaseDeptName() : null);
-
+            viewGeneratePurchaseOrderDTO.setEndReceive(assetPurchaseOrderDetailEntity.getEndReceive());
             /**
              * 1、待验收数量=采购数量-已验收数量
              * 2、已验收数量=已审核资产验收单订单验收数量
@@ -1500,6 +1500,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        //过滤已验收和已关闭的行
+        Iterator<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> iterator = dtoList.iterator();
+        while (iterator.hasNext()) {
+            AssetPurchaseOrderDTO.GenerateAssetAcceptDTO generateAssetAcceptDTO = iterator.next();
+            if (generateAssetAcceptDTO.getEndReceive().equals(AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode()) ||
+                    generateAssetAcceptDTO.getEndReceive().equals(AssetPurchaseOrderReceiveEnum.CLOSE.getCode())) {
+                iterator.remove();
+            }
+        }
+
         //按单分组下推
         List<List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO>> groupList = dtoList.stream()
                 .collect(Collectors.groupingBy(
@@ -1508,10 +1518,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .values()
                 .stream()
                 .collect(Collectors.toList());
-        for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {
-            assetAceptFeign.generateAssetAccept(generateAssetAcceptDTOList);
+
+        try {
+            for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {
+                assetAceptFeign.generateAssetAccept(generateAssetAcceptDTOList);
+            }
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.info("生成资产验收单失败", e);
+            throw e;
         }
-        return Boolean.TRUE;
     }
 
     @Override
@@ -1608,7 +1624,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDate.now())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
                     .update();
-        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) < 0) {
+        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) > 0) {
             assetPurchaseOrderDetailService.lambdaUpdate()
                     .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
