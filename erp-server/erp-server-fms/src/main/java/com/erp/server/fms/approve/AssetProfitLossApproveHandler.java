@@ -44,6 +44,7 @@ public class AssetProfitLossApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(assetProfitLossService.getVariablesMap(assetProfitLossEntity));
         return assetProfitLossService.approveEnd(approveOne, assetProfitLossEntity);
     }
 

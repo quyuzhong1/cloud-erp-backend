@@ -6,6 +6,7 @@ import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -175,4 +176,12 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
      */
     List<BatchResultDTO> pushToCard(AssetProfitLossDTO.PushToCardDTO dto);
 
+    /**
+    * 获取流程变量Map
+    * @author wuht
+    * @date: 2025-11-06
+    * @param entity
+    * @return Map<String, Object>
+    */
+    Map<String, Object> getVariablesMap(AssetProfitLossEntity entity);
 }
