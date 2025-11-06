@@ -361,6 +361,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
+                //为空表示submit
+                mqDto.setApproveType(null);
                 syncFsExternalInstance(mqDto);
             }
         });
