@@ -780,7 +780,6 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     @Transactional(rollbackFor = Exception.class)
     public void importAssetStocktakingPlan(BaseDTO.ImportDTO dto) {
         AssetStocktakingPlanExcelListener excelListenerUtil = new AssetStocktakingPlanExcelListener(
-            this, assetLocationService, sysUserFeign, 
             dto.getTaskId(), dto.getImportType(), dto.getImportCount()
         );
         
@@ -809,6 +808,60 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 批量处理导入成功的数据
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleImportSuccessList(List<AssetStocktakingPlanImportExcelDTO> successList,
+                                       List<String> errorNoList,
+                                       List<AssetStocktakingPlanImportExcelDTO> errorList2,
+                                       String importType) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        
+        // 过滤掉错误编号的数据
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            List<AssetStocktakingPlanImportExcelDTO> filteredList = successList.stream()
+                .filter(e -> e.getNo() != null && !errorNoList.contains(String.valueOf(e.getNo())))
+                .collect(Collectors.toList());
+            
+            // 被过滤掉的数据添加到错误列表
+            List<AssetStocktakingPlanImportExcelDTO> errorData = successList.stream()
+                .filter(e -> e.getNo() == null || errorNoList.contains(String.valueOf(e.getNo())))
+                .collect(Collectors.toList());
+            errorList2.addAll(errorData);
+            
+            successList = filteredList;
+        }
+        
+        // 批量保存数据
+        for (AssetStocktakingPlanImportExcelDTO excelDTO : successList) {
+            try {
+                AssetStocktakingPlanDTO.AddDTO addDTO = new AssetStocktakingPlanDTO.AddDTO();
+                
+                addDTO.setAssetOrgId(excelDTO.getAssetOrgId());
+                addDTO.setAssetOrgName(excelDTO.getAssetOrgName());
+                addDTO.setPlanName(excelDTO.getPlanName());
+                addDTO.setRemark(excelDTO.getRemark());
+                addDTO.setAssetCategories(excelDTO.getAssetCategories());
+                addDTO.setUseDeptIds(excelDTO.getUseDeptIds());
+                addDTO.setAssetLocationIds(excelDTO.getAssetLocationIds());
+                addDTO.setCardCodeStart(excelDTO.getCardCodeStart());
+                addDTO.setCardCodeEnd(excelDTO.getCardCodeEnd());
+                
+                // 保存
+                this.add(addDTO);
+                
+            } catch (Exception e) {
+                log.error("保存资产盘点方案失败：{}", e.getMessage(), e);
+                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                errorList2.add(excelDTO);
+            }
+        }
     }
 
     @Override
