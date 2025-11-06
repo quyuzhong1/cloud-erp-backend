@@ -140,31 +140,33 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 .filter(entity -> !AssetPurchaseOrderReceiveEnum.CLOSE.getCode().equals(entity.getEndReceive()))
                 .collect(Collectors.toList());
 
-        // 批量更新状态
-        boolean updateResult = this.lambdaUpdate()
-                .set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.CLOSE.getCode())
-                .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime, LocalDate.now())
-                .set(AssetPurchaseOrderDetailEntity::getRemark, remark)
-                .in(AssetPurchaseOrderDetailEntity::getId, toUpdateList.stream().map(AssetPurchaseOrderDetailEntity::getId).collect(Collectors.toList()))
-                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                .update();
+        if (!toUpdateList.isEmpty()) {
+            // 批量更新状态
+            boolean updateResult = this.lambdaUpdate()
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.CLOSE.getCode())
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime, LocalDate.now())
+                    .set(AssetPurchaseOrderDetailEntity::getRemark, remark)
+                    .in(AssetPurchaseOrderDetailEntity::getId, toUpdateList.stream().map(AssetPurchaseOrderDetailEntity::getId).collect(Collectors.toList()))
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .update();
 
-        // 记录操作日志
-        if (updateResult) {
-            for (AssetPurchaseOrderDetailEntity updatedEntity : toUpdateList) {
-                String msg = StrUtil.format("SKU【{}】结束验收，结束原因：{}", updatedEntity.getAssetCode(), remark);
-                moduleOperateLogService.addModuleOperateLogByObj(
-                        oldList.stream().filter(old -> old.getId().equals(updatedEntity.getId())).findFirst().orElse(null),
-                        updatedEntity,
-                        ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
-                        updatedEntity.getId(),
-                        "模具采购单",
-                        msg
-                );
+            // 记录操作日志
+            if (updateResult) {
+                for (AssetPurchaseOrderDetailEntity updatedEntity : toUpdateList) {
+                    String msg = StrUtil.format("SKU【{}】结束验收，结束原因：{}", updatedEntity.getAssetCode(), remark);
+                    moduleOperateLogService.addModuleOperateLogByObj(
+                            oldList.stream().filter(old -> old.getId().equals(updatedEntity.getId())).findFirst().orElse(null),
+                            updatedEntity,
+                            ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
+                            updatedEntity.getId(),
+                            "模具采购单",
+                            msg
+                    );
+                }
             }
         }
 
-        return updateResult;
+        return Boolean.TRUE;
     }
 
     @Override
