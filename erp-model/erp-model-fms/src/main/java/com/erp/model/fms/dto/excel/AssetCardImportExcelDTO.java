@@ -33,31 +33,55 @@ public class AssetCardImportExcelDTO {
     private String orgName;
 
     /**
-     * 计量单位
+     * 计量单位名称（Excel输入）
      */
     @ExcelProperty(value = "*计量单位", index = 2)
     @FieldValid(fieldName = "*计量单位", isNotBlank = true)
+    private String unitName;
+
+    /**
+     * 计量单位编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String unit;
 
     /**
-     * 资产类别
+     * 资产类别名称（Excel输入）
      */
     @ExcelProperty(value = "*资产类别", index = 3)
     @FieldValid(fieldName = "*资产类别", isNotBlank = true)
+    private String typeName;
+
+    /**
+     * 资产类别编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String type;
 
     /**
-     * 资产状态
+     * 资产状态名称（Excel输入）
      */
     @ExcelProperty(value = "*资产状态", index = 4)
     @FieldValid(fieldName = "*资产状态", isNotBlank = true)
+    private String statusName;
+
+    /**
+     * 资产状态编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String status;
 
     /**
-     * 变动方式
+     * 变动方式名称（Excel输入）
      */
     @ExcelProperty(value = "*变动方式", index = 5)
     @FieldValid(fieldName = "*变动方式", isNotBlank = true)
+    private String changeMethodName;
+
+    /**
+     * 变动方式编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String changeMethod;
 
     /**
@@ -132,10 +156,16 @@ public class AssetCardImportExcelDTO {
     private String useDeptId;
 
     /**
-     * 费用项目
+     * 费用项目名称（Excel输入）
      */
     @ExcelProperty(value = "*费用项目", index = 13)
     @FieldValid(fieldName = "*费用项目", isNotBlank = true)
+    private String costTypeName;
+
+    /**
+     * 费用项目编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String costType;
 
     /**

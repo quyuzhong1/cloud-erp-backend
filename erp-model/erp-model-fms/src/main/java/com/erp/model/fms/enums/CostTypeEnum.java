@@ -4,50 +4,50 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 折旧费枚举
+ * 费用项目枚举
  * @author system
  * @since 2025-10-23
  */
 @Getter
 @AllArgsConstructor
-public enum DepreciationChargeEnum {
+public enum CostTypeEnum {
     
     /**
-     * 费用项目
+     * 折旧费
      */
-    COST_TYPE("costType", "费用项目");
+    DEPRECIATION_CHARGE("depreciationCharge", "折旧费");
     
     /**
-     * 折旧费编码
+     * 费用项目编码
      */
     private final String code;
     
     /**
-     * 折旧费名称
+     * 费用项目名称
      */
     private final String name;
     
     /**
      * 根据编码获取枚举
-     * @param code 折旧费编码
+     * @param code 费用项目编码
      * @return 枚举
      */
-    public static DepreciationChargeEnum getByCode(String code) {
+    public static CostTypeEnum getByCode(String code) {
         if (code == null) {
-            return COST_TYPE;
+            return DEPRECIATION_CHARGE;
         }
-        for (DepreciationChargeEnum charge : values()) {
+        for (CostTypeEnum charge : values()) {
             if (charge.getCode().equals(code)) {
                 return charge;
             }
         }
-        return COST_TYPE;
+        return DEPRECIATION_CHARGE;
     }
     
     /**
      * 根据编码获取名称
-     * @param code 折旧费编码
-     * @return 折旧费名称
+     * @param code 费用项目编码
+     * @return 费用项目名称
      */
     public static String getName(String code) {
         return getByCode(code).getName();
@@ -55,14 +55,14 @@ public enum DepreciationChargeEnum {
     
     /**
      * 根据名称获取编码
-     * @param name 折旧费名称
-     * @return 折旧费编码，如果未找到则返回空字符串
+     * @param name 费用项目名称
+     * @return 费用项目编码，如果未找到则返回空字符串
      */
     public static String getCodeByName(String name) {
         if (name == null) {
             return "";
         }
-        for (DepreciationChargeEnum charge : values()) {
+        for (CostTypeEnum charge : values()) {
             if (charge.getName().equals(name) || charge.getCode().equalsIgnoreCase(name)) {
                 return charge.getCode();
             }

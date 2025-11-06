@@ -178,41 +178,41 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
      */
     private void validateAndConvertEnumValues(AssetCardImportExcelDTO data, List<String> errorMsgList) {
         // 验证并转换计量单位
-        String unitCode = UnitEnum.getCodeByName(data.getUnit());
+        String unitCode = UnitEnum.getCodeByName(data.getUnitName());
         if (StrUtil.isBlank(unitCode)) {
-            errorMsgList.add("计量单位【" + data.getUnit() + "】不存在");
+            errorMsgList.add("计量单位【" + data.getUnitName() + "】不存在");
         } else {
             data.setUnit(unitCode);
         }
         
         // 验证并转换资产类别
-        String typeCode = AssetCategoryEnum.getCodeByName(data.getType());
+        String typeCode = AssetCategoryEnum.getCodeByName(data.getTypeName());
         if (StrUtil.isBlank(typeCode)) {
-            errorMsgList.add("资产类别【" + data.getType() + "】不存在");
+            errorMsgList.add("资产类别【" + data.getTypeName() + "】不存在");
         } else {
             data.setType(typeCode);
         }
         
         // 验证并转换资产状态
-        String statusCode = AssetStatusEnum.getCodeByName(data.getStatus());
+        String statusCode = AssetStatusEnum.getCodeByName(data.getStatusName());
         if (StrUtil.isBlank(statusCode)) {
-            errorMsgList.add("资产状态【" + data.getStatus() + "】不存在");
+            errorMsgList.add("资产状态【" + data.getStatusName() + "】不存在");
         } else {
             data.setStatus(statusCode);
         }
         
         // 验证并转换变动方式
-        String changeMethodCode = ChangeMethodEnum.getCodeByName(data.getChangeMethod());
+        String changeMethodCode = ChangeMethodEnum.getCodeByName(data.getChangeMethodName());
         if (StrUtil.isBlank(changeMethodCode)) {
-            errorMsgList.add("变动方式【" + data.getChangeMethod() + "】不存在");
+            errorMsgList.add("变动方式【" + data.getChangeMethodName() + "】不存在");
         } else {
             data.setChangeMethod(changeMethodCode);
         }
         
         // 验证并转换费用项目
-        String costTypeCode = DepreciationChargeEnum.getCodeByName(data.getCostType());
+        String costTypeCode = CostTypeEnum.getCodeByName(data.getCostTypeName());
         if (StrUtil.isBlank(costTypeCode)) {
-            errorMsgList.add("费用项目【" + data.getCostType() + "】不存在");
+            errorMsgList.add("费用项目【" + data.getCostTypeName() + "】不存在");
         } else {
             data.setCostType(costTypeCode);
         }
