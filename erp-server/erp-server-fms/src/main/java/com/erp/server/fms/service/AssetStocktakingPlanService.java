@@ -177,6 +177,20 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
     void importAssetStocktakingPlan(BaseDTO.ImportDTO dto);
 
     /**
+    * 批量处理导入成功的数据
+    * @author wuht
+    * @date: 2025-10-27
+    * @param successList 成功数据列表
+    * @param errorNoList 错误编号列表
+    * @param errorList2 错误数据列表
+    * @param importType 导入类型
+    */
+    void handleImportSuccessList(List<com.erp.model.fms.dto.excel.AssetStocktakingPlanImportExcelDTO> successList,
+                                List<String> errorNoList,
+                                List<com.erp.model.fms.dto.excel.AssetStocktakingPlanImportExcelDTO> errorList2,
+                                String importType);
+
+    /**
     * 获取盘点方案下拉列表
     * @author wuht
     * @date: 2025-11-03
