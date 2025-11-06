@@ -1537,8 +1537,19 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .in(AssetPurchaseOrderDetailEntity::getId, detailList)
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
-        if (list.size() != detailList.size()) {
-            throw new ServiceException(ApiError.ERROR_95308);
+
+        //过滤已验收和已关闭的明细行
+        Iterator<AssetPurchaseOrderDetailEntity> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            AssetPurchaseOrderDetailEntity detailEntity = iterator.next();
+            if (detailEntity.getEndReceive().equals(AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode()) ||
+                    detailEntity.getEndReceive().equals(AssetPurchaseOrderReceiveEnum.CLOSE.getCode())) {
+                iterator.remove();
+            }
+        }
+
+        if (list.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95320);
         }
 
         long count = list.stream().filter(obj -> !obj.getMainId().equals(list.get(0).getMainId())).count();
@@ -1564,12 +1575,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         viewGeneratePurchaseChangeOrderDTO.setChangeUserId(UserContext.getDefaultLoginUser().getUid());
         viewGeneratePurchaseChangeOrderDTO.setChangeUserName(UserContext.getDefaultLoginUser().getUserName());
 
-        SysDepartmentUserNumberDTO deptDTO = sysUserFeign.getDeptByUserId(UserContext.getDefaultLoginUser().getUid());
-        if (Objects.nonNull(deptDTO)) {
-            viewGeneratePurchaseChangeOrderDTO.setChangeDeptId(deptDTO.getDepartmentId());
-            viewGeneratePurchaseChangeOrderDTO.setChangeDeptName(deptDTO.getDepartmentName());
+        try {
+            SysDepartmentUserNumberDTO deptDTO = sysUserFeign.getDeptByUserId(UserContext.getDefaultLoginUser().getUid());
+            if (Objects.nonNull(deptDTO)) {
+                viewGeneratePurchaseChangeOrderDTO.setChangeDeptId(deptDTO.getDepartmentId());
+                viewGeneratePurchaseChangeOrderDTO.setChangeDeptName(deptDTO.getDepartmentName());
+            }
+        } catch (Exception e) {
+            log.error("获取部门信息失败", e);
+            throw new ServiceException(ApiError.ERROR_9029);
         }
-
 
         viewGeneratePurchaseChangeOrderDTO.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC));
 
