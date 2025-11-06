@@ -76,6 +76,7 @@ public class KingdeeOtherOutstockConsumerServiceImpl implements KingdeeOtherOuts
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils, map);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核

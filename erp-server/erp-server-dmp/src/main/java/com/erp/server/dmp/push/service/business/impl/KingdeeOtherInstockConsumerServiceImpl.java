@@ -74,6 +74,7 @@ public class KingdeeOtherInstockConsumerServiceImpl implements KingdeeOtherInsto
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map,type);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核
