@@ -143,6 +143,11 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
 
         // 数据处理
         handleData(assetStocktakingPlanEntity);
+        
+        // 填充使用部门名称（用于日志记录）
+        fillUseDeptNames(old);
+        fillUseDeptNames(assetStocktakingPlanEntity);
+        
         log.info("编辑 开始修改资产盘点方案单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(assetStocktakingPlanEntity);
         if(!save) {
@@ -151,8 +156,8 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产盘点方案单日志数据，单号：【{}】", assetStocktakingPlanEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetStocktakingPlanEntity.getCode(), "资产盘点方案单");
+            log.info("编辑 开始记录资产盘点方案单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产盘点方案单");
         operateLogService.addModuleOperateLogByObj(old, assetStocktakingPlanEntity,  ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), assetStocktakingPlanEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -861,6 +866,29 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
                 excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
                 errorList2.add(excelDTO);
             }
+        }
+    }
+
+    /**
+     * 填充使用部门名称
+     */
+    private void fillUseDeptNames(AssetStocktakingPlanEntity entity) {
+        if (entity == null || StrUtil.isBlank(entity.getUseDeptIds())) {
+            return;
+        }
+        
+        try {
+            List<String> deptIdList = Arrays.asList(entity.getUseDeptIds().split(","));
+            List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(deptIdList);
+            
+            if (CollUtil.isNotEmpty(deptList)) {
+                String deptNames = deptList.stream()
+                    .map(com.erp.model.sys.entity.SysDepartmentEntity::getName)
+                    .collect(Collectors.joining(","));
+                entity.setUseDeptNames(deptNames);
+            }
+        } catch (Exception e) {
+            log.error("查询使用部门名称失败：{}", e.getMessage(), e);
         }
     }
 

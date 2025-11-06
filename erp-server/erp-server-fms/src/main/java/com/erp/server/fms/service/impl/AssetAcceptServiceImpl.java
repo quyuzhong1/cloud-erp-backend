@@ -119,12 +119,13 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
+        assetAcceptEntity.setSourceCode(addDTO.getPurchaseCode());
 
         // 如果填写了模具采购订单号，查询订单信息并设置来源（只在新增时且有订单号时才查询）
-        if (StringUtils.isNotBlank(addDTO.getSourceCode())) {
+        if (StringUtils.isNotBlank(addDTO.getPurchaseCode())) {
             try {
                 ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
-                    assetPurchaseOrderFeign.getByCode(addDTO.getSourceCode());
+                    assetPurchaseOrderFeign.getByCode(addDTO.getPurchaseCode());
                 
                 if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
                     AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
@@ -141,11 +142,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     }
                 } else {
                     log.warn("根据模具采购订单号{}查询订单失败: {}", 
-                        addDTO.getSourceCode(), 
+                        addDTO.getPurchaseCode(), 
                         orderResult != null ? orderResult.getMsg() : "返回结果为空");
                 }
             } catch (Exception e) {
-                log.error("查询模具采购订单{}失败", addDTO.getSourceCode(), e);
+                log.error("查询模具采购订单{}失败", addDTO.getPurchaseCode(), e);
             }
         }
 
@@ -568,8 +569,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         updateAttachment(addOrUpdateDTO, old);
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产验收单日志数据，单号：【{}】", assetAcceptEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetAcceptEntity.getCode(), "资产验收单");
+            log.info("编辑 开始记录资产验收单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产验收单");
         operateLogService.addModuleOperateLogByObj(old, assetAcceptEntity, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), assetAcceptEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -1793,10 +1794,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 
                 // 设置验收日期
                 addDTO.setAcceptDate(importMainDTO.getAcceptDate());
-                // 模具采购订单号：如果为空则设置默认值（因为是必填字段）
-                addDTO.setSourceCode(StringUtils.isNotBlank(importMainDTO.getSourceCode())
-                    ? importMainDTO.getSourceCode() 
-                    : "手动创建");
 
             // 如果填写了模具采购订单号，查询订单信息并设置来源
             Map<String, String> skuToDetailIdMap = new HashMap<>();
@@ -1808,7 +1805,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
                         AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
                         
-                        // 设置来源信息
+                        // 设置来源信息（默认为模具采购订单）
                         addDTO.setSourceId(orderData.getId());
                         addDTO.setSourceCode(orderData.getCode());
                         addDTO.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
@@ -1837,6 +1834,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 } catch (Exception e) {
                     log.error("查询模具采购订单{}失败", importMainDTO.getSourceCode(), e);
                 }
+            } else {
+                // 如果没有填写模具采购订单号，也默认设置来源类型为模具采购订单
+                addDTO.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
             }
             addDTO.setIsNeedSeal(importMainDTO.getIsNeedSeal());
             addDTO.setAcceptOrgId(importMainDTO.getAcceptOrgId());

@@ -293,9 +293,14 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
         }
 
         try {
+            // 清理供应商名称中的特殊字符（零宽字符、不可见字符等）
+            String cleanSupplierName = supplierName.trim()
+                .replaceAll("[\\u200B\\u200C\\u200D\\uFEFF\\u00A0]", "") // 移除零宽字符和不间断空格
+                .replaceAll("\\s+", " "); // 统一空白字符
+            
             // 调用供应商服务根据名称查询供应商信息
             List<SupplierEntity> supplierList = supplierFeign.listBySupplierByNames(
-                    Collections.singletonList(supplierName)
+                    Collections.singletonList(cleanSupplierName)
             );
 
             if (CollUtil.isNotEmpty(supplierList)) {
@@ -306,7 +311,7 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
                 return result;
             }
 
-            log.warn("未找到供应商名称：{}", supplierName);
+            log.warn("未找到供应商名称：{}（清理后：{}）", supplierName, cleanSupplierName);
             return null;
         } catch (Exception e) {
             log.error("查询供应商ID失败，供应商名称：{}，错误：{}", supplierName, e.getMessage(), e);

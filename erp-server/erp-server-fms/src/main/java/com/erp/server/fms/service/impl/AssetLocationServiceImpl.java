@@ -141,8 +141,8 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         }
 
         // 记录主单操作日志
-        log.info("编辑 开始记录资产位置单日志数据，单号：【{}】", assetLocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetLocationEntity.getCode(), "资产位置单");
+        log.info("编辑 开始记录资产位置单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产位置单");
         operateLogService.addModuleOperateLogByObj(old, assetLocationEntity, ModuleTypeEnum.ASSET_LOCATION.getCode(), assetLocationEntity.getId(), msg);
         return Boolean.TRUE;
     }

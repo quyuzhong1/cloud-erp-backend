@@ -74,6 +74,12 @@ public class AssetStocktakingPlanEntity extends BaseEntity<AssetStocktakingPlanE
     */
     @TableField("use_dept_ids")
     private String useDeptIds;
+
+    /**
+    * 使用部门名称（用于日志记录，不映射数据库字段）
+    */
+    @TableField(exist = false)
+    private String useDeptNames;
     /**
     * 资产位置ID字符串数组
     */
