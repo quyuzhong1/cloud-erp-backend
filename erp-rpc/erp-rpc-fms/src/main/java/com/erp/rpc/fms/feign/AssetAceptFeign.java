@@ -31,7 +31,7 @@ public interface AssetAceptFeign {
     Integer getAcceptQtyByDetailId(@RequestBody String detailId);
 
     /**
-     * 获取关联单据
+     * 通过资产采购单明细获取资产验收单明细
      * @param detailId
      * @return
      */
