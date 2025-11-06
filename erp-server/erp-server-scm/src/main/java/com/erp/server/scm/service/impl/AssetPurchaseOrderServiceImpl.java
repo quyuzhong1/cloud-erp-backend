@@ -444,6 +444,18 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             throw new ServiceException(ApiError.ERROR_95306);
         }
 
+        List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, entity.getId())
+                .list();
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+            List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> acceptDetailList =
+                    assetAceptFeign.getAcceptByDetailId(assetPurchaseOrderDetailEntity.getId()).getData();
+            if (!acceptDetailList.isEmpty()) {
+                throw new ServiceException(ApiError.ERROR_95321);
+            }
+        }
+
+
         return true;
     }
 
