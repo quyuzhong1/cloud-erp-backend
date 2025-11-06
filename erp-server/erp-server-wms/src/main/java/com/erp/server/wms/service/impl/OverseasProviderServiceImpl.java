@@ -52,6 +52,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;

@@ -226,6 +226,7 @@ public enum SourceTypeEnum {
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_DELIVERY("thirdWarehouseDelivery","第三方仓库发货","third_warehouse_delivery"),
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
