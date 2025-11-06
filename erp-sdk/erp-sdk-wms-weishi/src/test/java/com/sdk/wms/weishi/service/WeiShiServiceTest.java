@@ -232,11 +232,11 @@ public class WeiShiServiceTest {
         authMap.put("appKey","f8e951cec5d84d299f12b093671ca9ee");
 //        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
 //        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
-        authMap.put("accessToken", "c6c51849-ac66-4ee3-8a74-4f1bae0fdd2d");
+        authMap.put("accessToken", "6f231b10-be55-49c6-8850-3caaa8d18d07");
         WeiShiGetReturnInstockRequest weiShiGetReturnInstockRequest = new WeiShiGetReturnInstockRequest();
         weiShiGetReturnInstockRequest.setQueryTime(WeiShiGetReturnInstockRequest.QueryTimeDTO.builder()
                         .startTime("2025-05-01 00:00:00")
-                .endTime("2025-11-01 00:00:00")
+                .endTime("2025-12-01 00:00:00")
                 .eventType("UPDATE")
                 .build());
         WeiShiBaseResp<WeiShiReturnInstockResp>  resp = weiShiService.getReturnInstock(weiShiGetReturnInstockRequest,authMap);
