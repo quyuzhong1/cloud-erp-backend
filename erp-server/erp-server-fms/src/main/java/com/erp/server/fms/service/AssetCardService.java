@@ -1,4 +1,5 @@
 package com.erp.server.fms.service;
+import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.entity.AssetCardEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -173,6 +174,20 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     * @param dto
     */
     void importAssetCard(BaseDTO.ImportDTO dto);
+
+    /**
+    * 批量处理导入成功的数据
+    * @author wuht
+    * @date: 2025-01-10
+    * @param successList 成功数据列表
+    * @param errorNoList 错误编号列表
+    * @param errorList2 错误数据列表
+    * @param importType 导入类型
+    */
+    void handleImportSuccessList(List<AssetCardImportExcelDTO> successList,
+                                List<String> errorNoList,
+                                List<AssetCardImportExcelDTO> errorList2,
+                                String importType);
 
     /**
     * 下载导入模板

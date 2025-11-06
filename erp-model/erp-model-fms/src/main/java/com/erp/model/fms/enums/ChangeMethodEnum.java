@@ -57,5 +57,22 @@ public enum ChangeMethodEnum {
     public static String getName(String code) {
         return getByCode(code).getName();
     }
+    
+    /**
+     * 根据名称获取编码
+     * @param name 变动方式名称
+     * @return 变动方式编码，如果未找到则返回空字符串
+     */
+    public static String getCodeByName(String name) {
+        if (name == null) {
+            return "";
+        }
+        for (ChangeMethodEnum method : values()) {
+            if (method.getName().equals(name) || method.getCode().equalsIgnoreCase(name)) {
+                return method.getCode();
+            }
+        }
+        return "";
+    }
 }
 

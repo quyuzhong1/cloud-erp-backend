@@ -1,28 +1,31 @@
 package com.erp.server.fms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.dto.FindUserDTO;
-import com.common.core.exception.ServiceException;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.fms.dto.AssetCardDTO;
-import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.enums.*;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.fms.service.AssetCardService;
 import com.erp.server.fms.service.AssetLocationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RedissonClient;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -34,9 +37,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImportExcelDTO> {
 
-    private final AssetCardService assetCardService;
-    private final AssetLocationService assetLocationService;
-    private final SysUserFeign sysUserFeign;
+    private static final int BATCH_COUNT = 1000;
+
     private final String taskId;
     private final String importType;
     private final Integer importCount;
@@ -45,81 +47,34 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
     private final List<AssetCardImportExcelDTO> errorList = new ArrayList<>();
     private final List<String> errorNoList = new ArrayList<>();
     private int count = 0;
-    
-    // 缓存数据
-    private List<FindUserDTO> userList;
-    private List<SysDepartmentDTO> deptList;
-    private Map<String, String> assetLocationMap;
 
-    public AssetCardExcelListener(AssetCardService assetCardService, 
-                                 AssetLocationService assetLocationService,
-                                 SysUserFeign sysUserFeign,
-                                 String taskId, 
-                                 String importType, 
-                                 Integer importCount) {
-        this.assetCardService = assetCardService;
-        this.assetLocationService = assetLocationService;
-        this.sysUserFeign = sysUserFeign;
+    // 缓存相关常量
+    private static final String CACHE_DEPT_NAME_TO_ID = "asset_card:dept_name_to_id:";
+    private static final String CACHE_ASSET_LOCATION_NAME_TO_ID = "asset_card:asset_location_name_to_id:";
+    private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
+
+    private final AssetCardService assetCardService = SpringUtil.getBean(AssetCardService.class);
+    private final AssetLocationService assetLocationService = SpringUtil.getBean(AssetLocationService.class);
+    private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+    private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+    public AssetCardExcelListener(String taskId, String importType, Integer importCount) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
-        
-        // 初始化缓存数据
-        initCacheData();
-    }
-
-    private void initCacheData() {
-        try {
-            // 获取用户列表
-            userList = sysUserFeign.getUserList();
-            // 获取部门列表
-            deptList = sysUserFeign.getDeptList();
-            // 获取资产位置列表
-            List<com.erp.model.fms.entity.AssetLocationEntity> assetLocationList = assetLocationService.list();
-            assetLocationMap = assetLocationList.stream()
-                .collect(Collectors.toMap(
-                    com.erp.model.fms.entity.AssetLocationEntity::getAddress,
-                    com.erp.model.fms.entity.AssetLocationEntity::getId,
-                    (existing, replacement) -> existing
-                ));
-        } catch (Exception e) {
-            log.error("初始化缓存数据失败", e);
-        }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void invoke(AssetCardImportExcelDTO data, AnalysisContext context) {
         count++;
-        try {
-            // 数据验证
-            validateData(data);
-            
-            // 数据转换
-            AssetCardDTO.AddDTO addDTO = convertToAddDTO(data);
-            
-            // 保存数据
-            assetCardService.add(addDTO);
-            
-            successList.add(data);
-            log.info("第{}行数据导入成功：{}", count, data.getName());
-            
-        } catch (Exception e) {
-            log.error("第{}行数据导入失败：{}", count, e.getMessage());
-            data.setErrorMsg(e.getMessage());
-            errorList.add(data);
-            errorNoList.add(String.valueOf(data.getNo()));
-        }
-    }
-
-    @Override
-    public void doAfterAllAnalysed(AnalysisContext context) {
-        log.info("资产卡片导入完成，总行数：{}，成功：{}，失败：{}", count, successList.size(), errorList.size());
         
-        // 处理导入结果
-        handleImportResult();
-    }
-
-    private void validateData(AssetCardImportExcelDTO data) {
+        // 已经导入的数据跳过进度
+        if (importCount != null && count < importCount) {
+            return;
+        }
+        
         List<String> errorMsgList = new ArrayList<>();
         
         // 基础验证
@@ -128,27 +83,64 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
             errorMsgList.addAll(msgList);
         }
         
-        // 日期转换
+        // 日期转换处理
         convertDateFields(data, errorMsgList);
         
-        // 验证枚举值
-        try {
-            validateEnumValues(data);
-        } catch (ServiceException e) {
-            errorMsgList.add(e.getMessage());
+        // 数据校验和转换
+        validateAndConvertData(data, errorMsgList);
+        
+        // 存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            data.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(data);
+            return;
         }
         
-        // 验证关联数据
-        try {
-            validateRelatedData(data);
-        } catch (ServiceException e) {
-            errorMsgList.add(e.getMessage());
+        successList.add(data);
+        if (successList.size() >= BATCH_COUNT) {
+            try {
+                List<String> errorNoList = errorList.stream().map(e -> String.valueOf(e.getNo())).distinct().collect(Collectors.toList());
+                List<AssetCardImportExcelDTO> errorList2 = new ArrayList<>();
+                assetCardService.handleImportSuccessList(successList, errorNoList, errorList2, importType);
+                errorList.addAll(errorList2);
+            } catch (Exception e) {
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
+            successList.clear();
+            updateTask(count);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void doAfterAllAnalysed(AnalysisContext context) {
+        log.info("资产卡片Excel解析完成，总行数：{}，成功：{}，失败：{}", count, successList.size(), errorList.size());
         
-        // 如果有错误，抛出异常
-        if (CollUtil.isNotEmpty(errorMsgList)) {
-            throw new ServiceException(String.join("；", errorMsgList));
+        if (!successList.isEmpty()) {
+            try {
+                List<String> errorNoList = errorList.stream().map(e -> String.valueOf(e.getNo())).distinct().collect(Collectors.toList());
+                List<AssetCardImportExcelDTO> errorList2 = new ArrayList<>();
+                assetCardService.handleImportSuccessList(successList, errorNoList, errorList2, importType);
+                errorList.addAll(errorList2);
+            } catch (Exception e) {
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
+            successList.clear();
+            updateTask(count);
         }
+    }
+
+    /**
+     * 数据校验和转换
+     */
+    private void validateAndConvertData(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证并转换枚举值为code
+        validateAndConvertEnumValues(data, errorMsgList);
+        
+        // 验证并解析关联数据ID
+        validateAndResolveIds(data, errorMsgList);
     }
 
     /**
@@ -177,80 +169,82 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
         }
     }
 
-    private void validateEnumValues(AssetCardImportExcelDTO data) {
-        // 验证计量单位
-        if (UnitEnum.getName(data.getUnit()).isEmpty()) {
-            throw new ServiceException("计量单位【" + data.getUnit() + "】不存在");
+    /**
+     * 验证并转换枚举值为code
+     */
+    private void validateAndConvertEnumValues(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证并转换计量单位
+        String unitCode = UnitEnum.getCodeByName(data.getUnit());
+        if (StrUtil.isBlank(unitCode)) {
+            errorMsgList.add("计量单位【" + data.getUnit() + "】不存在");
+        } else {
+            data.setUnit(unitCode);
         }
         
-        // 验证资产类别
-        if (AssetCategoryEnum.getName(data.getType()).isEmpty()) {
-            throw new ServiceException("资产类别【" + data.getType() + "】不存在");
+        // 验证并转换资产类别
+        String typeCode = AssetCategoryEnum.getCodeByName(data.getType());
+        if (StrUtil.isBlank(typeCode)) {
+            errorMsgList.add("资产类别【" + data.getType() + "】不存在");
+        } else {
+            data.setType(typeCode);
         }
         
-        // 验证资产状态
-        if (AssetStatusEnum.getName(data.getStatus()).isEmpty()) {
-            throw new ServiceException("资产状态【" + data.getStatus() + "】不存在");
+        // 验证并转换资产状态
+        String statusCode = AssetStatusEnum.getCodeByName(data.getStatus());
+        if (StrUtil.isBlank(statusCode)) {
+            errorMsgList.add("资产状态【" + data.getStatus() + "】不存在");
+        } else {
+            data.setStatus(statusCode);
         }
         
-        // 验证变动方式
-        if (ChangeMethodEnum.getName(data.getChangeMethod()).isEmpty()) {
-            throw new ServiceException("变动方式【" + data.getChangeMethod() + "】不存在");
+        // 验证并转换变动方式
+        String changeMethodCode = ChangeMethodEnum.getCodeByName(data.getChangeMethod());
+        if (StrUtil.isBlank(changeMethodCode)) {
+            errorMsgList.add("变动方式【" + data.getChangeMethod() + "】不存在");
+        } else {
+            data.setChangeMethod(changeMethodCode);
         }
         
-        // 验证费用项目
-        if (DepreciationChargeEnum.getName(data.getCostType()).isEmpty()) {
-            throw new ServiceException("费用项目【" + data.getCostType() + "】不存在");
+        // 验证并转换费用项目
+        String costTypeCode = DepreciationChargeEnum.getCodeByName(data.getCostType());
+        if (StrUtil.isBlank(costTypeCode)) {
+            errorMsgList.add("费用项目【" + data.getCostType() + "】不存在");
+        } else {
+            data.setCostType(costTypeCode);
         }
     }
 
-    private void validateRelatedData(AssetCardImportExcelDTO data) {
-        // 验证资产位置
-        if (!assetLocationMap.containsKey(data.getAssetLocationName())) {
-            throw new ServiceException("资产位置【" + data.getAssetLocationName() + "】不存在");
+    /**
+     * 验证并解析关联数据ID
+     */
+    private void validateAndResolveIds(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证资产位置名称是否存在并解析资产位置ID
+        String assetLocationId = getAssetLocationIdByName(data.getAssetLocationName());
+        if (StrUtil.isBlank(assetLocationId)) {
+            errorMsgList.add("资产位置【" + data.getAssetLocationName() + "】不存在");
+        } else {
+            data.setAssetLocationId(assetLocationId);
         }
         
-        // 验证使用部门
-        if (CollUtil.isNotEmpty(deptList)) {
-            boolean deptExists = deptList.stream()
-                .anyMatch(dept -> data.getUseDeptName().equals(dept.getName()));
-            if (!deptExists) {
-                throw new ServiceException("使用部门【" + data.getUseDeptName() + "】不存在");
-            }
+        // 验证使用部门名称是否存在并解析部门ID
+        String useDeptId = getDeptIdByName(data.getUseDeptName());
+        if (StrUtil.isBlank(useDeptId)) {
+            errorMsgList.add("使用部门【" + data.getUseDeptName() + "】不存在");
+        } else {
+            data.setUseDeptId(useDeptId);
         }
     }
 
-    private AssetCardDTO.AddDTO convertToAddDTO(AssetCardImportExcelDTO data) {
-        AssetCardDTO.AddDTO addDTO = new AssetCardDTO.AddDTO();
-        
-        // 主表数据
-        addDTO.setOrgName(data.getOrgName());
-        addDTO.setType(data.getType());
-        addDTO.setName(data.getName());
-        addDTO.setUnit(data.getUnit());
-        addDTO.setQty(data.getQty());
-        addDTO.setStartUseDate(data.getStartUseDate());
-        addDTO.setRemark(data.getRemark());
-        addDTO.setStatus(data.getStatus());
-        addDTO.setChangeMethod(data.getChangeMethod());
-        addDTO.setSourceType(CardSourceEnum.MANUAL_CREATE.getCode());
-        
-        // 明细数据
-        AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
-        detailDTO.setAssetLocationId(assetLocationMap.get(data.getAssetLocationName()));
-        detailDTO.setQty(data.getQty());
-        detailDTO.setUseDeptName(data.getUseDeptName());
-        detailDTO.setCostType(data.getCostType());
-        detailDTO.setRemark(data.getDetailRemark());
-        
-        addDTO.setDetailList(Collections.singletonList(detailDTO));
-        
-        return addDTO;
-    }
-
-    private void handleImportResult() {
-        // 这里可以添加导入结果处理逻辑，比如发送通知等
-        log.info("导入任务完成，任务ID：{}，成功：{}，失败：{}", taskId, successList.size(), errorList.size());
+    /**
+     * 更新任务状态
+     */
+    private void updateTask(Integer count) {
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+        importResultDTO.setRemark("处理中");
+        importResultDTO.setCount(count);
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     public List<AssetCardImportExcelDTO> getSuccessList() {
@@ -267,5 +261,84 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
 
     public int getCount() {
         return count;
+    }
+
+    /**
+     * 根据部门名称查询部门ID（带缓存）
+     */
+    private String getDeptIdByName(String deptName) {
+        if (StrUtil.isBlank(deptName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_DEPT_NAME_TO_ID + deptName;
+        String deptId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(deptId)) {
+            return deptId;
+        }
+
+        try {
+            // 调用部门服务根据名称查询部门信息
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByNames(
+                    Collections.singletonList(deptName)
+            );
+
+            if (CollUtil.isNotEmpty(deptList)) {
+                // 返回第一个匹配的部门ID
+                String result = deptList.get(0).getId();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到部门名称：{}", deptName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门ID失败，部门名称：{}，错误：{}", deptName, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 根据资产位置名称查询资产位置ID（带缓存）
+     */
+    private String getAssetLocationIdByName(String assetLocationName) {
+        if (StrUtil.isBlank(assetLocationName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_ASSET_LOCATION_NAME_TO_ID + assetLocationName;
+        String assetLocationId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(assetLocationId)) {
+            return assetLocationId;
+        }
+
+        try {
+            // 调用资产位置服务根据地址或详细地址查询资产位置信息
+            List<com.erp.model.fms.entity.AssetLocationEntity> assetLocationList = assetLocationService.lambdaQuery()
+                    .and(wrapper -> wrapper
+                        .eq(com.erp.model.fms.entity.AssetLocationEntity::getAddress, assetLocationName)
+                        .or()
+                        .eq(com.erp.model.fms.entity.AssetLocationEntity::getDetailedAddress, assetLocationName)
+                    )
+                    .eq(com.erp.model.fms.entity.AssetLocationEntity::getIsDeleted, false)
+                    .list();
+
+            if (CollUtil.isNotEmpty(assetLocationList)) {
+                // 返回第一个匹配的资产位置ID
+                String result = assetLocationList.get(0).getId();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到资产位置（地址或详细地址）：{}", assetLocationName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询资产位置ID失败，资产位置名称：{}，错误：{}", assetLocationName, e.getMessage(), e);
+            return null;
+        }
     }
 }

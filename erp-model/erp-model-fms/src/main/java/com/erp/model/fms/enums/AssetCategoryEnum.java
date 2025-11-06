@@ -52,5 +52,22 @@ public enum AssetCategoryEnum {
     public static String getName(String code) {
         return getByCode(code).getName();
     }
+    
+    /**
+     * 根据名称获取编码
+     * @param name 类别名称
+     * @return 类别编码，如果未找到则返回空字符串
+     */
+    public static String getCodeByName(String name) {
+        if (name == null) {
+            return "";
+        }
+        for (AssetCategoryEnum category : values()) {
+            if (category.getName().equals(name) || category.getCode().equalsIgnoreCase(name)) {
+                return category.getCode();
+            }
+        }
+        return "";
+    }
 }
 
