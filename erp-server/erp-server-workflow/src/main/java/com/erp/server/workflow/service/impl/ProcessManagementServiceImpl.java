@@ -362,7 +362,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 //为空表示submit
-                mqDto.setApproveType(null);
+                mqDto.setApproveType("");
                 syncFsExternalInstance(mqDto);
             }
         });
