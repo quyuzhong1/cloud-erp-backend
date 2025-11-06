@@ -4,16 +4,12 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeePurchaseChangeConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -50,7 +46,7 @@ public class KingdeePurchaseChangeConsumer<T extends DmpSyncTaskIdDTO> extends A
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "POC23100700001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPKIDX,FSrcBillNo,FPOOrderEntry_Link_FSId,FPOOrderEntry_Link_FSBillId,FDEMANDBILLNO,FDEMANDBILLENTRYSEQ,FDEMANDBILLENTRYID";
+        String fieldKeys = "F_ULZ_orderType";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         queryList.forEach(req -> {
             System.out.println(req);

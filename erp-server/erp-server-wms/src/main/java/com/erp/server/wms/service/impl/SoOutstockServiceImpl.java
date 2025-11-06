@@ -476,8 +476,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //未作废、待提交、审核不通过才可以提交
-        if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
+        if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                && !entity.getApproveStatus().getCode().equals(ApproveStatusEnum.REJECT.getStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //查询是否冻结
