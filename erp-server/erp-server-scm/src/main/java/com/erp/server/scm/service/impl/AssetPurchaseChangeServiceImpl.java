@@ -715,9 +715,10 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         assetPurchaseChangeEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         assetPurchaseChangeEntity.setOrderType(addDTO.getOrderType());
         assetPurchaseChangeEntity.setChangeReason(addDTO.getChangeReason());
-        assetPurchaseChangeEntity.setSourceCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPO));
+        assetPurchaseChangeEntity.setSourceCode(addDTO.getSourceCode());
         assetPurchaseChangeEntity.setSourceId(addDTO.getSourceId());
         assetPurchaseChangeEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
+        assetPurchaseChangeEntity.setInvalidStatus(Boolean.FALSE);
     }
 
     private List<AssetPurchaseChangeDetailEntity> handleDetailData(AssetPurchaseChangeDTO.AddDTO addDTO,String assetPurchaseChangeId){
