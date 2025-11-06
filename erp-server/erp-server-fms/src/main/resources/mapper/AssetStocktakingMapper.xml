@@ -121,7 +121,13 @@
                 #{id}
             </foreach>
         </if>
-        ORDER BY ast.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ast.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.fms.dto.AssetStocktakingDTO$TabListDTO">
         SELECT
