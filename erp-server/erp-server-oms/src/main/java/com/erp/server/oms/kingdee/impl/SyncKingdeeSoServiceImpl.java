@@ -520,6 +520,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 if (Objects.nonNull(bankAccount)) {
                     resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
                 }
+            }else if (StringUtils.isNotBlank(entity.getReceiveAccount())) {
+                //如果没有已审核的收款单，则使用订单上的收款账号
+                BankAccountEntity bankAccount = bankAccountService.getById(entity.getReceiveAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
+
             }
         }
 
