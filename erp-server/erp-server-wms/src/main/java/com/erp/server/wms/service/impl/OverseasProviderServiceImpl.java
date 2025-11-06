@@ -466,14 +466,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
-    public List<OverseasProviderEntity> listByAuthStatus(String code) {
-        if(StringUtils.isNotBlank(code)){
-            return lambdaQuery().eq(OverseasProviderEntity::getAuthStatus,code).list();
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
     public OverseasProviderEntity refreshToken(OverseasProviderEntity entity) {
         ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(entity.getCode());
         Map<String,Object> authMap = entity.getAuthJson();
@@ -669,4 +661,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     public OverseasProviderEntity getAlreadyAuthById(String id) {
         return lambdaQuery().eq(BaseEntity::getId,id).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).one();
     }
+    @Override
+    public List<OverseasProviderEntity> listByAuthStatus(String code) {
+        if(StringUtils.isNotBlank(code)){
+            return lambdaQuery().eq(OverseasProviderEntity::getAuthStatus,code).list();
+        }
+        return Collections.emptyList();
+    }
+
 }
