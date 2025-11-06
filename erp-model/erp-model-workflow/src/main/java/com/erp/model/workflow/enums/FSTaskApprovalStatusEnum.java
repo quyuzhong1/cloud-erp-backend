@@ -4,7 +4,8 @@ public enum FSTaskApprovalStatusEnum {
     PENDING("PENDING", "待审批"),
     APPROVED("APPROVED", "任务同意"),
     REJECTED("REJECTED", "任务拒绝"),
-    CANCELED("TRANSFERRED", "任务转交"),
+    TRANSFERRED("TRANSFERRED", "任务转交"),
+    CANCELED("CANCELED", "撤销"),
     DELETED("DONE", "任务通过但审批人未操作。审批人看不到该任务时，如需查看可抄送至该审批人"),
     ;
 

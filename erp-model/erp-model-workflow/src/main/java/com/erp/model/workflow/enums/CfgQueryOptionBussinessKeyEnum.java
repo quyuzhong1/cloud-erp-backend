@@ -56,10 +56,16 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	EXHIBITION_ORDER("exhibitionOrder", "展会订单"),
 	MOLD_INFO("moldInfo", "模具档案"),
 	MOLD_REF_SKU("moldRefSku", "模具关联SKU"),
+	ASSET_CARD("assetCard", "资产卡片"),
+	ASSET_ACCEPTANCE("assetAcceptance", "资产验收单"),
 	ASSET_DISPOSAL("assetDisposal", "资产处置单"),
 	SAMPLE_RECIPIENT("sampleRecipient","样品领用单"),
 	SAMPLE_BACK_INFO("sampleBackInfo","样品退回单"),
 	SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账"),
+	INVENTORY_GAIN_LOSS("inventoryGainLoss", "盘盈盘亏单"),
+	ASSET_INVENTORY_SHEET("assetInventorySheet", "资产盘点表"),
+	INVENTORY_PLAN("inventoryPlan", "盘点方案"),
+	ASSET_LOCATION("assetLocation", "资产位置"),
     ;
     /**
      * 类型

@@ -2,7 +2,6 @@ package com.erp.rpc.sys.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.validator.ValidList;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.entity.*;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.common.business.validator.ValidList;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -132,5 +132,6 @@ public interface SysDictFeign {
      */
     @PostMapping("feign/sampleUseUser/saveOrUpdate")
     Boolean saveOrUpdateSampleUseUser(@RequestBody @Valid ValidList<SampleUseUserDTO.AddOrUpdateDTO> userList);
+
 
 }
