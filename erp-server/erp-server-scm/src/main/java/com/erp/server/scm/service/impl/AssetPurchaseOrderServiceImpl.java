@@ -450,7 +450,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
             List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> acceptDetailList =
                     assetAceptFeign.getAcceptByDetailId(assetPurchaseOrderDetailEntity.getId()).getData();
-            if (!acceptDetailList.isEmpty()) {
+            if (Objects.isNull(acceptDetailList)) {
                 throw new ServiceException(ApiError.ERROR_95321);
             }
         }
