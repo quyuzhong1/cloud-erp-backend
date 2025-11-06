@@ -17,10 +17,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
-import com.erp.model.dmp.entity.ThirdLogisticsEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.ThirdShopEntity;
-import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -74,14 +71,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ThirdLogisticsService thirdLogisticsService;
 //    @Resource
 //    private ThirdMappingService thirdMappingService;
-
     @Resource
     private LogisticsFeign logisticsFeign;
-
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
 
 //    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
@@ -748,6 +745,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 }
                 sysName = logisticsChannelEntity.getName();
                 break;
+            case PLATFORM:
+                DmpBasicSystemEntity systemEntity = dmpBasicSystemService.getById(addDTO.getSysId());
+                if (Objects.isNull(systemEntity)) {
+                    throw new ServiceException("系统为空");
+                }
+                sysName =  systemEntity.getName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
         }
@@ -872,6 +876,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdLogisticsEntity.getChannelName();
                     thirdAddDTO.setThirdInfoId(thirdLogisticsEntity.getId());
                     thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
+                    break;
+                case PLATFORM:
+                    thirdAddDTO.setThirdId(thirdAddDTO.getThirdCode());
+                    thirdAddDTO.setThirdInfoId("");
+                    thirdName = thirdAddDTO.getThirdName();
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
