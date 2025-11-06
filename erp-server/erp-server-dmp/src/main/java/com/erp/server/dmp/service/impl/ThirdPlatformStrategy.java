@@ -123,7 +123,6 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
         List<ThirdMappingEntity> thirdMappingEntityList = thirdMappingService.getList(viewParamDTO.getType(), sysId);
 
         // 平台系统信息
-        Map<String, DictBasicDTO.ViewDTO> dictDasicMap = new HashMap<>();
         Map<String, DictBasicEntity> thirdPlatformSysTypeMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(thirdMappingEntityList)) {
             List<String> sysTypeList = thirdMappingEntityList.stream().map(ThirdMappingEntity::getThirdSysType).distinct().collect(Collectors.toList());
@@ -135,36 +134,19 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
                 throw new ServiceException("系统类型字典信息不存在");
             }
             thirdPlatformSysTypeMap = thirdPlatformSysTypeList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, e->e,  (v1, v2) -> v1));
-
-            Map<String, List<String>> dictBasicGroupMap = thirdPlatformSysTypeList.stream()
-                    .collect(Collectors.groupingBy(
-                            DictBasicEntity::getRemark,
-                            Collectors.mapping(DictBasicEntity::getValue, Collectors.toList())
-                    ));
-            for (Map.Entry<String, List<String>> entry : dictBasicGroupMap.entrySet()) {
-                String database = StringUtils.isBlank(entry.getKey()) ? "dmp" : entry.getKey();
-                // 跨库查询
-                Map<String, DictBasicDTO.ViewDTO> curDictDasicMap = targetThirdPlatformMap(database, entry.getValue());
-                dictDasicMap.putAll(curDictDasicMap);
-            }
         }
 
         // 查询三方系统名称
-        getViewVo(mappingViewDTO, systemEntity, viewDTOList, thirdMappingEntityList, dictDasicMap, thirdPlatformSysTypeMap);
+        getViewVo(mappingViewDTO, systemEntity, viewDTOList, thirdMappingEntityList, thirdPlatformSysTypeMap);
     }
     
-    static void getViewVo(ThirdMappingDTO.MappingViewDTO mappingViewDTO, DmpBasicSystemEntity systemEntity, List<ThirdMappingDTO.ViewDTO> viewDTOList, List<ThirdMappingEntity> thirdMappingEntityList, Map<String, DictBasicDTO.ViewDTO> dictDasicMap, Map<String, DictBasicEntity> thirdPlatformSysTypeMap) {
+    static void getViewVo(ThirdMappingDTO.MappingViewDTO mappingViewDTO, DmpBasicSystemEntity systemEntity, List<ThirdMappingDTO.ViewDTO> viewDTOList, List<ThirdMappingEntity> thirdMappingEntityList, Map<String, DictBasicEntity> thirdPlatformSysTypeMap) {
         for (ThirdMappingEntity thirdMappingEntity : thirdMappingEntityList) {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
-            DictBasicDTO.ViewDTO thirdEntity = dictDasicMap.get(thirdMappingEntity.getThirdId());
-            if (Objects.isNull(thirdEntity)) {
-                viewDTOList.add(viewDTO);
-                continue;
-            }
-            viewDTO.setName(thirdEntity.getName());
+            viewDTO.setName(thirdMappingEntity.getThirdName());
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
             viewDTO.setThirdName(thirdMappingEntity.getThirdName());
-            viewDTO.setCode(thirdEntity.getValue());
+            viewDTO.setCode(thirdMappingEntity.getThirdId());
             viewDTO.setId(thirdMappingEntity.getId());
             DictBasicEntity dictBasicEntity = thirdPlatformSysTypeMap.get(thirdMappingEntity.getThirdSysType());
             if (null != dictBasicEntity) {
@@ -175,77 +157,10 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
         }
         mappingViewDTO.setSalesOrgId("");
         mappingViewDTO.setSalesOrgName("");
+        mappingViewDTO.setCode(systemEntity.getCode());
         mappingViewDTO.setSysName(systemEntity.getName());
         mappingViewDTO.setSysId(systemEntity.getId());
         mappingViewDTO.setThirdList(viewDTOList);
-    }
-
-
-    public static Map<String, DictBasicDTO.ViewDTO> targetThirdPlatformMap(String database, List<String> dictBasicTypeList) {
-        switch (database) {
-            case "dmp":
-                List<com.erp.model.dmp.entity.DictBasicEntity> dmpDictBasicEntityList = FeignQuery.create(com.erp.model.dmp.entity.DictBasicEntity.class)
-                        .in(com.erp.model.dmp.entity.DictBasicEntity::getType, dictBasicTypeList)
-                        .list();
-                if (CollectionUtils.isEmpty(dmpDictBasicEntityList)) {
-                    return Collections.emptyMap();
-                } else {
-                    return dmpDictBasicEntityList.stream()
-                            .collect(Collectors.toMap(com.erp.model.dmp.entity.DictBasicEntity::getId,
-                                    e-> new DictBasicDTO.ViewDTO(e.getId(), e.getRemark(), e.getValue(), e.getType(), e.getName(), e.getSort()),
-                                    (v1, v2) -> v1));
-                }
-            case "oms":
-                List<com.erp.model.oms.entity.DictBasicEntity> omsDictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
-                        .in(com.erp.model.oms.entity.DictBasicEntity::getType, dictBasicTypeList)
-                        .list();
-                if (CollectionUtils.isEmpty(omsDictBasicEntityList)) {
-                    return Collections.emptyMap();
-                } else {
-                    return omsDictBasicEntityList.stream()
-                            .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getId,
-                                    e-> new DictBasicDTO.ViewDTO(e.getId(), e.getRemark(), e.getValue(), e.getType(), e.getName(), e.getSort()),
-                                    (v1, v2) -> v1));
-                }
-            case "wms":
-                List<com.erp.model.wms.entity.DictBasicEntity> wmsDictBasicEntityList = FeignQuery.create(com.erp.model.wms.entity.DictBasicEntity.class)
-                        .in(com.erp.model.wms.entity.DictBasicEntity::getType, dictBasicTypeList)
-                        .list();
-                if (CollectionUtils.isEmpty(wmsDictBasicEntityList)) {
-                    return Collections.emptyMap();
-                } else {
-                    return wmsDictBasicEntityList.stream()
-                            .collect(Collectors.toMap(com.erp.model.wms.entity.DictBasicEntity::getId,
-                                    e-> new DictBasicDTO.ViewDTO(e.getId(), e.getRemark(), e.getValue(), e.getType(), e.getName(), e.getSort()),
-                                    (v1, v2) -> v1));
-                }
-            case "tms":
-                List<com.erp.model.tms.entity.DictBasicEntity> tmsDictBasicEntityList = FeignQuery.create(com.erp.model.tms.entity.DictBasicEntity.class)
-                        .in(com.erp.model.tms.entity.DictBasicEntity::getType, dictBasicTypeList)
-                        .list();
-                if (CollectionUtils.isEmpty(tmsDictBasicEntityList)) {
-                    return Collections.emptyMap();
-                } else {
-                    return tmsDictBasicEntityList.stream()
-                            .collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getId,
-                                    e-> new DictBasicDTO.ViewDTO(e.getId(), e.getRemark(), e.getCode(), e.getType(), e.getName(), e.getIndex()),
-                                    (v1, v2) -> v1));
-                }
-            case "sys":
-                List<com.erp.model.sys.entity.DictBasicEntity> sysDictBasicEntityList = FeignQuery.create(com.erp.model.sys.entity.DictBasicEntity.class)
-                        .in(com.erp.model.sys.entity.DictBasicEntity::getType, dictBasicTypeList)
-                        .list();
-                if (CollectionUtils.isEmpty(sysDictBasicEntityList)) {
-                    return Collections.emptyMap();
-                } else {
-                    return sysDictBasicEntityList.stream()
-                            .collect(Collectors.toMap(com.erp.model.sys.entity.DictBasicEntity::getId,
-                                    e-> new DictBasicDTO.ViewDTO(e.getId(), e.getRemark(), e.getValue(), e.getType(), e.getName(), e.getSort()),
-                                    (v1, v2) -> v1));
-                }
-            default:
-                return Collections.emptyMap();
-        }
     }
     
     /**

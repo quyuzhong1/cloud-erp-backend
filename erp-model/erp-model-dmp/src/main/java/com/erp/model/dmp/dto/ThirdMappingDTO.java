@@ -140,7 +140,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方id
          */
-        @NotBlank(message = "第三方id不能为空")
+//        @NotBlank(message = "第三方id不能为空")
         private String thirdId;
 
         /**
@@ -204,6 +204,12 @@ public class ThirdMappingDTO implements Serializable {
          * 系统表名称
          */
         private String sysName;
+
+        /**
+         * 系统代号
+         */
+        private String code;
+
         /**
          * 销售组织id
          */
