@@ -268,7 +268,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	}
 
 	@Override
-	public Boolean exportExcel(PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto) {
+	public Boolean exportExcel(DictBasicAllDTO.ExpotParamDTO dto) {
 		downloadTaskFeign.saveDownloadTask("字典数据表", FileTaskEventEnum.EXPORT_DICT_BASIC_ALL.getCode(), dto);
 		return Boolean.TRUE;
 	}
