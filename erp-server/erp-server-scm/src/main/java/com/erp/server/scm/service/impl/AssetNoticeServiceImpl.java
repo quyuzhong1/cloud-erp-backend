@@ -656,7 +656,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     public BatchResultDTO delete(String id) {
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交并且未作废数据支持删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || entity.getInvalidStatus()) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
 
