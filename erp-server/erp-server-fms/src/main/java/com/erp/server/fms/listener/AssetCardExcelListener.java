@@ -11,7 +11,9 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.fms.service.AssetCardService;
 import com.erp.server.fms.service.AssetLocationService;
@@ -51,11 +53,13 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
     // 缓存相关常量
     private static final String CACHE_DEPT_NAME_TO_ID = "asset_card:dept_name_to_id:";
     private static final String CACHE_ASSET_LOCATION_NAME_TO_ID = "asset_card:asset_location_name_to_id:";
+    private static final String CACHE_SUPPLIER_NAME_TO_ID = "asset_card:supplier_name_to_id:";
     private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
 
     private final AssetCardService assetCardService = SpringUtil.getBean(AssetCardService.class);
     private final AssetLocationService assetLocationService = SpringUtil.getBean(AssetLocationService.class);
     private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+    private final SupplierFeign supplierFeign = SpringUtil.getBean(SupplierFeign.class);
     private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
@@ -218,6 +222,16 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
      * 验证并解析关联数据ID
      */
     private void validateAndResolveIds(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证供应商名称是否存在并解析供应商ID（如果填写了）
+        if (StringUtils.isNotBlank(data.getSupplierName())) {
+            String supplierId = getSupplierIdByName(data.getSupplierName());
+            if (StrUtil.isBlank(supplierId)) {
+                errorMsgList.add("供应商【" + data.getSupplierName() + "】不存在");
+            } else {
+                data.setSupplierId(supplierId);
+            }
+        }
+        
         // 验证资产位置名称是否存在并解析资产位置ID
         String assetLocationId = getAssetLocationIdByName(data.getAssetLocationName());
         if (StrUtil.isBlank(assetLocationId)) {
@@ -261,6 +275,43 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
 
     public int getCount() {
         return count;
+    }
+
+    /**
+     * 根据供应商名称查询供应商ID（带缓存）
+     */
+    private String getSupplierIdByName(String supplierName) {
+        if (StrUtil.isBlank(supplierName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_SUPPLIER_NAME_TO_ID + supplierName;
+        String supplierId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(supplierId)) {
+            return supplierId;
+        }
+
+        try {
+            // 调用供应商服务根据名称查询供应商信息
+            List<SupplierEntity> supplierList = supplierFeign.listBySupplierByNames(
+                    Collections.singletonList(supplierName)
+            );
+
+            if (CollUtil.isNotEmpty(supplierList)) {
+                // 返回第一个匹配的供应商ID
+                String result = supplierList.get(0).getId();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到供应商名称：{}", supplierName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询供应商ID失败，供应商名称：{}，错误：{}", supplierName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**

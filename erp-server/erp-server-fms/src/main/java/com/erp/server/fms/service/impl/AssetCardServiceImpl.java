@@ -1032,6 +1032,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
                 detailDTO.setAssetLocationId(excelDTO.getAssetLocationId());
                 detailDTO.setQty(excelDTO.getQty());
+                detailDTO.setSupplierId(excelDTO.getSupplierId());
+                detailDTO.setSupplierName(excelDTO.getSupplierName());
                 detailDTO.setUseDeptName(excelDTO.getUseDeptName());
                 detailDTO.setCostType(excelDTO.getCostType());
                 detailDTO.setRemark(excelDTO.getDetailRemark());
