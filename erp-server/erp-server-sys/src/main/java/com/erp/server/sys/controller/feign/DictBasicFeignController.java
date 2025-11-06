@@ -1,10 +1,15 @@
 package com.erp.server.sys.controller.feign;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.server.sys.service.DictBasicAllService;
 import com.erp.server.sys.service.DictBasicService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -21,6 +26,8 @@ public class DictBasicFeignController extends BaseController {
 
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DictBasicAllService dictBasicAllService;
 
     /**
      * 获取字典数据 根据属性
@@ -33,4 +40,8 @@ public class DictBasicFeignController extends BaseController {
     }
 
 
+    @PostMapping("feign/dictBasic/paging")
+    public PagingVO<DictBasicAllDTO.ViewDTO> paging(@RequestBody PagingDTO< DictBasicAllDTO.PagingParamDTO > dto){
+        return dictBasicAllService.paging(dto);
+    }
 }
