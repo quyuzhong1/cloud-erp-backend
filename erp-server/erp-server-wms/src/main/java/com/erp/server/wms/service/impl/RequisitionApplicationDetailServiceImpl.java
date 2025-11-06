@@ -68,6 +68,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         //校验是否重复
         String type = addDTO.getType();
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            //明细中的fnsku不能为空
+            long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+            }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
@@ -129,6 +134,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         //校验是否重复
         String type = updateDTO.getType();
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            //明细中的fnsku不能为空
+            long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+            }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));

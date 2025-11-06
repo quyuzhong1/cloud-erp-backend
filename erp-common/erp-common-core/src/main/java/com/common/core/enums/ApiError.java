@@ -1343,6 +1343,9 @@ public enum ApiError implements Serializable {
 
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+    ERROR_FBA_FNSKU_NOT_EXIST(92281, "平台SKU【{}】未匹配到FNSKU，请检查SKU是否已绑定FNSKU"),
+    ERROR_TRANSFER_NOT_RETRY_OUTSTOCK(92288, "发货单已调拨出库，不允许重新出库"),
+    ERROR_FBA_FNSKU_NOT_BLANK(92289, "FNSKU不能为空"),
 
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),

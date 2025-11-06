@@ -998,6 +998,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 发票信息
          */
+        @Valid
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
          /**

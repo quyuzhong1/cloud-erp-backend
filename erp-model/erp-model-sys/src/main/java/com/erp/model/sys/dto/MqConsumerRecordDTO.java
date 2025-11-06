@@ -171,6 +171,34 @@ public class MqConsumerRecordDTO implements Serializable {
     }
 
     /**
+     * 构建MqDTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BuildMqDTO  {
+        /**
+         * 表名
+         */
+        private String table;
+        /**
+         * 操作类型 I 新增 U 更新 D 删除
+         */
+        private String operationType;
+        /**
+         * 数据库 erp-wms
+         */
+        private String db;
+        /**
+         * 变化钱的对象
+         */
+        private Object before;
+        /**
+         * 变化后的对象
+         */
+        private Object after;
+    }
+
+    /**
      *
      */
     @Data

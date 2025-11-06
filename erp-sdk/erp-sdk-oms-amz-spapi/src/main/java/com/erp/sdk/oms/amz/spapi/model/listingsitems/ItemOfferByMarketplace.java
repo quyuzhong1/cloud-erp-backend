@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,24 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Audience;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Money;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Points;
 
 import java.io.IOException;
-import java.util.Objects;
-
 /**
  * Offer details of a listings item for an Amazon marketplace.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class ItemOfferByMarketplace {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -37,8 +39,9 @@ public class ItemOfferByMarketplace {
    */
   @JsonAdapter(OfferTypeEnum.Adapter.class)
   public enum OfferTypeEnum {
+    @SerializedName("B2C")
     B2C("B2C"),
-    
+    @SerializedName("B2B")
     B2B("B2B");
 
     private String value;
@@ -46,7 +49,6 @@ public class ItemOfferByMarketplace {
     OfferTypeEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -55,31 +57,27 @@ public class ItemOfferByMarketplace {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static OfferTypeEnum fromValue(String text) {
+    public static OfferTypeEnum fromValue(String input) {
       for (OfferTypeEnum b : OfferTypeEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<OfferTypeEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final OfferTypeEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public OfferTypeEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return OfferTypeEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return OfferTypeEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("offerType")
+  }  @SerializedName("offerType")
   private OfferTypeEnum offerType = null;
 
   @SerializedName("price")
@@ -88,16 +86,19 @@ public class ItemOfferByMarketplace {
   @SerializedName("points")
   private Points points = null;
 
+  @SerializedName("audience")
+  private Audience audience = null;
+
   public ItemOfferByMarketplace marketplaceId(String marketplaceId) {
     this.marketplaceId = marketplaceId;
     return this;
   }
 
    /**
-   * Amazon marketplace identifier.
+   * The Amazon marketplace identifier.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -115,7 +116,7 @@ public class ItemOfferByMarketplace {
    * Type of offer for the listings item.
    * @return offerType
   **/
-
+  
   public OfferTypeEnum getOfferType() {
     return offerType;
   }
@@ -130,10 +131,10 @@ public class ItemOfferByMarketplace {
   }
 
    /**
-   * Purchase price of the listings item
+   * Get price
    * @return price
   **/
-
+  
   public Money getPrice() {
     return price;
   }
@@ -151,13 +152,31 @@ public class ItemOfferByMarketplace {
    * Get points
    * @return points
   **/
-
+  
   public Points getPoints() {
     return points;
   }
 
   public void setPoints(Points points) {
     this.points = points;
+  }
+
+  public ItemOfferByMarketplace audience(Audience audience) {
+    this.audience = audience;
+    return this;
+  }
+
+   /**
+   * Get audience
+   * @return audience
+  **/
+  
+  public Audience getAudience() {
+    return audience;
+  }
+
+  public void setAudience(Audience audience) {
+    this.audience = audience;
   }
 
 
@@ -173,12 +192,13 @@ public class ItemOfferByMarketplace {
     return Objects.equals(this.marketplaceId, itemOfferByMarketplace.marketplaceId) &&
         Objects.equals(this.offerType, itemOfferByMarketplace.offerType) &&
         Objects.equals(this.price, itemOfferByMarketplace.price) &&
-        Objects.equals(this.points, itemOfferByMarketplace.points);
+        Objects.equals(this.points, itemOfferByMarketplace.points) &&
+        Objects.equals(this.audience, itemOfferByMarketplace.audience);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(marketplaceId, offerType, price, points);
+    return Objects.hash(marketplaceId, offerType, price, points, audience);
   }
 
 
@@ -191,6 +211,7 @@ public class ItemOfferByMarketplace {
     sb.append("    offerType: ").append(toIndentedString(offerType)).append("\n");
     sb.append("    price: ").append(toIndentedString(price)).append("\n");
     sb.append("    points: ").append(toIndentedString(points)).append("\n");
+    sb.append("    audience: ").append(toIndentedString(audience)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -207,4 +228,3 @@ public class ItemOfferByMarketplace {
   }
 
 }
-
