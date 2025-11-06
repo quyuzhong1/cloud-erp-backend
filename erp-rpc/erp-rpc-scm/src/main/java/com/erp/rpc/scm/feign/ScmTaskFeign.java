@@ -503,4 +503,28 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/listSupplierAccount")
     List<SupplierAccountEntity> listSupplierAccount();
+
+    /**
+     * 开模通知单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetNoticeApprove")
+    List<BatchResultDTO> assetNoticeApprove(@RequestBody @Validated BaseApproveParamDTO  dto);
+
+    /**
+     * 模具采购单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetPurchaseOrderApprove")
+    List<BatchResultDTO> assetPurchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 模具采购变更单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetPurchaseChangeApprove")
+    List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 }
