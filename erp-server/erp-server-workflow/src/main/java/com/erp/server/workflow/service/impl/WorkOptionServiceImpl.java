@@ -34,6 +34,7 @@ import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.rpc.oms.feign.*;
+import com.erp.rpc.fms.feign.FmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -80,6 +81,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private FmsTaskFeign fmsTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -495,8 +499,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmApprove(dto, entity);
                 break;
             case WMS:
-            case FM:
                 wmsApprove(dto, entity);
+                break;
+            case FM:
+                fmsApprove(dto, entity);
                 break;
             case OMS:
                 omsApprove(dto, entity);
@@ -686,6 +692,44 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.sampleLedgerInitApprove(baseApproveParamDTO);
                 break;
                 
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean fmsApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case ASSET_CARD:
+                resultDTOList = fmsTaskFeign.assetCardApprove(baseApproveParamDTO);
+                break;
+            case ASSET_ACCEPTANCE:
+                resultDTOList = fmsTaskFeign.assetAcceptApprove(baseApproveParamDTO);
+                break;
+            case INVENTORY_GAIN_LOSS:
+                resultDTOList = fmsTaskFeign.assetProfitLossApprove(baseApproveParamDTO);
+                break;
+            case ASSET_INVENTORY_SHEET:
+                resultDTOList = fmsTaskFeign.assetStocktakingApprove(baseApproveParamDTO);
+                break;
+            case INVENTORY_PLAN:
+                resultDTOList = fmsTaskFeign.assetStocktakingPlanApprove(baseApproveParamDTO);
+                break;
+            case ASSET_LOCATION:
+                resultDTOList = fmsTaskFeign.assetLocationApprove(baseApproveParamDTO);
+                break;
+            case ASSET_DISPOSAL:
+                resultDTOList = fmsTaskFeign.assetDisposalApprove(baseApproveParamDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
