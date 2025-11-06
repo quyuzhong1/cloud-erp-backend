@@ -31,6 +31,7 @@ import com.erp.model.fms.entity.AssetDisposalDetailEntity;
 import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
+import com.erp.model.fms.enums.CardSourceEnum;
 import com.erp.model.fms.enums.DepreciationChargeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -952,7 +953,6 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Transactional(rollbackFor = Exception.class)
     public void importAssetCard(BaseDTO.ImportDTO dto) {
         AssetCardExcelListener excelListenerUtil = new AssetCardExcelListener(
-            this, assetLocationService, sysUserFeign, 
             dto.getTaskId(), dto.getImportType(), dto.getImportCount()
         );
         
@@ -981,6 +981,72 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 批量处理导入成功的数据
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleImportSuccessList(List<AssetCardImportExcelDTO> successList,
+                                       List<String> errorNoList,
+                                       List<AssetCardImportExcelDTO> errorList2,
+                                       String importType) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        
+        // 过滤掉错误编号的数据
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            List<AssetCardImportExcelDTO> filteredList = successList.stream()
+                .filter(e -> e.getNo() != null && !errorNoList.contains(String.valueOf(e.getNo())))
+                .collect(Collectors.toList());
+            
+            // 被过滤掉的数据添加到错误列表
+            List<AssetCardImportExcelDTO> errorData = successList.stream()
+                .filter(e -> e.getNo() == null || errorNoList.contains(String.valueOf(e.getNo())))
+                .collect(Collectors.toList());
+            errorList2.addAll(errorData);
+            
+            successList = filteredList;
+        }
+        
+        // 批量保存数据
+        for (AssetCardImportExcelDTO excelDTO : successList) {
+            try {
+                AssetCardDTO.AddDTO addDTO = new AssetCardDTO.AddDTO();
+                
+                // 主表数据（枚举字段已经在Listener中转换为code）
+                addDTO.setOrgName(excelDTO.getOrgName());
+                addDTO.setType(excelDTO.getType());
+                addDTO.setName(excelDTO.getName());
+                addDTO.setUnit(excelDTO.getUnit());
+                addDTO.setQty(excelDTO.getQty());
+                addDTO.setStartUseDate(excelDTO.getStartUseDate());
+                addDTO.setRemark(excelDTO.getRemark());
+                addDTO.setStatus(excelDTO.getStatus());
+                addDTO.setChangeMethod(excelDTO.getChangeMethod());
+                addDTO.setSourceType(CardSourceEnum.MANUAL_CREATE.getCode());
+                
+                // 明细数据
+                AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
+                detailDTO.setAssetLocationId(excelDTO.getAssetLocationId());
+                detailDTO.setQty(excelDTO.getQty());
+                detailDTO.setUseDeptName(excelDTO.getUseDeptName());
+                detailDTO.setCostType(excelDTO.getCostType());
+                detailDTO.setRemark(excelDTO.getDetailRemark());
+                
+                addDTO.setDetailList(Collections.singletonList(detailDTO));
+                
+                // 保存
+                this.add(addDTO);
+                
+            } catch (Exception e) {
+                log.error("保存资产卡片失败：{}", e.getMessage(), e);
+                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                errorList2.add(excelDTO);
+            }
+        }
     }
 
     /**

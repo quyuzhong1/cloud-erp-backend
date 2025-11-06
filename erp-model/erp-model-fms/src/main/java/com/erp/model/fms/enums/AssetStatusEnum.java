@@ -52,5 +52,22 @@ public enum AssetStatusEnum {
     public static String getName(String code) {
         return getByCode(code).getName();
     }
+    
+    /**
+     * 根据名称获取编码
+     * @param name 状态名称
+     * @return 状态编码，如果未找到则返回空字符串
+     */
+    public static String getCodeByName(String name) {
+        if (name == null) {
+            return "";
+        }
+        for (AssetStatusEnum status : values()) {
+            if (status.getName().equals(name) || status.getCode().equalsIgnoreCase(name)) {
+                return status.getCode();
+            }
+        }
+        return "";
+    }
 }
 
