@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -19,18 +21,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
-import com.erp.model.fms.entity.AssetCardDetailEntity;
-import com.erp.model.fms.entity.AssetCardEntity;
-import com.erp.model.fms.entity.AssetDisposalDetailEntity;
-import com.erp.model.fms.entity.AssetDisposalEntity;
-import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
-import com.erp.model.fms.entity.AssetStocktakingEntity;
+import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
+import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.CardSourceEnum;
 import com.erp.model.fms.enums.CostTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -40,13 +38,11 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.fms.listener.AssetCardExcelListener;
 import com.erp.server.fms.mapper.AssetCardMapper;
 import com.erp.server.fms.service.AssetCardService;
 import com.erp.server.fms.service.OperateLogService;
-import com.erp.server.fms.listener.AssetCardExcelListener;
-import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -56,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -97,6 +94,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     private FileFeign fileFeign;
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1059,6 +1058,15 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         String path = "classpath:excel/assetCardTemplate.xlsx";
         String excelName = "资产卡片导入模板.xlsx";
         ExcelUtil.downloadTemplate(path, excelName, response);
+    }
+
+    @Override
+    public Map<String, Object> getVariablesMap(AssetCardEntity entity) {
+        com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.ASSET_CARD.getCode());
+        dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
     @Override

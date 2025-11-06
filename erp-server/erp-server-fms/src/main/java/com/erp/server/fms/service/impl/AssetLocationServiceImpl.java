@@ -38,6 +38,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.listener.AssetLocationExcelListener;
 import com.erp.server.fms.mapper.AssetLocationMapper;
 import com.erp.server.fms.service.AssetLocationService;
@@ -90,6 +91,8 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     private FileFeign fileFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -710,6 +713,15 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
                 errorList2.add(excelDTO);
             }
         }
+    }
+
+    @Override
+    public Map<String, Object> getVariablesMap(AssetLocationEntity entity) {
+        com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.ASSET_LOCATION.getCode());
+        dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
     @Override

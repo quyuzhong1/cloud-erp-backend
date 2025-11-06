@@ -40,6 +40,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetStocktakingMapper;
 import com.erp.server.fms.service.AssetStocktakingService;
 import com.erp.server.fms.service.AssetStocktakingDetailService;
@@ -91,6 +92,8 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private AssetCardService assetCardService;
     @Resource
     private AssetCardDetailService assetCardDetailService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1005,6 +1008,15 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         log.info("删除待提交状态的盘盈盘亏单，数量：{}，单号：{}", 
                 profitLossList.size(), 
                 profitLossList.stream().map(AssetProfitLossEntity::getCode).collect(Collectors.joining(",")));
+    }
+
+    @Override
+    public Map<String, Object> getVariablesMap(AssetStocktakingEntity entity) {
+        com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.ASSET_INVENTORY_SHEET.getCode());
+        dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
     @Override

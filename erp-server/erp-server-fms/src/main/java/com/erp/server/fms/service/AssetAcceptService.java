@@ -9,6 +9,7 @@ import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -216,4 +217,13 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId);
 
     Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
+
+    /**
+    * 获取流程变量Map
+    * @author wuht
+    * @date: 2025-11-06
+    * @param entity
+    * @return Map<String, Object>
+    */
+    Map<String, Object> getVariablesMap(AssetAcceptEntity entity);
 }

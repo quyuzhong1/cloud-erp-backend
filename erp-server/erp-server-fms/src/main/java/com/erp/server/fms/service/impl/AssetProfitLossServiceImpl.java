@@ -40,6 +40,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetProfitLossMapper;
 import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -50,6 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -81,6 +83,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     @Autowired
     private AssetCardService assetCardService;
     private AssetLocationService assetLocationService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -725,6 +729,15 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         
         log.info("获取盘盈盘亏单下推列表成功，明细数量：{}", resultList.size());
         return resultList;
+    }
+
+    @Override
+    public Map<String, Object> getVariablesMap(AssetProfitLossEntity entity) {
+        com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.INVENTORY_GAIN_LOSS.getCode());
+        dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
     @Override

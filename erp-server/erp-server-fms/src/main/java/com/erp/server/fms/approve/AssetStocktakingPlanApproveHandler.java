@@ -44,6 +44,7 @@ public class AssetStocktakingPlanApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(assetStocktakingPlanService.getVariablesMap(assetStocktakingPlanEntity));
         return assetStocktakingPlanService.approveEnd(approveOne, assetStocktakingPlanEntity);
     }
 
