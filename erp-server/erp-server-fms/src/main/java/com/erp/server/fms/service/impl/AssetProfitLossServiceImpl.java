@@ -134,8 +134,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录盘盈盘亏单主单日志数据，单号：【{}】", assetProfitLossEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetProfitLossEntity.getCode(), "盘盈盘亏单主单");
+            log.info("编辑 开始记录盘盈盘亏单主单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "盘盈盘亏单主单");
         operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
         return Boolean.TRUE;
     }

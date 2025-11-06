@@ -325,8 +325,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产卡片主单日志数据，单号：【{}】", assetCardEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetCardEntity.getCode(), "资产卡片主单");
+            log.info("编辑 开始记录资产卡片主单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产卡片主单");
         operateLogService.addModuleOperateLogByObj(old, assetCardEntity, ModuleTypeEnum.ASSET_CARD.getCode(), assetCardEntity.getId(), msg);
         return Boolean.TRUE;
     }
