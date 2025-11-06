@@ -669,4 +669,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     public OverseasProviderEntity getAlreadyAuthById(String id) {
         return lambdaQuery().eq(BaseEntity::getId,id).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).one();
     }
+    @Override
+    public List<OverseasProviderEntity> listByAuthStatus(String code) {
+        if(StringUtils.isNotBlank(code)){
+            return lambdaQuery().eq(OverseasProviderEntity::getAuthStatus,code).list();
+        }
+        return Collections.emptyList();
+    }
+
 }
