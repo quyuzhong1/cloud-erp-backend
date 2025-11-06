@@ -11,7 +11,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionExtEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionExtTypeEnum;
@@ -19,12 +18,10 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.CfgQueryOptionExtMapper;
 import com.erp.server.workflow.service.CfgQueryOptionExtService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.workflow.service.OperateLogService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgQueryOptionExtDTO;
 import java.util.*;
@@ -33,8 +30,6 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 
 import javax.annotation.Resource;
-
-import static com.lowagie.text.xml.simpleparser.EntitiesToUnicode.map;
 
 /**
  * <p>
@@ -276,5 +271,10 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
             return "";
         }
         return resultList.stream().collect(Collectors.joining(","));
+    }
+
+    @Override
+    public void insertBatch(CfgQueryOptionExtEntity entity) {
+        this.baseMapper.insertSave(entity);
     }
 }
