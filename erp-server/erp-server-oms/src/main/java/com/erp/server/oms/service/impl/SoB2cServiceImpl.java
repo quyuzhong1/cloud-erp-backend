@@ -387,7 +387,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
     private static final int MAX_RETRY_COUNT = 3;
-    private static final long RETRY_DELAY_SECONDS = 30000;
+    private static final long RETRY_DELAY_SECONDS = 10000;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2423,23 +2423,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 下出库单的命令
          */
         if (isApi) {
-            //发货状态
             //异步处理
             soB2cService.asyncThirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
             operate = "异步提交发货";
-            //成功更新订单状态
-            this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         } else {
             //生成发货单
             generateSoB2cDeliveryBill(entity, list, logisticsEntity, warehouseManageType);
             //删除异常订单信息
             soB2cErrorService.removeAllTypeErrorOrder(id);
             this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+            //操作日志
+            String msg = "B2C销售订单【{}】提交发货";
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         }
-
-        //操作日志
-        String msg = "B2C销售订单【{}】" + operate;
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), operate);
     }
 
@@ -2844,8 +2840,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())){
             log.warn("B2C订单【{}】已发货，不进行出库单处理", entity.getCode());
             //已发货不进行处理
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("已发货，不进行出库单处理", entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
             return;
         }
+        //成功更新订单状态
+        this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         //判断渠道是否是海外仓的渠道，否的话判断新的渠道是否是海外仓渠道，否则报错
         Boolean isCheckNewChannel = false;
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
@@ -3043,6 +3042,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //成功更新订单状态
         this.updateBillStatus(entity.getId(), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        //操作日志
+        String msg = "B2C销售订单【{}】异步提交发货";
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
     }
 
 
@@ -3101,7 +3103,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //重试查询
                 try {
                     //等待30秒后重试
-                    log.error("30秒后进行第" + (retryCount + 2) + "次重试");
+                    log.error("10秒后进行第" + (retryCount + 2) + "次重试");
                     Thread.sleep(RETRY_DELAY_SECONDS);
                     apiResult = createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1);
                     return apiResult;
@@ -8277,6 +8279,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getBillStatus, soB2cEntity.getBillStatus())
                 .set(SoB2cEntity::getApproveStatus, soB2cEntity.getApproveStatus())
                 .set(SoB2cEntity::getIsIntercept, soB2cEntity.getIsIntercept())
+                .set(SoB2cEntity::getIsFrozen, soB2cEntity.getIsFrozen())
                 .set(StringUtils.isNotBlank(soB2cEntity.getRemark()),SoB2cEntity::getRemark, soB2cEntity.getRemark())
                 .update();
         if (result) {
