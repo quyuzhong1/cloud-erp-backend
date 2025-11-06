@@ -7,11 +7,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.*;
-import com.erp.server.fms.handler.AssetLocationQueryHandler;
-import com.erp.server.fms.handler.AssetAcceptQueryHandler;
-import com.erp.server.fms.handler.AssetProfitLossQueryHandler;
-import com.erp.server.fms.handler.AssetStocktakingPlanQueryHandler;
-import com.erp.server.fms.handler.AssetStocktakingQueryHandler;
+import com.erp.server.fms.handler.*;
 import com.erp.server.fms.query.AssetDisposalQueryHandler;
 import com.erp.server.fms.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -77,6 +73,7 @@ public class ExportFmsFeignController {
             tableField = "create_user_id",
             menuCode = "fms:assetCard:export"
     )
+    @WebAdvanceQuery(handler = AssetCardQueryHandler.class)
     public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(@RequestBody PagingDTO<AssetCardDTO.ExportDTO> dto) {
         return assetCardService.getAssetCardPageData(dto);
     }
