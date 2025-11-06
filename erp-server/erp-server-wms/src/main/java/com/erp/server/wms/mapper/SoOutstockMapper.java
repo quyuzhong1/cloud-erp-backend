@@ -113,4 +113,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@Param("params") SoOutstockDTO.ListAmountParamDTO params);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@Param("exhibitionId") String exhibitionId);
+
+    List<SoOutstockDTO.ExportLogisticsHandoverListDTO> exportLogisticsHandover(@Param("ids") List<String> ids);
 }
