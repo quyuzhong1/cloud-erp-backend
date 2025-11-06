@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -838,6 +839,20 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
            return;
         }
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         // 属性赋值
         for(AssetPurchaseOrderDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -855,6 +870,12 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             } else {
                 data.setAcceptQty(parseAcceptQty);
                 data.setUnAcceptQty(data.getPurchaseQty().subtract(parseAcceptQty));
+            }
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
             }
 
         }
