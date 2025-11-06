@@ -108,6 +108,8 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 				if(sleepVal != null) {
 					isRetry = true;
 					sleep = sleepVal.longValue();
+				}else {
+					isRetry = false;
 				}
 				errormsg = parseObject.getString("errormsg");
 			}
