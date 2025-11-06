@@ -47,7 +47,7 @@ public class ExportFmsAssetStocktakingPlanHandler extends AbstractPageFileEventH
 
     @Override
     public String getExcelPath() {
-        return "excel/assetStocktakingPlan.xlsx";
+        return "excel/fms/assetStocktakingPlan.xlsx";
     }
 }
 
