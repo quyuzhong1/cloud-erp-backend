@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
@@ -146,7 +147,7 @@ public class CfgApproveSyncBuildHandler {
                 .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                 .updateTime(updateTimeMillis)//审批实例最近更新时间
                 .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
-                .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                 .build();
 
         //任务列表数组  最大长度：300
@@ -167,20 +168,19 @@ public class CfgApproveSyncBuildHandler {
             ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
                     .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
                     .map(e -> {
-                                num.updateAndGet(v -> v + 1);
-                                Integer i = num.get();
-                                String taskTitle = "@i18n@taskTitle" + i;
-                                //撤销操作
-                                values.put(taskTitle, cfgApproveSyncEntity.getTitle());
+                                // 使用映射获取状态码
+                                ApproveStatusEnum taskStatus = e.getTaskStatus();
+                                String status = STATUS_MAPPING.getOrDefault(taskStatus, "");
 
-                        // 使用映射获取状态码
-                        ApproveStatusEnum taskStatus = e.getTaskStatus();
-                        String status = STATUS_MAPPING.getOrDefault(taskStatus, "");
+                                //撤销 (只针对审批中的才设置撤销)
+                                if (taskStatus.equals(ApproveStatusEnum.APPROVE_ING) && approveType.equals(ApproveTypeEnum.CANCEL.getStatus())) {
+                                    status = FSTaskApprovalStatusEnum.DELETED.getCode();
+                                }
 
-                        return ExternalInstanceTaskNode.newBuilder()
+                                return ExternalInstanceTaskNode.newBuilder()
                                         .taskId(e.getId())
                                         .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
-                                        .title(taskTitle)
+                                        .title("@i18n@title")
                                         .links(ExternalInstanceLink.newBuilder()
                                                 .pcLink(pcLinkByEnv)
                                                 .mobileLink(pcLinkByEnv)
