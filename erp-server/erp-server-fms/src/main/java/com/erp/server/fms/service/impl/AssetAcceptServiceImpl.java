@@ -119,13 +119,13 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
-        assetAcceptEntity.setSourceCode(addDTO.getPurchaseCode());
+        assetAcceptEntity.setSourceCode(addDTO.getSourceCode());
 
         // 如果填写了模具采购订单号，查询订单信息并设置来源（只在新增时且有订单号时才查询）
-        if (StringUtils.isNotBlank(addDTO.getPurchaseCode())) {
+        if (StringUtils.isNotBlank(addDTO.getSourceCode())) {
             try {
                 ApiResult<AssetPurchaseOrderDTO.DetailWithSkuDTO> orderResult =
-                    assetPurchaseOrderFeign.getByCode(addDTO.getPurchaseCode());
+                    assetPurchaseOrderFeign.getByCode(addDTO.getSourceCode());
                 
                 if (orderResult != null && orderResult.isSuccess() && orderResult.getData() != null) {
                     AssetPurchaseOrderDTO.DetailWithSkuDTO orderData = orderResult.getData();
@@ -142,11 +142,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     }
                 } else {
                     log.warn("根据模具采购订单号{}查询订单失败: {}", 
-                        addDTO.getPurchaseCode(), 
+                        addDTO.getSourceCode(), 
                         orderResult != null ? orderResult.getMsg() : "返回结果为空");
                 }
             } catch (Exception e) {
-                log.error("查询模具采购订单{}失败", addDTO.getPurchaseCode(), e);
+                log.error("查询模具采购订单{}失败", addDTO.getSourceCode(), e);
             }
         }
 
