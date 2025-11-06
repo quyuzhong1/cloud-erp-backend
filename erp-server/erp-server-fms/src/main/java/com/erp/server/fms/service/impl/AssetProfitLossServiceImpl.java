@@ -29,6 +29,7 @@ import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
+import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.model.fms.enums.AssetStatusEnum;
 import com.erp.model.fms.enums.ChangeMethodEnum;
 import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
@@ -40,11 +41,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.fms.mapper.AssetProfitLossMapper;
-import com.erp.server.fms.service.AssetProfitLossDetailService;
-import com.erp.server.fms.service.AssetProfitLossService;
-import com.erp.server.fms.service.AssetStocktakingPlanService;
-import com.erp.server.fms.service.DictBasicService;
-import com.erp.server.fms.service.OperateLogService;
+import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -82,7 +79,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     @Autowired
     private AssetStocktakingPlanService assetStocktakingPlanService;
     @Autowired
-    private com.erp.server.fms.service.AssetCardService assetCardService;
+    private AssetCardService assetCardService;
+    private AssetLocationService assetLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -659,9 +657,30 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                     .collect(Collectors.toMap(DictBasicDTO.DropDownDTO::getCode, DictBasicDTO.DropDownDTO::getName, (v1, v2) -> v1));
         }
         
+        // 获取所有实际资产位置ID
+        List<String> locationIds = detailList.stream()
+                .map(AssetProfitLossDetailEntity::getActualLocation)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 查询资产位置信息
+        Map<String, String> locationMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(locationIds)) {
+            List<AssetLocationEntity> locationList = assetLocationService.lambdaQuery()
+                    .in(AssetLocationEntity::getId, locationIds)
+                    .eq(AssetLocationEntity::getIsDeleted, false)
+                    .list();
+            if (CollUtil.isNotEmpty(locationList)) {
+                locationMap = locationList.stream()
+                        .collect(Collectors.toMap(AssetLocationEntity::getId, AssetLocationEntity::getAddress, (v1, v2) -> v1));
+            }
+        }
+        
         // 组装返回数据
         List<AssetProfitLossDTO.PushToCardListDTO> resultList = new ArrayList<>(detailList.size());
         Map<String, String> finalAssetCategoryMap = assetCategoryMap;
+        Map<String, String> finalLocationMap = locationMap;
         
         for (AssetProfitLossDetailEntity detail : detailList) {
             AssetProfitLossDTO.PushToCardListDTO dto = new AssetProfitLossDTO.PushToCardListDTO();
@@ -691,7 +710,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             dto.setUnit(detail.getUnit());
             dto.setQty(detail.getDiffQty());  // 使用差异数量
             dto.setActualLocation(detail.getActualLocation());
-            // actualLocationName 需要通过位置服务查询，暂时不设置
+            dto.setActualLocationName(finalLocationMap.get(detail.getActualLocation()));
             
             // 使用部门和费用项目留空，等待用户选择
             dto.setUseDeptId(null);
