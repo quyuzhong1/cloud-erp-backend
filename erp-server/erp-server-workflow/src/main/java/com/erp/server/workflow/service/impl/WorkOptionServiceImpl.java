@@ -596,6 +596,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case SUBCONTRACT_ORDER:
                 scmTaskFeign.subcontractOrderApprove(approveOneDTO);
                 break;
+            case ASSET_NOTICE:
+                scmTaskFeign.assetNoticeApprove(baseApproveParamDTO);
+                break;
+            case ASSET_PURCHASE_ORDER:
+                scmTaskFeign.assetPurchaseOrderApprove(baseApproveParamDTO);
+                break;
+            case ASSET_PURCHASE_CHANGE:
+                scmTaskFeign.assetPurchaseChangeApprove(baseApproveParamDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
