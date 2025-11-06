@@ -262,11 +262,17 @@ public class AssetAcceptExcelDTO implements Serializable {
     private String useDeptId;
 
     /**
-     * 费用项目
+     * 费用项目名称（Excel输入）
      */
     @ExcelProperty(value = "*费用项目", index = 17)
     @ColumnWidth(15)
     @FieldValid(fieldName = "*费用项目", isNotBlank = true)
+    private String costTypeName;
+
+    /**
+     * 费用项目编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String costType;
 
     /**

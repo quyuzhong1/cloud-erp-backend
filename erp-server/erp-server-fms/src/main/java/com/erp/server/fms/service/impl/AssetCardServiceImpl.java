@@ -32,7 +32,7 @@ import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
 import com.erp.model.fms.enums.CardSourceEnum;
-import com.erp.model.fms.enums.DepreciationChargeEnum;
+import com.erp.model.fms.enums.CostTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -325,8 +325,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录资产卡片主单日志数据，单号：【{}】", assetCardEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetCardEntity.getCode(), "资产卡片主单");
+            log.info("编辑 开始记录资产卡片主单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产卡片主单");
         operateLogService.addModuleOperateLogByObj(old, assetCardEntity, ModuleTypeEnum.ASSET_CARD.getCode(), assetCardEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -808,7 +808,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                         
                         // 填充费用项目名称（枚举转换）
                         if (StringUtils.isNotBlank(detail.getCostType())) {
-                            detailView.setCostTypeName(DepreciationChargeEnum.getName(detail.getCostType()));
+                            detailView.setCostTypeName(CostTypeEnum.getName(detail.getCostType()));
                         }
                         
                         return detailView;
@@ -912,7 +912,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             // 明细字段的枚举值转换
             // 费用项目枚举转换
             if (StringUtils.isNotBlank(data.getCostType())) {
-                data.setCostTypeName(com.erp.model.fms.enums.DepreciationChargeEnum.getName(data.getCostType()));
+                data.setCostTypeName(CostTypeEnum.getName(data.getCostType()));
             }
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
@@ -1032,6 +1032,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
                 detailDTO.setAssetLocationId(excelDTO.getAssetLocationId());
                 detailDTO.setQty(excelDTO.getQty());
+                detailDTO.setSupplierId(excelDTO.getSupplierId());
+                detailDTO.setSupplierName(excelDTO.getSupplierName());
                 detailDTO.setUseDeptName(excelDTO.getUseDeptName());
                 detailDTO.setCostType(excelDTO.getCostType());
                 detailDTO.setRemark(excelDTO.getDetailRemark());

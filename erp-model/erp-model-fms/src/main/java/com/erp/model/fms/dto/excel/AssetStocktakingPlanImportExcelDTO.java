@@ -49,9 +49,15 @@ public class AssetStocktakingPlanImportExcelDTO {
     private String remark;
 
     /**
-     * 资产类别（多个用逗号分隔）
+     * 资产类别名称（多个用逗号分隔，Excel输入）
      */
     @ExcelProperty(value = "资产类别", index = 4)
+    private String assetCategoryNames;
+
+    /**
+     * 资产类别编码（多个用逗号分隔，从名称转换得到）
+     */
+    @ExcelIgnore
     private String assetCategories;
 
     /**
