@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -69,17 +70,26 @@ public class ThirdPlatformController extends BaseController {
         if (Objects.isNull(dictBasicEntity)) {
             throw new ServiceException("系统类型字典信息不存在");
         }
-        // 平台系统信息
-        Map<String, DictBasicDTO.ViewDTO> dictDasicMap = new HashMap<>();
-        String database = StringUtils.isBlank(dictBasicEntity.getRemark()) ? "dmp" : dictBasicEntity.getRemark();
         // 兼容跨库查询
         PagingDTO<DictBasicAllDTO.PagingParamDTO> dtoPagingDTO = new PagingDTO<>();
-
         List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        // 指定数据库
+        String database = StringUtils.isBlank(dictBasicEntity.getRemark()) ? "dmp" : dictBasicEntity.getRemark();
+        AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("systemCode", QueryConditionEnum.EQ, database , QueryDataTypeEnum.STRING);
+        advanceQueryDTOList.add(advanceQueryDTO);
+        // 指定字典类型
+        AdvanceQueryDTO typeAdvanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("t.type", QueryConditionEnum.EQ, dictBasicEntity.getValue() , QueryDataTypeEnum.STRING);
+        advanceQueryDTOList.add(typeAdvanceQueryDTO);
+        // 指定字典关键字
+        AdvanceQueryDTO searchKeyAdvanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("t.name", QueryConditionEnum.CONTAINS, dto.getParams().getSearchKeyword() , QueryDataTypeEnum.STRING);
+        advanceQueryDTOList.add(searchKeyAdvanceQueryDTO);
 
-//        AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value, QueryDataTypeEnum.STRING);
-//        advanceQueryDTOList.add();
-//        PagingVO<DictBasicAllDTO.ViewDTO> paging = sysDictFeign.paging(dtoPagingDTO);
+        DictBasicAllDTO.PagingParamDTO pagingParamDTO = new DictBasicAllDTO.PagingParamDTO();
+        pagingParamDTO.setAdvanceQueryDTOList(advanceQueryDTOList);
+        dtoPagingDTO.setParams(pagingParamDTO);
+        PagingVO<DictBasicAllDTO.ViewDTO> paging = sysDictFeign.paging(dtoPagingDTO);
+
+
         return null;
     }
 

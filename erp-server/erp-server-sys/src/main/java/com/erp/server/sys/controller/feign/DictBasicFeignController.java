@@ -40,7 +40,7 @@ public class DictBasicFeignController extends BaseController {
     }
 
 
-    @PostMapping("feign/dictBasic/paging")
+    @PostMapping("/paging")
     public PagingVO<DictBasicAllDTO.ViewDTO> paging(@RequestBody PagingDTO< DictBasicAllDTO.PagingParamDTO > dto){
         return dictBasicAllService.paging(dto);
     }
