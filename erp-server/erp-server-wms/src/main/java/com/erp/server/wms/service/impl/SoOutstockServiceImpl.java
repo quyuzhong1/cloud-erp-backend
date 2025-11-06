@@ -2892,7 +2892,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (ObjectUtil.isEmpty(entity)) {
                     throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
                 }
-                BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+                BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
                 if (!submit.getSuccess()) {
                     throw new ServiceException(ApiError.ERROR_1042,"销售出库单");
                 }
@@ -3055,7 +3055,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
         }
-        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
         if (submit.getSuccess()) {
             soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
         }
