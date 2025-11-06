@@ -24,6 +24,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
 import com.erp.model.fms.dto.AssetStocktakingDetailDTO;
@@ -228,7 +229,8 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     @Override
     public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
         // 调用现有的分页查询方法
-        IPage<AssetStocktakingPlanDTO.ListDTO> pageData = this.baseMapper.listExport(dto.getParams());
+        Page<AssetAcceptDTO.ListDTO> page = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<AssetStocktakingPlanDTO.ListDTO> pageData = this.baseMapper.listExport(page,dto.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>();
         }
