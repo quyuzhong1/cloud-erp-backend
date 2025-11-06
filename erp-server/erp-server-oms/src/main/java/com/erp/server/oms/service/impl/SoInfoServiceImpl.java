@@ -377,6 +377,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //添加明细
             soDetailService.addSoDetail(addEntity, dto.getIsTax(), dto.getDetailList());
+            if(StringUtils.isNotBlank(dto.getReceiveAccount()) && CollectionUtils.isNotEmpty(dto.getSoReceiptDTOList())){
+                dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
+            }
             //更新收款单信息
             soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
 
@@ -1395,6 +1398,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
             throw new ServiceException(ApiError.ERROR_92017);
         }
+        String oldReceiptAccount = soInfo.getReceiveAccount();
         List<SoReceiptEntity> existReceipt = soReceiptService.listBySoId(id);
 
         String customerId = dto.getCustomerId();
@@ -1523,8 +1527,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
+
             //修改 订单详情
             soDetailService.updateSoDetail(soInfo, dto.getIsTax(), dto.getDetailList(),old);
+            if(StringUtils.isNotBlank(dto.getReceiveAccount()) && !dto.getReceiveAccount().equals(oldReceiptAccount) && CollectionUtils.isNotEmpty(dto.getSoReceiptDTOList())){
+                dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
+            }
             //更新收款单信息
             soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
             return id;
@@ -2754,11 +2762,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             KingdeeReceiptConditionEntity receiptCondition = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getId(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
             ValidatorUtil.isTrue(Objects.nonNull(receiptCondition), () -> new ServiceException("收款条件错误"));
         }
-//        // 收款账号
-//        if (StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
-//            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(soInfoEntity.getSalesOrgId(), soInfoEntity.getReceiveAccount());
-//            ValidatorUtil.isTrue(CollUtil.isNotEmpty(bankAccountList), () -> new ServiceException("收款账号错误"));
-//        }
+        // 收款账号
+        if (StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
+            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(soInfoEntity.getSalesOrgId(), soInfoEntity.getReceiveAccount());
+            ValidatorUtil.isTrue(CollUtil.isNotEmpty(bankAccountList), () -> new ServiceException("收款账号错误"));
+        }
     }
 
     @Override
