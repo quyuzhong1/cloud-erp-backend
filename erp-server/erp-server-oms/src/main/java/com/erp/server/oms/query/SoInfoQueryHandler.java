@@ -12,10 +12,13 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.plm.vo.SkuVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,9 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -58,13 +64,79 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
          * 虚拟仓是否缺货
          */
         if("isVirtualOutStock".equals(field)){
-//            String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
-//            if ((Boolean) value) {
-//                return sql + "< 0";
-//            } else {
-//                return sql + ">= 0";
-//            }
             return getQueryAllSql();
+        }
+        /**
+         * SPU编号查询
+         */
+        if("spuNo".equals(field)){
+            String queryField = "pi.spu_no";
+            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
+                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryEmptySql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
+            }
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryAllSql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+            }
+        }
+
+        /**
+         * SPU名称查询
+         */
+        if("spuName".equals(field)){
+            String queryField = "pi.name";
+            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
+                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryEmptySql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
+            }
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryAllSql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+            }
+        }
+
+
+        /**
+         * 剩余发货通知数量
+         */
+        if("remainingNoticeQty".equals(field)){
+            // 使用 XML 中关联的发货通知明细聚合别名 sdnd
+            return "(sod.qty - COALESCE(sdnd.deliveryQty, 0)) " + compareCodeSplicingValueSql;
         }
 
         if("tab".equals(field)){
@@ -86,16 +158,18 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
                     //审核不通过
                     super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.REJECT.getStatus());
                     break;
-                //未发货
+                //待发货：审核通过 + 发货明细部分未发货 AND 发货明细未关闭
                 case OmsConstant.WAIT_DELIVERY:
-                    super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.APPROVE.getStatus());
-                    super.buildDefaultDTO("sod.delivery_status",Arrays.asList(DeliveryStatusEnum.UN_SHIPPED.getCode(),DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode()));
-                break;
-                //已发货
+                    return "si.approve_status = 'approve' AND EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment') " +
+                           "AND sd.is_close = FALSE)";
+                //已发货：审核通过 + 所有明细已发货，或审核通过 + 发货明细部分未发货并且发货明细已关闭
                 case OmsConstant.DELIVERY:
-                    super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.APPROVE.getStatus());
-                    super.buildDefaultDTO("sod.delivery_status",Arrays.asList(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode()));
-                break;
+                    return "si.approve_status = 'approve' AND ((NOT EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND sd.delivery_status != 'completeShipment')) " +
+                           "OR (EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment') " +
+                           "AND sd.is_close = TRUE)))";
 
             }
         }

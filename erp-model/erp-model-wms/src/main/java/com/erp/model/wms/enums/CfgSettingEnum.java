@@ -29,6 +29,7 @@ public enum CfgSettingEnum implements EnumMessage {
     WAREHOUSE_BY_SO_RETURN("warehouseBySoReturn","东莞售后仓库配置"),
     QC_USER("qcUser","质检员"),
     SHOP_EXPIRE_NOTICE("shopExpireNotice","店铺过期通知"),
+    INVENTORY_REDIS("inventoryRedis","库存redis扣减配置"),
     ;
 
     /**

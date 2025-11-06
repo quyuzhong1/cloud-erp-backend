@@ -17,6 +17,7 @@ import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
+import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
@@ -224,7 +225,11 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        return ApiResult.error("查询jifeng仓出库单失败");
+        JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
+        if(!isSuccess(outBound)){
+            return failure(outBound.getMessage());
+        }
+        return Objects.nonNull(outBound.getData()) ? success(outBound.getData().getOrderNo()) : failure(outBound.getMessage());
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {

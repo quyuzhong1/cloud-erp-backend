@@ -425,6 +425,20 @@ public class SoOutstockDTO implements Serializable {
          * 客户采购订单号
          */
         private String customerPO;
+        /**
+         * 分区ID
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
     }
 
     /**·
@@ -991,6 +1005,21 @@ public class SoOutstockDTO implements Serializable {
          * 客户备注
          */
         private String customerRemark;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 

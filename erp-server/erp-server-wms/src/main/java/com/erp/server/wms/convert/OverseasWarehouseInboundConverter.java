@@ -155,6 +155,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "address2",  source = "receiverInfo.address2"),
             @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
             @Mapping(target = "itemList",  source = "items"),
+            @Mapping(target = "vatChangeInfo.shipperEori",  source = "eoriTaxNo"),
     })
     GoodCangCreateOutboundReq outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq createOutboundReq);
 

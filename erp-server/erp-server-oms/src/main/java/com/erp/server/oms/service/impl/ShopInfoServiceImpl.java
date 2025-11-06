@@ -633,6 +633,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
         shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
+        shopInfo.setEoriTaxNo(dto.getEoriTaxNo());
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());

@@ -107,9 +107,9 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory connectionFactory){
+    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
         RedisTemplate<Object, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
+        template.setConnectionFactory(redisConnectionFactory);
 
         FastJson2JsonRedisSerializer serializer = new FastJson2JsonRedisSerializer(Object.class);
 
@@ -167,6 +167,7 @@ public class RedisConfig {
      * 定义redission分布式锁客户端bean
      * @return
      */
+    @Primary
     @Bean
     public RedissonClient redisson()  {
         Config config = new Config();

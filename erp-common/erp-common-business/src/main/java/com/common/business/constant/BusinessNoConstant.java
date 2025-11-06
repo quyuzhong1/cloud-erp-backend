@@ -215,6 +215,8 @@ public interface BusinessNoConstant {
     String QCTZ="QCTZ";
     //组包计划
     String ZBJH="ZBJH";
+    //样品转移单
+    String YPZY="YPZY";
     //资质字典
     String DC="DC";
 

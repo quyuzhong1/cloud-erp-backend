@@ -46,5 +46,11 @@ public class ProductBomInfoDTO implements Serializable {
          */
         @NotNull(message = "产品id不能为空")
         private List<String> skuIds;
+
+        /**
+         * SoB2cDetailEntity的ID
+         */
+        @NotNull(message = "b2c订单详情id不能为空")
+        private String soB2cDetailId;
     }
 }

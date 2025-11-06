@@ -243,6 +243,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
                 mainEntity.setIsIntercept(false);
+                mainEntity.setIsFrozen(false);
                 mainEntity.setRemark("三方仓出库单废弃,拦截成功");
                 if(mainEntity.getIsCancel()){
                     mainEntity.setInvalidStatus(Boolean.TRUE);

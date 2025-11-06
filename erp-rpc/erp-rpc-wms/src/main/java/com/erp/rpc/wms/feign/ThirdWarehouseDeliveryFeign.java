@@ -30,6 +30,8 @@ public interface ThirdWarehouseDeliveryFeign {
     @PostMapping("feign/thirdWarehouseDelivery/getLatestBySoId")
     ThirdWarehouseDeliveryEntity getLatestBySoId(@RequestBody String soId);
 
+    @PostMapping("feign/thirdWarehouseDelivery/deleteById")
+    void deleteById(@RequestBody String id);
     @PostMapping("feign/thirdWarehouseDelivery/update")
     boolean update(@RequestBody ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
 

@@ -30,9 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import com.erp.server.wms.query.SampleLedgerQueryHandler;
-import com.erp.server.wms.service.SampleLedgerFlowService;
-import com.erp.server.wms.query.SampleLedgerFlowQueryHandler;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -209,6 +206,8 @@ public class ExportWmsFeignController {
     private SampleBackInfoService sampleBackInfoService;
     @Resource
     private SampleInitialLedgerService sampleInitialLedgerService;
+    @Resource
+    private SampleTransferInfoService sampleTransferInfoService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -961,7 +960,7 @@ public class ExportWmsFeignController {
     @PostMapping("/exportSoB2cProcessing")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbp.warehouse_id",
-            shopTableField = "sb2c.shop_id",
+            shopTableField = "sbp.shop_id",
             menuCode = "wms:soB2cProcessing:paging"
     )
     @WebAdvanceQuery
@@ -1217,6 +1216,24 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleInitialLedgerQueryHandler.class)
     public PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.PagingParamDTO> dto) {
         return sampleInitialLedgerService.paging(dto);
+    }
+
+    /**
+     * 导出样品转移单Excel数据
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSampleTransferInfoPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleTransferInfo:export",
+            tableAlias = "sti"
+    )
+    @WebAdvanceQuery(handler = SampleTransferInfoQueryHandler.class)
+    public PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto) {
+        return sampleTransferInfoService.getSampleTransferInfoPageData(dto);
     }
 
 }
