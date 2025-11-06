@@ -11,7 +11,9 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.fms.service.AssetCardService;
 import com.erp.server.fms.service.AssetLocationService;
@@ -51,11 +53,13 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
     // 缓存相关常量
     private static final String CACHE_DEPT_NAME_TO_ID = "asset_card:dept_name_to_id:";
     private static final String CACHE_ASSET_LOCATION_NAME_TO_ID = "asset_card:asset_location_name_to_id:";
+    private static final String CACHE_SUPPLIER_NAME_TO_ID = "asset_card:supplier_name_to_id:";
     private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
 
     private final AssetCardService assetCardService = SpringUtil.getBean(AssetCardService.class);
     private final AssetLocationService assetLocationService = SpringUtil.getBean(AssetLocationService.class);
     private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+    private final SupplierFeign supplierFeign = SpringUtil.getBean(SupplierFeign.class);
     private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
@@ -174,41 +178,41 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
      */
     private void validateAndConvertEnumValues(AssetCardImportExcelDTO data, List<String> errorMsgList) {
         // 验证并转换计量单位
-        String unitCode = UnitEnum.getCodeByName(data.getUnit());
+        String unitCode = UnitEnum.getCodeByName(data.getUnitName());
         if (StrUtil.isBlank(unitCode)) {
-            errorMsgList.add("计量单位【" + data.getUnit() + "】不存在");
+            errorMsgList.add("计量单位【" + data.getUnitName() + "】不存在");
         } else {
             data.setUnit(unitCode);
         }
         
         // 验证并转换资产类别
-        String typeCode = AssetCategoryEnum.getCodeByName(data.getType());
+        String typeCode = AssetCategoryEnum.getCodeByName(data.getTypeName());
         if (StrUtil.isBlank(typeCode)) {
-            errorMsgList.add("资产类别【" + data.getType() + "】不存在");
+            errorMsgList.add("资产类别【" + data.getTypeName() + "】不存在");
         } else {
             data.setType(typeCode);
         }
         
         // 验证并转换资产状态
-        String statusCode = AssetStatusEnum.getCodeByName(data.getStatus());
+        String statusCode = AssetStatusEnum.getCodeByName(data.getStatusName());
         if (StrUtil.isBlank(statusCode)) {
-            errorMsgList.add("资产状态【" + data.getStatus() + "】不存在");
+            errorMsgList.add("资产状态【" + data.getStatusName() + "】不存在");
         } else {
             data.setStatus(statusCode);
         }
         
         // 验证并转换变动方式
-        String changeMethodCode = ChangeMethodEnum.getCodeByName(data.getChangeMethod());
+        String changeMethodCode = ChangeMethodEnum.getCodeByName(data.getChangeMethodName());
         if (StrUtil.isBlank(changeMethodCode)) {
-            errorMsgList.add("变动方式【" + data.getChangeMethod() + "】不存在");
+            errorMsgList.add("变动方式【" + data.getChangeMethodName() + "】不存在");
         } else {
             data.setChangeMethod(changeMethodCode);
         }
         
         // 验证并转换费用项目
-        String costTypeCode = DepreciationChargeEnum.getCodeByName(data.getCostType());
+        String costTypeCode = CostTypeEnum.getCodeByName(data.getCostTypeName());
         if (StrUtil.isBlank(costTypeCode)) {
-            errorMsgList.add("费用项目【" + data.getCostType() + "】不存在");
+            errorMsgList.add("费用项目【" + data.getCostTypeName() + "】不存在");
         } else {
             data.setCostType(costTypeCode);
         }
@@ -218,6 +222,16 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
      * 验证并解析关联数据ID
      */
     private void validateAndResolveIds(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证供应商名称是否存在并解析供应商ID（如果填写了）
+        if (StringUtils.isNotBlank(data.getSupplierName())) {
+            String supplierId = getSupplierIdByName(data.getSupplierName());
+            if (StrUtil.isBlank(supplierId)) {
+                errorMsgList.add("供应商【" + data.getSupplierName() + "】不存在");
+            } else {
+                data.setSupplierId(supplierId);
+            }
+        }
+        
         // 验证资产位置名称是否存在并解析资产位置ID
         String assetLocationId = getAssetLocationIdByName(data.getAssetLocationName());
         if (StrUtil.isBlank(assetLocationId)) {
@@ -261,6 +275,43 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
 
     public int getCount() {
         return count;
+    }
+
+    /**
+     * 根据供应商名称查询供应商ID（带缓存）
+     */
+    private String getSupplierIdByName(String supplierName) {
+        if (StrUtil.isBlank(supplierName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_SUPPLIER_NAME_TO_ID + supplierName;
+        String supplierId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(supplierId)) {
+            return supplierId;
+        }
+
+        try {
+            // 调用供应商服务根据名称查询供应商信息
+            List<SupplierEntity> supplierList = supplierFeign.listBySupplierByNames(
+                    Collections.singletonList(supplierName)
+            );
+
+            if (CollUtil.isNotEmpty(supplierList)) {
+                // 返回第一个匹配的供应商ID
+                String result = supplierList.get(0).getId();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到供应商名称：{}", supplierName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询供应商ID失败，供应商名称：{}，错误：{}", supplierName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.erp.server.fms.listener;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
@@ -13,6 +12,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.fms.dto.excel.AssetAcceptExcelDTO;
+import com.erp.model.fms.enums.CostTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -98,6 +98,9 @@ public class AssetAcceptExcelListener extends AnalysisEventListener<AssetAcceptE
         // 日期转换处理
         convertDateFields(data, errorMsgList);
         
+        // 验证并转换枚举值为code
+        validateAndConvertEnumValues(data, errorMsgList);
+        
         // 数据校验和ID解析
         validateAndResolveIds(data, errorMsgList);
         
@@ -170,6 +173,19 @@ public class AssetAcceptExcelListener extends AnalysisEventListener<AssetAcceptE
             } catch (Exception e) {
                 errorMsgList.add("验收日期格式错误，请使用yyyy-MM-dd或yyyy/M/d格式");
             }
+        }
+    }
+
+    /**
+     * 验证并转换枚举值为code
+     */
+    private void validateAndConvertEnumValues(AssetAcceptExcelDTO data, List<String> errorMsgList) {
+        // 验证并转换费用项目
+        String costTypeCode = CostTypeEnum.getCodeByName(data.getCostTypeName());
+        if (StrUtil.isBlank(costTypeCode)) {
+            errorMsgList.add("费用项目【" + data.getCostTypeName() + "】不存在");
+        } else {
+            data.setCostType(costTypeCode);
         }
     }
 

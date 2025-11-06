@@ -143,20 +143,20 @@ public class AssetStocktakingPlanExcelListener extends AnalysisEventListener<Ass
      */
     private void validateAndConvertEnumValues(AssetStocktakingPlanImportExcelDTO data, List<String> errorMsgList) {
         // 验证并转换资产类别（如果填写了）
-        if (StringUtils.isNotBlank(data.getAssetCategories())) {
-            String[] categories = data.getAssetCategories().split(",");
+        if (StringUtils.isNotBlank(data.getAssetCategoryNames())) {
+            String[] categoryNames = data.getAssetCategoryNames().split(",");
             List<String> categoryCodes = new ArrayList<>();
             
-            for (String category : categories) {
-                String categoryCode = AssetCategoryEnum.getCodeByName(category.trim());
+            for (String categoryName : categoryNames) {
+                String categoryCode = AssetCategoryEnum.getCodeByName(categoryName.trim());
                 if (StrUtil.isBlank(categoryCode)) {
-                    errorMsgList.add("资产类别【" + category.trim() + "】不存在");
+                    errorMsgList.add("资产类别【" + categoryName.trim() + "】不存在");
                 } else {
                     categoryCodes.add(categoryCode);
                 }
             }
             
-            if (categoryCodes.size() == categories.length) {
+            if (categoryCodes.size() == categoryNames.length) {
                 data.setAssetCategories(String.join(",", categoryCodes));
             }
         }

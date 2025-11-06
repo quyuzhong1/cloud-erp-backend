@@ -33,31 +33,55 @@ public class AssetCardImportExcelDTO {
     private String orgName;
 
     /**
-     * 计量单位
+     * 计量单位名称（Excel输入）
      */
     @ExcelProperty(value = "*计量单位", index = 2)
     @FieldValid(fieldName = "*计量单位", isNotBlank = true)
+    private String unitName;
+
+    /**
+     * 计量单位编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String unit;
 
     /**
-     * 资产类别
+     * 资产类别名称（Excel输入）
      */
     @ExcelProperty(value = "*资产类别", index = 3)
     @FieldValid(fieldName = "*资产类别", isNotBlank = true)
+    private String typeName;
+
+    /**
+     * 资产类别编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String type;
 
     /**
-     * 资产状态
+     * 资产状态名称（Excel输入）
      */
     @ExcelProperty(value = "*资产状态", index = 4)
     @FieldValid(fieldName = "*资产状态", isNotBlank = true)
+    private String statusName;
+
+    /**
+     * 资产状态编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String status;
 
     /**
-     * 变动方式
+     * 变动方式名称（Excel输入）
      */
     @ExcelProperty(value = "*变动方式", index = 5)
     @FieldValid(fieldName = "*变动方式", isNotBlank = true)
+    private String changeMethodName;
+
+    /**
+     * 变动方式编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String changeMethod;
 
     /**
@@ -87,9 +111,21 @@ public class AssetCardImportExcelDTO {
     private String remark;
 
     /**
+     * 供应商名称
+     */
+    @ExcelProperty(value = "供应商", index = 9)
+    private String supplierName;
+
+    /**
+     * 供应商ID（从供应商名称解析得到）
+     */
+    @ExcelIgnore
+    private String supplierId;
+
+    /**
      * 资产位置
      */
-    @ExcelProperty(value = "*资产位置", index = 9)
+    @ExcelProperty(value = "*资产位置", index = 10)
     @FieldValid(fieldName = "*资产位置", isNotBlank = true)
     private String assetLocationName;
 
@@ -102,14 +138,14 @@ public class AssetCardImportExcelDTO {
     /**
      * 数量
      */
-    @ExcelProperty(value = "*数量", index = 10)
+    @ExcelProperty(value = "*数量", index = 11)
     @FieldValid(fieldName = "*数量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private Integer qty;
 
     /**
      * 使用部门
      */
-    @ExcelProperty(value = "*使用部门", index = 11)
+    @ExcelProperty(value = "*使用部门", index = 12)
     @FieldValid(fieldName = "*使用部门", isNotBlank = true)
     private String useDeptName;
 
@@ -120,22 +156,28 @@ public class AssetCardImportExcelDTO {
     private String useDeptId;
 
     /**
-     * 费用项目
+     * 费用项目名称（Excel输入）
      */
-    @ExcelProperty(value = "*费用项目", index = 12)
+    @ExcelProperty(value = "*费用项目", index = 13)
     @FieldValid(fieldName = "*费用项目", isNotBlank = true)
+    private String costTypeName;
+
+    /**
+     * 费用项目编码（从名称转换得到）
+     */
+    @ExcelIgnore
     private String costType;
 
     /**
      * 明细备注
      */
-    @ExcelProperty(value = "备注", index = 13)
+    @ExcelProperty(value = "备注", index = 14)
     private String detailRemark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =14)
+    @ExcelProperty(value = "错误数据", index = 15)
     @ColumnWidth(50)
-    private String  errorMsg = "";
+    private String errorMsg = "";
 }

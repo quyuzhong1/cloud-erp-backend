@@ -79,12 +79,15 @@ public class WeiShiReturnInstockInitHandler extends DmpInputInitHandler {
 				.eventType("UPDATE")
 				.build());
 		WeiShiBaseResp<WeiShiReturnInstockResp> resp = weiShiService.getReturnInstock(weiShiGetReturnInstockRequest,overseasProviderEntity.getAuthJson());
-		if (null == resp || resp.getData() == null) {
+		if (null == resp) {
 			throw new ServiceException("纬狮获取退货入库数据失败: 响应结果为空");
 		}
 		if(resp.getCode() != 200){
 			log.warn("纬狮获取退货入库失败，code:{},msg:{}",resp.getCode(),resp.getMsg());
 			throw new ServiceException("纬狮获取退货入库失败，code:"+resp.getCode()+",msg:"+resp.getMsg());
+		}
+		if (resp.getData() == null) {
+			throw new ServiceException("纬狮获取退货入库数据失败: 数据体为空");
 		}
 		if(CollectionUtils.isEmpty(resp.getData().getRows())){
 			log.info("纬狮获取退货入库数据为空");

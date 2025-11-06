@@ -3182,6 +3182,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             uploadHandoverFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile = thirdWarehouseFeign.uploadHandoverFile(uploadHandoverFileReq);
             if(!uploadHandoverFile.isSuccess()){
+                //删除三方仓订单和发货单
+                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+                if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                    ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
+                    req.setOrderCode(shippingOrderNo);
+                    req.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+                    req.setShopId(entity.getShopId());
+                    req.setOwnerCode(overseasProviderWarehouse.getOwnerCode());
+                    req.setErpOrderCode(thirdWarehouseDeliveryEntity.getCode());
+                    req.setWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+                    req.setReason("推送交接文件失败，取消订单");
+                    req.setAuthId(overseasProviderWarehouse.getMainId());
+                    ApiResult<String> cancelResult = thirdWarehouseFeign.cancelOutboundOrder(req);
+                    if(!cancelResult.isSuccess()){
+                        log.error("推送交接文件失败，取消三方仓订单失败，订单号{}，原因{}",shippingOrderNo,cancelResult.getMsg());
+                        throw new ServiceException("推送交接文件失败{},同时取消三方仓订单失败，原因{}",uploadHandoverFile.getMsg(),cancelResult.getMsg());
+                    }
+                }
                 throw new ServiceException("推送交接文件失败{}",uploadHandoverFile.getMsg());
             }
         }
