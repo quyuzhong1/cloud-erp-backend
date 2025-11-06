@@ -6,6 +6,7 @@ import com.erp.model.fms.dto.AssetLocationDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -237,5 +238,14 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
      * @date: 2025-10-21
      */
     List<AssetLocationDTO.DropDownDTO> dropDownList(String keyword);
+
+    /**
+    * 获取流程变量Map
+    * @author wuht
+    * @date: 2025-11-06
+    * @param entity
+    * @return Map<String, Object>
+    */
+    Map<String, Object> getVariablesMap(AssetLocationEntity entity);
 
 }

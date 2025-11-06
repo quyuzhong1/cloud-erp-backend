@@ -7,6 +7,7 @@ import com.erp.model.fms.dto.AssetCardDTO;
 import com.common.business.vo.PagingVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -198,4 +199,13 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     void downloadTemplate(javax.servlet.http.HttpServletResponse response);
 
     List<AssetCardDTO.ApprovedCardDTO> searchApprovedCard(AssetCardDTO.SearchParamDTO dto);
+
+    /**
+    * 获取流程变量Map
+    * @author wuht
+    * @date: 2025-11-06
+    * @param entity
+    * @return Map<String, Object>
+    */
+    Map<String, Object> getVariablesMap(AssetCardEntity entity);
 }
