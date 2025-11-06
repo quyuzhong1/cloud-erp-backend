@@ -15,6 +15,7 @@ public enum ThirdSysTypeEnum {
     LOGISTICS("logistics", "物流渠道"),
     WAREHOUSE("warehouse", "仓库"),
     VIRTUAL_WAREHOUSE("virtualWarehouse", "虚拟仓"),
+    PLATFORM("platform", "平台"),
     ;
 
     private String code;

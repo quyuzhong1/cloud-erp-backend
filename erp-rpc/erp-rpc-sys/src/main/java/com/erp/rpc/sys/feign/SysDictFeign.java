@@ -2,7 +2,6 @@ package com.erp.rpc.sys.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.validator.ValidList;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.entity.*;
@@ -132,5 +131,6 @@ public interface SysDictFeign {
      */
     @PostMapping("feign/sampleUseUser/saveOrUpdate")
     Boolean saveOrUpdateSampleUseUser(@RequestBody @Valid ValidList<SampleUseUserDTO.AddOrUpdateDTO> userList);
+
 
 }
