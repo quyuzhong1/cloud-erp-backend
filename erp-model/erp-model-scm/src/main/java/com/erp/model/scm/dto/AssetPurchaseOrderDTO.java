@@ -1077,6 +1077,12 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private BigDecimal acceptQty;
 
+        /**
+         * 结束收货:AssetPurchaseOrderReceiveEnum
+         *
+         */
+        private String endReceive;
+
     }
 
     @Data
@@ -1147,6 +1153,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @NotNull(message = "验收数量不能为空")
         private BigDecimal acceptQty;
+
+        /**
+         * 结束验收AssetPurchaseOrderReceiveEnum
+         */
+        private String endReceive;
 
         /**
          * 资产位置id
