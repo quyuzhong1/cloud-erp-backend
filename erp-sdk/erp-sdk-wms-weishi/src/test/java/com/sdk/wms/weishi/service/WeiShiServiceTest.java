@@ -229,10 +229,10 @@ public class WeiShiServiceTest {
     @Test
     public void getReturnInstock() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","6f656319297541f3a687b70fce35cf20");
+        authMap.put("appKey","f8e951cec5d84d299f12b093671ca9ee");
 //        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
 //        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
-        authMap.put("accessToken", "e97be72d-1947-4f11-b0cb-339891122372");
+        authMap.put("accessToken", "c6c51849-ac66-4ee3-8a74-4f1bae0fdd2d");
         WeiShiGetReturnInstockRequest weiShiGetReturnInstockRequest = new WeiShiGetReturnInstockRequest();
         weiShiGetReturnInstockRequest.setQueryTime(WeiShiGetReturnInstockRequest.QueryTimeDTO.builder()
                         .startTime("2025-05-01 00:00:00")
