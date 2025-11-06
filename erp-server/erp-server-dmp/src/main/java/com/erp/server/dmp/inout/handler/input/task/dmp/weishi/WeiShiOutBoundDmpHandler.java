@@ -33,7 +33,7 @@ public class WeiShiOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 				// 解析为 LocalDateTime 对象
 				LocalDateTime shippedTime = LocalDateTime.parse(shippedTimeStr, formatter);
 				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-					dmpDataMap.put("date_shipping", shippedTime);
+					dmpDataMap.put("dateShipping", shippedTime);
 				}
 			}
 		}

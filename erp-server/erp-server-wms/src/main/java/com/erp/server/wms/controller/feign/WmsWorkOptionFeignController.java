@@ -98,6 +98,9 @@ public class WmsWorkOptionFeignController {
     @Resource
     private SampleInitialLedgerService sampleInitialLedgerService;
 
+    @Resource
+    private SampleTransferInfoService sampleTransferInfoService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -542,6 +545,25 @@ public class WmsWorkOptionFeignController {
                 resultDTOS.add(sampleInitialLedgerService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment())));
             } catch (Exception e) {
                 log.error("样品期初台账审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品转移单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleTransferApprove")
+    public List<BatchResultDTO> sampleTransferApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleTransferInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), ClientTypeEnum.WEB));
+            } catch (Exception e) {
+                log.error("样品转移单审核失败", e);
                 resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
             }
         }

@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 import com.erp.model.workflow.entity.CfgQueryOptionExtEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,4 +17,6 @@ public interface CfgQueryOptionExtService extends SuperService<CfgQueryOptionExt
 
 
     Map<String,String> getRemoteValues(Map<String, String> map);
+
+    void insertBatch(CfgQueryOptionExtEntity entity);
 }

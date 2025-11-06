@@ -833,6 +833,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(SupplierEntity entity) {
+        //提交前审核状态
+        String approveStatus = entity.getApproveStatus().getCode();
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -850,11 +852,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.getName(approveStatus), ApproveStatusEnum.APPROVE_ING.getName());
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
-            //审核不通过
-            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            addModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }

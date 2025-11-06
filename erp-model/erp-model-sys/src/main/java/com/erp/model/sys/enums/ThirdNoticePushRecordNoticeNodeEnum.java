@@ -18,6 +18,7 @@ public enum ThirdNoticePushRecordNoticeNodeEnum implements EnumMessage {
     QC_BACK_FILL_PACKAGING ("qcBackFillPackaging ", "产品尺寸变更"),
     NOT_SUBSEQUENT_BATCH("notSubsequentBatch", "新品通知"),
     SUBSEQUENT_BATCH("subsequentBatch", "老品通知"),
+    UNLOCK_VIRTUAL_INVENTORY("unLockVirtualInventory", "释放SKU虚拟仓库存"),
     ;
     /**
      * 类型
