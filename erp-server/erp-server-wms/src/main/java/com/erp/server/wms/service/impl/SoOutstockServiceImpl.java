@@ -1979,7 +1979,30 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
         Boolean isB2c = b2c.equals(orderType);
         if(isB2c){
-           throw new ServiceException("B2C订单不允许修改出库单");
+            SoOutstockEntity old = new SoOutstockEntity();
+            BeanMapper.copy(soOutstock, old);
+            BeanMapper.copy(dto, soOutstock);
+            Boolean updateResult = this.updateById(soOutstock);
+            if (updateResult) {
+                //更新TMS物流跟踪号
+                LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
+                batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+                batchUpdateTrackNoDTO.setLogisticsChannelId(soOutstock.getLogisticsChannelId());
+                batchUpdateTrackNoDTO.setTrackNoList(dto.getTrackNoList());
+                List<BatchResultDTO> batchResultDTOList = logisticsBillFeign.updateBatchTrackNo(Collections.singletonList(batchUpdateTrackNoDTO),false);
+                if(CollectionUtils.isNotEmpty(batchResultDTOList) && !batchResultDTOList.get(0).getSuccess()){
+                    throw new ServiceException("更新跟踪单号失败:"+batchResultDTOList.get(0).getMsg());
+                }
+                /**
+                 * 添加修改日志
+                 */
+                operateLogService.addModuleOperateLogByObj(old, soOutstock, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "", "");
+                soOutstockDetailService.updateDetail(id, detailList);
+                return id;
+            }
+        }
+        if ("qimen".equals(soOutstock.getCreateUserName()) || "wangdiantong".equals(soOutstock.getCreateUserName())){
+            throw new ServiceException("旺店通不允许修改出库单");
         }
         List<SoDetailEntity> soDetailList = Collections.emptyList();
         if (!isB2c) {
