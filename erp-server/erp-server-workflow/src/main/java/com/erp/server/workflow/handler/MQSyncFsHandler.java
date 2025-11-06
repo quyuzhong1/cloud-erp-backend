@@ -91,6 +91,7 @@ public class MQSyncFsHandler {
         List<String> allUserIds = new ArrayList<>();
         //申请人
         String createUserId = processManagementEntity.getCreateUserId();
+        dto.setCreateUserId(createUserId);
         //审核人
         List<String> approveIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
         //抄送人

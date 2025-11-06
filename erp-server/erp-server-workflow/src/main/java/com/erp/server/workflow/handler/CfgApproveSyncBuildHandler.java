@@ -79,7 +79,8 @@ public class CfgApproveSyncBuildHandler {
         //实例id
         String instanceId = mqDto.getInstanceId();
         //创建人id
-        String createUserId = mqDto.getOperator();
+        String createUserId = mqDto.getCreateUserId();
+        String operator = mqDto.getOperator();
         //单据名称
         String businessName = mqDto.getBusinessName();
         //当前流程操作动作
@@ -89,18 +90,17 @@ public class CfgApproveSyncBuildHandler {
         //标题
         values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
 
-        syncRecordEntity.setReceiverId(createUserId);
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
+        //默认设置为审批人
+        syncRecordEntity.setReceiverId(operator);
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(operator);
         if(Objects.nonNull(findUserDTO)){
             syncRecordEntity.setReceiverName(findUserDTO.getUserName());
         }
 
         //查询飞书的用户信息
         String thirdOpenUserId = "";
-        String userName;
         ThirdUnionDTO thirdUnionDTO = thirdUnionMap.getOrDefault(createUserId, null);
         if(Objects.isNull(thirdUnionDTO)){
-            userName = "";
             errorReason= "创建人未绑定飞书";
             syncRecordEntity.setErrorReason( errorReason);
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
@@ -116,7 +116,6 @@ public class CfgApproveSyncBuildHandler {
             }
             thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
-            userName = thirdUnionDTO.getUserName();
         }
 
         //获取创建时间以及更新时间
