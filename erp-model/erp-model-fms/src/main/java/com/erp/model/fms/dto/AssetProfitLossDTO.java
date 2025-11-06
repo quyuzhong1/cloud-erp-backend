@@ -161,6 +161,11 @@ public class AssetProfitLossDTO implements Serializable {
         private String planName;
 
         /**
+        * 明细ID
+        */
+        private String detailId;
+
+        /**
         * 资产类别
         */
         private String assetCategory;
@@ -174,6 +179,11 @@ public class AssetProfitLossDTO implements Serializable {
         * 卡片编码
         */
         private String cardCode;
+
+        /**
+        * 卡片ID
+        */
+        private String cardId;
 
         /**
         * 资产名称

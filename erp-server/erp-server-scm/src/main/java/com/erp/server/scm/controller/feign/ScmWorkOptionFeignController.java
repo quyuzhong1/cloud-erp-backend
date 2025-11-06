@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -58,6 +60,16 @@ public class ScmWorkOptionFeignController {
     private PurchaseOrderDetailService purchaseOrderDetailService;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private AssetNoticeService assetNoticeService;
+
+    @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+
+    @Resource
+    private AssetPurchaseChangeService assetPurchaseChangeService;
+
     /**
      * 根据入参查询单据数量
      * @Author Luo_WG
@@ -221,6 +233,82 @@ public class ScmWorkOptionFeignController {
                 log.error("采购申请单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/assetNoticeApprove")
+    public List<BatchResultDTO> assetNoticeApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        List<AssetNoticeEntity> list = assetNoticeService.lambdaQuery().in(AssetNoticeEntity::getId, ids).list();
+        Map<String, AssetNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetNoticeEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = assetNoticeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("审核失败",e);
+                AssetNoticeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/assetPurchaseOrderApprove")
+    public List<BatchResultDTO> assetPurchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<AssetPurchaseOrderEntity> list = assetPurchaseOrderService.lambdaQuery().in(AssetPurchaseOrderEntity::getId, ids).list();
+        Map<String, AssetPurchaseOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseOrderEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = assetPurchaseOrderService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("审核失败",e);
+                AssetPurchaseOrderEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/assetPurchaseChangeApprove")
+    public List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.lambdaQuery().in(AssetPurchaseChangeEntity::getId, ids).list();
+        Map<String, AssetPurchaseChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetPurchaseChangeEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = assetPurchaseChangeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("审核失败",e);
+                AssetPurchaseChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
         }
         return resultDTOS;
     }
