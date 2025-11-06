@@ -16,9 +16,16 @@ import lombok.Data;
 public class AssetStocktakingPlanImportExcelDTO {
 
     /**
+     * 序号
+     */
+    @ExcelProperty(value = "*序号", index = 0)
+    @FieldValid(fieldName = "*序号", isNotBlank = true)
+    private Integer no;
+
+    /**
      * 资产组织
      */
-    @ExcelProperty(value = "*资产组织", index = 0)
+    @ExcelProperty(value = "*资产组织", index = 1)
     @FieldValid(fieldName = "*资产组织", isNotBlank = true)
     private String assetOrgName;
 
@@ -31,26 +38,26 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 盘点方案名称
      */
-    @ExcelProperty(value = "*盘点方案名称", index = 1)
+    @ExcelProperty(value = "*盘点方案名称", index = 2)
     @FieldValid(fieldName = "*盘点方案名称", isNotBlank = true)
     private String planName;
 
     /**
      * 描述
      */
-    @ExcelProperty(value = "描述", index = 2)
+    @ExcelProperty(value = "描述", index = 3)
     private String remark;
 
     /**
      * 资产类别（多个用逗号分隔）
      */
-    @ExcelProperty(value = "资产类别", index = 3)
+    @ExcelProperty(value = "资产类别", index = 4)
     private String assetCategories;
 
     /**
      * 使用部门（多个用逗号分隔）
      */
-    @ExcelProperty(value = "使用部门", index = 4)
+    @ExcelProperty(value = "使用部门", index = 5)
     private String useDeptNames;
 
     /**
@@ -62,7 +69,7 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 资产位置（多个用逗号分隔）
      */
-    @ExcelProperty(value = "资产位置", index = 5)
+    @ExcelProperty(value = "资产位置", index = 6)
     private String assetLocationNames;
 
     /**
@@ -74,13 +81,13 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 起始卡片编码
      */
-    @ExcelProperty(value = "起始卡片编码", index = 6)
+    @ExcelProperty(value = "起始卡片编码", index = 7)
     private String cardCodeStart;
 
     /**
      * 结束卡片编码
      */
-    @ExcelProperty(value = "结束卡片编码", index = 7)
+    @ExcelProperty(value = "结束卡片编码", index = 8)
     private String cardCodeEnd;
 
     /**
@@ -98,7 +105,7 @@ public class AssetStocktakingPlanImportExcelDTO {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 9)
     @ColumnWidth(50)
     private String errorMsg = "";
 }
