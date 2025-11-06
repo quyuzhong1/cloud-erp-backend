@@ -94,6 +94,12 @@ public class AssetCardImportExcelDTO {
     private String assetLocationName;
 
     /**
+     * 资产位置ID（从资产位置名称解析得到）
+     */
+    @ExcelIgnore
+    private String assetLocationId;
+
+    /**
      * 数量
      */
     @ExcelProperty(value = "*数量", index = 10)
@@ -106,6 +112,12 @@ public class AssetCardImportExcelDTO {
     @ExcelProperty(value = "*使用部门", index = 11)
     @FieldValid(fieldName = "*使用部门", isNotBlank = true)
     private String useDeptName;
+
+    /**
+     * 使用部门ID（从使用部门名称解析得到）
+     */
+    @ExcelIgnore
+    private String useDeptId;
 
     /**
      * 费用项目

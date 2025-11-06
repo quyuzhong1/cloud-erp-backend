@@ -52,5 +52,22 @@ public enum UnitEnum {
     public static String getName(String code) {
         return getByCode(code).getName();
     }
+    
+    /**
+     * 根据名称获取编码
+     * @param name 单位名称
+     * @return 单位编码，如果未找到则返回空字符串
+     */
+    public static String getCodeByName(String name) {
+        if (name == null) {
+            return "";
+        }
+        for (UnitEnum unit : values()) {
+            if (unit.getName().equals(name) || unit.getCode().equalsIgnoreCase(name)) {
+                return unit.getCode();
+            }
+        }
+        return "";
+    }
 }
 
