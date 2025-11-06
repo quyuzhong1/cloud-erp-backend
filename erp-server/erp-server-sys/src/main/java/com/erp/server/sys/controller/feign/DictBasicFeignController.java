@@ -38,10 +38,4 @@ public class DictBasicFeignController extends BaseController {
     public List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type) {
         return  dictBasicService.listByType(type);
     }
-
-
-    @PostMapping("/paging")
-    public PagingVO<DictBasicAllDTO.ViewDTO> paging(@RequestBody PagingDTO< DictBasicAllDTO.PagingParamDTO > dto){
-        return dictBasicAllService.paging(dto);
-    }
 }

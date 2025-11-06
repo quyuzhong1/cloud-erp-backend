@@ -2,9 +2,6 @@ package com.erp.rpc.sys.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -112,11 +109,5 @@ public interface SysDictFeign {
     @PostMapping("feign/sampleUseUser/getByIds")
     List<BaseIdDTO> getByIds(@RequestBody List<String> ids);
 
-
-    /**
-     * 全局字段分页查询，默认SYS
-     */
-    @PostMapping("feign/dictBasic/paging")
-    PagingVO<DictBasicAllDTO.ViewDTO> paging(@RequestBody PagingDTO< DictBasicAllDTO.PagingParamDTO > dto);
 
 }
