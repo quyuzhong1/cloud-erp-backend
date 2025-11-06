@@ -301,9 +301,9 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             }else {
                 item.setIsMyState(0);
             }
-            Integer deleteState = item.getDeleteState();
+            Boolean deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
-            if (MathUtil.ZERO.equals(deleteState) || MathUtil.ZERO.equals(userState)) {
+            if (deleteState || MathUtil.ZERO.equals(userState)) {
                 item.setDisabled(Boolean.TRUE);
             } else {
                 item.setDisabled(Boolean.FALSE);
@@ -348,9 +348,9 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             }else {
                 item.setIsMyState(0);
             }
-            Integer deleteState = item.getDeleteState();
+            Boolean deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
-            if (MathUtil.ZERO.equals(deleteState) || MathUtil.ZERO.equals(userState)) {
+            if (deleteState || MathUtil.ZERO.equals(userState)) {
                 item.setDisabled(Boolean.TRUE);
             } else {
                 item.setDisabled(Boolean.FALSE);
