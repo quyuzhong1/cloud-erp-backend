@@ -12,6 +12,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -63,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
@@ -442,7 +444,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String createUserId = (String) variablesMap.get("createUserId");
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        if (CharSequenceUtil.equals(createUserId,userInfo.getUid())) {
+        if (CharSequenceUtil.equals(createUserId,userInfo.getUid()) && !CharSequenceUtil.equals(createUserId, UserStateConstants.USER_SYSTEM_ID)) {
             throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
     }
@@ -1579,11 +1581,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         log.debug("completeTaskHandle finish ");
         // 审批任务填充审批信息
         DelegateExecution execution = taskDelegate.getExecution();
+        // 获取当前任务的审批人
+        String assignee = taskDelegate.getAssignee();
+        if(CharSequenceUtil.isBlank(assignee)) {
+            List<String> userIdList = taskDelegate.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+            assignee = CollectionUtils.isEmpty(userIdList) ? "" : userIdList.get(0);
+        }
+
         //审核人不能和创建人一样
         String createUserId = "" + execution.getVariable("createUserId");
-        if (CharSequenceUtil.equals(createUserId,taskDelegate.getAssignee())) {
+        if (CharSequenceUtil.equals(createUserId,assignee)) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
+            throw new BpmnError(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.code.toString(),CharSequenceUtil.format(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.msg,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName()));
         }
     }
 
