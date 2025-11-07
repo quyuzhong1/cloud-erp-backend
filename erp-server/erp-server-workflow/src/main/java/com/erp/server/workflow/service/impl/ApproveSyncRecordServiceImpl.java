@@ -12,6 +12,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -264,87 +265,44 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     }
 
     @Override
-    public void externalInstance(ApproveSyncRecordDTO.externalInstanceParamDTO dto) {
-//        if(Objects.isNull(dto) || CollUtil.isEmpty(dto.getProcessManagementId())){
-//            return;
-//        }
-//
-//        List<ProcessManagementEntity> list = processManagementService.lambdaQuery().in(ProcessManagementEntity::getId, dto.getProcessManagementId()).list();
-//        if(CollUtil.isNotEmpty(list)){
-//            List<String> processInstanceIds = list.stream().map(ProcessManagementEntity::getProcessInstanceId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-//            if(CollUtil.isNotEmpty(processInstanceIds)){
-//                Map<String, List<ProcessTaskManagementEntity>> taskMap = processTaskManagementService.lambdaQuery()
-//                        .in(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceIds)
-//                        .list().stream().collect(Collectors.groupingBy(ProcessTaskManagementEntity::getProcessInstanceId));
-//
-//                for (ProcessManagementEntity processManagementEntity : list) {
-//                    if(taskMap.containsKey(processManagementEntity.getProcessInstanceId())){
-//                        //任务列表
-//                        List<ProcessTaskManagementEntity> processTaskManagementEntities = taskMap.get(processManagementEntity.getProcessInstanceId());
-//
-//                        //抄送任务
-//                        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
-//                        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
-//
-//                        //任务列表人员和抄送列表人员飞书信息
-//                        List<String> allUserIds = new ArrayList<>();
-//                        //申请人
-//                        String createUserId = processManagementEntity.getCreateUserId();
-//                        //审核人
-//                        List<String> approveIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-//                        //抄送人
-//                        List<String> ccIds = processTaskCcEntities.stream().map(ProcessTaskCcEntity::getCcUserId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-//                        // 合并成一个集合（包含去重后的用户ID）
-//                        allUserIds.add(createUserId);
-//                        allUserIds.addAll(approveIds);
-//                        allUserIds.addAll(ccIds);
-//                        allUserIds = allUserIds.stream().distinct().collect(Collectors.toList());
-//                        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
-//
-//
-//
-//
-//                    }
-//                }
-//            }
-//        }
-    }
-
-    @Override
-    public void externalInstance2(ApproveSyncRecordDTO.externalInstanceParamDTO dto) {
+    public void externalInstance(ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException {
         List<String> status = Arrays.asList("approve", "reject");
 
-        List<SampleRecipientEntity> list = FeignQuery.create(SampleRecipientEntity.class).in(SampleRecipientEntity::getId, dto.getIds()).list();
+        Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(dto.getClassPath());
+
+        List<BaseEntity> list = FeignQuery.create(clazz).in(SampleRecipientEntity::getId, dto.getIds()).list();
         List<ProcessManagementEntity> processManagementEntities = processManagementService.lambdaQuery().eq(ProcessManagementEntity::getIsDeleted,false).in(ProcessManagementEntity::getBusinessId, dto.getIds()).list();
 
-        for (SampleRecipientEntity entity : list) {
+        for (BaseEntity entity : list) {
             Map<String, Object> variables = BeanUtil.beanToMap(entity);
 
-            ProcessManagementEntity managementTask = processManagementEntities.stream().filter(e -> e.getBusinessId().equals(entity.getId())).findFirst().orElse(null);
-            if(Objects.nonNull(managementTask)){
+            List<ProcessManagementEntity> managementTasks = processManagementEntities.stream().filter(e -> e.getBusinessId().equals(entity.getId())).collect(Collectors.toList());
+            for (ProcessManagementEntity managementTask : managementTasks) {
+                if(Objects.nonNull(managementTask)){
+                    List<ProcessTaskManagementEntity> taskList = processTaskManagementService.lambdaQuery()
+                            .eq(ProcessTaskManagementEntity::getProcessInstanceId, managementTask.getProcessInstanceId())
+                            .eq(ProcessTaskManagementEntity::getIsDeleted, false)
+                            .in(ProcessTaskManagementEntity::getTaskStatus, status)
+                            .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
+                            .list();
 
-                List<ProcessTaskManagementEntity> taskList = processTaskManagementService.lambdaQuery()
-                        .eq(ProcessTaskManagementEntity::getProcessInstanceId, managementTask.getProcessInstanceId())
-                        .eq(ProcessTaskManagementEntity::getIsDeleted, false)
-                        .in(ProcessTaskManagementEntity::getTaskStatus, status)
-                        .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
-                        .list();
+                    //判断该单据类型是否有ERP审批同步定义
+                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                    mqDto.setProcessManagementId(managementTask.getId());
+                    mqDto.setBusinessName(managementTask.getBusinessName());
+                    mqDto.setBusinessCode(managementTask.getBusinessCode());
+                    mqDto.setInstanceId(managementTask.getProcessInstanceId());
+                    mqDto.setCurTaskId(taskList.get(0).getId());
+                    mqDto.setOperator(taskList.get(0).getCreateUserId());
+                    mqDto.setCreateUserId(managementTask.getCreateUserId());
+                    mqDto.setVariablesMap(variables);
+                    mqDto.setBusinessKey(managementTask.getBusinessKey());
+                    mqDto.setApproveType(managementTask.getApproveStatus().getStatus());
+                    syncFsExternalInstance(mqDto);
 
-
-                //判断该单据类型是否有ERP审批同步定义
-                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-                mqDto.setProcessManagementId(managementTask.getId());
-                mqDto.setBusinessName(managementTask.getBusinessName());
-                mqDto.setBusinessCode(managementTask.getBusinessCode());
-                mqDto.setInstanceId(managementTask.getProcessInstanceId());
-                mqDto.setCurTaskId(taskList.get(0).getId());
-                mqDto.setOperator(managementTask.getCreateUserId());
-                mqDto.setCreateUserId(managementTask.getCreateUserId());
-                mqDto.setVariablesMap(variables);
-                mqDto.setBusinessKey(managementTask.getBusinessKey());
-                mqDto.setApproveType(managementTask.getApproveStatus().getStatus());
-                syncFsExternalInstance(mqDto);
+                }
             }
+
         }
     }
 
@@ -366,7 +324,8 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             //保存mq消费记录
             if (addMqConsumerRecord(mqDto)) return;
 
-            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
+            mqSyncFsHandler.handler(mqDto);
+//            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
         }
     }
 
