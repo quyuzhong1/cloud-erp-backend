@@ -18,6 +18,9 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -83,6 +86,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -158,6 +162,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private SampleLedgerQtyValidator sampleLedgerQtyValidator;
     @Autowired
     private SampleLedgerService sampleLedgerService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Autowired
     @Lazy
     private SampleRecipientService _this;
@@ -583,6 +589,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 根据样本领用单
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleRecipientEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
@@ -658,7 +678,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -1135,28 +1155,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
         
-        //最新审核人：如果approveUserId或approveUserName为空则去查询
-        if (StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) {
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RECIPIENT.getCode(), data.getId()));
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-            if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
-                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
-                    .collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(curApproveList)) {
-                    String curApproveId = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
-                        .collect(Collectors.joining(","));
-                    String curApproveName = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
-                        .collect(Collectors.joining(","));
-                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
-                        data.setApproveUserId(curApproveId);
-                    }
-                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
-                        data.setApproveUserName(curApproveName);
-                    }
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RECIPIENT.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(curApproveList)) {
+                String curApproveName = curApproveList.stream()
+                    .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                    .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApproveName)) {
+                    data.setApproveUserName(curApproveName);
                 }
             }
         }
@@ -1178,7 +1190,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -1252,7 +1264,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleRecipientEntity::getId, id)
-        .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveUserId, "")
+                .set(SampleRecipientEntity::getApproveUserName, "")
+                .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveTime, null)
         .update(new SampleRecipientEntity());
     }
 
@@ -1298,23 +1313,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
 
-            //最新审核人：如果approveUserId或approveUserName为空则去查询并填充
-            if ((StringUtils.isBlank(data.getApproveUserId()) || StringUtils.isBlank(data.getApproveUserName())) 
-                && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
                     .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
                     .collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(curApproveList)) {
-                    String curApproveId = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveId)
-                        .collect(Collectors.joining(","));
                     String curApproveName = curApproveList.stream()
                         .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
                         .collect(Collectors.joining(","));
-                    if (StringUtils.isNotBlank(curApproveId) && StringUtils.isBlank(data.getApproveUserId())) {
-                        data.setApproveUserId(curApproveId);
-                    }
-                    if (StringUtils.isNotBlank(curApproveName) && StringUtils.isBlank(data.getApproveUserName())) {
+                    if (StringUtils.isNotBlank(curApproveName)) {
                         data.setApproveUserName(curApproveName);
                     }
                 }

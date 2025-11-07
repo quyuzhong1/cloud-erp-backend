@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,27 +10,27 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.time.OffsetDateTime;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemImage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.time.OffsetDateTime;
 /**
  * Summary details of a listings item for an Amazon marketplace.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class ItemSummaryByMarketplace {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -46,30 +46,31 @@ public class ItemSummaryByMarketplace {
    */
   @JsonAdapter(ConditionTypeEnum.Adapter.class)
   public enum ConditionTypeEnum {
+    @SerializedName("new_new")
     NEW_NEW("new_new"),
-    
+    @SerializedName("new_open_box")
     NEW_OPEN_BOX("new_open_box"),
-    
+    @SerializedName("new_oem")
     NEW_OEM("new_oem"),
-    
+    @SerializedName("refurbished_refurbished")
     REFURBISHED_REFURBISHED("refurbished_refurbished"),
-    
+    @SerializedName("used_like_new")
     USED_LIKE_NEW("used_like_new"),
-    
+    @SerializedName("used_very_good")
     USED_VERY_GOOD("used_very_good"),
-    
+    @SerializedName("used_good")
     USED_GOOD("used_good"),
-    
+    @SerializedName("used_acceptable")
     USED_ACCEPTABLE("used_acceptable"),
-    
+    @SerializedName("collectible_like_new")
     COLLECTIBLE_LIKE_NEW("collectible_like_new"),
-    
+    @SerializedName("collectible_very_good")
     COLLECTIBLE_VERY_GOOD("collectible_very_good"),
-    
+    @SerializedName("collectible_good")
     COLLECTIBLE_GOOD("collectible_good"),
-    
+    @SerializedName("collectible_acceptable")
     COLLECTIBLE_ACCEPTABLE("collectible_acceptable"),
-    
+    @SerializedName("club_club")
     CLUB_CLUB("club_club");
 
     private String value;
@@ -77,7 +78,6 @@ public class ItemSummaryByMarketplace {
     ConditionTypeEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -86,31 +86,27 @@ public class ItemSummaryByMarketplace {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static ConditionTypeEnum fromValue(String text) {
+    public static ConditionTypeEnum fromValue(String input) {
       for (ConditionTypeEnum b : ConditionTypeEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<ConditionTypeEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final ConditionTypeEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public ConditionTypeEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return ConditionTypeEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return ConditionTypeEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("conditionType")
+  }  @SerializedName("conditionType")
   private ConditionTypeEnum conditionType = null;
 
   /**
@@ -118,8 +114,9 @@ public class ItemSummaryByMarketplace {
    */
   @JsonAdapter(StatusEnum.Adapter.class)
   public enum StatusEnum {
+    @SerializedName("BUYABLE")
     BUYABLE("BUYABLE"),
-    
+    @SerializedName("DISCOVERABLE")
     DISCOVERABLE("DISCOVERABLE");
 
     private String value;
@@ -127,7 +124,6 @@ public class ItemSummaryByMarketplace {
     StatusEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -136,31 +132,27 @@ public class ItemSummaryByMarketplace {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static StatusEnum fromValue(String text) {
+    public static StatusEnum fromValue(String input) {
       for (StatusEnum b : StatusEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<StatusEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final StatusEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public StatusEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return StatusEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return StatusEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("status")
+  }  @SerializedName("status")
   private List<StatusEnum> status = new ArrayList<StatusEnum>();
 
   @SerializedName("fnSku")
@@ -187,7 +179,7 @@ public class ItemSummaryByMarketplace {
    * A marketplace identifier. Identifies the Amazon marketplace for the listings item.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -205,7 +197,7 @@ public class ItemSummaryByMarketplace {
    * Amazon Standard Identification Number (ASIN) of the listings item.
    * @return asin
   **/
-
+  
   public String getAsin() {
     return asin;
   }
@@ -223,7 +215,7 @@ public class ItemSummaryByMarketplace {
    * The Amazon product type of the listings item.
    * @return productType
   **/
-
+  
   public String getProductType() {
     return productType;
   }
@@ -241,7 +233,7 @@ public class ItemSummaryByMarketplace {
    * Identifies the condition of the listings item.
    * @return conditionType
   **/
-
+  
   public ConditionTypeEnum getConditionType() {
     return conditionType;
   }
@@ -264,7 +256,7 @@ public class ItemSummaryByMarketplace {
    * Statuses that apply to the listings item.
    * @return status
   **/
-
+  
   public List<StatusEnum> getStatus() {
     return status;
   }
@@ -279,10 +271,10 @@ public class ItemSummaryByMarketplace {
   }
 
    /**
-   * Fulfillment network stock keeping unit is an identifier used by Amazon fulfillment centers to identify each unique item.
+   * The fulfillment network stock keeping unit is an identifier used by Amazon fulfillment centers to identify each unique item.
    * @return fnSku
   **/
-
+  
   public String getFnSku() {
     return fnSku;
   }
@@ -297,10 +289,10 @@ public class ItemSummaryByMarketplace {
   }
 
    /**
-   * Name, or title, associated with an Amazon catalog item.
+   * The name or title associated with an Amazon catalog item.
    * @return itemName
   **/
-
+  
   public String getItemName() {
     return itemName;
   }
@@ -315,10 +307,10 @@ public class ItemSummaryByMarketplace {
   }
 
    /**
-   * Date the listings item was created, in ISO 8601 format.
+   * The date the listings item was created in ISO 8601 format.
    * @return createdDate
   **/
-
+  
   public OffsetDateTime getCreatedDate() {
     return createdDate;
   }
@@ -333,10 +325,10 @@ public class ItemSummaryByMarketplace {
   }
 
    /**
-   * Date the listings item was last updated, in ISO 8601 format.
+   * The date the listings item was last updated in ISO 8601 format.
    * @return lastUpdatedDate
   **/
-
+  
   public OffsetDateTime getLastUpdatedDate() {
     return lastUpdatedDate;
   }
@@ -351,10 +343,10 @@ public class ItemSummaryByMarketplace {
   }
 
    /**
-   * Main image for the listings item.
+   * Get mainImage
    * @return mainImage
   **/
-
+  
   public ItemImage getMainImage() {
     return mainImage;
   }
@@ -422,4 +414,3 @@ public class ItemSummaryByMarketplace {
   }
 
 }
-

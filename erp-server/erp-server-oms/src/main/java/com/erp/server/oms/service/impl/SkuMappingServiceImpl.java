@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -70,6 +71,9 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaries;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaryByMarketplace;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
@@ -2326,6 +2330,89 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         downloadTaskFeign.saveDownloadTask("b2b平台sku对照列表", EXPORT_OMS_B2B_PLATFORM_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<BatchResultDTO> syncPlatformProductByOne(SkuMappingDTO.SyncPlatformProductDTO paramDTO){
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(paramDTO.getShopId());
+        if(ObjectUtil.isEmpty(shopInfoEntity)){
+            throw new ServiceException("店铺不存在");
+        }
+        if(!AuthStatusEnum.ALREADY.getCode().equals(shopInfoEntity.getAuthStatus())){
+            throw new ServiceException("只有已授权店铺可以同步");
+        }
+        if(Boolean.TRUE.equals(shopInfoEntity.getDisabled())){
+            throw new ServiceException("已禁用店铺无法同步");
+        }
+        //查下对照表数据
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(paramDTO.getShopId()));
+        listingInfoParamDTO.setPlatform(paramDTO.getPlatform());
+        listingInfoParamDTO.setPlatformSkuNoList(paramDTO.getPlatformSkuNoList());
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingList = this.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(shopInfoEntity.getDictPlatform());
+        dto.setBillType(BusinessTypeEnum.PRODUCT_LISTING.getCode());
+        dto.setNextLevelId(shopInfoEntity.getId());
+        // 亚马逊指定正常任务类型兼容限流重试
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
+            dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+            // 手动指定创建报告
+            Map<String, Object> map = Collections.singletonMap("platformSkuNoList",paramDTO.getPlatformSkuNoList());
+            dto.setDetailExtendJson(JSON.toJSONString(map));
+        }
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            if (e.getMessage().contains("任务不存在")){
+                throw new ServiceException("店铺授权异常，请检查店铺授权");
+            }
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
+        //打印返回数据
+        log.warn("店铺商品同步返回数据:{}", JSONUtil.toJsonStr(requestList));
+
+        List<Item> items = JSONArray.parseArray(requestList.get(0), Item.class);
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<ListingInfoEntity> listingUpdateList = new ArrayList<>();
+        for (String platformSkuNo : paramDTO.getPlatformSkuNoList()) {
+            Item item = items.stream().filter(obj -> CharSequenceUtil.equals(obj.getSku(), platformSkuNo)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(item)) {
+                resultDTOList.add(BatchResultDTO.fail(paramDTO.getShopId(),platformSkuNo,"平台未找到同步信息【item】"));
+                continue;
+            }
+            ItemSummaries summaries = item.getSummaries();
+            if (ObjectUtil.isEmpty(summaries)) {
+                resultDTOList.add(BatchResultDTO.fail(paramDTO.getShopId(),platformSkuNo,"平台未找到同步信息【summaries】"));
+                continue;
+            }
+            //数据赋值
+            ItemSummaryByMarketplace summary = item.getSummaries().get(0);
+            String asin = summary.getAsin();
+            String fnSku = summary.getFnSku();
+            String itemName = summary.getItemName();
+            mappingList.stream().filter(obj ->CharSequenceUtil.equals(obj.getPlatformSkuNo(), platformSkuNo))
+                    .findFirst()
+                    .ifPresent(mapping -> {
+                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                        listingInfoEntity.setId(mapping.getListingId());
+                        listingInfoEntity.setPlatformSkuNo(platformSkuNo);
+                        listingInfoEntity.setPlatformSpuName(itemName);
+                        listingInfoEntity.setPlatformSpuNo(asin);
+                        listingInfoEntity.setPlatformFnSku(fnSku);
+                        listingUpdateList.add(listingInfoEntity);
+                        resultDTOList.add(BatchResultDTO.success(paramDTO.getShopId(),platformSkuNo,"商品同步成功"));
+                    });
+        }
+        listingInfoService.updateBatchById(listingUpdateList);
+        return resultDTOList;
+    }
+
+
 
     private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {
         List<String> listingIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());

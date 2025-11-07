@@ -213,6 +213,8 @@ public interface BusinessNoConstant {
     String YPTH="YPTH";
     //期初台账
     String QCTZ="QCTZ";
+    //样品转移单
+    String YPZY="YPZY";
     //资质字典
     String DC="DC";
     //组包计划

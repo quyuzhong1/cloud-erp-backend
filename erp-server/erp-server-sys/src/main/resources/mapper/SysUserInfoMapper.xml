@@ -5,7 +5,7 @@
     <select id="findList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT uid AS userId,user_name,real_name,mobile
         FROM sys_user_info
-        WHERE delete_state=1
+        WHERE is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
             real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
@@ -31,7 +31,7 @@
         update_time,
         email
         FROM sys_user_info sui
-        WHERE delete_state=1 AND user_account not in ('admin')
+        WHERE is_deleted = false AND user_account not in ('admin')
         <if test="params.state !=null">
             AND sui.user_state=#{params.state}
         </if>
@@ -66,7 +66,7 @@
         sru.user_id=sui.uid AND sru.role_id=#{params.flagId} limit 1),0) AS
         flagState
         FROM sys_user_info sui
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
             sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
@@ -82,7 +82,7 @@
         COALESCE((SELECT 1 FROM sys_post_user spu
         where spu.user_id=sui.uid AND spu.post_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
             sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
@@ -98,7 +98,7 @@
         COALESCE((SELECT 1 FROM sys_department_user sdu
         where sdu.user_id=sui.uid AND sdu.department_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
             sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
@@ -185,7 +185,7 @@
         sui.mobile,
         sui.user_state,
         sui.last_login_time,
-        sui.delete_state,
+        sui.is_deleted,
         sui.last_login_ip,
         sui.login_count,
         sui.create_time,
@@ -231,7 +231,7 @@
                sui.create_time as createTime
         from sys_user_info sui
         <where>
-            ${params.sqlMap.default} and sui.delete_state = 1 and sui.user_type = 'erp'
+            ${params.sqlMap.default} and sui.is_deleted = false and sui.user_type = 'erp'
             <if test="params.userName != null and params.userName != ''">
                 and sui.user_name  ilike concat('%',#{params.userName}::text,'%')
             </if>
@@ -299,7 +299,7 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
         </if>
-          AND delete_state=1 AND user_account not in ('admin')
+          AND is_deleted = false AND user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
 <!--        </if>-->
@@ -346,7 +346,7 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
         </if>
-        AND delete_state=1 AND user_account not in ('admin')
+        AND is_deleted = false AND user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
 <!--        </if>-->
@@ -375,13 +375,13 @@
         ORDER BY sui.create_time DESC
     </select>
     <select id="pagingSelect" resultType="com.common.business.dto.UserSelectDto$PageSelectDTO">
-        select uid as userId,user_name  as userName,delete_state as userState from (
+        select uid as userId,user_name  as userName, user_state as userState from (
         select
         sui.uid,
         sui.user_name,
-        sui.delete_state
+        sui.user_state
         from sys_user_info sui
-        where  sui.delete_state = 1
+        where  sui.is_deleted = false
         and sui.user_type='erp'
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((sui.uid = #{params.searchKeyword}) or sui.user_name ilike concat('%', #{params.searchKeyword}::text ,'%'))

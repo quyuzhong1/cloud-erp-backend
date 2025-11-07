@@ -1,10 +1,12 @@
 package com.erp.server.oms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.erp.model.oms.enums.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -42,6 +44,20 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         if("sb2cd.virtual_warehouse_id".equals(field)){
             return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        }
+        if("deliveryCode".equals(field)){
+            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+            String dynamicDataSource = "";
+            if(dynamicDataSourceTypeEnum != null) {
+                dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+            }
+            if(dynamicDataSource != null && dynamicDataSource.equals("doris") ){ // 切换到doris
+                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery where is_deleted = false  AND status != 'cancelDelivery' and code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
+            }else {
+                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery where is_deleted = false  AND status != 'cancelDelivery' and code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
+            }
+
+
         }
         //标签类型
         if("lable".equals(field)){

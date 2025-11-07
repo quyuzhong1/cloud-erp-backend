@@ -2,6 +2,7 @@ package com.erp.server.sys.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.sys.dto.DictPartitionDTO;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -36,4 +37,11 @@ public interface DictPartitionMapper extends BaseMapper<DictPartitionEntity> {
      * @return
      */
     List<DictPartitionDTO.DictDTO> dropDown(@Param("params") DictPartitionDTO.SelectDTO params);
+
+    /**
+     * 高级查询军区信息
+     * @param params
+     * @return
+     */
+    List<DictPartitionEntity> listByAdvanceQuery(@Param("params") AdvanceQueryContainer params);
 }
