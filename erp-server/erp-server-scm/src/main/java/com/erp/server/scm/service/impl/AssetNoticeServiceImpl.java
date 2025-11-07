@@ -71,8 +71,8 @@ import java.util.stream.Stream;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_NOTICE;
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_MOLD_INFO;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -747,7 +747,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入开模通知单档案", IMPORT_PLM_MOLD_INFO.getCode(), dto);
+        downloadTaskFeign.saveImportTask("导入开模通知单", IMPORT_SCM_ASSET_NOTICE.getCode(), dto);
         return Boolean.TRUE;
     }
 
