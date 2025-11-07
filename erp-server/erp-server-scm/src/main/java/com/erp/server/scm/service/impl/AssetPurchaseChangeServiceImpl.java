@@ -80,9 +80,6 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     private AssetNoticeDetailService assetNoticeDetailService;
 
     @Autowired
-    private PurchasePriceService purchasePriceService;
-
-    @Autowired
     private ModuleOperateLogService moduleOperateLogService;
 
     @Autowired
