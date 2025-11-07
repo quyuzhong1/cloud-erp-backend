@@ -44,6 +44,7 @@ public class AssetCardApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(assetCardService.getVariablesMap(assetCardEntity));
         return assetCardService.approveEnd(approveOne, assetCardEntity);
     }
 

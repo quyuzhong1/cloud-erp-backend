@@ -44,6 +44,7 @@ public class AssetLocationApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(assetLocationService.getVariablesMap(assetLocationEntity));
         return assetLocationService.approveEnd(approveOne, assetLocationEntity);
     }
 
