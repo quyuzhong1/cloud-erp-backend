@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -45,6 +47,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.entity.doris.AdsPushTaskEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
+import com.erp.model.sys.entity.DictBasicEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsPushTaskMapper;
 import com.erp.server.dmp.service.AdsPushTaskService;
@@ -192,6 +195,8 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sourceType").list();
+        Map<String, String> valueRemarkMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getRemark , (d1 , d2) -> d1));
         for (DmpOutputTaskRecordDTO.PagingDTO listDTO : list) {
             listDTO.setSyncTypeName("推送");
 
@@ -201,7 +206,10 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
             } else {
                 listDTO.setStatusName(DmpOutputTaskRecordStatusEnum.getName(listDTO.getStatus()));
             }
-
+            String sourceTypeName = valueRemarkMap.get(listDTO.getSourceTypeName());
+            if(StringUtils.isNotBlank(sourceTypeName)) {
+            	listDTO.setSourceTypeName(sourceTypeName);
+            }
         }
     }
 
