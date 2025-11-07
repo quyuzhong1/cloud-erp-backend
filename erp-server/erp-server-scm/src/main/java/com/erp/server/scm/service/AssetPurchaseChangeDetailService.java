@@ -1,4 +1,5 @@
 package com.erp.server.scm.service;
+import com.erp.model.scm.dto.AssetPurchaseChangeDTO;
 import com.erp.model.scm.entity.AssetPurchaseChangeDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -26,15 +27,22 @@ public interface AssetPurchaseChangeDetailService extends SuperService<AssetPurc
     BaseResultDTO.AddDTO add(AssetPurchaseChangeDetailDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author wtr
-    * @date: 2025-10-16
-    * @param dto
-    * @return
-    */
-    Boolean update(AssetPurchaseChangeDetailDTO.UpdateDTO dto);
+     * 修改
+     * @author wtr
+     * @date: 2025-10-16
+     * @param
+     * @return
+     */
+    Boolean update(AssetPurchaseChangeDetailDTO.UpdateDTO addOrUpdateDTO);
 
-    void update(List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity);
+    /**
+     * 修改
+     * @author wtr
+     * @date: 2025-10-16
+     * @param
+     * @return
+     */
+    Boolean update(List<AssetPurchaseChangeDetailDTO.UpdateDTO> assetPurchaseChangeDetailDTOList);
 
 
 }
