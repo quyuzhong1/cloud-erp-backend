@@ -1,6 +1,7 @@
 package com.erp.server.scm.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
@@ -186,8 +188,14 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
             //供应商等级
             resultMap.put("grade",grade.getName());
         }
+
         //结算币别
-        resultMap.put("payCurrency",entity.getPayCurrency());
+        DictCurrencyEntity currency = FeignQuery.getById(DictCurrencyEntity.class, entity.getPayCurrency());
+        if (ObjUtil.isNotEmpty(currency)) {
+            //结算币别
+            resultMap.put("payCurrency",currency.getKingdeeCode());
+        }
+
 
         DictBasicEntity payMethod = dictBasicService.getById(entity.getPayMethodId());
         if (ObjectUtils.isNotEmpty(payMethod)) {
