@@ -2,12 +2,17 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -30,8 +35,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.dto.ExcelData;
+import com.common.core.dto.SheetData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -45,10 +53,8 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.SkuStdCostDTO;
@@ -66,6 +72,7 @@ import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -126,6 +133,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -4423,6 +4431,131 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
         }
         return resultList;
+    }
+
+    @Override
+    public void exportLogisticsHandover(BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response) {
+        String excelPath = "excel/exportLogisticsHandover.xlsx";
+        List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list = baseMapper.exportLogisticsHandover(idsDTO.getIds());
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        fillExportLogisticsHandoverListDTO(list);
+        //按照销售订单，审核人，出库日期分组
+        Map<String,List<SoOutstockDTO.ExportLogisticsHandoverListDTO>> map = list.stream().collect(Collectors.groupingBy(e->e.getSoCode()+"_"+e.getApproveUserName()+"_"+ cn.hutool.core.date.DateUtil.format(e.getBillDate().atStartOfDay(), DatePattern.NORM_DATE_PATTERN)));
+        List<ExcelData> excelDataList = new ArrayList<>();
+        for (Map.Entry<String, List<SoOutstockDTO.ExportLogisticsHandoverListDTO>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            List<SoOutstockDTO.ExportLogisticsHandoverListDTO> value = entry.getValue();
+            //第一页的数据
+            SoOutstockDTO.ExportLogisticsHandoverSummaryDTO exportDTO = new SoOutstockDTO.ExportLogisticsHandoverSummaryDTO();
+            SoOutstockDTO.ExportLogisticsHandoverListDTO firstDTO = value.get(0);
+            //copy
+            BeanUtils.copyProperties(firstDTO,exportDTO);
+            List<SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO> dtoList = new ArrayList<>();
+            //根据code去重value，每个code保留一条
+            Map<String, SoOutstockDTO.ExportLogisticsHandoverListDTO> codeMap = value.stream().collect(Collectors.toMap(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCode, Function.identity(), (v1, v2) -> v1));
+            int rowNum = 1;
+            for (Map.Entry<String, SoOutstockDTO.ExportLogisticsHandoverListDTO> codeEntry : codeMap.entrySet()) {
+                SoOutstockDTO.ExportLogisticsHandoverListDTO listDTO = codeEntry.getValue();
+                SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO detailDTO = new SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO();
+                BeanUtils.copyProperties(listDTO,detailDTO);
+                detailDTO.setRowNum(rowNum);
+                dtoList.add(detailDTO);
+                rowNum++;
+            }
+
+            ExcelData excelData = new ExcelData();
+            excelData.setData(exportDTO);
+            excelData.setDetailList(dtoList);
+            excelData.setFilename(key + ".xlsx");
+
+            //gropy by code
+            Map<String,List<SoOutstockDTO.ExportLogisticsHandoverListDTO>> mapList = value.stream().collect(Collectors.groupingBy(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCode));
+            //遍历mapList
+            List<SheetData<SoOutstockDTO.ExportLogisticsHandoverListDetailDTO>> sheetDataList = new ArrayList<>();
+            int sheetNo = 1;
+            for (Map.Entry<String, List<SoOutstockDTO.ExportLogisticsHandoverListDTO>> mapEntry : mapList.entrySet()) {
+                SoOutstockDTO.ExportLogisticsHandoverListDTO firstMapDTO = mapEntry.getValue().get(0);
+                List<List<String>> head = new ArrayList<>();
+                head.add(Arrays.asList("客户名称", firstMapDTO.getCustomerName(), "   ", "出库单号", firstMapDTO.getCode(), ""));
+                head.add(Arrays.asList("销售单号", firstMapDTO.getSoCode(), "", "销售员", firstMapDTO.getSellerName(), ""));
+                head.add(Arrays.asList("", "", "", "", "", ""));
+                head.add(Arrays.asList("序号", "SKU", "产品名称", "数量", "单位", "备注"));
+
+                SheetData<SoOutstockDTO.ExportLogisticsHandoverListDetailDTO> sheetData = new SheetData<>();
+                List<SoOutstockDTO.ExportLogisticsHandoverListDetailDTO> detialList = new ArrayList<>();
+                int detailNum = 1;
+                for (SoOutstockDTO.ExportLogisticsHandoverListDTO exportLogisticsHandoverListDTO : mapEntry.getValue()) {
+                    SoOutstockDTO.ExportLogisticsHandoverListDetailDTO detailDTO = new SoOutstockDTO.ExportLogisticsHandoverListDetailDTO();
+                    BeanUtils.copyProperties(exportLogisticsHandoverListDTO,detailDTO);
+                    detailDTO.setRowNum(detailNum);
+                    detailNum++;
+                    detialList.add(detailDTO);
+                }
+
+                WriteSheet writeSheet = EasyExcel.writerSheet(sheetNo,mapEntry.getKey()).build();
+                sheetNo++;
+
+                WriteTable table = EasyExcel.writerTable(0)
+                        .head(new ArrayList<>())
+                        .needHead(false)
+                        .build();
+                WriteTable detailTable = EasyExcel.writerTable(1).head(SoOutstockDTO.ExportLogisticsHandoverListDetailDTO.class).needHead(false).build();
+                sheetData.setWriteSheet(writeSheet);
+                sheetData.setHeadWriteTable(table);
+                sheetData.setDetailWriteTable(detailTable);
+                sheetData.setHeadDataList(head);
+                sheetData.setDetailDataList(detialList);
+                sheetDataList.add(sheetData);
+            }
+
+            excelData.setSheetDataList(sheetDataList);
+            excelDataList.add(excelData);
+        }
+        ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"销售出库单物流交接单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
+    }
+
+    private void fillExportLogisticsHandoverListDTO(List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list) {
+        List<String> addressIds = list.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getReceiveAddressId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(addressIds)){
+            customerAddressEntities = customerFeign.listCustomerAddressByIds(addressIds);
+        }
+
+        List<String> carrIds = list.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCarrierId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntityList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(carrIds)){
+            supplierEntityList = scmTaskFeign.getSupplierByIdList(carrIds);
+        }
+
+        List<String> skuIds = list.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(skuIds)){
+            skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        }
+        for (SoOutstockDTO.ExportLogisticsHandoverListDTO v : list) {
+            v.setSalesOrgName(v.getSalesOrgName() + "出库单");
+
+            String deliveryModeName = DeliveryModeEnum.getName(v.getDeliveryMode());
+            v.setDeliveryModeName(deliveryModeName);
+            //收货地址
+            CustomerAddressEntity addressEntity = customerAddressEntities.stream().filter(a->a.getId().equals(v.getReceiveAddressId())).findFirst().orElse(null);
+            if(Objects.nonNull(addressEntity)){
+                v.setReceiveAddress(addressEntity.getAddress());
+            }
+            //承运商
+            SupplierEntity supplierEntity = supplierEntityList.stream().filter(s->s.getId().equals(v.getCarrierId())).findFirst().orElse(null);
+            if(Objects.nonNull(supplierEntity)){
+                v.setCarrierName(supplierEntity.getName());
+            }
+            //产品信息
+            SkuVO skuVO = skuVOS.stream().filter(s->s.getSkuId().equals(v.getSkuId())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setProductName(skuVO.getSkuName());
+                v.setSkuUnit(skuVO.getUnitName());
+            }
+        }
     }
 
 }
