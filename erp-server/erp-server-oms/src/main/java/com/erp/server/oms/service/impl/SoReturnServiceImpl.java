@@ -558,19 +558,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setType(soInfoEntity.getOrderType());
         soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
-        soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
-            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
-            if (dept != null) {
-                soReturnEntity.setSalesDeptName(dept.getName());
-            }
-        }
-        soReturnEntity.setSellerId(soInfoEntity.getSellerId());
-        soReturnEntity.setSellerName(soInfoEntity.getSellerName());
         soReturnEntity.setCustomerId(soInfoEntity.getCustomerId());
-        Optional<CustomerInfoEntity> byIdOpt = customerInfoService.getByIdOpt(soInfoEntity.getCustomerId());
-        if(byIdOpt.isPresent()){
-            soReturnEntity.setCustomerName(byIdOpt.get().getName());
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(soInfoEntity.getCustomerId());
+        if(Objects.nonNull(customerInfoEntity)){
+            soReturnEntity.setCustomerName(customerInfoEntity.getName());
+            soReturnEntity.setSellerId(customerInfoEntity.getSellerId());
+            soReturnEntity.setSellerName(customerInfoEntity.getSellerName());
+            soReturnEntity.setSalesDeptId(customerInfoEntity.getSalesDeptId());
+            if(StringUtils.isNotBlank(customerInfoEntity.getSalesDeptId())){
+                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(customerInfoEntity.getSalesDeptId());
+                if (dept != null) {
+                    soReturnEntity.setSalesDeptName(dept.getName());
+                }
+            }
+        }else{
+            soReturnEntity.setSellerId(soInfoEntity.getSellerId());
+            soReturnEntity.setSellerName(soInfoEntity.getSellerName());
+            soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
         }
         //收货地址
         if(StringUtils.isNotBlank(soInfoEntity.getReceiveAddressId())){

@@ -12,12 +12,14 @@ import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.common.core.dto.ExcelData;
+import com.common.core.dto.SheetData;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.listener.EasyExcelListener;
@@ -921,6 +923,24 @@ public class ExcelPrintUtils {
 
 						if (excelData.getData() != null) {
 							excelWriter.fill(excelData.getData() , writeSheet);
+						}
+						if(CollectionUtils.isNotEmpty(excelData.getSheetDataList())){
+							for (Object sheetObj : excelData.getSheetDataList()) {
+								SheetData sheetData = (SheetData) sheetObj;
+								WriteSheet writeSheet1 = sheetData.getWriteSheet();
+								WriteTable writeHeadTable = sheetData.getHeadWriteTable();
+								WriteTable detailWriteTable = sheetData.getDetailWriteTable();
+								if(Objects.nonNull(writeHeadTable)){
+									if(CollectionUtils.isNotEmpty(sheetData.getHeadDataList())){
+										excelWriter.write(sheetData.getHeadDataList(), writeSheet1, writeHeadTable);
+									}else{
+										excelWriter.write(Collections.emptyList(), writeSheet1, writeHeadTable);
+									}
+								}
+								if(Objects.nonNull(detailWriteTable) && CollectionUtils.isNotEmpty(sheetData.getDetailDataList())){
+									excelWriter.write(sheetData.getDetailDataList(), writeSheet1, detailWriteTable);
+								}
+							}
 						}
 						excelWriter.finish();
 						zipOut.putNextEntry(new ZipEntry(excelData.getFilename()));

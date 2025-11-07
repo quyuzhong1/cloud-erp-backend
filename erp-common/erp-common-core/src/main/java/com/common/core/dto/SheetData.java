@@ -6,24 +6,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExcelData<T,R> {
+public class SheetData<T>{
 
-    private T data;
+    private WriteSheet writeSheet;
 
-    private List<R> detailList;
+    //头信息
+    private WriteTable headWriteTable;
 
-    // 表格文件名
-    private String filename;
+    //明细信息
+    private WriteTable detailWriteTable;
 
-    //多个sheet数据，从第二个sheet开始，不支持模板
-    private List<SheetData> sheetDataList;
+    private List<T> detailDataList;
 
+    private List<List<String>> headDataList;
 }
 

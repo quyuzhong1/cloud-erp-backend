@@ -554,4 +554,45 @@
         ORDER BY
             so.create_time DESC
     </select>
+    <select id="exportLogisticsHandover"
+            resultType="com.erp.model.wms.dto.SoOutstockDTO$ExportLogisticsHandoverListDTO">
+        SELECT so.id as id,
+               sod.id as detailId,
+               so.sales_org_name as salesOrgName,
+               ci.name as customerName,
+               so.bill_date as billDate,
+               so.so_id as soId,
+               si.delivery_mode as deliveryMode,
+               si.receive_address_id as receiveAddressId,
+               so.carrier_id as carrierId,
+               so.approve_user_name as approveUserName,
+               so.approve_user_name as deliveryUserName,
+               si.code as soCode,
+               so.code as code,
+               so.warehouse_name as warehouseName,
+               so.track_no as trackNo,
+               so.remark as detailRemark,
+               so.seller_name as sellerName,
+               sod.sku_no as skuNo,
+               sod.sku_id as skuId,
+               sod.actual_qty as actualQty,
+               so.remark as remark,
+               (SELECT count (1) from so_delivery_notice sdn
+                                          inner join packing_task pt on sdn.id = pt.source_id
+                                          inner join wms_carton wc on wc.packing_task_id = pt.id
+                where sdn.id = so.source_id and sdn.is_deleted = false and pt.is_deleted = false
+                  and wc.is_deleted  =false
+               ) as boxQty
+        from so_outstock so
+                          inner join so_outstock_detail sod on so.id = sod.main_id
+                          inner join customer_info ci on so.customer_id = ci.id
+                          inner join so_info si on si.id = so.so_id
+        where so.is_deleted = false and sod.is_deleted = false and ci.is_deleted = false and si.is_deleted = false
+          and so.order_type = 'B2B'
+          and so.approve_status = 'approve'
+        and so.id in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>
