@@ -149,6 +149,12 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
 
         List<AssetNoticeDetailEntity> newList = BeanMapperUtils.copyList(AssetNoticeDetailEntity.class, detailList);
         for (AssetNoticeDetailEntity assetNoticeDetailEntity : newList) {
+            //关联开模通知单id
+            if (StringUtils.isBlank(assetNoticeDetailEntity.getCreatePoType())) {
+                assetNoticeDetailEntity.setMainId(assetNoticeId);
+            }
+
+            //采购关联状态
             if (StringUtils.isBlank(assetNoticeDetailEntity.getCreatePoType())) {
                 assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
             }
