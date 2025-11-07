@@ -4,6 +4,8 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.scm.mapper.AssetNoticeDetailMapper;
 import com.erp.server.scm.service.AssetNoticeDetailService;
 import com.erp.server.scm.service.ModuleOperateLogService;
@@ -14,14 +16,19 @@ import com.erp.model.scm.entity.AssetNoticeDetailEntity;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+
 /**
  * <p>
  *  服务实现类
@@ -36,6 +43,9 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
 
     @Autowired
     private ModuleOperateLogService moduleOperateLogService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -82,8 +92,8 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", assetNoticeDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeDetailEntity.getId(), "");
+        log.info("编辑 开始记录日志数据，id：【{}】", assetNoticeDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeDetailEntity.getId(), "");
         moduleOperateLogService.addModuleOperateLogByObj(old, assetNoticeDetailEntity, null, assetNoticeDetailEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
@@ -108,17 +118,58 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(List<AssetNoticeDetailDTO.UpdateDTO> detailList, String assetNoticeId) {
-        if (CollectionUtils.isEmpty(detailList)) {
-            return;
+        if (detailList == null) {
+            detailList = new ArrayList<>();
         }
-        List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
-        for (AssetNoticeDetailDTO.UpdateDTO updateDTO : detailList) {
-            AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
-            BeanMapperUtils.copy(updateDTO, assetNoticeDetailEntity);
-            assetNoticeDetailEntity.setMainId(assetNoticeId);
-            assetNoticeDetailEntities.add(assetNoticeDetailEntity);
+
+        //查询旧数据
+        List<AssetNoticeDetailEntity> oldList = this.lambdaQuery()
+                .eq(AssetNoticeDetailEntity::getMainId, assetNoticeId)
+                .list();
+
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            Set<String> deleteIdSet = new HashSet<>(deleteIds);
+            List<AssetNoticeDetailEntity> removeList = oldList.stream()
+                    .filter(obj -> deleteIdSet.contains(obj.getId()))
+                    .collect(Collectors.toList());
+
+            List<Pair<String, String>> pairList = removeList.stream()
+                    .map(obj -> new Pair<>(obj.getAssetId(), obj.getMainId()))
+                    .collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog(
+                    "模具通知单删除了一个SKU【%s】",
+                    ModuleTypeEnum.ASSET_NOTICE.getCode(),
+                    pairList,
+                    "编辑操作"
+            );
+
+            this.removeByIds(deleteIds);
         }
-        super.updateBatchById(assetNoticeDetailEntities);
+
+        List<AssetNoticeDetailEntity> newList = BeanMapperUtils.copyList(AssetNoticeDetailEntity.class, detailList);
+        this.saveOrUpdateBatch(newList);
+
+        // 更新 SKU 占用状态
+        List<String> skuIds = newList.stream()
+                .map(AssetNoticeDetailEntity::getAssetId)
+                .distinct()
+                .collect(Collectors.toList());
+        try {
+            plmTaskFeign.updateOccupyStatus(skuIds);
+        } catch (Exception e) {
+            log.warn("更新 SKU 占用状态失败，skuIds={}", skuIds, e);
+            throw new ServiceException(ApiError.ERROR_95322,skuIds);
+        }
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<AssetNoticeDetailDTO.UpdateDTO> newList, List<AssetNoticeDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).map(obj -> obj.getId()).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
