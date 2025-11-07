@@ -33,9 +33,11 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoReceiptSourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.mapper.SoReceiptMapper;
@@ -98,6 +100,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -884,6 +889,14 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
                 data.setReceiptAccountName(bankAccountEntity.getAccountName());
             }
+
+            //销售组织
+            if (StringUtils.isNotBlank(data.getSalesOrgId())) {
+                SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(data.getSalesOrgId());
+                data.setSalesOrgId(data.getSalesOrgId());
+                data.setSalesOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+
         }
     }
     /**
