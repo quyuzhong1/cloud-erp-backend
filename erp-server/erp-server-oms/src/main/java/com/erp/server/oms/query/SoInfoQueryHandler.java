@@ -165,11 +165,19 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
                            "AND sd.is_close = FALSE)";
                 //已发货：审核通过 + 所有明细已发货，或审核通过 + 发货明细部分未发货并且发货明细已关闭
                 case OmsConstant.DELIVERY:
-                    return "si.approve_status = 'approve' AND ((NOT EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
-                           "AND sd.delivery_status != 'completeShipment')) " +
-                           "OR (EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
-                           "AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment') " +
-                           "AND sd.is_close = TRUE)))";
+                    return " si.approve_status = 'approve'\n" +
+                            "AND (\n" +
+                            "  si.id IN (\n" +
+                            "    SELECT sd.main_id\n" +
+                            "    FROM so_detail sd\n" +
+                            "    WHERE sd.is_deleted = FALSE\n" +
+                            "    GROUP BY sd.main_id\n" +
+                            "    HAVING \n" +
+                            "      SUM(CASE WHEN sd.delivery_status != 'completeShipment' THEN 1 ELSE 0 END) = 0\n" +
+                            "      OR\n" +
+                            "      SUM(CASE WHEN (sd.delivery_status IN ('unShipped','partialShipment') AND sd.is_close = TRUE) THEN 1 ELSE 0 END) > 0\n" +
+                            "  )\n" +
+                            ")";
 
             }
         }
