@@ -277,10 +277,17 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             fillDetaillList(detailEntityList,assetPurchaseOrderId);
 
             this.saveOrUpdateBatch(detailEntityList);
+
         } else {
+
             // 无来源的订单，直接删除旧数据 + 保存新数据
             deleteOldDetails(assetPurchaseOrderId, detailList);
+
             List<AssetPurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailEntity.class, detailList);
+
+            // 补充关联关系
+            fillDetaillList(newList,assetPurchaseOrderId);
+
             this.saveOrUpdateBatch(newList);
         }
     }
