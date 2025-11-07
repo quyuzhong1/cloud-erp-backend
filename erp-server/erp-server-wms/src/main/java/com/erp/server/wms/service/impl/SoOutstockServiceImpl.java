@@ -1875,7 +1875,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                  * 添加修改日志
                  */
                 operateLogService.addModuleOperateLogByObj(old, soOutstock, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "", "");
-                soOutstockDetailService.updateDetail(id, detailList);
+                soOutstockDetailService.updateDetail(id, detailList, true);
                 return id;
             }
         }
@@ -1970,7 +1970,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
              * 添加修改日志
              */
             operateLogService.addModuleOperateLogByObj(old, soOutstock, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "", "");
-            soOutstockDetailService.updateDetail(id, detailList);
+            soOutstockDetailService.updateDetail(id, detailList, false);
             return id;
         }
         return "";

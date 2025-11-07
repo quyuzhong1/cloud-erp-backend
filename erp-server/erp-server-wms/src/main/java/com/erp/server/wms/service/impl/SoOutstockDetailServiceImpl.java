@@ -49,7 +49,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -365,12 +364,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param mainId
      * @param detailList
+     * @param isB2c
      * @return void
      * @author yl
      * @date 2023-05-22 18:21
      */
     @Override
-    public void updateDetail(String mainId, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
+    public void updateDetail(String mainId, List<SoOutstockDetailDTO.UpdateDTO> detailList, boolean isB2c) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
@@ -443,7 +443,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
 
         //处理明细数据
-        handleDetailData(addOrUpdateList);
+        if(!isB2c){
+            handleDetailData(addOrUpdateList);
+        }
         this.saveOrUpdateBatch(addOrUpdateList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
 
