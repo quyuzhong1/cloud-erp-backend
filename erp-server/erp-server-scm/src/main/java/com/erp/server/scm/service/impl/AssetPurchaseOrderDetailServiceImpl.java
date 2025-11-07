@@ -270,8 +270,12 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             // 检查总金额是否为 0
             checkTotalAmount(detailEntityList);
 
-            // 删除旧数据 + 保存新数据
+            // 删除旧数据
             deleteOldDetails(assetPurchaseOrderId, detailList);
+
+            // 补充关联关系
+            fillDetaillList(detailEntityList,assetPurchaseOrderId);
+
             this.saveOrUpdateBatch(detailEntityList);
         } else {
             // 无来源的订单，直接删除旧数据 + 保存新数据
@@ -407,6 +411,22 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             );
 
             this.removeByIds(deleteIds);
+        }
+    }
+
+    public void fillDetaillList(List<AssetPurchaseOrderDetailEntity> detailEntityList,String assetPurchaseOrderId){
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : detailEntityList) {
+
+            //关联模具采购单头
+            if (StringUtils.isBlank(assetPurchaseOrderDetailEntity.getMainId())) {
+                assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
+            }
+
+            //收货状态
+            if (StringUtils.isBlank(assetPurchaseOrderDetailEntity.getEndReceive())) {
+                assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+            }
+
         }
     }
 
