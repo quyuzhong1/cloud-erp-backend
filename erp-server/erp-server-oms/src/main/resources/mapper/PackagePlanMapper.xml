@@ -87,13 +87,13 @@
         pp.print_order_status as printOrderStatus,
         pp.create_time as createTime,
         pp.create_user_name as createUserName,
+        ppd.id as detailId,
         ppd.so_code as soCode,
         ppd.so_id as soId,
         ppd.logistics_channel_id as logisticsChannelId,
         ppd.logistics_channel_name as logisticsChannelName,
-        ppd.track_no as trackNo,
-        ppd.transport_no as transportNo,
-        ppd.barcode as barcode
+        ppd.barcode as barcode,
+        ppd.platform_code as platformCode
         FROM package_plan pp
         LEFT JOIN package_plan_detail ppd on ppd.main_id = pp.id and ppd.is_deleted=FALSE
         WHERE
