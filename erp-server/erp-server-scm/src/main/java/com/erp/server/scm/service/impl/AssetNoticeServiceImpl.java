@@ -507,6 +507,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setAssetCode(productDetailEntity.getSkuNo());
                 addDetailDTO.setAssetName(productDetailEntity.getName());
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getApplyQty());
+                if (generatePurchaseOrderDTO.getTaxPrice() == null
+                        || generatePurchaseOrderDTO.getTaxPrice().compareTo(BigDecimal.ZERO) == 0) {
+                    throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,generatePurchaseOrderDTO.getAssetCode());
+                }
                 //采购金额
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
                 addDetailDTO.setMainId(generatePurchaseOrderDTO.getId());
