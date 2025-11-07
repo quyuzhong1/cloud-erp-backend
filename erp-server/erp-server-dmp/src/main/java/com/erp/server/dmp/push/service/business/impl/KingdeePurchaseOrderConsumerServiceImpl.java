@@ -257,9 +257,6 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
         } catch (ServiceException e) {
             log.error("金蝶查询异常，删除单据失败: {}", e.getMessage());
             throw new ServiceException("未查询到金蝶数据，删除单据失败: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("查询金蝶数据时发生异常，删除单据失败", e);
-            throw new ServiceException("查询金蝶数据时发生异常，删除单据失败", e);
         }
     }
 
