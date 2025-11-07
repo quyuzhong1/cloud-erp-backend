@@ -156,8 +156,10 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             throw new ServiceException("保存失败");
         }
 
-        List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity = handleUpdateDetailData(addOrUpdateDTO);
-        assetPurchaseChangeDetailService.updateBatchById(assetPurchaseChangeDetailEntity);
+        //List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity = handleUpdateDetailData(addOrUpdateDTO);
+        //assetPurchaseChangeDetailService.updateBatchById(assetPurchaseChangeDetailEntity);
+
+        assetPurchaseChangeDetailService.update(addOrUpdateDTO.getAssetPurchaseChangeDetailDTOList());
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，单号：【{}】", assetPurchaseChangeEntity.getCode());
@@ -866,61 +868,53 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     }
 
     public List<AssetPurchaseChangeDetailEntity> handleUpdateDetailData(AssetPurchaseChangeDTO.UpdateDTO updateDTO){
-        List<AssetPurchaseChangeDetailEntity> detailList = new ArrayList<>();
-
-        for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseChangeDetailDTOList()) {
-            AssetPurchaseChangeDetailEntity detailEntity = new AssetPurchaseChangeDetailEntity();
-            BeanUtils.copyProperties(dto,detailEntity);
-
-            //校验数量不能超过通知单待采购数量
-            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailService.lambdaQuery()
-                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .eq(AssetPurchaseOrderDetailEntity::getId, dto.getSourceDetailId())
-                    .one();
-
-            //排除当前来源的采购订单
-            if (StringUtils.isNotBlank(assetPurchaseOrderDetailEntity.getSourceDetailId())) {
-                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE).one();
-
-                List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
-                        .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetNoticeDetailEntity.getId())
-                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                        .list();
-
-                BigDecimal pruchaseQtySum = assetPurchaseOrderDetailEntityList.stream()
-                        .map(obj -> obj.getPurchaseQty())
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                if (assetNoticeDetailEntity.getApplyQty().compareTo(dto.getPurchaseQty().add(pruchaseQtySum)) < 0) {
-                    throw new ServiceException(ApiError.ERROR_95315);
-                }
-            } else {
-                //如果没有开模通知单，数量比对应采购单明细数量少就可以
-                for (AssetPurchaseChangeDetailDTO.UpdateDTO updateDTO1 : updateDTO.getAssetPurchaseChangeDetailDTOList()) {
-                    if (updateDTO1.getSourceDetailId().equals(assetPurchaseOrderDetailEntity.getId())
-                            && updateDTO1.getPurchaseQty().compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
-                        throw new ServiceException(ApiError.ERROR_95312);
-                    }
-                }
-            }
-
-            detailEntity.setTotalAmount(dto.getPurchaseQty().multiply(dto.getTaxPrice()));
-            detailEntity.setOldTotalAmount(dto.getOldPurchaseQty().multiply(dto.getOldTaxPrice()));
-            detailList.add(detailEntity);
-        }
-
-        AssetPurchaseChangeDetailEntity assetPurchaseChangeDetailEntity = detailList.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
-                .findFirst()
-                .orElse(null);
-
-        if (Objects.nonNull(assetPurchaseChangeDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseChangeDetailEntity.getAssetCode());
-        }
-
-        return detailList;
+//        List<AssetPurchaseChangeDetailEntity> detailList = new ArrayList<>();
+//
+//        for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseChangeDetailDTOList()) {
+//            AssetPurchaseChangeDetailEntity detailEntity = new AssetPurchaseChangeDetailEntity();
+//            BeanUtils.copyProperties(dto,detailEntity);
+//
+//          //校验数量不能超过通知单待采购数量
+//            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailService.lambdaQuery()
+//                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+//                    .eq(AssetPurchaseOrderDetailEntity::getId, dto.getSourceDetailId())
+//                    .one();
+//
+//            //排除当前来源的采购订单(现阶段不限制采购数量超过开模通知单数量)
+//            if (StringUtils.isNotBlank(assetPurchaseOrderDetailEntity.getSourceDetailId())) {
+//                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+//                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+//                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE).one();
+//
+//                List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+//                        .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetNoticeDetailEntity.getId())
+//                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+//                        .list();
+//
+//                BigDecimal pruchaseQtySum = assetPurchaseOrderDetailEntityList.stream()
+//                        .map(obj -> obj.getPurchaseQty())
+//                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//                if (assetNoticeDetailEntity.getApplyQty().compareTo(dto.getPurchaseQty().add(pruchaseQtySum)) < 0) {
+//                    throw new ServiceException(ApiError.ERROR_95315);
+//                }
+//            } else {
+//                //如果没有开模通知单，数量比对应采购单明细数量少就可以
+//                for (AssetPurchaseChangeDetailDTO.UpdateDTO updateDTO1 : updateDTO.getAssetPurchaseChangeDetailDTOList()) {
+//                    if (updateDTO1.getSourceDetailId().equals(assetPurchaseOrderDetailEntity.getId())
+//                            && updateDTO1.getPurchaseQty().compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
+//                        throw new ServiceException(ApiError.ERROR_95312);
+//                    }
+//                }
+//            }
+//
+//            detailEntity.setTotalAmount(dto.getPurchaseQty().multiply(dto.getTaxPrice()));
+//            detailEntity.setOldTotalAmount(dto.getOldPurchaseQty().multiply(dto.getOldTaxPrice()));
+//            detailList.add(detailEntity);
+//        }
+//
+//        return detailList;
+        return null;
     }
 
     public List<PurchasePriceDTO.PriceDTO> convertAssetPurchaseChangeDTOToPriceDTO(AssetPurchaseChangeDTO.UpdateDTO updateDTO) {
