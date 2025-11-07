@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.AssetPurchaseChangeDetailDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -81,16 +83,39 @@ public class AssetPurchaseChangeDetailServiceImpl extends SuperServiceImpl<Asset
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", assetPurchaseChangeDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseChangeDetailEntity.getId(), "");
+        log.info("编辑 开始记录日志数据，id：【{}】", assetPurchaseChangeDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetPurchaseChangeDetailEntity.getId(), "");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         moduleOperateLogService.addModuleOperateLogByObj(old, assetPurchaseChangeDetailEntity, null, assetPurchaseChangeDetailEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 
     @Override
-    public void update(List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntity) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean update(List<AssetPurchaseChangeDetailDTO.UpdateDTO> updateDTO) {
 
+        for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO) {
+
+            if (dto.getPurchaseQty() == null || dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO);
+            }
+
+            if (dto.getTaxPrice() == null || dto.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException("单价不能为空或0");
+            }
+
+            boolean updated = this.lambdaUpdate()
+                    .set(AssetPurchaseChangeDetailEntity::getPurchaseQty, dto.getPurchaseQty())
+                    .set(AssetPurchaseChangeDetailEntity::getTaxPrice, dto.getTaxPrice())
+                    .set(AssetPurchaseChangeDetailEntity::getTotalAmount, dto.getPurchaseQty().multiply(dto.getTaxPrice()))
+                    .eq(AssetPurchaseChangeDetailEntity::getId, dto.getId())
+                    .update();
+
+            if (!updated) {
+                throw new ServiceException("模具采购变更单更新失败，id【{}】: " + dto.getId());
+            }
+        }
+        return Boolean.TRUE;
     }
 
 
