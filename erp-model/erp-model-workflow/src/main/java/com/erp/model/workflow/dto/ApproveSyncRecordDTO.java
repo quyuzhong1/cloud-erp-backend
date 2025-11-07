@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -197,10 +198,13 @@ public class ApproveSyncRecordDTO implements Serializable {
     public static class externalInstanceParamDTO {
 
         /**
-         * process_management 主表id
+         * 业务主表id
          */
+        @NotEmpty(message = "业务主表ids不能为空")
         private List<String> ids;
-
+        //业务主表实体类全路径
+        @NotBlank(message = "classPath不能为空")
+        private String classPath;
 
     }
 
