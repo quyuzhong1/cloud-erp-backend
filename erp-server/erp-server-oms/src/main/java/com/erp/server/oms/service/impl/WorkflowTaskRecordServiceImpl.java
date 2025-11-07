@@ -141,6 +141,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeBySourceIdAndSourceType(String sourceId, String sourceType) {
         if (CharSequenceUtil.isAllNotBlank(sourceId,sourceType)){
             this.lambdaUpdate().eq(WorkflowTaskRecordEntity::getSourceId,sourceId)

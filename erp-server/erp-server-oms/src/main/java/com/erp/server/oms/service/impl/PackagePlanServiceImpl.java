@@ -766,7 +766,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         try {
             BaseResponse response = wildberriesSDKService.signDelivery(authEntity.getToken(), packageNo);
-            if (CharSequenceUtil.isNotBlank(response.getCode()) && !"SupplyClosed".equals(response.getStatus())) {
+            if (Objects.nonNull(response) && CharSequenceUtil.isNotBlank(response.getCode()) && !"SupplyClosed".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg("将供货单转入已完成失败:" + JSONUtil.toJsonStr(response));
                 return mqResponseDTO;
             }
@@ -1070,13 +1070,14 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeBySoId(String id) {
         if (CharSequenceUtil.isBlank(id)){
             return;
         }
         List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getBySoId(id);
         if(CollectionUtils.isNotEmpty(detailEntityList)){
-            packagePlanDetailService.removeByIds(detailEntityList);
+            packagePlanDetailService.removeByIds(detailEntityList.stream().map(PackagePlanDetailEntity::getId).collect(Collectors.toList()));
         }
         List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).collect(Collectors.toList());
         this.lambdaUpdate().in(PackagePlanEntity::getId,mainIds).remove();
@@ -1085,11 +1086,22 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
-        if (CharSequenceUtil.isBlank(id)){
+        PackagePlanEntity entity = this.getById(id);
+        if (Objects.isNull(entity)){
             return BatchResultDTO.fail(id, id, "组包计划不存在");
+        }
+        List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getByMainIds(Collections.singletonList(id));
+        List<String> soIds = detailEntityList.stream().map(PackagePlanDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIds);
+        List<String> logisticsCodes = soB2cLogisticsEntities.stream().map(SoB2cLogisticsEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(logisticsCodes)){
+            throw new ServiceException("组包计划单已关联物流单，不能删除");
         }
         this.removeById(id);
         packagePlanDetailService.removeByMainId(id);
+        soIds.forEach(e ->{
+            workflowTaskRecordService.removeBySourceIdAndSourceType(e, WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+        });
         return BatchResultDTO.success(id, id, "删除组包计划成功");
     }
 
