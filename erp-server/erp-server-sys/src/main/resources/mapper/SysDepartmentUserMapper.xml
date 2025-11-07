@@ -9,7 +9,7 @@
         INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
         INNER JOIN sys_department sd ON sd.id=sdu.department_id
         WHERE ${params.sqlMap.default}
-        and  sui.is_deleted = false
+        and sui.is_deleted = false
         <if test="departmentIds !=null  and  departmentIds.size>0">
           AND  sdu.department_id IN
             <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
@@ -65,7 +65,6 @@
             ) AS dept
         LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1
         LEFT JOIN sys_user_info sui on sdu.user_id = sui.uid
-        where sui.is_deleted = false
     </select>
 
     <select id="getDeptByUserId" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">

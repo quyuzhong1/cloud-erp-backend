@@ -532,4 +532,18 @@ public class CustomerInfoController extends BaseController {
         return success(customerInfoService.getThirdCustomerAccount(dto));
     }
 
+    /**
+     * 启用的非2C客户列表
+     */
+    @PostMapping("/listEnable2cCustomer")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "customer_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable2cCustomer(PermissionsDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable2cCustomer(dto.getPermissionSql());
+        return success(list);
+    }
+
 }

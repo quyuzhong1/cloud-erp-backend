@@ -1301,6 +1301,25 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             base.setSalesDeptId(customer.getSalesDeptId());
             base.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
         }
+
+        //军区名称
+        if(StringUtils.isNotBlank(customer.getPartitionId())){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class, customer.getPartitionId());
+            if(dictPartitionEntity != null){
+                base.setPartitionId(dictPartitionEntity.getId());
+                base.setPartitionCode(dictPartitionEntity.getCode());
+                base.setPartitionName(dictPartitionEntity.getName());
+            }
+        }
+
+        //平台归属
+        base.setPlatformType(customer.getPlatformType());
+        base.setPlatformTypeName(PlatformDictEnum.getNameByCode(customer.getPlatformType()));
+
+        //平台类型
+        base.setBusinessMode(customer.getBusinessMode());
+        base.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(customer.getBusinessMode()));
+
         return base;
     }
 
@@ -2553,5 +2572,34 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             }
         }
         return false;
+    }
+
+    @Override
+    public List<CustomerDTO.InfoDTO> listEnable2cCustomer(String permissionSql) {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(CustomerInfoEntity::getId,
+                CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getName,
+                CustomerInfoEntity::getShortName,
+                CustomerInfoEntity::getApproveStatus,
+                CustomerInfoEntity::getDisabled,
+                CustomerInfoEntity::getCurrency)
+        .notIn(CustomerInfoEntity::getBusinessMode,CustomerInfoBusinessModeEnum.O2C.getCode(),CustomerInfoBusinessModeEnum.X2C.getCode());
+        if (StringUtils.isNotBlank(permissionSql)) {
+            queryWrapper.last(permissionSql + " ORDER BY create_time DESC");
+        } else {
+            queryWrapper.last(" ORDER BY create_time DESC");
+        }
+        List<CustomerInfoEntity> list = this.list(queryWrapper);
+        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        List<ApproveStatusEnum> statusList = new ArrayList<>(1);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        for (CustomerDTO.InfoDTO item : resultList) {
+            if (!statusList.contains(item.getApproveStatus())) {
+                item.setDisabled(true);
+            }
+        }
+        resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
+        return resultList;
     }
 }
