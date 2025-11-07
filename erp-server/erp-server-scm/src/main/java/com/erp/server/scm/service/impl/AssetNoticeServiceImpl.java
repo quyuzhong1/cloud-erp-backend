@@ -779,7 +779,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),skuVOList,userList,deptList,companyList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
@@ -792,7 +792,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "开模通知单错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, MoldInfoImportExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetNoticeImportExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

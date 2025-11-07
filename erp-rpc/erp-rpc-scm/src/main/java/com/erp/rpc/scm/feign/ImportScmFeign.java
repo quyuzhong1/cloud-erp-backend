@@ -14,5 +14,4 @@ public interface ImportScmFeign {
 
     @PostMapping("/feign/import/importAssetPurchaseOrder")
     void importAssetPurchaseOrder(@RequestBody BaseDTO.ImportTypeDTO dto);
-
 }
