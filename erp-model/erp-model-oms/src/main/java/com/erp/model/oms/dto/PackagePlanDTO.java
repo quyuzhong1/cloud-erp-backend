@@ -305,6 +305,10 @@ public class PackagePlanDTO implements Serializable {
          * 销售订单id
          */
         private String soId;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 物流渠道id
@@ -316,6 +320,10 @@ public class PackagePlanDTO implements Serializable {
          */
         private String logisticsChannelName;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
         /**
          * 物流跟踪号
          */

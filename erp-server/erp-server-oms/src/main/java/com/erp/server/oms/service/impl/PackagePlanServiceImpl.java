@@ -987,6 +987,11 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             item.setPrintHandoverStatusName(PackagePrintStatusEnum.getName(item.getPrintHandoverStatus()));
             item.setPrintOrderStatusName(PackagePrintStatusEnum.getName(item.getPrintOrderStatus()));
             item.setHandoverDownload(item.getIsHandoverDownload() ? "已下载" : "未下载");
+            List<PackagePlanDetailDTO.ViewDTO> viewDTOS = map.get(item.getId());
+            viewDTOS.stream().filter(e -> e.getId().equals(item.getDetailId())).findFirst().ifPresent(f -> {
+                item.setTrackNo(f.getTrackNo());
+                item.setTransportNo(f.getTransportNo());
+            });
         });
     }
 
@@ -1009,7 +1014,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             }
         }
         if(CollectionUtils.isNotEmpty(errorCodeList)){
-            throw new ServiceException("组包预报批量打印失败,单号:{},未上传标签",errorCodeList);
+            throw new ServiceException("组包预报批量打印失败,单号:{},无标签",errorCodeList);
         }
         if(CollectionUtils.isNotEmpty(base64List)){
             try {
@@ -1174,27 +1179,31 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     }
 
     private String print(String id) {
+        String base64 = "";
         PackagePlanEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划单");
+            return base64;
         }
         List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getByMainIds(Collections.singletonList(id));
         if(CollectionUtils.isEmpty(detailEntityList)){
-            throw new ServiceException("组包计划详情不存在");
+            return base64;
+//            throw new ServiceException("组包计划【{}】详情不存在",entity.getCode());
         }
         PackagePlanDetailEntity packagePlanDetailEntity = detailEntityList.get(0);
         String soId = packagePlanDetailEntity.getSoId();
         List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(Collections.singletonList(soId));
         if(CollectionUtils.isEmpty(soB2cLabelEntities)){
-            throw new ServiceException("订单标签不存在");
+            return base64;
+//            throw new ServiceException("【{}】订单标签不存在",entity.getCode());
         }
-        String base64 = soB2cLabelEntities.get(0).getLogisticsLabelBase64();
+        base64 = soB2cLabelEntities.get(0).getLogisticsLabelBase64();
         if (CharSequenceUtil.isNotBlank(base64)) {
             entity.setPrintOrderStatus(PackagePrintStatusEnum.ALREADY.getCode());
             this.updateById(entity);
-        } else {
-            throw new ServiceException("打印失败");
         }
+//        else {
+//            throw new ServiceException("打印失败");
+//        }
         return base64;
     }
 
