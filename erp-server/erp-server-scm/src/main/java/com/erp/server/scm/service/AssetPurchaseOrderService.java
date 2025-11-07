@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -191,24 +192,82 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
      */
     AssetPurchaseOrderDTO.DetailWithSkuDTO getByCode(String code);
 
+    /**
+     *
+     * @param successList
+     * @throws Exception
+     */
     void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception;
 
+    /**
+     *
+     * @param id
+     * @param response
+     * @return
+     */
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
 
+    /**
+     *
+     * @param id
+     * @param response
+     */
     void exportAssetPurchaseContractPdf(String id, HttpServletResponse response);
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     AssetPurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
 
+    /**
+     *
+     * @param detailId
+     * @return
+     */
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
 
+    /**
+     *
+     * @param dto
+     * @return
+     */
     List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> viewGenerateAssetAccept(BaseIdsDTO.IdsDTO dto);
 
+    /**
+     *
+     * @param dtoList
+     * @return
+     */
     Boolean generateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
 
+    /**
+     *
+     * @param dto
+     * @return
+     */
     AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrder(BaseIdsDTO.IdsDTO dto);
 
+    /**
+     *
+     * @param id
+     * @param syncKingdeeId
+     * @return
+     */
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
+    /**
+     *
+     * @param rewritePurchaseOrderDTO
+     * @return
+     */
     Boolean rewriteAssetPurchaseOrder(AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO);
+
+    /**
+     *
+     * @param dto
+     */
+    void importAssetPurchaseOrder(BaseDTO.ImportDTO dto);
 
 }

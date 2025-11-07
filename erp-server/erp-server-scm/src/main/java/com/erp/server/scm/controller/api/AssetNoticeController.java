@@ -427,18 +427,15 @@ public class AssetNoticeController extends BaseController {
     }
 
     /**
-     * 导入
-     * @author Will
-     * @date: 2023/3/15 18:22
-     * @param excelImportDTO
-     * @param response
-     * @return ApiResult
+     *
+     * @param dto
+     * @return
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入资产通知单")
     @PostMapping("/importFile")
-    public ApiResult< AssetNoticeDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        AssetNoticeDetailDTO.ImportDTO importDTO = assetNoticeService.importFile(excelImportDTO.getExcelFile(), response);
-        return success(importDTO);
+    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = assetNoticeService.importFile(dto);
+        return result ? success() : failure();
     }
 
     /**
