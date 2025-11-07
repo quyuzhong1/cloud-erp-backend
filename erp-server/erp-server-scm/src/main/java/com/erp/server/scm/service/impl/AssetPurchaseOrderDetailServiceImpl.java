@@ -23,6 +23,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,9 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
     @Autowired
     private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
+
+    @Autowired
+    private AssetNoticeService assetNoticeService;
 
     @Autowired
     private AssetNoticeDetailService assetNoticeDetailService;
@@ -231,89 +235,179 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(AssetPurchaseOrderDTO.UpdateDTO updateDTO, String assetPurchaseOrderId) {
         if (CollectionUtils.isEmpty(updateDTO.getAssetPurchaseOrderDetailDTOList())) {
             return;
         }
 
-        //明细条数不允许增加
-        List<AssetPurchaseOrderDetailEntity> list = this.lambdaQuery()
-                .eq(AssetPurchaseOrderDetailEntity::getMainId, assetPurchaseOrderId)
-                .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                .list();
-        if (updateDTO.getAssetPurchaseOrderDetailDTOList().size() > list.size()) {
-            throw new ServiceException(ApiError.ERROR_95311);
+        List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList = updateDTO.getAssetPurchaseOrderDetailDTOList();
+
+        if (StringUtils.isNotBlank(updateDTO.getSourceId())) {
+            // 校验来源是否存在
+            if (Objects.isNull(assetNoticeService.getById(updateDTO.getSourceId()))) {
+                throw new ServiceException(ApiError.ERROR_95297); // 来源不存在
+            }
+
+            // 校验明细条数是否增加
+            List<AssetPurchaseOrderDetailEntity> oldList = this.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getMainId, assetPurchaseOrderId)
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (detailList.size() > oldList.size()) {
+                throw new ServiceException(ApiError.ERROR_95311); // 不允许增加明细
+            }
+
+            // 校验采购数量是否超过剩余数量
+            validatePurchaseQty(detailList, oldList);
+
+            // 从价表取价
+            List<PurchasePriceDTO.PriceDTO> priceDTOS = getPurchasePrices(updateDTO, detailList);
+
+            // 构建明细实体
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = buildDetailEntities(updateDTO, detailList, priceDTOS);
+
+            // 检查总金额是否为 0
+            checkTotalAmount(detailEntityList);
+
+            // 删除旧数据 + 保存新数据
+            deleteOldDetails(assetPurchaseOrderId, detailList);
+            this.saveOrUpdateBatch(detailEntityList);
+        } else {
+            // 无来源的订单，直接删除旧数据 + 保存新数据
+            deleteOldDetails(assetPurchaseOrderId, detailList);
+            List<AssetPurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailEntity.class, detailList);
+            this.saveOrUpdateBatch(newList);
         }
+    }
 
-        AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(updateDTO.getId());
-        if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getSourceId())) {
-            //有来源的订单申请数量不允许超过剩余数量
-            for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
-                List<AssetPurchaseOrderDetailEntity> entityList = assetPurchaseOrderDetailService.lambdaQuery()
-                        .eq(AssetPurchaseOrderDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                        .list();
+    /**
+     * 校验采购数量是否超过剩余数量
+     */
+    private void validatePurchaseQty(List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList, List<AssetPurchaseOrderDetailEntity> oldList) {
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : oldList) {
+            List<AssetPurchaseOrderDetailEntity> entityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
 
-                //排除当前订单的采购数量
-                BigDecimal purchaseQtySum = entityList.stream()
-                        .filter(obj -> !obj.getId().equals(assetPurchaseOrderDetailEntity.getId()))
-                        .map(obj -> obj.getPurchaseQty())
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal purchaseQtySum = entityList.stream()
+                    .filter(obj -> !obj.getId().equals(assetPurchaseOrderDetailEntity.getId()))
+                    .map(AssetPurchaseOrderDetailEntity::getPurchaseQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                //获取通知单的申请数量
-                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
-                        .one();
-                //申请数量-除了当前单的已采购数量 > 传入的采购数量 才可以保存
-                if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum).compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
-                    throw new ServiceException(ApiError.ERROR_95312);
-                }
+            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .one();
+
+            if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum)
+                    .compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
+                throw new ServiceException(ApiError.ERROR_95312); // 采购数量超过剩余数量
             }
         }
+    }
 
-        //从价表取价
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
-        for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
-            PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
-            priceDTO.setSkuId(dto.getAssetId());
-            priceDTO.setSupplierId(updateDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
-            priceDTO.setQty(dto.getPurchaseQty().intValue());
-            priceDTO.setPurchaseOrgId(updateDTO.getPurchaseOrgId());
-            priceDTOList.add(priceDTO);
-        }
+    /**
+     * 从价表取价
+     */
+    private List<PurchasePriceDTO.PriceDTO> getPurchasePrices(AssetPurchaseOrderDTO.UpdateDTO updateDTO, List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList) {
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = detailList.stream()
+                .map(dto -> {
+                    PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
+                    priceDTO.setSkuId(dto.getAssetId());
+                    priceDTO.setSupplierId(updateDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
+                    priceDTO.setQty(dto.getPurchaseQty().intValue());
+                    priceDTO.setPurchaseOrgId(updateDTO.getPurchaseOrgId());
+                    return priceDTO;
+                })
+                .collect(Collectors.toList());
 
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
         if (priceDTOS.isEmpty()) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        return priceDTOS;
+    }
 
-        List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
-        for (AssetPurchaseOrderDetailDTO.UpdateDTO dto : updateDTO.getAssetPurchaseOrderDetailDTOList()) {
-            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-            BeanUtils.copyProperties(dto,assetPurchaseOrderDetailEntity);
+    /**
+     * 构建明细实体
+     */
+    private List<AssetPurchaseOrderDetailEntity> buildDetailEntities(
+            AssetPurchaseOrderDTO.UpdateDTO updateDTO,
+            List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList,
+            List<PurchasePriceDTO.PriceDTO> priceDTOS) {
+        return detailList.stream()
+                .map(dto -> {
+                    AssetPurchaseOrderDetailEntity entity = new AssetPurchaseOrderDetailEntity();
+                    BeanUtils.copyProperties(dto, entity);
+                    entity.setMainId(updateDTO.getId());
+                    entity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
 
-            assetPurchaseOrderDetailEntity.setMainId(assetPurchaseOrderId);
-            assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
+                    // 设置价格
+                    priceDTOS.stream()
+                            .filter(priceDTO -> priceDTO.getSkuId().equals(dto.getAssetId()))
+                            .findFirst()
+                            .ifPresent(priceDTO -> {
+                                entity.setTaxPrice(priceDTO.getTaxPrice());
+                                entity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            });
 
-            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
-                if (priceDTO.getSkuId().equals(dto.getAssetId())) {
-                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                }
-            }
+                    entity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+                    return entity;
+                })
+                .collect(Collectors.toList());
+    }
 
-            assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
-            detailEntityList.add(assetPurchaseOrderDetailEntity);
+    /**
+     * 检查总金额是否为 0
+     */
+    private void checkTotalAmount(List<AssetPurchaseOrderDetailEntity> detailEntityList) {
+        AssetPurchaseOrderDetailEntity invalidEntity = detailEntityList.stream()
+                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(invalidEntity)) {
+            throw new ServiceException(ApiError.ERROR_95313, invalidEntity.getAssetCode());
         }
+    }
 
-        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0).findFirst().orElse(null);
-        if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+    /**
+     * 删除旧数据
+     */
+    private void deleteOldDetails(String assetPurchaseOrderId, List<AssetPurchaseOrderDetailDTO.UpdateDTO> newList) {
+        List<AssetPurchaseOrderDetailEntity> oldList = this.lambdaQuery()
+                .eq(AssetPurchaseOrderDetailEntity::getMainId, assetPurchaseOrderId)
+                .list();
+
+        Set<String> newIdSet = newList.stream()
+                .filter(g -> StringUtils.isNotBlank(g.getId()))
+                .map(AssetPurchaseOrderDetailDTO.UpdateDTO::getId)
+                .collect(Collectors.toSet());
+
+        List<String> deleteIds = oldList.stream()
+                .map(AssetPurchaseOrderDetailEntity::getId)
+                .filter(id -> !newIdSet.contains(id))
+                .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<AssetPurchaseOrderDetailEntity> removeList = oldList.stream()
+                    .filter(obj -> deleteIds.contains(obj.getId()))
+                    .collect(Collectors.toList());
+
+            List<Pair<String, String>> pairList = removeList.stream()
+                    .map(obj -> new Pair<>(obj.getAssetId(), obj.getMainId()))
+                    .collect(Collectors.toList());
+
+            moduleOperateLogService.batchAddModuleOperateLog(
+                    "模具采购单删除了一个SKU【%s】",
+                    ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),
+                    pairList,
+                    "编辑操作"
+            );
+
+            this.removeByIds(deleteIds);
         }
-
-        super.updateBatchById(detailEntityList);
     }
 
     @Override
