@@ -148,6 +148,11 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
         }
 
         List<AssetNoticeDetailEntity> newList = BeanMapperUtils.copyList(AssetNoticeDetailEntity.class, detailList);
+        for (AssetNoticeDetailEntity assetNoticeDetailEntity : newList) {
+            if (StringUtils.isBlank(assetNoticeDetailEntity.getCreatePoType())) {
+                assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            }
+        }
         this.saveOrUpdateBatch(newList);
 
         // 更新 SKU 占用状态
