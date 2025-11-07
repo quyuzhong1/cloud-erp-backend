@@ -33,8 +33,8 @@ import java.util.Map;
 /**
  * @author Lambda
  * @Classname SyncKingdeeSoServiceImpl
- * @Date 2023-05-30 11:46
- * @Created by yl
+ * @Date 2025-11-07 11:46
+ * @Created by zdy
  */
 @Slf4j
 @Service

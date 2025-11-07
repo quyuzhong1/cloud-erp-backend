@@ -343,8 +343,13 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             }else {
                 item.setIsMyState(0);
             }
+            Boolean deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
-            item.setDisabled(MathUtil.ZERO.equals(userState));
+            if (deleteState || MathUtil.ZERO.equals(userState)) {
+                item.setDisabled(Boolean.TRUE);
+            } else {
+                item.setDisabled(Boolean.FALSE);
+            }
             //部门为空时设置为时效
             if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
                 item.setDisabled(Boolean.TRUE);
