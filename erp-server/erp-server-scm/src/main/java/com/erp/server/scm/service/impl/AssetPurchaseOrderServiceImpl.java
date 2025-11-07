@@ -1684,6 +1684,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         return Boolean.TRUE;
     }
 
+    @Override
+    public void importAssetPurchaseOrder(BaseDTO.ImportDTO dto) {
+
+    }
+
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(
             List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList,
             String purchaseOrgId,

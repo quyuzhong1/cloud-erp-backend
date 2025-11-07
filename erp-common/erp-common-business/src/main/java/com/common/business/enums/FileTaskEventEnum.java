@@ -130,7 +130,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SCM_PURCHASE_ORDER_ADJUST("EXPORT_SCM_PURCHASE_ORDER_ADJUST","历史未完结订单","","",""),
     EXPORT_SCM_PO_RECONCILIATION_DETAIL("EXPORT_SCM_PO_RECONCILIATION_DETAIL","采购对账单-明细数据导出","","",""),
     EXPORT_SCM_ASSET_NOTICE("EXPORT_SCM_ASSET_NOTICE","开模通知单导出","","",""),
+    IMPORT_SCM_ASSET_NOTICE("IMPORT_SCM_ASSET_NOTICE", "开模通知单导入","com.erp.rpc.scm.feign.ImportScmFeign","importAssetNotice",""),
     EXPORT_SCM_ASSET_PURCHASE_ORDER("EXPORT_SCM_ASSET_PURCHASE_ORDER","模具采购单导出","","",""),
+    IMPORT_SCM_ASSET_PURCHASE_ORDER("IMPORT_SCM_ASSET_PURCHASE_ORDER", "模具采购单导入","com.erp.rpc.scm.feign.ImportScmFeign","importAssetPurchaseOrder",""),
     EXPORT_SCM_ASSET_PURCHASE_CHANGE("EXPORT_SCM_ASSET_PURCHASE_CHANGE","模具采购变更单导出","","",""),
 
     //srm
