@@ -189,4 +189,19 @@ public class ApproveSyncRecordDTO implements Serializable {
 
     }
 
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class externalInstanceParamDTO {
+
+        /**
+         * process_management 主表id
+         */
+        private List<String> ids;
+
+
+    }
+
 }
