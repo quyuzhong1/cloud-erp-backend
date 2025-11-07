@@ -77,6 +77,7 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY("so_b2c_delivery", "34", "b2c发货单"),
     SO_OUTSTOCK_USABLE("so_outstock_usable", "35", "销售出库扣可用库存"),
     DELIVERY_PUSH_TRANSFER("delivery_push_transfer", "38", "直接调拨单（发货单下推）"),
+    DELIVERY_PUSH_TRANSFER_NOT_OUTBOUND("delivery_push_transfer_not_outbound", "58", "直接调拨单（发货单不出库下推）"),
     DELIVERY_NOTICE_PUSH_TRANSFER("delivery_notice_push_transfer", "39", "直接调拨单（发货通知单下推）"),
     DELIVERY_PUSH_TRANSFER_TO_ULANZI("delivery_push_transfer_to_ulanzi", "40", "直接调拨单（头程发货单自动生成：发货仓->优蓝子中转仓）"),
     FIRST_MILE_DELIVERY_PUSH_TRANSFER_TO_THIRD("delivery_push_transfer_to_ulanzi_to_third", "56", "直接调拨单（头程发货单-三方仓发三方仓)"),

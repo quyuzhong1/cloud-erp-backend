@@ -786,7 +786,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
 
         //来源B2C发货单
-        List<TransferInfoEntity> b2cDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> b2cDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()) || StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY_NOT_OUTBOUND.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         updateB2cSoDeliveryInventory(b2cDeliveryList,detailList);
     }
@@ -1452,6 +1452,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  addTransferList = new ArrayList<>();
         List<TransferDTO>  pushTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryTransferList = new ArrayList<>();
+        List<TransferDTO>  deliveryNotOutBoundTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryNoticeTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferInfoList = new ArrayList<>();
@@ -1487,6 +1488,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 pushTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())){
                 deliveryTransferList.add(transferDTO);
+            }else if (SourceTypeEnum.SO_B2C_DELIVERY_NOT_OUTBOUND.getCode().equals(transferInfoEntity.getSourceType())){
+                deliveryNotOutBoundTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(transferInfoEntity.getSourceType()) ){
                 deliveryNoticeTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_INFO.getCode().equals(transferInfoEntity.getSourceType())){
@@ -1533,6 +1536,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
+        //B2C发货单（不出库）下推数据更新库存
+        if (CollectionUtils.isNotEmpty(deliveryNotOutBoundTransferList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(deliveryNotOutBoundTransferList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_NOT_OUTBOUND.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+
         //B2B发货通知单下推数据更新库存
         if (CollectionUtils.isNotEmpty(deliveryNoticeTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();

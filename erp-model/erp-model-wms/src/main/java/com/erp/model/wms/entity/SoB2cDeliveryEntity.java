@@ -218,7 +218,11 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField(exist = false)
     private String sameWaveStr;
 
-
+    /**
+     * 是否标记不出库发货（默认false）
+     */
+    @TableField(exist = false)
+    private Boolean isNotOutbound;
     
 
     
