@@ -2,16 +2,12 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.DmpSyncMqDTO;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.ThirdWarehouseCreateOutboundPushDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.impl.SoB2cServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +18,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * @author Will
+ * @author zdy
  * @version 1.0
- * @date 2023/4/20 11:12
+ * @date 2025/11/07 11:12
  */
 @Service
 @Slf4j
