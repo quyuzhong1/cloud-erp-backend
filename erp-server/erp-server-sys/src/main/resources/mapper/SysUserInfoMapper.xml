@@ -299,7 +299,7 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
         </if>
-          AND is_deleted = false AND user_account not in ('admin')
+          AND sui.is_deleted = false AND sui.user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
 <!--        </if>-->
@@ -346,7 +346,7 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
         </if>
-        AND is_deleted = false AND user_account not in ('admin')
+        AND sui.is_deleted = false AND sui.user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
 <!--        </if>-->

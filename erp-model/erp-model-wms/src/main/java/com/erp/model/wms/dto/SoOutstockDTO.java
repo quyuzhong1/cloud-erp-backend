@@ -8,6 +8,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -1170,6 +1171,102 @@ public class SoOutstockDTO implements Serializable {
          * 跟踪号
          */
         private List<String> trackNoList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverSummaryDTO {
+
+        private String salesOrgName;
+
+        private String customerName;
+
+        private LocalDate billDate;
+
+        private String deliveryModeName;
+
+        private String receiveAddress;
+
+        private String carrierName;
+
+        private String approveUserName;
+
+        private String deliveryUserName;
+
+        private List<ExportLogisticsHandoverSummaryDetailDTO> detailDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverSummaryDetailDTO {
+
+        private Integer rowNum;
+
+        private String soCode;
+
+        private String code;
+
+        private Integer boxQty;
+
+        private String boxUnit = "箱";
+
+        private String warehouseName;
+
+        private String trackNo;
+
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExportLogisticsHandoverListDetailDTO {
+
+        private Integer rowNum;
+
+        private String skuNo;
+        private String productName;
+        private Integer actualQty;
+        private String skuUnit;
+        private String detailRemark;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverListDTO {
+
+        private String id;
+
+        private String detailId;
+        private String salesOrgName;
+        private String customerName;
+        private LocalDate billDate;
+        private String soId;
+        private String deliveryMode;
+        private String deliveryModeName;
+        private String receiveAddressId;
+        private String receiveAddress;
+        private String carrierId;
+        private String carrierName;
+        private String approveUserName;
+        private String deliveryUserName;
+        private String soCode;
+        private String code;
+        private String warehouseName;
+        private String trackNo;
+        private String detailRemark;
+        private String sellerName;
+        private String skuNo;
+        private String skuId;
+        private String productName;
+
+        private String skuUnit;
+
+        private Integer actualQty;
+        private Integer boxQty;
+        private String boxUnit = "箱";
+        private String remark;
+        private Integer rowNum;
     }
 
     @Data

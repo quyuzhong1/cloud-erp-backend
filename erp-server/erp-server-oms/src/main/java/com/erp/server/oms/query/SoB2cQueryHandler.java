@@ -111,6 +111,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     if(valueStr.equals("soMultiChannel")){
                         sb.append(" sb2c.multi_channel_type != '' ");
                     }
+                    if(valueStr.equals("transitWarehouse")){
+                        sb.append(" sb2c.label_json ~ 'fbs' ");
+                    }
                     isFirst = false;
                 }
             }

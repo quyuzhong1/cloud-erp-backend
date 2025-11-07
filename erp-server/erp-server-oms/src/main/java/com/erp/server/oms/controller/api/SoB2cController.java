@@ -22,6 +22,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -142,6 +143,11 @@ public class SoB2cController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        //收货人信息不能为空
+        if (Objects.isNull(dto.getReceiverDTO())){
+            throw new ServiceException("收货人信息不能为空");
+        }
+        ValidatorUtil.validateEntity(dto.getReceiverDTO());
         /**
          * 1,创建订单
          * 2,匹配订单规则
@@ -289,6 +295,11 @@ public class SoB2cController extends BaseController {
             serviceClass = SoB2cService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
+        //收货人信息不能为空
+        if (Objects.isNull(dto.getReceiverDTO())){
+            throw new ServiceException("收货人信息不能为空");
+        }
+        ValidatorUtil.validateEntity(dto.getReceiverDTO());
         soB2cService.update(dto);
         //检查是否备案并修改状态
         soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");

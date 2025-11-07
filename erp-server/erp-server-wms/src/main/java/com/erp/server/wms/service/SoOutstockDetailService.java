@@ -81,13 +81,15 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
     
     /**
      * 修改明细信息
-     * @author yl
-     * @date 2023-05-22 18:19
+     *
      * @param id
      * @param detailList
+     * @param isB2c
      * @return void
+     * @author yl
+     * @date 2023-05-22 18:19
      */
-    void updateDetail(String id, List<SoOutstockDetailDTO.UpdateDTO> detailList);
+    void updateDetail(String id, List<SoOutstockDetailDTO.UpdateDTO> detailList, boolean isB2c);
 
     /**
      * 获取到销售出库明细 根据主表id
