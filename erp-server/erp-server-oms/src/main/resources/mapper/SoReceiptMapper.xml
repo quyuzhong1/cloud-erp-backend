@@ -48,6 +48,7 @@
                sr.code,
                sr.third_code as thirdCode,
                sr.customer_id as customerId,
+               sr.sales_org_id as salesOrgId,
                ci.name as customerName,
                sr.approve_status as approveStatus,
                sr.receipt_amount as totalReceiptAmount,
