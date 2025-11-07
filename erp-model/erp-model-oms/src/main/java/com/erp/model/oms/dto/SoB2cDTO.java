@@ -821,7 +821,7 @@ public class SoB2cDTO implements Serializable {
 
         private String extendId;
         /**
-         * 要求发货时间
+         * 最晚发货时间/要求发货时间
          */
         private LocalDateTime requiredDeliveryTime;
         /**
@@ -870,6 +870,16 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
+
+
+
     }
 
     @Data
@@ -3458,6 +3468,12 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

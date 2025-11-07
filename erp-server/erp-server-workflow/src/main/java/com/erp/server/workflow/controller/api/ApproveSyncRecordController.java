@@ -132,4 +132,12 @@ public class ApproveSyncRecordController extends BaseController {
     }
 
 
+    @PostMapping("/externalInstance")
+    public void externalInstance(@RequestBody @Validated ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException {
+        approveSyncRecordService.externalInstance(dto);
+    }
+
+
+
+
 }

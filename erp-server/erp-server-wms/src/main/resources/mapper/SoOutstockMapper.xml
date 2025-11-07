@@ -67,9 +67,12 @@
         sod.remark as detailRemark,
         so.packing_status,
         so.logistics_channel_id,
-        so.logistics_channel_name
+        so.logistics_channel_name,
+        COALESCE(si.partition_id, sbr.partition_id) as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE AND sod.is_deleted=FALSE
@@ -141,9 +144,13 @@
         sod.virtual_warehouse_id as virtualWarehouseId,
            sod.warehouse_location AS warehouseLocation,
            sod.remark AS detailRemark,
-        sod.customer_po as customerPO
+        sod.customer_po as customerPO,
+           sod.remark AS detailRemark,
+           COALESCE(si.partition_id, sbr.partition_id) as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE AND  sod.is_deleted=FALSE
@@ -300,6 +307,8 @@
             CAST(sum(ROUND(((ROUND(sod.price * ((sod.tax_rate / 100) + 1),4)) * sod.exchange_rate),4) * sod.actual_qty)  AS VARCHAR) as totalTaxAmount
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
         ${params.sqlMap.default}
            and so.is_deleted = FALSE AND sod.is_deleted = FALSE
@@ -446,7 +455,7 @@
 		<include refid="SoDataCompareByCondition"/>
     </select>
     <select id="listApproveBySourceDetailIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
-        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join public.so_outstock so on
+        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join so_outstock so on
         so.id = sod.main_id
         where
             so.approve_status = 'approve'

@@ -40,12 +40,16 @@ import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.model.wms.entity.SampleRecipientEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
 import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
 import com.erp.server.wms.service.*;
@@ -107,6 +111,8 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     private SampleLedgerLockUtil sampleLedgerLockUtil;
     @Autowired
     private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+    @Autowired
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -264,6 +270,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     *
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleInitialLedgerEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_LEDGER_INIT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -324,7 +344,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -521,7 +541,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -545,6 +565,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             if (CollUtil.isNotEmpty(userList)) {
                 FindUserDTO user = userList.get(0);
                 data.setUserName(user.getUserName());
+            }
+        }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(curApprove)) {
+                data.setApproveUserName(curApprove);
             }
         }
     }
@@ -586,7 +620,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleInitialLedgerEntity::getId, id)
-        .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveUserId, "")
+                .set(SampleInitialLedgerEntity::getApproveUserName, "")
+                .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveTime, null)
         .update(new SampleInitialLedgerEntity());
     }
 
@@ -643,10 +680,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 data.setUserName(userName);
             }
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
             }
         }
     }

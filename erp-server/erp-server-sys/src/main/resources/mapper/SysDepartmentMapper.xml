@@ -26,7 +26,7 @@
         from sys_department sd
         inner join sys_department_user sdu on sd.id = sdu.department_id
         inner join sys_user_info sui on sdu.user_id = sui.uid
-        where sdu.lead_state = 1
+        where sdu.lead_state = 1 and sui.is_deleted = false
         <if test="deptNames != null and deptNames.size() > 0">
             and sd.name in
             <foreach collection="deptNames" open="(" separator="," close=")" item="item">

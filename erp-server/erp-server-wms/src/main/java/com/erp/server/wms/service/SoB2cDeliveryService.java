@@ -21,6 +21,7 @@ import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -472,4 +473,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
 
     void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    /**
+     * 根据源ID列表获取deliveryCode映射
+     * @param sourceIds 源ID列表
+     * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
+     */
+    Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds);
 }

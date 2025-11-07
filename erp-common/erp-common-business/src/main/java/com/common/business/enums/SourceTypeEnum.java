@@ -98,6 +98,7 @@ public enum SourceTypeEnum {
     SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
     SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
     SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+    SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
 
 
     //OMS

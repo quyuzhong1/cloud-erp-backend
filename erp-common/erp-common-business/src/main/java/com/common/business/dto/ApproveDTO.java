@@ -9,7 +9,6 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
 
@@ -55,6 +54,15 @@ public class ApproveDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 平台，默认设置成erp
+         */
+        private String sourcePlatform = "erp";
+
+
+        public CancelProcessDTO(String id) {
+            this.id = id;
+        }
     }
 
 
