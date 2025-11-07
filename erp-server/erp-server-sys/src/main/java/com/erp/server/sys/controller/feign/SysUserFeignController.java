@@ -190,23 +190,23 @@ public class SysUserFeignController extends BaseController {
         if (userByUserId == null) {
             return failure(ApiError.USER_NOT_EXIST, null);
         }
-        
+
         SysUserDTO sysUserDTO = new SysUserDTO();
         org.springframework.beans.BeanUtils.copyProperties(userByUserId, sysUserDTO);
-        
+
         // 2. 获取用户角色ID列表
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
-        
+
         // 3. 根据角色获取菜单和权限（参考accountLogin方法）
         List<com.erp.model.sys.vo.SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds, userType);
         List<com.erp.model.sys.vo.SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds, MathUtil.ONE, userType);
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE, userType);
-        
+
         // 4. 设置到返回对象
         sysUserDTO.setPermissionList(permissionList);
         sysUserDTO.setOverallMenuList(overallMenuList);
         sysUserDTO.setLeftMenuList(leftMenuList);
-        
+
         return success(sysUserDTO);
     }
 
