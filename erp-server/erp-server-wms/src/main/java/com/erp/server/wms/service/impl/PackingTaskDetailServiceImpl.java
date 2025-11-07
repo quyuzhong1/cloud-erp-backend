@@ -134,14 +134,15 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
      *
      * @param searchKey
      * @param searchMode
+     * @param customerPO
      * @return
      */
     @Override
-    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode) {
+    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode, String customerPO) {
         if (CharSequenceUtil.isBlank(searchKey) && SearchModeEnum.PERFECT.getCode().equals(searchMode)){
             return Collections.emptyList();
         }
-        return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode);
+        return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode,customerPO);
     }
 
     @Override

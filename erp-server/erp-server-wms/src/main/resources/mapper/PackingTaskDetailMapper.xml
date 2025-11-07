@@ -68,7 +68,8 @@
             ptd.fn_sku,
             ptd.third_barcode,
             ptd.source_detail_id,
-            pp.ean
+            pp.ean,
+            ptd.customer_po as customerPO
         FROM
             packing_task_detail ptd
                 LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
@@ -83,6 +84,9 @@
         </if>
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
+        </if>
+        <if test="customerPO != null and customerPO != ''">
+            AND ptd.customer_po = #{customerPO}
         </if>
     </select>
 

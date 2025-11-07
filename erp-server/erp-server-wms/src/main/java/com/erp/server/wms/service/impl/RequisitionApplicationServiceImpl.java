@@ -786,6 +786,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //针对拣货单进行库存的多退少补
         handleVirtualInventoryQty(list);
+        //三方仓发三方仓生成装箱任务
+        List<RequisitionApplicationEntity> requisitionApplicationEntityList = this.listByIds(raIds);
+        List<RequisitionApplicationEntity> waitHandleThirdToThirdList = requisitionApplicationEntityList.stream()
+                .filter(req -> ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(req.getDeliveryType()))
+                .collect(Collectors.toList());
+        for (RequisitionApplicationEntity requisitionApplicationEntity : waitHandleThirdToThirdList) {
+            packingTaskService.addPackingByRequisition(requisitionApplicationEntity);
+        }
 
         //新增日志
         List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
