@@ -21,7 +21,7 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@SuperBuilder
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ThirdWarehouseCreateOutboundPushDTO extends UniqueDto {
