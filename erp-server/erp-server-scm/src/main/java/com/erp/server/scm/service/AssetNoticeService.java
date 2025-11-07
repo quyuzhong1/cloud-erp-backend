@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.AssetNoticeDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -150,9 +151,15 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
     Boolean approveEnd(ApproveOneDTO dto, AssetNoticeEntity entity);
 
 
-    AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile file, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
 
     BatchResultDTO invalid(AssetNoticeEntity entity,String remark);
 
     void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList);
+
+    /**
+     *
+     * @param dto
+     */
+    void importAssetNotice(BaseDTO.ImportDTO dto);
 }

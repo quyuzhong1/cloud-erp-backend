@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,6 +12,7 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
@@ -25,6 +27,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.listener.AssetNoticeExcelListener;
@@ -56,6 +59,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -68,6 +72,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_NOTICE;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_MOLD_INFO;
 
 /**
  * <p>
@@ -119,6 +124,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -737,47 +745,63 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     }
 
     @Override
-    public AssetNoticeDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入开模通知单档案", IMPORT_PLM_MOLD_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetNotice(BaseDTO.ImportDTO dto) {
         //查询所有审核通过的模具
         List<SkuVO> skuVOList = plmTaskFeign.listAssetProduct();
 
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(skuVOList,userList,deptList,companyList);
 
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),skuVOList,userList,deptList,companyList);
         try {
-            EasyExcelFactory.read(excelFile.getInputStream(), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！",e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
-            log.error("导入格式错误！",e);
+            log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        //验证导入数据是否为空
-        List<AssetNoticeImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        AssetNoticeDetailDTO.ImportDTO importDTO = new AssetNoticeDetailDTO.ImportDTO();
-        //导入数据处理
-        List<AssetNoticeDetailDTO.MoldImportDTO> successList = excelListenerUtil.getSuccessList();
-        //导出错误数据
-        List<AssetNoticeImportExcelDTO> errorList = excelListenerUtil.getErrorList();
 
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetNoticeImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "开模通知单错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetNoticeImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
+            String fileName = "开模通知单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, MoldInfoImportExcelDTO.class);
+            if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importDTO.setSuccessList(successList);
-        importDTO.setErrorUrl(url);
-        return importDTO;
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     @Override

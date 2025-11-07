@@ -6,13 +6,18 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.scm.service.AssetNoticeService;
+import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import java.math.BigDecimal;
@@ -29,6 +34,17 @@ import java.util.*;
  **/
 public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeImportExcelDTO> {
 
+    private static final int BATCH_COUNT = 1000;
+
+    private final String taskId;
+
+    private final String importType;
+
+    private final Integer importCount;
+
+    @Getter
+    private Integer count = 0;
+
 
     /**
      * 导入数据，用于判断导入是否为空
@@ -43,7 +59,7 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
     /**
      * 导入正确数据
      */
-    private List<AssetNoticeDetailDTO.MoldImportDTO> successList = new ArrayList<>();
+    private List<AssetNoticeDetailDTO.MoldImportDTO> successList = new ArrayList<>(BATCH_COUNT);
 
     /**
      * 模具数据
@@ -65,13 +81,25 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
      */
     List<SysDepartmentDTO> deptList;
 
+
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
     private final DateTimeFormatter dateTimeFormatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private final AssetNoticeService assetNoticeService = SpringUtil.getBean(AssetNoticeService.class);
 
-    public AssetNoticeExcelListener(List<SkuVO> skuList, List<FindUserDTO> userList, List<SysDepartmentDTO> deptList, List<BaseIdDTO> companyList) {
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+    public AssetNoticeExcelListener(String taskId,
+                                    String importType,
+                                    Integer importCount,
+                                    List<SkuVO> skuList,
+                                    List<FindUserDTO> userList,
+                                    List<SysDepartmentDTO> deptList,
+                                    List<BaseIdDTO> companyList) {
+        this.taskId = taskId;
+        this.importType = importType;
+        this.importCount = importCount;
         this.skuList = skuList;
         this.userList = userList;
         this.deptList = deptList;
@@ -82,6 +110,12 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
 
     @Override
     public void invoke(AssetNoticeImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+        count += 1;
+        //已经导入的数据跳过进度
+        if (Objects.nonNull(importCount) && count < importCount){
+            return;
+        }
+
         // 添加数据用于判断是否为空
         allList.add(importExcelDTO);
 
@@ -200,6 +234,7 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
 
         // 将detail添加到对应的excelDTO的detailList中
         excelDTO.getMoldDetailImportDTOList().add(detail);
+
     }
 
 
@@ -232,6 +267,7 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
             }catch (Exception e){
                 errorList.forEach(excelDTO -> excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
             }
+            updateTask(count);
         }
     }
 
@@ -245,5 +281,14 @@ public class AssetNoticeExcelListener extends AnalysisEventListener<AssetNoticeI
 
     public List<AssetNoticeDetailDTO.MoldImportDTO> getSuccessList(){
         return successList;
+    }
+
+    private void updateTask(Integer count){
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+        importResultDTO.setRemark("处理中");
+        importResultDTO.setCount(count);
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }
