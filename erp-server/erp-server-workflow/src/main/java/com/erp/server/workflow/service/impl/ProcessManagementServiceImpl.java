@@ -64,7 +64,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.camunda.bpm.engine.*;
-import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
@@ -1592,7 +1591,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String createUserId = "" + execution.getVariable("createUserId");
         if (CharSequenceUtil.equals(createUserId,assignee)) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
-            throw new BpmnError(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.code.toString(),CharSequenceUtil.format(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.msg,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName()));
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.code.toString(),CharSequenceUtil.format(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF.msg,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName()));
         }
     }
 
