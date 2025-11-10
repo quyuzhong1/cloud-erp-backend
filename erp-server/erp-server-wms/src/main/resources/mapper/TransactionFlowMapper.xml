@@ -76,6 +76,7 @@
             t.source_type AS sourceType,
             t.source_code AS sourceCode,
             t.source_id AS sourceId,
+            t.source_detail_id AS sourceDetailId,
             t.operation_mode AS operationMode,
             t.sku_id AS skuId,
             t.sku_no AS skuNo,
@@ -676,7 +677,8 @@
             t.skuNo,
             t.saleState,
             t.productName,
-            t.imagesUrl
+            t.imagesUrl,
+            #{params.date} as "date"
         FROM (
             select balanceQty,skuId,warehouseId,warehouseName,orgId,pd.sku_no as skuNo ,ps.sale_state as saleState,
             pd.name as productName,

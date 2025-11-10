@@ -632,5 +632,10 @@ public class InventoryReportDTO implements Serializable {
          * 结余数量
          */
         private Integer balanceQty;
+
+        /**
+         * 日期 (单据日期或者审核日期)
+         */
+        private LocalDate date;
     }
 }

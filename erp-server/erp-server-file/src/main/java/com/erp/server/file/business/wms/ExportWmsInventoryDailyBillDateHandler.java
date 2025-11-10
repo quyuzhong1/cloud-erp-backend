@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_DAILY;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_DAILY_BILLDATE;
 
 @Component
 @Slf4j
-public class ExportWmsInventoryDailyHandler extends AbstractPageFileEventHandler<InventoryReportDTO.ListDailyInventoryDTO, InventoryReportDTO.DailyInventoryParamDTO> {
+public class ExportWmsInventoryDailyBillDateHandler extends AbstractPageFileEventHandler<InventoryReportDTO.ListDailyInventoryDTO, InventoryReportDTO.DailyInventoryParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
@@ -37,11 +37,11 @@ public class ExportWmsInventoryDailyHandler extends AbstractPageFileEventHandler
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_WMS_INVENTORY_DAILY;
+        return EXPORT_WMS_INVENTORY_DAILY_BILLDATE;
     }
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/dailyInventory.xlsx";
+        return "excel/wms/dailyInventoryBillDate.xlsx";
     }
 }

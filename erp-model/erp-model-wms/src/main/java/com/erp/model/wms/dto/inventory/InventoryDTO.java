@@ -830,6 +830,10 @@ public class InventoryDTO implements Serializable {
          * 单据编号id
          */
         private String sourceId;
+        /**
+         * 单据明细id
+         */
+        private String sourceDetailId;
 
         /**
          * 操作类型编码
@@ -942,6 +946,11 @@ public class InventoryDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
     }
 
     /**

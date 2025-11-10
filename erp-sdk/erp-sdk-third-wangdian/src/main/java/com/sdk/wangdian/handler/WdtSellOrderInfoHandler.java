@@ -130,6 +130,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(detailItem.getSrcOrderDetailId());
                 detail.setInvalidStatus(false);
+                detail.setPlatformCode(detailItem.getSrcTid());
 
                 List<SalesStockoutResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
                 List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()

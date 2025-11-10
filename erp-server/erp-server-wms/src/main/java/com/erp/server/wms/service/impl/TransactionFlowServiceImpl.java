@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -34,10 +35,7 @@ import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewD
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
-import com.erp.model.wms.entity.InventoryHisEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -111,6 +109,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
         List<TransactionFlowEntity> txnFlows =  lambdaQuery()
@@ -342,7 +342,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+        String dateType = params.getDateType();
+        if(Objects.equals(dateType,"approveDate")){
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+        }else {
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY_BILLDATE.getCode(), params);
+        }
     }
 
     @Override
@@ -515,6 +520,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dataList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //获取销售出库单明细的平台订单号
+        List<String> soOutstockDetailIds = dataList.stream().filter(e -> Objects.equals(e.getSourceType(), SourceTypeEnum.SO_OUTSTOCK.getCode())).map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceDetailId).collect(Collectors.toList());
+        Map<String, String> platformCodeMap = soOutstockDetailService.listByIds(soOutstockDetailIds).stream().collect(Collectors.toMap(SoOutstockDetailEntity::getId, SoOutstockDetailEntity::getPlatformCode));
+
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -540,6 +550,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             data.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //平台订单号
+            data.setPlatformCode(platformCodeMap.get(data.getSourceDetailId()));
         });
     }
 
