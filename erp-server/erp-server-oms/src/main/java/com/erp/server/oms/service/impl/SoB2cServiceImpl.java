@@ -4397,7 +4397,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
             }
 
             //标签处理
@@ -9234,7 +9234,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(exportDTO.getId()) && CharSequenceUtil.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                exportDTO.setApproveUserName(curApprove);
+                exportDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,exportDTO.getApproveUserName()));
             }
             //是否缺货
             if (isOutStock) {

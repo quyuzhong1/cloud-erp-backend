@@ -1,83 +1,68 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.*;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.validator.ValidList;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.wms.dto.SampleRecipientDTO;
-import com.erp.model.wms.entity.SampleInitialLedgerEntity;
-import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleInitialLedgerDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import java.util.Collections;
-import com.common.core.utils.*;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.common.core.utils.ExcelUtil;
-import com.common.business.enums.FileTaskEventEnum;
-import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.core.utils.FastDFSClientUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.enums.ImportTypeEnum;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.SampleInitialLedgerDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
+import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
+import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import org.springframework.transaction.annotation.Propagation;
-import org.apache.commons.lang3.StringUtils;
-import com.common.core.enums.ApiError;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
-import org.apache.commons.math3.util.Pair;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 样品期初台账 服务实现类
@@ -642,7 +627,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
             }
         }
     }

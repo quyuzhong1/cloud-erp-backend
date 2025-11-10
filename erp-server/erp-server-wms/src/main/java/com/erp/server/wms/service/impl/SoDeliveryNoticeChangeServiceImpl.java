@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -33,7 +34,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -728,7 +732,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    data.setApproveUserName(curApprove);
+                    data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
                 }
             }
         }

@@ -1169,7 +1169,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                excelDTO.setApproveUserName(curApprove);
+                excelDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,excelDTO.getApproveUserName()));
             }
             excelDTO.setApproveTime(item.getApproveTime());
             resultList.add(excelDTO);

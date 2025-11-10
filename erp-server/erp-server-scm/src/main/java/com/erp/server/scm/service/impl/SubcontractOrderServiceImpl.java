@@ -1476,7 +1476,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //最新审核人
             if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
+
             }
         }
 

@@ -527,7 +527,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(exportDTO.getId()) && CharSequenceUtil.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                exportDTO.setApproveUserName(curApprove);
+                exportDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,exportDTO.getApproveUserName()));
             }
 
             //仓位名称
