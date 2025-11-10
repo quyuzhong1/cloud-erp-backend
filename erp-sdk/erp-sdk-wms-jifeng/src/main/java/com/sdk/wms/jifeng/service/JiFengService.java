@@ -32,13 +32,13 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","8914cc5779b04c9992b0418011b2c73a");
+        authMap.put("accessToken","d57ee2fa8c224d3089a301845afa4b64");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
-        List<String> erpNo = new ArrayList<>();
-        erpNo.add("WFHD25101603694");
-        JiFengBaseResp<List<JiFengOutboundResp>> a = jiFengService.getOrder(authMap,erpNo);
+//        List<String> erpNo = new ArrayList<>();
+//        erpNo.add("WFHD25101603694");
+        JiFengBaseResp<JiFengCreateInboundResp> a = jiFengService.cancelInbound(authMap,"IN5200096","FHD25110100002");
         System.out.println(JSONObject.toJSONString( a));
     }
 //    public static void main(String[] args) {

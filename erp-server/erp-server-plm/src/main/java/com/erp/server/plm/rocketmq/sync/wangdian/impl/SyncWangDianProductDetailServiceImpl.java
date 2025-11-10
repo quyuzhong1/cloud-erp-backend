@@ -60,6 +60,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     @Resource
     private ProductLogisticsService productLogisticsService;
     @Resource
+    private ProductSaleService productSaleService;
+    @Resource
     private BasicDictService basicDictService;
     @Resource
     private BasicCategoryService basicCategoryService;
@@ -83,7 +85,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         ProductInfoEntity info = productInfoService.getById(entity.getProductId());
         ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
-        ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(entity.getId());
+        ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
         dto.setGoodsNo(entity.getSkuNo());
         dto.setGoodsName(entity.getName());
@@ -103,13 +105,18 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setHeight(LengthConverterUtil.mmToCm(productPack.getProductHeight()));
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
-        if (Objects.nonNull(productLogistics) && StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
-            String[] split = productLogistics.getProductPropertyId().split(",");
+//        if (Objects.nonNull(productLogistics) && StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
+//            String[] split = productLogistics.getProductPropertyId().split(",");
+//            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+//            List<String> productPropertyNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+//            specList.setGoodsLabel(StringUtils.join(productPropertyNameList, ","));
+//        }
+        if (Objects.nonNull(productSaleEntity) && StringUtils.isNotBlank(productSaleEntity.getProductPropertyId())) {
+            String[] split = productSaleEntity.getProductPropertyId().split(",");
             List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
             List<String> productPropertyNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
             specList.setGoodsLabel(StringUtils.join(productPropertyNameList, ","));
         }
-
         dto.setSpecList(Collections.singletonList(specList));
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)

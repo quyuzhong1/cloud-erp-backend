@@ -151,6 +151,21 @@ public class ProductSaleShowDTO implements Serializable {
      *禁止修改的字段
      */
     private List<String> disableFieldList;
+    /**
+     * 产品属性
+     */
+    private String productProperty;
 
+    /**
+     * 产品属性id
+     */
+    private String productPropertyId;
+
+    /**
+     * 保险属性
+     */
+    private List<String> insurancePropertyList;
+    private List<String> insurancePropertyNameList;
+    private String insuranceProperty;
     private static final long serialVersionUID = 1L;
 }

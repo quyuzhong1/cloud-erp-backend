@@ -113,6 +113,24 @@ public class ProductSaleEntity extends BaseEntity<ProductSaleEntity> implements 
     @TableField(value = "data_url")
     private String dataUrl;
 
+    /**
+     * 产品属性
+     */
+    @TableField(value = "product_property")
+    private String productProperty;
+
+    /**
+     * 产品属性id
+     */
+    @TableField(value = "product_property_id")
+    private String productPropertyId;
+
+    /**
+     * 保险属性
+     */
+    @TableField("insurance_property")
+    private String insuranceProperty;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
