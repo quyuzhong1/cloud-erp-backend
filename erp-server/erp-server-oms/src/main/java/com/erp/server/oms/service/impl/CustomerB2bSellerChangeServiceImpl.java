@@ -197,7 +197,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(re.getCustomerId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    re.setApproveUserName(curApprove);
+                    re.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,re.getApproveUserName()));
                 }
             }
         }
@@ -562,7 +562,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getMainId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    customerB2bSellerExcelDTO.setApproveUserName(curApprove);
+                    customerB2bSellerExcelDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,customerB2bSellerExcelDTO.getApproveUserName()));
                 }
             }
         }

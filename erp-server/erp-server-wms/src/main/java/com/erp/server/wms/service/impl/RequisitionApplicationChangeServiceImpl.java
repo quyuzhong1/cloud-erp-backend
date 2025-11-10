@@ -1070,7 +1070,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    data.setApproveUserName(curApprove);
+                    data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
                 }
             }
             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(data.getSkuId())).findFirst().orElse(new SkuVO());
