@@ -23,7 +23,7 @@ import java.util.Map;
  * @Description:
  **/
 @RestController
-@RequestMapping("feign/assetAcept")
+@RequestMapping("feign/assetAccept")
 public class AssetAceptFeignController {
 
     @Resource
