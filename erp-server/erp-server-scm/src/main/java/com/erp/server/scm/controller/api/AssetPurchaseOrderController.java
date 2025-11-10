@@ -441,15 +441,14 @@ public class AssetPurchaseOrderController extends BaseController {
      * 导入
      * @author wtr
      * @date:  2025-10-16
-     * @param excelImportDTO
-     * @param response
+     * @param
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入资产采购单")
     @PostMapping("/importFile")
-    public ApiResult<AssetPurchaseOrderDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        AssetPurchaseOrderDTO.ImportDTO importDTO = assetPurchaseOrderService.importFile(excelImportDTO.getExcelFile(), response);
-        return success(importDTO);
+    public ApiResult<AssetPurchaseOrderDTO.ImportDTO> importFile(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = assetPurchaseOrderService.importFile(dto);
+        return result ? success() : failure();
     }
 
     /**
