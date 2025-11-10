@@ -27,10 +27,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.oms.dto.PackagePlanDTO;
-import com.erp.model.oms.dto.PackagePlanDetailDTO;
-import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -936,6 +933,19 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             mqResponseDTO.setErrorMsg("获取订单标签失败");
             log.warn("获取订单标签失败: {}", e.getMessage());
             return mqResponseDTO;
+        }
+        Boolean isDelivery = (Boolean)data.getOrDefault("isDelivery", Boolean.FALSE);
+        String submitDelivery = (String) data.getOrDefault("submitDelivery", "");
+        if (isDelivery && CharSequenceUtil.isBlank(submitDelivery)){
+            try {
+                //提交发货
+                soB2cService.submitDelivery(soId, "");
+                data.put("submitDelivery", "success");
+            }catch (Exception e){
+                mqResponseDTO.setErrorMsg("自动提交发货失败: " + e.getMessage());
+                mqResponseDTO.setData(data);
+                return mqResponseDTO;
+            }
         }
         mqResponseDTO.setData(data);
         return mqResponseDTO;
