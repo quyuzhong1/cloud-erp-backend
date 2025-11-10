@@ -132,7 +132,7 @@ public class SampleTransferInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleTransferInfo:updateAndSubmit",
+            menuCode = "wms:sampleTransferInfo:update",
             serviceClass = SampleTransferInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleTransferInfoDTO.UpdateDTO dto) {
