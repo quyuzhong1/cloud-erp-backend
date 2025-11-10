@@ -140,7 +140,7 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     */
     BatchResultDTO cancelProcess(String id);
 
-    AssetPurchaseOrderDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
 
     /**
     * 导出Excel

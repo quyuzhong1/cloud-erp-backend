@@ -2,7 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.convert.Convert;
-import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
@@ -25,6 +25,8 @@ import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +44,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
@@ -87,8 +90,8 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.web.multipart.MultipartFile;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -164,6 +167,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
     @Autowired
     private FileTemplateFeign fileTemplateFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -589,7 +595,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
-    public AssetPurchaseOrderDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入模具采购单", IMPORT_SCM_ASSET_PURCHASE_ORDER.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importAssetPurchaseOrder(BaseDTO.ImportDTO dto) {
+
         //资产通知单
         LambdaQueryWrapper<AssetNoticeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AssetNoticeEntity::getIsDeleted,Boolean.FALSE);
@@ -598,11 +613,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         //结算方式
         List<DictBasicDTO> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getId,(o1,o2)->o1));
-
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
         Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(KingdeePaymentConditionEntity::getCode, KingdeePaymentConditionEntity::getName,(o1,o2)->o1));
-
         //sku
         List<SkuVO> skuVOList = plmTaskFeign.listApproveSku();
         //核算公司
@@ -612,15 +625,29 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //供应商信息
-
         List<SupplierEntity> supplierEntitiyList = supplierService.lambdaQuery().eq(SupplierEntity::getIsDeleted,Boolean.FALSE).list();
         //供应商联系人
-
         List<SupplierContactEntity> supplierContactEntityList = supplierContactService.lambdaQuery().eq(SupplierContactEntity::getIsDeleted,Boolean.FALSE).list();
         //供应商账户
         List<SupplierAccountEntity> supplierAccountEntityList = supplierAccountService.lambdaQuery().eq(SupplierAccountEntity::getIsDeleted,Boolean.FALSE).list();
 
-        AssetPurchaseOrderExcelListener excelListenerUtil = new AssetPurchaseOrderExcelListener(skuVOList,
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        AssetPurchaseOrderExcelListener excelListenerUtil = new AssetPurchaseOrderExcelListener(
+                dto.getTaskId(),
+                dto.getImportType(),
+                dto.getImportCount(),
+                skuVOList,
                 userList,
                 deptList,
                 companyList,
@@ -632,36 +659,37 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 supplierAccountEntityList);
 
         try {
-            EasyExcelFactory.read(excelFile.getInputStream(), AssetPurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！",e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), AssetPurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
-            log.error("导入格式错误！",e);
+            log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
+
         //验证导入数据是否为空
         List<AssetPurchaseOrderImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        AssetPurchaseOrderDTO.ImportDTO importDTO = new AssetPurchaseOrderDTO.ImportDTO();
-        //导入数据处理
-        List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList = excelListenerUtil.getSuccessList();
-        //导出错误数据
-        List<AssetPurchaseOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
 
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<AssetPurchaseOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "模具采购单错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetNoticeImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
+            String fileName = "模具采购订单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, AssetPurchaseOrderImportExcelDTO.class);
+            if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importDTO.setSuccessList(successList);
-        importDTO.setErrorUrl(url);
-        return importDTO;
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     @Override
@@ -1685,10 +1713,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         return Boolean.TRUE;
     }
 
-    @Override
-    public void importAssetPurchaseOrder(BaseDTO.ImportDTO dto) {
-
-    }
 
     public static List<PurchasePriceDTO.PriceDTO> convertMoldDetailToPriceDTO(
             List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList,
