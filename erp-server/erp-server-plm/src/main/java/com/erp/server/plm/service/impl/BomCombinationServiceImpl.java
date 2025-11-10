@@ -625,8 +625,14 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         skuList.add(bomSkuDTO);
         addBomDTO.setSkuList(skuList);
         String bomId = bomInfoService.insert(addBomDTO);
+
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //审核BOM
         bomSubmitApprove(bomId);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return Boolean.TRUE;
     }
 
