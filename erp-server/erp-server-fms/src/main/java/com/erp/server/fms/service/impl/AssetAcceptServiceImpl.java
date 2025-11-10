@@ -1451,23 +1451,19 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
         
         // 生成资产卡片
-        List<String> generatedCardIds = new ArrayList<>();
         LocalDate currentDate = LocalDate.now();
         
-        // 根据数量拆分生成资产卡片
-        Integer acceptQty = detail.getAcceptQty();
-        for (int i = 0; i < acceptQty; i++) {
-            AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
-            BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardAddDTO);
-            generatedCardIds.add(cardResult.getId());
-        }
+        // 一个验收明细生成一张资产卡片，但卡片包含多个实物信息明细
+        AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
+        BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardAddDTO);
+        String generatedCardId = cardResult.getId();
         
         // 更新明细状态为已生成
         detail.setAssetCardStatus(AssetCardStatusEnum.GENERATED.getStatus());
         assetAcceptDetailService.updateById(detail);
         
-        log.info("资产验收明细{}转资产卡片成功，生成{}张资产卡片", detailId, generatedCardIds.size());
-        return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成" + generatedCardIds.size() + "张资产卡片");
+        log.info("资产验收明细{}转资产卡片成功，生成资产卡片ID: {}", detailId, generatedCardId);
+        return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成1张资产卡片，包含" + detail.getAcceptQty() + "个实物信息");
     }
     
     /**
@@ -1488,8 +1484,29 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         cardDTO.setChangeMethod(ChangeMethodEnum.PURCHASE.getName()); // 变动方式默认值
         cardDTO.setName(detail.getProductName()); // 资产名称 = 产品名称
         cardDTO.setStartUseDate(currentDate); // 开始使用日期 = 操作日期
-        cardDTO.setQty(1); // 数量 = 1（每个明细项拆分为多个卡片）
-
+        cardDTO.setQty(detail.getAcceptQty()); // 数量 = 验收数量
+        
+        // 构建实物信息明细列表
+        List<AssetCardDetailDTO.AddDTO> detailList = new ArrayList<>();
+        Integer acceptQty = detail.getAcceptQty();
+        
+        // 根据验收数量创建对应数量的实物信息明细
+        for (int i = 1; i <= acceptQty; i++) {
+            AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
+            
+            // 实物信息字段映射
+            detailDTO.setAssetCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC)); // 资产编码 = SKU编号 + 序号
+            detailDTO.setAssetLocationId(detail.getAssetLocationId()); // 资产位置ID
+            detailDTO.setUseDeptId(detail.getUseDeptId()); // 使用部门ID
+            detailDTO.setUseDeptName(detail.getUseDeptName()); // 使用部门名称
+            detailDTO.setCostType(detail.getCostType()); // 费用项目
+            detailDTO.setRemark(detail.getRemark()); // 备注
+            detailDTO.setQty(1); // 每个实物信息数量为1
+            
+            detailList.add(detailDTO);
+        }
+        
+        cardDTO.setDetailList(detailList);
         return cardDTO;
     }
 
