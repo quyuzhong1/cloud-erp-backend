@@ -273,6 +273,15 @@ public class SoOutstockFeignController {
     public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
         return soOutstockService.listSoOutstockByExhibitionId(exhibitionId);
     }
+
+    /**
+     * 自动反审核并删除出库单
+     * @param id
+     */
+    @GetMapping("/deleteSoOutstock")
+    void deleteSoOutstock(@RequestParam(value = "id") String id){
+        soOutstockService.deleteSoOutstock(id);
+    }
 }
 
 

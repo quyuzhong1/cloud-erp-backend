@@ -10730,6 +10730,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity) {
+        if (Objects.isNull(soB2cEntity.getIsNotOutbound()) || !soB2cEntity.getIsNotOutbound()){
+            return BatchResultDTO.fail(id, id, "只能针对已经操作不出库发货的订单操作撤销");
+        }
+        if (Objects.nonNull(soOutstockEntity)){
+            //查询关联的出库单自动反审核删除-查询关联的中转调拨单反审核删除
+            soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId());
+        }
+        if (Objects.nonNull(deliveryEntity)){
+            //查询关联的发货单自动删除
+            soB2cDeliveryFeign.deleteSoB2cDelivery(deliveryEntity.getId());
+        }
+        //- 订单状态自动变更为待提交-待配货，清除不出库发货标签
+        this.lambdaUpdate()
+                .set(SoB2cEntity::getIsNotOutbound, Boolean.FALSE)
+                .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode())
+                .eq(SoB2cEntity::getId,soB2cEntity.getId()).update();
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单状态由【{}】改为【{}】,清除不出库发货标签",SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()),SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getName()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(),"撤销不出库发货");
+
+        if (ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus())){
+            this.disApprove(id);
+        }
+        return BatchResultDTO.success(id, soB2cEntity.getCode(), "撤销不出库发货成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "仅支持配货中重新获取面单");
