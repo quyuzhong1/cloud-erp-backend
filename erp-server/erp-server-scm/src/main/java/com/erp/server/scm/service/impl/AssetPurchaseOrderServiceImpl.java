@@ -1695,18 +1695,28 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         log.info("资产验收单回写模具采购订单明细id:{},已验收总数:{}",rewritePurchaseOrderDTO.getDetailId(),rewritePurchaseOrderDTO.getAcceptedQty());
 
-        if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) == 0) {
+        if (rewritePurchaseOrderDTO.getAcceptedQty().compareTo(BigDecimal.ZERO) == 0) {
+            // 已验收数量为0，设置为待验收
+            assetPurchaseOrderDetailService.lambdaUpdate()
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode())
+                    .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime, null)
+                    .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
+                    .update();
+        } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) == 0) {
+            // 已验收数量等于采购数量，设置为已验收
             assetPurchaseOrderDetailService.lambdaUpdate()
                     .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
                     .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDate.now())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
                     .update();
         } else if (assetPurchaseOrderDetailEntity.getPurchaseQty().compareTo(rewritePurchaseOrderDTO.getAcceptedQty()) > 0) {
+            // 已验收数量小于采购数量，设置为部分验收
             assetPurchaseOrderDetailService.lambdaUpdate()
                     .set(AssetPurchaseOrderDetailEntity::getEndReceive,AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode())
                     .eq(AssetPurchaseOrderDetailEntity::getId,rewritePurchaseOrderDTO.getDetailId())
                     .update();
         } else {
+            // 已验收数量大于采购数量，抛异常
             throw new ServiceException(ApiError.ERROR_100000);
         }
         return Boolean.TRUE;

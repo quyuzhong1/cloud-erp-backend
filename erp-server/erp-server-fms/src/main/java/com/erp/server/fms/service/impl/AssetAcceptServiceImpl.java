@@ -791,6 +791,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        // 回写模具采购订单验收状态
+        rewriteAssetPurchaseOrderForDisApprove(entity);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
@@ -932,26 +934,76 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     }
 
     public void rewriteAssetPurchaseOrder(AssetAcceptEntity entity){
+        rewriteAssetPurchaseOrderInternal(entity, false);
+    }
 
-        List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+    public void rewriteAssetPurchaseOrderForDisApprove(AssetAcceptEntity entity){
+        rewriteAssetPurchaseOrderInternal(entity, true);
+    }
+
+    /**
+     * 回写采购订单状态的内部方法
+     * @param entity 验收单实体
+     * @param excludeCurrentEntity 是否排除当前单据（true=反审核场景，false=审核通过场景）
+     */
+    private void rewriteAssetPurchaseOrderInternal(AssetAcceptEntity entity, boolean excludeCurrentEntity) {
+        List<AssetAcceptDetailEntity> currentDetailList = assetAcceptDetailService.lambdaQuery()
                 .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
-        for (AssetAcceptDetailEntity detailEntity : detailList) {
-            AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO = new AssetPurchaseOrderDTO.rewritePurchaseOrderDTO();
-            //计算同一采购明细行的已验收数量
-            List<AssetAcceptDetailEntity> sameSoureDetailList = assetAcceptDetailService.lambdaQuery()
-                    .eq(AssetAcceptDetailEntity::getSourceDetailId, detailEntity.getSourceDetailId())
-                    .list();
-
-            int totalAcceptedQty = sameSoureDetailList.stream()
-                    .mapToInt(obj -> obj.getAcceptedQty())
-                    .sum();
-            totalAcceptedQty += detailEntity.getAcceptQty();
-            rewritePurchaseOrderDTO.setDetailId(detailEntity.getSourceDetailId());
-            rewritePurchaseOrderDTO.setAcceptedQty(new BigDecimal(totalAcceptedQty));
-            assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO);
+        if (CollUtil.isEmpty(currentDetailList)) {
+            return;
         }
 
+        Set<String> sourceDetailIds = currentDetailList.stream()
+                .map(AssetAcceptDetailEntity::getSourceDetailId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return;
+        }
+
+        // 查询相关验收明细，根据场景决定是否排除当前单据
+        List<AssetAcceptDetailEntity> relatedDetailList = assetAcceptDetailService.lambdaQuery()
+                .in(AssetAcceptDetailEntity::getSourceDetailId, sourceDetailIds)
+                .ne(excludeCurrentEntity, AssetAcceptDetailEntity::getMainId, entity.getId())
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        // 获取审核状态映射
+        Set<String> mainIds = relatedDetailList.stream()
+                .map(AssetAcceptDetailEntity::getMainId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        Map<String, String> approveStatusMap = mainIds.isEmpty() ? new HashMap<>() :
+                this.lambdaQuery()
+                        .in(AssetAcceptEntity::getId, mainIds)
+                        .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
+                        .list()
+                        .stream()
+                        .collect(Collectors.toMap(AssetAcceptEntity::getId, item -> item.getApproveStatus().getStatus()));
+
+        // 计算已审核验收总数
+        Map<String, Integer> approvedAcceptQtyMap = relatedDetailList.stream()
+                .filter(detail -> StringUtils.isNotBlank(detail.getSourceDetailId()))
+                .filter(detail -> ApproveStatusEnum.APPROVE.getStatus().equals(approveStatusMap.get(detail.getMainId())))
+                .collect(Collectors.groupingBy(
+                        AssetAcceptDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(detail -> detail.getAcceptQty() != null ? detail.getAcceptQty() : 0)
+                ));
+
+        // 回写采购订单状态
+        currentDetailList.stream()
+                .map(AssetAcceptDetailEntity::getSourceDetailId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .forEach(sourceDetailId -> {
+                    AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewriteDTO = new AssetPurchaseOrderDTO.rewritePurchaseOrderDTO();
+                    rewriteDTO.setDetailId(sourceDetailId);
+                    rewriteDTO.setAcceptedQty(new BigDecimal(approvedAcceptQtyMap.getOrDefault(sourceDetailId, 0)));
+                    assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewriteDTO);
+                });
     }
 
     @Override
