@@ -2087,6 +2087,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
+        map.put("isDelivery", isDelivery);
         map.put("errorType", SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
