@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
+import com.common.business.utils.StringUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -1166,6 +1167,32 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
                 BeanUtils.copyProperties(firstMoldImportDTO.getSupplierImportDTO(),assetPurchaseOrderSupplierEntity);
                 assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(entity.getId());
+
+                if (StringUtils.isNotBlank(assetPurchaseOrderSupplierEntity.getSupplierId())) {
+                    SupplierDTO.ViewDTO supplierDTO = supplierService.getBySupplierId(assetPurchaseOrderSupplierEntity.getSupplierId());
+                    List<SupplierAccountDTO.UpdateDTO> supplierAccountList = supplierAccountService.getBySupplierId(assetPurchaseOrderSupplierEntity.getSupplierId());
+
+                    //付款条件
+                    if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPaymentCondition())) {
+                        assetPurchaseOrderSupplierEntity.setPaymentCondition(supplierDTO.getPaymentCondition());
+                        assetPurchaseOrderSupplierEntity.setPaymentConditionName(supplierDTO.getPaymentConditionName());
+                    }
+
+                    //结算方式
+                    if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayMethodId())) {
+                        assetPurchaseOrderSupplierEntity.setPayMethodId(supplierDTO.getPayMethodId());
+                        assetPurchaseOrderSupplierEntity.setPayMethodName(supplierDTO.getPayMethodName());
+                    }
+
+                    //银行信息
+                    if (StringUtils.isBlank(assetPurchaseOrderSupplierEntity.getPayee())) {
+                        SupplierAccountDTO.UpdateDTO updateDTO =
+                                supplierAccountList.stream().filter(obj -> obj.getIsDefault().equals(Boolean.TRUE)).findFirst().get();
+                        assetPurchaseOrderSupplierEntity.setPayee(updateDTO.getPayee());
+                        assetPurchaseOrderSupplierEntity.setBankAccount(updateDTO.getBankAccount());
+                    }
+
+                }
 
                 boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
                 if (!savePurchaseSupplier) {
