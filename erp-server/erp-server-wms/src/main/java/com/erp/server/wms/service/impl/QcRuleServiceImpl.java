@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -14,6 +15,8 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -302,6 +305,13 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         List<QcRuleEntity> list = this.listByIds(qcRuleIdList);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NO_EXIST_RULE);
+        }
+        for (QcRuleEntity entity : list) {
+            //当前登陆人,启用流程后可删除
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+                throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            }
         }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();

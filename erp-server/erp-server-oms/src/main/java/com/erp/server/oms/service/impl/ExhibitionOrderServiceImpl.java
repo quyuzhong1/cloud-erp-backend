@@ -196,6 +196,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();
         BeanMapperUtils.copy(addDTO, exhibitionOrderEntity);
 
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("展会订单明细不能为空");
+        }
         // 数据处理
         handleData(exhibitionOrderEntity);
 
@@ -346,6 +350,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
+        }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("展会订单明细不能为空");
         }
         ExhibitionOrderEntity exhibitionOrderEntity = BeanMapperUtils.map(ExhibitionOrderEntity.class, addOrUpdateDTO);
 

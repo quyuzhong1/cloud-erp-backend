@@ -30,7 +30,11 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
@@ -95,6 +99,10 @@ public class SoB2cController extends BaseController {
 
     @Resource
     private SoB2cRuleService soB2cRuleService;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
     /**
      * 获取状态统计
      *
@@ -1352,6 +1360,38 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    /**
+     * 撤销不出库发货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelDeliveryWithNotOutbound")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "撤销不出库发货")
+    public ApiResult<List<BatchResultDTO>> cancelDeliveryWithNotOutbound(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        List<SoOutstockEntity> soOutstockEntityList = soOutstockFeign.listBySoIds(ids);
+        List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(ids);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids){
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(entity -> entity.getId().equals(id)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "B2C销售订单不存在"));
+                continue;
+            }
+            SoOutstockEntity soOutstockEntity = soOutstockEntityList.stream().filter(entity -> entity.getSoId().equals(id)).findFirst().orElse(null);
+            SoB2cDeliveryEntity deliveryEntity = deliveryEntityList.stream().filter(entity -> entity.getSourceId().equals(id)).findFirst().orElse(null);
+            try {
+                BatchResultDTO resultDTO = soB2cService.cancelDeliveryWithNotOutbound(id, soB2cEntity, soOutstockEntity, deliveryEntity);
+                resultDTOS.add(resultDTO);
+            }catch (Exception e){
+                log.error("B2C撤销不出库发货失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
     /**
      * 修复历史sku销售成本价

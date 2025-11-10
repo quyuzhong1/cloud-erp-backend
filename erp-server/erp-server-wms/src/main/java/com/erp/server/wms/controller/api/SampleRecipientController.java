@@ -135,7 +135,7 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleRecipient:updateAndSubmit",
+            menuCode = "wms:sampleRecipient:update",
             serviceClass = SampleRecipientService.class,
             keyIdName = "id")
         public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleRecipientDTO.UpdateDTO dto) {

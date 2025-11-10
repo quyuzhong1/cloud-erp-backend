@@ -5,9 +5,11 @@ import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.dto.SkuDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description 产品销售信息服务类
@@ -97,4 +99,16 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateProductSaleListingTimeBatch(List<ProductSaleEntity> list);
+    /**
+     * 批量更新父sku的物流属性
+     * 取子件SKU的属性合集
+     *
+     * @param parentSkuId
+     * @return
+     */
+    Boolean saveOrUpdateParentPropertyId(List<String> parentSkuId);
+    Boolean saveOrUpdateParentPropertyIdByChildSkuId(List<String> childSkuId);
+
+    List<ProductSaleEntity> listBySkuIdList(List<String> skuIdList);
+    List<String> getInsurancePropertyList(String insurancePropertyValue, Map<String, BasicDictEntity> mapById);
 }

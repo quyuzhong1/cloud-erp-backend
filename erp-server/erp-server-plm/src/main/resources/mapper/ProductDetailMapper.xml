@@ -98,7 +98,7 @@
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pi.application_category_id,
-        pl.product_property as productProperty
+        ps.product_property as productProperty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -529,7 +529,7 @@
         ps.data_url,
         CASE WHEN ps.is_marketable = 1 THEN '是' ELSE '否' END isMarketable,
         ps.sales_platform,
-        pl.product_property,
+        ps.product_property,
         pl.declare_price,
         pl.declare_chinese_name,
         pl.declare_english_name,
@@ -549,14 +549,14 @@
         ppk.net_weight,
         ppk.box_weight,
         ppk.box_qty,
-        pl.product_property_id,
+        ps.product_property_id,
         pd.charge_id,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.application_category_id,
-        pl.insurance_property
+        ps.insurance_property
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -565,7 +565,7 @@
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
-        LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id AND dp.is_deleted = FALSE
+        LEFT JOIN basic_dict dp ON ps.product_property_id = dp.id AND dp.is_deleted = FALSE
         WHERE ${params.sqlMap.default} and pi.is_deleted = FALSE
         <if test="params.skuIds != null and params.skuIds.size>0">
             AND pd.id IN
@@ -774,7 +774,7 @@
         pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_currency_symbol as declareCurrencySymbol,
         pi.materials,
         pi.function_desc,
@@ -1006,7 +1006,7 @@
         pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_element as declareElement,
         pl.declare_currency_symbol as declareCurrencySymbol,
         pi.spec_type,
@@ -1435,7 +1435,7 @@
             pl.exemption AS exemption,
             pl.combination_declare_type AS combinationDeclareType,
             pl.customs_code AS customsCode,
-            pl.product_property_id AS propertyId,
+        ps.product_property_id AS propertyId,
             pl. product_property AS logisticsPropertyName,
             pl.first_qty AS firstQty,
             pl.second_qty AS secondQty,
@@ -1663,7 +1663,7 @@
 
     <select id="listLogisticsProduct" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ProductDTO">
         SELECT
-        pl.sku_id,pl.product_property,pl.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
+        pl.sku_id,ps.product_property,ps.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
         pl.declare_price,pl.customs_code,pl.declare_element,pl.english_material,pl.english_usage,
         pl.create_time,pl.create_user_id,pl.update_time,pl.update_user_id,pl.create_user_name,pl.update_user_name,
         pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pl.dest_declare_price,
@@ -1674,7 +1674,7 @@
         pp.box_width / 10 AS boxSizeWide,
         pp.box_height / 10 AS boxSizeHigh,
         pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
-        (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
+        (select value from basic_dict  where is_deleted=false and id=ps.product_property_id LIMIT 1) AS productProperty,
         (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
         pd.name as cnName,pd.name_en as enName,
         pi.spu_no as spuNo,
@@ -1748,7 +1748,7 @@
             pd.variant_property as variantProperty,
             pl.declare_chinese_name as declareName,
             pl.declare_model as declareModel,
-            pl.product_property_id AS productPropertyId,
+            ps.product_property_id AS productPropertyId,
             pi.materials,
             pi.function_desc,
             pi.grade AS productGrade,
@@ -2053,7 +2053,7 @@
         pd.warehouse_location_large as warehouseLocationLarge,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_element as declareElement,
         pl.declare_currency_symbol as declareCurrencySymbol
         FROM product_detail pd

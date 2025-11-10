@@ -1055,6 +1055,20 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String searchMode = adjustDTO.getSearchMode();
         List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey,searchMode,null );
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+        List<String> customerPOList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(adjustDTO.getCartonDetailList())){
+            customerPOList = adjustDTO.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getCustomerPO).distinct().collect(Collectors.toList());
+        }
+
+        //获取本箱装箱列表
+        if(CollectionUtils.isNotEmpty(customerPOList)){
+            List<String> finalCustomerPOList = customerPOList;
+            viewDTOList = viewDTOList.stream()
+                    .filter(e -> finalCustomerPOList.contains(e.getCustomerPO()))
+                    .collect(Collectors.toList());
+        }
+
+
         if (CollectionUtils.isNotEmpty(viewDTOList)) {
             //根据sku进行分类汇总
             List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(packingTaskEntity.getId());
@@ -1094,6 +1108,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSkuNo(groupSkuDTO.getSkuNo());
                 cartonDetailDTO.setFnSku(viewDTO.getFnSku());
                 cartonDetailDTO.setEan(viewDTO.getEan());
+                cartonDetailDTO.setCustomerPO(viewDTO.getCustomerPO());
                 cartonDetailDTO.setMd5(Md5Util.md5(groupSkuDTO.getSkuId() + "-" + viewDTO.getFnSku() + "-" + viewDTO.getEan()));
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(groupSkuDTO.getFnSku(), e.getFnSku()))

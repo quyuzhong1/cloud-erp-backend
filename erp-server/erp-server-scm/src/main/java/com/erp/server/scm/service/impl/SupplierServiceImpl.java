@@ -1750,7 +1750,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                exportExcel.setApproveUserName(curApprove);
+                exportExcel.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,exportExcel.getApproveUserName()));
             }
             exportExcel.setApproveTime(item.getApproveTime());
 

@@ -619,4 +619,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
 
     void exportLogisticsHandover(BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response);
+
+    /**
+     * 自动反审核并删除出库单
+     * @param id
+     */
+    void deleteSoOutstock(String id);
 }

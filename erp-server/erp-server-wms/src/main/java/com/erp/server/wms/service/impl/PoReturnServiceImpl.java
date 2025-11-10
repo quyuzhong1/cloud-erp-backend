@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -766,11 +767,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
         //库存校验
         checkInventoryQty(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购退货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "审核操作");
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             String confirmStatus = "";

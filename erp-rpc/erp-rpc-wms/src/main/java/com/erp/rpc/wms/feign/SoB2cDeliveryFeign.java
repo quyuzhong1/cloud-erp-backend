@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -152,4 +153,10 @@ public interface SoB2cDeliveryFeign {
 
     @PostMapping("/feign/soB2cDelivery/getDeliveryCodeBySourceId")
     Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds);
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    @GetMapping("/feign/soB2cDelivery/deleteSoB2cDelivery")
+    void deleteSoB2cDelivery(@RequestParam(value = "id") String id);
 }

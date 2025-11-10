@@ -138,6 +138,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         handleData(sampleInitialLedgerEntity);
 
         log.info("开始新增样品期初台账");
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品期初台账明细不能为空");
+        }
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCTZ);
         sampleInitialLedgerEntity.setCode(code);
