@@ -195,14 +195,14 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         }
         DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
         try {
-            String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            String id = dmpTaskFeign.saveDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
             if (!ApiResult.success().getCode().equals(status) && sendMsg) {
                 dmpPushTaskEntity.setId(id);
                 sendPushWarnMsg(dmpPushTaskEntity);
             }
         } catch (Exception e) {
-            log.error("saveOrUpdateDmpPushTask:记录操作日志失败",e);
+            log.error("saveDmpPushTask:记录操作日志失败",e);
         }
     }
 

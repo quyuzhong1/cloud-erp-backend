@@ -91,14 +91,14 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         dmpPushTaskEntity.setReturnMsg(responseParamJson);
         String id = null;
         try {
-            id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            id = dmpTaskFeign.saveDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
 //            if (!RequestStatusEnums.SUCCESS.getCode().equals(status) && isSendMsg){
 //                dmpPushTaskEntity.setId(id);
 //                this.sendPushWarnMsg(dmpPushTaskEntity);
 //            }
         } catch (Exception e) {
-            log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
+            log.error("saveDmpPushTask:记录操作日志失败");
         }
         return id;
     }

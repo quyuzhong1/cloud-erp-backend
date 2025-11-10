@@ -245,6 +245,17 @@ public class DmpFeignController extends BaseController {
         return dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
     }
 
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("/save/push/task")
+    public String saveDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity) {
+        return dmpPushTaskService.saveDmpPushTask(dmpPushTaskEntity);
+    }
+
 
     /**
      * @description: 拉取数据预警
