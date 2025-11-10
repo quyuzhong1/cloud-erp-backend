@@ -232,6 +232,10 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品借用单明细不能为空");
+        }
         SampleBorrowInfoEntity sampleBorrowInfoEntity =  BeanMapperUtils.map(SampleBorrowInfoEntity.class, addOrUpdateDTO);
         // 数据处理
         handleData(sampleBorrowInfoEntity);
