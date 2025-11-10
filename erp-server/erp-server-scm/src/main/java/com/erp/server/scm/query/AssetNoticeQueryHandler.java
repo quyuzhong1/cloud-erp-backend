@@ -27,6 +27,7 @@ public class AssetNoticeQueryHandler extends AbstractQueryHandler {
             }else if ("waitCreate".equals(status)){
                 super.buildDefaultDTO("an.approve_status",ApproveStatusEnum.APPROVE.getStatus());
                 super.buildDefaultDTO("and1.create_po_type", Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus()));
+                super.buildDefaultDTO("and1.create_po_type", Arrays.asList(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
             }else if ("created".equals(status)){
                 super.buildDefaultDTO("an.approve_status",ApproveStatusEnum.APPROVE.getStatus());
                 super.buildDefaultDTO("and1.create_po_type", Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
