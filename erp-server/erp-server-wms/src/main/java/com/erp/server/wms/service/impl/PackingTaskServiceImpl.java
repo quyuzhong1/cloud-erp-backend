@@ -205,6 +205,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             packingTaskDetailEntity.setFnSku(soDetailEntity.getCustomerSkuNo());
             if( null != soDeliveryNoticeDetailEntity){
                 packingTaskDetailEntity.setDeliveryQty(soDeliveryNoticeDetailEntity.getPickingQty());
+                packingTaskDetailEntity.setCustomerPO(soDeliveryNoticeDetailEntity.getCustomerPO());
             }else{
                 packingTaskDetailEntity.setDeliveryQty(0);
             }
