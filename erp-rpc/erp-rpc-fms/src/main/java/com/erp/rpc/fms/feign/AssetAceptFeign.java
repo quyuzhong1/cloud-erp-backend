@@ -27,7 +27,7 @@ public interface AssetAceptFeign {
      * @param detailId
      * @return
      */
-    @PostMapping("feign/assetAcept/getAcceptQty")
+    @PostMapping("feign/assetAccept/getAcceptQty")
     Integer getAcceptQtyByDetailId(@RequestBody String detailId);
 
     /**
@@ -35,7 +35,7 @@ public interface AssetAceptFeign {
      * @param detailId
      * @return
      */
-    @PostMapping("feign/assetAcept/getAssetAccept")
+    @PostMapping("feign/assetAccept/getAssetAccept")
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId);
 
     /**
@@ -43,7 +43,7 @@ public interface AssetAceptFeign {
      * @param dtoList
      * @return
      */
-    @PostMapping("feign/assetAcept/generateAssetAccept")
+    @PostMapping("feign/assetAccept/generateAssetAccept")
     Boolean generateAssetAccept(@RequestBody List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList);
 
     /**
@@ -51,6 +51,6 @@ public interface AssetAceptFeign {
      * @param detailIdList
      * @return
      */
-    @PostMapping("feign/assetAcept/getAcceptableQty")
+    @PostMapping("feign/assetAccept/getAcceptableQty")
     Map<String, BigDecimal> getAcceptableQtyByDetailId(@RequestBody List<String> detailIdList);
 }
