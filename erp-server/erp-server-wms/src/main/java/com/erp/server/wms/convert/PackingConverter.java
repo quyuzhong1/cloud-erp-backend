@@ -64,7 +64,8 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.deliveryQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", source = "detailEntity.platformSkuNo")
+            @Mapping(target = "fnSku", source = "detailEntity.platformSkuNo"),
+            @Mapping(target = "customerPO", source = "detailEntity.customerPO")
     })
     PackingTaskDetailEntity b2bDeliveryDetailToPackingTaskDetail(SoDeliveryNoticeDetailEntity detailEntity);
     List<PackingTaskDetailEntity> b2bDeliveryDetailToPackingTaskDetail(List<SoDeliveryNoticeDetailEntity> detailEntityList);

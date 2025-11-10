@@ -302,6 +302,7 @@ public class WmsCartonDetailDTO implements Serializable {
 
         private BigDecimal height;
 
+        private String customerPO;
         /**
          * 箱子尺寸单位
          */
@@ -353,6 +354,7 @@ public class WmsCartonDetailDTO implements Serializable {
          */
         private Integer totalQty = 0;
         private BigDecimal volumeWeight;
+
     }
 
     /**

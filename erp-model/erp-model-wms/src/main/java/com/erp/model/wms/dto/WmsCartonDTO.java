@@ -124,6 +124,11 @@ public class WmsCartonDTO {
          * 重量单位 kg
          */
         private String weightUnit;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -154,6 +159,11 @@ public class WmsCartonDTO {
          * 是否过滤0数据 true:过滤 false:不过滤(默认false)
          */
         private Boolean isRemoveZero;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
     /**
      * 装箱详情
@@ -169,6 +179,11 @@ public class WmsCartonDTO {
          * 装箱任务编码
          */
         private String taskCode;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 箱子id
          */
@@ -258,6 +273,11 @@ public class WmsCartonDTO {
          * fnSku
          */
         private String fnSku;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         private String ean;
         //唯一值
         private String md5;

@@ -1765,6 +1765,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 addDTO.setSourceId(view.getMainId());
                 addDTO.setSourceCode(view.getCode());
                 addDTO.setWarehouseId(view.getWarehouseId());
+                if(Objects.nonNull(view.getBillDate())){
+                    addDTO.setBillDate(view.getBillDate());
+                }
+                addDTO.setBillDate(view.getBillDate());
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {

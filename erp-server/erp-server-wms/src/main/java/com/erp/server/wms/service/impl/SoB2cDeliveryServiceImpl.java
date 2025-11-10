@@ -1620,6 +1620,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         soB2cDelivery.setIsMatchTransferRule(true);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
+        soB2cDeliveryEntity.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         //生成直接调拨单
         this.pushTransferInfo(soB2cDeliveryEntity);
         // 校验是否已生成销售出库单
@@ -2595,7 +2596,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setOutOrgId(outWarehouseEntity.getOrgId());
         addDTO.setRemark(CharSequenceUtil.format("【{}】发货自动生成调拨",entity.getCode()));
         addDTO.setSourceId(entity.getId());
-        addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        if (Objects.nonNull(entity.getIsNotOutbound()) && entity.getIsNotOutbound()){
+            addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY_NOT_OUTBOUND.getCode());
+        }else {
+            addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        }
         addDTO.setSourceCode(entity.getCode());
         //重试时需要按照发货单的发货时间调拨
         if(entity.getDeliveryTime() == null){
