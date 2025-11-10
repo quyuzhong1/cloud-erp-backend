@@ -192,4 +192,6 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
     List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList);
 
     PagingVO<DmpPushTaskDTO.ListDTO> exportPushTask(PagingDTO<DmpPushTaskDTO.ParamDTO> dto);
+
+    String saveDmpPushTask(DmpPushTaskEntity dmpPushTaskEntity);
 }
