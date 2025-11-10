@@ -73,4 +73,27 @@
             dcid.main_id,
             dci.bill_type
     </select>
+
+    <!-- 查询配置明细信息 -->
+    <select id="getDmpCfgInputDetailByOption" resultType="com.erp.model.dmp.entity.DmpCfgInputDetailEntity">
+        select
+            dci.id as mainId,
+            dcid.id,
+            dcid. create_time,
+            dcid.update_time,
+            dcid.create_user_name,
+            dcid.create_user_id,
+            dcid.update_user_name,
+            dcid.update_user_id,
+            dcid.version,
+            dcid.is_deleted,
+            dcid.main_id, dcid.next_level_id, dcid.last_time, dcid.next_time, dcid.interval_time, dcid.override_time, dcid.max_retry_count, dcid.exec_timeout, dcid.disabled, dcid.extend_json
+        from dmp_basic_system abs
+        inner join dmp_cfg_input dci on abs.id = dci.system_id and dci.is_deleted = false
+        left join dmp_cfg_input_detail dcid on dci.id = dcid.main_id and dcid.is_deleted = false
+        where dcid.is_deleted = false
+            and abs.code = #{cfgOptionDTO.system}
+            and dci.code = #{cfgOptionDTO.code}
+            and dcid.next_level_id = #{cfgOptionDTO.nextLevelId}
+    </select>
 </mapper>

@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -81,6 +82,9 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private TbTaskTypeService tbTaskTypeService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -387,6 +391,18 @@ public class DmpFeignController extends BaseController {
             ServiceException.runError("来源编码列表不能包含空值");
         }
         return dmpOutputTaskRecordService.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
+
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:17
+     * @param cfgOptionDTO
+     * @return String
+     */
+    @PostMapping("/input/optionDmpCfgInputDetail")
+    public void optionDmpCfgInputDetail(@RequestBody @Valid DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO){
+         dmpCfgInputDetailService.optionDmpCfgInputDetail(cfgOptionDTO);
     }
 
 }

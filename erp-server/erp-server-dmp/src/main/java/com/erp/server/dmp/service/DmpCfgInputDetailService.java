@@ -1,9 +1,11 @@
 package com.erp.server.dmp.service;
+
+import com.common.business.dto.DmpInputFeignDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.SuperService;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 
 import java.util.List;
 
@@ -44,4 +46,12 @@ public interface DmpCfgInputDetailService extends SuperService<DmpCfgInputDetail
      * @return 可执行的任务列表-明细维度
      */
     List<DmpInoutDTO.ListDTO> listBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:19
+     * @param cfgOptionDTO
+     * @return void
+     */
+    void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
 }

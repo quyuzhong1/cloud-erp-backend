@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -48,48 +47,24 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
-        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         //获取第三方审批定义
-        List<ThirdProcessDefinitionEntity> cfgThirdProcessList = listCfgThirdProcess();
-
-        List<String> approvalCodeList = cfgThirdProcessList.stream().map(ThirdProcessDefinitionEntity::getApprovalCode).distinct().collect(Collectors.toList());
+        String approvalCode = dmpResponse.getDmpCfgInputDetailEntity().getNextLevelId();
         JSONArray result = new JSONArray();
-        for (String approvalCode : approvalCodeList) {
-            try {
-                List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
-                for (String id : ids) {
-                    JSONObject object = new JSONObject();
-                    object.put("instance_id", id);
-                    object.put("ulanzi_approval_code", approvalCode);
-                    result.add(object);
-                }
-            } catch (Exception e) {
-                log.error("调用飞书失败,e= {}",e.getMessage());
-                continue;
+        try {
+            List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
+            for (String id : ids) {
+                JSONObject object = new JSONObject();
+                object.put("instance_id", id);
+                object.put("ulanzi_approval_code", approvalCode);
+                result.add(object);
             }
+        } catch (Exception e) {
+            log.error("调用飞书失败,e= {}",e.getMessage());
+            throw new ServiceException("调用飞书失败,msg= {}",e.getMessage());
         }
-        dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
-        return dmpInputTaskInitDTOList;
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
     }
 
-    /**
-     * 获取飞书审批定义
-     * @author will
-     * @date 2025/7/14 16:30
-     * @return List<ThirdProcessDefinitionEntity>
-     */
-    private List<ThirdProcessDefinitionEntity> listCfgThirdProcess () {
-
-        List<ThirdProcessDefinitionEntity> thirdProcessDefinitionList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
-                .eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
-                .eq(ThirdProcessDefinitionEntity::getEnableStatus, Boolean.TRUE)
-                .list();
-        if (CollUtil.isEmpty(thirdProcessDefinitionList)) {
-            log.warn("无可用的飞书审批定义，handler: {}", this.getClass().getSimpleName());
-            return Collections.emptyList();
-        }
-        return thirdProcessDefinitionList;
-    }
 
 
     public static void main(String[] args) {

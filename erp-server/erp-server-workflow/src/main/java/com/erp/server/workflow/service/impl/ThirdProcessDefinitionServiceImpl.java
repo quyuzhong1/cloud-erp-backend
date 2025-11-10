@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.DmpPullConstant;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,6 +24,7 @@ import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
@@ -59,7 +62,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private DictBasicService dictBasicService;
-
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -78,12 +82,16 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             throw new ServiceException("三方审批定义保存失败");
         }
 
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getName()));
         return new BaseResultDTO.AddDTO(thirdProcessDefinitionEntity.getId(), thirdProcessDefinitionEntity.getId());
     }
 
     /**
     * 修改
     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(ThirdProcessDefinitionDTO.UpdateDTO addOrUpdateDTO) {
@@ -98,6 +106,9 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),old.getApprovalCode(),OperationTypeEnum.UPDATE.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.UPDATE.getName()));
         return Boolean.TRUE;
     }
 
@@ -141,9 +152,13 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
         ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
         super.removeById(id);
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getName()));
         return BatchResultDTO.success(entity.getId(), entity.getApprovalCode(), OperationTypeEnum.DELETE);
     }
 

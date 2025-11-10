@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -336,5 +337,14 @@ public interface DmpTaskFeign {
                                                                 @RequestParam(value = "outputClass",required = false) String outputClass
     );
 
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:13
+     * @param cfgOptionDTO
+     * @return void
+     */
+    @PostMapping("feign/input/optionDmpCfgInputDetail")
+    void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
 
 }
