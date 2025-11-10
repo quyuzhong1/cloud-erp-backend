@@ -99,14 +99,27 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
 
     @Override
     public Integer getAcceptQtyByDetailId(String detailId) {
-        LambdaQueryWrapper<AssetAcceptDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AssetAcceptDetailEntity::getSourceDetailId, detailId)
-                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE);
-        List<AssetAcceptDetailEntity> list = this.list(queryWrapper);
+        Integer sum = 0;
+
+        List<AssetAcceptDetailEntity> list = this.lambdaQuery()
+                .eq(AssetAcceptDetailEntity::getSourceDetailId, detailId)
+                .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
         if (!list.isEmpty()) {
-            return list.stream().mapToInt(AssetAcceptDetailEntity::getAcceptedQty).sum();
+            //只获取已审核的数量
+            for (AssetAcceptDetailEntity detailEntity : list) {
+                AssetAcceptEntity assetAcceptEntity = assetAcceptService.lambdaQuery()
+                        .eq(AssetAcceptEntity::getId, detailEntity.getMainId())
+                        .one();
+                if (assetAcceptEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
+                    sum += detailEntity.getAcceptQty();
+                }
+            }
+
+            return sum;
         }
-        return null;
+        return sum;
     }
 
     @Override
@@ -123,10 +136,10 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
 
             //过滤掉待提交、审核中、审核不通过的资产验收单
             List<AssetAcceptEntity> entityList = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, detailIds)
-                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode())
-                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getCode())
-                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
-                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
+//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode())
+//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getCode())
+//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
+//                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
                     .list();
             List<String> filterList = entityList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
             List<AssetAcceptDetailEntity> collect = detailList.stream().filter(obj -> filterList.contains(obj.getMainId())).collect(Collectors.toList());
