@@ -243,6 +243,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品报废单明细不能为空");
+        }
         SampleScrapInfoEntity sampleScrapInfoEntity =  BeanMapperUtils.map(SampleScrapInfoEntity.class, addOrUpdateDTO);
         handleData(sampleScrapInfoEntity);
 

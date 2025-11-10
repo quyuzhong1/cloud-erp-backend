@@ -145,6 +145,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity sampleTransferInfoEntity = new SampleTransferInfoEntity();
         BeanMapperUtils.copy(addDTO, sampleTransferInfoEntity);
 
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品转移单明细不能为空");
+        }
         // 数据处理
         handleData(sampleTransferInfoEntity);
 
@@ -238,6 +242,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
+        }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品转移单明细不能为空");
         }
         SampleTransferInfoEntity sampleTransferInfoEntity =  BeanMapperUtils.map(SampleTransferInfoEntity.class, addOrUpdateDTO);
 

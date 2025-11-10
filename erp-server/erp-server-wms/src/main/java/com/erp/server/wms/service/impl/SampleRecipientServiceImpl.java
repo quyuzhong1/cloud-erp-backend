@@ -311,6 +311,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 使用范围验证
         validateUsageScope(sampleRecipientEntity);
 
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
+
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
             validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
