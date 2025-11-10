@@ -60,6 +60,11 @@ public class PackingTaskDetailEntity extends BaseEntity<PackingTaskDetailEntity>
     @TableField("third_barcode")
     private String thirdBarcode;
 
+    /**
+     * 客户PO号
+     */
+    @TableField("customer_po")
+    private String customerPO;
 
     public static final String MAIN_ID = "main_id";
 

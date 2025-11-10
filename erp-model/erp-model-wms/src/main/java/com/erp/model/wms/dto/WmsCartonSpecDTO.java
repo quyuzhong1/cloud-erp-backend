@@ -600,6 +600,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String cartonId;
         /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
          * 产品id
          */
         private String skuId;

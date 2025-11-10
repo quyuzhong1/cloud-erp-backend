@@ -205,6 +205,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             packingTaskDetailEntity.setFnSku(soDetailEntity.getCustomerSkuNo());
             if( null != soDeliveryNoticeDetailEntity){
                 packingTaskDetailEntity.setDeliveryQty(soDeliveryNoticeDetailEntity.getPickingQty());
+                packingTaskDetailEntity.setCustomerPO(soDeliveryNoticeDetailEntity.getCustomerPO());
             }else{
                 packingTaskDetailEntity.setDeliveryQty(0);
             }
@@ -306,6 +307,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())){
             List<WmsCartonDetailDTO.AddDTO> detailList = dto.getWmsCartonList().stream().map(WmsCartonSpecDTO.AddDTO::getDetailList).flatMap(List::stream).collect(Collectors.toList());
             checkPackQtyByPickQtyBySku(packingTask, detailList,isAddCarton);
+            //校验相同客户po号不能装同一箱
+            checkSameCustomerPoInCarton(packingTask,dto.getWmsCartonList());
         }
         PickingSourceTypeEnum type = PickingSourceTypeEnum.getByStatus(packingTask.getSourceType());
         Map<String, Integer> packedMap = new HashMap<>();
@@ -425,6 +428,48 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return Boolean.TRUE;
     }
 
+    private void checkSameCustomerPoInCartonByAdjust(PackingTaskEntity packingTaskEntity,List<WmsCartonDTO.AdjustSaveDTO> wmsCartonList) {
+        List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+        for (WmsCartonDTO.AdjustSaveDTO addDTO : wmsCartonList) {
+            Set<String> customerPoSet = new HashSet<>();
+            for (WmsCartonDTO.AdjustDetailDTO detailDTO : addDTO.getCartonDetailList()) {
+                PackingTaskDetailEntity taskDetailEntity = taskDetailEntityList.stream()
+                        .filter(e -> Objects.nonNull(e)
+                                && e.getSkuId().equals(detailDTO.getSkuId())
+                                && Objects.equals(e.getFnSku(), detailDTO.getFnSku()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(taskDetailEntity) && CharSequenceUtil.isNotBlank(taskDetailEntity.getCustomerPO())) {
+                    customerPoSet.add(taskDetailEntity.getCustomerPO());
+                }
+            }
+            if (customerPoSet.size() > 1) {
+                throw new ServiceException("同一箱子内不允许存在不同客户PO号");
+            }
+        }
+    }
+
+    private void checkSameCustomerPoInCarton(PackingTaskEntity packingTaskEntity,List<WmsCartonSpecDTO.AddDTO> wmsCartonList) {
+        List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+        for (WmsCartonSpecDTO.AddDTO addDTO : wmsCartonList) {
+            Set<String> customerPoSet = new HashSet<>();
+            for (WmsCartonDetailDTO.AddDTO detailDTO : addDTO.getDetailList()) {
+                PackingTaskDetailEntity taskDetailEntity = taskDetailEntityList.stream()
+                        .filter(e -> Objects.nonNull(e)
+                                && e.getSkuId().equals(detailDTO.getSkuId())
+                                && Objects.equals(e.getFnSku(), detailDTO.getFnSku()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(taskDetailEntity) && CharSequenceUtil.isNotBlank(taskDetailEntity.getCustomerPO())) {
+                    customerPoSet.add(taskDetailEntity.getCustomerPO());
+                }
+            }
+            if (customerPoSet.size() > 1) {
+                throw new ServiceException("同一箱子内不允许存在不同客户PO号，箱号:{}",addDTO.getBoxNo());
+            }
+        }
+    }
+
     private void checkPackQtyByPickQtyBySku(PackingTaskEntity packingTask, List<WmsCartonDetailDTO.AddDTO> detailList, Boolean isAddCarton) {
         if (CollectionUtils.isEmpty(detailList)){
             return;
@@ -448,6 +493,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_92266.msg,taskDetailEntity.getSkuNo(), packQty, deliveryQty));
             }
         });
+
     }
 
     private void buildCartonSpecWeight(WmsCartonSpecDTO.AddDTO dto, PickingSourceTypeEnum type) {
@@ -1007,7 +1053,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //(输入SKU/FNSKU/EAN码)
         String searchKey = adjustDTO.getSearchKey();
         String searchMode = adjustDTO.getSearchMode();
-        List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey,searchMode);
+        List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey,searchMode,null );
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
         if (CollectionUtils.isNotEmpty(viewDTOList)) {
             //根据sku进行分类汇总
@@ -1127,7 +1173,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String searchMode = searchDTO.getSearchMode();
         //是否过滤待装箱为0数量
         Boolean isRemoveZero = searchDTO.getIsRemoveZero();
-        List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey, searchMode);
+        List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey, searchMode,searchDTO.getCustomerPO() );
         if (CollectionUtils.isNotEmpty(viewDTOList)){
             //根据sku进行分类汇总
             List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(packingTaskEntity.getId());
@@ -1142,6 +1188,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSkuNo(groupSkuDTO.getSkuNo());
                 cartonDetailDTO.setFnSku(viewDTO.getFnSku());
                 cartonDetailDTO.setEan(viewDTO.getEan());
+                cartonDetailDTO.setCustomerPO(viewDTO.getCustomerPO());
+
                 cartonDetailDTO.setMd5(Md5Util.md5(groupSkuDTO.getSkuId() + "-" + viewDTO.getFnSku() + "-" + viewDTO.getEan()));
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku()))
@@ -1313,6 +1361,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<String> skuNoList = otherSku.stream().map(WmsCartonDetailDTO.AddDTO::getSkuNo).distinct().collect(Collectors.toList());
             throw new ServiceException(CharSequenceUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTaskEntity.getCode(), String.join(",", skuNoList)));
         }
+        //校验相同客户po号不能装同一箱
+        checkSameCustomerPoInCarton(packingTaskEntity,Arrays.asList(addDTO));
         //校验累计装箱数量不可大于发货数量
         checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList(), Boolean.TRUE);
         String specId;
@@ -1415,6 +1465,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 //        if (PackingWeightStatusEnum.SUCCESS.getCode().equals(cartonEntity.getWeightingStatus())){
 //            throw new ServiceException(ApiError.ERROR_92254);
 //        }
+        //校验相同客户po号不能装同一箱
+        checkSameCustomerPoInCartonByAdjust(packingTaskEntity, Collections.singletonList(dto));
         String adjustType = dto.getAdjustType();
         if (AdjustTypeEnum.REPACKING.getCode().equals(adjustType)){
             //重新装箱 先删除装箱详情
@@ -1721,14 +1773,31 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             return Collections.emptyList();
         }
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+        List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = adjustDTO.getCartonDetailList();
+        List<String> customerPOList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(adjustDetailDTOList)){
+            customerPOList = adjustDetailDTOList.stream().map(WmsCartonDTO.AdjustDetailDTO::getCustomerPO).distinct().collect(Collectors.toList());
+        }
+
         //获取本箱装箱列表
         List<WmsCartonDetailEntity> cartonDetailEntityList = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(adjustDTO.getCartonId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(customerPOList)){
+            List<String> finalCustomerPOList = customerPOList;
+            taskDetailEntityList = taskDetailEntityList.stream()
+                    .filter(e -> finalCustomerPOList.contains(e.getCustomerPO()))
+                    .collect(Collectors.toList());
+        }
+
         List<String> skuIds = cartonDetailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIds);
         List<WmsCartonDTO.CartonDetailDTO> cartonDetailDTOList = new ArrayList<>(cartonDetailEntityList.size());
         for (WmsCartonDetailEntity wmsCartonDetailEntity : cartonDetailEntityList) {
             //发货数量
             Integer deliveryQty = taskDetailEntityList.stream().filter(e -> e.getSkuId().equals(wmsCartonDetailEntity.getSkuId()) && Objects.equals(e.getFnSku(), wmsCartonDetailEntity.getFnSku())).map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            PackingTaskDetailEntity packingTaskDetailEntity = taskDetailEntityList.stream().filter(e -> e.getSkuId().equals(wmsCartonDetailEntity.getSkuId()) && Objects.equals(e.getFnSku(), wmsCartonDetailEntity.getFnSku())).findFirst().orElse(null);
+            if(Objects.isNull(packingTaskDetailEntity)){
+                continue;
+            }
             //已装数量 取值为累计已装箱的装箱数量[包含未完成+已完成][选择为重新装箱不计算本箱]
             Integer packedQty = 0;
             if (AdjustTypeEnum.REPACKING.getCode().equals(adjustDTO.getAdjustType())){
@@ -1748,6 +1817,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                             .skuNo(wmsCartonDetailEntity.getSkuNo())
                             .fnSku(wmsCartonDetailEntity.getFnSku())
                             .deliveryQty(deliveryQty)
+                            .customerPO(packingTaskDetailEntity.getCustomerPO())
                             .pickedQty(deliveryQty)
                             .packedQty(packedQty)
                             //本箱已装
