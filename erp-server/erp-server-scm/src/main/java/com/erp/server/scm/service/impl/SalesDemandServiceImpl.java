@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -230,6 +232,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
         log.info("备货申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过

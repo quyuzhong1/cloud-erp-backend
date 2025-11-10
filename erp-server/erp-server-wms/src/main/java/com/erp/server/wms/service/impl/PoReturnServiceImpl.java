@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -765,6 +766,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public BatchResultDTO approve(PoReturnEntity entity, String type, String comment, Boolean isNeedProcess,List<PoReturnDetailEntity> poReturnDetailList) {
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
         //库存校验
         checkInventoryQty(entity);
