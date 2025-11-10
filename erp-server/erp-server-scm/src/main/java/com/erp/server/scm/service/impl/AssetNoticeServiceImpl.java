@@ -24,6 +24,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -451,8 +452,16 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             addDTO.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseOrgName(value.get(0).getPurchaseOrgName());
-            addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
-            addDTO.setPurchaseUserName(value.get(0).getPurchaseUserId());
+            if (StringUtils.isNotBlank(value.get(0).getPurchaseUserId())) {
+                addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
+                addDTO.setPurchaseUserName(value.get(0).getPurchaseUserId());
+                SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(value.get(0).getPurchaseUserId());
+                if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
+                    addDTO.setPurchaseDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+                    addDTO.setPurchaseDeptName(sysDepartmentUserNumberDTO.getDepartmentName());
+                }
+            }
+
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setSourceCode(value.get(0).getCode());
             addDTO.setSourceId(value.get(0).getId());
@@ -692,7 +701,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
-
 
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
