@@ -498,7 +498,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
                         .update();
             } else if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
-                //采购总数量大于当前明细数量，状态改为未生成
+                //采购总数量大于当前明细数量，状态改为部分生成
                 assetNoticeDetailService.lambdaUpdate()
                         .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
                         .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
