@@ -1361,6 +1361,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
         if (ObjectUtils.isNotEmpty(productSaleDTO)) {
             productSaleDTO.setSkuId(skuId);
+            //保险属性
+            if(CollUtil.isNotEmpty(productSaleDTO.getInsurancePropertyList())){
+                productSaleDTO.setInsuranceProperty(productSaleDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+            }
             //SKU操作日志
             addProductSaleLog(productSaleDTO, id);
             productSaleService.saveOrUpdate(productSaleDTO);
@@ -1681,6 +1685,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //5.修改/新增 销售信息
         List<ProductSaleDTO> productSaleList = productManySpecDTO.getProductSaleList();
         if (productSaleList.size() > 0) {
+            productSaleList.forEach(productLogisticsDTO -> {
+                //保险属性
+                if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
+                    productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+                }
+            });
             //操作日志
             productSaleList.stream().forEach(obj -> addProductSaleLog(obj, productInfoDTO.getId()));
             productSaleService.saveOrUpdateBatch(productSaleList);
@@ -4455,7 +4465,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
-        productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
+        productSaleService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
 
         //添加日志
         String fieldValue = getFieldValue(dto);
@@ -5583,6 +5593,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }else {
                     productSaleDTO.setSalesPlatform(productSalesPlatformEnum.getCode());
                 }
+            }
+            /**
+             * 保险属性
+             */
+            if(StringUtils.isNotBlank(insurancePropertyName)){
+                productSaleDTO.setInsuranceProperty(insurancePropertyName);
+            }
+            if(CollUtil.isNotEmpty(declarePropertyList)){
+                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                productSaleDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
+                productSaleDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
             }
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 

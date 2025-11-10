@@ -136,6 +136,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     private ProductLogisticsService productLogisticsService;
 
     @Resource
+    private ProductSaleService productSaleService;
+
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private SysUserFeign sysUserFeign;
@@ -178,7 +181,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
         //更新父sku物流属性
         List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
+        productSaleService.saveOrUpdateParentPropertyId(parentSkuIds);
         //提交
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
@@ -602,7 +605,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
             //更新父sku物流属性
             List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
+            productSaleService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return result;
     }

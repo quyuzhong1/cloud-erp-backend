@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @Description 产品销售信息表请求参数
@@ -28,7 +29,20 @@ public class ProductSaleDTO implements Serializable {
      * sku表id
      */
     private String skuId;
+    /**
+     * 产品属性
+     */
+    private String productProperty;
 
+    /**
+     * 产品属性id
+     */
+    private String productPropertyId;
+    /**
+     * 保险属性
+     */
+    private String insuranceProperty;
+    private List<String> insurancePropertyList;
     /**
      * 年目标销售量
      */
