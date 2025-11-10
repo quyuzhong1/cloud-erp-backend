@@ -422,30 +422,18 @@ public class AssetAcceptController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/transferToAssetCard")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "fms:assetAccept:transferToAssetCard",
-            serviceClass = AssetAcceptService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "资产验收表转资产卡片")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "资产验收明细转资产卡片")
     public ApiResult<List<BatchResultDTO>> transferToAssetCard(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<AssetAcceptEntity> list = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, ids).list();
-        Map<String, AssetAcceptEntity> idEntityMap = list.stream().collect(Collectors.toMap(AssetAcceptEntity::getId, w -> w));
-        for (String id : ids) {
+        List<String> detailIds = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(detailIds.size());
+        
+        for (String detailId : detailIds) {
             BatchResultDTO transferResult;
             try {
-                transferResult = assetAcceptService.transferToAssetCard(id);
+                transferResult = assetAcceptService.transferToAssetCard(detailId);
             } catch (Exception e) {
-                log.error("资产验收单转资产卡片失败", e);
-                AssetAcceptEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    transferResult = BatchResultDTO.fail(id, id, "资产验收单不存在, 转资产卡片失败");
-                    resultDTOS.add(transferResult);
-                    continue;
-                }
-                transferResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                log.error("资产验收明细转资产卡片失败，detailId: {}", detailId, e);
+                transferResult = BatchResultDTO.fail(detailId, detailId, "转资产卡片失败: " + e.getMessage());
             }
             resultDTOS.add(transferResult);
         }
