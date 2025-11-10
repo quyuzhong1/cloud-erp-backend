@@ -433,6 +433,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             }catch (Exception e){
                 errorList.forEach(excelDTO -> excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
             }
+            updateTask(count);
         }
     }
 
