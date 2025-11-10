@@ -412,10 +412,6 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateOutputQtyById(MoldInfoDTO.UpdateQty dto) {
         MoldRefSkuEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
-        // 只有待提交或审核不通过数据支持删除
-        if (!(Objects.equals(old.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(old.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_DELETE);
-        }
         MoldRefSkuEntity entity = new MoldRefSkuEntity();
         BeanMapper.copy(old,entity);
 
@@ -439,10 +435,6 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateSkuQtyById(MoldInfoDTO.UpdateQty dto) {
         MoldRefSkuEntity old = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
-        // 只有待提交或审核不通过数据支持删除
-        if (!(Objects.equals(old.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(old.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_DELETE);
-        }
         MoldRefSkuEntity entity = new MoldRefSkuEntity();
         BeanMapper.copy(old,entity);
 
