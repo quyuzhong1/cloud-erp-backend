@@ -136,17 +136,15 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
 
             //过滤掉待提交、审核中、审核不通过的资产验收单
             List<AssetAcceptEntity> entityList = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, detailIds)
-//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode())
-//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getCode())
-//                    .ne(AssetAcceptEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
-//                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
+                    .notIn(AssetAcceptEntity::getApproveStatus, Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getCode(),ApproveStatusEnum.APPROVE_ING.getCode(),ApproveStatusEnum.REJECT.getCode()))
+                    .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
                     .list();
             List<String> filterList = entityList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
             List<AssetAcceptDetailEntity> collect = detailList.stream().filter(obj -> filterList.contains(obj.getMainId())).collect(Collectors.toList());
 
             collect.stream()
                     .forEach(obj -> {
-                        String detailId = obj.getId();
+                        String detailId = obj.getSourceDetailId();
                         BigDecimal acceptQty = new BigDecimal(obj.getAcceptQty());
 
                         // 如果 map 中已经存在该 detailId，则累加；否则直接放入
