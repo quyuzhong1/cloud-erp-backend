@@ -24,6 +24,7 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
             }else if ("approveIng".equals(status)){
                 super.buildDefaultDTO("apo.approve_status",AssetPurchaseOrderTabListEnum.APPROVE_ING.getStatus());
             }else if ("waitReceive".equals(status)){
+                super.buildDefaultDTO("apo.approve_status",ApproveStatusEnum.APPROVE.getStatus());
                 super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.WAIT_RECEIVE.getStatus());
             }else if ("allReceive".equals(status)){
                 super.buildDefaultDTO("apod.end_receive",AssetPurchaseOrderTabListEnum.ALL_RECEIVE.getStatus());
