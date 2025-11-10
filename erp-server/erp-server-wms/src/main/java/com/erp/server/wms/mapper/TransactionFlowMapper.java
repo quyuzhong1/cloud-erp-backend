@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -136,4 +138,6 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return List<String>
      */
     List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId,@Param("fromTable") Boolean fromTable);
+
+    IPage<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPagingByLocation(Page query,@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
 }

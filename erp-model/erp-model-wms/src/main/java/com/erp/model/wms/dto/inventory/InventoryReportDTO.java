@@ -622,6 +622,7 @@ public class InventoryReportDTO implements Serializable {
          */
         private String warehouseName;
 
+
         /**
          * 仓库禁用
          */
@@ -637,5 +638,26 @@ public class InventoryReportDTO implements Serializable {
          * 日期 (单据日期或者审核日期)
          */
         private LocalDate date;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseArea;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+
     }
 }
