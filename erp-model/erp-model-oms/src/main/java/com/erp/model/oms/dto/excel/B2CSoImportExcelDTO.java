@@ -50,7 +50,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*店铺")
-    @FieldValid(fieldName = "店铺", isNotBlank = true,maxLength = 30)
+    @FieldValid(fieldName = "店铺", isNotBlank = true,maxLength = 100)
     private String shopName;
 
     /**
