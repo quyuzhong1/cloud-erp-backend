@@ -6,7 +6,9 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.dto.AssetPurchaseOrderDetailDTO;
@@ -17,7 +19,9 @@ import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
+import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import java.math.BigDecimal;
@@ -35,6 +39,16 @@ import java.util.stream.Collectors;
  **/
 public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<AssetPurchaseOrderImportExcelDTO> {
 
+    private static final int BATCH_COUNT = 1000;
+
+    private final String taskId;
+
+    private final String importType;
+
+    private final Integer importCount;
+
+    @Getter
+    private Integer count = 0;
 
     /**
      * 导入数据，用于判断导入是否为空
@@ -49,7 +63,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
     /**
      * 导入正确数据
      */
-    private List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList = new ArrayList<>();
+    private List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList = new ArrayList<>(BATCH_COUNT);
 
     /**
      * 模具数据
@@ -107,7 +121,13 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     private final AssetPurchaseOrderService assetPurchaseOrderService = SpringUtil.getBean(AssetPurchaseOrderService.class);
 
-    public AssetPurchaseOrderExcelListener(List<SkuVO> skuList,
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+
+    public AssetPurchaseOrderExcelListener(String taskId,
+                                           String importType,
+                                           Integer importCount,
+                                           List<SkuVO> skuList,
                                            List<FindUserDTO> userList,
                                            List<SysDepartmentDTO> deptList,
                                            List<BaseIdDTO> companyList,
@@ -117,6 +137,9 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                                            List<SupplierEntity> supplierEntityList,
                                            List<SupplierContactEntity> supplierContactEntityList,
                                            List<SupplierAccountEntity> supplierAccountEntityList) {
+        this.taskId = taskId;
+        this.importType = importType;
+        this.importCount = importCount;
         this.skuList = skuList;
         this.userList = userList;
         this.deptList = deptList;
@@ -133,6 +156,12 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     @Override
     public void invoke(AssetPurchaseOrderImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+        count += 1;
+        //已经导入的数据跳过进度
+        if (Objects.nonNull(importCount) && count < importCount){
+            return;
+        }
+
         // 添加数据用于判断是否为空
         allList.add(importExcelDTO);
 
@@ -417,5 +446,14 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     public List<AssetPurchaseOrderDetailDTO.MoldImportDTO> getSuccessList(){
         return successList;
+    }
+
+    private void updateTask(Integer count){
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+        importResultDTO.setRemark("处理中");
+        importResultDTO.setCount(count);
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }
