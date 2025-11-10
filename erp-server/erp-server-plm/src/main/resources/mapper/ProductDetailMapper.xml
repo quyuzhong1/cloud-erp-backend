@@ -2053,7 +2053,7 @@
         pd.warehouse_location_large as warehouseLocationLarge,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        ps.product_property_id AS productPropertyId,
+        pi.property_id AS productPropertyId,
         pl.declare_element as declareElement,
         pl.declare_currency_symbol as declareCurrencySymbol
         FROM product_detail pd
