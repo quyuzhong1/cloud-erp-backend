@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
@@ -21,6 +23,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -123,14 +127,13 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
                 }
+                Map<String, Object> lableMap = new HashMap<>();
                 Object shippingTypeObj = dmpDataMap.get("logisticType");
                 if (shippingTypeObj != null) {
                     String shippingType = String.valueOf(shippingTypeObj);
-                    Map<String, String> lableMap = new HashMap<>();
                     lableMap.put("tikTokStatus", statusObj.toString());
                     //自发货(shipping_type=SELLER)	中转仓（shipping_type=TIKTOK）
                     lableMap.put("shippingType", shippingType);
-                    dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
 
                     //渠道Id
                     Object shippingProviderIdObj = dmpDataMap.get("shippingProviderId");
@@ -145,8 +148,34 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         String shippingProvider = String.valueOf(shippingProviderObj);
                         dmpDataMap.put("logisticsChannelName", "SELLER".equalsIgnoreCase(shippingType) ? "" : shippingProvider);
                     }
-
                 }
+
+                // 是否明细退款
+                boolean hasRefundLineItems = false;
+                Object lineItemsObj = dmpDataMap.get("lineItems");
+                if (null != lineItemsObj){
+                    // 存在退款的明细ID
+                    Set<String> refundedLineItemIds = new HashSet<>();
+                    JSONArray jsonArray = JSONUtil.parseArray(lineItemsObj.toString());
+                    for (Object itemObj : jsonArray) {
+                        JSONObject itemJsonObj = JSONUtil.parseObj(itemObj);
+                        String cancelUser = itemJsonObj.getStr("cancelUser");
+                        if (StringUtils.isNotBlank(cancelUser)) {
+                            String sourceFundedLineItemId = itemJsonObj.getStr("fid");
+                            refundedLineItemIds.add(sourceFundedLineItemId);
+                            hasRefundLineItems = true;
+                        }
+                    }
+                    if (CollectionUtils.isNotEmpty(refundedLineItemIds)) {
+                        lableMap.put("refundedLineItemIds", refundedLineItemIds);
+                    }
+                }
+                // 明细存在退货 取消状态
+                if (hasRefundLineItems) {
+                    dmpDataMap.put("isCancel", Boolean.TRUE);
+                }
+
+                dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
 
                 //支付时间
                 Object paidTimeObj = dmpDataMap.get("paidTime");
