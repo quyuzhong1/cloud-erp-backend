@@ -1094,6 +1094,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSkuNo(groupSkuDTO.getSkuNo());
                 cartonDetailDTO.setFnSku(viewDTO.getFnSku());
                 cartonDetailDTO.setEan(viewDTO.getEan());
+                cartonDetailDTO.setCustomerPO(viewDTO.getCustomerPO());
                 cartonDetailDTO.setMd5(Md5Util.md5(groupSkuDTO.getSkuId() + "-" + viewDTO.getFnSku() + "-" + viewDTO.getEan()));
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(groupSkuDTO.getFnSku(), e.getFnSku()))
