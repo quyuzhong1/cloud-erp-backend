@@ -416,18 +416,6 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             return;
         }
 
-        //successList.add(excelDTO);
-        if (successList.size() >= BATCH_COUNT){
-            try {
-                List<AssetPurchaseOrderImportExcelDTO> errorList2 = new ArrayList<>();
-                assetPurchaseOrderService.handleImportSuccessList(successList);
-                errorList.addAll(errorList2);
-            }catch (Exception e){
-                errorList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
-            }
-            successList.clear();
-            updateTask(count);
-        }
     }
 
 
