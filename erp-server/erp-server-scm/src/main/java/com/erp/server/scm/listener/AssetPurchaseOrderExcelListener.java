@@ -21,6 +21,8 @@ import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.scm.service.AssetNoticeDetailService;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
 import com.erp.server.scm.service.PurchasePriceService;
 import lombok.Getter;
@@ -127,6 +129,8 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
+    private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
+
     public AssetPurchaseOrderExcelListener(String taskId,
                                            String importType,
                                            Integer importCount,
@@ -221,7 +225,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                     errorMsgList.add("请录入申请人信息");
                 } else {
                     excelDTO.setPurchaseUserId(findUserDTO.getUserId());
-                    excelDTO.setPurchaseUserId(findUserDTO.getUserName());
+                    excelDTO.setPurchaseUserName(findUserDTO.getUserName());
                 }
             }
 
@@ -330,7 +334,6 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                 }
             }
 
-
             //账户名称
             if (StringUtils.isNotBlank(importExcelDTO.getPayee())) {
                 if (CollectionUtils.isEmpty(supplierAccountEntityList)) {
@@ -363,6 +366,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
             // 初始化detailList
             excelDTO.setMoldDetailImportDTOList(new ArrayList<>());
+
             excelDTOMap.put(serialNumber, excelDTO);
         }
 
@@ -396,11 +400,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
         List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
         List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
         if (ObjectUtils.isEmpty(priceDTOList)) {
-            errorMsgList.add("请录入价目表信息");
-        }
-
-        // 存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+            errorMsgList.add("未找到采购价目表");
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
             return;
@@ -408,6 +408,13 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
         // 将detail添加到对应的excelDTO的detailList中
         excelDTO.getMoldDetailImportDTOList().add(detail);
+
+        // 存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
 
         //successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
