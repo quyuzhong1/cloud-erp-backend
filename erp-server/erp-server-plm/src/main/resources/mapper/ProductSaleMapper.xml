@@ -6,7 +6,7 @@
 
 
     <sql id="Base_Column_List">
-        year_sale_qty,
+        year_sale_qty,product_property,product_property_id,insurance_property,
         year_sale_amount,month_sale_qty,month_sale_amount,
         sale_country,listing_time,delisting_time,
         is_finished_img,is_finished_video,sale_state,

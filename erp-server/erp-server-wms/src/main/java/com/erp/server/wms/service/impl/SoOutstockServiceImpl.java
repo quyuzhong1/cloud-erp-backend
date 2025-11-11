@@ -3335,10 +3335,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setWarehouseName(warehouseInfo.getName());
             }
         }
-        //取直接调拨单的流水号
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Collections.singletonList(dto.getSourceId()));
-        if (CollectionUtils.isNotEmpty(transferInfoList)) {
-            soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
+        //重新赋值
+        if (CharSequenceUtil.isBlank(soOutstock.getBatchNo())){
+            //取直接调拨单的流水号
+            List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Collections.singletonList(dto.getSourceId()));
+            if (CollectionUtils.isNotEmpty(transferInfoList)) {
+                soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
+            }
         }
         soOutstock.setPackDate(billDate);
         //销售员
@@ -4533,6 +4536,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             excelDataList.add(excelData);
         }
         ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"销售出库单物流交接单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteSoOutstock(String id) {
+        SoOutstockEntity soOutstockEntity = this.getById(id);
+        if (Objects.isNull(soOutstockEntity)){
+            soOutstockDetailService.removeByMainIdList(Collections.singletonList(id));
+            return;
+        }
+        //已审核需要反审核
+        if (ApproveStatusEnum.APPROVE.equals(soOutstockEntity.getApproveStatus())){
+            this.disApprove(soOutstockEntity, Boolean.TRUE);
+        }
+        //删除销售出库单 反审核直接调拨单并删除
+        this.deleteEntity(soOutstockEntity);
+
     }
 
     private void fillExportLogisticsHandoverListDTO(List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list) {

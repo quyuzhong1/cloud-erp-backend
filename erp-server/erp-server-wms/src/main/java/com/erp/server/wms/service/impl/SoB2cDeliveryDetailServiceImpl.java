@@ -64,6 +64,14 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
         return this.lambdaQuery().in(SoB2cDeliveryDetailEntity::getSourceDetailId, soDetailIdList).list();
     }
 
+    @Override
+    public void removeByMainIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        this.lambdaUpdate().in(SoB2cDeliveryDetailEntity::getMainId, ids).remove();
+    }
+
     /**
     * 新增修改处理数据
     */

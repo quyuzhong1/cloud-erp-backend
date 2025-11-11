@@ -480,4 +480,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
      */
     Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds);
+
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    void deleteSoB2cDelivery(String id);
 }

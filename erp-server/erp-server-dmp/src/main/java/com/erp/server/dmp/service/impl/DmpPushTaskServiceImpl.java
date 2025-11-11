@@ -473,6 +473,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return new PagingVO<>(page);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    public String saveDmpPushTask(DmpPushTaskEntity dmpPushTaskEntity) {
+        DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
+        bean.saveDmpSyncTask(dmpPushTaskEntity);
+        return dmpPushTaskEntity.getId();
+    }
+
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
