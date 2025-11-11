@@ -454,7 +454,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             addDTO.setPurchaseOrgName(value.get(0).getPurchaseOrgName());
             if (StringUtils.isNotBlank(value.get(0).getPurchaseUserId())) {
                 addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
-                addDTO.setPurchaseUserName(value.get(0).getPurchaseUserId());
+                addDTO.setPurchaseUserName(value.get(0).getPurchaseUserName());
                 SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(value.get(0).getPurchaseUserId());
                 if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
                     addDTO.setPurchaseDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
