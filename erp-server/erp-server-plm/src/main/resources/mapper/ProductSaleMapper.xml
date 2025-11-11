@@ -12,6 +12,10 @@
         is_finished_img,is_finished_video,sale_state,
         pd.create_time,pd.create_user_id,pd.update_time,
         pd.update_user_id,data_url,ps.target_sales_qty,
+                ps.input_voltage,ps.output_voltage,ps.voltage_unit,
+        ps.input_electric,ps.output_electric,ps.electric_unit,
+        ps.input_power,ps.output_power,ps.power_unit,
+        ps.input_battery_capacity,ps.output_battery_capacity,ps.battery_capacity_unit,
         ps.sales_platform,ps.is_marketable
     </sql>
 
