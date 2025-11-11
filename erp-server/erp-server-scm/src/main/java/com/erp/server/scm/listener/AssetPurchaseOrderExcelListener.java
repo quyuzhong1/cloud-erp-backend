@@ -397,6 +397,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
             List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
             if (ObjectUtils.isEmpty(priceDTOList)) {
+                errorMsgList.add("未找到采购价目表");
                 importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(importExcelDTO);
                 return;
