@@ -151,7 +151,6 @@ public class ApproveTaskDetailDTO implements Serializable {
         /**
          * 数大臣字段编码
          */
-        @NotBlank(message = "数大臣字段编码不能为空")
         private String sysField;
 
         /**
