@@ -218,5 +218,6 @@ public interface BusinessNoConstant {
     //资质字典
     String DC="DC";
 
-
+    //差异策略配置
+    String HD="HD";
 }
