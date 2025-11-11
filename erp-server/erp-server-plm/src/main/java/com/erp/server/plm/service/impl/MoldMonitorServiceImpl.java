@@ -50,6 +50,8 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -579,9 +581,20 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
             if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.PURCHASEORDER.getCode())){
                 PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO = new PurchaseOrderDTO.PurchaseCalcQtyParamsDTO();
                 purchaseCalcQtyParamsDTO.setSkuIdList(skuIds);
+                //过滤出approveTime 大于等于moldMonitorEntity.getStartDate() 并且小于等于 moldMonitorEntity.getEndDate()
+                List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.getPurchaseOrderByParams(purchaseCalcQtyParamsDTO);
                 List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO)
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .filter(e -> {
+                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate startDate = moldMonitorEntity.getStartDate();
+                            LocalDate endDate = moldMonitorEntity.getEndDate();
+                            if (approveTime == null || startDate == null || endDate == null) {
+                                return false;
+                            }
+                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                        })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
                     for (PurchaseOrderDTO.PurchaseCalcQtyDTO purchaseCalcQtyDTO : detail) {
@@ -605,6 +618,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 List<WarehouseReceiveDTO.ReceiveInfoDTO> detail = wmsTaskFeign.getReceiveByParams(dto)
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .filter(e -> {
+                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate startDate = moldMonitorEntity.getStartDate();
+                            LocalDate endDate = moldMonitorEntity.getEndDate();
+                            if (approveTime == null || startDate == null || endDate == null) {
+                                return false;
+                            }
+                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                        })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
                     for (WarehouseReceiveDTO.ReceiveInfoDTO receiveInfoDTO : detail) {
@@ -628,6 +650,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 List<PoInstockDTO.PoInStockInfoDTO> detail = wmsTaskFeign.getPoStockInByParams(dto)
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
+                        .filter(e -> {
+                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate startDate = moldMonitorEntity.getStartDate();
+                            LocalDate endDate = moldMonitorEntity.getEndDate();
+                            if (approveTime == null || startDate == null || endDate == null) {
+                                return false;
+                            }
+                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                        })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
                     for (PoInstockDTO.PoInStockInfoDTO poInStockInfoDTO : detail) {
@@ -690,7 +721,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 if(returnQtyLimit > qty){
                     moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.UNDERACHIEVED.getCode());
                 }else{
-                    moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.UNDERACHIEVED.getCode());
+                    moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.DERACHIEVED.getCode());
                 }
             }
         }

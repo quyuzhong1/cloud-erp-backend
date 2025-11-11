@@ -1137,6 +1137,8 @@ public class PoInstockDTO implements Serializable {
 
         private String approveStatus;
 
+        private LocalDate approveTime;
+
         private Integer qty;
 
     }

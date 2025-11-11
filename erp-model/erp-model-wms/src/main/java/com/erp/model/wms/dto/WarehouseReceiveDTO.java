@@ -1368,6 +1368,8 @@ public class WarehouseReceiveDTO implements Serializable {
 
         private String approveStatus;
 
+        private LocalDate approveTime;
+
         private Integer qty;
 
     }
