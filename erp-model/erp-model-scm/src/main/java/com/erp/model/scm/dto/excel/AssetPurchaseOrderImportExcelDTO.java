@@ -74,14 +74,14 @@ public class AssetPurchaseOrderImportExcelDTO implements Serializable {
      * 供应商联系人
      */
     @ExcelProperty("供应商联系人")
-    @FieldValid(fieldName = "contactName",isNotBlank = true)
+    @FieldValid(fieldName = "contactName")
     private String  contactName;
 
     /**
      * 供应商电话
      */
     @ExcelProperty("供应商电话")
-    @FieldValid(fieldName = "contactTelNumber",isNotBlank = true)
+    @FieldValid(fieldName = "contactTelNumber")
     private String  contactTelNumber;
 
     /**

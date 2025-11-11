@@ -3724,6 +3724,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return Boolean.FALSE;
     }
 
+    @Override
+    public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
+        return baseMapper.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO.getSkuIdList(), purchaseCalcQtyParamsDTO.getSupplierIdList());
+    }
+
     /**
      * 处理数据
      * @author will

@@ -667,7 +667,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         List<AssetPurchaseOrderEntity> purchaseOrderEntityList = assetPurchaseOrderService.list(lambdaQueryWrapper);
         if (CollectionUtils.isNotEmpty(purchaseOrderEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95305);
+            throw new ServiceException(ApiError.ERROR_98132);
         }
 
         return true;
@@ -688,7 +688,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 .list();
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_95308);
+            throw new ServiceException(ApiError.ERROR_98135);
         }
 
         List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
