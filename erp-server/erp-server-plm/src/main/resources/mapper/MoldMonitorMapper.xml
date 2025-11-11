@@ -102,6 +102,9 @@ mm.remark AS remark
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
              ${params.permissionSql}
         </if>
+        <if test="params != null and params.sourceType != null and params.sourceType != ''">
+            and source_type = #{params.sourceType}
+        </if>
         <if test="params != null">
             <choose>
                 <when test="params.sourceType == 'cfgMoldReturnAlertrRule'">

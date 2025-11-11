@@ -71,6 +71,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1118,7 +1119,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception{
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -1128,7 +1129,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         Map<String, List<AssetPurchaseOrderDetailDTO.MoldImportDTO>> groupedBySerialNumber = successList.stream()
                 .collect(Collectors.groupingBy(AssetPurchaseOrderDetailDTO.MoldImportDTO::getSerialNumber));
 
-        try {
             for (Map.Entry<String, List<AssetPurchaseOrderDetailDTO.MoldImportDTO>> entry : groupedBySerialNumber.entrySet()) {
                 String serialNumber = entry.getKey();
                 List<AssetPurchaseOrderDetailDTO.MoldImportDTO> moldImportDTOList = entry.getValue();
@@ -1136,6 +1136,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 if (CollectionUtils.isEmpty(moldImportDTOList)) {
                     continue;
                 }
+
 
                 // 取第一个元素作为主表数据
                 AssetPurchaseOrderDetailDTO.MoldImportDTO firstMoldImportDTO = moldImportDTOList.get(0);
@@ -1204,44 +1205,55 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntities = new ArrayList<>();
                 for (AssetPurchaseOrderDetailDTO.MoldImportDTO moldImportDTO : moldImportDTOList) {
                     List<AssetPurchaseOrderDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList = moldImportDTO.getMoldDetailImportDTOList();
-                    //从价表查询价格
-                    List<PurchasePriceDTO.PriceDTO> convertList = convertMoldDetailToPriceDTO(moldDetailImportDTOList,
-                            firstMoldImportDTO.getPurchaseOrgId(),
-                            firstMoldImportDTO.getSupplierImportDTO().getSupplierId());
-                    List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-                    if (priceDTOList.isEmpty()) {
-                        throw new ServiceException("查询采购价目表失败");
-                    }
-                    for (AssetPurchaseOrderDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
-                        AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
-                        BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
-                        assetPurchaseOrderDetailEntity.setMainId(entity.getId()); // 关联主表ID
-
-                        AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                                .eq(AssetNoticeDetailEntity::getMainId, firstMoldImportDTO.getSourceId())
-                                .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
-                                .eq(AssetNoticeDetailEntity::getAssetCode, moldDetailImportDTO.getAssetCode())
-                                .one();
-                        if (Objects.isNull(assetNoticeDetailEntity)) {
-                            throw new ServiceException("没有查到开模通知单");
+                    if (!moldDetailImportDTOList.isEmpty()) {
+                        //从价表查询价格
+                        List<PurchasePriceDTO.PriceDTO> convertList = convertMoldDetailToPriceDTO(moldDetailImportDTOList,
+                                firstMoldImportDTO.getPurchaseOrgId(),
+                                firstMoldImportDTO.getSupplierImportDTO().getSupplierId());
+                        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+                        if (priceDTOList.isEmpty()) {
+                            throw new ServiceException("查询采购价目表失败");
                         }
-                        assetPurchaseOrderDetailEntity.setSourceDetailId(assetNoticeDetailEntity.getId());
+                        for (AssetPurchaseOrderDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
+                            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
+                            BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
+                            assetPurchaseOrderDetailEntity.setMainId(entity.getId()); // 关联主表ID
 
-                        PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
-                                .filter(obj -> obj.getSkuId().equals(assetPurchaseOrderDetailEntity.getAssetId()))
-                                .findFirst()
-                                .orElse(null);
-                        MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(moldDetailImportDTO.getAssetCode());
-                        assetPurchaseOrderDetailEntity.setTag(moldInfoEntity.getTag());
+                            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                                    .eq(AssetNoticeDetailEntity::getMainId, firstMoldImportDTO.getSourceId())
+                                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                                    .eq(AssetNoticeDetailEntity::getAssetCode, moldDetailImportDTO.getAssetCode())
+                                    .one();
+                            if (Objects.isNull(assetNoticeDetailEntity)) {
+                                throw new ServiceException("没有查到开模通知单");
+                            }
+                            assetPurchaseOrderDetailEntity.setSourceDetailId(assetNoticeDetailEntity.getId());
 
-                        assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                        assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
-                        assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
-                        assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrency());
-                        assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
+                                    .filter(obj -> obj.getSkuId().equals(assetPurchaseOrderDetailEntity.getAssetId()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (Objects.isNull(priceDTO)) {
+                                throw new ServiceException("【{}】查询采购价目表失败",assetPurchaseOrderDetailEntity.getAssetCode());
+                            }
 
-                        assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
+                            MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(moldDetailImportDTO.getAssetCode());
+                            if (Objects.isNull(moldInfoEntity)) {
+                                throw new ServiceException("【{}】查询模具档案失败",moldDetailImportDTO.getAssetCode());
+                            }
+
+                            assetPurchaseOrderDetailEntity.setTag(moldInfoEntity.getTag());
+
+                            assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                            assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
+                            assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
+                            assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrency());
+                            assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+
+                            assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
+                        }
                     }
+
                 }
 
                 // 批量保存明细
@@ -1257,9 +1269,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         entity.getCode());
                 moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "导入");
             }
-        } catch (Exception e) {
-            throw new ServiceException("模具采购单导入保存失败", e);
-        }
     }
 
     @Override

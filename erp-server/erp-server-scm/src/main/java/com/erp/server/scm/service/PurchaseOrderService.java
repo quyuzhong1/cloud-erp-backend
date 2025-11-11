@@ -541,4 +541,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
+
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 }

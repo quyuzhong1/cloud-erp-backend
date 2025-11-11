@@ -590,4 +590,14 @@ public class PurchaseOrderFeignController {
                 .eq(SupplierAccountEntity::getIsDeleted, Boolean.FALSE)
                 .list();
     }
+
+
+    /**
+     * 通过sku 供应商查询所有采购订单
+     * @param purchaseCalcQtyParamsDTO 参数
+     */
+    @PostMapping("/getPurchaseOrderByParams")
+    public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
+        return purchaseOrderService.getPurchaseOrderByParams(purchaseCalcQtyParamsDTO);
+    }
 }

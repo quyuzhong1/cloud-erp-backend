@@ -94,6 +94,8 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private AssetCardDetailService assetCardDetailService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private com.erp.server.fms.service.AssetStocktakingPlanService assetStocktakingPlanService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -706,17 +708,7 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         data.setApproveStatus(assetStocktakingEntity.getApproveStatus().getStatus());
         // 数据填充处理
         fillOne(data);
-        
-        // 查询明细数据
-        List<AssetStocktakingDetailEntity> detailEntities = assetStocktakingDetailService.lambdaQuery()
-                .eq(AssetStocktakingDetailEntity::getMainId, id)
-                .list();
-        
-        if (CollUtil.isNotEmpty(detailEntities)) {
-            List<AssetStocktakingDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(AssetStocktakingDetailDTO.ViewDTO.class, detailEntities);
-            data.setDetailList(detailList);
-        }
-        
+
         return data;
     }
     /**
@@ -743,6 +735,20 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private void fillOne(AssetStocktakingDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        // 查询盘点方案名称
+        if (StrUtil.isNotBlank(data.getSourceId())) {
+            assetStocktakingPlanService.getByIdOpt(data.getSourceId())
+                    .ifPresent(plan -> data.setStocktakingPlanName(plan.getPlanName()));
+        }
+        // 查询明细数据
+        List<AssetStocktakingDetailEntity> detailEntities = assetStocktakingDetailService.lambdaQuery()
+                .eq(AssetStocktakingDetailEntity::getMainId, data.getId())
+                .list();
+
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            List<AssetStocktakingDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(AssetStocktakingDetailDTO.ViewDTO.class, detailEntities);
+            data.setDetailList(detailList);
         }
     }
 
