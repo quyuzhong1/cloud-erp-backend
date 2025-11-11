@@ -515,7 +515,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductPackShowDTOS(packShowDTOList);
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
-        logisticsShowDTOList.forEach(req -> {
+        saleShowDTOList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getProductPropertyId())) {
                 String[] split = req.getProductPropertyId().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
@@ -655,7 +655,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductPackShowDTOS(packShowDTOList);
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.listBySkuId(skuId);
-        logisticsShowDTOList.forEach(req -> {
+        saleShowDTOList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getProductPropertyId())) {
                 String[] split = req.getProductPropertyId().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
@@ -893,7 +893,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productManyDetail.setProductPackShowDTOS(packShowDTOList);
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
-        logisticsShowDTOList.stream().forEach(req -> {
+        saleShowDTOList.stream().forEach(req -> {
             List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
             //物流 禁用字段
             List<String> logisticsDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_LOGISTICS_SHOW_LIST, skuFiledConfigList);
