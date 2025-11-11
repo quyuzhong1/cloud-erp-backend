@@ -17,6 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -58,7 +59,6 @@ import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -164,6 +164,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private SampleLedgerService sampleLedgerService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Autowired
+    private DictBasicService dictBasicService;
     @Autowired
     @Lazy
     private SampleRecipientService _this;
@@ -691,8 +693,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         approveDTO.getVariablesMap().put("totalQty", totalQty);
         
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -1203,8 +1208,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         startDTO.getVariablesMap().put("totalQty", totalQty);
 
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -1306,11 +1314,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         Map<String, String> userNameMap = userList.stream()
                 .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+        
+        // 查询样品用途字典并转换为Map
+        List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageNameMap = usageDictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setUsage(SampleUsageEnum.getName(data.getUsage()));
+            data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
             data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
 //            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
