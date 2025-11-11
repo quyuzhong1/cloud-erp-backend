@@ -222,8 +222,15 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             this.saveBatch(billDetailList);
             for (LogisticsBillDetailEntity entity : billDetailList) {
                 LogisticsBillEntity logisticsBillEntity = billList.stream().filter(obj -> CharSequenceUtil.equals(entity.getMainId(), obj.getId())).findFirst().orElse(null);
-                //新增物流费用单
-                logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    //新增物流费用单
+                    logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
             }
         }
         return Boolean.FALSE;
