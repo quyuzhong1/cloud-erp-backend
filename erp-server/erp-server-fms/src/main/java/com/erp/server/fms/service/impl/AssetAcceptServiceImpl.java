@@ -1454,16 +1454,24 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         LocalDate currentDate = LocalDate.now();
         
         // 一个验收明细生成一张资产卡片，但卡片包含多个实物信息明细
-        AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
-        BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardAddDTO);
-        String generatedCardId = cardResult.getId();
-        
-        // 更新明细状态为已生成
-        detail.setAssetCardStatus(AssetCardStatusEnum.GENERATED.getStatus());
-        assetAcceptDetailService.updateById(detail);
-        
-        log.info("资产验收明细{}转资产卡片成功，生成资产卡片ID: {}", detailId, generatedCardId);
-        return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成1张资产卡片，包含" + detail.getAcceptQty() + "个实物信息");
+
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
+            BaseResultDTO.AddDTO cardResult = assetCardService.add(cardAddDTO);
+            String generatedCardId = cardResult.getId();
+            assetCardService.submit(generatedCardId,false);
+            assetCardService.approve(new ApproveOneDTO(generatedCardId,ApproveTypeEnum.PASS.getStatus(),""));
+            // 更新明细状态为已生成
+            detail.setAssetCardStatus(AssetCardStatusEnum.GENERATED.getStatus());
+            assetAcceptDetailService.updateById(detail);
+            log.info("资产验收明细{}转资产卡片成功，生成资产卡片ID: {}", detailId, generatedCardId);
+            return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成1张资产卡片，包含" + detail.getAcceptQty() + "个实物信息");
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
     }
     
     /**
