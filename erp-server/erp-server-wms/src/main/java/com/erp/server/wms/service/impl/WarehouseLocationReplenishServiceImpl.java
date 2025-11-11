@@ -242,7 +242,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             );
             List<String> pickAreaIds = pickAreaList.stream().map(item -> item.getId()).collect(Collectors.toList());
             if(pickAreaIds.isEmpty()){
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_AREA);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_AREA, dto.getSkuNo());
             }
 
             //推荐补货仓位
@@ -254,7 +254,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             );
             List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if(pickLocationCodeList.isEmpty()){
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION, dto.getSkuNo());
             }
             List<InventoryEntity> pickInventoryList = inventoryService.list(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
@@ -305,7 +305,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 */
                 inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
                 if(Objects.isNull(inventoryEntity)){
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION, dto.getSkuNo());
                 }
                 String toWarehouseLocation = inventoryEntity.getWarehouseLocation();
                 replenishItem.setToWarehouseLocation(toWarehouseLocation);

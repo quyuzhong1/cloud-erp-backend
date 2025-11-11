@@ -1295,8 +1295,8 @@ public enum ApiError implements Serializable {
     ERROR_EXISTS_TRANSFER_INFO(92236, "存在未删除或未作废的直接调拨单"),
     ERROR_GENERATE_TRANSFER(92237, "可用库存不足，生成直接调拨单失败"),
 
-    ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
-    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
+    ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时SKU【{}】没有找到有效的库区"),
+    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时SKU【{}】没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
     ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
