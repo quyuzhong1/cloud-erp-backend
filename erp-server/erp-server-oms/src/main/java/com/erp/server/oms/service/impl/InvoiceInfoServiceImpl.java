@@ -954,6 +954,16 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return ruleResultDTO;
     }
 
+    @Override
+    public InvoiceInfoEntity findLatestInvoice(String soId) {
+        if (CharSequenceUtil.isBlank(soId)){
+            return null;
+        }
+        List<InvoiceInfoEntity> list = lambdaQuery().eq(InvoiceInfoEntity::getSoId, soId)
+                .orderByDesc(InvoiceInfoEntity::getCreateTime).list();
+        return CollUtil.isEmpty(list) ? null : list.get(0);
+    }
+
     private Map<String, Object> handleMatchJson(SoB2cEntity soB2cEntity) {
         Map<String, Object> map = new HashMap<>();
         if (Objects.isNull(soB2cEntity)){
