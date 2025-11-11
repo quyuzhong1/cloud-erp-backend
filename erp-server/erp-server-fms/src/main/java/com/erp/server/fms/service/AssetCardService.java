@@ -83,13 +83,15 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     void updateAndSubmit(AssetCardDTO.UpdateDTO dto);
 
      /**
-     * 提交审核
-     * @author wuht
-     * @date: 2025-10-11
-     * @param id
-     * @return
-     */
-    BatchResultDTO submit(String id);
+      * 提交审核
+      *
+      * @param id
+      * @param isNeedProcess
+      * @return
+      * @author wuht
+      * @date: 2025-10-11
+      */
+    BatchResultDTO submit(String id, boolean isNeedProcess);
 
     /**
     * 审核
