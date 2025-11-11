@@ -38,6 +38,8 @@ import com.erp.model.fms.enums.UnitEnum;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -2087,11 +2089,36 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (dtoList.isEmpty()) {
             return Boolean.FALSE;
         }
+
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         assetAcceptEntity.setSourceId(dtoList.get(0).getId());
         assetAcceptEntity.setSourceCode(dtoList.get(0).getCode());
+        assetAcceptEntity.setSupplierId(dtoList.get(0).getSupplierId());
+        assetAcceptEntity.setSupplierName(dtoList.get(0).getSupplierName());
         assetAcceptEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         assetAcceptEntity.setAcceptDate(LocalDate.now());
+
+        //验收人
+        if (StringUtils.isNotBlank(dtoList.get(0).getPurchaseOrgId())) {
+            assetAcceptEntity.setAcceptUserId(dtoList.get(0).getAcceptUserId());
+            assetAcceptEntity.setAcceptUserName(dtoList.get(0).getAcceptUserName());
+            //部门
+            SysDepartmentUserNumberDTO deptDTO = sysUserFeign.getDeptByUserId(dtoList.get(0).getAcceptUserId());
+            if (Objects.nonNull(deptDTO)) {
+                assetAcceptEntity.setAcceptDeptId(deptDTO.getDepartmentId());
+                assetAcceptEntity.setAcceptDeptName(deptDTO.getDepartmentName());
+            }
+        }
+
+        //组织
+        if (StringUtils.isNotBlank(dtoList.get(0).getPurchaseOrgId())) {
+            assetAcceptEntity.setAcceptOrgId(dtoList.get(0).getPurchaseOrgId());
+            SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(dtoList.get(0).getPurchaseOrgId());
+            if (Objects.nonNull(companyEntity)) {
+                assetAcceptEntity.setAcceptOrgName(companyEntity.getCompanyName());
+            }
+        }
+
         log.info("开始通过下推新增资产验收单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YSD);
