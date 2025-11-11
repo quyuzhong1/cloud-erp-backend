@@ -1083,6 +1083,16 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private String endReceive;
 
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
     }
 
     @Data
@@ -1160,6 +1170,16 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String endReceive;
 
         /**
+         * 验收人id
+         */
+        private String acceptUserId;
+
+        /**
+         * 验收人名称
+         */
+        private String acceptUserName;
+
+        /**
          * 资产位置id
          */
         @NotBlank(message = "资产位置id不能为空")
@@ -1181,6 +1201,16 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         @NotBlank(message = "费用项目不能为空")
         private String costType;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 备注
