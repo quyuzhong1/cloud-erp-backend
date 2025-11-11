@@ -134,9 +134,9 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
 
             List<String> detailIds = detailList.stream().map(obj -> obj.getMainId()).collect(Collectors.toList());
 
-            //过滤掉待提交、审核中、审核不通过的资产验收单
+            //可验收数量=待验收数量-待提交、审核中、审核不通过的资产验收单
             List<AssetAcceptEntity> entityList = assetAcceptService.lambdaQuery().in(AssetAcceptEntity::getId, detailIds)
-                    .notIn(AssetAcceptEntity::getApproveStatus, Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getCode(),ApproveStatusEnum.APPROVE_ING.getCode(),ApproveStatusEnum.REJECT.getCode()))
+                    .in(AssetAcceptEntity::getApproveStatus, Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getCode(),ApproveStatusEnum.APPROVE_ING.getCode(),ApproveStatusEnum.REJECT.getCode()))
                     .eq(AssetAcceptEntity::getIsDeleted, Boolean.FALSE)
                     .list();
             List<String> filterList = entityList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
