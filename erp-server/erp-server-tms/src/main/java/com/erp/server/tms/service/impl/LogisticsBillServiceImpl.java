@@ -287,8 +287,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 detailEntityList.add(saveDetailEntity);
             }
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
-            //新增物流费用单
-            addLogisticsBillCost(saveEntity,detailEntityList);
+
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                //新增物流费用单
+                addLogisticsBillCost(saveEntity,detailEntityList);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         return Boolean.TRUE;
     }
@@ -1226,8 +1234,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 if (CollectionUtils.isEmpty(detailList)) {
                     continue;
                 }
-                //新增物流费用单
-                logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    //新增物流费用单
+                    logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
             }
         }
         return batchResultDTOList;
@@ -1378,11 +1393,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             this.logisticsBillDetailService.saveBatch(detailEntityList);
             Map<String, List<LogisticsBillDetailEntity>> billMap = detailEntityList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getMainId));
             list.forEach(entity -> {
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     this.addLogisticsBillCost(entity, billMap.get(entity.getId()));
                 }catch (Exception e){
                     log.error(e.getMessage());
 //                    throw new ServiceException(e.getMessage());
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             });
         });
