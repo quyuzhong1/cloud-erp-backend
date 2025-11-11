@@ -122,7 +122,8 @@
         SELECT 'waitReceive' as tabFlag,COUNT(*) as count FROM (
             SELECT 1
             FROM asset_purchase_order_detail apod
-            WHERE apod.is_deleted = FALSE and apod.end_receive = 'waitReceive'
+            left join asset_purchase_order apo on apo.id = apod.main_id
+            WHERE apod.is_deleted = FALSE and apod.end_receive = 'waitReceive' and apo.approve_status = 'approve'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
