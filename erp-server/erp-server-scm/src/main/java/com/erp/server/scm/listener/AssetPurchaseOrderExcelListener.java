@@ -21,6 +21,8 @@ import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.scm.service.AssetNoticeDetailService;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
 import com.erp.server.scm.service.PurchasePriceService;
 import lombok.Getter;
@@ -127,6 +129,8 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
+    private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
+
     public AssetPurchaseOrderExcelListener(String taskId,
                                            String importType,
                                            Integer importCount,
@@ -221,7 +225,7 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                     errorMsgList.add("请录入申请人信息");
                 } else {
                     excelDTO.setPurchaseUserId(findUserDTO.getUserId());
-                    excelDTO.setPurchaseUserId(findUserDTO.getUserName());
+                    excelDTO.setPurchaseUserName(findUserDTO.getUserName());
                 }
             }
 
@@ -330,7 +334,6 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                 }
             }
 
-
             //账户名称
             if (StringUtils.isNotBlank(importExcelDTO.getPayee())) {
                 if (CollectionUtils.isEmpty(supplierAccountEntityList)) {
@@ -363,40 +366,46 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
             // 初始化detailList
             excelDTO.setMoldDetailImportDTOList(new ArrayList<>());
-            excelDTOMap.put(serialNumber, excelDTO);
-        }
 
-        // 创建新的detail并设置属性
-        AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail = new AssetPurchaseOrderDetailDTO.MoldDetailImportDTO();
+            // 创建新的detail并设置属性
+            AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail = new AssetPurchaseOrderDetailDTO.MoldDetailImportDTO();
 
-        // sku信息
-        if (CollectionUtils.isEmpty(skuList)) {
-            errorMsgList.add("系统中未发现已启用的sku信息");
-        } else {
-            if (StringUtils.isNotBlank(importExcelDTO.getAssetCode())) {
-                SkuVO skuVO = skuList.stream()
-                        .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssetCode()))
-                        .findFirst()
-                        .orElse(null);
-                if (ObjectUtils.isEmpty(skuVO)) {
-                    errorMsgList.add("请录入启用的sku信息");
-                } else {
-                    detail.setAssetId(skuVO.getSkuId());
-                    detail.setAssetCode(skuVO.getSkuNo());
-                    detail.setAssetName(skuVO.getSkuName());
+            // sku信息
+            if (CollectionUtils.isEmpty(skuList)) {
+                errorMsgList.add("系统中未发现已启用的sku信息");
+            } else {
+                if (StringUtils.isNotBlank(importExcelDTO.getAssetCode())) {
+                    SkuVO skuVO = skuList.stream()
+                            .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssetCode()))
+                            .findFirst()
+                            .orElse(null);
+                    if (ObjectUtils.isEmpty(skuVO)) {
+                        errorMsgList.add("请录入启用的sku信息");
+                    } else {
+                        detail.setAssetId(skuVO.getSkuId());
+                        detail.setAssetCode(skuVO.getSkuNo());
+                        detail.setAssetName(skuVO.getSkuName());
+                    }
                 }
             }
-        }
-        // 设置detail的其他属性
-        detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
-        detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
-        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
-        detail.setRemark(importExcelDTO.getRemark());
+            // 设置detail的其他属性
+            detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
+            detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
+            detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
+            detail.setRemark(importExcelDTO.getRemark());
 
-        List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-        if (ObjectUtils.isEmpty(priceDTOList)) {
-            errorMsgList.add("请录入价目表信息");
+            List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
+            List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+            if (ObjectUtils.isEmpty(priceDTOList)) {
+                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(importExcelDTO);
+                return;
+            }
+
+            // 将detail添加到对应的excelDTO的detailList中
+            excelDTO.getMoldDetailImportDTOList().add(detail);
+
+            excelDTOMap.put(serialNumber, excelDTO);
         }
 
         // 存在错误数据则直接返回
@@ -405,9 +414,6 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             errorList.add(importExcelDTO);
             return;
         }
-
-        // 将detail添加到对应的excelDTO的detailList中
-        excelDTO.getMoldDetailImportDTOList().add(detail);
 
         //successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){

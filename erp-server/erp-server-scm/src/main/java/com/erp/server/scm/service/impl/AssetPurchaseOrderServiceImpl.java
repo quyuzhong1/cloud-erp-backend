@@ -1159,10 +1159,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 entity.setContractStampStatus(ContractStampStatusEnum.WAIT_SUBMIT.getCode());
 
                 // 保存主表
-                boolean saveAssetPurchase = super.save(entity);
-                if (!saveAssetPurchase) {
-                    throw new ServiceException("模具采购单头导入保存失败");
-                }
+                super.save(entity);
 
                 // 处理供应商数据
                 AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
@@ -1196,10 +1193,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
                 }
 
-                boolean savePurchaseSupplier = assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
-                if (!savePurchaseSupplier) {
-                    throw new ServiceException("模具采购供应商导入保存失败");
-                }
+                assetPurchaseOrderSupplierService.save(assetPurchaseOrderSupplierEntity);
 
                 // 处理明细数据
                 List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntities = new ArrayList<>();
@@ -1211,9 +1205,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                                 firstMoldImportDTO.getPurchaseOrgId(),
                                 firstMoldImportDTO.getSupplierImportDTO().getSupplierId());
                         List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-                        if (priceDTOList.isEmpty()) {
-                            throw new ServiceException("查询采购价目表失败");
-                        }
+
                         for (AssetPurchaseOrderDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
                             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
                             BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
@@ -1224,24 +1216,14 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                                     .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
                                     .eq(AssetNoticeDetailEntity::getAssetCode, moldDetailImportDTO.getAssetCode())
                                     .one();
-                            if (Objects.isNull(assetNoticeDetailEntity)) {
-                                throw new ServiceException("没有查到开模通知单");
-                            }
                             assetPurchaseOrderDetailEntity.setSourceDetailId(assetNoticeDetailEntity.getId());
 
                             PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
                                     .filter(obj -> obj.getSkuId().equals(assetPurchaseOrderDetailEntity.getAssetId()))
                                     .findFirst()
                                     .orElse(null);
-                            if (Objects.isNull(priceDTO)) {
-                                throw new ServiceException("【{}】查询采购价目表失败",assetPurchaseOrderDetailEntity.getAssetCode());
-                            }
 
                             MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(moldDetailImportDTO.getAssetCode());
-                            if (Objects.isNull(moldInfoEntity)) {
-                                throw new ServiceException("【{}】查询模具档案失败",moldDetailImportDTO.getAssetCode());
-                            }
-
                             assetPurchaseOrderDetailEntity.setTag(moldInfoEntity.getTag());
 
                             assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
@@ -1257,10 +1239,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 }
 
                 // 批量保存明细
-                boolean saveDetail = assetPurchaseOrderDetailService.saveBatch(assetPurchaseOrderDetailEntities);
-                if (!saveDetail) {
-                    throw new ServiceException("模具采购单明细导入保存失败");
-                }
+                assetPurchaseOrderDetailService.saveBatch(assetPurchaseOrderDetailEntities);
 
                 // 记录操作日志
                 String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
