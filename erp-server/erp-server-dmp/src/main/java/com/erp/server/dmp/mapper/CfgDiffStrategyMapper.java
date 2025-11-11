@@ -1,8 +1,12 @@
 package com.erp.server.dmp.mapper;
-import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CfgDiffStrategyMapper extends BaseMapper<CfgDiffStrategyEntity> {
 
+	IPage<CfgDiffStrategyDTO.ViewDTO> paging(Page query, @Param("params") CfgDiffStrategyDTO.PagingParamDTO params);
 }

@@ -32,5 +32,37 @@
         code, name, bill_type, status
     </sql>
 
-
+<select id="paging" resultType="com.erp.model.dmp.dto.CfgDiffStrategyDTO$ViewDTO">
+        select 
+        t.id,
+        g.id detailId,
+        t.code,
+        t.name,
+        t.bill_type,
+        g.diff_tag,
+        g.condition_desc,
+        g.suggest_type,
+        t.status,
+        t.create_user_id,
+		t.create_user_name,
+		t.create_time,
+		t.update_user_id,
+		t.update_user_name,
+		t.update_time
+        from cfg_diff_strategy t
+        left join cfg_diff_strategy_detail g on t.id = g.main_id
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false and g.is_deleted = false 
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
 </mapper>

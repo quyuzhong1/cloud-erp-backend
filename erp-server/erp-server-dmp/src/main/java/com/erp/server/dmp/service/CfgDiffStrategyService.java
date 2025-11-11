@@ -1,8 +1,13 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
+import java.util.List;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
 
 /**
  * <p>
@@ -32,5 +37,13 @@ public interface CfgDiffStrategyService extends SuperService<CfgDiffStrategyEnti
     */
     Boolean update(CfgDiffStrategyDTO.UpdateDTO dto);
 
-
+    List<CfgDiffStrategyDTO.TabListDTO> tabList(PermissionsDTO dto);
+    
+    PagingVO<CfgDiffStrategyDTO.ViewDTO> paging(PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto);
+    
+    Boolean exportExcel(CfgDiffStrategyDTO.ExpotParamDTO dto);
+    
+    void batchOp(CfgDiffStrategyDTO.BatchOpDTO dto);
+    
+    CfgDiffStrategyDTO.UpdateDTO view(String id);
 }

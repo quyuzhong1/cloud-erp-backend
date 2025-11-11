@@ -172,6 +172,7 @@ public enum ModuleTypeEnum {
     SAMPLE_TRANSFER_INFO("146", "样品转移单"),
     PAYABLE_INFO("145", "应付单"),
 
+    CFG_DIFF_STRATEGY("150", "差异策略配置"),
     ;
 
 

@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -51,8 +53,8 @@ public class CfgDiffStrategyController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.dmp.dto.DmpOutputTaskDTO.TabListDTO>>
      **/
     @PostMapping("/tabList")
-    public ApiResult<List<CfgDiffStrategyDTO.TabListDTO>> tabList(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto) {
-        return success();
+    public ApiResult<List<CfgDiffStrategyDTO.TabListDTO>> tabList(@RequestBody @Validated PermissionsDTO dto) {
+        return success(cfgDiffStrategyService.tabList(dto));
     }
     
     /**
@@ -67,7 +69,7 @@ public class CfgDiffStrategyController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = CfgDiffStrategyQueryHandler.class)
     public ApiResult<PagingVO<CfgDiffStrategyDTO.ViewDTO>> paging(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto) {
-        return success();
+        return success(cfgDiffStrategyService.paging(dto));
     }
     
     /**
@@ -80,7 +82,7 @@ public class CfgDiffStrategyController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "差异策略配置基础信息导出")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated CfgDiffStrategyDTO.ExpotParamDTO dto) {
-        return success();
+        return success(cfgDiffStrategyService.exportExcel(dto));
     }
 
     
@@ -131,7 +133,19 @@ public class CfgDiffStrategyController extends BaseController {
          serviceClass = CfgDiffStrategyService.class,
          keyIdName = "id")
      public ApiResult<?> batchOp(@RequestBody @Validated CfgDiffStrategyDTO.BatchOpDTO dto) {
-         return success();
+    	 cfgDiffStrategyService.batchOp(dto);
+    	 return success();
      }
 
+     /**
+      * 展示
+      * @author shukai
+      * @date:  2025-11-11
+      * @param dto
+      * @return ApiResult
+      */
+      @PostMapping("/view")
+      public ApiResult<CfgDiffStrategyDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+          return success(cfgDiffStrategyService.view(dto.getId()));
+      }
 }

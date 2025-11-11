@@ -4,6 +4,7 @@ import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -31,4 +32,7 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportAfterSale")
     PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto);
+    
+    @PostMapping("/feign/export/exportCfgDiffStrategy")
+    PagingVO<CfgDiffStrategyDTO.ViewDTO> exportCfgDiffStrategy(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto);
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -96,7 +97,7 @@ public class CfgDiffStrategyDTO implements Serializable {
            /**
             * 启用状态名称
             */
-          private Boolean statusName;
+          private String statusName;
           
           /**
            * 创建人id
@@ -206,6 +207,8 @@ public class CfgDiffStrategyDTO implements Serializable {
      @Data
      @NoArgsConstructor
      public static class AddDetailDTO {
+    	 
+    	 private String id;
 
     	 /**
           * 差异标签：http://172.16.100.11:3002/project/119/interface/api/24109		key传dictDiffTag
@@ -247,6 +250,12 @@ public class CfgDiffStrategyDTO implements Serializable {
            @NotBlank(message = "条件的字段不能为空")
            @Size(max = 30,message = "条件的字段最大长度不能超过30位")
            private String field;
+           
+           /**
+            * 条件的字段名称
+            */
+            @NotBlank(message = "条件的字段名称不能为空")
+            private String fieldName;
 
            /**
            * 比较符：高级查询getQueryCondition获取，入参code取单据类型返回的remark字段
@@ -254,12 +263,22 @@ public class CfgDiffStrategyDTO implements Serializable {
            @NotBlank(message = "比较符不能为空")
            @Size(max = 30,message = "比较符最大长度不能超过30位")
            private String compare;
+           
+           /**
+            * 比较符名称
+            */
+            @NotBlank(message = "比较符名称不能为空")
+            private String compareName;
 
            /**
-           * 对应的值，高级查询getQueryCondition获取，入参code取单据类型返回的remark字段
+           * 对应的值，高级查询getQueryCondition获取，入参code取单据类型返回的remark字段，多个用,逗号分隔
            */
-           @NotBlank(message = "对应的值不能为空")
            private String value;
+           
+           /**
+            * 对应的值名称
+            */
+            private String valueName;
 
            /**
            * 右括号
@@ -289,6 +308,11 @@ public class CfgDiffStrategyDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends AddDTO {
 
+    	/**
+    	 * 编码
+    	 */
+    	private String code;
+    	
         /**
         * 主键id
         */
@@ -306,8 +330,8 @@ public class CfgDiffStrategyDTO implements Serializable {
     	/**
     	 * 主键id
     	 */
-    	@NotBlank(message = "主键id不能为空")
-    	private String id;
+    	@NotEmpty(message = "主键id不能为空")
+    	private List<String> ids;
     	
     	/**
     	 * 操作类型：able=批量启用，disable=批量停用，delete=批量删除
