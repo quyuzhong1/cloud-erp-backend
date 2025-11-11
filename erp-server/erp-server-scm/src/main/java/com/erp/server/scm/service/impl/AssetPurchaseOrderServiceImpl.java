@@ -1230,6 +1230,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                             assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
                             assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrencySymbol());
                             assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
 
                             assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
                         }
