@@ -233,6 +233,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品归还单明细不能为空");
+        }
         SampleReturnInfoEntity sampleReturnInfoEntity =  BeanMapperUtils.map(SampleReturnInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理

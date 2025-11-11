@@ -1229,6 +1229,41 @@ public class CustomerDTO implements Serializable {
 
         private String receiveConditionName;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+
+        /**
+         * 平台归属
+         */
+        private String platformType;
+
+        /**
+         * 平台归属名称
+         */
+        private String platformTypeName;
+
+        /**
+         * 平台类型:CustomerInfoBusinessModeEnum
+         */
+        private String businessMode;
+
+        /**
+         * 平台类型名称:CustomerInfoBusinessModeEnum
+         */
+        private String businessModeName;
+
         //----销售组织信息----
         /**
          * 销售部门id
