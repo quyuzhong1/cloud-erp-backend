@@ -582,8 +582,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO = new PurchaseOrderDTO.PurchaseCalcQtyParamsDTO();
                 purchaseCalcQtyParamsDTO.setSkuIdList(skuIds);
                 //过滤出approveTime 大于等于moldMonitorEntity.getStartDate() 并且小于等于 moldMonitorEntity.getEndDate()
-                List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.getPurchaseOrderByParams(purchaseCalcQtyParamsDTO);
-                List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO)
+                List<PurchaseOrderDTO.PurchaseCalcQtyDTO> detail = purchaseOrderFeign.getPurchaseOrderByParams(purchaseCalcQtyParamsDTO)
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
                         .filter(e -> {
