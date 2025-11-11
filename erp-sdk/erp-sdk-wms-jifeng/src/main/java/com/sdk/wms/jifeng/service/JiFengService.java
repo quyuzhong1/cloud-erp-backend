@@ -53,7 +53,6 @@ public class JiFengService {
 //        JiFengBaseResp<JiFengTokenResp> resp = jiFengService.refreshToken(JiFengAuthRequest.builder().userId(userId).refreshToken(refreshToken).token(token).email(email).domain(url).clientId(clientId).clientSecret(clientSecret).key("vLdBchPpgi").build());
 //        System.out.println(resp);
 //    }
-
     public JiFengBaseResp<String> authorize(JiFengAuthRequest jiFengAuthRequest){
         String path = "/api/oauth/authorize";
         String url = getUrl(jiFengAuthRequest.getDomain());
