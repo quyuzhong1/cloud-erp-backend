@@ -1675,6 +1675,7 @@
         LEFT join product_logistics pl on pl.sku_id = pd.id and pl.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pp.sku_id = pl.sku_id and pp.is_deleted = false
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = false
         WHERE  pd.is_deleted=false
         <if test="skuIdList !=null and skuIdList.size>0">
             AND pd.id IN
@@ -2036,6 +2037,7 @@
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id AND ps.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
