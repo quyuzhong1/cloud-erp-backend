@@ -12,6 +12,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.dto.AssetPurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -21,6 +22,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
+import com.erp.server.scm.service.PurchasePriceService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -121,8 +123,9 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     private final AssetPurchaseOrderService assetPurchaseOrderService = SpringUtil.getBean(AssetPurchaseOrderService.class);
 
-    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+    private final PurchasePriceService purchasePriceService = SpringUtil.getBean(PurchasePriceService.class);
 
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
     public AssetPurchaseOrderExcelListener(String taskId,
                                            String importType,
@@ -384,6 +387,17 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                 }
             }
         }
+        // 设置detail的其他属性
+        detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
+        detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
+        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
+        detail.setRemark(importExcelDTO.getRemark());
+
+        List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+        if (ObjectUtils.isEmpty(priceDTOList)) {
+            errorMsgList.add("请录入价目表信息");
+        }
 
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
@@ -392,14 +406,21 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             return;
         }
 
-        // 设置detail的其他属性
-        detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
-        detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
-        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
-        detail.setRemark(importExcelDTO.getRemark());
-
         // 将detail添加到对应的excelDTO的detailList中
         excelDTO.getMoldDetailImportDTOList().add(detail);
+
+        //successList.add(excelDTO);
+        if (successList.size() >= BATCH_COUNT){
+            try {
+                List<AssetPurchaseOrderImportExcelDTO> errorList2 = new ArrayList<>();
+                assetPurchaseOrderService.handleImportSuccessList(successList);
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                errorList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+            }
+            successList.clear();
+            updateTask(count);
+        }
     }
 
 
@@ -421,6 +442,17 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
                 }
             }
         }
+    }
+
+    public static List<PurchasePriceDTO.PriceDTO> convertImportDTOToPriceDTO(AssetPurchaseOrderDetailDTO.MoldImportDTO importDTO,
+                                                                             AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail) {
+        PurchasePriceDTO.PriceDTO priceDTO = PurchasePriceDTO.PriceDTO.builder()
+                .purchaseOrgId(importDTO.getPurchaseOrgId())
+                .skuId(detail.getAssetId())
+                .supplierId(importDTO.getSupplierImportDTO().getSupplierId())
+                .qty(detail.getPurchaseQty() != null ? detail.getPurchaseQty().intValue() : null)
+                .build();
+        return Collections.singletonList(priceDTO);
     }
 
     @Override
