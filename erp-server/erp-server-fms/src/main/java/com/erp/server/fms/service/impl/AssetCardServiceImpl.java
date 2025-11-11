@@ -434,7 +434,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
+    public BatchResultDTO submit(String id,  boolean isNeedProcess) {
         AssetCardEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到资产卡片主单数据");
@@ -446,7 +446,10 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
 
         // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动资产卡片主单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
+        if (isNeedProcess){
+            startProcess(entity);
+        }
+
         // 记录操作日志
         log.info("提交 开始记录资产卡片主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产卡片主单");
@@ -461,7 +464,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId());
+        this.submit(result.getId(), false);
         return result;
     }
 
@@ -472,7 +475,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        this.submit(dto.getId(), false);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
