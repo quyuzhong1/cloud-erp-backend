@@ -7,6 +7,7 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -16,6 +17,7 @@ import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
@@ -31,6 +33,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +53,8 @@ import java.time.LocalDateTime;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.stream.Stream;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
@@ -103,6 +108,9 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private AssetAceptFeign assetAceptFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -123,8 +131,11 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             throw new ServiceException("保存失败");
         }
 
-        List<AssetPurchaseChangeDetailEntity> detailList = handleDetailData(addDTO, assetPurchaseChangeEntity.getId());
-        assetPurchaseChangeDetailService.saveBatch(detailList);
+        //List<AssetPurchaseChangeDetailEntity> detailList = handleDetailData(addDTO, assetPurchaseChangeEntity.getId());
+        handleAddDetailData(addDTO.getAssetPurchaseChangeDetailDTOList());
+        List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntityList =
+                BeanMapperUtils.copyList(AssetPurchaseChangeDetailEntity.class, addDTO.getAssetPurchaseChangeDetailDTOList());
+        assetPurchaseChangeDetailService.saveBatch(assetPurchaseChangeDetailEntityList);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "模具采购变更单" , assetPurchaseChangeEntity.getCode());
@@ -938,5 +949,20 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
         }
 
+    }
+
+    public void handleAddDetailData(List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList){
+        for (AssetPurchaseChangeDetailDTO.AddDTO addDTO : assetPurchaseChangeDetailDTOList) {
+            AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailService.getById(addDTO.getSourceDetailId());
+
+            List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> assetAcceptList =
+                    assetAceptFeign.getAcceptByDetailId(assetPurchaseOrderDetailEntity.getId()).getData();
+            if (!assetAcceptList.isEmpty()) {
+                BigDecimal sum = assetAcceptList.stream().map(obj -> obj.getAcceptQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (addDTO.getPurchaseQty().compareTo(sum) < 0) {
+                    throw new ServiceException(ApiError.ERROR_95323);
+                }
+            }
+        }
     }
 }
