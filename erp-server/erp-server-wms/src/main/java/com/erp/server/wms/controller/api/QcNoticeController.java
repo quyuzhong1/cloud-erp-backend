@@ -357,7 +357,7 @@ public class QcNoticeController extends BaseController {
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "质检通知单作废")
-    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated QcNoticeDTO.InvalidDTO dto) {
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO  dto) {
         List<String> ids = dto.getIds();
         String remark = dto.getRemark();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

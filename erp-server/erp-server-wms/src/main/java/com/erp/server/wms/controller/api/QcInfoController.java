@@ -346,7 +346,7 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:invalid",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult<?> invalid(@RequestBody @Validated QcInfoDTO.InvalidDTO dto) {
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         String remark = dto.getRemark();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
