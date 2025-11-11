@@ -3391,13 +3391,20 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         Map<String, String> skuNoMap = skuList.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (k1, k2) -> k1));
 
-        // 校验每个SKU是否有入库记录
+        // 收集所有没有入库记录的SKU编码
+        List<String> errorSkuNoList = new ArrayList<>();
         for (PurchaseReturnOrderDetailDTO.AddDTO detail : detailList) {
             String skuId = detail.getSkuId();
             if (!instockedSkuIds.contains(skuId)) {
                 String skuNo = skuNoMap.getOrDefault(skuId, skuId);
-                throw new ServiceException(CharSequenceUtil.format("SKU【{}】未找到入库信息，无法退货", skuNo));
+                errorSkuNoList.add(skuNo);
             }
+        }
+
+        // 如果存在没有入库记录的SKU，一次性提示所有
+        if (CollectionUtils.isNotEmpty(errorSkuNoList)) {
+            String errorMessage = String.join("】、【", errorSkuNoList);
+            throw new ServiceException(CharSequenceUtil.format("SKU【{}】未找到入库信息，无法退货", errorMessage));
         }
     }
 
