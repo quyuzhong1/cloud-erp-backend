@@ -1551,6 +1551,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             viewGeneratePurchaseOrderDTO.setPurchaseDeptId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId()) ? assetPurchaseOrderEntity.getPurchaseDeptId() : null);
             viewGeneratePurchaseOrderDTO.setPurchaseDeptName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptName()) ? assetPurchaseOrderEntity.getPurchaseDeptName() : null);
             viewGeneratePurchaseOrderDTO.setEndReceive(assetPurchaseOrderDetailEntity.getEndReceive());
+            //供应商信息，下推的时候需要
+            AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
+                    .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, assetPurchaseOrderDetailEntity.getMainId())
+                    .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
+                    .one();
+            viewGeneratePurchaseOrderDTO.setSupplierId(assetPurchaseOrderSupplierEntity.getSupplierId());
+            viewGeneratePurchaseOrderDTO.setSupplierName(assetPurchaseOrderSupplierEntity.getSupplierName());
             /**
              * 1、待验收数量=采购数量-已验收数量
              * 2、已验收数量=已审核资产验收单订单验收数量
