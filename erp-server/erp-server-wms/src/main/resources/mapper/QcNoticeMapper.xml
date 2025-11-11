@@ -64,6 +64,8 @@
         qn.qc_status AS qcStatus,
         qn.qc_timeliness AS qcTimeliness,
         qn.remark AS remark,
+        qn.invalid_status AS invalidStatus,
+        qn.invalid_remark AS invalidRemark,
         qnd.id AS detailId,
         qnd.sku_id AS skuId,
         qnd.sku_no AS skuNo,
