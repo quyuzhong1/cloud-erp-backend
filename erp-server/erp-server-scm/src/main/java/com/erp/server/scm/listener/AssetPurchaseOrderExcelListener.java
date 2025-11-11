@@ -367,47 +367,47 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             // 初始化detailList
             excelDTO.setMoldDetailImportDTOList(new ArrayList<>());
 
-            // 创建新的detail并设置属性
-            AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail = new AssetPurchaseOrderDetailDTO.MoldDetailImportDTO();
-
-            // sku信息
-            if (CollectionUtils.isEmpty(skuList)) {
-                errorMsgList.add("系统中未发现已启用的sku信息");
-            } else {
-                if (StringUtils.isNotBlank(importExcelDTO.getAssetCode())) {
-                    SkuVO skuVO = skuList.stream()
-                            .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssetCode()))
-                            .findFirst()
-                            .orElse(null);
-                    if (ObjectUtils.isEmpty(skuVO)) {
-                        errorMsgList.add("请录入启用的sku信息");
-                    } else {
-                        detail.setAssetId(skuVO.getSkuId());
-                        detail.setAssetCode(skuVO.getSkuNo());
-                        detail.setAssetName(skuVO.getSkuName());
-                    }
-                }
-            }
-            // 设置detail的其他属性
-            detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
-            detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
-            detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
-            detail.setRemark(importExcelDTO.getRemark());
-
-            List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
-            List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-            if (ObjectUtils.isEmpty(priceDTOList)) {
-                errorMsgList.add("未找到采购价目表");
-                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(importExcelDTO);
-                return;
-            }
-
-            // 将detail添加到对应的excelDTO的detailList中
-            excelDTO.getMoldDetailImportDTOList().add(detail);
-
             excelDTOMap.put(serialNumber, excelDTO);
         }
+
+        // 创建新的detail并设置属性
+        AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail = new AssetPurchaseOrderDetailDTO.MoldDetailImportDTO();
+
+        // sku信息
+        if (CollectionUtils.isEmpty(skuList)) {
+            errorMsgList.add("系统中未发现已启用的sku信息");
+        } else {
+            if (StringUtils.isNotBlank(importExcelDTO.getAssetCode())) {
+                SkuVO skuVO = skuList.stream()
+                        .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssetCode()))
+                        .findFirst()
+                        .orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    errorMsgList.add("请录入启用的sku信息");
+                } else {
+                    detail.setAssetId(skuVO.getSkuId());
+                    detail.setAssetCode(skuVO.getSkuNo());
+                    detail.setAssetName(skuVO.getSkuName());
+                }
+            }
+        }
+        // 设置detail的其他属性
+        detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
+        detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
+        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
+        detail.setRemark(importExcelDTO.getRemark());
+
+        List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+        if (ObjectUtils.isEmpty(priceDTOList)) {
+            errorMsgList.add("未找到采购价目表");
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+
+        // 将detail添加到对应的excelDTO的detailList中
+        excelDTO.getMoldDetailImportDTOList().add(detail);
 
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
