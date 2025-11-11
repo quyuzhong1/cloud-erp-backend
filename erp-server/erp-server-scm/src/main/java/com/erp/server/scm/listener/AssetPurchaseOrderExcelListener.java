@@ -466,9 +466,18 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
     @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         successList.addAll(excelDTOMap.values());
-        if (!successList.isEmpty()){
+
+        List<AssetPurchaseOrderDetailDTO.MoldImportDTO> filteredList = new ArrayList<>();
+        for (AssetPurchaseOrderDetailDTO.MoldImportDTO moldImportDTO : excelDTOMap.values()) {
+            if (!moldImportDTO.getMoldDetailImportDTOList().isEmpty()) {
+                filteredList.add(moldImportDTO);
+            }
+        }
+
+
+        if (!filteredList.isEmpty()){
             try {
-                assetPurchaseOrderService.handleImportSuccessList(successList);
+                assetPurchaseOrderService.handleImportSuccessList(filteredList);
             }catch (Exception e){
                 errorList.forEach(excelDTO -> excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
             }
