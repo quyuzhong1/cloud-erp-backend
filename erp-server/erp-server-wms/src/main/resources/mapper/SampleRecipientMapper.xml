@@ -371,6 +371,7 @@
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
+        and srd.is_deleted = FALSE
         AND sr.approve_status = 'approve'
         AND srd.exec_status IN ('waitOutstock', 'partOutstock')
         <if test="permissionSql != null and permissionSql != ''">
@@ -385,6 +386,7 @@
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
+        and srd.is_deleted = FALSE
         AND srd.exec_status = 'completeOutstock'
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}

@@ -27,7 +27,6 @@ import java.util.Map;
  * @since 2023-05-10
  */
 @Mapper
-@DS("postgres")
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
     IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params);

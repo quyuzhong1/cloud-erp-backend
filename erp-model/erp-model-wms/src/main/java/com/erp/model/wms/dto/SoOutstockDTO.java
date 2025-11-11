@@ -465,6 +465,10 @@ public class SoOutstockDTO implements Serializable {
 
         private List<LocalDate> billDateList;
         
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
