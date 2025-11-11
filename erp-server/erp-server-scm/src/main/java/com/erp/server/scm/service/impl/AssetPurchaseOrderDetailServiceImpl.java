@@ -136,7 +136,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         List<AssetPurchaseOrderEntity> assetPurchaseOrderEntityList = assetPurchaseOrderService.listByIds(purchaseOrderIdList);
         long count = assetPurchaseOrderEntityList.stream().filter(obj -> !obj.getApproveStatus().equals(AssetApproveStatusEnum.APPROVE.getCode())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95319);
+            throw new ServiceException(ApiError.ERROR_98146);
         }
 
         // 过滤需更新的记录（未结束接收的明细）
@@ -228,7 +228,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95313,assetPurchaseOrderDetailEntity.getAssetCode());
+            throw new ServiceException(ApiError.ERROR_98140,assetPurchaseOrderDetailEntity.getAssetCode());
         }
 
         super.saveBatch(detailEntityList);
@@ -255,7 +255,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                     .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                     .list();
             if (detailList.size() > oldList.size()) {
-                throw new ServiceException(ApiError.ERROR_95311); // 不允许增加明细
+                throw new ServiceException(ApiError.ERROR_98138); // 不允许增加明细
             }
 
             // 校验采购数量是否超过剩余数量
@@ -314,7 +314,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
             if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum)
                     .compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
-                throw new ServiceException(ApiError.ERROR_95312); // 采购数量超过剩余数量
+                throw new ServiceException(ApiError.ERROR_98139); // 采购数量超过剩余数量
             }
         }
     }
@@ -379,7 +379,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(invalidEntity)) {
-            throw new ServiceException(ApiError.ERROR_95313, invalidEntity.getAssetCode());
+            throw new ServiceException(ApiError.ERROR_98140, invalidEntity.getAssetCode());
         }
     }
 
