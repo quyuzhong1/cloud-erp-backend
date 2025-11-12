@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -205,6 +207,12 @@ public class SampleLedgerFlowDTO implements Serializable {
          */
         private Integer qty;
 
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
 
@@ -303,6 +311,12 @@ public class SampleLedgerFlowDTO implements Serializable {
         * 数量
         */
         private Integer qty;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
 
 
     }
@@ -443,6 +457,13 @@ public class SampleLedgerFlowDTO implements Serializable {
         private Integer qty;
 
 
+        /**
+         * 备注
+         */
+        @Size(max = 200,message = "备注最大长度不能超过200位")
+        private String remark;
+
+
     }
 
     /**
@@ -560,6 +581,11 @@ public class SampleLedgerFlowDTO implements Serializable {
              * 样品台账ID
              */
             private String sampleLedgerId;
+
+            /**
+             * 备注
+             */
+            private String remark;
         }
     }
 
