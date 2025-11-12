@@ -638,7 +638,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
-        if (!CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())) {
+        if (!CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus()) && !CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())) {
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));
             if (!Boolean.TRUE.equals(b)){
                 throw new ServiceException("反审核取消同步失败");
