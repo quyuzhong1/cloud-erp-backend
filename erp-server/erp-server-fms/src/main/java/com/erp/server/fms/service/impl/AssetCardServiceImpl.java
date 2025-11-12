@@ -79,6 +79,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @Autowired
     private com.erp.server.fms.service.AssetCardDetailService assetCardDetailService;
     @Autowired
+    private com.erp.server.fms.service.AssetAcceptDetailService assetAcceptDetailService;
+    @Autowired
     private com.erp.server.fms.service.AssetStocktakingService assetStocktakingService;
     @Autowired
     private com.erp.server.fms.service.AssetStocktakingDetailService assetStocktakingDetailService;
@@ -618,7 +620,50 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+        
+        // 删除明细数据
+        log.info("删除 开始删除资产卡片明细数据，主单id：【{}】", id);
+        List<AssetCardDetailEntity> detailList = assetCardDetailService.lambdaQuery()
+                .eq(AssetCardDetailEntity::getMainId, id)
+                .list();
+        
+        if (CollUtil.isNotEmpty(detailList)) {
+            // 收集所有来源明细ID，用于更新验收单明细的卡片关联状态
+            List<String> sourceDetailIds = detailList.stream()
+                    .map(AssetCardDetailEntity::getSourceDetailId)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toList());
+            
+            // 删除明细数据
+            boolean removeDetailResult = assetCardDetailService.removeByIds(
+                    detailList.stream().map(AssetCardDetailEntity::getId).collect(Collectors.toList())
+            );
+            if (!removeDetailResult) {
+                throw new ServiceException("删除资产卡片明细数据失败");
+            }
+            log.info("删除资产卡片明细数据成功，共删除{}条明细", detailList.size());
+            
+            // 更新资产验收单明细的卡片关联状态为"未生成"
+            if (CollUtil.isNotEmpty(sourceDetailIds)) {
+                log.info("删除 开始更新资产验收单明细的卡片关联状态，sourceDetailIds：【{}】", sourceDetailIds);
+                List<AssetAcceptDetailEntity> acceptDetailList = assetAcceptDetailService.lambdaQuery()
+                        .in(AssetAcceptDetailEntity::getId, sourceDetailIds)
+                        .list();
+                
+                if (CollUtil.isNotEmpty(acceptDetailList)) {
+                    // 将卡片关联状态更新为"未生成"
+                    acceptDetailList.forEach(acceptDetail -> 
+                            acceptDetail.setAssetCardStatus(com.erp.model.fms.enums.AssetCardStatusEnum.NOT_GENERATED.getStatus())
+                    );
+                    
+                    boolean updateResult = assetAcceptDetailService.updateBatchById(acceptDetailList);
+                    if (!updateResult) {
+                        throw new ServiceException("更新资产验收单明细的卡片关联状态失败");
+                    }
+                    log.info("更新资产验收单明细的卡片关联状态成功，共更新{}条验收明细", acceptDetailList.size());
+                }
+            }
+        }
 
         // 删除主单数据
         log.info("删除 开始删除资产卡片主单主单数据，id：【{}】", id);
