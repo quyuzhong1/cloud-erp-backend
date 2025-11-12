@@ -1535,6 +1535,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             /**
              * 添加修改日志
              */
+            if(Objects.isNull(soInfo.getShippingFee())){
+                soInfo.setShippingFee(BigDecimal.ZERO);
+            }
+            if(Objects.isNull(soInfo.getBankServiceFee())){
+                soInfo.setBankServiceFee(BigDecimal.ZERO);
+            }
             operateLogService.addModuleOperateLogByObj(old, soInfo, ModuleTypeEnum.SO.getCode(), id, "", "");
             // 此处调整为明细的币制取主单的币制
             if (StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {

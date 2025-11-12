@@ -516,6 +516,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     .sorted(Comparator.comparing(SoReceiptEntity::getCreateTime))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(filteredList)) {
+                resultMap.put("receiveDate", LocalDateTimeUtil.format(filteredList.get(0).getReceiptDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), filteredList.get(0).getDictReceiptMethod())).findFirst().orElse(null);
+                if (Objects.nonNull(dictBasicEntity)) {
+                    resultMap.put("receiveMethod", dictBasicEntity.getRemark());
+                }
                 BankAccountEntity bankAccount = bankAccountService.getById(filteredList.get(0).getReceiptAccount());
                 if (Objects.nonNull(bankAccount)) {
                     resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
