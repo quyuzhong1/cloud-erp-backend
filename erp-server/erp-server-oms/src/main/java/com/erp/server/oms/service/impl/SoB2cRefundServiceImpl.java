@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
@@ -353,6 +354,15 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
         List<String> skuIds = list.stream().map(v->v.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVoList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<SoOutstockDetailEntity> allOutList = soOutstockFeign.listDetailBySoIds(soIds);
+
+        //查询审核流程
+        List<String> ids = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_REFUND.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+        }
+
         for (SoB2cRefundDTO.PagingViewDTO item : list) {
             String dictPlatform = item.getDictPlatform();
             item.setPlatformName(PlatformDictEnum.getNameByCode(dictPlatform));
@@ -363,6 +373,12 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
             item.setProductName(skuVO.getSkuName());
             List<SoOutstockDetailEntity> outList = allOutList.stream().filter(s->s.getSoId().equals(item.getSoId()) && s.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
             item.setOutQty(outList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
+            }
         }
     }
 }
