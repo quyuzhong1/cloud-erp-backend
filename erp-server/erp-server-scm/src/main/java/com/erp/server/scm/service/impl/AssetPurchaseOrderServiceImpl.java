@@ -1242,6 +1242,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 // 批量保存明细
                 assetPurchaseOrderDetailService.saveBatch(assetPurchaseOrderDetailEntities);
 
+                //回写开模通知单
+                rewriteAssetNotice(assetPurchaseOrderDetailEntities);
+
                 // 记录操作日志
                 String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
                         UserContext.getDefaultLoginUser().getUserName(),
@@ -1249,6 +1252,37 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         entity.getCode());
                 moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), entity.getId(), "导入");
             }
+    }
+
+    public void rewriteAssetNotice(List<AssetPurchaseOrderDetailEntity> list){
+        //回写通知单生成状态
+        for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
+            List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            //已采购总数
+            BigDecimal purchaseSumQty = assetPurchaseOrderDetailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .one();
+
+            if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) == 0) {
+                //采购总数量等于当前明细数量，状态改为未生成
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.NOT_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            } else if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
+                //采购总数量大于当前明细数量，状态改为部分生成
+                assetNoticeDetailService.lambdaUpdate()
+                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
+                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                        .update();
+            }
+        }
     }
 
     @Override
