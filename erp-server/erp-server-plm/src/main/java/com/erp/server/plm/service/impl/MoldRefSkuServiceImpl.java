@@ -147,7 +147,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         // 记录操作日志
         log.info("提交 开始记录模具关联sku日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(),"模具关联sku");
-        sysLogService.addSysLogBySave(msg, "", id, "");
+        sysLogService.addSysLogBySave(msg, "", id, "","提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -168,7 +168,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具关联sku", approveType.getName(), dto.getComment());
-        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "","审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -218,7 +218,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具关联sku");
-        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "","反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -245,7 +245,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         // 删除日志数据
         log.info("删除 开始删除模具关联sku日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具关联sku");
-        sysLogService.addSysLogBySave(msg, "", id, "");
+        sysLogService.addSysLogBySave(msg, "", id, "","删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DELETE);
     }
 
@@ -270,7 +270,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具关联sku");
-        sysLogService.addSysLogBySave(msg, "", id, "");
+        sysLogService.addSysLogBySave(msg, "", id, "","撤销操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.MOLD_REF_SKU.getCode());
