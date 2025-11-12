@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 
 
 /**
@@ -22,7 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_return_detail")
-public class SampleReturnDetailEntity extends BaseEntity<SampleReturnDetailEntity> {
+public class SampleReturnDetailEntity extends BaseEntity<SampleReturnDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 关联归还单主表ID
@@ -78,6 +80,24 @@ public class SampleReturnDetailEntity extends BaseEntity<SampleReturnDetailEntit
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    /**
+     * 实现接口方法：获取样品台账ID
+     * 归还单需要从借用单动态获取台账ID，此处返回null
+     */
+    @Override
+    public String getSampleLedgerId() {
+        return null;
+    }
+
+    /**
+     * 实现接口方法：获取数量
+     * 归还单使用 returnQty 字段
+     */
+    @Override
+    public Integer getQty() {
+        return this.returnQty;
     }
 
 }

@@ -146,11 +146,12 @@
             ta.in_warehouse_name as inWarehouseName,
             ta.in_org_id as inOrgId,
             ta.in_org_name as inOrgName
-        from transfer_application ta
-        inner join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
+        from  transfer_application_detail tad
+        inner join transfer_application ta on ta.id = tad.main_id and tad.is_deleted = false
         <where>
-            ta.is_deleted = false and ta.id in
-            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            ta.is_deleted = false
+            and tad.id in
+            <foreach collection="detailIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </where>

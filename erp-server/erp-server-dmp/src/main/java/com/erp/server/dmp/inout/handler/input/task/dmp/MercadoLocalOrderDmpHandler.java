@@ -56,9 +56,17 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
 
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_local_shipment_data");
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibreLocal_shipment_data");
+
+        //查询SLA信息
+        DmpInputTaskEntity slaInputTaskEntity = list.stream().filter(req -> "1952980922018058717".equals(req.getCfgInputId())).findFirst().orElse(null);
+        List<ParamData> paramSlaList = new ArrayList<>();
+        paramSlaList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, slaInputTaskEntity.getId()));
+        List<Map<String, Object>> dmpInputMongoChildSlaList = mongoService.findMongoData(paramSlaList, "mercadolibreLocal_shipmentSla_data");
+
         //使用 DateTimeFormatter 解析字符串日期
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
 
         String parentTaskId = dmpInputTaskEntity.getParentTaskId();
         List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
@@ -118,12 +126,14 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
 
                 Object shipmentId = shipmentIdMap.get("id");
                 if (shipmentId != null) {
+                    lableMap.put("shipmentId", shipmentId);
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shipmentMap)) {
                         continue;
                     }
                     dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
-                    lableMap.put("shipmentId", shipmentId);
+                    //买家自选物流 （跟踪方式）
+                    dmpDataMap.put("buyerSelectedLogistics", shipmentMap.get("trackingMethod"));
 
                     Object dateCreated = shipmentMap.get("dateCreated");
                     if (ObjectUtil.isNotEmpty(dateCreated)) {
@@ -251,8 +261,18 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
                             Object costObj = leadTimeMap.get("cost");
                             lableMap.put("cost", costObj);
                         }
+                    }
 
-
+                    //sla信息不为空
+                    Map<String, Object> shipmentSlaMap = dmpInputMongoChildSlaList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(shipmentSlaMap)) {
+                        //sla 状态 。 表示货件的当前状态。其值可以是“on_time”、“delayed”、“early”
+                        dmpDataMap.put("slaStatus", shipmentSlaMap.get("status"));
+                        //sla 最晚发货时间 。 发货的截止日期和时间，需要在此时间之前发货
+                        Object expectedDateObj =shipmentSlaMap.get("expectedDate") ;
+                        if (null != expectedDateObj) {
+                            lableMap.put("slaExpectedDate", expectedDateObj);
+                        }
                     }
 
                     //扩展字段

@@ -102,7 +102,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     private ProductChangeDetailsService productChangeDetailsService;
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private BomOperateLogService bomOperateLogService;
@@ -837,7 +837,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     private void setList(Object newObj, Object oldObj, List<String> resultList) {
-        List<String> list = sysLogService.listSysLogField(newObj, oldObj);
+        List<String> list = operateLogService.listSysLogField(newObj, oldObj);
         if (CollectionUtils.isNotEmpty(list)) {
             resultList.addAll(list);
         }

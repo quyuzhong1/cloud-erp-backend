@@ -17,12 +17,20 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.enums.ImportTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -32,6 +40,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import org.springframework.beans.BeanUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
@@ -50,7 +59,6 @@ import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -78,6 +86,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -146,6 +155,18 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Autowired
     private WmsAttachmentService attachmentService;
     @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Autowired
+    private DictBasicService dictBasicService;
+    @Autowired
     @Lazy
     private SampleRecipientService _this;
 
@@ -175,6 +196,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         validateUsageScope(sampleRecipientEntity);
 
         log.info("开始新增样品领用单");
+        
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
+        
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);
         sampleRecipientEntity.setCode(code);
@@ -282,6 +309,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 使用范围验证
         validateUsageScope(sampleRecipientEntity);
+
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
 
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
@@ -564,6 +596,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 根据样本领用单
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleRecipientEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
@@ -639,7 +685,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -647,8 +693,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         approveDTO.getVariablesMap().put("totalQty", totalQty);
         
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -690,6 +739,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 反审核条件判断
         validateDisApprove(entity);
+
+        // 使用分布式锁进行数量校验（反审核时需要校验台账是否足够扣减）
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -910,7 +962,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             .collect(Collectors.toList());
         
         // 查询主单信息
-        List<SampleRecipientEntity> mainList = this.lambdaQuery().in(SampleRecipientEntity::getId, mainIds).list();
+        List<SampleRecipientEntity> mainList = new ArrayList<>();
+        if (!mainIds.isEmpty()) {
+            mainList = this.lambdaQuery().in(SampleRecipientEntity::getId, mainIds).list();
+        }
         Map<String, SampleRecipientEntity> mainIdEntityMap = mainList.stream()
             .collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
 
@@ -999,7 +1054,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("只有已审核通过的样品领用单能结束领用");
         }
 
-        // 检查明细状态，只有部分出库的样品领用单能结束领用
+        // 检查明细状态，只有待出库或部分出库的样品领用单能结束领用
         List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
             .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
             .list();
@@ -1008,23 +1063,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单明细不能为空");
         }
 
-        // 检查是否有部分出库状态的明细
-        boolean hasPartOutstock = detailList.stream()
-            .anyMatch(detail -> SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()));
-
-        if (!hasPartOutstock) {
-            throw new ServiceException("只有部分出库的样品领用单能结束领用");
-        }
-
-        // 检查是否所有明细都是"已出库"或"待出库"
-        boolean allCompletedOrWaiting = detailList.stream()
-            .allMatch(detail ->
-                SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
-                SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
+        // 检查是否有待出库或部分出库状态的明细
+        boolean hasWaitOrPartOutstock = detailList.stream()
+            .anyMatch(detail -> 
+                SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
+                SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
             );
 
-        if (allCompletedOrWaiting) {
-            throw new ServiceException("只有部分出库的样品领用单能结束领用");
+        if (!hasWaitOrPartOutstock) {
+            throw new ServiceException("只有待出库或部分出库的样品领用单能结束领用");
         }
     }
 
@@ -1060,8 +1107,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public SampleRecipientDTO.ViewDTO view(String id) {
         SampleRecipientEntity sampleRecipientEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品领用单数据"));
-        SampleRecipientDTO.ViewDTO data = BeanMapperUtils.map(SampleRecipientDTO.ViewDTO.class, sampleRecipientEntity);
+        SampleRecipientDTO.ViewDTO data = new SampleRecipientDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleRecipientEntity, data);
         data.setApproveStatus(sampleRecipientEntity.getApproveStatus().getCode());
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
@@ -1095,7 +1145,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
                 
                 // 移动端商品详情字段填充
-                productDTO.setReservedQty(detail.getRecipientQty() - detail.getDeliveryQty());
+                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为领用数量-已出库数量
+                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (detail.getRecipientQty() - detail.getDeliveryQty());
+                productDTO.setReservedQty(reservedQty);
                 productDTO.setDeliveryQty(detail.getDeliveryQty());
                 productDTO.setExecStatus(detail.getExecStatus());
                 
@@ -1112,6 +1164,25 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RECIPIENT.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(curApproveList)) {
+                String curApproveName = curApproveList.stream()
+                    .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                    .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApproveName)) {
+                    data.setApproveUserName(curApproveName);
+                }
+            }
+        }
+        
         return data;
     }
     /**
@@ -1129,7 +1200,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -1137,8 +1208,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         startDTO.getVariablesMap().put("totalQty", totalQty);
 
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -1203,7 +1277,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleRecipientEntity::getId, id)
-        .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveUserId, "")
+                .set(SampleRecipientEntity::getApproveUserName, "")
+                .set(SampleRecipientEntity::getApproveStatus, approveStatus)
+                .set(SampleRecipientEntity::getApproveTime, null)
         .update(new SampleRecipientEntity());
     }
 
@@ -1237,11 +1314,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         Map<String, String> userNameMap = userList.stream()
                 .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+        
+        // 查询样品用途字典并转换为Map
+        List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageNameMap = usageDictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setUsage(SampleUsageEnum.getName(data.getUsage()));
+            data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
             data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
 //            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
@@ -1249,10 +1332,19 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
             }
         }
     }
@@ -2698,6 +2790,86 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 使用分布式锁校验样品台账数量
+     * 领用单需要动态查询台账ID
+     * 领用单：审核+X（不需要校验），反审核-X（需要校验）
+     */
+    private void validateSampleLedgerQtyWithLock(SampleRecipientEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品领用单明细
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("样品领用单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 只有反审核时需要校验（扣减库存）
+        if (!ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            log.info("样品领用单审核不需要校验台账数量，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = detailList.stream()
+                .map(SampleRecipientDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setUseUserId(entity.getUseUserId());
+        searchDTO.setSkuIds(skuIds);
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleRecipientDetailEntity detail : detailList) {
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(-detail.getRecipientQty()); // 反审核时扣减库存
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到台账，SKU：{}，领用人：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getUserName(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的样品台账不存在，无法反审核", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的样品台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验样品领用单台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, approveType, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("样品领用单台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
     }
 
 

@@ -6,6 +6,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -39,5 +40,11 @@ public interface SysPartitionFeign {
      */
     @PostMapping("feign/partition/getPartitionByCountry")
     String getPartitionByCountry(@RequestBody String country);
+
+    /**
+     * 高级查询军区信息
+     */
+    @PostMapping("feign/partition/listByAdvanceQuery")
+    List<DictPartitionEntity> listByAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 
 }

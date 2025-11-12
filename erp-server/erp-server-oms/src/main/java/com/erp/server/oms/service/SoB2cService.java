@@ -2,10 +2,7 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -561,12 +558,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 撤销流程
      * @description
-     * @param id
+     * @param dto
      * @author Lambda
      * @return
      * @create 2024-01-09 12:06
      */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 反审核

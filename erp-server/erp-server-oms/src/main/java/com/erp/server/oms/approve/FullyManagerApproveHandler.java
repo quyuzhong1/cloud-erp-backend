@@ -21,7 +21,7 @@ public class FullyManagerApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = soB2cService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = soB2cService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

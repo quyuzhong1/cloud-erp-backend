@@ -188,7 +188,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         List<DictGlobalAreaEntity> dbList = this.list();
         List<String> idList = dbList.stream().map(DictGlobalAreaEntity::getId).collect(Collectors.toList());
 
-        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList);
+        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList , businessType);
         for (KingdeeDTO.AssistDTO item : areaList) {
             String kingdeeId = item.getKingdeeId();
             String kingdeeCode = item.getKingdeeCode();
@@ -291,7 +291,11 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
                 dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
             }
         });
-        thirdpartyRefBusinessService.removeByBusinessId(id);
+        Class<DictGlobalAreaEntity> AreaClass = DictGlobalAreaEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        thirdpartyRefBusinessService.removeByBusinessId(id , businessType);
         return BatchResultDTO.success(entity.getId(), entity.getRegionName(), OperationTypeEnum.DELETE);
 
     }
@@ -351,12 +355,12 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
                     .update();
         }
 
-        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
+        TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id , businessType);
         if (Objects.isNull(refBusinessEntity)) {
-            Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
-            TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String businessType = tableName.value();
             ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
             refEntity.setBusinessType(businessType);
             refEntity.setBusinessId(id);

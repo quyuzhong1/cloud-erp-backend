@@ -110,4 +110,12 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return LastPullDTO
      */
     DmpPushTaskDTO.LastPullDTO getLastPullRecord(@Param("params")DmpPushTaskDTO.LastPullParamDTO paramDTO);
+
+    /**
+     * 获取最新的推送记录
+     * @param sourceCodeList 来源编码列表
+     * @param outputClass 输出处理器
+     * @return 分组后的推送记录列表
+     */
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@Param("sourceCodeList") List<String> sourceCodeList, @Param("outputClass") String outputClass);
 }

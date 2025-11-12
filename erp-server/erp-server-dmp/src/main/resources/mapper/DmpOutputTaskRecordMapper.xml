@@ -475,4 +475,27 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
           AND bill_type = #{params.billType}
           AND platform = #{params.platform};
     </select>
+
+    <select id="getLastOutputTaskRecordList" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT *
+            FROM (
+                SELECT
+                    dotr.*,
+                    ROW_NUMBER() OVER (PARTITION BY dotr.data_id ORDER BY dotr.create_time DESC) AS rn
+                FROM
+                dmp_output_task_record AS dotr
+                LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+                LEFT JOIN dmp_cfg_output AS dco ON dco.id = dor.cfg_output_id
+                WHERE
+                dco.output_class = #{outputClass}
+                AND dotr.source_code IN
+            <foreach collection="sourceCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+                AND dotr.is_deleted = FALSE
+                AND dor.is_deleted = FALSE
+            ) t
+        WHERE t.rn = 1
+        ORDER BY t.create_time DESC
+    </select>
 </mapper>

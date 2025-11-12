@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -148,4 +149,7 @@ public interface SoB2cDeliveryFeign {
 
     @PostMapping("feign/soB2cDelivery/generateDeliveryAndOutStock")
     void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    @PostMapping("/feign/soB2cDelivery/getDeliveryCodeBySourceId")
+    Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds);
 }

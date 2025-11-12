@@ -169,6 +169,7 @@ public enum ModuleTypeEnum {
     SAMPLE_BACK_INFO("135", "样品退回单"),
     SAMPLE_LEDGER("136", "样品台账"),
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
+    SAMPLE_TRANSFER_INFO("146", "样品转移单"),
     PAYABLE_INFO("145", "应付单"),
 
     ;

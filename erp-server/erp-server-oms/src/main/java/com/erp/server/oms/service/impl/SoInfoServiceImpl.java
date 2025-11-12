@@ -87,6 +87,8 @@ import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.convert.SoInfoConverter;
@@ -1052,6 +1054,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
+
+                //剩余发货通知数量 = 销售数量 - 发货通知数量
+                Integer remainingNoticeQty = qty - effectiveNoticeQty;
+                item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
 
@@ -1081,6 +1087,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
+                // 设置SPU信息
+                item.setSpuId(sku.getProductId());
+                item.setSpuNo(sku.getSpuNo());
+                item.setSpuName(sku.getSpuName());
             }
             //发货状态
             String deliveryStatus = DeliveryStatusEnum.UN_SHIPPED.getCode();
@@ -1372,6 +1382,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        Boolean needUpdateDeliveryNotice = false;
+        if (!soInfo.getSalesOrgId().equals(dto.getSalesOrgId()) || !soInfo.getSellerId().equals(dto.getSellerId()) || !soInfo.getSalesDeptId().equals(dto.getSalesDeptId())) {
+            //销售组织和销售部门销售员变更校验,是否存在已审核发货通知单
+            List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeFeign.listDeliveryNoticeBySoIds(Collections.singletonList(soInfo.getId()));
+            if (CollUtil.isNotEmpty(soDeliveryNoticeEntities)){
+                long count = soDeliveryNoticeEntities.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus())).count();
+                if(count > 0) {
+                    throw new ServiceException("下游发货单通知单已审核通过，不允许修改");
+                }
+                needUpdateDeliveryNotice = true;
+            }
+        }
         //已审核不能编辑
         if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
             throw new ServiceException(ApiError.ERROR_92017);
@@ -1400,9 +1422,26 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         String saleOrgId = dto.getSalesOrgId();
         if (StringUtils.isNotBlank(saleOrgId)) {
-            String oldSaleOrgId = soInfo.getSalesOrgId();
-            if (CollUtil.isNotEmpty(existReceipt) && !saleOrgId.equals(oldSaleOrgId)) {
+
+        }
+
+        //销售组织
+        String salesOrgId = dto.getSalesOrgId();
+        if (StringUtils.isNotBlank(salesOrgId)) {
+            String oldSalesOrgId = soInfo.getSalesOrgId();
+            if (CollUtil.isNotEmpty(existReceipt) && !saleOrgId.equals(oldSalesOrgId)) {
                 throw new ServiceException("已存在收款单，组织不允许修改");
+            }
+
+            if(StringUtils.isNotBlank(oldSalesOrgId) && !salesOrgId.equals(oldSalesOrgId)) {
+                //判断是否已下推发货通知单，是则销售组织不允许修改
+                String soId = soInfo.getId();
+                Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
+                if (CollUtil.isNotEmpty(pushDownMap)
+                        && pushDownMap.containsKey(soId)
+                        && pushDownMap.get(soId) > 0) {
+                    throw new ServiceException("已下推发货通知单冻结库存，销售组织不允许修改，请删除发货通知单后修改");
+                }
             }
         }
         String code = soInfo.getCode();
@@ -1429,9 +1468,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (!soInfo.getIsDeclare()) {
             soInfo.setCustomsFee(BigDecimal.ZERO);
         }
-
-        //销售组织
-        String salesOrgId = dto.getSalesOrgId();
         //销售员
         String sellerId = dto.getSellerId();
         //用户信息
@@ -1476,7 +1512,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
-
+            if (needUpdateDeliveryNotice){
+                soDeliveryNoticeFeign.updateSalesInfo(soInfo);
+            }
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
             omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
@@ -3390,6 +3428,49 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
+
+            // 收集所有仓库ID用于虚拟仓校验
+            List<String> warehouseIdList = val.stream()
+                    .map(SoInfoDTO.GenerateSoOutView::getWarehouseId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 校验仓库是否绑定了虚拟仓
+            if (CollectionUtils.isNotEmpty(warehouseIdList)) {
+                List<VirtualWarehouseRelationEntity> virtualWarehouseRelationList = wmsVirtualWarehouseFeign.getByWarehouseIds(warehouseIdList);
+                if (CollectionUtils.isNotEmpty(virtualWarehouseRelationList)) {
+                    // 获取虚拟仓信息
+                    List<String> virtualWarehouseIdList = virtualWarehouseRelationList.stream()
+                            .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId)
+                            .distinct()
+                            .collect(Collectors.toList());
+                    List<VirtualWarehouseEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.listByIds(virtualWarehouseIdList);
+
+                    // 构建仓库ID到虚拟仓名称的映射
+                    Map<String, String> warehouseToVirtualMap = new HashMap<>();
+                    for (VirtualWarehouseRelationEntity relation : virtualWarehouseRelationList) {
+                        VirtualWarehouseEntity virtualWarehouse = virtualWarehouseList.stream()
+                                .filter(vw -> vw.getId().equals(relation.getVirtualWarehouseId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (virtualWarehouse != null) {
+                            warehouseToVirtualMap.put(relation.getWarehouseId(), virtualWarehouse.getName());
+                        }
+                    }
+
+                    // 检查是否有仓库绑定了虚拟仓
+                    for (SoInfoDTO.GenerateSoOutView soOutView : val) {
+                        String virtualWarehouseName = warehouseToVirtualMap.get(soOutView.getWarehouseId());
+                        if (CharSequenceUtil.isNotBlank(virtualWarehouseName)) {
+                            batchResultDTOList.add(BatchResultDTO.fail(key, key,
+                                CharSequenceUtil.format("发货仓库绑定虚拟仓【{}】，不允许直接下推销售出库单", virtualWarehouseName)));
+                            return;
+                        }
+                    }
+                }
+            }
+
             for (SoInfoDTO.GenerateSoOutView soOutView : val) {
                 if(soOutView.getActualDeliveryQty() > soOutView.getWaitDeliveryQty()){
                     batchResultDTOList.add(BatchResultDTO.fail(key,key, CharSequenceUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));
@@ -4381,8 +4462,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String isReissueStr = item.getIsReissue();
                 addDetail.setIsReissue("是".equals(isReissueStr));
                 //是否关闭
-                String isCloseStr = item.getIsClose();
-                addDetail.setIsClose("是".equals(isCloseStr));
+//                String isCloseStr = item.getIsClose();
+                addDetail.setIsClose(false);
                 //客户PO号
                 addDetail.setCustomerPO(item.getCustomerPO());
                 addDetail.setToCountry(item.getToCountry());

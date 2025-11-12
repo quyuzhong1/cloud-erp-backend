@@ -107,7 +107,9 @@
         fdp.name as partitionName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
         sb2c.nfe_invoice_status as nfeInvoiceStatus,
-        sb2c.multi_channel_type as multiChannelType
+        sb2c.multi_channel_type as multiChannelType,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime
     </sql>
     <sql id="Full_Managed_Column_List">
         distinct sb2c.id,
@@ -268,7 +270,9 @@
 		sbd.finish_print_time as finishPrintTime,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime
     </sql>
     <!-- 通用查询结果列 -->
     <sql id="Export_Fully_managed_Column_List">
@@ -378,6 +382,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
@@ -1113,6 +1118,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
@@ -1194,7 +1200,13 @@
                 ${params.permissionSql}
             </if>
         </where>
-        order by sb2c.id desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sb2c.id desc
     </select>
 
     <!-- 异常订单导出 -->

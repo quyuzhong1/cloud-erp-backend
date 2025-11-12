@@ -293,6 +293,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
     @Override
     public ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map) {
+        log.warn("处理第三方仓订单，参数为=========={}", map);
         CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
         if(Boolean.TRUE.equals(ruleMatchDTO.getApproveSuccess())){
             //处理地址

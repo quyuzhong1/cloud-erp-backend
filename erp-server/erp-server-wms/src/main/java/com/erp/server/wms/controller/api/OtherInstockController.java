@@ -401,11 +401,6 @@ public class OtherInstockController extends BaseController {
     }
 
 
-    @PostMapping("/generateOtherAddAndSubmit")
-    public WorkflowTaskRecordDTO.MqResponseDTO generateOtherAddAndSubmit(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto){
-        return otherInstockService.generateOtherAddAndSubmit(dto);
-    }
-
     /**
      * @author jack
      * @date:  2025-9-16

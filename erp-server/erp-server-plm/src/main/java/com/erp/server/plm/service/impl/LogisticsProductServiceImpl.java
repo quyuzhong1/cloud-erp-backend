@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -133,7 +132,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -338,7 +337,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 skuNo = productDetailEntity.getSkuNo();
             }
             String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
-            sysLogService.addSysLogByUpdate(oldEntity, productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "", msg);
+            operateLogService.addSysLogByUpdate(oldEntity, productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "", msg);
         }else{
             ProductDetailEntity productDetailEntity = productDetailService.getById(oldEntity.getSkuId());
             String skuNo = "";
@@ -347,7 +346,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
             // 记录操作日志
             String msg = CharSequenceUtil.format("用户【{}】新增【{}】SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流产品信息", skuNo);
-            sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "");
+            operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "");
         }
         return save;
     }
@@ -464,7 +463,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             productLogisticsService.updateById(logistics);
             //日志
             String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
-            sysLogService.addSysLogByUpdate(productLogisticsEntity,logistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogisticsEntity.getId(), "",msg);
+            operateLogService.addSysLogByUpdate(productLogisticsEntity,logistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogisticsEntity.getId(), "",msg);
         }
 
         if (!errorList.isEmpty()) {
@@ -622,7 +621,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 记录操作日志
         String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】提交审核 ", UserContext.getDefaultLoginUser().getUserName(), skuNo);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
 
@@ -654,7 +653,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             skuNo = productDetailEntity.getSkuNo();
         }
         String msg = CharSequenceUtil.format("物流产品信息【{}】撤销流程", skuNo);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -683,7 +682,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             skuNo = productDetailEntity.getSkuNo();
         }
         String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), skuNo, "物流产品信息", approveType.getName(), dto.getComment());
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -716,7 +715,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             skuNo = productDetailEntity.getSkuNo();
         }
         String msg = CharSequenceUtil.format("物流产品信息【{}】反审核流程", skuNo);
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
+        operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
 
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
@@ -992,7 +991,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
             //日志
             String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
-            sysLogService.addSysLogByUpdate(oldLogistics,newLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), newLogistics.getId(), "",msg);
+            operateLogService.addSysLogByUpdate(oldLogistics,newLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), newLogistics.getId(), "",msg);
         }
     }
 

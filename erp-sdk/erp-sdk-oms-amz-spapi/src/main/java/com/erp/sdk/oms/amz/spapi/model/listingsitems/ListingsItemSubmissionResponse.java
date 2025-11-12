@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,26 +10,27 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Issue;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemIdentifiers;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
  * Response containing the results of a submission to the Selling Partner API for Listings Items.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class ListingsItemSubmissionResponse {
   @SerializedName("sku")
   private String sku = null;
@@ -39,16 +40,18 @@ public class ListingsItemSubmissionResponse {
    */
   @JsonAdapter(StatusEnum.Adapter.class)
   public enum StatusEnum {
+    @SerializedName("ACCEPTED")
     ACCEPTED("ACCEPTED"),
-    
-    INVALID("INVALID");
+    @SerializedName("INVALID")
+    INVALID("INVALID"),
+    @SerializedName("VALID")
+    VALID("VALID");
 
     private String value;
 
     StatusEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -57,31 +60,27 @@ public class ListingsItemSubmissionResponse {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static StatusEnum fromValue(String text) {
+    public static StatusEnum fromValue(String input) {
       for (StatusEnum b : StatusEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<StatusEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final StatusEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public StatusEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return StatusEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return StatusEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("status")
+  }  @SerializedName("status")
   private StatusEnum status = null;
 
   @SerializedName("submissionId")
@@ -89,6 +88,9 @@ public class ListingsItemSubmissionResponse {
 
   @SerializedName("issues")
   private List<Issue> issues = null;
+
+  @SerializedName("identifiers")
+  private ItemIdentifiers identifiers = null;
 
   public ListingsItemSubmissionResponse sku(String sku) {
     this.sku = sku;
@@ -99,7 +101,7 @@ public class ListingsItemSubmissionResponse {
    * A selling partner provided identifier for an Amazon listing.
    * @return sku
   **/
-
+  
   public String getSku() {
     return sku;
   }
@@ -117,7 +119,7 @@ public class ListingsItemSubmissionResponse {
    * The status of the listings item submission.
    * @return status
   **/
-
+  
   public StatusEnum getStatus() {
     return status;
   }
@@ -135,7 +137,7 @@ public class ListingsItemSubmissionResponse {
    * The unique identifier of the listings item submission.
    * @return submissionId
   **/
-
+  
   public String getSubmissionId() {
     return submissionId;
   }
@@ -161,13 +163,31 @@ public class ListingsItemSubmissionResponse {
    * Listings item issues related to the listings item submission.
    * @return issues
   **/
-
+  
   public List<Issue> getIssues() {
     return issues;
   }
 
   public void setIssues(List<Issue> issues) {
     this.issues = issues;
+  }
+
+  public ListingsItemSubmissionResponse identifiers(ItemIdentifiers identifiers) {
+    this.identifiers = identifiers;
+    return this;
+  }
+
+   /**
+   * Get identifiers
+   * @return identifiers
+  **/
+  
+  public ItemIdentifiers getIdentifiers() {
+    return identifiers;
+  }
+
+  public void setIdentifiers(ItemIdentifiers identifiers) {
+    this.identifiers = identifiers;
   }
 
 
@@ -183,12 +203,13 @@ public class ListingsItemSubmissionResponse {
     return Objects.equals(this.sku, listingsItemSubmissionResponse.sku) &&
         Objects.equals(this.status, listingsItemSubmissionResponse.status) &&
         Objects.equals(this.submissionId, listingsItemSubmissionResponse.submissionId) &&
-        Objects.equals(this.issues, listingsItemSubmissionResponse.issues);
+        Objects.equals(this.issues, listingsItemSubmissionResponse.issues) &&
+        Objects.equals(this.identifiers, listingsItemSubmissionResponse.identifiers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sku, status, submissionId, issues);
+    return Objects.hash(sku, status, submissionId, issues, identifiers);
   }
 
 
@@ -201,6 +222,7 @@ public class ListingsItemSubmissionResponse {
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    submissionId: ").append(toIndentedString(submissionId)).append("\n");
     sb.append("    issues: ").append(toIndentedString(issues)).append("\n");
+    sb.append("    identifiers: ").append(toIndentedString(identifiers)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -217,4 +239,3 @@ public class ListingsItemSubmissionResponse {
   }
 
 }
-

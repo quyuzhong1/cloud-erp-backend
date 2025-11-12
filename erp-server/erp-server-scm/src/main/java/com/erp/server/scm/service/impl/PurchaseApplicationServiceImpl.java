@@ -1353,6 +1353,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> skuIds = records.stream().map(PurchaseApplicationDTO.ListDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
+        //查询最新审核人
+        List<String> mainIds = records.stream().map(PurchaseApplicationDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        for (String mainId : mainIds) {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_APPLICATION.getCode(), mainId));
+        }
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+
         for (PurchaseApplicationDTO.ListDTO obj : records){
 
             //委外数量
@@ -1410,6 +1418,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 List<PurchaseSuggestMergeDTO.PushSourceDTO> pushSourceList = BeanUtil.copyToList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class);
                 String codes = pushSourceList.stream().map(PurchaseSuggestMergeDTO.PushSourceDTO::getCode).distinct().collect(Collectors.joining(","));
                 obj.setSourceCode(codes);
+            }
+            
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                obj.setApproveUserName(curApprove);
             }
         }
     }
@@ -1862,6 +1879,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException(ApiError.ERROR_98049);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(PurchaseApplicationDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgentTotal", isUrgent);
+        //新品首批
+        String firstMassProduct = detailList.stream().map(PurchaseApplicationDetailEntity::getFirstMassProduct).collect(Collectors.joining(","));
+        variablesMap.put("firstMassProductTotal", firstMassProduct);
         return variablesMap;
     }
 }

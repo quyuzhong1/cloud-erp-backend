@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -12,35 +12,56 @@
 
 package com.erp.sdk.oms.amz.spapi.api;
 
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
-import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.client.ApiCallback;
+import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.client.Configuration;
+import com.erp.sdk.oms.amz.spapi.client.Pair;
+import com.erp.sdk.oms.amz.spapi.client.ProgressRequestBody;
+import com.erp.sdk.oms.amz.spapi.client.ProgressResponseBody;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+
+
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ErrorList;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSearchResults;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemPatchRequest;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemPutRequest;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemSubmissionResponse;
-import com.google.gson.reflect.TypeToken;
-import lombok.Getter;
-import okhttp3.Call;
-import okhttp3.Interceptor;
-import okhttp3.Response;
+import java.time.OffsetDateTime;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Getter
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAccessTokenCache;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAccessTokenCacheImpl;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationSigner;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
+import okhttp3.Call;
+
 public class ListingsApi {
     private ApiClient apiClient;
 
-    public ListingsApi() {
+    ListingsApi() {
         this(Configuration.getDefaultApiClient());
     }
 
     public ListingsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
+    }
+
+    public ApiClient getApiClient() {
+        return apiClient;
     }
 
     public void setApiClient(ApiClient apiClient) {
@@ -52,13 +73,14 @@ public class ListingsApi {
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call deleteListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public Call deleteListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -84,16 +106,16 @@ public class ListingsApi {
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -106,72 +128,71 @@ public class ListingsApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call deleteListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call deleteListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'sellerId' is set
         if (sellerId == null) {
             throw new ApiException("Missing the required parameter 'sellerId' when calling deleteListingsItem(Async)");
         }
-        
         // verify the required parameter 'sku' is set
         if (sku == null) {
             throw new ApiException("Missing the required parameter 'sku' when calling deleteListingsItem(Async)");
         }
-        
         // verify the required parameter 'marketplaceIds' is set
         if (marketplaceIds == null) {
             throw new ApiException("Missing the required parameter 'marketplaceIds' when calling deleteListingsItem(Async)");
         }
-        
 
-        Call call = deleteListingsItemCall(sellerId, sku, marketplaceIds, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = deleteListingsItemCall(sellerId, sku, marketplaceIds, issueLocale, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ListingsItemSubmissionResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ListingsItemSubmissionResponse deleteListingsItem(String sellerId, String sku, List<String> marketplaceIds, String issueLocale) throws ApiException {
+    public ListingsItemSubmissionResponse deleteListingsItem(String sellerId, String sku, List<String> marketplaceIds, String issueLocale) throws ApiException,LWAException {
         ApiResponse<ListingsItemSubmissionResponse> resp = deleteListingsItemWithHttpInfo(sellerId, sku, marketplaceIds, issueLocale);
         return resp.getData();
     }
 
     /**
      * 
-     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ApiResponse&lt;ListingsItemSubmissionResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ListingsItemSubmissionResponse> deleteListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, String issueLocale) throws ApiException {
-        Call call = deleteListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, null, null);
+    public ApiResponse<ListingsItemSubmissionResponse> deleteListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, String issueLocale) throws ApiException,LWAException {
+        okhttp3.Call call = deleteListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, null, null);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Delete a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call deleteListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException {
+    public okhttp3.Call deleteListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -192,7 +213,7 @@ public class ListingsApi {
             };
         }
 
-        Call call = deleteListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = deleteListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -202,14 +223,15 @@ public class ListingsApi {
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
-     * @param includedData A comma-delimited list of data sets to include in the response. Default: summaries. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;summaries&#x60;. (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call getListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -237,16 +259,16 @@ public class ListingsApi {
         if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
 
         final String[] localVarContentTypes = {
-            "application/json"
+            
         };
         final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -259,75 +281,74 @@ public class ListingsApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
+    private okhttp3.Call getListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'sellerId' is set
         if (sellerId == null) {
             throw new ApiException("Missing the required parameter 'sellerId' when calling getListingsItem(Async)");
         }
-        
         // verify the required parameter 'sku' is set
         if (sku == null) {
             throw new ApiException("Missing the required parameter 'sku' when calling getListingsItem(Async)");
         }
-        
         // verify the required parameter 'marketplaceIds' is set
         if (marketplaceIds == null) {
             throw new ApiException("Missing the required parameter 'marketplaceIds' when calling getListingsItem(Async)");
         }
-        
 
-        Call call = getListingsItemCall(sellerId, sku, marketplaceIds, issueLocale, includedData, progressListener, progressRequestListener);
+        okhttp3.Call call = getListingsItemCall(sellerId, sku, marketplaceIds, issueLocale, includedData, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
-     * @param includedData A comma-delimited list of data sets to include in the response. Default: summaries. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;summaries&#x60;. (optional)
      * @return Item
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Item getListingsItem(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData) throws ApiException {
+    public Item getListingsItem(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData) throws ApiException,LWAException {
         ApiResponse<Item> resp = getListingsItemWithHttpInfo(sellerId, sku, marketplaceIds, issueLocale, includedData);
         return resp.getData();
     }
 
     /**
      * 
-     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
-     * @param includedData A comma-delimited list of data sets to include in the response. Default: summaries. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;summaries&#x60;. (optional)
      * @return ApiResponse&lt;Item&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<Item> getListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData) throws ApiException {
-        Call call = getListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, includedData, null, null);
+    public ApiResponse<Item> getListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData) throws ApiException,LWAException {
+        okhttp3.Call call = getListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, includedData, null, null);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Returns details about a listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
-     * @param includedData A comma-delimited list of data sets to include in the response. Default: summaries. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;summaries&#x60;. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call getListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ApiCallback<Item> callback) throws ApiException {
+    public okhttp3.Call getListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, String issueLocale, List<String> includedData, final ApiCallback<Item> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -348,24 +369,27 @@ public class ListingsApi {
             };
         }
 
-        Call call = getListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, includedData, progressListener, progressRequestListener);
+        okhttp3.Call call = getListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, issueLocale, includedData, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for patchListingsItem
+     * @param body The request body schema for the &#x60;patchListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the patchListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call patchListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPatchRequest body, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call patchListingsItemCall(ListingsItemPatchRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -377,6 +401,10 @@ public class ListingsApi {
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
         if (marketplaceIds != null)
         localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "marketplaceIds", marketplaceIds));
+        if (includedData != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "includedData", includedData));
+        if (mode != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("mode", mode));
         if (issueLocale != null)
         localVarQueryParams.addAll(apiClient.parameterToPair("issueLocale", issueLocale));
 
@@ -397,10 +425,10 @@ public class ListingsApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -413,80 +441,84 @@ public class ListingsApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call patchListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPatchRequest body, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
-        // verify the required parameter 'sellerId' is set
-        if (sellerId == null) {
-            throw new ApiException("Missing the required parameter 'sellerId' when calling patchListingsItem(Async)");
-        }
-        
-        // verify the required parameter 'sku' is set
-        if (sku == null) {
-            throw new ApiException("Missing the required parameter 'sku' when calling patchListingsItem(Async)");
-        }
-        
-        // verify the required parameter 'marketplaceIds' is set
-        if (marketplaceIds == null) {
-            throw new ApiException("Missing the required parameter 'marketplaceIds' when calling patchListingsItem(Async)");
-        }
-        
+    private okhttp3.Call patchListingsItemValidateBeforeCall(ListingsItemPatchRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling patchListingsItem(Async)");
         }
-        
+        // verify the required parameter 'sellerId' is set
+        if (sellerId == null) {
+            throw new ApiException("Missing the required parameter 'sellerId' when calling patchListingsItem(Async)");
+        }
+        // verify the required parameter 'sku' is set
+        if (sku == null) {
+            throw new ApiException("Missing the required parameter 'sku' when calling patchListingsItem(Async)");
+        }
+        // verify the required parameter 'marketplaceIds' is set
+        if (marketplaceIds == null) {
+            throw new ApiException("Missing the required parameter 'marketplaceIds' when calling patchListingsItem(Async)");
+        }
 
-        Call call = patchListingsItemCall(sellerId, sku, marketplaceIds, body, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = patchListingsItemCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;patchListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the patchListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ListingsItemSubmissionResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ListingsItemSubmissionResponse patchListingsItem(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPatchRequest body, String issueLocale) throws ApiException {
-        ApiResponse<ListingsItemSubmissionResponse> resp = patchListingsItemWithHttpInfo(sellerId, sku, marketplaceIds, body, issueLocale);
+    public ListingsItemSubmissionResponse patchListingsItem(ListingsItemPatchRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale) throws ApiException,LWAException {
+        ApiResponse<ListingsItemSubmissionResponse> resp = patchListingsItemWithHttpInfo(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale);
         return resp.getData();
     }
 
     /**
      * 
-     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;patchListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the patchListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ApiResponse&lt;ListingsItemSubmissionResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ListingsItemSubmissionResponse> patchListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPatchRequest body, String issueLocale) throws ApiException {
-        Call call = patchListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, body, issueLocale, null, null);
+    public ApiResponse<ListingsItemSubmissionResponse> patchListingsItemWithHttpInfo(ListingsItemPatchRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale) throws ApiException,LWAException {
+        okhttp3.Call call = patchListingsItemValidateBeforeCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, null, null);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Partially update (patch) a listings item for a selling partner. Only top-level listings item attributes can be patched. Patching nested attributes is not supported.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;patchListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the patchListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call patchListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPatchRequest body, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException {
+    public okhttp3.Call patchListingsItemAsync(ListingsItemPatchRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -507,24 +539,27 @@ public class ListingsApi {
             };
         }
 
-        Call call = patchListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, body, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = patchListingsItemValidateBeforeCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
     /**
      * Build call for putListingsItem
+     * @param body The request body schema for the &#x60;putListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the putListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param progressListener Progress listener
      * @param progressRequestListener Progress request listener
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call putListingsItemCall(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPutRequest body, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public okhttp3.Call putListingsItemCall(ListingsItemPutRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = body;
 
         // create path and map variables
@@ -536,6 +571,10 @@ public class ListingsApi {
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
         if (marketplaceIds != null)
         localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "marketplaceIds", marketplaceIds));
+        if (includedData != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "includedData", includedData));
+        if (mode != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("mode", mode));
         if (issueLocale != null)
         localVarQueryParams.addAll(apiClient.parameterToPair("issueLocale", issueLocale));
 
@@ -556,10 +595,10 @@ public class ListingsApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
                     return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                     .build();
@@ -572,80 +611,84 @@ public class ListingsApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call putListingsItemValidateBeforeCall(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPutRequest body, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        
-        // verify the required parameter 'sellerId' is set
-        if (sellerId == null) {
-            throw new ApiException("Missing the required parameter 'sellerId' when calling putListingsItem(Async)");
-        }
-        
-        // verify the required parameter 'sku' is set
-        if (sku == null) {
-            throw new ApiException("Missing the required parameter 'sku' when calling putListingsItem(Async)");
-        }
-        
-        // verify the required parameter 'marketplaceIds' is set
-        if (marketplaceIds == null) {
-            throw new ApiException("Missing the required parameter 'marketplaceIds' when calling putListingsItem(Async)");
-        }
-        
+    private okhttp3.Call putListingsItemValidateBeforeCall(ListingsItemPutRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new ApiException("Missing the required parameter 'body' when calling putListingsItem(Async)");
         }
-        
+        // verify the required parameter 'sellerId' is set
+        if (sellerId == null) {
+            throw new ApiException("Missing the required parameter 'sellerId' when calling putListingsItem(Async)");
+        }
+        // verify the required parameter 'sku' is set
+        if (sku == null) {
+            throw new ApiException("Missing the required parameter 'sku' when calling putListingsItem(Async)");
+        }
+        // verify the required parameter 'marketplaceIds' is set
+        if (marketplaceIds == null) {
+            throw new ApiException("Missing the required parameter 'marketplaceIds' when calling putListingsItem(Async)");
+        }
 
-        Call call = putListingsItemCall(sellerId, sku, marketplaceIds, body, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = putListingsItemCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, progressListener, progressRequestListener);
         return call;
 
     }
 
     /**
      * 
-     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;putListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the putListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ListingsItemSubmissionResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ListingsItemSubmissionResponse putListingsItem(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPutRequest body, String issueLocale) throws ApiException {
-        ApiResponse<ListingsItemSubmissionResponse> resp = putListingsItemWithHttpInfo(sellerId, sku, marketplaceIds, body, issueLocale);
+    public ListingsItemSubmissionResponse putListingsItem(ListingsItemPutRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale) throws ApiException,LWAException {
+        ApiResponse<ListingsItemSubmissionResponse> resp = putListingsItemWithHttpInfo(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale);
         return resp.getData();
     }
 
     /**
      * 
-     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;putListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the putListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @return ApiResponse&lt;ListingsItemSubmissionResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ListingsItemSubmissionResponse> putListingsItemWithHttpInfo(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPutRequest body, String issueLocale) throws ApiException {
-        Call call = putListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, body, issueLocale, null, null);
+    public ApiResponse<ListingsItemSubmissionResponse> putListingsItemWithHttpInfo(ListingsItemPutRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale) throws ApiException,LWAException {
+        okhttp3.Call call = putListingsItemValidateBeforeCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, null, null);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
 
     /**
      *  (asynchronously)
-     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     * Creates a new or fully-updates an existing listings item for a selling partner.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The preceding table indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput can receive higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api) in the Selling Partner API documentation.
+     * @param body The request body schema for the &#x60;putListingsItem&#x60; operation. (required)
      * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
      * @param sku A selling partner provided identifier for an Amazon listing. (required)
      * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
-     * @param body The request body schema for the putListingsItem operation. (required)
-     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. Localized messages default to \&quot;en_US\&quot; when a localization is not available in the specified locale. (optional)
+     * @param includedData A comma-delimited list of data sets to include in the response. Default: &#x60;issues&#x60;. (optional)
+     * @param mode The mode of operation for the request. (optional)
+     * @param issueLocale A locale for localization of issues. When not provided, the default language code of the first marketplace is used. Examples: &#x60;en_US&#x60;, &#x60;fr_CA&#x60;, &#x60;fr_FR&#x60;. Localized messages default to &#x60;en_US&#x60; when a localization is not available in the specified locale. (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
      */
-    public Call putListingsItemAsync(String sellerId, String sku, List<String> marketplaceIds, ListingsItemPutRequest body, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException {
+    public okhttp3.Call putListingsItemAsync(ListingsItemPutRequest body, String sellerId, String sku, List<String> marketplaceIds, List<String> includedData, String mode, String issueLocale, final ApiCallback<ListingsItemSubmissionResponse> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -666,25 +709,256 @@ public class ListingsApi {
             };
         }
 
-        Call call = putListingsItemValidateBeforeCall(sellerId, sku, marketplaceIds, body, issueLocale, progressListener, progressRequestListener);
+        okhttp3.Call call = putListingsItemValidateBeforeCall(body, sellerId, sku, marketplaceIds, includedData, mode, issueLocale, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<ListingsItemSubmissionResponse>(){}.getType();
+        apiClient.executeAsync(call, localVarReturnType, callback);
+        return call;
+    }
+    /**
+     * Build call for searchListingsItems
+     * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
+     * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
+     * @param issueLocale A locale that is used to localize issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. When a localization is not available in the specified locale, localized messages default to \&quot;en_US\&quot;. (optional)
+     * @param includedData A comma-delimited list of datasets that you want to include in the response. Default: &#x60;summaries&#x60;. (optional)
+     * @param identifiers A comma-delimited list of product identifiers that you can use to search for listings items.   **Note**:  1. This is required when you specify &#x60;identifiersType&#x60;. 2. You cannot use &#x27;identifiers&#x27; if you specify &#x60;variationParentSku&#x60; or &#x60;packageHierarchySku&#x60;. (optional)
+     * @param identifiersType A type of product identifiers that you can use to search for listings items.   **Note**:  This is required when &#x60;identifiers&#x60; is provided. (optional)
+     * @param variationParentSku Filters results to include listing items that are variation children of the specified SKU.   **Note**: You cannot use &#x60;variationParentSku&#x60; if you include &#x60;identifiers&#x60; or &#x60;packageHierarchySku&#x60; in your request. (optional)
+     * @param packageHierarchySku Filter results to include listing items that contain or are contained by the specified SKU.   **Note**: You cannot use &#x60;packageHierarchySku&#x60; if you include &#x60;identifiers&#x60; or &#x60;variationParentSku&#x60; in your request. (optional)
+     * @param createdAfter A date-time that is used to filter listing items. The response includes listings items that were created at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param createdBefore A date-time that is used to filter listing items. The response includes listings items that were created at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedAfter A date-time that is used to filter listing items. The response includes listings items that were last updated at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedBefore A date-time that is used to filter listing items. The response includes listings items that were last updated at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param withIssueSeverity Filter results to include only listing items that have issues that match one or more of the specified severity levels. (optional)
+     * @param withStatus Filter results to include only listing items that have the specified status. (optional)
+     * @param withoutStatus Filter results to include only listing items that don&#x27;t contain the specified statuses. (optional)
+     * @param sortBy An attribute by which to sort the returned listing items. (optional, default to lastUpdatedDate)
+     * @param sortOrder The order in which to sort the result items. (optional, default to DESC)
+     * @param pageSize The number of results that you want to include on each page. (optional, default to 10)
+     * @param pageToken A token that you can use to fetch a specific page when there are multiple pages of results. (optional)
+     * @param progressListener Progress listener
+     * @param progressRequestListener Progress request listener
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call searchListingsItemsCall(String sellerId, List<String> marketplaceIds, String issueLocale, List<String> includedData, List<String> identifiers, String identifiersType, String variationParentSku, String packageHierarchySku, OffsetDateTime createdAfter, OffsetDateTime createdBefore, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, List<String> withIssueSeverity, List<String> withStatus, List<String> withoutStatus, String sortBy, String sortOrder, Integer pageSize, String pageToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        Object localVarPostBody = null;
+
+        // create path and map variables
+        String localVarPath = "/listings/2021-08-01/items/{sellerId}"
+            .replaceAll("\\{" + "sellerId" + "\\}", apiClient.escapeString(sellerId.toString()));
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        if (marketplaceIds != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "marketplaceIds", marketplaceIds));
+        if (issueLocale != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("issueLocale", issueLocale));
+        if (includedData != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "includedData", includedData));
+        if (identifiers != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "identifiers", identifiers));
+        if (identifiersType != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("identifiersType", identifiersType));
+        if (variationParentSku != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("variationParentSku", variationParentSku));
+        if (packageHierarchySku != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("packageHierarchySku", packageHierarchySku));
+        if (createdAfter != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("createdAfter", createdAfter));
+        if (createdBefore != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("createdBefore", createdBefore));
+        if (lastUpdatedAfter != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("lastUpdatedAfter", lastUpdatedAfter));
+        if (lastUpdatedBefore != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("lastUpdatedBefore", lastUpdatedBefore));
+        if (withIssueSeverity != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "withIssueSeverity", withIssueSeverity));
+        if (withStatus != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "withStatus", withStatus));
+        if (withoutStatus != null)
+        localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "withoutStatus", withoutStatus));
+        if (sortBy != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("sortBy", sortBy));
+        if (sortOrder != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("sortOrder", sortOrder));
+        if (pageSize != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("pageSize", pageSize));
+        if (pageToken != null)
+        localVarQueryParams.addAll(apiClient.parameterToPair("pageToken", pageToken));
+
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json"
+        };
+        final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
+
+        final String[] localVarContentTypes = {
+            
+        };
+        final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+        localVarHeaderParams.put("Content-Type", localVarContentType);
+
+        if(progressListener != null) {
+            apiClient.getHttpClient().networkInterceptors().add(new okhttp3.Interceptor() {
+                @Override
+                public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws IOException {
+                    okhttp3.Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                    .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                    .build();
+                }
+            });
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return apiClient.buildCall(localVarPath, "GET", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarFormParams, localVarAuthNames, progressRequestListener);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call searchListingsItemsValidateBeforeCall(String sellerId, List<String> marketplaceIds, String issueLocale, List<String> includedData, List<String> identifiers, String identifiersType, String variationParentSku, String packageHierarchySku, OffsetDateTime createdAfter, OffsetDateTime createdBefore, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, List<String> withIssueSeverity, List<String> withStatus, List<String> withoutStatus, String sortBy, String sortOrder, Integer pageSize, String pageToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+        // verify the required parameter 'sellerId' is set
+        if (sellerId == null) {
+            throw new ApiException("Missing the required parameter 'sellerId' when calling searchListingsItems(Async)");
+        }
+        // verify the required parameter 'marketplaceIds' is set
+        if (marketplaceIds == null) {
+            throw new ApiException("Missing the required parameter 'marketplaceIds' when calling searchListingsItems(Async)");
+        }
+
+        okhttp3.Call call = searchListingsItemsCall(sellerId, marketplaceIds, issueLocale, includedData, identifiers, identifiersType, variationParentSku, packageHierarchySku, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, withIssueSeverity, withStatus, withoutStatus, sortBy, sortOrder, pageSize, pageToken, progressListener, progressRequestListener);
+        return call;
+
+    }
+
+    /**
+     * 
+     * Search for and return a list of selling partner listings items and their respective details.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that are applied to the requested operation, when available. The preceding table contains the default rate and burst values for this operation. Selling partners whose business demands require higher throughput might have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
+     * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
+     * @param issueLocale A locale that is used to localize issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. When a localization is not available in the specified locale, localized messages default to \&quot;en_US\&quot;. (optional)
+     * @param includedData A comma-delimited list of datasets that you want to include in the response. Default: &#x60;summaries&#x60;. (optional)
+     * @param identifiers A comma-delimited list of product identifiers that you can use to search for listings items.   **Note**:  1. This is required when you specify &#x60;identifiersType&#x60;. 2. You cannot use &#x27;identifiers&#x27; if you specify &#x60;variationParentSku&#x60; or &#x60;packageHierarchySku&#x60;. (optional)
+     * @param identifiersType A type of product identifiers that you can use to search for listings items.   **Note**:  This is required when &#x60;identifiers&#x60; is provided. (optional)
+     * @param variationParentSku Filters results to include listing items that are variation children of the specified SKU.   **Note**: You cannot use &#x60;variationParentSku&#x60; if you include &#x60;identifiers&#x60; or &#x60;packageHierarchySku&#x60; in your request. (optional)
+     * @param packageHierarchySku Filter results to include listing items that contain or are contained by the specified SKU.   **Note**: You cannot use &#x60;packageHierarchySku&#x60; if you include &#x60;identifiers&#x60; or &#x60;variationParentSku&#x60; in your request. (optional)
+     * @param createdAfter A date-time that is used to filter listing items. The response includes listings items that were created at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param createdBefore A date-time that is used to filter listing items. The response includes listings items that were created at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedAfter A date-time that is used to filter listing items. The response includes listings items that were last updated at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedBefore A date-time that is used to filter listing items. The response includes listings items that were last updated at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param withIssueSeverity Filter results to include only listing items that have issues that match one or more of the specified severity levels. (optional)
+     * @param withStatus Filter results to include only listing items that have the specified status. (optional)
+     * @param withoutStatus Filter results to include only listing items that don&#x27;t contain the specified statuses. (optional)
+     * @param sortBy An attribute by which to sort the returned listing items. (optional, default to lastUpdatedDate)
+     * @param sortOrder The order in which to sort the result items. (optional, default to DESC)
+     * @param pageSize The number of results that you want to include on each page. (optional, default to 10)
+     * @param pageToken A token that you can use to fetch a specific page when there are multiple pages of results. (optional)
+     * @return ItemSearchResults
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public ItemSearchResults searchListingsItems(String sellerId, List<String> marketplaceIds, String issueLocale, List<String> includedData, List<String> identifiers, String identifiersType, String variationParentSku, String packageHierarchySku, OffsetDateTime createdAfter, OffsetDateTime createdBefore, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, List<String> withIssueSeverity, List<String> withStatus, List<String> withoutStatus, String sortBy, String sortOrder, Integer pageSize, String pageToken) throws ApiException,LWAException {
+        ApiResponse<ItemSearchResults> resp = searchListingsItemsWithHttpInfo(sellerId, marketplaceIds, issueLocale, includedData, identifiers, identifiersType, variationParentSku, packageHierarchySku, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, withIssueSeverity, withStatus, withoutStatus, sortBy, sortOrder, pageSize, pageToken);
+        return resp.getData();
+    }
+
+    /**
+     * 
+     * Search for and return a list of selling partner listings items and their respective details.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that are applied to the requested operation, when available. The preceding table contains the default rate and burst values for this operation. Selling partners whose business demands require higher throughput might have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
+     * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
+     * @param issueLocale A locale that is used to localize issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. When a localization is not available in the specified locale, localized messages default to \&quot;en_US\&quot;. (optional)
+     * @param includedData A comma-delimited list of datasets that you want to include in the response. Default: &#x60;summaries&#x60;. (optional)
+     * @param identifiers A comma-delimited list of product identifiers that you can use to search for listings items.   **Note**:  1. This is required when you specify &#x60;identifiersType&#x60;. 2. You cannot use &#x27;identifiers&#x27; if you specify &#x60;variationParentSku&#x60; or &#x60;packageHierarchySku&#x60;. (optional)
+     * @param identifiersType A type of product identifiers that you can use to search for listings items.   **Note**:  This is required when &#x60;identifiers&#x60; is provided. (optional)
+     * @param variationParentSku Filters results to include listing items that are variation children of the specified SKU.   **Note**: You cannot use &#x60;variationParentSku&#x60; if you include &#x60;identifiers&#x60; or &#x60;packageHierarchySku&#x60; in your request. (optional)
+     * @param packageHierarchySku Filter results to include listing items that contain or are contained by the specified SKU.   **Note**: You cannot use &#x60;packageHierarchySku&#x60; if you include &#x60;identifiers&#x60; or &#x60;variationParentSku&#x60; in your request. (optional)
+     * @param createdAfter A date-time that is used to filter listing items. The response includes listings items that were created at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param createdBefore A date-time that is used to filter listing items. The response includes listings items that were created at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedAfter A date-time that is used to filter listing items. The response includes listings items that were last updated at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedBefore A date-time that is used to filter listing items. The response includes listings items that were last updated at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param withIssueSeverity Filter results to include only listing items that have issues that match one or more of the specified severity levels. (optional)
+     * @param withStatus Filter results to include only listing items that have the specified status. (optional)
+     * @param withoutStatus Filter results to include only listing items that don&#x27;t contain the specified statuses. (optional)
+     * @param sortBy An attribute by which to sort the returned listing items. (optional, default to lastUpdatedDate)
+     * @param sortOrder The order in which to sort the result items. (optional, default to DESC)
+     * @param pageSize The number of results that you want to include on each page. (optional, default to 10)
+     * @param pageToken A token that you can use to fetch a specific page when there are multiple pages of results. (optional)
+     * @return ApiResponse&lt;ItemSearchResults&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public ApiResponse<ItemSearchResults> searchListingsItemsWithHttpInfo(String sellerId, List<String> marketplaceIds, String issueLocale, List<String> includedData, List<String> identifiers, String identifiersType, String variationParentSku, String packageHierarchySku, OffsetDateTime createdAfter, OffsetDateTime createdBefore, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, List<String> withIssueSeverity, List<String> withStatus, List<String> withoutStatus, String sortBy, String sortOrder, Integer pageSize, String pageToken) throws ApiException,LWAException {
+        okhttp3.Call call = searchListingsItemsValidateBeforeCall(sellerId, marketplaceIds, issueLocale, includedData, identifiers, identifiersType, variationParentSku, packageHierarchySku, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, withIssueSeverity, withStatus, withoutStatus, sortBy, sortOrder, pageSize, pageToken, null, null);
+        Type localVarReturnType = new TypeToken<ItemSearchResults>(){}.getType();
+        return apiClient.execute(call, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * Search for and return a list of selling partner listings items and their respective details.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 5 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that are applied to the requested operation, when available. The preceding table contains the default rate and burst values for this operation. Selling partners whose business demands require higher throughput might have higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     * @param sellerId A selling partner identifier, such as a merchant account or vendor code. (required)
+     * @param marketplaceIds A comma-delimited list of Amazon marketplace identifiers for the request. (required)
+     * @param issueLocale A locale that is used to localize issues. When not provided, the default language code of the first marketplace is used. Examples: \&quot;en_US\&quot;, \&quot;fr_CA\&quot;, \&quot;fr_FR\&quot;. When a localization is not available in the specified locale, localized messages default to \&quot;en_US\&quot;. (optional)
+     * @param includedData A comma-delimited list of datasets that you want to include in the response. Default: &#x60;summaries&#x60;. (optional)
+     * @param identifiers A comma-delimited list of product identifiers that you can use to search for listings items.   **Note**:  1. This is required when you specify &#x60;identifiersType&#x60;. 2. You cannot use &#x27;identifiers&#x27; if you specify &#x60;variationParentSku&#x60; or &#x60;packageHierarchySku&#x60;. (optional)
+     * @param identifiersType A type of product identifiers that you can use to search for listings items.   **Note**:  This is required when &#x60;identifiers&#x60; is provided. (optional)
+     * @param variationParentSku Filters results to include listing items that are variation children of the specified SKU.   **Note**: You cannot use &#x60;variationParentSku&#x60; if you include &#x60;identifiers&#x60; or &#x60;packageHierarchySku&#x60; in your request. (optional)
+     * @param packageHierarchySku Filter results to include listing items that contain or are contained by the specified SKU.   **Note**: You cannot use &#x60;packageHierarchySku&#x60; if you include &#x60;identifiers&#x60; or &#x60;variationParentSku&#x60; in your request. (optional)
+     * @param createdAfter A date-time that is used to filter listing items. The response includes listings items that were created at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param createdBefore A date-time that is used to filter listing items. The response includes listings items that were created at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedAfter A date-time that is used to filter listing items. The response includes listings items that were last updated at or after this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param lastUpdatedBefore A date-time that is used to filter listing items. The response includes listings items that were last updated at or before this time. Values are in [ISO 8601](https://developer-docs.amazon.com/sp-api/docs/iso-8601) date-time format. (optional)
+     * @param withIssueSeverity Filter results to include only listing items that have issues that match one or more of the specified severity levels. (optional)
+     * @param withStatus Filter results to include only listing items that have the specified status. (optional)
+     * @param withoutStatus Filter results to include only listing items that don&#x27;t contain the specified statuses. (optional)
+     * @param sortBy An attribute by which to sort the returned listing items. (optional, default to lastUpdatedDate)
+     * @param sortOrder The order in which to sort the result items. (optional, default to DESC)
+     * @param pageSize The number of results that you want to include on each page. (optional, default to 10)
+     * @param pageToken A token that you can use to fetch a specific page when there are multiple pages of results. (optional)
+     * @param callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    public okhttp3.Call searchListingsItemsAsync(String sellerId, List<String> marketplaceIds, String issueLocale, List<String> includedData, List<String> identifiers, String identifiersType, String variationParentSku, String packageHierarchySku, OffsetDateTime createdAfter, OffsetDateTime createdBefore, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, List<String> withIssueSeverity, List<String> withStatus, List<String> withoutStatus, String sortBy, String sortOrder, Integer pageSize, String pageToken, final ApiCallback<ItemSearchResults> callback) throws ApiException, LWAException {
+
+        ProgressResponseBody.ProgressListener progressListener = null;
+        ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
+
+        if (callback != null) {
+            progressListener = new ProgressResponseBody.ProgressListener() {
+                @Override
+                public void update(long bytesRead, long contentLength, boolean done) {
+                    callback.onDownloadProgress(bytesRead, contentLength, done);
+                }
+            };
+
+            progressRequestListener = new ProgressRequestBody.ProgressRequestListener() {
+                @Override
+                public void onRequestProgress(long bytesWritten, long contentLength, boolean done) {
+                    callback.onUploadProgress(bytesWritten, contentLength, done);
+                }
+            };
+        }
+
+        okhttp3.Call call = searchListingsItemsValidateBeforeCall(sellerId, marketplaceIds, issueLocale, includedData, identifiers, identifiersType, variationParentSku, packageHierarchySku, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, withIssueSeverity, withStatus, withoutStatus, sortBy, sortOrder, pageSize, pageToken, progressListener, progressRequestListener);
+        Type localVarReturnType = new TypeToken<ItemSearchResults>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
 
     public static class Builder {
-        private AWSAuthenticationCredentials awsAuthenticationCredentials;
         private LWAAuthorizationCredentials lwaAuthorizationCredentials;
         private String endpoint;
         private LWAAccessTokenCache lwaAccessTokenCache;
         private Boolean disableAccessTokenCache = false;
-        private AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider;
         private RateLimitConfiguration rateLimitConfiguration;
 
-        public Builder awsAuthenticationCredentials(AWSAuthenticationCredentials awsAuthenticationCredentials) {
-            this.awsAuthenticationCredentials = awsAuthenticationCredentials;
-            return this;
-        }
 
         public Builder lwaAuthorizationCredentials(LWAAuthorizationCredentials lwaAuthorizationCredentials) {
             this.lwaAuthorizationCredentials = lwaAuthorizationCredentials;
@@ -705,12 +979,7 @@ public class ListingsApi {
             this.disableAccessTokenCache = true;
             return this;
         }
-        
-        public Builder awsAuthenticationCredentialsProvider(AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider) {
-            this.awsAuthenticationCredentialsProvider = awsAuthenticationCredentialsProvider;
-            return this;
-        }
-        
+
         public Builder rateLimitConfigurationOnRequests(RateLimitConfiguration rateLimitConfiguration){
             this.rateLimitConfiguration = rateLimitConfiguration;
             return this;
@@ -720,13 +989,8 @@ public class ListingsApi {
             this.rateLimitConfiguration = null;
             return this;
         }
-        
 
         public ListingsApi build() {
-//            if (awsAuthenticationCredentials == null) {
-//                throw new RuntimeException("AWSAuthenticationCredentials not set");
-//            }
-
             if (lwaAuthorizationCredentials == null) {
                 throw new RuntimeException("LWAAuthorizationCredentials not set");
             }
@@ -734,14 +998,6 @@ public class ListingsApi {
             if (StringUtil.isEmpty(endpoint)) {
                 throw new RuntimeException("Endpoint not set");
             }
-
-//            AWSSigV4Signer awsSigV4Signer;
-//            if ( awsAuthenticationCredentialsProvider == null) {
-//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
-//            }
-//            else {
-//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials,awsAuthenticationCredentialsProvider);
-//            }
             
             LWAAuthorizationSigner lwaAuthorizationSigner = null;            
             if (disableAccessTokenCache) {
@@ -755,7 +1011,6 @@ public class ListingsApi {
             }
 
             return new ListingsApi(new ApiClient()
-                // .setAWSSigV4Signer(awsSigV4Signer)
                 .setLWAAuthorizationSigner(lwaAuthorizationSigner)
                 .setBasePath(endpoint)
                 .setRateLimiter(rateLimitConfiguration));

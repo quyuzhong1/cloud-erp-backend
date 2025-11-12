@@ -67,7 +67,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     private NoticeMessageService noticeMessageService;
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
@@ -194,11 +194,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
             if (flag) {
                 //新增上传交付物操作日志
-                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", String.join(",", fileNames)))
+                OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(String.format("上传了一个文件[%s]", String.join(",", fileNames)))
                         .setBusinessId(taskEntity.getId())
                         .setOperation("文档操作")
                         .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-                sysLogService.addSysLogByOther(sysLogEntity);
+                operateLogService.addSysLogByOther(operateLogEntity);
             }
         }
 
@@ -273,11 +273,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             }
         }
         //新增删除交付物操作日志
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("删除了一个文件[%s]", entity.getFileName()))
+        OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(String.format("删除了一个文件[%s]", entity.getFileName()))
                 .setBusinessId(taskEntity.getId())
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-        sysLogService.addSysLogByOther(sysLogEntity);
+        operateLogService.addSysLogByOther(operateLogEntity);
         return this.removeById(id);
     }
 
@@ -378,11 +378,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增变更文档操作日志
-            SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", sb.toString()))
+            OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(String.format("变更了一个文件[%s]", sb.toString()))
                     .setBusinessId(taskEntity.getId())
                     .setOperation("文档操作")
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-            sysLogService.addSysLogByOther(sysLogEntity);
+            operateLogService.addSysLogByOther(operateLogEntity);
 
             //添加历史
             taskDocHistoryService.addHistory(oldDocs);
@@ -512,11 +512,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
 //                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 //                //新增变更文档操作日志
-//                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",", fileNames)))
+//                OperateLogEntity sysLogEntity = new OperateLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",", fileNames)))
 //                        .setBusinessId(taskEntity.getId())
 //                        .setOperation("文档操作")
 //                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-//                sysLogService.addSysLogByOther(sysLogEntity);
+//                operateLogService.addSysLogByOther(sysLogEntity);
 //            }
 //        }
         return Boolean.TRUE;

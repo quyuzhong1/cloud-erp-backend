@@ -169,4 +169,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO);
 
     Boolean batchNoNeedSyncBySourceCode(List<String> sourceCodeList, String remark);
+
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass);
 }

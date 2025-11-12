@@ -98,6 +98,7 @@ public enum SourceTypeEnum {
     SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
     SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
     SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+    SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
 
 
     //OMS
@@ -218,6 +219,7 @@ public enum SourceTypeEnum {
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_DELIVERY("thirdWarehouseDelivery","第三方仓库发货","third_warehouse_delivery"),
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),

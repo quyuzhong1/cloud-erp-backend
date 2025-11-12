@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -101,7 +102,7 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
     	sysPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
     	sysPushMsgEntity.setSourceType(SourceTypeEnum.COUNTRY.getCode());
     	sysPushMsgEntity.setSourceId(entity.getId());
-    	sysPushMsgEntity.setSourceCode(entity.getRegionCode());
+    	sysPushMsgEntity.setSourceCode(entity.getId());
     	sysPushMsgEntity.setSyncOperate(operate);
     	sysPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         
@@ -121,7 +122,11 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         resultMap.put("code",entity.getKingdeeCode());
         //名称
         resultMap.put("name",entity.getNameCn());
-        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        Class<DictCountryEntity> CountryClass = DictCountryEntity.class;
+        TableName tableName = CountryClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId() , businessType);
         String syncKingdeeId="";
         if (Objects.nonNull(thirdpartyRef)) {
             syncKingdeeId = thirdpartyRef.getThirdpartyId();
@@ -145,8 +150,10 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
             }
             //上级编码
             resultMap.put("parentCode",areaEntity.getKingdeeCode());
+            Class<DictGlobalAreaEntity> AreaClass = DictGlobalAreaEntity.class;
+            TableName areaTableName = AreaClass.getDeclaredAnnotation(TableName.class);
             //上级
-            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode());
+            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode() , areaTableName.value());
             if (Objects.nonNull(pidThirdpartyRef)) {
                 resultMap.put("pid",pidThirdpartyRef.getThirdpartyId());
             }

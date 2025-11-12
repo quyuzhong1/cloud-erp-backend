@@ -12,8 +12,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -62,7 +60,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
 
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -117,7 +115,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                 .update();
 
         if (save) {
-            sysLogService.addSysLogBySave("sku图片由[" + oldImagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+            operateLogService.addSysLogBySave("sku图片由[" + oldImagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
 
             if(StringUtils.isNotBlank(oldImagesUrl)){
                 List<String> list = Arrays.asList(oldImagesUrl.split(","));

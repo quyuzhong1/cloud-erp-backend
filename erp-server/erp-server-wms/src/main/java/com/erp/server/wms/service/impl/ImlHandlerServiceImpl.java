@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
@@ -97,7 +98,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return failure("艾姆勒同个客户同个参考号5分钟内不允许重复提交");
         }
         redisUtil.set("wms-iml:"+createOutboundReq.getReferenceNo(),createOutboundReq.getReferenceNo(),300);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(imlCreateOutboundReq));
         ImlResponse<String> response =  imlService.createOutboundBill(imlCreateOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考编号已存在")){
             return ApiResult.success();
         }

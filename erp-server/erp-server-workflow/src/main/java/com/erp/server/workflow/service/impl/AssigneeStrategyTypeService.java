@@ -62,21 +62,41 @@ public class AssigneeStrategyTypeService {
         ChargeSuperiorEnum chargeSuperior = ChargeSuperiorEnum.getByDictValue(dto.getPropertiesDTO().getAssignee());
         // 默认直接上级
         chargeSuperior = null == chargeSuperior ? ChargeSuperiorEnum.DIRECT_SUPERIOR : chargeSuperior;
-        // 如果所选上级不存在, 则继续向上查找
-        ChargeSuperiorEnum finalChargeSuperior = chargeSuperior;
-        String userId = superList.stream()
-                .filter(superior -> superior.getLevel() >= finalChargeSuperior.getCode())
-                .min(Comparator.comparing(UserSuperiorDTO::getLevel))
-                .map(UserSuperiorDTO::getUserId)
-                // 如果所选上级不存在,取最高级别的上级
-                .orElseGet(() ->
-                    superList.stream()
-                    .max(Comparator.comparing(UserSuperiorDTO::getLevel))
-                    .map(UserSuperiorDTO::getUserId)
-                    .orElse(null)
-                );
+        String userId = findSuperiorByLevelSequence(superList, chargeSuperior.getCode());
         // 发起人
         return null != userId ? Arrays.asList(userId) : Collections.emptyList();
+    }
+
+
+    /**
+     * 逐级查找上级
+     * @author will
+     * @date 2025/10/27 10:40
+     * @param superList
+     * @param startLevel
+     * @return String
+     */
+    private String findSuperiorByLevelSequence(List<UserSuperiorDTO> superList, int startLevel) {
+        // 获取系统中所有可能的级别
+        List<Integer> allSystemLevels = Arrays.stream(ChargeSuperiorEnum.values()).map(ChargeSuperiorEnum::getCode).collect(Collectors.toList()); 
+
+        // 从起始级别开始，按顺序查找
+        for (int level : allSystemLevels) {
+            if (level >= startLevel) {
+                Optional<UserSuperiorDTO> superior = superList.stream()
+                        .filter(s -> s.getLevel() == level)
+                        .findFirst();
+                if (superior.isPresent()) {
+                    return superior.get().getUserId();
+                }
+            }
+        }
+
+        // 如果都找不到，返回最高级别的上级
+        return superList.stream()
+                .max(Comparator.comparing(UserSuperiorDTO::getLevel))
+                .map(UserSuperiorDTO::getUserId)
+                .orElse(null);
     }
 
     /**

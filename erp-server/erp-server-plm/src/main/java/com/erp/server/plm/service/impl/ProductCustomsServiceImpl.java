@@ -30,7 +30,7 @@ import com.erp.server.plm.listener.ProductCustomsExcelListener;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
 import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -63,7 +63,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_CUS
 public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMapper, ProductCustomsEntity> implements ProductCustomsService {
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private ProductDetailService productDetailService;
@@ -262,12 +262,12 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
+                    operateLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
                 }else {
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
+                    operateLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -291,7 +291,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                 // 操作日志
                 for (ProductCustomsEntity productCustomsEntity : remove) {
                     String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
+                    operateLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -343,12 +343,12 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "",format);
+                    operateLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "",format);
                 }else {
                     // 操作日志
                     self.save(productCustomsEntity);
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "");
+                    operateLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "");
                 }
             }
             //新增sku国家默认的记录，如果有则不新增
@@ -407,7 +407,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
         // 删除日志数据
         String format = String.format("删除【%s】清关信息", StringUtils.isBlank(entity.getCountryName()) ? "默认" : entity.getCountryName());
-        sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), entity.getSkuId(), productId);
+        operateLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), entity.getSkuId(), productId);
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo()+":"+entity.getCountryName(), OperationTypeEnum.DELETE);
     }
 

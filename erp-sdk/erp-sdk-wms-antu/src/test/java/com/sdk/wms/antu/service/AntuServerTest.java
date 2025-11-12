@@ -93,6 +93,14 @@ public class AntuServerTest {
         AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
+    @Test
+    public void getOrderByRefCode() {
+        AntuGetOutboundRefReq req = AntuGetOutboundRefReq.builder()
+                .referenceNo("WFHD251030000008")
+                .build();
+        AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(req, OmsPlatformEnum.OMS_ANTU);
+        System.out.println(response);
+    }
 
     @Test
     public void getShippingMethodTest() {

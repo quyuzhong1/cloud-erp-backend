@@ -1,8 +1,10 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -55,5 +57,30 @@ public class MqConsumerRecordServiceImpl extends SuperServiceImpl<MqConsumerReco
             return mqConsumerRecord.getId();
         }
         return "";
+    }
+
+    @Override
+    public String buildMqDTO(MqConsumerRecordDTO.BuildMqDTO dto){
+        String jsonStr ="";
+        if(Objects.nonNull(dto)){
+            List<Map<String, Map<String, Object>>> list = new ArrayList<>();
+            Map<String, Map<String, Object>> beforeMap = new HashMap<>();
+            Map<String, Map<String, Object>> afterMap = new HashMap<>();
+            Object before = dto.getBefore();
+            if(Objects.nonNull(before)){
+                beforeMap.put("before", BeanUtil.beanToMap(before));
+                list.add(beforeMap);
+            }
+            Object after = dto.getAfter();
+            if(Objects.nonNull(after)){
+                afterMap.put("after", BeanUtil.beanToMap(after));
+                list.add(afterMap);
+            }
+            if(list.size() > 0){
+                //把list转出String类型的json
+                jsonStr = JSONUtil.toJsonStr(list);
+            }
+        }
+        return jsonStr;
     }
 }

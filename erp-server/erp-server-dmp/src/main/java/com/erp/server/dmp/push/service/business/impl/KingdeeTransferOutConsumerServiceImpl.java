@@ -59,7 +59,7 @@ public class KingdeeTransferOutConsumerServiceImpl implements KingdeeTransferOut
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_RATE.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFEROUT.getCode());
 
 
         /**

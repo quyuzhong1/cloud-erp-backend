@@ -103,11 +103,11 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -237,11 +237,11 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--勾选的id集合-->
         <if test="params.ids != null and params.ids.size > 0">
             AND sr.id in
@@ -312,11 +312,11 @@
             srd.remark AS detailRemark
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
-        ON srd.main_id = sr.id AND sr.is_deleted = false
+        ON srd.main_id = sr.id AND srd.is_deleted = false
         LEFT JOIN warehouse wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sr.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -371,6 +371,7 @@
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
+        and srd.is_deleted = FALSE
         AND sr.approve_status = 'approve'
         AND srd.exec_status IN ('waitOutstock', 'partOutstock')
         <if test="permissionSql != null and permissionSql != ''">
@@ -385,6 +386,7 @@
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
+        and srd.is_deleted = FALSE
         AND srd.exec_status = 'completeOutstock'
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}

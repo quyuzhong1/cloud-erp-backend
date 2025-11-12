@@ -288,8 +288,8 @@ public class PackingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/processThirdBarcode")
-    public ApiResult processThirdBarcode(){
-        packingTaskService.processThirdBarcode();
+    public ApiResult processThirdBarcode(@RequestBody(required = false) List<String> sourceCodeList){
+        packingTaskService.processThirdBarcode(sourceCodeList);
         return success();
     }
 }

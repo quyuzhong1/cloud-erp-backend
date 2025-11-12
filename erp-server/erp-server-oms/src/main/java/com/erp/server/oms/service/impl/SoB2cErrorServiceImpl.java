@@ -379,7 +379,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if (CollUtil.isEmpty(list)){
             return Boolean.TRUE;
         }
-        List<String> errorIds = list.stream().filter(e -> dto.getDetailIdList().contains(e.getDetailId()) && Objects.equals(e.getDetailId(), CharSequenceUtil.EMPTY)).map(SoB2cErrorEntity::getId).distinct().collect(Collectors.toList());
+        List<String> errorIds = list.stream()
+                .filter(e -> dto.getDetailIdList().contains(e.getDetailId()) && !Objects.equals(e.getDetailId(), CharSequenceUtil.EMPTY))
+                .map(SoB2cErrorEntity::getId).distinct().collect(Collectors.toList());
         boolean result = this.removeByIds(errorIds);
         if (result && errorIds.size() == list.size()){
             soB2cService.removeSignError(dto.getMainId(),dto.getType());

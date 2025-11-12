@@ -172,9 +172,9 @@ public class SkuMappingController extends BaseController {
 
     /**
      * b2b平台sku同步
-     * @author will 
+     * @author will
      * @date 2025/8/27 10:26
-     * @param dto 
+     * @param dto
      * @return ApiResult<PagingViewDTO>
      */
     @PostMapping("/b2bPlatformSyncSku")
@@ -187,7 +187,7 @@ public class SkuMappingController extends BaseController {
      * b2b平台sku列表导出
      * @author will
      * @date 2025/8/27 16:06
-     * @param dto 
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2b的sku对照表")
@@ -521,6 +521,18 @@ public class SkuMappingController extends BaseController {
     public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         skuMappingService.syncPlatformProduct(dto.getIds());
         return success();
+    }
+
+    /**
+     * 单个同步商品
+     * @author will
+     * @date 2025/8/7 16:29
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/syncPlatformProductByOne")
+    public ApiResult<List<BatchResultDTO>> syncPlatformProductByOne(@RequestBody @Validated SkuMappingDTO.SyncPlatformProductDTO dto){
+        return success(skuMappingService.syncPlatformProductByOne(dto));
     }
 
     /**

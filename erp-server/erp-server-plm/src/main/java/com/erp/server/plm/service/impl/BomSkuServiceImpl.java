@@ -12,6 +12,13 @@ import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.VirtualInventoryFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
@@ -19,6 +26,7 @@ import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -32,6 +40,7 @@ import java.util.stream.Stream;
  * @since 2023-01-09 11:45:28
  */
 @Service
+@Slf4j
 public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity> implements BomSkuService {
 
 
@@ -40,6 +49,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private VirtualInventoryFeign virtualInventoryFeign;
+
+    @Resource
+    private InventoryFeign inventoryFeign;
 
     /**
      * 保存bom 与sku 关系
@@ -346,5 +364,106 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             return Collections.emptyList();
         }
         return baseMapper.getSingleBomInfo(skuIdList);
+    }
+
+    @Override
+    public List<BomChildrenSkuDTO> listBomChildBySoB2cDetailId(ProductBomInfoDTO.SkuIdParams params) {
+        if (CollectionUtils.isEmpty(params.getSkuIds()) || StringUtils.isBlank(params.getSoB2cDetailId())) {
+            return Collections.emptyList();
+        }
+
+        // 1. 根据SoB2cDetailEntity的ID获取明细信息
+        SoB2cDetailEntity soB2cDetail = null;
+        try {
+            List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByIds(Collections.singletonList(params.getSoB2cDetailId()));
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                soB2cDetail = detailList.get(0);
+            }
+        } catch (Exception e) {
+            log.warn("获取SoB2cDetailEntity失败", e);
+            return Collections.emptyList();
+        }
+
+        if (soB2cDetail == null) {
+            return Collections.emptyList();
+        }
+
+        // 2. 获取BOM子件信息
+        List<BomChildrenSkuDTO> result = baseMapper.listBomChildBySkuIds(params.getSkuIds());
+        
+        // 3. 为每个子件添加库存信息
+        if (CollectionUtils.isNotEmpty(result)) {
+            // 获取所有子件的SKU ID
+            List<String> childSkuIds = result.stream()
+                    .map(BomChildrenSkuDTO::getSkuId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 获取虚拟仓库存 - 使用Feign调用
+            Map<String, Integer> virtualInventoryMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(childSkuIds) && StringUtils.isNotBlank(soB2cDetail.getVirtualWarehouseId())) {
+                try {
+                    VirtualInventoryDTO.VirtualInventoryParamDTO virtualParam = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+                    virtualParam.setSkuIdList(childSkuIds);
+                    virtualParam.setVirtualWarehouseIdList(Collections.singletonList(soB2cDetail.getVirtualWarehouseId()));
+                    // warehouseIdList 是必填的，必须设置
+                    if (StringUtils.isNotBlank(soB2cDetail.getWarehouseId())) {
+                        virtualParam.setWarehouseIdList(Collections.singletonList(soB2cDetail.getWarehouseId()));
+                    } else {
+                        // 如果没有实体仓ID，使用一个默认值或者跳过虚拟仓查询
+                        log.warn("SoB2cDetailEntity缺少warehouseId，跳过虚拟仓库存查询");
+                    }
+                    virtualParam.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+                    
+                    List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(virtualParam);
+                    if (CollectionUtils.isNotEmpty(virtualInventoryList)) {
+                        for (VirtualInventoryDTO.VirtualInventoryQtyDTO virtualQty : virtualInventoryList) {
+                            String key = virtualQty.getSkuId();
+                            Integer currentQty = virtualInventoryMap.getOrDefault(key, 0);
+                            virtualInventoryMap.put(key, currentQty + virtualQty.getInventoryQty());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("获取虚拟仓库存失败", e);
+                }
+            }
+
+            // 获取实体仓库存 - 使用Feign调用
+            Map<String, Integer> realInventoryMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(childSkuIds) && StringUtils.isNotBlank(soB2cDetail.getWarehouseId())) {
+                try {
+                    InventoryQtyDTO.SkuInventoryStatusParamDTO realParam = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+                    realParam.setSkuIdList(childSkuIds);
+                    realParam.setWarehouseIdList(Collections.singletonList(soB2cDetail.getWarehouseId()));
+                    realParam.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+                    
+                    List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> realInventoryList = inventoryFeign.listSkuInventoryStatusByParam(realParam);
+                    if (CollectionUtils.isNotEmpty(realInventoryList)) {
+                        for (InventoryQtyDTO.SkuInventoryStatusTotalDTO realQty : realInventoryList) {
+                            String key = realQty.getSkuId();
+                            Integer currentQty = realInventoryMap.getOrDefault(key, 0);
+                            realInventoryMap.put(key, currentQty + realQty.getInventoryTotal());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("获取实体仓库存失败", e);
+                }
+            }
+
+            // 设置库存信息到结果中
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : result) {
+                String skuId = bomChildrenSkuDTO.getSkuId();
+                
+                // 设置虚拟仓库存
+                Integer virtualQty = virtualInventoryMap.get(skuId);
+                bomChildrenSkuDTO.setVirtualUsableQty(virtualQty != null ? virtualQty : 0);
+                
+                // 设置实体仓库存
+                Integer realQty = realInventoryMap.get(skuId);
+                bomChildrenSkuDTO.setWarehouseUsableQty(realQty != null ? realQty : 0);
+            }
+        }
+        
+        return result;
     }
 }

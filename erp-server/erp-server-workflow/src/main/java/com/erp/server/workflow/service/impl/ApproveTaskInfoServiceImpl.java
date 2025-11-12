@@ -214,7 +214,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             Map<String, List<ApproveTaskDetailEntity>> groupMap = list.stream()
                     .collect(Collectors.groupingBy(e -> ObjectUtil.isEmpty(e.getEntityCode()) ? "" : e.getEntityCode()));
             for (Map.Entry<String, List<ApproveTaskDetailEntity>> entry : groupMap.entrySet()) {
-                if ("".equals(entry.getKey())) {
+                if ("".equals(entry.getKey()) || "main".equals(entry.getKey())) {
                     //根据erp字段分组，存在重复的就给list
                     groupMapValue(entry.getValue(),detailMap);
                 } else {

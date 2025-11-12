@@ -238,6 +238,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_SAMPLE_BACK_INFO("IMPORT_WMS_SAMPLE_BACK_INFO","导入样品退回单","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleBackInfo",""),
     EXPORT_WMS_SAMPLE_INITIAL_LEDGER_REPORT("EXPORT_WMS_SAMPLE_INITIAL_LEDGER_REPORT", "样品期初台账导出","","",""),
     IMPORT_WMS_SAMPLE_INITIAL_LEDGER("IMPORT_WMS_SAMPLE_INITIAL_LEDGER","样品期初台账导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleInitialLedger",""),
+    EXPORT_WMS_SAMPLE_TRANSFER_INFO_REPORT("EXPORT_WMS_SAMPLE_TRANSFER_INFO_REPORT", "样品转移单导出","","",""),
+    IMPORT_WMS_SAMPLE_TRANSFER_INFO("IMPORT_WMS_SAMPLE_TRANSFER_INFO","样品转移单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleTransfer",""),
 
 
     //tms

@@ -1381,6 +1381,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MappingSkuViewDTO {
+        /**
+         * listingId
+         */
+        private String listingId;
 
         private String id;
 
@@ -1612,6 +1616,14 @@ public class SkuMappingDTO implements Serializable {
          * 客户id
          */
         private String cutomerId;
+        /**
+         *
+         */
+        private String type;
+        /**
+         * 匹配结果吧true 已匹配 false 未匹配
+         */
+        private String matchResult;
     }
 
 
@@ -1736,6 +1748,27 @@ public class SkuMappingDTO implements Serializable {
          * 标签文件名称
          */
         private String labelFileName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncPlatformProductDTO {
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String platform;
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺ID不能为空")
+        private String shopId;
+
+        /**
+         * 平台sku集合
+         */
+        @NotEmpty(message = "平台Sku不能为空")
+        private List<String> platformSkuNoList;
     }
 
 

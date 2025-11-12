@@ -5,14 +5,12 @@ import com.common.business.constant.MongoTableNameContant;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.oms.dto.OmsMongoDTO;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.AmzBusinessHandleService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,8 +38,6 @@ public class DmpMongoDbFeignController{
     private MongoService mongoService;
     @Resource
     private MongoTemplate mongoTemplate;
-    @Resource
-    private AmzBusinessHandleService amzBusinessHandleService;
 
     /**
      * 拉取货件
@@ -86,17 +82,6 @@ public class DmpMongoDbFeignController{
         List<KingdeeDeliveryDetailEntity> list = mongoTemplate.find(query, KingdeeDeliveryDetailEntity.class, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL);
         return CollectionUtils.isNotEmpty(list);
 
-    }
-
-    /**
-     * 查询mongodb是否有销售出库单
-     *
-     * @Author Jim
-     * @since 2024-02-14
-     **/
-    @PostMapping("/checkSoOutStock")
-    public Boolean checkSoOutStock(@RequestBody DmpPullSoOutStockDTO resultDTO){
-        return amzBusinessHandleService.checkAndSendSoOutStock(resultDTO);
     }
 
 }

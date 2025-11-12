@@ -1,10 +1,7 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -31,8 +28,6 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -93,7 +88,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
 
     @Value("${pmoCharge}")
@@ -192,7 +187,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             sb.append(userName).append(" ").append(nowTime).append(" ").append("提交 ");
             sb.append("计划开始时间  ");
             sb.append(task.getPlanStartTime()).append("  计划结束时间 ").append(task.getPlanEndTime());
-            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
+            operateLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
         }
 
 
@@ -802,7 +797,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                     sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
                     sb.append("计划开始时间 ");
                     sb.append(task.getOriginStartTime()).append("  计划结束时间").append(task.getOriginEndTime());
-                    sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
+                    operateLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
                 }
 
             }

@@ -504,7 +504,8 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
         
         SampleLedgerFlowDTO.ViewDTO viewDTO = new SampleLedgerFlowDTO.ViewDTO();
         BeanMapperUtils.copy(entity, viewDTO);
-        
+        viewDTO.setDictBizType(ApproveTypeEnum.getName(viewDTO.getDictBizType()));
+        viewDTO.setSourceType(SourceTypeEnum.getName(viewDTO.getSourceType()));
         return viewDTO;
     }
 

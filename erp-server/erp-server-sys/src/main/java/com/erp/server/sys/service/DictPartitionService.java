@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.common.business.service.SuperService;
@@ -48,4 +49,11 @@ public interface DictPartitionService extends SuperService<DictPartitionEntity> 
      * @return
      */
     List<DictPartitionDTO.DictDTO> dropDown(DictPartitionDTO.SelectDTO dto);
+
+    /**
+     * 高级查询军区信息
+     * @param advanceQueryContainer
+     * @return
+     */
+    List<DictPartitionEntity> listByAdvanceQuery(AdvanceQueryContainer advanceQueryContainer);
 }
