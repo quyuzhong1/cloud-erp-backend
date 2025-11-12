@@ -1522,6 +1522,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             /**
              * 添加修改日志
              */
+            if(Objects.isNull(soInfo.getShippingFee())){
+                soInfo.setShippingFee(BigDecimal.ZERO);
+            }
+            if(Objects.isNull(soInfo.getBankServiceFee())){
+                soInfo.setBankServiceFee(BigDecimal.ZERO);
+            }
             operateLogService.addModuleOperateLogByObj(old, soInfo, ModuleTypeEnum.SO.getCode(), id, "", "");
             // 此处调整为明细的币制取主单的币制
             if (StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
@@ -1534,7 +1540,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
             }
             //更新收款单信息
-            soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+            if(dto.getIsUpdateSoReceipt()){
+                soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+            }
             return id;
         }
         return "";
@@ -3760,6 +3768,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
+            updateDTO.setIsUpdateSoReceipt(false);
             String id = this.updateSo(updateDTO);
             //处理删除的明细
             List<String> platformDetailIds = detailList.stream().map(PlatformB2bOrderDetailDTO::getPlatformDetailId).collect(Collectors.toList());
