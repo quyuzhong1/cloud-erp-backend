@@ -380,9 +380,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(StringUtils.isNotBlank(dto.getReceiveAccount()) && CollectionUtils.isNotEmpty(dto.getSoReceiptDTOList())){
                 dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
             }
-            //更新收款单信息
-            soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
-
+            try {
+                UserContext.setIsUserSystem(true);
+                //更新收款单信息
+                soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
             omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);

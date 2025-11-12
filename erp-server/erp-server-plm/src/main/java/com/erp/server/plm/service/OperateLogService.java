@@ -53,6 +53,8 @@ public interface OperateLogService extends IService<OperateLogEntity> {
      */
     Boolean addSysLogBySave(String content,String classPath,String businessId,String pid);
 
+    Boolean addSysLogBySave(String content, String classPath, String businessId, String pid, String operation);
+
     /**
      * @description: 新增时批量保存日志
      * @author Will
