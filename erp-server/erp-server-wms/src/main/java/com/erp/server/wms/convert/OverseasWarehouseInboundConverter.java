@@ -325,11 +325,8 @@ public interface OverseasWarehouseInboundConverter {
     @Mappings({
             @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "incomeType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.IncomeTypeEnum.getCodeByErp(sourceData.getIncomeType()))"),
-            @Mapping(target = "receivingType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.TransitTypeEnum.getCodeByErp(sourceData.getReceivingType()))"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
-            @Mapping(target = "smCode",  expression = "java(OverseasWarehouseInboundConverter.getImlSmCode(sourceData))"),
             @Mapping(target = "trackingNumber",  source = "trackingNumber"),
             @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "toStrByDate"),
             @Mapping(target = "verify",  source = "verify"),
