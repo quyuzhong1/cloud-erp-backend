@@ -265,7 +265,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        PagingVO pagingVO = new PagingVO(pageData);
+        pagingVO.setTotalCount(pageData.getRecords().size());
+        return pagingVO;
     }
 
     @Override
