@@ -112,7 +112,7 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 	}
 
 	@Override
-	public PagingVO<TotalDTO> total(com.common.business.dto.base.PagingDTO<PagingParamDTO> dto) {
+	public TotalDTO total(com.common.business.dto.base.PagingDTO<PagingParamDTO> dto) {
 		// TODO Auto-generated method stub
 		return null;
 	}

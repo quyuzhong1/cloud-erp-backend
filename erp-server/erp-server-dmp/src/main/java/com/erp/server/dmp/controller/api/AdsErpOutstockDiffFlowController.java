@@ -64,7 +64,7 @@ public class AdsErpOutstockDiffFlowController extends BaseController {
      */
     @PostMapping("/total")
     @WebAdvanceQuery(handler = AdsErpOutstockDiffFlowQueryHandler.class)
-    public ApiResult<PagingVO<AdsErpOutstockDiffFlowDTO.TotalDTO>> total(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto) {
+    public ApiResult<AdsErpOutstockDiffFlowDTO.TotalDTO> total(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto) {
         return success(adsErpOutstockDiffFlowService.total(dto));
     }
     

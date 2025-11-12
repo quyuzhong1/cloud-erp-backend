@@ -67,7 +67,7 @@ public class AdsErpOutstockDiffFlowDTO implements Serializable {
     @AllArgsConstructor
     public static class ReCreateDTO{
     	/**
-         * 主键id
+         * 核算周期
          */
         private String checkMonth;
     }

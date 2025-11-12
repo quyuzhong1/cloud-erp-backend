@@ -36,7 +36,7 @@ public interface AdsErpOutstockDiffFlowService extends SuperService<AdsErpOutsto
 
     PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> paging(PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
     
-    PagingVO<AdsErpOutstockDiffFlowDTO.TotalDTO> total(PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
+    AdsErpOutstockDiffFlowDTO.TotalDTO total(PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
     
     Boolean reCreate(AdsErpOutstockDiffFlowDTO.ReCreateDTO dto);
     
