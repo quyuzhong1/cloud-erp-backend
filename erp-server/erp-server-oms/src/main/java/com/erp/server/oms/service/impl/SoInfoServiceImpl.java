@@ -372,8 +372,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //添加明细
             soDetailService.addSoDetail(addEntity, dto.getIsTax(), dto.getDetailList());
-            //更新收款单信息
-            soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
+            try {
+                UserContext.setIsUserSystem(true);
+                //更新收款单信息
+                soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);

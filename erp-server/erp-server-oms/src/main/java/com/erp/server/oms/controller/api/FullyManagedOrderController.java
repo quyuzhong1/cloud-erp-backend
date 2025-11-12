@@ -194,7 +194,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 ApproveResultDTO submit1 = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
                 if (submit1.getSuccess() && !submit1.getIsExistProcess()){
-                    submit = soB2cService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核"), null, "");
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核");
+                    approveOneDTO.setIsSubmitAutoApprove(true);
+                    approveOneDTO.setIsNeedProcess(false);
+                    submit = soB2cService.approve(approveOneDTO, null, "");
                     //速卖通平台仓订单不走任何规则
                     if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
                         resultDTOS.add(submit);
