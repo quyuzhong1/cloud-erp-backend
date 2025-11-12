@@ -218,6 +218,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 flowEntity.setSkuId(detail.getSkuId());
                 flowEntity.setProductName(detail.getProductName());
                 flowEntity.setQty(detail.getQty());
+                flowEntity.setRemark(detail.getRemark());
                 
                 // 保存单个明细
                 boolean saved = super.save(flowEntity);
