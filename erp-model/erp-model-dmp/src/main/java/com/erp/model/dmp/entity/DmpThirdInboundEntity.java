@@ -80,6 +80,8 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
      */
     @TableField("source_code")
     private String sourceCode;
+    @TableField("main_id")
+    private String mainId;
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 

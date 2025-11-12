@@ -61,7 +61,7 @@ public class DmpInputGoodCangInBoundDmpHandler extends DmpInputDoChildDmpHandler
 		for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
 			String sourcePlatform = DmpBasicSystemCodeEnum.GOODCANG.getCode();
 			String reference_no = dmpInputMongoChildEntity.get("receiving_code").toString();
-			String authId = dmpInputMongoChildEntity.getOrDefault("authId", "").toString();
+			String authId = dmpInputMongoChildEntity.getOrDefault("nextLevelId", "").toString();
 			String uniqueId = CharSequenceUtil.format("{}_{}_{}", sourcePlatform, reference_no, authId);
 			String dmpId = billNoIdMap.get(uniqueId);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
