@@ -69,6 +69,8 @@
             apod.tax_rate as taxRate,
             apod.purchase_qty as purchaseQty,
             apod.total_amount as totalAmount,
+            apod.currency as currency,
+            apod.currency_symbol as currencySymbol,
             apod.remark as remark,
             apo.approve_user_id as approveUserId,
             apo.approve_user_name as approveUserName,

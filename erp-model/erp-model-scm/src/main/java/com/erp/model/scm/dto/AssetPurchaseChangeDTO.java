@@ -194,6 +194,16 @@ public class AssetPurchaseChangeDTO implements Serializable {
         private BigDecimal totalAmount;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 变更备注
          */
         private String remark;
