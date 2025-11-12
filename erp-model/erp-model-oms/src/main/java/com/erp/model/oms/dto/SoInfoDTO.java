@@ -1642,6 +1642,7 @@ public class SoInfoDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
+        private Boolean isUpdateSoReceipt = true;
 
         /**
          * 平台
