@@ -1544,8 +1544,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             try {
                 UserContext.setIsUserSystem(true);
-                //更新收款单信息
-                soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+                if(dto.getIsUpdateSoReceipt()){
+                    soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+                }
             }finally {
                 UserContext.clearIsUserSystem();
             }
@@ -3777,6 +3778,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 updateDTOList.add(detailDTO);
             }
             updateDTO.setDetailList(updateDTOList);
+            updateDTO.setIsUpdateSoReceipt(false);
             String id = this.updateSo(updateDTO);
             //处理删除的明细
             List<String> platformDetailIds = detailList.stream().map(PlatformB2bOrderDetailDTO::getPlatformDetailId).collect(Collectors.toList());
