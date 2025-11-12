@@ -144,6 +144,11 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
     }
 
     private void dealDetail(String id , CfgDiffStrategyDTO.AddDTO addDTO) {
+    	String billType = addDTO.getBillType();
+		List<CfgDiffStrategyEntity> dbBillTypeList = lambdaQuery().eq(CfgDiffStrategyEntity::getBillType, billType).ne(CfgDiffStrategyEntity::getId, id).list();
+    	if(CollUtil.isNotEmpty(dbBillTypeList)) {
+    		throw new ServiceException("对应单据类型已存在【" + dbBillTypeList.get(0).getName() + "】异常策略配置");
+    	}
     	List<CfgDiffStrategyDetailEntity> dbDetailList = cfgDiffStrategyDetailService.lambdaQuery().eq(CfgDiffStrategyDetailEntity::getMainId, id).list();
     	if(CollUtil.isNotEmpty(dbDetailList)) {
     		List<String> detailIds = dbDetailList.stream().map(CfgDiffStrategyDetailEntity::getId).collect(Collectors.toList());
