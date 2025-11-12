@@ -409,7 +409,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
 
         // 日志数据
         String msg = StrUtil.format("用户【{}】模具编号【{}】返还数量上限【{}】取消返还确认", UserContext.getDefaultLoginUser().getUserName(), old.getMoldCode(),old.getReturnQtyLimit());
-        sysLogService.addSysLogBySave(msg, "", entity.getId(), "");
+        sysLogService.addSysLogBySave(msg, "", entity.getId(), "","编辑操作");
 
         // 查询相关的附件信息
         List<PlmAttachmentEntity> attachmentList = attachmentService.listByBusinessIds(Arrays.asList(id));
