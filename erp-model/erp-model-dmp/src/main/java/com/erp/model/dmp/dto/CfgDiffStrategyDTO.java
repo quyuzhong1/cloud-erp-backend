@@ -224,6 +224,11 @@ public class CfgDiffStrategyDTO implements Serializable {
           @Size(max = 255,message = "建议处理方式最大长度不能超过255位")
           private String suggestType;
           
+          
+          /**
+         * 启动条件
+         */
+        private String conditionDesc;
           /**
          * 条件设置列表
          */
@@ -240,7 +245,6 @@ public class CfgDiffStrategyDTO implements Serializable {
     	  /**
            * 左括号
            */
-           @NotBlank(message = "左括号不能为空")
            @Size(max = 10,message = "左括号最大长度不能超过10位")
            private String leftBracket;
 
@@ -252,12 +256,6 @@ public class CfgDiffStrategyDTO implements Serializable {
            private String field;
            
            /**
-            * 条件的字段名称
-            */
-            @NotBlank(message = "条件的字段名称不能为空")
-            private String fieldName;
-
-           /**
            * 比较符：高级查询getQueryCondition获取，入参code取单据类型返回的remark字段
            */
            @NotBlank(message = "比较符不能为空")
@@ -265,25 +263,13 @@ public class CfgDiffStrategyDTO implements Serializable {
            private String compare;
            
            /**
-            * 比较符名称
-            */
-            @NotBlank(message = "比较符名称不能为空")
-            private String compareName;
-
-           /**
            * 对应的值，高级查询getQueryCondition获取，入参code取单据类型返回的remark字段，多个用,逗号分隔
            */
            private String value;
            
            /**
-            * 对应的值名称
-            */
-            private String valueName;
-
-           /**
            * 右括号
            */
-           @NotBlank(message = "右括号不能为空")
            @Size(max = 10,message = "右括号最大长度不能超过10位")
            private String rightBracket;
 

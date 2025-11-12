@@ -165,7 +165,6 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
     			}
     			List<AddConditionDTO> conditionList = addDetailDTO.getConditionList();
     			StringBuilder conditionSql = new StringBuilder();
-    			StringBuilder conditionDesc = new StringBuilder();
     			List<CfgDiffStrategyConditionEntity> cfgDiffStrategyConditionEntityList = new ArrayList<>();
     			if(CollUtil.isNotEmpty(conditionList)) {
     				conditionList.sort((c1 , c2) -> c1.getIndex().compareTo(c2.getIndex()));
@@ -226,32 +225,12 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
 	    					conditionSql.append(" ");
     					}
 						
-						conditionDesc.append(addConditionDTO.getLeftBracket());
-						conditionDesc.append(" ");
-						conditionDesc.append(addConditionDTO.getFieldName());
-						conditionDesc.append(" ");
-						conditionDesc.append(addConditionDTO.getCompareName());
-						conditionDesc.append(" ");
-						String valueName = addConditionDTO.getValueName();
-						if(StringUtils.isBlank(valueName)) {
-							valueName = addConditionDTO.getValue();
-						}
-						conditionDesc.append(valueName);
-						conditionDesc.append(" ");
-						conditionDesc.append(addConditionDTO.getRightBracket());
-						if(i != size) {
-							conditionDesc.append(" ");
-							conditionDesc.append(addConditionDTO.getLogic());
-							conditionDesc.append(" ");
-    					}
-						
     					i = i + 1;
     				}
     			}
     			CfgDiffStrategyDetailEntity cfgDiffStrategyDetailEntity = BeanUtil.copyProperties(addDetailDTO, CfgDiffStrategyDetailEntity.class);
     			cfgDiffStrategyDetailEntity.setMainId(id);
     			cfgDiffStrategyDetailEntity.setConditionSql(conditionSql.toString());
-    			cfgDiffStrategyDetailEntity.setConditionDesc(conditionDesc.toString());
     			
     			cfgDiffStrategyDetailService.save(cfgDiffStrategyDetailEntity);
     			
