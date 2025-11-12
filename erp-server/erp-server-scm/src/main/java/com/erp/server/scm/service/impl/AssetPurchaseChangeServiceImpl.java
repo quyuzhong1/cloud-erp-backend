@@ -132,7 +132,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         }
 
         //List<AssetPurchaseChangeDetailEntity> detailList = handleDetailData(addDTO, assetPurchaseChangeEntity.getId());
-        handleAddDetailData(addDTO.getAssetPurchaseChangeDetailDTOList());
+        handleAddDetailData(addDTO.getAssetPurchaseChangeDetailDTOList(),assetPurchaseChangeEntity.getId());
         List<AssetPurchaseChangeDetailEntity> assetPurchaseChangeDetailEntityList =
                 BeanMapperUtils.copyList(AssetPurchaseChangeDetailEntity.class, addDTO.getAssetPurchaseChangeDetailDTOList());
         assetPurchaseChangeDetailService.saveBatch(assetPurchaseChangeDetailEntityList);
@@ -951,13 +951,18 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     }
 
-    public void handleAddDetailData(List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList){
+    public void handleAddDetailData(List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList,String assetPurchaseChangeId){
         for (AssetPurchaseChangeDetailDTO.AddDTO addDTO : assetPurchaseChangeDetailDTOList) {
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailService.getById(addDTO.getSourceDetailId());
 
+            addDTO.setOldTotalAmount(addDTO.getOldPurchaseQty().multiply(addDTO.getOldTaxPrice()));
+            addDTO.setTotalAmount(addDTO.getPurchaseQty().multiply(addDTO.getTaxPrice()));
+            addDTO.setTaxRate(addDTO.getOldTaxRate());
+            addDTO.setMainId(assetPurchaseChangeId);
+
             List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> assetAcceptList =
                     assetAceptFeign.getAcceptByDetailId(assetPurchaseOrderDetailEntity.getId()).getData();
-            if (!assetAcceptList.isEmpty()) {
+            if (Objects.nonNull(assetAcceptList)) {
                 BigDecimal sum = assetAcceptList.stream().map(obj -> obj.getAcceptQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 if (addDTO.getPurchaseQty().compareTo(sum) < 0) {
                     throw new ServiceException(ApiError.ERROR_98150);
