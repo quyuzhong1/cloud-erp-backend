@@ -68,8 +68,7 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map,type);
-            //查询是否存在并删除
-            queryAndOperateDelete(apiUtils, platformEntity, map, operate);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核
@@ -241,16 +240,18 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
         try {
             // 查询金蝶数据
             JSONObject model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
-            JSONObject result = model.getJSONObject("Result");
-            JSONObject responseStatus = result.getJSONObject("ResponseStatus");
+            if (Objects.nonNull(model.getJSONObject("Result"))) {
+                JSONObject result = model.getJSONObject("Result");
+                JSONObject responseStatus = result.getJSONObject("ResponseStatus");
 
-            // 检查查询是否成功
-            if (!responseStatus.getBool("IsSuccess")) {
-                // 提取金蝶返回的错误信息
-                Object errors = responseStatus.get("Errors");
-                String errorMsg = (errors != null) ? errors.toString() : "未知错误";
-                log.error("金蝶查询失败，无法删除单据，Errors: {}", errorMsg);
-                throw new ServiceException("金蝶查询失败，无法删除单据: " + errorMsg);
+                // 检查查询是否成功
+                if (!responseStatus.getBool("IsSuccess")) {
+                    // 提取金蝶返回的错误信息
+                    Object errors = responseStatus.get("Errors");
+                    String errorMsg = (errors != null) ? errors.toString() : "未知错误";
+                    log.error("金蝶查询失败，无法删除单据，Errors: {}", errorMsg);
+                    throw new ServiceException("金蝶查询失败，无法删除单据: " + errorMsg);
+                }
             }
 
             // 查询成功，执行删除操作

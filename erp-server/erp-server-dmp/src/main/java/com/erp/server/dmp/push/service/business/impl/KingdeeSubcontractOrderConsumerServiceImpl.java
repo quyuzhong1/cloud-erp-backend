@@ -85,8 +85,8 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map);
-            //查询是否存在并删除
-            queryAndOperateDelete(apiUtils, platformEntity, map, operate);        }
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
         /**
          * 审核
          */
