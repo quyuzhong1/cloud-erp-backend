@@ -1623,14 +1623,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String createUserId = "" + execution.getVariable("createUserId");
         // 获取当前任务的审批人
         String assignee = taskDelegate.getAssignee();
-        if (CharSequenceUtil.isNotBlank(assignee) && CharSequenceUtil.equals(createUserId,assignee)) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
-        }
-        List<String> userIdList = taskDelegate.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(userIdList) && userIdList.contains(createUserId)) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
+        if (CharSequenceUtil.isNotBlank(assignee)) {
+            //当前审核人和创建人相同则报错
+            if (CharSequenceUtil.equals(createUserId,assignee)) {
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
+                throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
+            }
+        } else {
+            List<String> userIdList = taskDelegate.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(userIdList) && userIdList.contains(createUserId)) {
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
+                throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,ObjectUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName());
+            }
         }
     }
 
