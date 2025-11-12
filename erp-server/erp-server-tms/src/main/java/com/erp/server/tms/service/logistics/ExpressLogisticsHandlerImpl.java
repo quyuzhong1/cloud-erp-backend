@@ -352,7 +352,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         BaseResult baseResult = null;
         LogisticsOrderResponseVO logisticsOrderResponseVO = new LogisticsOrderResponseVO();
         OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
-                .orderId(logisticsQueryVO.getDeliveryNo())
+                .orderId(logisticsQueryVO.getPushPlatformCode())
                 .searchType(1)
                 .language("zh-CN")
                 .build();

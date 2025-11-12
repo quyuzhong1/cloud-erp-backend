@@ -294,7 +294,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         boolean success = true;
         for (LogisticsQueryBaseVO logisticsQueryBaseVO : logisticsQueryVOList) {
             OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
-                    .request_no(logisticsQueryBaseVO.getDeliveryNo())
+                    .request_no(logisticsQueryBaseVO.getPushPlatformCode())
                     .build();
             try {
                 ValidatorUtil.validateEntity(orderQueryRequest);
@@ -357,7 +357,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .isPrintPickInfo(logisticsGetLabelVO.getIsPdn())
                 .createPackageLabel(logisticsGetLabelVO.getIsPdn())
                 .isPrintPickBarcode(logisticsGetLabelVO.getIsPdn())
-                .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
+                .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getPushPlatformCode).collect(Collectors.toList()))
                 .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();
         ValidatorUtil.validateEntity(labelRequest);

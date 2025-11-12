@@ -176,7 +176,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         boolean isSuccess = true;
         for (LogisticsQueryBaseVO logisticsQueryBaseVO : logisticsQueryVOList) {
             TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
-                    .orderNo(logisticsQueryBaseVO.getDeliveryNo())
+                    .orderNo(logisticsQueryBaseVO.getPushPlatformCode())
                     .build();
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
             try {
