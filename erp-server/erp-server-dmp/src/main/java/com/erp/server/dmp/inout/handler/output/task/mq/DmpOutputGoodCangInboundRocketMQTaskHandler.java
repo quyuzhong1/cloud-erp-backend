@@ -42,7 +42,7 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
 				if("dmp_third_inbound".equals(storageName)) {
 					for(BaseEntity v : value) {
 						DmpThirdInboundEntity dmpThirdInboundEntity = (DmpThirdInboundEntity) v;
-						dmpThirdInboundEntityMap.put(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity);
+						dmpThirdInboundEntityMap.put(dmpThirdInboundEntity.getMainId(), dmpThirdInboundEntity);
 					}
 				} else if ("dmp_third_inventory_trans_flow".equals(storageName)) {
 					for(BaseEntity v : value) {
@@ -66,7 +66,8 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
 				String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
 				if("dmp_third_inbound".equals(storageName)) {
 					for(BaseEntity v : value) {
-						changeIds.add(v.getId());
+						DmpThirdInboundEntity thirdInboundEntity = (DmpThirdInboundEntity) v;
+						changeIds.add(thirdInboundEntity.getMainId());
 					}
 				} else if ("dmp_third_inventory_trans_flow".equals(storageName)) {
 					for (BaseEntity v : value) {
