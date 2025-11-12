@@ -785,6 +785,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String trackNo;
         /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
+        /**
          * ioss税号
          */
         private String iossTaxNo;
@@ -1090,6 +1094,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
+        /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
 
         /**
          * 店铺id

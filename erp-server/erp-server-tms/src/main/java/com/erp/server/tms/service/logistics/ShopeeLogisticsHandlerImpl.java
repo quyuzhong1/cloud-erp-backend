@@ -224,7 +224,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             BaseRequest baseRequest = getBaseRequest(authMap);
             try {
                 ValidatorUtil.validateEntity(baseRequest);
-                TrackResponse trackResponse = shopeeLogisticsService.getTrackNumber(baseRequest,logisticsQueryVO.getDeliveryNo());
+                TrackResponse trackResponse = shopeeLogisticsService.getTrackNumber(baseRequest,logisticsQueryVO.getPushPlatformCode());
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
                 if (Objects.nonNull(trackResponse) && CharSequenceUtil.isNotBlank(trackResponse.getTrackingNumber())) {
                     responseVO.setTransportNo(trackResponse.getTrackingNumber());

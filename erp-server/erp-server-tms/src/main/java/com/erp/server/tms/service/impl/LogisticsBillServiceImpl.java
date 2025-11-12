@@ -549,6 +549,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             return LogisticsBillDTO.GenerateBillResultDTO.builder()
+                    .pushPlatformCode(logisticsOrderVO.getDeliveryNo())
                     .trackNo(orderResult.getData().getTrackNo())
                     .transportNo(orderResult.getData().getTransportNo())
                     .iossTaxNo(CharSequenceUtil.isNotBlank(orderResult.getData().getIossTaxNo()) ? orderResult.getData().getIossTaxNo() : CharSequenceUtil.EMPTY)
@@ -1076,6 +1077,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
                 getLabelVO.setTransportNo(soB2cLogisticsEntity.getCode());
                 getLabelVO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                getLabelVO.setPushPlatformCode(CharSequenceUtil.isNotBlank(dto.getPushPlatformCode())? dto.getPushPlatformCode() : soB2cLogisticsEntity.getPushPlatformCode());
                 //授权信息
                 getLabelVO.setAuthMap(authMap);
                 //查询是否打印配货单
