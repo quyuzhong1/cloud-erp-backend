@@ -1085,9 +1085,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
 
-        // 只有审核通过和反审核才记录台账流水
+        // 需要入台账 并且 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+        if ( ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
             // 记录台账流水
             try {
                 SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
@@ -1367,6 +1367,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     * 新增修改处理数据
     */
     private void handleData(SampleRecipientEntity sampleRecipientEntity) {
+
+        //若设置为无需出库， 则无需出库原因为必填
+        if(!sampleRecipientEntity.getIsOutstockRequired() && StringUtils.isBlank(sampleRecipientEntity.getNoOutstockReason())){
+            throw new ServiceException("需要出库选择为否时，不出库原因必填");
+        }
+
         // 查询用户信息
         List<String> userIds = new ArrayList<>();
         userIds.add(sampleRecipientEntity.getUserId());
@@ -1411,6 +1417,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         sampleRecipientEntity.setUserName(userNameMap.get(sampleRecipientEntity.getUserId()));
         sampleRecipientEntity.setUseUserName(userNameMap.get(sampleRecipientEntity.getUseUserId()));
+
+
     }
 
     /**
@@ -1907,6 +1915,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             if (main.getApproveStatus() != ApproveStatusEnum.APPROVE) {
                 throw new ServiceException("只有已审核的样品领用单支持下推其他出库单");
+            }
+
+            //
+            if (Boolean.FALSE.equals(main.getIsOutstockRequired())) {
+                throw new ServiceException("样品领用单无需出库，无法下推");
             }
         }
 
@@ -2614,6 +2627,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
 //                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                //当单据为领用单时，且样品是否需要入台账为“否”，则领用单【审核】完成生成俩条一样的流水，一正一负；流水备注为“领用单无需退回”；反审核同理，流水备注为“领用单无需退回”
+                if(!entity.getIsLedgerRequired()){
+                    flowDetail.setRemark("领用单无需退回");
+                    //设置一条相反的流水
+                    SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail2 = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                    BeanMapperUtils.copy(flowDetail, flowDetail2);
+                    flowDetail2.setQty(qty * -1);
+                    flowDetails.add(flowDetail2);
+                }
                 flowDetails.add(flowDetail);
             }
 
