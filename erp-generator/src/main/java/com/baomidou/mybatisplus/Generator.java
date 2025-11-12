@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.AutoGenerator;
 import com.baomidou.mybatisplus.generator.config.*;
+import com.baomidou.mybatisplus.generator.config.converts.MySqlTypeConvert;
 import com.baomidou.mybatisplus.generator.config.converts.PostgreSqlTypeConvert;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
@@ -30,6 +31,32 @@ import java.util.*;
  */
 public class Generator {
 
+    public static void main(String[] args) throws Exception{
+        // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
+        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
+        PROJECT_PATH = ClassLoader.getSystemResource("").getPath().split("erp-generator")[0];
+        MODEL = scanner("模块名:pg示例:wms,doris示例:ads");
+        AUTHOR = scanner("作者");
+        String tableName = scanner("表名，多个英文逗号分割");
+//        String[] tableNames = {"logistics_channel_constraint"};
+
+        String[] tableNames = tableName.split(",");
+        if(tableNames.length == 1) {
+            tableNames = tableName.split("，");
+        }
+        // 根据不同数据库类型转换参数
+        String dbType = convertDbTypeParams(MODEL);
+
+        generateByTables(tableNames);
+
+        System.out.println("==========================准备处理枚举...================================");
+//        dealEnum(tableNames);
+        if ("postgresql".equalsIgnoreCase(dbType)) {
+            dealDictEnum();
+        }
+        System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
+    }
+
     /**
        模块名（需要更改）新加控制台输入，无需改动代码
      */
@@ -42,6 +69,10 @@ public class Generator {
      * 项目路径
      */
     private static String PROJECT_PATH;
+    /**
+     * 数据库类型：默认:postgresql(doris/mysql/postgresql/sqlserver/oracle/db2)（需要更改）新加控制台输入，无需改动代码
+     */
+    private static String DB_TYPE = "postgresql";
     /**
      * 当前环境是否Windows
      */
@@ -79,11 +110,23 @@ public class Generator {
     /**
      * 数据库用户名
      */
-    private static final String DB_USER_NAME = "postgres";
+    private static String DB_USER_NAME = "postgres";
     /**
      * 数据库密码
      */
-    private static final String DB_PASSWORD = "admin@viji";
+    private static String DB_PASSWORD = "admin@viji";
+    /**
+     * 驱动名称:默认postgresql驱动
+     */
+    private static String DB_DRIVER_NAME = "org.postgresql.Driver";
+    /**
+     * 数据库类型转换器:默认postgresql
+     */
+    private static ITypeConvert typeConvert = new PostgreSqlTypeConvert();
+    /**
+     * 子模块路径(如有需要请更改)
+     */
+    private static String subModelPath = "";
 
     public static String scanner(String tip) throws Exception {
         Scanner scanner = new Scanner(System.in);
@@ -98,33 +141,59 @@ public class Generator {
         }
         throw new Exception("请输入正确的" + tip + "！");
     }
-    
-    public static void main(String[] args) throws Exception{
-        // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
-        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
-    	PROJECT_PATH = ClassLoader.getSystemResource("").getPath().split("erp-generator")[0];
-    	MODEL = scanner("模块名");
-        AUTHOR = scanner("作者");
-        String tableName = scanner("表名，多个英文逗号分割");
-//        String[] tableNames = {"logistics_channel_constraint"};
 
-        String[] tableNames = tableName.split(",");
-        if(tableNames.length == 1) {
-        	tableNames = tableName.split("，");
+    /**
+     * 根据不同数据库类型转换参数
+     */
+    private static String convertDbTypeParams(String model) {
+        String dbType = "postgresql";
+        String dbName = "";
+        // 兼容doris数据源
+        if ("ods".equalsIgnoreCase(model)
+                || "ads".equalsIgnoreCase(model)
+                || "dws".equalsIgnoreCase(model)
+                || "std".equalsIgnoreCase(model)
+                || "dwd".equalsIgnoreCase(model)
+        ) {
+            MODEL = "dmp";
+            dbType = "doris";
+            subModelPath = "doris";
+            typeConvert = new MySqlTypeConvert();
+            dbName = StrUtil.format( "dmp_{}", model);
+        } else {
+            // 默认pg
+            MODEL = model;
+            dbName = StrUtil.format( "erp-{}", model);
         }
-
-        BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
         BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
+        BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
         MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
         SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
-        DB_URL = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        // 重新赋值路径
 
-        generateByTables(tableNames);
-        
-        System.out.println("==========================准备处理枚举...================================");
-//        dealEnum(tableNames);
-        dealDictEnum();
-        System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
+        switch (dbType.toLowerCase()) {
+            case "doris":
+                DB_URL = "jdbc:mysql://172.16.100.12:9030/" + dbName + "?useSSL=false&useUnicode=true&characterEncoding=UTF8";
+                DB_USER_NAME =  "root";
+                DB_PASSWORD = "123456";
+                DB_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+                break;
+            case "postgresql":
+                DB_URL = "jdbc:postgresql://172.16.100.60:32590/" + dbName + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+                DB_USER_NAME =  "postgres";
+                DB_PASSWORD = "admin@viji";
+                DB_DRIVER_NAME = "org.postgresql.Driver";
+                break;
+//            case "sqlserver":
+//                break;
+//            case "mysql":
+//                break;
+//            case "oracle":
+//                break;
+            default:
+                throw new RuntimeException("不支持的数据库类型: " + dbType);
+        }
+        return dbType;
     }
 
     /**
@@ -171,12 +240,21 @@ public class Generator {
 
     @SneakyThrows
     private static PackageConfig packageConfig() {
-        String xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/";
-        String entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        String xmlPath;
+        String mapperPath;
+        String entityPath;
+        if (StringUtils.isNotEmpty(subModelPath)){
+            xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/" + subModelPath  + "/";
+            mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper" + "/" + subModelPath;
+            entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL + "/entity" + "/"+ subModelPath;
+        } else {
+            xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/";
+            mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper";
+            entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        }
         String controllerPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "controller/api";
         String servicePath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service";
         String serviceImplPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service" + "/" + "impl";
-        String mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper";
         String dtoPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/dto";
         if (IS_WINDOWS) {
             xmlPath = xmlPath.replaceAll("/+|\\\\+", "\\\\");
@@ -213,7 +291,13 @@ public class Generator {
         Map<String, String> newPackageInfo = new HashMap<>();
         newPackageInfo.putAll(packageInfo);
         // 替换实体包名
-        newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity" );
+        if (StringUtils.isNotEmpty(subModelPath)){
+            newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity" + "." + subModelPath);
+            newPackageInfo.put(ConstVal.MAPPER, BASE_PACKAGE_NAME + "." + "mapper" + "." + subModelPath);
+        } else {
+            newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity");
+            newPackageInfo.put(ConstVal.MAPPER, BASE_PACKAGE_NAME + "." + "mapper");
+        }
         // 替换控制器包名
         String controllerPackage = packageInfo.get(ConstVal.CONTROLLER);
         newPackageInfo.put(ConstVal.CONTROLLER, controllerPackage + ".api");
@@ -231,9 +315,12 @@ public class Generator {
         dataSourceConfig.setUrl(DB_URL)
                 .setUsername(DB_USER_NAME)
                 .setPassword(DB_PASSWORD)
-                .setDriverName("org.postgresql.Driver")
+                .setDriverName(DB_DRIVER_NAME)
+                .setTypeConvert(typeConvert);
+//                .setDriverName("org.postgresql.Driver")
                 // 类型转换
-                .setTypeConvert(new PostgreSqlTypeConvert());
+                // 类型转换
+//                .setTypeConvert(new PostgreSqlTypeConvert());
         return dataSourceConfig;
 
     }
