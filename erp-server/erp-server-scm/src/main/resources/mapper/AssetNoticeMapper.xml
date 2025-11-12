@@ -125,26 +125,24 @@
             SELECT
             FROM asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.ID = and1.main_id AND and1.is_deleted = FALSE
-            LEFT JOIN asset_purchase_order_detail apod ON apod.source_detail_id = and1.ID AND apod.is_deleted = FALSE
-            WHERE an.is_deleted = FALSE
+            WHERE
+            an.is_deleted = FALSE
+            and and1.create_po_type in ('0','1') and an.approve_status = 'approve'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-            GROUP BY and1.ID
-            HAVING COALESCE(and1.apply_qty, 0) - COALESCE(SUM(apod.purchase_qty), 0) > 0
         ) t1
     union all
         SELECT 'created' as tabFlag,COUNT(*) as count FROM (
-            SELECT 1
+            SELECT
             FROM asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.ID = and1.main_id AND and1.is_deleted = FALSE
-            LEFT JOIN asset_purchase_order_detail apod ON apod.source_detail_id = and1.ID AND apod.is_deleted = FALSE
-            WHERE an.is_deleted = FALSE
+            WHERE
+            an.is_deleted = FALSE
+            and and1.create_po_type = '2'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-            GROUP BY and1.ID
-            HAVING COALESCE(SUM(apod.purchase_qty), 0) > 0
         ) t2
     </select>
 </mapper>

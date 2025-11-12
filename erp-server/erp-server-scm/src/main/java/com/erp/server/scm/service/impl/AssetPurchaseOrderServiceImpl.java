@@ -1256,30 +1256,32 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public void rewriteAssetNotice(List<AssetPurchaseOrderDetailEntity> list){
         //回写通知单生成状态
         for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : list) {
-            List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
-                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .list();
-            //已采购总数
-            BigDecimal purchaseSumQty = assetPurchaseOrderDetailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (StringUtils.isNotBlank(assetPurchaseOrderDetailEntity.getSourceDetailId())) {
+                List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                        .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .list();
+                //已采购总数
+                BigDecimal purchaseSumQty = assetPurchaseOrderDetailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
-                    .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
-                    .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
-                    .one();
-
-            if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) == 0) {
-                //采购总数量等于当前明细数量，状态改为未生成
-                assetNoticeDetailService.lambdaUpdate()
-                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.NOT_GENERATED.getStatus())
-                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
-                        .update();
-            } else if (purchaseSumQty.compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
-                //采购总数量大于当前明细数量，状态改为部分生成
-                assetNoticeDetailService.lambdaUpdate()
-                        .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
-                        .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
-                        .update();
+                AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
+                        .eq(AssetNoticeDetailEntity::getId, assetPurchaseOrderDetailEntity.getSourceDetailId())
+                        .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .one();
+                BigDecimal purchaseSum = purchaseSumQty.add(assetPurchaseOrderDetailEntity.getPurchaseQty());
+                if (purchaseSum.compareTo(assetNoticeDetailEntity.getApplyQty()) >= 0) {
+                    //采购总数量大于等于通知单明细的数量,改为已生成
+                    assetNoticeDetailService.lambdaUpdate()
+                            .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.ALL_GENERATED.getStatus())
+                            .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                            .update();
+                } else if (purchaseSum.compareTo(assetNoticeDetailEntity.getApplyQty()) < 0) {
+                    //采购总数量大于等于通知单明细的数量,改为部分生成
+                    assetNoticeDetailService.lambdaUpdate()
+                            .set(AssetNoticeDetailEntity::getCreatePoType, CreatePoTypeEnum.PARTIAL_GENERATED.getStatus())
+                            .eq(AssetNoticeDetailEntity::getId, assetNoticeDetailEntity.getId())
+                            .update();
+                }
             }
         }
     }
