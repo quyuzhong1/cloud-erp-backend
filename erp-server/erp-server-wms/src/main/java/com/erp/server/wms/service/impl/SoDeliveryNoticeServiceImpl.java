@@ -2322,6 +2322,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
 
         SoInfoEntity soInfoEntity = null;
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             //获取销售单信息
             soInfoEntity = soInfoFeign.getSoInfoById(soId);
@@ -2334,16 +2337,26 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             log.error("发货通知单新增异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        //自动生成功能系统标识
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             submit(Arrays.asList(soDeliveryNoticeEntity.getId()), Boolean.FALSE);
         }catch (Exception e) {
             log.error("发货通知单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        //自动生成功能系统标识
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             String id = soDeliveryNoticeEntity.getId();
 //            approve(soDeliveryNoticeEntity,ApproveTypeEnum.PASS.getStatus(),"展会订单自动审核通过", Boolean.FALSE);
@@ -2358,6 +2371,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             log.error("发货通知单审批通过异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         Map<String, Object> map = new HashMap<>();
@@ -2416,6 +2432,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 String idsStr = soDeliveryNoticeEntities.stream()
                         .map(SoDeliveryNoticeEntity::getId)
                         .collect(Collectors.joining(","));
+                //自动生成功能系统标识
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = bean.delete(ids);
                     if(!delete){
@@ -2427,6 +2446,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.error("发货通知单删除失败",e);
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());
