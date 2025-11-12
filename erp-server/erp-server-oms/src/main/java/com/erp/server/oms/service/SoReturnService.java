@@ -1,7 +1,9 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.ApproveDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -72,10 +74,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 提交
      * @Author Luo_WG
      * @Date 2023/5/10 16:45
-     * @param id
+     * @param ids
      * @return java.lang.Boolean
      **/
-    BatchResultDTO submit(String id);
+    Boolean submit(List<String> ids);
 
     /**
      * 新增提交
@@ -84,7 +86,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO addAndSubmit(SoReturnDTO.Add dto);
+    Boolean addAndSubmit(SoReturnDTO.Add dto);
 
     /**
      * 修改提交
@@ -93,34 +95,34 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO updateAndSubmit(SoReturnDTO.Update dto);
+    Boolean updateAndSubmit(SoReturnDTO.Update dto);
 
     /**
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param dto
-     * @return entity
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
      **/
-    BatchResultDTO approve(ApproveOneDTO dto,SoReturnEntity entity);
+    BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,SoReturnEntity entity);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param id
+     * @param ids
      * @return java.lang.Boolean
      **/
-    BatchResultDTO disApprove(String id);
+    BatchResultDTO disApprove(SoReturnEntity entity);
 
     /**
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param dto
+     * @param ids
      * @return java.lang.Boolean
      **/
-    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
+    Boolean cancelProcess(List<String> ids);
 
     /**
      * 批量作废
@@ -263,6 +265,4 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     Map<String,String> getCurrencySymbol(List<String> currencys);
 
     Map<String,BigDecimal> getCurrencyMap(List<String> currencys);
-
-    Boolean approveEnd(ApproveOneDTO dto, SoReturnEntity entity);
 }
