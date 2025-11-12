@@ -1,0 +1,9 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+   com.sdk.wms.tongyou.service.TongYouService,\
+   com.sdk.wms.tongyou.handle.TongYouProductHandler,\
+   com.sdk.wms.tongyou.handle.TongYouWarehouseHandler,\
+   com.sdk.wms.tongyou.handle.TongYouInboundHandler,\
+   com.sdk.wms.tongyou.handle.TongYouInventoryHandler,\
+   com.sdk.wms.tongyou.handle.TongYouOutboundHandler
+
+
