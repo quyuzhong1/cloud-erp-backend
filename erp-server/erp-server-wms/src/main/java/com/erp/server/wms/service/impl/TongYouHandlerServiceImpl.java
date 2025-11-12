@@ -87,6 +87,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
+
+    @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         TongYouCreateOutboundReq tongYouCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToTongYou(createOutboundReq);
         // 艾姆勒同个客户同个参考号5分钟内不允许重复提交
