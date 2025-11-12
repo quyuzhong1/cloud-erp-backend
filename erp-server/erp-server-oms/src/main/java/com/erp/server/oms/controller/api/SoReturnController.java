@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -30,7 +31,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 销售退货单
@@ -155,9 +159,27 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:submit",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoReturnEntity> soReturnEntities = soReturnService.listByIds(ids);
+        Map<String, SoReturnEntity> soReturnEntityMap = soReturnEntities.stream().collect(Collectors.toMap(SoReturnEntity::getId, Function.identity()));
+        for (String id : ids) {
+            SoReturnEntity soReturnEntity = soReturnEntityMap.get(id);
+            if (Objects.isNull(soReturnEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id,"订单不存在"));
+                continue;
+            }
+            BatchResultDTO submit = null;
+            try {
+                submit = soReturnService.submit(id);
+
+            }catch (Exception e){
+                submit = BatchResultDTO.fail(id, id, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -174,9 +196,9 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:add",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated SoReturnDTO.Add dto) {
-        Boolean flag = soReturnService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated SoReturnDTO.Add dto) {
+        BatchResultDTO batchResultDTO = soReturnService.addAndSubmit(dto);
+        return batchResultDTO.getSuccess() ? success(batchResultDTO) : failure(batchResultDTO);
     }
 
     /**
@@ -193,9 +215,9 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:update",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated SoReturnDTO.Update dto) {
-        Boolean flag = soReturnService.updateAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<BatchResultDTO> updateAndSubmit(@RequestBody @Validated SoReturnDTO.Update dto) {
+        BatchResultDTO batchResultDTO = soReturnService.updateAndSubmit(dto);
+        return batchResultDTO.getSuccess() ? success(batchResultDTO) : failure(batchResultDTO);
     }
 
     /**
@@ -223,7 +245,7 @@ public class SoReturnController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soReturnService.approve(dto, entity));
+                resultDTOS.add(soReturnService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), entity));
             }catch (Exception e){
                 log.error("销售退货订单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -258,7 +280,7 @@ public class SoReturnController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soReturnService.disApprove(entity));
+                resultDTOS.add(soReturnService.disApprove(id));
             }catch (Exception e){
                 log.error("反审核销售退货订单失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -281,9 +303,26 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:cancelProcess",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnService.cancelProcess(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soReturnService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
+            } catch (Exception e) {
+                log.error("B2C销售订单撤销失败>>>>>{}", e.getMessage());
+                SoReturnEntity entity = soReturnService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "销售退货订单不存在, 撤销流程失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
