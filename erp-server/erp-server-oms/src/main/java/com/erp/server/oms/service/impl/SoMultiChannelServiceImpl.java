@@ -408,7 +408,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        if (!CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())){
+        if (!CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())){
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));
             if (!Boolean.TRUE.equals(b)){
                 throw new ServiceException("反审核取消同步失败");
@@ -587,7 +587,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
                 .set(SoMultiChannelEntity::getSignOrderError, CharSequenceUtil.isNotBlank(createResultDTO.getMsg()) ? createResultDTO.getMsg() : "")
                 .eq(SoMultiChannelEntity::getId, createResultDTO.getId()).update();
-        if (CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus())) {
+        if (!CreateStatusEnum.WAIT.getCode().equals(createResultDTO.getCreateStatus())) {
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(soMultiChannelEntity.getDeliveryCode()), "亚马逊订单创建失败，取消同步"));
             if (!Boolean.TRUE.equals(b)){
                 throw new ServiceException("反审核取消同步失败");
