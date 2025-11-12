@@ -16,13 +16,14 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -267,4 +268,41 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo")
     })
     FirstMileChangeRecordDTO.AddDTO convertFbaToChangeRecord(FbaShipmentEntity entity, FbaShipmentDetailEntity detailEntity, FbaShipmentReceiveEntity receivedEntity, String deliveryCode);
+
+    @Mappings({
+            @Mapping(target = "receivingCode",  source = "receivingCode"),
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
+            @Mapping(target = "trackingNumber",  source = "trackingNumber"),
+            @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "toStrByDate"),
+            @Mapping(target = "verify",  source = "verify"),
+            @Mapping(target = "contacter",  source = "collect.contacterName"),
+            @Mapping(target = "contactPhone",  source = "collect.contactPhone"),
+            @Mapping(target = "regionIdLevel0",  source = "collect.collectStateId"),
+            @Mapping(target = "regionIdLevel1",  source = "collect.collectCityId"),
+            @Mapping(target = "regionIdLevel2",  source = "collect.collectAreaId"),
+            @Mapping(target = "customerType",  source = "declareType"),
+            @Mapping(target = "street",  source = "collect.collectStreet"),
+            @Mapping(target = "items",  source = "items"),
+    })
+    TongYouCreateInboundReq inboundDtoToTongYou(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "shippingMethod",  source = "shippingMethod"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "verify",  source = "verify",defaultValue = "1"),
+            @Mapping(target = "name",  source = "receiverInfo.name"),
+            @Mapping(target = "phone",  source = "receiverInfo.phone"),
+            @Mapping(target = "countryCode",  source = "receiverInfo.countryCode"),
+            @Mapping(target = "province",  source = "receiverInfo.province"),
+            @Mapping(target = "city",  source = "receiverInfo.city"),
+            @Mapping(target = "address1",  source = "receiverInfo.address1"),
+            @Mapping(target = "address2",  source = "receiverInfo.address2"),
+            @Mapping(target = "address3",  source = "receiverInfo.address3"),
+            @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
+            @Mapping(target = "items",  source = "items"),
+    })
+    TongYouCreateOutboundReq outboundDtoToTongYou(ThirdWarehouseCreateOutboundReq createOutboundReq);
 }
