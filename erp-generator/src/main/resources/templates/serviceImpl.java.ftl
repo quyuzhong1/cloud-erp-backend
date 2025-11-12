@@ -8,11 +8,11 @@ package ${package.ServiceImpl};
     <#assign docName = docName[0..<docName?length-1] + "单">
 </#if>
 
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
-</#if>
+<#--</#if>-->
 
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -39,35 +39,34 @@ import ${package.Dto}.${table.dtoName};
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+    <#if fieldMap["invalidStatus"]??>
+import com.erp.model.scm.enums.InvalidStatusEnum;
+    </#if>
+    <#if fieldMap["approveTime"]??>
+import java.time.LocalDateTime;
+    </#if>
+</#if>
+import javax.annotation.Resource;
+import java.util.stream.Collectors;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-
-import com.common.business.enums.ApproveStatusEnum;
-<#if fieldMap["invalidStatus"]??>
-import com.erp.model.scm.enums.InvalidStatusEnum;
-</#if>
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-
 import javax.servlet.http.HttpServletResponse;
-<#if fieldMap["approveTime"]??>
-import java.time.LocalDateTime;
-</#if>
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-</#if>
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * ${table.comment!} 服务实现类
@@ -178,7 +177,6 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     }
 
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     @Override
     public PagingVO<${table.dtoName}.ListDTO> paging(PagingDTO<${table.dtoName}.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -232,6 +230,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
+    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -445,15 +444,6 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         return Boolean.TRUE;
     }
 
-    @Override
-    public ${table.dtoName}.ViewDTO view(String id) {
-        ${entity} ${entity?uncap_first} = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到${docName}数据"));
-        ${table.dtoName}.ViewDTO data = BeanMapperUtils.map(${table.dtoName}.ViewDTO.class, ${entity?uncap_first});
-        // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
-        return data;
-    }
     /**
     * 启动流程
     *
@@ -540,25 +530,6 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     /**
     * 分页查询、导出 数据处理
     */
-    private void fillList(List<${table.dtoName}.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-
-        // 属性赋值
-        for(${table.dtoName}.ListDTO data : list) {
-            <#if fieldMap["approveStatus"]??>
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            </#if>
-            <#if fieldMap["invalidStatus"]??>
-            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            </#if>
-            // TODO 其他如需要显示名称的字段赋值
-        }
-    }
-    /**
-    * 分页查询、导出 数据处理
-    */
     private void validateSubmit(${entity} entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
@@ -574,5 +545,34 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     private void handleData(${entity} ${entity?uncap_first}) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public ${table.dtoName}.ViewDTO view(String id) {
+    ${entity} ${entity?uncap_first} = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到${docName}数据"));
+    ${table.dtoName}.ViewDTO data = BeanMapperUtils.map(${table.dtoName}.ViewDTO.class, ${entity?uncap_first});
+    // 数据填充处理
+    fillOne(data);
+    // TODO 查询明细数据（如果有的话）
+    return data;
+    }
+
+   /**
+    * 分页查询、导出 数据处理
+   */
+   private void fillList(List<${table.dtoName}.ListDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 属性赋值
+        for(${table.dtoName}.ListDTO data : list) {
+        <#if fieldMap["approveStatus"]??>
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        </#if>
+        <#if fieldMap["invalidStatus"]??>
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        </#if>
+        // TODO 其他如需要显示名称的字段赋值
+        }
+   }
 }
 </#if>
