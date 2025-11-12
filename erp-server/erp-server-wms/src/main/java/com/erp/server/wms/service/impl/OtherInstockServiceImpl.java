@@ -1757,6 +1757,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             return mqResponseDTO;
         }
 
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try{
             // 生成其他入库单
             OtherInstockDTO.AddDTO otherInstockAddDTO = downstreamDTO.getOtherInstockAddDTO();
@@ -1804,6 +1807,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
         return mqResponseDTO;
     }
@@ -1835,6 +1841,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             log.warn("soId 类型转换失败: {} 或 exhibitionOrderId 类型转换失败: {}", data.get("soId"), data.get("exhibitionOrderId"));
             return mqResponseDTO;
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
 
         //销售出库单
         List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSoId, soId).list();
@@ -1842,6 +1850,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             StringBuilder sb = new StringBuilder();
             List<BatchResultDTO> resultDTOS = new ArrayList<>(soOutstockEntities.size());
             for (SoOutstockEntity entity : soOutstockEntities) {
+                //自动生成功能系统标识
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     BatchResultDTO result = soOutstockService.disApprove(entity, Boolean.TRUE);
                     if(!result.getSuccess()){
@@ -1851,6 +1861,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 }catch (Exception e){
                     sb.append(StrUtil.format("销售出库单反审核失败,soOutstockId:{},e:{};",entity.getId(),e.getMessage()));
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }
 
@@ -1859,6 +1872,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 String idsStr = soOutstockEntities.stream()
                         .map(SoOutstockEntity::getId)
                         .collect(Collectors.joining(","));
+                //自动生成功能系统标识
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = soOutstockService.delete(ids);
                     if(!delete){
@@ -1870,6 +1885,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                     mqResponseDTO.setErrorMsg(StrUtil.format("销售出库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.warn(sb.toString());
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());
@@ -1885,6 +1903,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             StringBuilder sb = new StringBuilder();
             List<BatchResultDTO> resultDTOS = new ArrayList<>(otherInstockEntities.size());
             for (OtherInstockEntity entity : otherInstockEntities) {
+
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     BatchResultDTO result = bean.disApprove(entity.getId(), Boolean.TRUE);
                     if(!result.getSuccess()){
@@ -1895,6 +1915,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                     log.error("其他入库单反审核失败",e);
                     sb.append(StrUtil.format("其他入库单反审核失败,otherInstockId:{},e:{} ;",entity.getId(),e.getMessage()));
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }
 
@@ -1903,6 +1926,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 String idsStr = otherInstockEntities.stream()
                         .map(OtherInstockEntity::getId)
                         .collect(Collectors.joining(","));
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = bean.delete(ids);
                     if(!delete){
@@ -1914,6 +1938,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                     mqResponseDTO.setErrorMsg(StrUtil.format("其他入库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.error("其他入库单删除失败",e);
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());

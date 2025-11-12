@@ -1153,6 +1153,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         addDTO.setDetailList(addDTOS);
 
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         String soId;
         try {
             soId = soInfoService.add(addDTO);
@@ -1160,12 +1163,16 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         Map<String, Object> map = new HashMap<>();
         map.put("soId", soId);
         mqResponseDTO.setData(map);
 
+        UserContext.setIsUserSystem(Boolean.TRUE);
         SoInfoEntity soInfoEntity = soInfoService.getById(soId);
         try {
             soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
@@ -1173,8 +1180,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
             baseApproveParamDTO.setIds(Collections.singletonList(soId));
@@ -1186,6 +1197,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单审批通过异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         return mqResponseDTO;
@@ -1216,6 +1230,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         }
         SoInfoEntity entity = soInfoService.getById(soId);
         if(Objects.nonNull(entity)){
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
             List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(Arrays.asList(entity.getId()));
             try {
                 BatchResultDTO result = soInfoService.disApprove(entity, soChangeList);
@@ -1227,8 +1244,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 log.error("B2B销售订单反审核失败",e);
                 mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{},e:{}",entity.getId(),e.getMessage()));
                 return mqResponseDTO;
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
 
+            UserContext.setIsUserSystem(Boolean.TRUE);
             try {
                 List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(Arrays.asList(entity.getId()));
                 if(!resultDTOList.get(0).getSuccess()){
@@ -1239,6 +1260,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 log.error("B2B销售订单删除失败",e);
                 mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{},e:{}",entity.getId(),e.getMessage()));
                 return mqResponseDTO;
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
         }
         return mqResponseDTO;
