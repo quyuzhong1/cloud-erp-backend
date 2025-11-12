@@ -284,6 +284,16 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private BigDecimal totalAmount;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 待验收数量
          */
         private BigDecimal unAcceptQty;

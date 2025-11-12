@@ -76,6 +76,8 @@
             apcd.tax_price AS TaxPrice,
             apcd.total_amount AS TotalAmount,
             apcd.tax_rate AS taxRate,
+            apcd.currency as currency,
+            apcd.currency_symbol as currencySymbol,
             apcd.remark AS remark,
             apc.change_user_id AS changeUserId,
             apc.change_user_name AS changeUserName,
