@@ -1,14 +1,14 @@
 package com.erp.server.oms.service;
+
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.SoB2cReturnDTO;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -76,4 +76,51 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockPreview(List<String> ids);
 
     List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
+
+    /**
+     * 提交
+     * @author will
+     * @date 2025/10/24 11:47
+     * @param entity
+     * @param isNeedProcess
+     * @return BatchResultDTO
+     */
+    BatchResultDTO submit(SoB2cReturnEntity entity, Boolean isNeedProcess);
+
+    /**
+     * 审核
+     * @author will
+     * @date 2025/10/24 11:48
+     * @param dto
+     * @return BatchResultDTO
+     */
+    BatchResultDTO approve(SoB2cReturnEntity entity,ApproveOneDTO dto);
+
+    /**
+     * 反审核
+     * @author will
+     * @date 2025/10/24 11:48
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO disApprove(SoB2cReturnEntity entity);
+
+    /**
+     * 取消流程
+     * @author will
+     * @date 2025/10/24 11:49
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(SoB2cReturnEntity entity);
+
+    /**
+     * 审核完成
+     * @author will
+     * @date 2025/10/24 11:49
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoB2cReturnEntity entity);
 }

@@ -1,18 +1,18 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -394,6 +394,14 @@ public class SoB2cReturnDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 审核人
+         */
+        private String approveUserName;
     }
 
     @Data
