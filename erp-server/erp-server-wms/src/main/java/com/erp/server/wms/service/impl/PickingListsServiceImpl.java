@@ -752,7 +752,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("生成拣货单【{}】", entity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "新增操作");
         entities.forEach(v -> v.setActualQty(v.getQty()));
         pickingDetailService.saveBatch(entities);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        try {
+            UserContext.setIsUserSystem(true);
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     @Override
