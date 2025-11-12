@@ -1,13 +1,16 @@
 package com.erp.server.tms.service.logistics;
 
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
+import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -17,6 +20,7 @@ import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
@@ -52,6 +56,9 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private TikTokSdkClientService tikTokSdkClientService;
+
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
 
     /**
      * 查询店铺
@@ -100,9 +107,15 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             packageDetailDTO = tikTokSdkClientService.getPackageDetail(tikTokShopInfoDTO,packageId);
         }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), "", false);
             return failure("获取跟踪异常："+e.getMessage());
         }
         if(StringUtils.isNotBlank(packageDetailDTO.getData().getTracking_number())){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(packageDetailDTO), false);
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(packageDetailDTO.getData().getTracking_number())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
@@ -118,23 +131,38 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             ShipOrderOther shipOrderOther = tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO,packageId,paramDTO);
             if(shipOrderOther.getCode()!=0){
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(shipOrderOther), false);
                 return failure("向TIKTOK平台下物流单异常："+shipOrderOther.getMessage());
             }
         }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), "", false);
             return failure("向平台下物流单异常："+e.getMessage());
         }
         try {
             packageDetailDTO = tikTokSdkClientService.getPackageDetail(tikTokShopInfoDTO,packageId);
         }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), "", false);
             return failure("获取跟踪异常："+e.getMessage());
         }
         if(StringUtils.isNotBlank(packageDetailDTO.getData().getTracking_number())){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(packageDetailDTO), false);
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(packageDetailDTO.getData().getTracking_number())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
                     .trackNo(packageDetailDTO.getData().getTracking_number())
                     .build());
         }else{
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(packageDetailDTO), false);
             return failure("跟踪号获取为空，请稍后重试");
         }
     }

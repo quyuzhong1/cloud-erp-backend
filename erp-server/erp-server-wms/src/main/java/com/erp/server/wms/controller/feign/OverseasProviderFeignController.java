@@ -69,8 +69,8 @@ public class OverseasProviderFeignController {
         return overseasProviderWarehouseService.listProviderWarehouseBySql(compareCodeSplicingValueSql);
     }
 
-    @GetMapping("/feign/overseasProvider/refreshToken")
-    public OverseasProviderEntity refreshToken(OverseasProviderEntity entity){
+    @PostMapping("/refreshToken")
+    public OverseasProviderEntity refreshToken(@RequestBody OverseasProviderEntity entity){
         return overseasProviderService.refreshToken(entity);
     }
 }
