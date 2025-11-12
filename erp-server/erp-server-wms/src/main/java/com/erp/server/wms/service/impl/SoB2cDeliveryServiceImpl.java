@@ -2254,7 +2254,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         moveDto.setSourceCode(old.getCode());
         moveDto.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         moveDto.setDetailList(moveDetailList);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
+
         //取消保宏预报
         BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
         idDto.setIds(Collections.singletonList(soB2cEntity.getId()));

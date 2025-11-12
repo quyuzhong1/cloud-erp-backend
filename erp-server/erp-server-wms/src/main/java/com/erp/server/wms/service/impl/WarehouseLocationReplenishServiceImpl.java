@@ -440,12 +440,19 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         addDTO.setWarehouseId(fullEntity.getWarehouseId());
         addDTO.setPcShow(Boolean.TRUE);
         addDTO.setDetailList(Collections.singletonList(moveDetail));
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try{
             warehouseLocationMoveService.addAndApprove(addDTO);
         }catch (Exception e){
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
             e.printStackTrace();
             return BatchResultDTO.fail(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
 
         //修改发货单状态，清除异常
         if(CharSequenceUtil.isNotBlank(fullEntity.getSourceId())){
