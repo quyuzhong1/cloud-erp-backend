@@ -274,7 +274,7 @@ public class AsyncServiceImpl implements AsyncService {
      */
     @Override
     @Async("wmsErpExecutor")
-    public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity) {
+    public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity,String abnormalProblemReason) {
         if(mainEntity.getIsIntercept()){
             return;
         }
@@ -284,16 +284,16 @@ public class AsyncServiceImpl implements AsyncService {
         operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
         operateLogDTO.setBusinessId(mainEntity.getId());
         try {
-            BatchResultDTO batchResultDTO = soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(mainEntity.getId(), "三方仓出库异常，自动取消"));
+            BatchResultDTO batchResultDTO = soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(mainEntity.getId(), "三方仓出库异常，自动取消,异常信息："+ abnormalProblemReason));
             if(batchResultDTO.getSuccess()){
                 //拦截成功，接口会更新订单为待提交-待配货，需要自动变更为审核通过-配货中
                 mainEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
                 mainEntity.setIsIntercept(false);
                 soB2cFeign.updateStatus(mainEntity);
-                operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消");
+                operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消,异常信息："+ abnormalProblemReason);
             }else{
-                operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败");
+                operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败,异常信息："+ abnormalProblemReason);
             }
             soB2cFeign.addModuleOperateLog(operateLogDTO);
         }catch (Exception e){
