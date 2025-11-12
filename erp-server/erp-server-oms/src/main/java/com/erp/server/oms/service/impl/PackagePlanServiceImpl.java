@@ -910,30 +910,31 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo()) && CollUtil.isNotEmpty(soB2cLabelEntities) && CharSequenceUtil.isNotBlank(soB2cLabelEntities.get(0).getLogisticsLabelBase64())) {
             data.put("trackNo", soB2cLogisticsEntity.getTrackNo());
             mqResponseDTO.setData(data);
-            return mqResponseDTO;
+//            return mqResponseDTO;
         }
-        OrderLabelRequest request = OrderLabelRequest.builder()
-                .orders(Collections.singletonList(Long.valueOf(platformCode)))
-                .width(58)
-                .height(40)
-                .type("png")
-                .build();
-        try {
-            CrossOrderLabelResponse response = wildberriesSDKService.getCrossOrderLabel(authEntity.getToken(), request);
-            List<CrossOrderLabelResponse.Sticker> stickers = response.getStickers();
-            if (CollUtil.isEmpty(stickers)) {
-                mqResponseDTO.setErrorMsg("获取订单标签失败: 标签为空");
-                return mqResponseDTO;
-            }
-            CrossOrderLabelResponse.Sticker sticker = stickers.get(0);
-            String url = sticker.getUrl();
-            data.put("crossLabelUrl", url);
-            soB2cLabelService.updateCrossLabelUrl(soId, url);
-        } catch (Exception e) {
-            mqResponseDTO.setErrorMsg("获取订单标签失败");
-            log.warn("获取订单标签失败: {}", e.getMessage());
-            return mqResponseDTO;
-        }
+//        //跨境面单
+//        OrderLabelRequest request = OrderLabelRequest.builder()
+//                .orders(Collections.singletonList(Long.valueOf(platformCode)))
+//                .width(58)
+//                .height(40)
+//                .type("png")
+//                .build();
+//        try {
+//            CrossOrderLabelResponse response = wildberriesSDKService.getCrossOrderLabel(authEntity.getToken(), request);
+//            List<CrossOrderLabelResponse.Sticker> stickers = response.getStickers();
+//            if (CollUtil.isEmpty(stickers)) {
+//                mqResponseDTO.setErrorMsg("获取订单标签失败: 标签为空");
+//                return mqResponseDTO;
+//            }
+//            CrossOrderLabelResponse.Sticker sticker = stickers.get(0);
+//            String url = sticker.getUrl();
+//            data.put("crossLabelUrl", url);
+//            soB2cLabelService.updateCrossLabelUrl(soId, url);
+//        } catch (Exception e) {
+//            mqResponseDTO.setErrorMsg("获取订单标签失败");
+//            log.warn("获取订单标签失败: {}", e.getMessage());
+//            return mqResponseDTO;
+//        }
         Boolean isDelivery = (Boolean)data.getOrDefault("isDelivery", Boolean.FALSE);
         String submitDelivery = (String) data.getOrDefault("submitDelivery", "");
         if (isDelivery && CharSequenceUtil.isBlank(submitDelivery)){
