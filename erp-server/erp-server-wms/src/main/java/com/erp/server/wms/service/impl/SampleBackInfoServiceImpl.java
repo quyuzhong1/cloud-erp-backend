@@ -267,6 +267,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品退回单明细不能为空");
+        }
         SampleBackInfoEntity sampleBackInfoEntity =  BeanMapperUtils.map(SampleBackInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -809,12 +813,18 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         
         // 审核通过后自动生成其他入库单
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
             try {
                 generateOtherInboundOrder(entity);
                 log.info("样品退回单审核通过，自动生成其他入库单成功，单据编号：{}", entity.getCode());
             } catch (Exception e) {
                 log.error("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
                 throw new ServiceException("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
         }
         

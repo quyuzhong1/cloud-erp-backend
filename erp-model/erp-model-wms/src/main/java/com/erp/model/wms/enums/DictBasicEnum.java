@@ -31,6 +31,7 @@ public enum DictBasicEnum {
     WAVE_TYPE("waveType", "", "波次类型"),
     VIRTUAL_SPLIT_BOM("virtual_split_bom", "", "拆分bom"),
     CFG_SETTING_VIRTUAL("cfgSettingVirtual", "", "虚拟仓配置"),
+    SAMPLE_USAGE("sampleUsage", "", "样品领用用途"),
 
     ;
 
