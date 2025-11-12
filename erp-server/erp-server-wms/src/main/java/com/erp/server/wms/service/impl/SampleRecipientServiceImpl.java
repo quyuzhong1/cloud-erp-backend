@@ -1238,6 +1238,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
+        data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
     }
 
     /**
@@ -1331,6 +1333,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
+            data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
+            data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
