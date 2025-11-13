@@ -17,8 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -58,8 +57,6 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -2236,10 +2233,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             
             // 基础信息映射
             addDTO.setBillDate(firstItem.getBillDate() != null ? firstItem.getBillDate() : LocalDate.now()); // 出库日期
-            addDTO.setInventoryDirection("ordinary"); // 库存方向：固定为"普通"
+            addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode()); // 库存方向：固定为"普通"
             addDTO.setWarehouseId(firstItem.getWarehouseId()); // 发货仓库
             addDTO.setType("0"); // 业务类型：固定为"物料领用"
-            addDTO.setOutType("样品领用"); // 出库类型：固定为"样品领用"
+            addDTO.setOutType(OutstockTypeEnum.SAMPLE_COLLECTION.getName()); // 出库类型：固定为"样品领用"
             addDTO.setReceiverId(firstItem.getUserId()); // 领料人ID
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
