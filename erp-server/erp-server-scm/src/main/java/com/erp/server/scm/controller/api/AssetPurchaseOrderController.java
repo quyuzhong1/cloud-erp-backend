@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.server.scm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.scm.service.AssetPurchaseOrderDetailService;
@@ -576,12 +577,12 @@ public class AssetPurchaseOrderController extends BaseController {
 
     /**
      * 获取关联单据
-     * @param detailId
+     * @param id
      * @return
      */
-    @GetMapping("/getAcceptByDetailId")
-    public ApiResult<?> getAcceptByDetailId(@RequestParam("detailId") String detailId) {
-        return assetPurchaseOrderService.getAcceptByDetailId(detailId);
+    @GetMapping("/getAcceptByPurchaseOrderId")
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByPurchaseOrderId(@RequestParam("id") String id) {
+        return assetPurchaseOrderService.getAcceptByPurchaseOrderId(id);
     }
 
     /**

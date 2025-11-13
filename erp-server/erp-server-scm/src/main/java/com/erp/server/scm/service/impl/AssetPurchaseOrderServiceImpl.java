@@ -1552,8 +1552,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
-    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(String detailId) {
-        return assetAceptFeign.getAcceptByDetailId(detailId);
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByPurchaseOrderId(String detailId) {
+        return assetAceptFeign.getAcceptByPurchaseOrderId(detailId);
     }
 
     /**
