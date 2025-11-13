@@ -105,9 +105,9 @@
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
-            sr.is_outstock_required,
-            sr.no_outstock_reason,
-            sr.is_ledger_required
+                sr.is_outstock_required as isOutstockRequired,
+                sr.no_outstock_reason as noOutstockReason,
+                sr.is_ledger_required as isLedgerRequired
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
@@ -242,9 +242,9 @@
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark
-        sr.is_outstock_required,
-        sr.no_outstock_reason,
-        sr.is_ledger_required
+        sr.is_outstock_required as isOutstockRequired,
+        sr.no_outstock_reason as noOutstockReason,
+        sr.is_ledger_required as isLedgerRequired
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
@@ -320,9 +320,9 @@
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark
-        sr.is_outstock_required,
-        sr.no_outstock_reason,
-        sr.is_ledger_required
+        sr.is_outstock_required as isOutstockRequired,
+        sr.no_outstock_reason as noOutstockReason,
+        sr.is_ledger_required as isLedgerRequired
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
