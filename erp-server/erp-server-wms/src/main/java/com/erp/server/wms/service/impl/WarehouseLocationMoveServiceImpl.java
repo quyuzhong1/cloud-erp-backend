@@ -541,7 +541,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
