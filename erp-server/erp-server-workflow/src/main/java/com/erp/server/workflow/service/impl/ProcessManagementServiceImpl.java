@@ -448,7 +448,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String createUserId = (String) variablesMap.get("createUserId");
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        if (CharSequenceUtil.equals(createUserId,userInfo.getUid()) && !CharSequenceUtil.equals(createUserId, UserStateConstants.USER_SYSTEM_ID)) {
+        if (CharSequenceUtil.equals(createUserId,userInfo.getUid())) {
             throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
     }

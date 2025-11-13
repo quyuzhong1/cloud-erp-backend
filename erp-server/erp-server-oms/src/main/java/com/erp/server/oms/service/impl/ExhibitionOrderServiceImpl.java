@@ -877,10 +877,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        
+
         // 使用分布式锁进行数量校验（反审核时也需要校验）
         validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
-        
+
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //判断上一次的审核的任务是否已经全部执行成功
@@ -2386,7 +2386,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery()
                 .eq(ExhibitionOrderDetailEntity::getMainId, entity.getId())
                 .list();
-        
+
         // 使用通用工具类进行数量校验
         sampleDocumentAuditUtil.validateSampleDocumentQty(
             entity.getCode(),
