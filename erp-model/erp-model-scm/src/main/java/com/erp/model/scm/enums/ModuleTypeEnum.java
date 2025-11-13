@@ -173,6 +173,9 @@ public enum ModuleTypeEnum {
     PAYABLE_INFO("145", "应付单"),
 
     CFG_DIFF_STRATEGY("150", "差异策略配置"),
+
+    // doris
+    ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
     ;
 
 
