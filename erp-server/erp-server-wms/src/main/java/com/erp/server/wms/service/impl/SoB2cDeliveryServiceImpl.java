@@ -2203,6 +2203,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             addReplenishDTO.setQty(qty);
             addList.add(addReplenishDTO);
+            //记录日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位库存预警" , detailEntity.getSkuNo());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), deliveryEntity.getId(), "新增操作");
         }
         if(CollectionUtils.isNotEmpty(addList)){
             warehouseLocationReplenishService.addList(addList);
