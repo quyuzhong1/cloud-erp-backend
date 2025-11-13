@@ -89,12 +89,6 @@ public interface WmsTaskFeign {
     String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
 
     /**
-     * 批量新增退货单
-     */
-    @PostMapping("feign/purchaseReturnOrder/addReturnOrder")
-    Boolean batchAddReturnOrder(List<PurchaseReturnOrderDTO.AddDTO> dto);
-
-    /**
      * 获取入库数量
      **/
     @PostMapping("feign/purchaseStockIn/getStockInQty")

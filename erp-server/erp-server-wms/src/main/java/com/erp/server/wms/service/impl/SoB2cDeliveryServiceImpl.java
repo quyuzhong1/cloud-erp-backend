@@ -2133,7 +2133,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
             List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
             if (CollectionUtils.isNotEmpty(skus)) {
-                generateReplenish(detailEntities, entity, skus);
+                try {
+                    UserContext.setIsUserSystem(true);
+                    generateReplenish(detailEntities, entity, skus);
+                }finally {
+                    UserContext.clearIsUserSystem();
+                }
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
                 dto.getIds().remove(entity.getId());
@@ -2289,7 +2294,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         moveDto.setSourceCode(old.getCode());
         moveDto.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         moveDto.setDetailList(moveDetailList);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
+
         //取消保宏预报
         BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
         idDto.setIds(Collections.singletonList(soB2cEntity.getId()));

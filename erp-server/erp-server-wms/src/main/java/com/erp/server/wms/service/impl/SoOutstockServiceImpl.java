@@ -846,7 +846,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     .checkCfg(Boolean.TRUE) // 检查配置
                     .build();
             try {
-                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                Boolean autoGenerateResult;
+                //自动生成功能系统标识
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
                 if(autoGenerateResult){
                     TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
                     updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -918,8 +927,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             inventoryInOutStockDTO.setParamList(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
-        //物流单添加
-        saveLogisticsBill(entity);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            //物流单添加
+            saveLogisticsBill(entity);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
     }
 
     /**
@@ -1055,9 +1072,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && CollectionUtils.isNotEmpty(noticeList)) {
             b2BVirtualInventory(members);
         }
-        //物流单添加
-        saveLogisticsBill(entity);
-
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            //物流单添加
+            saveLogisticsBill(entity);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
     }
 
     /**

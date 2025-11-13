@@ -268,7 +268,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         .build();
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                        Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        Boolean autoGenerateResult;
+                        //自动生成功能系统标识
+                        Boolean originalValue = UserContext.getIsUserSystem();
+                        UserContext.setIsUserSystem(Boolean.TRUE);
+                        try {
+                            autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        } finally {
+                            //恢复系统标识
+                            UserContext.setIsUserSystem(originalValue);
+                        }
                         if(autoGenerateResult){
                             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                             updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -1091,7 +1100,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .build();
                     try {
                         if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                            BatchResultDTO autoGenerateResult;
+                            //自动生成功能系统标识
+                            Boolean originalValue = UserContext.getIsUserSystem();
+                            UserContext.setIsUserSystem(Boolean.TRUE);
+                            try {
+                                 autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                            } finally {
+                                //恢复系统标识
+                                UserContext.setIsUserSystem(originalValue);
+                            }
                             if(autoGenerateResult.getSuccess()){
                                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                                 updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -1106,7 +1124,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
                     try {
                         if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                            Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                            Boolean autoGenerateResult;
+                            //自动生成功能系统标识
+                            Boolean originalValue = UserContext.getIsUserSystem();
+                            UserContext.setIsUserSystem(Boolean.TRUE);
+                            try {
+                                autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                            } finally {
+                                //恢复系统标识
+                                UserContext.setIsUserSystem(originalValue);
+                            }
                             if(autoGenerateResult){
                                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                                 updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
@@ -1688,10 +1715,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 continue;
             }
             try {
+                UserContext.setIsUserSystem(true);
                 resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
             }catch (Exception e){
                 log.error("加工单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }finally {
+                UserContext.clearIsUserSystem();
             }
         }
         return resultDTOS;
