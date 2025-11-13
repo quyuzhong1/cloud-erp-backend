@@ -3698,7 +3698,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-
+        //wildberries不支持拆分合并
+        String codeStr = list.stream().filter(e -> PlatformDictEnum.WILDBERRIES.getCode().equals(e.getDictPlatform())).map(SoB2cEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(codeStr)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED,codeStr);
+        }
         // 销售明细
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
