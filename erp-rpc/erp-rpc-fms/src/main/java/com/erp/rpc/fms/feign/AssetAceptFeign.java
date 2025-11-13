@@ -35,7 +35,7 @@ public interface AssetAceptFeign {
      * @param detailId
      * @return
      */
-    @PostMapping("feign/assetAccept/getAssetAccept")
+    @PostMapping("feign/assetAccept/getAcceptByDetailId")
     ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId);
 
     /**
@@ -51,6 +51,14 @@ public interface AssetAceptFeign {
      * @param detailIdList
      * @return
      */
-    @PostMapping("feign/assetAccept/getAcceptableQty")
+    @PostMapping("feign/assetAccept/getAcceptableQtyByDetailId")
     Map<String, BigDecimal> getAcceptableQtyByDetailId(@RequestBody List<String> detailIdList);
+
+    /**
+     * 通过资产采购单id获取资产验收单明细
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/assetAccept/getAcceptByPurchaseOrderId")
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByPurchaseOrderId(@RequestBody String id);
 }

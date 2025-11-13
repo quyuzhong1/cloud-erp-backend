@@ -646,7 +646,7 @@ public class AssetAcceptDTO implements Serializable {
         /**
          * 资产验收单号
          */
-        private String AssetAcceptCode;
+        private String assetAcceptCode;
 
         /**
          * 单据状态
