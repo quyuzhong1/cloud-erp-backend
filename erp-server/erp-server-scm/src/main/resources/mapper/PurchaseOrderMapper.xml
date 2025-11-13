@@ -229,6 +229,46 @@
     </select>
 
 
+    <select id="listPurchaseDetailIds" resultType="java.lang.String">
+        select
+            pod.id
+        from purchase_order po
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and po.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <select id="listPurchaseDetailIdsByLastId" resultType="java.lang.String">
+        select
+            pod.id
+        from purchase_order po
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and po.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <if test="lastId != null and lastId != ''">
+                and pod.id &gt; #{lastId}
+            </if>
+        </where>
+        order by pod.id asc
+        limit #{limit}
+    </select>
+
+
     <select id="listExportExcel" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
         select
             po.id,
