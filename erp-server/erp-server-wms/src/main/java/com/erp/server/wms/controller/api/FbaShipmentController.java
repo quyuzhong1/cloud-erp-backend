@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -149,7 +150,13 @@ public class FbaShipmentController extends BaseController {
     @PostMapping("/pullShipment")
     @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
     public ApiResult pullShipment(@RequestBody @Validated FbaShipmentDTO.PullShipmentDTO dto) {
-        Boolean flag = fbaShipmentService.pullShipment(dto);
+        Boolean flag;
+        try {
+            UserContext.setIsUserSystem(true);
+            flag = fbaShipmentService.pullShipment(dto);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         return flag ? success() : failure();
     }
 
