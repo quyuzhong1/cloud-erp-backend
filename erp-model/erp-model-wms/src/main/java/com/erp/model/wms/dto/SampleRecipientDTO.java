@@ -670,8 +670,6 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 发货仓库ID  接口： warehouse/list
          */
-        @NotBlank(message = "发货仓库ID不能为空")
-        @Size(max = 19, message = "发货仓库ID最大长度不能超过19位")
         private String warehouseId;
 
         /**
