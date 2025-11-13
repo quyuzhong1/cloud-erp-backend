@@ -3,18 +3,11 @@ package com.erp.server.tms.service.logistics;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FileUtil;
-import com.common.core.utils.ValidatorUtil;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -25,21 +18,14 @@ import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.oms.wildberries.dto.OrderLabelRequest;
 import com.sdk.oms.wildberries.dto.OrderLabelResponse;
 import com.sdk.oms.wildberries.service.WildberriesSDKService;
-import com.sdk.tms.disifang.model.base.ResponseMsg;
-import com.sdk.tms.disifang.model.label.request.LabelRequest;
-import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
-import com.sdk.wms.iml.dto.response.ImlResponse;
-import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -61,6 +47,8 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Value("${oms.sdk.wildberries.sandbox}")
+    private String sandbox;
     /**
      * 查询店铺授权
      * @param shopId
@@ -104,7 +92,7 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
         try {
-            OrderLabelResponse orderLabelResponse = wildberriesSDKService.getOrderLabel(logisticsGetLabelVO.getAuthMap().get("token"), request);
+            OrderLabelResponse orderLabelResponse = wildberriesSDKService.getOrderLabel(logisticsGetLabelVO.getAuthMap().get("token"), request, sandbox);
             //失败
             if (CollUtil.isEmpty(orderLabelResponse.getStickers())) {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
