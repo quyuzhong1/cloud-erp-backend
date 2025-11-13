@@ -32,6 +32,11 @@ public class SampleRecipientQueryHandler extends AbstractQueryHandler {
                 // 审核中
                 super.buildDefaultDTO("sr.approve_status", "approveIng");
                 break;
+            case "noOutstock":
+                // 已出库：执行状态为完全出库
+                super.buildSplicingSQLDTO("srd.exec_status", QueryConditionEnum.EQ,
+                        "noOutstock", QueryDataTypeEnum.STRING);
+                break;
             case "waitOutstock":
                 // 待出库：审核通过且执行状态为待出库或部分出库
                 super.buildDefaultDTO("sr.approve_status", "approve");
