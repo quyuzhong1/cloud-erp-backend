@@ -384,7 +384,7 @@
 
         UNION ALL
 
-        SELECT
+        SELECT 
             'waitOutstock' AS tabFlag,
             COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
