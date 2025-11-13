@@ -16,10 +16,12 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.tms.enums.PilotApplicationTabEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.apache.commons.math3.util.Pair;
@@ -58,8 +60,6 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -517,37 +517,38 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Override
     public List<SampleRecipientDTO.TabListDTO> tabList(PermissionsDTO param) {
+
         SampleRecipientDTO.PagingParamDTO searchParam = new SampleRecipientDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
 
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }
+
         // 使用一个SQL查询获取所有状态的统计数量
-        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(param.getPermissionSql());
+        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(searchParam);
 
         // 设置tabFlagName
         list.stream().forEach(e ->{
-            if(Objects.equals("waitOutstock", e.getTabFlag())){
-                e.setTabFlagName("待出库");
-            }else if(Objects.equals("completeOutstock", e.getTabFlag())){
-                e.setTabFlagName("已出库");
-            }else {
-                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
-            }
+            e.setTabFlagName(SampleRecipientTabEnum.getName(e.getTabFlag()));
         });
 
-        // 按照指定顺序排序
-        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "waitOutstock", "completeOutstock", "rejected");
-        list.sort((a, b) -> {
-            int indexA = orderList.indexOf(a.getTabFlag());
-            int indexB = orderList.indexOf(b.getTabFlag());
-            if (indexA == -1) indexA = Integer.MAX_VALUE;
-            if (indexB == -1) indexB = Integer.MAX_VALUE;
-            return Integer.compare(indexA, indexB);
-        });
+        // 修改为按照 SampleRecipientTabEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            SampleRecipientTabEnum statusEnum = SampleRecipientTabEnum.getByCode(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
 
         // 计算合计数量
-        int totalCount = list.stream().mapToInt(SampleRecipientDTO.TabListDTO::getCount).sum();
-        list.add(0, new SampleRecipientDTO.TabListDTO("all", "全部", totalCount));
-
+        list.add(0, new SampleRecipientDTO.TabListDTO("all", "全部", 0));
         return list;
     }
 
@@ -2744,7 +2745,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         searchParam.setPermissionSql(dto.getPermissionSql());
 
         // 使用一个SQL查询获取所有状态的统计数量
-        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+        List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(searchParam);
 
         // 设置tabFlagName
         list.stream().forEach(e ->{
