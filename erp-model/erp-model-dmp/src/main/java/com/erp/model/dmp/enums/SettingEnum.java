@@ -81,6 +81,9 @@ public enum SettingEnum {
     //数据查询使用doris
     DORIS_QUERY_CFG_DMPOUTPUTTASKRECORD("dmpOutputTaskRecord",SettingEnum.DORIS_QUERY_CFG,"中台监控页面"),
     DORIS_QUERY_CFG_SOOUTSTOCK("soOutstock",SettingEnum.DORIS_QUERY_CFG,"销售出库单"),
+
+    // ADS配置
+    ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST("adsErpInventoryDiffWarehouseList", SettingEnum.ADS_CFG,"ADS平台库存差异仓库配置"),
     ;
 
     @EnumValue
@@ -178,6 +181,11 @@ public enum SettingEnum {
      * 数据查询使用doris
      */
     public static final String DORIS_QUERY_CFG = "doris_query_cfg";
+
+    /**
+     * 数仓ADS配置
+     */
+    public static final String ADS_CFG = "ads_cfg";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

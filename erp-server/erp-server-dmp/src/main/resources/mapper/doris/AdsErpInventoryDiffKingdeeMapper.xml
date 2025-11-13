@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffKingdeeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="unique_code" property="uniqueCode" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="account_code" property="accountCode" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="bill_topic" property="billTopic" />
+       <result column="flow_id" property="flowId" />
+       <result column="etl_status" property="etlStatus" />
+       <result column="node_id" property="nodeId" />
+       <result column="instance_id" property="instanceId" />
+       <result column="task_id" property="taskId" />
+       <result column="source_id" property="sourceId" />
+       <result column="last_update_flag" property="lastUpdateFlag" />
+       <result column="check_period" property="checkPeriod" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="closing_qty" property="closingQty" />
+       <result column="intransit_qty" property="intransitQty" />
+       <result column="kingdee_warehouse_id" property="kingdeeWarehouseId" />
+       <result column="kingdee_warehouse_code" property="kingdeeWarehouseCode" />
+       <result column="kingdee_warehouse_name" property="kingdeeWarehouseName" />
+       <result column="kingdee_warehouse_location" property="kingdeeWarehouseLocation" />
+       <result column="kingdee_warehouse_location_name" property="kingdeeWarehouseLocationName" />
+       <result column="kingdee_sku_id" property="kingdeeSkuId" />
+       <result column="kingdee_sku_no" property="kingdeeSkuNo" />
+       <result column="kingdee_product_name" property="kingdeeProductName" />
+       <result column="kingdee_owner" property="kingdeeOwner" />
+       <result column="kingdee_closing_qty" property="kingdeeClosingQty" />
+       <result column="kingdee_outstock_qty" property="kingdeeOutstockQty" />
+       <result column="kingdee_instock_qty" property="kingdeeInstockQty" />
+       <result column="kingdee_closing_intransit_qty" property="kingdeeClosingIntransitQty" />
+       <result column="kingdee_outstock_intransit_qty" property="kingdeeOutstockIntransitQty" />
+       <result column="kingdee_instock_intransit_qty" property="kingdeeInstockIntransitQty" />
+       <result column="diff_closing_intransit_qty" property="diffClosingIntransitQty" />
+       <result column="diff_closing_qty" property="diffClosingQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_period, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, closing_qty, intransit_qty, kingdee_warehouse_id, kingdee_warehouse_code, kingdee_warehouse_name, kingdee_warehouse_location, kingdee_warehouse_location_name, kingdee_sku_id, kingdee_sku_no, kingdee_product_name, kingdee_owner, kingdee_closing_qty, kingdee_outstock_qty, kingdee_instock_qty, kingdee_closing_intransit_qty, kingdee_outstock_intransit_qty, kingdee_instock_intransit_qty, diff_closing_intransit_qty, diff_closing_qty, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from ads_erp_inventory_diff_kingdee where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  ads_erp_inventory_diff_kingdee
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
