@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -226,4 +227,6 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     * @return Map<String, Object>
     */
     Map<String, Object> getVariablesMap(AssetAcceptEntity entity);
+
+    List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> getAcceptByPurchaseOrderId(String id);
 }

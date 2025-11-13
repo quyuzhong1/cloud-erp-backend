@@ -39,6 +39,7 @@ import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -2082,6 +2083,49 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
+    }
+
+    @Override
+    public List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> getAcceptByPurchaseOrderId(String id) {
+        List<AssetAcceptEntity> list = this.lambdaQuery()
+                .eq(AssetAcceptEntity::getSourceId, id)
+                .eq(AssetAcceptEntity::getIsDeleted,Boolean.FALSE)
+                .list();
+        if (!list.isEmpty()) {
+            List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> assetPurchaseOrderRefListDTOS = new ArrayList<>();
+
+            for (AssetAcceptEntity assetAcceptEntity : list) {
+                List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+                        .eq(AssetAcceptDetailEntity::getMainId, assetAcceptEntity.getId())
+                        .eq(AssetAcceptDetailEntity::getIsDeleted, Boolean.FALSE)
+                        .list();
+                AssetAcceptDTO.AssetPurchaseOrderRefListDTO assetPurchaseOrderRefListDTO = new AssetAcceptDTO.AssetPurchaseOrderRefListDTO();
+
+                //单头信息
+                assetPurchaseOrderRefListDTO.setAssetAcceptCode(assetAcceptEntity.getCode());
+                assetPurchaseOrderRefListDTO.setAcceptDate(assetAcceptEntity.getAcceptDate());
+                if (StringUtils.isNotBlank(assetAcceptEntity.getApproveUserId())) {
+                    assetPurchaseOrderRefListDTO.setApproveUserId(assetAcceptEntity.getApproveUserId());
+                    SysUserDTO sysUserById = sysUserFeign.getSysUserById(assetAcceptEntity.getApproveUserId());
+                    assetPurchaseOrderRefListDTO.setApproveUserName(sysUserById.getUserName());
+                }
+                assetPurchaseOrderRefListDTO.setApproveStatutsName(ApproveStatusEnum.getName(assetPurchaseOrderRefListDTO.getApproveStatuts()));
+                assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetPurchaseOrderRefListDTO.getInvalidStatus()));
+
+                //明细信息
+                for (AssetAcceptDetailEntity detailEntity : detailList) {
+                    BeanUtils.copyProperties(detailEntity,assetPurchaseOrderRefListDTO);
+
+                    assetPurchaseOrderRefListDTOS.add(assetPurchaseOrderRefListDTO);
+                }
+                return assetPurchaseOrderRefListDTOS;
+            }
+            
+
+
+        }
+
+        return new ArrayList<>();
     }
 
     @Override

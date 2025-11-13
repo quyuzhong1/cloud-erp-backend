@@ -226,7 +226,7 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
      * @param detailId
      * @return
      */
-    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByDetailId(String detailId);
+    ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>>  getAcceptByPurchaseOrderId(String detailId);
 
     /**
      *

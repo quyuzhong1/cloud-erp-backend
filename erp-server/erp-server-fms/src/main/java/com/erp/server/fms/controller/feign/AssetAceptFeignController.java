@@ -33,8 +33,8 @@ public class AssetAceptFeignController {
     private AssetAcceptService assetAcceptService;
 
     /**
-     *
-     * @param 资产采购单明细id
+     * 资产采购单明细id
+     * @param
      * @return
      */
     @PostMapping("/getAcceptQty")
@@ -42,7 +42,7 @@ public class AssetAceptFeignController {
         return assetAcceptDetailService.getAcceptQtyByDetailId(detailId);
     }
 
-    @PostMapping("/getAssetAccept")
+    @PostMapping("/getAcceptByDetailId")
     public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByDetailId(@RequestBody String detailId) {
         return assetAcceptService.getAcceptByDetailId(detailId);
     }
@@ -59,11 +59,16 @@ public class AssetAceptFeignController {
 
     /**
      * 获取可验收数量
-     * @param dtoList
+     * @param
      * @return
      */
-    @PostMapping("/getAcceptableQty")
+    @PostMapping("/getAcceptableQtyByDetailId")
     public Map<String, BigDecimal> getAcceptableQtyByDetailId(@RequestBody List<String> detailIdList){
         return assetAcceptDetailService.getAcceptableQtyByDetailId(detailIdList);
+    }
+
+    @PostMapping("/getAcceptByPurchaseOrderId")
+    public ApiResult<List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO>> getAcceptByPurchaseOrderId(@RequestBody String id){
+        return ApiResult.success(assetAcceptService.getAcceptByPurchaseOrderId(id));
     }
 }
