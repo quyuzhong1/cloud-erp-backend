@@ -241,7 +241,7 @@
                 ELSE (srd.recipient_qty - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
-            srd.remark AS detailRemark
+            srd.remark AS detailRemark,
         sr.is_outstock_required as isOutstockRequired,
         sr.no_outstock_reason as noOutstockReason,
         sr.is_ledger_required as isLedgerRequired
@@ -319,7 +319,7 @@
                 ELSE (srd.recipient_qty - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
-            srd.remark AS detailRemark
+            srd.remark AS detailRemark,
         sr.is_outstock_required as isOutstockRequired,
         sr.no_outstock_reason as noOutstockReason,
         sr.is_ledger_required as isLedgerRequired
