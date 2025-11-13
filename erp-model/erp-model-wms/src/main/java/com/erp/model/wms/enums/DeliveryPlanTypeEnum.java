@@ -10,6 +10,7 @@ import lombok.Getter;
 public enum DeliveryPlanTypeEnum implements EnumMessage {
     FBA("fba","FBA发货计划"),
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓发货计划"),
+    ALIEXPRESS("AliExpress","速卖通发货计划"),
     ;
 
     /**

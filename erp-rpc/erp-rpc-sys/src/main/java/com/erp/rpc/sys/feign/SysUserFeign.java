@@ -653,13 +653,6 @@ public interface SysUserFeign {
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
 
     /**
-     * 根据币种三字码获取币种符号
-     * @param num
-     * @return
-     */
-    @GetMapping("feign/currency/getCurrencyByNum")
-    DictCurrencyEntity getCurrencyByNum(@RequestParam(value = "num") String num);
-    /**
      * 通过App-Id获取飞书用户UnionId
      * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
      *
@@ -670,4 +663,11 @@ public interface SysUserFeign {
     @PostMapping("feign/user/getFsUserUnionIdByAppId")
     ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto);
 
+    /**
+     * 根据币种三字码获取币种符号
+     * @param num
+     * @return
+     */
+    @GetMapping("feign/currency/getCurrencyByNum")
+    DictCurrencyEntity getCurrencyByNum(@RequestParam(value = "num") String num);
 }

@@ -1266,7 +1266,8 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         return addDTOList;
     }
 
-    private PackagePlanEntity getBySoId(String soId) {
+    @Override
+    public PackagePlanEntity getBySoId(String soId) {
         if (CharSequenceUtil.isBlank(soId)) {
             return null;
         }
@@ -1275,7 +1276,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             return null;
         }
         List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        return this.lambdaQuery().select(PackagePlanEntity::getId, PackagePlanEntity::getPackageNo).in(PackagePlanEntity::getId, mainIds).orderByDesc(PackagePlanEntity::getCreateTime).last("limit 1").one();
+        return this.lambdaQuery().in(PackagePlanEntity::getId, mainIds).orderByDesc(PackagePlanEntity::getCreateTime).last("limit 1").one();
     }
 
 

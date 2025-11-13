@@ -146,4 +146,11 @@ public interface PackagePlanService extends SuperService<PackagePlanEntity> {
      * @param response
      */
     void batchHandoverPrint(List<String> ids, HttpServletResponse response);
+
+    /**
+     * 根据销售订单id获取组包计划
+     * @param soId
+     * @return
+     */
+    PackagePlanEntity getBySoId(String soId);
 }

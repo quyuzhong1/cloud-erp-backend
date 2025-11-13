@@ -1900,6 +1900,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             operateLogService.addModuleOperateLog(String.format("三方仓销售退货入库单【%s】无客户信息不自动审核通过", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), soReturnInstockEntity.getId(), "审核操作");
             return;
         }
+        //没有仓库不审核
+        if(detailEntityList.stream().anyMatch(v->StringUtils.isBlank(v.getWarehouseId()))){
+            return;
+        }
         //审核
         this.approve(soReturnInstockEntity,ApproveTypeEnum.PASS.getStatus(),"三方仓新增自动审核通过",false);
     }

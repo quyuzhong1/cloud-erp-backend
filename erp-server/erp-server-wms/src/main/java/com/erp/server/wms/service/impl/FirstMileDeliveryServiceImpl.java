@@ -1028,7 +1028,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
 
             //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+            || FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
                 //查询是否下推了入库单
                 OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                 if (ObjectUtil.isEmpty(inboundEntity)) {
@@ -1046,7 +1047,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)
                         && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())
                         && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
-                        && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())) {
+                        && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
+                        && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
@@ -2050,7 +2052,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //只有备货类型等于备货海外仓时，才可以下推入库单，否则提示：只有备货海外仓的发货单允许下推入库单
-        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+        && !FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
             throw new ServiceException(ApiError.IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN);
         }
 
@@ -2085,12 +2088,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
+
         //物流信息
         OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity);
         viewDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 
+        viewDTO.setDemandTypeName(FbaDemandTypeEnum.getName(viewDTO.getDemandType()));
         //查询头程物流单
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(tmsFirstMileLogisticEntities)) {
@@ -2098,7 +2103,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             viewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
             viewDTO.setTrackingNo(tmsFirstMileLogisticEntity.getTransportNo());
         }
-
+        List<OverseasProviderWarehouseEntity> entityList = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(destWarehouseId));
+        if(CollectionUtils.isNotEmpty(entityList)){
+            viewDTO.setOverseasWarehouseId(entityList.get(0).getId());
+        }
         // 平台信息
         viewDTO.setDictPlatform(dictPlatform);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);

@@ -53,24 +53,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
 
     @Override
     public List<GoodCangReceiptBatchResp> download(JobTaskDTO data) {
-        List<GoodCangReceiptBatchResp> respList = new ArrayList<>();
-        //查询待签收、部分签收状态的入库单
-        List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_GOOD_CANG.getCode());
-        if(CollectionUtils.isEmpty(receiveCodeList)){
-            return new ArrayList<>();
-        }
-        for(String receiveCode : receiveCodeList){
-            GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail(receiveCode);
-            if(response.getMessage().contains("当前客户无此入库单")){
-                continue;
-            }
-            checkResponse(response);
-            response.getData().setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.INBOUND.getCode()+receiveCode));
-            respList.add(response.getData());
-        }
-        return respList;
+        return new ArrayList<>();
     }
 
     private void checkResponse(GoodCangResponse<?> response) {

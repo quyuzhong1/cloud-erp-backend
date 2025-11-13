@@ -130,7 +130,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      */
     Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto);
 
-    List<String> getReceiptNumbersForStatus(List<String> statusList, String platform);
+    List<String> getReceiptNumbersForStatus(List<String> statusList, String authId);
 
     /**
      * 根据来源id查询入库单
