@@ -1,16 +1,12 @@
 package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
@@ -22,16 +18,13 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.sdk.oms.walmart.api.WalmartStaticKey;
-import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
-import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
-import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import com.sdk.oms.wildberries.dto.WildberriesResponse;
 import com.sdk.oms.wildberries.dto.WildberriesShopInfoDTO;
 import com.sdk.oms.wildberries.service.WildberriesSDKService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -61,6 +54,8 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private RedisUtil redisUtil;
 
+    @Value("${oms.sdk.wildberries.sandbox}")
+    private String sandbox;
     /**
      * 获取授权地址
      */
@@ -89,7 +84,7 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
         }
 
         WildberriesSDKService sdkService = new WildberriesSDKService();
-        WildberriesResponse response1 = sdkService.checkToken(shopAuth.getAccessToken());
+        WildberriesResponse response1 = sdkService.checkToken(shopAuth.getAccessToken(),sandbox);
         if (!response1.isSuccess()){
             throw new ServiceException("授权校验失败：{}", response1.getMsg());
         }

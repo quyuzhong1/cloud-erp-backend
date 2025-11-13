@@ -66,4 +66,9 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return skuStdCostDetailService.approveEnd(approveOne,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

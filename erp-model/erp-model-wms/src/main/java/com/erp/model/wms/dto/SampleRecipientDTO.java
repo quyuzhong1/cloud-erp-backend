@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -307,6 +308,21 @@ public class SampleRecipientDTO implements Serializable {
          */
         private String skuCount;
 
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired;
+        private String isOutstockRequiredName;
+        /**
+         * 仓库无需出库原因
+         */
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired;
+        private String isLedgerRequiredName;
+
     }
 
     /**
@@ -502,6 +518,21 @@ public class SampleRecipientDTO implements Serializable {
          * 审核状态名称
          */
         private String approveStatusName;
+
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired;
+        private String isOutstockRequiredName;
+        /**
+         * 仓库无需出库原因
+         */
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired;
+        private String isLedgerRequiredName;
 
 
     }
@@ -763,6 +794,19 @@ public class SampleRecipientDTO implements Serializable {
             return StringUtils.isNotBlank(receivePhone);
         }
 
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired;
+        /**
+         * 仓库无需出库原因
+         */
+        @Size(max = 200, message = "无需出库原因最大长度不能超过200位")
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired;
 
     }
     /**

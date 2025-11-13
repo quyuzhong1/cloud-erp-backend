@@ -77,4 +77,9 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
         }
         return lambdaQuery().in(KingdeePaymentConditionEntity::getName,paymentConditionNames).eq(KingdeePaymentConditionEntity::getDisabled,Boolean.FALSE).list();
     }
+
+    @Override
+    public List<KingdeePaymentConditionEntity> listAll() {
+        return list();
+    }
 }

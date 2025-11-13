@@ -42,7 +42,7 @@ public class KingdeePaymentConditionController extends BaseController {
      */
     @GetMapping("/select")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> select() {
-        List<KingdeePaymentConditionEntity> list = kingdeePaymentConditionService.list();
+        List<KingdeePaymentConditionEntity> list = kingdeePaymentConditionService.listAll();
         List<BaseDropDownDTO.DisabledDTO> result = list.stream().sorted(Comparator.comparing(KingdeePaymentConditionEntity::getDisabled))
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.getCode(),x.getName(),x.getDisabled()))
                 .collect(Collectors.toList());
