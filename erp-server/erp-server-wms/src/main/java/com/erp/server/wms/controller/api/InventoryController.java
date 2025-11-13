@@ -264,7 +264,7 @@ public class InventoryController extends BaseController {
 
 
     /**
-     * 每日库存列表
+     * 每日库存列表 （仓库维度）
      * @param dto
      * @return
      */
@@ -278,8 +278,9 @@ public class InventoryController extends BaseController {
         return success(transactionFlowService.dailyInventoryPaging(dto));
     }
 
+
     /**
-     * 每日库存导出
+     * 每日库存导出（仓库维度）
      * @param dto
      * @return
      */
@@ -287,6 +288,33 @@ public class InventoryController extends BaseController {
     @PostMapping(value = "/exportDailyInventory")
     public ApiResult<Boolean> exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
         transactionFlowService.exportDailyInventory(dto);
+        return success(true);
+    }
+
+    /**
+     * 每日库存列表 (仓位维度)
+     * @param dto
+     * @return
+     */
+    @PostMapping("/dailyInventoryPagingByLocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "tf.warehouse_id",
+            menuCode = "wms:inventory:dailyInventoryPaging"
+    )
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
+    public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPagingByLocation(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
+        return success(transactionFlowService.dailyInventoryPagingByLocation(dto));
+    }
+
+    /**
+     * 每日库存导出 (仓位维度)
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "每日库存导出")
+    @PostMapping(value = "/exportDailyInventoryByLocation")
+    public ApiResult<Boolean> exportDailyInventoryByLocation(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
+        transactionFlowService.exportDailyInventoryByLocation(dto);
         return success(true);
     }
 

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -34,10 +35,8 @@ import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewD
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
-import com.erp.model.wms.entity.InventoryHisEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -50,6 +49,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -111,6 +111,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
         List<TransactionFlowEntity> txnFlows =  lambdaQuery()
@@ -341,8 +343,36 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
+    public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPagingByLocation(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO) {
+        InventoryReportDTO.DailyInventoryParamDTO params = pagingParamDTO.getParams();
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        if (ObjectUtils.isEmpty(params.getDate())) {
+            params.setDate(LocalDate.now());
+        }
+        IPage<InventoryReportDTO.ListDailyInventoryDTO> pageData = baseMapper.dailyInventoryPagingByLocation(query, pagingParamDTO.getParams());
+        handleDailyInventory(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+        String dateType = params.getDateType();
+        if(Objects.equals(dateType,"approveDate")){
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+        }else {
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY_BILLDATE.getCode(), params);
+        }
+    }
+
+    @Override
+    public void exportDailyInventoryByLocation(InventoryReportDTO.DailyInventoryParamDTO params) {
+        String dateType = params.getDateType();
+        if(Objects.equals(dateType,"approveDate")){
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY_LOCATION.getCode(), params);
+        }else {
+            downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY_LOCATION_BILLDATE.getCode(), params);
+        }
     }
 
     @Override
@@ -432,6 +462,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         List<String> warehouseIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
 
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIdList);
+
+        Map<String, WarehouseLocationEntity> locationMap = warehouseLocationEntities.stream().filter(e-> Objects.equals(e.getType(), WarehouseLocationTypeEnum.LOCATION.getCode())).collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (o1, o2) -> o1));
+
+        Map<String, WarehouseLocationEntity> areaMap = warehouseLocationEntities.stream().filter(e-> Objects.equals(e.getType(), WarehouseLocationTypeEnum.AREA.getCode())).collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity(), (o1, o2) -> o1));
+
         List<String> orgIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
@@ -450,8 +486,26 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if (ObjectUtils.isNotEmpty(codeDTO)) {
                 inventoryDTO.setOrgName(codeDTO.getName());
             }
-        }
 
+            //仓位
+            if(StringUtils.isNotBlank(inventoryDTO.getWarehouseLocation())){
+
+                WarehouseLocationEntity locationEntity = locationMap.get(inventoryDTO.getWarehouseLocation());
+                if(Objects.nonNull(locationEntity)){
+                    inventoryDTO.setWarehouseLocationName((locationEntity.getName()));
+
+                    //库区
+                    String parentId = locationEntity.getParentId();
+                    if(StringUtils.isNotBlank(parentId)){
+                        WarehouseLocationEntity areaEntity = areaMap.get(parentId);
+                        if(Objects.nonNull(areaEntity)){
+                            inventoryDTO.setWarehouseArea(areaEntity.getCode());
+                            inventoryDTO.setWarehouseAreaName(areaEntity.getName());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -515,6 +569,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dataList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //获取销售出库单明细的平台订单号
+        List<String> soOutstockDetailIds = dataList.stream().filter(e -> Objects.equals(e.getSourceType(), SourceTypeEnum.SO_OUTSTOCK.getCode())).map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceDetailId).collect(Collectors.toList());
+        Map<String, String> platformCodeMap = soOutstockDetailService.listByIds(soOutstockDetailIds).stream().collect(Collectors.toMap(SoOutstockDetailEntity::getId, SoOutstockDetailEntity::getPlatformCode));
+
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -540,6 +599,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             data.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //平台订单号
+            data.setPlatformCode(platformCodeMap.get(data.getSourceDetailId()));
         });
     }
 

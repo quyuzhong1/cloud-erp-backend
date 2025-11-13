@@ -333,6 +333,41 @@ public class QcInfoController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 批量作废
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INVALID, desc = "质检单作废")
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:invalid",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        String remark = dto.getRemark();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(ids);
+        
+        for (String id : ids) {
+            QcInfoEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.invalid(id, remark));
+            } catch (Exception e) {
+                log.error("质检单作废失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
     /**
      * 导出质检单

@@ -38,6 +38,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -475,6 +476,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             item.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "");
             item.setRemark(remark);
             item.setSourceTypeName(SourceTypeEnum.getName(item.getSourceType()));
+            item.setInvalidStatusName(InvalidStatusEnum.getName(item.getInvalidStatus()));
 
         }
         return new PagingVO<>(pageData);
@@ -1279,6 +1281,38 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
+    }
+
+    /**
+     * 作废
+     * @author jack
+     * @date 2025-11-10
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String remark) {
+        QcInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检单数据"));
+        
+        // 只有暂存、待质检、取消状态允许作废
+        if (!(Objects.equals(QcBillStatusEnum.DRAFT, entity.getQcStatus()) 
+            || Objects.equals(QcBillStatusEnum.WAIT_QC, entity.getQcStatus())
+            || Objects.equals(QcBillStatusEnum.CANCEL, entity.getQcStatus())) 
+            ) {
+           throw new ServiceException("只有暂存、待质检、取消状态允许作废");
+        }
+        
+        log.info("作废 开始修改质检单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(QcInfoEntity::getId, id)
+            .set(QcInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+            .set(QcInfoEntity::getInvalidRemark, remark)
+            .update();
+        
+        log.info("作废 开始记录操作日志，id：【{}】", id);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", 
+            UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检单", remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "作废操作");
+        
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
 

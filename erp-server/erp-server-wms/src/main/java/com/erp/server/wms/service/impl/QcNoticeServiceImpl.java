@@ -23,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcNoticeDetailImportExcelDTO;
@@ -433,6 +434,32 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getCode(), "删除质检通知单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    /**
+     * 作废
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO invalid(String id, String remark) {
+        QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
+
+        // 只有待提交、审核不通过数据允许作废
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        
+        log.info("作废 开始修改质检通知单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(QcNoticeEntity::getId, id)
+            .set(QcNoticeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+            .set(QcNoticeEntity::getInvalidRemark, remark)
+            .update();
+        
+        log.info("作废 开始记录操作日志，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单", remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "作废操作");
+        
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     /**
@@ -1085,6 +1112,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+
+            //作废状态
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
             //sku 质检状态
             data.setQcDetailStatusName(QcNoticeStatusEnum.getByCode(data.getQcDetailStatus()).getName());

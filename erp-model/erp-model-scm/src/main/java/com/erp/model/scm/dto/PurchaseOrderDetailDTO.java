@@ -517,6 +517,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 采购员
          */
         private String purchaseUserName;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
     }
 
     /**
