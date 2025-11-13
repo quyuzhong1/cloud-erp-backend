@@ -24,15 +24,14 @@ import ${package.Service}.${table.serviceName};
 import ${superServiceImplClassPackage};
 import com.common.business.threadlocal.UserContext;
 import ${package.Service}.OperateLogService;
-import ${package.Service}.CommonService;
+<#--import ${package.Service}.CommonService;-->
 import com.common.core.exception.ServiceException;
 <#if fieldMap["code"]??>
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 </#if>
+import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import ${package.Dto}.${table.dtoName};
@@ -83,14 +82,14 @@ open class ${table.serviceImplName} : ${superServiceImplClass}<${table.mapperNam
 }
 <#else>
 public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.mapperName}, ${entity}> implements ${table.serviceName} {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     <#if fieldMap["code"]??>
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
     </#if>
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
     </#if>
 
@@ -196,7 +195,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         searchParam.setPermissionSql(param.getPermissionSql());
         List<${table.dtoName}.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
+        <#if fieldMap["approveStatus"]??>
         List<String> statusList = ApproveStatusEnum.getStatusList();
+        <#else >
+        // TODO 替换当前表Tab状态字段
+        List<String> statusList = null;
+        </#if>
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(${table.dtoName}.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
@@ -466,11 +470,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(${table.dtoName}.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-            return;
-        }
-    }
+
 
     /**
     * 审核更新审核信息
@@ -554,6 +554,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     fillOne(data);
     // TODO 查询明细数据（如果有的话）
     return data;
+    }
+
+    private void fillOne(${table.dtoName}.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+          return;
+        }
     }
 
    /**

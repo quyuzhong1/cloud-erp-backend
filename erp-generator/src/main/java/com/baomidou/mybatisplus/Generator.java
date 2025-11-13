@@ -158,7 +158,6 @@ public class Generator {
             MODEL = "dmp";
             dbType = "doris";
             subModelPath = "doris";
-            typeConvert = new MySqlTypeConvert();
             dbName = StrUtil.format( "dmp_{}", model);
         } else {
             // 默认pg
@@ -177,12 +176,14 @@ public class Generator {
                 DB_USER_NAME =  "root";
                 DB_PASSWORD = "123456";
                 DB_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+                typeConvert = new MySqlTypeConvert();
                 break;
             case "postgresql":
                 DB_URL = "jdbc:postgresql://172.16.100.60:32590/" + dbName + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
                 DB_USER_NAME =  "postgres";
                 DB_PASSWORD = "admin@viji";
                 DB_DRIVER_NAME = "org.postgresql.Driver";
+                typeConvert = new PostgreSqlTypeConvert();
                 break;
 //            case "sqlserver":
 //                break;
