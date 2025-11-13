@@ -267,4 +267,10 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
 
     List<SoB2cEntity> listWaitShipByWarehouseIds(@Param("warehouseIds") List<String> warehouseIds);
+    /**
+     * 生成组包计划预览
+     * @param soIds
+     * @return
+     */
+    List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(@Param("soIds") List<String> soIds);
 }

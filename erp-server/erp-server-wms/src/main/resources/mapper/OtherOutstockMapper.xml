@@ -223,7 +223,7 @@
         left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
         <where>
             oo.is_deleted = false
-            and oo.source_type = 'sampleRecipient'
+--             and oo.source_type = 'sampleRecipient'
             <if test="params.id != null and params.id != ''">
                 and oo.source_id = #{params.id}
             </if>

@@ -8,6 +8,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.DictBasicDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -98,4 +99,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
 
     List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(@Param("platformCodeList") List<String> platformCodeList);
+
+    List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(@Param("dto")  LogisticsChannelDTO.PlatformWarehouseDTO dto);
 }

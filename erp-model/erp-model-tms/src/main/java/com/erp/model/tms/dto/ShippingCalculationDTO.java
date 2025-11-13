@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
@@ -116,6 +117,23 @@ public class ShippingCalculationDTO {
          * 邮编
          */
         private String postCode;
+
+
+        private List<SkusDTO> skus;
+
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class SkusDTO {
+
+        private String skuNo;
+
+        private String platformSkuNo;
+
+        private Integer qty;
     }
 
     /**

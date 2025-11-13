@@ -138,7 +138,12 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
      */
     @TableField("is_unlock_inventory")
     private Boolean isUnlockInventory;
-    
+
+    /**
+     * 目的仓库id
+     */
+    @TableField("to_warehouse_id")
+    private String toWarehouseId;
 
     public static final String SOURCE_ID = "source_id";
 

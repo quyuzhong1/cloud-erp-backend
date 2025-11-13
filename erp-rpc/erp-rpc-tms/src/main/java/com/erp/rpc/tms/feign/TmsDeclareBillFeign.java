@@ -24,16 +24,6 @@ public interface TmsDeclareBillFeign {
     List<TmsDeclareBillEntity> listBySourceIds(@RequestBody List<String> sourceIds);
 
     /**
-     * 新增报关单
-     * @Author Luo_WG
-     * @Date 2024/1/25 18:31
-     * @param addDTO
-     * @return com.common.business.dto.base.BaseResultDTO.AddDTO
-     **/
-    @PostMapping("/feign/tmsDeclareBill/addB2BDeclare")
-    Boolean addB2BDeclare(@RequestBody TmsDeclareBillDTO.AddDTO addDTO);
-
-    /**
      * 删除报关单
      * @Author Luo_WG
      * @Date 2024/1/25 18:31

@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
@@ -240,5 +242,23 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             return this.list(queryWrapper);
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public BatchResultDTO addAttachment(BaseDTO.AddAttachmentDTO addAttachmentDTO) {
+        List<OmsAttachmentEntity> list = new ArrayList<>(addAttachmentDTO.getFileList().size());
+        addAttachmentDTO.getFileList().forEach(fileDTO -> {
+            OmsAttachmentEntity entity = new OmsAttachmentEntity();
+            entity.setAttachUrl(fileDTO.getAttachUrl());
+            entity.setAttachName(fileDTO.getAttachName());
+            entity.setBusinessId(addAttachmentDTO.getId());
+            entity.setType(addAttachmentDTO.getType());
+            list.add(entity);
+        });
+        boolean saved = this.saveBatch(list);
+        if (saved) {
+            return BatchResultDTO.success(addAttachmentDTO.getId(), addAttachmentDTO.getId(), "新增附件成功");
+        }
+        return BatchResultDTO.fail(addAttachmentDTO.getId(), addAttachmentDTO.getId(), "新增附件失败");
     }
 }

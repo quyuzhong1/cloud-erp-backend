@@ -17,6 +17,8 @@ public enum SoB2cErrorTypeEnum {
     SUBMIT_DELIVERY("submitDelivery",  "提交发货异常"),
     SIGN_DELIVERY("signDelivery",  "标记发货异常"),
     GET_LOGISTICS_CODE("getLogisticsCode",  "获取物流单异常"),
+    //组包计划异常
+    PACKAGE_PLAN_GENERATE("packagePlanGenerate",  "组包计划生成异常"),
     GENERATE_OUTSTOCK("generateOutstock",  "生成销售出库单"),
     INTERCEPT_SUCCESS("interceptSuccess",  "物流拦截成功"),
     ORDER_FORECAST("orderForecast",  "订单预报失败"),

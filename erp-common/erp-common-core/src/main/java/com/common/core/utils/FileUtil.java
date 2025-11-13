@@ -562,6 +562,28 @@ public class FileUtil {
         // 截取文件名的部分（去掉后缀）
         return fileName.substring(0, lastDotIndex);
     }
+    /**
+     * 获取文件名的后缀名
+     * @param fileName 文件名
+     * @return 后缀名（不含点），如果没有后缀则返回空字符串
+     */
+    public static String getFileSuffix(String fileName) {
+        // 处理空值或空字符串
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return "";
+        }
+
+        // 查找最后一个点的位置
+        int lastDotIndex = fileName.lastIndexOf('.');
+
+        // 没有点或者点是最后一个字符的情况
+        if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
+            return "";
+        }
+
+        // 从点的下一个字符开始截取到结尾
+        return fileName.substring(lastDotIndex + 1);
+    }
 
     public static String convertToBase64AndCheckIfPdf(MultipartFile multipartFile) throws IOException {
         // 检查文件是否为空

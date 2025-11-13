@@ -110,6 +110,12 @@ public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
     @TableField("qty")
     private Integer qty;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
 
     public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
 
@@ -146,6 +152,8 @@ public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
     public static final String USE_USER_NAME = "use_user_name";
 
     public static final String QTY = "qty";
+
+    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
  * 样品领用单明细执行状态枚举
  */
 public enum SampleRecipientExecStatusEnum implements EnumMessage {
+    NO_OUTSTOCK("noOutstock", "无需出库"),
     WAIT_OUTSTOCK("waitOutstock", "待出库"),
     PART_OUTSTOCK("partOutstock", "部分出库"),
     COMPLETE_OUTSTOCK("completeOutstock", "已出库")

@@ -2,6 +2,7 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformRefundOrderDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -80,7 +81,9 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 		}
 		SoB2cRefundEntity soB2cRefundEntity = this.buildRefund(dto,soB2cEntity);
 		List<SoB2cRefundDetailEntity> soB2cRefundDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
-		soB2cRefundService.add(soB2cRefundEntity, soB2cRefundDetailEntityList);
+		soB2cRefundService.autoAddApprove(soB2cRefundEntity, soB2cRefundDetailEntityList);
+		BaseResultDTO.AddDTO addDTO = soB2cRefundService.add(soB2cRefundEntity, soB2cRefundDetailEntityList);
+
 	}
 
 	private List<SoB2cRefundDetailEntity> buildRefundDetail(PlatformRefundOrderDTO dto, List<SoB2cDetailEntity> soB2cDetailEntityList) {

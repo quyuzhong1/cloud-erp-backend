@@ -44,4 +44,5 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto);
 
     List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType);
+
 }

@@ -287,8 +287,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 detailEntityList.add(saveDetailEntity);
             }
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
-            //新增物流费用单
-            addLogisticsBillCost(saveEntity,detailEntityList);
+
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                //新增物流费用单
+                addLogisticsBillCost(saveEntity,detailEntityList);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         return Boolean.TRUE;
     }
@@ -500,6 +508,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
+                && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
@@ -540,6 +549,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             return LogisticsBillDTO.GenerateBillResultDTO.builder()
+                    .pushPlatformCode(logisticsOrderVO.getDeliveryNo())
                     .trackNo(orderResult.getData().getTrackNo())
                     .transportNo(orderResult.getData().getTransportNo())
                     .iossTaxNo(CharSequenceUtil.isNotBlank(orderResult.getData().getIossTaxNo()) ? orderResult.getData().getIossTaxNo() : CharSequenceUtil.EMPTY)
@@ -634,7 +644,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setPlatformCode(dto.getPlatformCode());
         cancelOrderVO.setReason(dto.getReason());
         cancelOrderVO.setOrderId(dto.getOrderId());
-        cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (ObjectUtil.isEmpty(billBase) || Objects.isNull(billBase.getId())) {
@@ -644,6 +653,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),dto.getShopId(), auth.getLogisticsPlatform());
         cancelOrderVO.setAuthMap(authMap);
+        cancelOrderList.add(cancelOrderVO);
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -1067,6 +1077,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
                 getLabelVO.setTransportNo(soB2cLogisticsEntity.getCode());
                 getLabelVO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                getLabelVO.setPushPlatformCode(CharSequenceUtil.isNotBlank(dto.getPushPlatformCode())? dto.getPushPlatformCode() : soB2cLogisticsEntity.getPushPlatformCode());
                 //授权信息
                 getLabelVO.setAuthMap(authMap);
                 //查询是否打印配货单
@@ -1225,8 +1236,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 if (CollectionUtils.isEmpty(detailList)) {
                     continue;
                 }
-                //新增物流费用单
-                logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    //新增物流费用单
+                    logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
             }
         }
         return batchResultDTOList;
@@ -1377,11 +1395,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             this.logisticsBillDetailService.saveBatch(detailEntityList);
             Map<String, List<LogisticsBillDetailEntity>> billMap = detailEntityList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getMainId));
             list.forEach(entity -> {
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     this.addLogisticsBillCost(entity, billMap.get(entity.getId()));
                 }catch (Exception e){
                     log.error(e.getMessage());
 //                    throw new ServiceException(e.getMessage());
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             });
         });

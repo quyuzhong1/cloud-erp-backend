@@ -200,7 +200,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(logisticsQueryBaseVO == null){
                 throw new ServiceException("参数异常");
             }
-            List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryBaseVO.getAuthMap(), logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()));
+            List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryBaseVO.getAuthMap(), logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getPushPlatformCode).collect(Collectors.toList()));
 
             logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
                     logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),

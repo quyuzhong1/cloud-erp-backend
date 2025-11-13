@@ -146,7 +146,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList());
+        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getPushPlatformCode).collect(Collectors.toList());
         WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
                 .referenceNoList(deliveryList)
                 .build()

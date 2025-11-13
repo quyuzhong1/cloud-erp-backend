@@ -138,12 +138,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         handleData(sampleBorrowInfoEntity);
 
         log.info("开始新增样品借用单");
-        
+
         // 校验明细不能为空
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
             throw new ServiceException("样品借用单明细不能为空");
         }
-        
+
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPJY);
         sampleBorrowInfoEntity.setCode(code);
@@ -231,6 +231,10 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
+        }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品借用单明细不能为空");
         }
         SampleBorrowInfoEntity sampleBorrowInfoEntity =  BeanMapperUtils.map(SampleBorrowInfoEntity.class, addOrUpdateDTO);
         // 数据处理
@@ -913,7 +917,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 获取当前日期，用于计算归还周期
         LocalDate now = LocalDate.now();
         LocalDate estimatedReturnDate = sampleBorrowInfoEntity.getEstimatedReturnDate();
-        
+
         // 计算每个明细项中SKU的实际可用数量以及归还信息
         detailDTOList.forEach(detailDTO -> {
             String sampleLedgerId = detailDTO.getSampleLedgerId();
@@ -923,12 +927,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 detailDTO.setUseUserId(sampleLedger.getUseUserId());
                 detailDTO.setUseUserName(sampleLedger.getUseUserName());
             }
-            
+
             // 计算已归还数量 = 借用数量 - 待归还数量
             Integer borrowQty = detailDTO.getBorrowQty() != null ? detailDTO.getBorrowQty() : 0;
             Integer waitReturnQty = detailDTO.getWaitReturnQty() != null ? detailDTO.getWaitReturnQty() : 0;
             detailDTO.setReturnQty(borrowQty - waitReturnQty);
-            
+
             // 计算归还周期
             String returnPeriod = "";
             if(waitReturnQty == 0){
@@ -962,7 +966,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
-        
+
         //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode(), data.getId()));
@@ -980,7 +984,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 }
             }
         }
-        
+
         return data;
     }
     /**
@@ -1568,7 +1572,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     /**
      * 使用分布式锁进行样品台账数量校验
      * 实现一锁二判三放行的逻辑
-     * 
+     *
      * @param entity 样品借用单实体
      * @param approveType 审核类型
      */
@@ -1584,12 +1588,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             new LambdaQueryWrapper<SampleBorrowDetailEntity>()
                 .eq(SampleBorrowDetailEntity::getMainId, entity.getId())
         );
-        
+
         if (CollUtil.isEmpty(detailList)) {
             log.info("样品借用单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         if (ApproveTypeEnum.PASS.equals(approveType)) {
             // 审核：校验借出人台账（sampleLedgerId）是否足够扣减
             validateLendUserLedger(entity, detailList);
@@ -1598,7 +1602,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             validateBorrowUserLedger(entity, detailList);
         }
     }
-    
+
     /**
      * 校验借出人台账数量（审核时）
      */
@@ -1606,7 +1610,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
-        
+
         for (SampleBorrowDetailEntity detail : detailList) {
             if (StrUtil.isNotBlank(detail.getSampleLedgerId()) && detail.getBorrowQty() != null) {
                 sampleLedgerIds.add(detail.getSampleLedgerId());
@@ -1614,14 +1618,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 skuNos.add(detail.getSkuNo());
             }
         }
-        
+
         if (CollUtil.isEmpty(sampleLedgerIds)) {
             log.info("没有需要校验的借出人台账，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         log.info("开始校验借出人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
-        
+
         // 使用分布式锁进行数量校验
         sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
             sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.PASS, skuNos, sampleLedgerService::getLedgerQtyMap);
@@ -1710,14 +1714,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 throw new ServiceException(StrUtil.format("SKU【{}】的借入人台账不存在，无法反审核", detail.getSkuNo()));
             }
         }
-        
+
         if (CollUtil.isEmpty(sampleLedgerIds)) {
             log.info("没有需要校验的借入人台账，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         log.info("开始校验借入人台账数量，单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
-        
+
         // 使用分布式锁进行数量校验
         sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
             sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, ApproveTypeEnum.DIS_APPROVE, skuNos, sampleLedgerService::getLedgerQtyMap);

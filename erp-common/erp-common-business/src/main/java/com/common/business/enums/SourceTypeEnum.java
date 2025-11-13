@@ -130,6 +130,9 @@ public enum SourceTypeEnum {
     EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
 
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
+    SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
+
+
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
@@ -219,6 +222,7 @@ public enum SourceTypeEnum {
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_DELIVERY("thirdWarehouseDelivery","第三方仓库发货","third_warehouse_delivery"),
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
@@ -235,6 +239,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE("thirdWarehouseUploadHandoverFile", "第三方仓上传交接文件","dmp_push_task"),
     THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),

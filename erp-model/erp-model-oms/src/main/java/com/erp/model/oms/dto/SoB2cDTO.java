@@ -424,6 +424,10 @@ public class SoB2cDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
 
         /**
          * 付款状态
@@ -749,10 +753,6 @@ public class SoB2cDTO implements Serializable {
          */
         private String approveUserId;
         /**
-         * 审核人名称
-         */
-        private String approveUserName;
-        /**
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
@@ -876,6 +876,10 @@ public class SoB2cDTO implements Serializable {
 
 
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
     }
 
     @Data
@@ -2859,6 +2863,15 @@ public class SoB2cDTO implements Serializable {
          * 订单创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 审批人名称
+         */
+        private String approveUserName;
+
         /**
          * 销售订单明细id
          */
