@@ -1422,6 +1422,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),
     ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED(92061,"WB订单【{}】不支持拆分和合并"),
     ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP(92061,"B2C销售订单【{}】平台和店铺不能为空"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
