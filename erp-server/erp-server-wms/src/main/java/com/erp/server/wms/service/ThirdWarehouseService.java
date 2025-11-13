@@ -86,6 +86,13 @@ public interface ThirdWarehouseService {
      */
     ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq, String authId);
 
+    /**
+     * 上传交接文件
+     * @param authId
+     * @return
+     */
+    ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq, String authId);
+
 
     ApiResult<String> refreshToken(String authId, Map<String,Object> map);
 }

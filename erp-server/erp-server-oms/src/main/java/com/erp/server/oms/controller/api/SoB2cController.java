@@ -283,6 +283,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:update",
+            serviceClass = SoB2cService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         //检查是否备案并修改状态
@@ -302,6 +307,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/submit")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:submit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -354,6 +364,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/approve")
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:approve",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -431,6 +446,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "B2C销售订单作废")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:invalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -462,6 +482,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/unInvalid")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "B2C销售订单取消作废")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:unInvalid",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -521,6 +546,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @LogAction(value = LogActionEnum.CANCEL, desc = "B2C销售订单撤销")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:cancelProcess",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -555,6 +585,11 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/disApprove")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核B2C销售订单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:disApprove",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();

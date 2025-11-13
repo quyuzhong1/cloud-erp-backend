@@ -601,8 +601,14 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
         }
+
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //添加应付单
         payableInfoService.generatePayableInfo(entity,poReconciliationDetailList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
 
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");

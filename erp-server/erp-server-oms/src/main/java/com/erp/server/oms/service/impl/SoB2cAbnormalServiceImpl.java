@@ -89,6 +89,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             case GET_LOGISTICS_CODE:
                 resultDTOList.add(soB2cService.getLogisticsCode(id, Boolean.TRUE));
                 break;
+            case PACKAGE_PLAN_GENERATE:
+                resultDTOList.add(soB2cService.retryPackagePlan(id));
+                break;
             case GENERATE_OUTSTOCK:
                 Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
                 BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");

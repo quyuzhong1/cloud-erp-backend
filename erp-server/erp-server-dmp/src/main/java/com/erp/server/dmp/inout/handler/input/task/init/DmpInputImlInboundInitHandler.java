@@ -48,37 +48,7 @@ public class DmpInputImlInboundInitHandler extends DmpInputInitHandler{
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        //查询待签收、部分签收状态的入库单
-		List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_IML.getCode());
-        List<ImlReceiptResp> allResult = new ArrayList<>();
-        
-        if(CollUtil.isNotEmpty(receiveCodeList)) {
-        	String typeId = dmpCfgInputEntity.getTypeId();
-            DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-            String apiType = dmpCfgApiEntity.getApiType();
-            
-            List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.IML.getCode()));
-            if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            	throw new ServiceException("艾姆勒授权信息不存在");
-            }
-            ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
-            
-          //查询数据
-            ImlGetReceiptReq imlGetReceiptReq = ImlGetReceiptReq.builder()
-                    .page(1)
-                    .pageSize(receiveCodeList.size())
-                    .receivingCodeArr(receiveCodeList)
-                    .build();
-            String response = ImlUtils.callService(apiType,imlGetReceiptReq);
-            ImlResponse<List<ImlReceiptResp>> result = JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {}.getType());
-            allResult = result.getData();
-        }
-		
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
-		return Collections.singletonList(dmpInputTaskInitDTO);
+        return new ArrayList<>();
 	}
 
 	

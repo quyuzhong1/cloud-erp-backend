@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public enum PickingSourceTypeEnum implements EnumMessage {
     FBA("FBA", "FBA"),
     THIRD("thirdWarehouse", "第三方仓"),
+    ALIEXPRESS("aliexpress", "速卖通仓"),
     B2B("B2B", "B2B");
     ;
 

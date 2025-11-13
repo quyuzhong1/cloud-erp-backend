@@ -132,28 +132,6 @@ public interface OverseasWarehouseInboundConverter {
     })
     GoodCangCreateInboundReq.CollectingAddress inboundDtoToGoodCangCollect(ThirdWarehouseCreateInboundReq createInboundReq);
 
-    @Mappings({
-            @Mapping(target = "receivingCode",  source = "receivingCode"),
-            @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "incomeType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.IncomeTypeEnum.getCodeByErp(sourceData.getIncomeType()))"),
-            @Mapping(target = "receivingType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.TransitTypeEnum.getCodeByErp(sourceData.getReceivingType()))"),
-            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
-            @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
-            @Mapping(target = "smCode",  expression = "java(OverseasWarehouseInboundConverter.getImlSmCode(sourceData))"),
-            @Mapping(target = "trackingNumber",  source = "trackingNumber"),
-            @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "toStrByDate"),
-            @Mapping(target = "verify",  source = "verify"),
-            @Mapping(target = "contacter",  source = "collect.contacterName"),
-            @Mapping(target = "contactPhone",  source = "collect.contactPhone"),
-            @Mapping(target = "regionIdLevel0",  source = "collect.collectStateId"),
-            @Mapping(target = "regionIdLevel1",  source = "collect.collectCityId"),
-            @Mapping(target = "regionIdLevel2",  source = "collect.collectAreaId"),
-            @Mapping(target = "customerType",  source = "declareType"),
-            @Mapping(target = "street",  source = "collect.collectStreet"),
-            @Mapping(target = "items",  source = "items"),
-    })
-    ImlCreateInboundReq inboundDtoToIml(ThirdWarehouseCreateInboundReq sourceData);
-
     static String getImlSmCode(ThirdWarehouseCreateInboundReq data){
         if(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode().equals(data.getReceivingType())){
             return CharSequenceUtil.isBlank(data.getSmCode()) ? "PHLY1" : data.getSmCode();
@@ -161,12 +139,6 @@ public interface OverseasWarehouseInboundConverter {
         return null;
     }
 
-    @Mappings({
-            @Mapping(target = "productSku",  source = "productSku"),
-            @Mapping(target = "boxNo",  source = "boxNo"),
-            @Mapping(target = "quantity",  source = "quantity"),
-    })
-    ImlCreateInboundReq.Item inboundDtoToImlItem(ThirdWarehouseCreateInboundReq.Item createInboundReq);
 
     @Mappings({
             @Mapping(target = "referenceNo",  source = "referenceNo"),
@@ -193,31 +165,6 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "hsCode",  source = "hsCode"),
     })
     GoodCangCreateOutboundReq.Item outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
-
-
-    @Mappings({
-            @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "shippingMethod",  source = "shippingMethod"),
-            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
-            @Mapping(target = "verify",  source = "verify",defaultValue = "1"),
-            @Mapping(target = "name",  source = "receiverInfo.name"),
-            @Mapping(target = "phone",  source = "receiverInfo.phone"),
-            @Mapping(target = "countryCode",  source = "receiverInfo.countryCode"),
-            @Mapping(target = "province",  source = "receiverInfo.province"),
-            @Mapping(target = "city",  source = "receiverInfo.city"),
-            @Mapping(target = "address1",  source = "receiverInfo.address1"),
-            @Mapping(target = "address2",  source = "receiverInfo.address2"),
-            @Mapping(target = "address3",  source = "receiverInfo.address3"),
-            @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
-            @Mapping(target = "items",  source = "items"),
-    })
-    ImlCreateOutboundReq outboundDtoToIml(ThirdWarehouseCreateOutboundReq createOutboundReq);
-
-    @Mappings({
-            @Mapping(target = "productSku",  source = "productSku"),
-            @Mapping(target = "quantity",  source = "quantity"),
-    })
-    ImlCreateOutboundReq.Item outboundDtoToIml(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
 
     @Mappings({
             @Mapping(target = "referenceNo",  source = "referenceNo"),

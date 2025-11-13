@@ -75,6 +75,10 @@ public class OkHttpUtils {
         Call call = createPostJsonCall(url, params, headers);
         return execute(call);
     }
+    public static String doPostJsonQueryParam(okhttp3.HttpUrl url, Map<String, Object> params, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, params, headers);
+        return execute(call);
+    }
 
     /**
      * 获取post 请求 以json
@@ -251,6 +255,16 @@ public class OkHttpUtils {
     }
 
     public static Call createPostJsonCall(String url, Map<String, Object> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+    public static Call createPostJsonCall(okhttp3.HttpUrl url, Map<String, Object> params, Map<String, String> headers) {
         MediaType json = MediaType.parse("application/json; charset=utf-8");
         RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
         Request request = new Request.Builder()

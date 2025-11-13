@@ -122,7 +122,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
             List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
             for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
-                BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
+                BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getPushPlatformCode());
                 if(isFailure(response)){
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),

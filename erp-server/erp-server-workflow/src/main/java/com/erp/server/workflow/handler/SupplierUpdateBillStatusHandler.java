@@ -43,6 +43,8 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -120,7 +122,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
 
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
 
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
@@ -318,8 +320,23 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 attachList.add(attachment);
             } else if (attachmentObject instanceof String) {
                 if (CharSequenceUtil.isNotBlank(attachmentObject.toString())) {
-                    Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
-                    attachList.add(attachment);
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = null;
+                    try {
+                        node = mapper.readTree(attachmentObject.toString());
+                    } catch (Exception e) {
+                        log.error("资质附件解析异常，当前值：{}", attachmentObject);
+                        throw new ServiceException("资质附件不是有效的JSON字符串格式");
+                    }
+                    if (node.isObject()) {
+                        Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                        attachList.add(attachment);
+                    } else if (node.isArray()) {
+                        JSONArray jsonArray = JSONUtil.parseArray(attachmentObject);
+                        for (Object element : jsonArray) {
+                            attachList.addAll(processJsonElement(element));
+                        }
+                    }
                 }
             }  else {
                 JSONArray jsonArray = JSONUtil.parseArray(attachmentObject);

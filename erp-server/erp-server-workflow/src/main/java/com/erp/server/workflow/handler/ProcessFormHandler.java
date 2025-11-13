@@ -7,14 +7,11 @@ package com.erp.server.workflow.handler;
  */
 
 import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
-import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 
 import java.util.List;
@@ -57,7 +54,7 @@ public interface ProcessFormHandler {
      *
      * JSONArray formArray
      */
-    Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
+    Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList,String sourceType);
 
     /**
      * 批量生成taskdetailDto push

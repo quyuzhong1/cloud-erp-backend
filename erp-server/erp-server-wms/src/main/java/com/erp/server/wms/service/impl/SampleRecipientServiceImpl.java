@@ -17,8 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -58,8 +57,6 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -213,7 +210,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 库存校验
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+            //去掉库存校验
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
 
             // 保存明细数据
             List<SampleRecipientDetailEntity> detailEntities = new ArrayList<>();
@@ -225,7 +223,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailEntity.setProductName(productDTO.getProductName());
                 detailEntity.setRecipientQty(productDTO.getQuantity());
                 detailEntity.setDeliveryQty(0); // 初始已出库数量为0
-                detailEntity.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                if(!sampleRecipientEntity.getIsOutstockRequired()){
+                    detailEntity.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                }else {
+                    detailEntity.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                }
                 detailEntity.setRemark(productDTO.getRemark());
                 detailEntities.add(detailEntity);
             }
@@ -317,7 +319,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
+            //去掉库存校验
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
@@ -354,6 +357,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     existingDetail.setRemark(productDTO.getRemark());
                     existingDetail.setSkuNo(productDTO.getSkuNo());
                     existingDetail.setSkuId(productDTO.getSkuId());
+                    if(!sampleRecipientEntity.getIsOutstockRequired()){
+                        existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                    }
                     // 注意：不重置已出库数量和执行状态，保持业务连续性
                     toSave.add(existingDetail);
                 } else {
@@ -365,7 +371,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
-                    newDetail.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                    if(!sampleRecipientEntity.getIsOutstockRequired()){
+                        newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                    }else {
+                        newDetail.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                    }
                     newDetail.setRemark(productDTO.getRemark());
                     toSave.add(newDetail);
                 }
@@ -1085,9 +1095,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
 
-        // 只有审核通过和反审核才记录台账流水
+        // 需要入台账 并且 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+        if ( ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
             // 记录台账流水
             try {
                 SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
@@ -1238,6 +1248,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
+        data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
     }
 
     /**
@@ -1331,6 +1343,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
+            data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
+            data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -1363,6 +1377,24 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     * 新增修改处理数据
     */
     private void handleData(SampleRecipientEntity sampleRecipientEntity) {
+
+        if(Objects.isNull(sampleRecipientEntity.getIsOutstockRequired())){
+            sampleRecipientEntity.setIsOutstockRequired(Boolean.TRUE);
+        }
+
+        if(Objects.isNull(sampleRecipientEntity.getIsLedgerRequired())){
+            sampleRecipientEntity.setIsLedgerRequired(Boolean.TRUE);
+        }
+
+        //若设置为无需出库， 则无需出库原因为必填
+        if(sampleRecipientEntity.getIsOutstockRequired() && StringUtils.isBlank(sampleRecipientEntity.getWarehouseId())){
+            throw new ServiceException("发货仓库ID不能为空");
+        }
+        //若设置为无需出库， 则无需出库原因为必填
+        if(!sampleRecipientEntity.getIsOutstockRequired() && StringUtils.isBlank(sampleRecipientEntity.getNoOutstockReason())){
+            throw new ServiceException("需要出库选择为否时，不出库原因必填");
+        }
+
         // 查询用户信息
         List<String> userIds = new ArrayList<>();
         userIds.add(sampleRecipientEntity.getUserId());
@@ -1407,6 +1439,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         sampleRecipientEntity.setUserName(userNameMap.get(sampleRecipientEntity.getUserId()));
         sampleRecipientEntity.setUseUserName(userNameMap.get(sampleRecipientEntity.getUseUserId()));
+
+
     }
 
     /**
@@ -1904,6 +1938,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             if (main.getApproveStatus() != ApproveStatusEnum.APPROVE) {
                 throw new ServiceException("只有已审核的样品领用单支持下推其他出库单");
             }
+
+            //
+            if (Boolean.FALSE.equals(main.getIsOutstockRequired())) {
+                throw new ServiceException("样品领用单无需出库，无法下推");
+            }
         }
 
 
@@ -2206,10 +2245,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             
             // 基础信息映射
             addDTO.setBillDate(firstItem.getBillDate() != null ? firstItem.getBillDate() : LocalDate.now()); // 出库日期
-            addDTO.setInventoryDirection("ordinary"); // 库存方向：固定为"普通"
+            addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode()); // 库存方向：固定为"普通"
             addDTO.setWarehouseId(firstItem.getWarehouseId()); // 发货仓库
             addDTO.setType("0"); // 业务类型：固定为"物料领用"
-            addDTO.setOutType("样品领用"); // 出库类型：固定为"样品领用"
+            addDTO.setOutType(OutstockTypeEnum.SAMPLE_COLLECTION.getName()); // 出库类型：固定为"样品领用"
             addDTO.setReceiverId(firstItem.getUserId()); // 领料人ID
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
@@ -2292,14 +2331,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     log.info("成功更新其他出库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
                 }
                 // 提交
-                otherOutstockService.submit(outboundOrderId, Boolean.FALSE);
-                // 审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
-                baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                baseApproveParamDTO.setComment("");
-                otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
-
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    otherOutstockService.submit(outboundOrderId, Boolean.FALSE);
+                    // 审核
+                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                    baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
+                    baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    baseApproveParamDTO.setComment("");
+                    otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
                 log.info("成功创建其他出库单，ID：{}，来源：{}，明细数量：{}",
                         outboundOrderId, firstItem.getSourceCode(), detailList.size());
                 return BatchResultDTO.success(sourceId, firstItem.getSourceCode(), "下推其他出库单成功");
@@ -2610,6 +2655,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 flowDetail.setProductName(detail.getProductName());
                 flowDetail.setQty(qty);
 //                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                //当单据为领用单时，且样品是否需要入台账为“否”，则领用单【审核】完成生成俩条一样的流水，一正一负；流水备注为“领用单无需退回”；反审核同理，流水备注为“领用单无需退回”
+                if(!entity.getIsLedgerRequired()){
+                    flowDetail.setRemark("领用单无需退回");
+                    //设置一条相反的流水
+                    SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail2 = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                    BeanMapperUtils.copy(flowDetail, flowDetail2);
+                    flowDetail2.setQty(qty * -1);
+                    flowDetails.add(flowDetail2);
+                }
                 flowDetails.add(flowDetail);
             }
 

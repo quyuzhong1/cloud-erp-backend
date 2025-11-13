@@ -79,10 +79,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 批量提交
      * @author yl
      * @date 2023-05-19 10:34
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean submit(List<String> ids,Boolean isNeedProcess);
+    BatchResultDTO submit(SoOutstockEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增并提交

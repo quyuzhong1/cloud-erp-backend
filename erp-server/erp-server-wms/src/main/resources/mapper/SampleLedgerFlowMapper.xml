@@ -75,7 +75,8 @@
             slf.product_name,
             slf.use_user_id,
             slf.use_user_name,
-            slf.qty
+            slf.qty,
+            slf.remark
         FROM sample_ledger_flow slf
         WHERE
         ${params.sqlMap.default}
@@ -96,7 +97,7 @@
     <!-- 分页导出Excel查询 -->
     <select id="listExport" resultType="com.erp.model.wms.dto.SampleLedgerFlowDTO$ListDTO">
         SELECT
-            slf.id, slf.create_user_id, slf.create_user_name, slf.create_time, slf.update_user_id, slf.update_user_name, slf.update_time, slf.version, slf.is_deleted, slf.sample_ledger_id, slf.operate_time, slf.bill_date, slf.user_id, slf.user_name, slf.dept_id, slf.dept_name, slf.source_code, slf.source_type, slf.source_id, slf.source_detail_id, slf.dict_biz_type, slf.sku_no, slf.sku_id, slf.product_name, slf.use_user_id, slf.use_user_name, slf.qty
+            slf.id, slf.create_user_id, slf.create_user_name, slf.create_time, slf.update_user_id, slf.update_user_name, slf.update_time, slf.version, slf.is_deleted, slf.sample_ledger_id, slf.operate_time, slf.bill_date, slf.user_id, slf.user_name, slf.dept_id, slf.dept_name, slf.source_code, slf.source_type, slf.source_id, slf.source_detail_id, slf.dict_biz_type, slf.sku_no, slf.sku_id, slf.product_name, slf.use_user_id, slf.use_user_name, slf.qty,  slf.remark
         FROM sample_ledger_flow slf
         WHERE
         ${params.sqlMap.default}
@@ -200,7 +201,8 @@
             slf.product_name,
             slf.use_user_id,
             slf.use_user_name,
-            slf.qty
+            slf.qty,
+            slf.remark
         FROM sample_ledger_flow slf
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">

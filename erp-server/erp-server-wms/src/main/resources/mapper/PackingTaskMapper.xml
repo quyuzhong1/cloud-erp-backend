@@ -331,7 +331,7 @@
         FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE),0) as pickQty
         FROM
         packing_task pt
-        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse')
+        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse','aliexpress')
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
