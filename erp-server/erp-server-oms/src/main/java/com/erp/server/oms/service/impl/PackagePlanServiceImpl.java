@@ -638,7 +638,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             Long orderId = sticker.getOrderId();
             String file = sticker.getFile();
             //更新跟踪号
-            soB2cLogisticsService.updateLogisticsCode(soId, trackNo, trackNo, "", "");
+            soB2cLogisticsService.updateLogisticsCode(soId, trackNo, trackNo, "", "",platformCode);
             //更新订单标签
             List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
             SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
