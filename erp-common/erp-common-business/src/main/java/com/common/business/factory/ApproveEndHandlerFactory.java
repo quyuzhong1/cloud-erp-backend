@@ -5,7 +5,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -26,10 +28,13 @@ public class ApproveEndHandlerFactory {
         Map<String, Object> handlers = applicationContext.getBeansWithAnnotation(ApproveBusinessKey.class);
         
         handlers.forEach((beanName, handler) -> {
-            ApproveBusinessKey annotation = handler.getClass().getAnnotation(ApproveBusinessKey.class);
-            if (handler instanceof AbstractApproveHandler) {
-                handlerMap.put(annotation.value(), (AbstractApproveHandler) handler);
-            }
+            // 获取原始类
+            Class<?> targetClass = AopUtils.getTargetClass(handler);
+            ApproveBusinessKey annotation = AnnotationUtils.findAnnotation(targetClass, ApproveBusinessKey.class);
+            if (handler instanceof AbstractApproveHandler && annotation != null) {
+                    handlerMap.put(annotation.value(), (AbstractApproveHandler) handler);
+                }
+
         });
     }
 

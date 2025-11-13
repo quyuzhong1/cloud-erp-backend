@@ -185,6 +185,22 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     @TableField("reason")
     private String reason;
 
+    /**
+     * 是否需要出库， true = 出库， false = 不出库
+     */
+    @TableField("is_outstock_required")
+    private Boolean isOutstockRequired;
+    /**
+     * 仓库无需出库原因
+     */
+    @TableField("no_outstock_reason")
+    private String noOutstockReason;
+    /**
+     * 是否需要入台账：true =入账，false  =不入账
+     */
+    @TableField("is_ledger_required")
+    private Boolean isLedgerRequired;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

@@ -52,7 +52,11 @@
             rod.sale_qty as saleQty,
             rod.refund_qty as refundQty,
             ro.create_time as createTime,
-            ro.update_time as update_time
+            ro.update_time as update_time,
+            ro.approve_user_id as approveUserId,
+            ro.approve_user_name as approveUserName,
+            ro.approve_time as approveTime,
+            ro.create_user_name as createUserName
         FROM so_b2c_refund ro
         LEFT join so_b2c_refund_detail rod on ro.id = rod.main_id and rod.is_deleted = false
         WHERE  ${params.sqlMap.default}

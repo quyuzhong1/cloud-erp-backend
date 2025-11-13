@@ -160,6 +160,7 @@ public class SoB2cDeliveryController extends BaseController {
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
+                    UserContext.setIsUserSystem(true);
                     //波次列表波次状态自动变更
                     waveListService.waveListStatusAutoChange(id);
                     //生产直接调拨单
@@ -177,6 +178,8 @@ public class SoB2cDeliveryController extends BaseController {
                     continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }finally {
+                UserContext.clearIsUserSystem();
             }
             resultDTOS.add(result);
         }
