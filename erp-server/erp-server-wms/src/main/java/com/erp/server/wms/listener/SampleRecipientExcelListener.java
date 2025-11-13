@@ -8,6 +8,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.BooleanEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.threadlocal.UserContext;
@@ -124,6 +125,24 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         
         // 设置创建人信息
         setCreateUserInfo(data);
+
+        // 是否需要出库
+        data.setIsOutstockRequired(Boolean.TRUE); //默认值
+        String isOutstockRequiredStr = data.getIsOutstockRequiredStr();
+        if(StringUtils.isNotBlank(isOutstockRequiredStr)){
+            if(Objects.equals(isOutstockRequiredStr , BooleanEnum.FALSE.getName())){
+                data.setIsOutstockRequired(Boolean.FALSE);
+            }
+        }
+
+        // 是否需要入台账
+        data.setIsLedgerRequired(Boolean.TRUE);//默认值
+        String isLedgerRequiredStr = data.getIsLedgerRequiredStr();
+        if(StringUtils.isNotBlank(isLedgerRequiredStr)){
+            if(Objects.equals(isLedgerRequiredStr , BooleanEnum.FALSE.getName())){
+                data.setIsLedgerRequired(Boolean.FALSE);
+            }
+        }
         
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
