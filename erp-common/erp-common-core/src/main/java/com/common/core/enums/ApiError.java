@@ -1751,6 +1751,10 @@ public enum ApiError implements Serializable {
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
+    ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH(94205,"包装尺寸：长度必须大于等于宽度"),
+    ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT(94206,"包装尺寸：宽度必须大于等于高度"),
+    ERROR_BOX_LENGTH_LESS_THAN_WIDTH(94207,"箱规尺寸：长度必须大于等于宽度"),
+    ERROR_BOX_WIDTH_LESS_THAN_HEIGHT(94208,"箱规尺寸：宽度必须大于等于高度"),
 
     ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"【{}】箱规长度必须大于等于包装长度"),
     ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"【{}】箱规宽度必须大于等于包装宽度"),
