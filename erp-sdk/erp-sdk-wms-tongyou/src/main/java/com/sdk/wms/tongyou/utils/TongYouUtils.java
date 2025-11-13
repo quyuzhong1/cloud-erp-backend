@@ -32,7 +32,7 @@ public class TongYouUtils {
      * @param clazz   目标类型（如 String.class 或自定义 DTO）
      * @return 成功返回解析结果，失败返回 errorResp
      */
-    public static <T> TongYouBaseResp<T> parseToImlResp(String jsonStr, Class<T> clazz) {
+    public static <T> TongYouBaseResp<T> parseToTongYouResp(String jsonStr, Class<T> clazz) {
         try {
             return JSON.parseObject(jsonStr, new TypeReference<TongYouBaseResp<T>>(clazz) {});
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class TongYouUtils {
      * @param typeRef 目标类型（如 new TypeReference<TongYouBaseResp<String>>() {}）
      * @return 成功返回解析结果，失败返回 errorResp
      */
-    public static <T> TongYouBaseResp<T> parseToImlResp(String jsonStr, TypeReference<TongYouBaseResp<T>> typeRef) {
+    public static <T> TongYouBaseResp<T> parseToTongYouResp(String jsonStr, TypeReference<TongYouBaseResp<T>> typeRef) {
         try {
             return JSON.parseObject(jsonStr, typeRef);
         } catch (Exception e) {
