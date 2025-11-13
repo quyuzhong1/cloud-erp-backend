@@ -4,6 +4,8 @@ public class TongYouConstants {
     private TongYouConstants() {
         throw new IllegalStateException("Utility TongYouConstants class");
     }
+
+
     public static final String METHOD_GET_PRODUCT_LIST = "getProductList";
 
     public static final String METHOD_GET_WAREHOUSE = "getWarehouse";

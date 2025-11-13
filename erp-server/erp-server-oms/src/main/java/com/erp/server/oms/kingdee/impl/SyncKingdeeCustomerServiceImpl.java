@@ -402,7 +402,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		resultMap.put("shop_name", entity.getName());
 		resultMap.put("currency_code", entity.getTradeCurrency());
 		resultMap.put("settlement_currency_code", entity.getCurrency());
-		resultMap.put("business_mode", EnumMessage.getNameByCode(CustomerInfoBusinessModeEnum.class , entity.getBusinessMode()));
+		resultMap.put("business_mode", "B2C");
 		resultMap.put("transactional_mode", EnumMessage.getNameByCode(CustomerInfoTransactionalModeEnum.class , entity.getTransactionalMode()));
 		CodeDTO financialDto = orgIdCodeMap.get(useOrgId);
 		if(financialDto != null) {
@@ -415,7 +415,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		if(orgDto != null) {
 			resultMap.put("organization", orgDto.getCode());
 		}
-		resultMap.put("period_setting", EnumMessage.getNameByCode(CustomerInfoPeriodSettingEnum.class , entity.getPeriodSetting()));
+		resultMap.put("period_setting", CustomerInfoPeriodSettingEnum.MONTH.getCode());
 		resultMap.put("check_type", EnumMessage.getNameByCode(CustomerInfoCheckTypeEnum.class , entity.getCheckType()));
 		resultMap.put("is_check", "1");
 		List<ShopInfoEntity> shopInfoList = shopInfoService.lambdaQuery().eq(ShopInfoEntity::getCustomerId, entity.getId()).list();

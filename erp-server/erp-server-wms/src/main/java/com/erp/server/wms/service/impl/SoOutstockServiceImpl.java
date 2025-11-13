@@ -14,6 +14,10 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -4545,12 +4549,33 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstockDetailService.removeByMainIdList(Collections.singletonList(id));
             return;
         }
+        List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(id));
         //已审核需要反审核
         if (ApproveStatusEnum.APPROVE.equals(soOutstockEntity.getApproveStatus())){
             this.disApprove(soOutstockEntity, Boolean.TRUE);
         }
         //删除销售出库单 反审核直接调拨单并删除
-        this.deleteEntity(soOutstockEntity);
+        this.removeById(id);
+        //添加日志
+        String content = "删除销售订单[%s]";
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(soOutstockEntity.getId(), soOutstockEntity.getCode()));
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
+
+        //删除明细
+        soOutstockDetailService.removeByMainIdList(Collections.singletonList(id));
+
+        //自动删除同批次的直接调拨单
+        soOutstockService.deleteTransferInfo(Collections.singletonList(soOutstockEntity));
+
+        //B2B发送金蝶
+        sendPushTask(Collections.singletonList(soOutstockEntity), SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //推送数帝云
+        syncKingdeeSoOutstockService.syncDataToSdy(soOutstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+        //删除三方仓发货单
+        if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType())){
+            thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(soOutstockEntity.getSourceId()));
+        }
 
     }
 

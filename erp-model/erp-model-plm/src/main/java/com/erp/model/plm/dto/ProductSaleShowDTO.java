@@ -167,5 +167,73 @@ public class ProductSaleShowDTO implements Serializable {
     private List<String> insurancePropertyList;
     private List<String> insurancePropertyNameList;
     private String insuranceProperty;
+    /**
+     * 判断是否含电 true 展示输入输出电池电压功率  false不展示入输出电池电压功率
+     */
+    private boolean electric;
+    /**
+     * 输入参数 仅展示使用
+     */
+    private String inputParams;
+    /**
+     * 输出参数 仅展示使用
+     */
+    private String outputParams;
+    /**
+     * 输入电压
+     */
+    private BigDecimal inputVoltage;
+    /**
+     * 输出电压
+     */
+    private BigDecimal outputVoltage;
+
+    /**
+     * 电压单位  dict type=voltageUnit
+     */
+    private String voltageUnit;
+
+    /**
+     * 输入电流
+     */
+    private BigDecimal inputElectric;
+    /**
+     * 输出电流
+     */
+    private BigDecimal outputElectric;
+
+    /**
+     * 电流单位 dict type=electricUnit
+     */
+    private String electricUnit;
+
+    /**
+     * 输入功率
+     */
+    private BigDecimal inputPower;
+    /**
+     * 输出功率
+     */
+    private BigDecimal outputPower;
+
+    /**
+     * 功率单位 dict type=powerUnit
+     */
+    private String powerUnit;
+
+    /**
+     * 输入电池容量
+     */
+    private BigDecimal inputBatteryCapacity;
+    /**
+     * 输出电池容量
+     */
+    private BigDecimal outputBatteryCapacity;
+
+    /**
+     * 电池容量单位 dict type=batteryCapacityUnit
+     */
+    private String batteryCapacityUnit;
+
     private static final long serialVersionUID = 1L;
 }
