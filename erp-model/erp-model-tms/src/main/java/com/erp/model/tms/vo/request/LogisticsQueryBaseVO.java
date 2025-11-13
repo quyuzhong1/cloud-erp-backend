@@ -45,6 +45,10 @@ public class LogisticsQueryBaseVO implements Serializable {
      */
     String trackNo;
     /**
+     * 推送平台code
+     */
+    String pushPlatformCode;
+    /**
      * 授权信息
      */
     Map<String, String> authMap;

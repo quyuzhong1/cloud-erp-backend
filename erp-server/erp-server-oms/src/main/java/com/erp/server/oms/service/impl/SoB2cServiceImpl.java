@@ -1935,7 +1935,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //如果取消物流单 则需要清空物流单信息
             String msg = "取消物流单号，修改单号【{}/{}】改为【/】";
             operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单号");
-            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "", "");
+            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "", "", "");
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
@@ -1985,18 +1985,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isBlank(trackNo)) {
                 trackNo = "";//重置字段保障运单号和跟踪号一致
             }
+            String pushPlatformCode = resultDTO.getPushPlatformCode();
             String transportNo = resultDTO.getTransportNo();
             String iossTaxNo = resultDTO.getIossTaxNo();
             String declareOrgId = resultDTO.getDeclareOrgId();
-            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId);
+            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId,pushPlatformCode);
 
             //操作日志
-            String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】";
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, transportNo, trackNo, iossTaxNo), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
+            String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】，申报组织id【{}】，推送平台单号【{}】";
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, transportNo, trackNo, iossTaxNo,declareOrgId,pushPlatformCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
 
             //下单成功发送异步请求保存面单
             if (CharSequenceUtil.isNotBlank(trackNo)) {
-                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo);
+                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo,pushPlatformCode);
                 mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
             }
 
@@ -2080,13 +2081,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param logisticsChannelId 订单渠道id
      * @param soB2cEntity        订单信息
      * @param transportNo        物流单号
+     * @param pushPlatformCode
      * @return
      */
-    private LogisticsBillDTO.PrintLogisticsWaybillDTO getPlatformWaybill(String logisticsChannelId, SoB2cEntity soB2cEntity, String transportNo) {
+    private LogisticsBillDTO.PrintLogisticsWaybillDTO getPlatformWaybill(String logisticsChannelId, SoB2cEntity soB2cEntity, String transportNo, String pushPlatformCode) {
         LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
         printLogisticsWaybill.setChannelId(logisticsChannelId);
         printLogisticsWaybill.setB2cSoId(soB2cEntity.getId());
         printLogisticsWaybill.setDeliveryNo(soB2cEntity.getCode());
+        printLogisticsWaybill.setPushPlatformCode(pushPlatformCode);
         printLogisticsWaybill.setShopId(soB2cEntity.getShopId());
         printLogisticsWaybill.setTransportNo(transportNo);
         return printLogisticsWaybill;
