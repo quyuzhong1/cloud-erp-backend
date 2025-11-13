@@ -80,10 +80,6 @@
             <artifactId>okhttp</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
@@ -123,10 +119,6 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
             <exclusions>
-                <exclusion>
-                    <artifactId>lombok</artifactId>
-                    <groupId>org.projectlombok</groupId>
-                </exclusion>
                 <exclusion>
                     <artifactId>commons-text</artifactId>
                     <groupId>org.apache.commons</groupId>
