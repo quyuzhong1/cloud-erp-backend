@@ -40,12 +40,16 @@ import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.model.wms.entity.SampleRecipientEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
 import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
 import com.erp.server.wms.service.*;
@@ -107,6 +111,8 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     private SampleLedgerLockUtil sampleLedgerLockUtil;
     @Autowired
     private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+    @Autowired
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -119,6 +125,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         handleData(sampleInitialLedgerEntity);
 
         log.info("开始新增样品期初台账");
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品期初台账明细不能为空");
+        }
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCTZ);
         sampleInitialLedgerEntity.setCode(code);
@@ -264,6 +274,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     *
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleInitialLedgerEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_LEDGER_INIT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -324,7 +348,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -521,7 +545,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());

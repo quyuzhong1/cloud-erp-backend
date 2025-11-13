@@ -51,38 +51,46 @@ public class CfgApproveSyncSendHandler {
     private ApproveSyncRecordService approveSyncRecordService;
 
     public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
-                                String curTaskId,
                                 List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                 ApproveSyncRecordEntity syncRecordEntity) {
-        //过滤出当前任务ID的审批记录 并且任务状态为通过或者拒绝
-        List<ProcessTaskManagementEntity> approveTaskList = processTaskManagementEntities.stream()
-                .filter(item -> item.getTaskId().equals(curTaskId) && (Objects.equals(item.getTaskStatus(), ApproveStatusEnum.REJECT) || Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE)))
-                .collect(Collectors.toList());
+        //获取操作的taskId
+        String curTaskId = dto.getCurTaskId();
+        if(StringUtils.isBlank(curTaskId)){
 
-        //审批状态
-        String approveType = dto.getApproveType();
-        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.APPROVED.getCode(),syncRecordEntity);
-        } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())) {//审核不通过
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.REJECTED.getCode(),syncRecordEntity);
-        } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
-            //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode(),syncRecordEntity);
-        } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.FORWARDED.getCode(),syncRecordEntity);
-        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.PROCESSED.getCode(),syncRecordEntity);
-        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
-        } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){ //暂停
-            //更新审批结果通知
-            commonUpdateNotice(approveTaskList,FsActionStatusEnum.SUSPEND.getCode(),syncRecordEntity);
+        }else {
+            //过滤出当前任务ID的审批记录 并且任务状态为通过或者拒绝
+            List<ProcessTaskManagementEntity> approveTaskList = processTaskManagementEntities.stream()
+                    .filter(item -> item.getTaskId().equals(curTaskId))
+                    .collect(Collectors.toList());
+
+            //审批状态
+            String approveType = dto.getApproveType();
+            if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.APPROVED.getCode(),syncRecordEntity);
+            } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())) {//审核不通过
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.REJECTED.getCode(),syncRecordEntity);
+            } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
+                //更新审批结果通知
+                commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode(),syncRecordEntity);
+            } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.FORWARDED.getCode(),syncRecordEntity);
+            } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.PROCESSED.getCode(),syncRecordEntity);
+            } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
+            } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){ //暂停
+                //更新审批结果通知
+                commonUpdateNotice(approveTaskList,FsActionStatusEnum.SUSPEND.getCode(),syncRecordEntity);
+            }
         }
+
+
+
     }
 
     public void sendNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
@@ -115,7 +123,9 @@ public class CfgApproveSyncSendHandler {
                 //发送抄送通知
                 commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
             }
-        }if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
+        }
+
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);

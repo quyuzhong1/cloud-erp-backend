@@ -185,6 +185,16 @@ public interface DmpTaskFeign {
     @PostMapping("feign/saveOrUpdate/push/task")
     String saveOrUpdateDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
 
+
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("feign/save/push/task")
+    String saveDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
+
     /**
      * 创建第三方仓任务
      * @return

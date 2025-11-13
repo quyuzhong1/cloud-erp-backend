@@ -17,7 +17,11 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -55,7 +59,6 @@ import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.model.wms.enums.SampleUsageEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -83,6 +86,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -158,6 +162,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private SampleLedgerQtyValidator sampleLedgerQtyValidator;
     @Autowired
     private SampleLedgerService sampleLedgerService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Autowired
+    private DictBasicService dictBasicService;
     @Autowired
     @Lazy
     private SampleRecipientService _this;
@@ -301,6 +309,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 使用范围验证
         validateUsageScope(sampleRecipientEntity);
+
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
 
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
@@ -583,6 +596,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 根据样本领用单
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleRecipientEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
@@ -658,7 +685,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -666,8 +693,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         approveDTO.getVariablesMap().put("totalQty", totalQty);
         
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -1170,7 +1200,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         List<SampleRecipientDetailEntity> list = sampleRecipientDetailService.list(new LambdaQueryWrapper<SampleRecipientDetailEntity>().eq(SampleRecipientDetailEntity::getMainId, entity.getId()));
         // 统计领用总数
         Integer totalQty = list.stream()
@@ -1178,8 +1208,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .sum();
         startDTO.getVariablesMap().put("totalQty", totalQty);
 
-        // 确保usageCn变量不为null
-        String usageCn = SampleUsageEnum.getName(entity.getUsage());
+        // 确保usageCn变量不为null，使用字典服务获取样品用途名称
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageMap = dictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
             usageCn = ""; // 设置默认值
@@ -1281,11 +1314,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         Map<String, String> userNameMap = userList.stream()
                 .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+        
+        // 查询样品用途字典并转换为Map
+        List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        Map<String, String> usageNameMap = usageDictList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+        
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setUsage(SampleUsageEnum.getName(data.getUsage()));
+            data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
             data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
 //            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));

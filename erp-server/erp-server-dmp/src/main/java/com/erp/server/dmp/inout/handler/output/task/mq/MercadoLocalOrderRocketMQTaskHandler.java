@@ -423,7 +423,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")
                 .logisticType(dmpSoInfoEntityList.get(0).getLogisticType())
-                .buyerSelectedLogistics(dmpSoInfoEntityList.get(0).getBuyerSelectedLogistics())
+                .name(dmpSoInfoEntityList.get(0).getBuyerSelectedLogistics())
                 .build();
         logisticsDTOS.add(dto);
         return logisticsDTOS;

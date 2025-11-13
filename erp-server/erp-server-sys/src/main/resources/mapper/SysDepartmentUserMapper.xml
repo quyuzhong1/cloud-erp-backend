@@ -9,7 +9,7 @@
         INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
         INNER JOIN sys_department sd ON sd.id=sdu.department_id
         WHERE ${params.sqlMap.default}
-        and sui.delete_state=1
+        and sui.is_deleted = false
         <if test="departmentIds !=null  and  departmentIds.size>0">
           AND  sdu.department_id IN
             <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
@@ -37,7 +37,7 @@
         FROM sys_department_user sdu
         INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
         INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
     </select>
     <select id="listSuperiorByUserId" resultType="com.erp.model.sys.dto.UserSuperiorDTO">
         SELECT
@@ -65,6 +65,7 @@
             ) AS dept
         LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1
         LEFT JOIN sys_user_info sui on sdu.user_id = sui.uid
+        where sui.is_deleted = false
     </select>
 
     <select id="getDeptByUserId" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
@@ -77,7 +78,7 @@
         FROM sys_department_user sdu
         INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
         INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         AND sdu.user_id = #{userId}
         LIMIT 1
     </select>
@@ -91,7 +92,7 @@
          FROM sys_user_info sui
          INNER JOIN sys_department_user sdu
          ON sdu.user_id = sui.uid
-         WHERE sui.delete_state=1
+         WHERE sui.is_deleted = false
          AND sdu.department_id = #{deptId}
 
     </select>
@@ -108,7 +109,7 @@
         FROM sys_user_info sui
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         <if test="userIdList!=null and userIdList.size>0">
             AND sui.uid IN
             <foreach collection="userIdList" item="userId" open="(" separator="," close=")">
@@ -131,7 +132,7 @@
         FROM sys_user_info sui
         INNER JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.delete_state=1
+        WHERE sui.is_deleted = false
         <if test="deptIdList!=null and deptIdList.size>0">
             AND sd.id IN
             <foreach collection="deptIdList" item="userId" open="(" separator="," close=")">

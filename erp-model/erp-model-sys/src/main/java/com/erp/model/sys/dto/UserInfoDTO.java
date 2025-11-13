@@ -44,7 +44,7 @@ public class UserInfoDTO implements Serializable {
          * 0 已删除
          * 1 正常
          */
-        private Integer deleteState;
+        private Boolean deleteState;
 
         /**
          * 用户名称

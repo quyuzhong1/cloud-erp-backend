@@ -2,8 +2,12 @@ package com.erp.server.scm.cfgQueryOption;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.entity.CfgQueryOptionExtEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionUseTypeEnum;
+import com.erp.server.workflow.service.CfgQueryOptionExtService;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -17,6 +21,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import java.sql.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -30,6 +36,8 @@ public class CfgQueryOptionServiceTest {
 
     @Autowired
     private CfgQueryOptionService cfgQueryOptionService;
+    @Autowired
+    private CfgQueryOptionExtService cfgQueryOptionExtService;
 
     /**
      * 数据库用户名
@@ -76,4 +84,37 @@ public class CfgQueryOptionServiceTest {
     }
 
 
+    /**
+     * 测试 genBySql 方法
+     */
+    @Test
+    public void testGenBySql111() {
+        List<String> list = Arrays.asList("1968526068663963650","1968526068714295299","1968527867730980865","1968527867772923907","1968531372357197827","1968531372357197831","1968566215250051075","1968566215250051079","1968566215250051084","1968566215296188417","1968566215296188420","1968566215296188423","1968566215296188427","1968566216386707458","1968582099003809794","1968582099003809798","1968582099054141443","1968582099054141450","1968582099054141451","1968582099372908552");
+
+        List<CfgQueryOptionExtEntity> cfgQueryOptionExtEntities = cfgQueryOptionExtService.lambdaQuery().in(CfgQueryOptionExtEntity::getCfgQueryOptionId, list).list();
+        Map<String, CfgQueryOptionExtEntity> cfgQueryOptionExtMap = cfgQueryOptionExtEntities.stream().collect(Collectors.toMap(CfgQueryOptionExtEntity::getCfgQueryOptionId, Function.identity()));
+
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.lambdaQuery().like(CfgQueryOptionEntity::getBussinessKey, "%sample%").list();
+        for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionEntities) {
+            CfgQueryOptionExtEntity cfgQueryOptionExtEntity = cfgQueryOptionExtMap.get(cfgQueryOptionEntity.getId());
+
+            String idStr = IdWorker.getIdStr();
+
+            cfgQueryOptionEntity.setUseType(CfgQueryOptionUseTypeEnum.ALL_DATA.getCode());
+            cfgQueryOptionEntity.setId(idStr);
+            cfgQueryOptionService.save(cfgQueryOptionEntity);
+            if(Objects.nonNull(cfgQueryOptionExtEntity)){
+                cfgQueryOptionExtEntity.setId(IdWorker.getIdStr());
+                cfgQueryOptionExtEntity.setCfgQueryOptionId(idStr);
+                cfgQueryOptionExtService.insertBatch(cfgQueryOptionExtEntity);
+            }
+
+
+        }
+
+
+
+
+
+    }
 }

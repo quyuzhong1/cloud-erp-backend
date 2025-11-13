@@ -7,7 +7,7 @@
         ,sui.user_state
         FROM sys_post_user spu JOIN sys_user_info sui ON spu.user_id=sui.uid
         WHERE spu.post_id=#{params.flagId}
-        AND delete_state=1
+        AND sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
             sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
             sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')

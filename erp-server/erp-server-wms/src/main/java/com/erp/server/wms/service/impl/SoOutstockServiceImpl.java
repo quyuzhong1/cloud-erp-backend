@@ -8,6 +8,8 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -71,6 +73,7 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -1552,7 +1555,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
+        ExportDTO params = dto.getParams();
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+        	dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
+		params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         //获取导出数据
 		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
@@ -1683,6 +1692,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+        	dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page query = new Page(dto.getCurrPage(), dto.getPageSize() , dto.getIsSearchCount());
         IPage pageData = baseMapper.paging(query, params);
@@ -1838,7 +1852,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setCnyTaxPrice(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
-            item.setAllAmountLocalCurrency(MathUtil.multiplyWithTwo(item.getCnyTaxPrice(), new BigDecimal(item.getActualQty()),4));
 
             //装箱状态
             item.setPackingStatusName(PackingTaskStatusEnum.getName(item.getPackingStatus()));
@@ -2779,6 +2792,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
+    	DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+        	dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
@@ -2981,7 +2999,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             this.submitAndApprove(id);
         }
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
     @Override
@@ -3070,7 +3088,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
         }
-        return true;
+        return false;
     }
 
 

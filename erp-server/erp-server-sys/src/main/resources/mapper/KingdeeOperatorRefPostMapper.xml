@@ -155,8 +155,7 @@
         su.real_name   AS realName,
         su.mobile   AS mobile,
         su.user_state AS userState,
-        su.delete_state AS deleteState,
-        su.user_state AS userState,
+        su.is_deleted AS deleteState,
         krp.erp_user_id AS userId
         FROM kingdee_operator_ref_post ko
         LEFT JOIN kingdee_user_ref_post krp

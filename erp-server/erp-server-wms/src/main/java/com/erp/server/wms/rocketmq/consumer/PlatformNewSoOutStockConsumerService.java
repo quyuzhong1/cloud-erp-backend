@@ -256,6 +256,8 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         if (result){
             //更新多渠道订单生成出库单标识
             soMultiChannelFeign.updateSoOutstock(dto);
+        }else {
+            throw new ServiceException("当前销售出库单【{}】生成失败", dto.getPlatformCode());
         }
     }
 }
