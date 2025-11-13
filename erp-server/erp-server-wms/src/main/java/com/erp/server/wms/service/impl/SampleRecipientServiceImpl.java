@@ -542,13 +542,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 e.setTabFlagName("待出库");
             }else if(Objects.equals("completeOutstock", e.getTabFlag())){
                 e.setTabFlagName("已出库");
+            }else if(Objects.equals("noOutstock", e.getTabFlag())){
+                e.setTabFlagName("无需出库");
             }else {
                 e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
             }
         });
 
         // 按照指定顺序排序
-        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "waitOutstock", "completeOutstock", "rejected");
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "noOutstock","waitOutstock", "completeOutstock", "rejected");
         list.sort((a, b) -> {
             int indexA = orderList.indexOf(a.getTabFlag());
             int indexB = orderList.indexOf(b.getTabFlag());
