@@ -80,6 +80,9 @@ public class SampleRecipientDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        private List<String> ids;
+
+        private String approveStatus;
      }
     /**
     * 分页列表
@@ -331,10 +334,7 @@ public class SampleRecipientDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**
