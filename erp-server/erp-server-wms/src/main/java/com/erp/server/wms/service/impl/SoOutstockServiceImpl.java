@@ -714,6 +714,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setPartitionName(partitionEntity.get(0).getName());
             }
         }
+
+        //报关类型
+        if (StringUtils.isNotBlank(result.getDeclarationType())) {
+            result.setDeclarationTypeName(DeclarationTypeEnum.getByCode(result.getDeclarationType()).getName());
+        }
+
         //设置仓管员信息，如果没有则取仓库负责人
         if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())
                 || CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
@@ -2000,6 +2006,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     item.setPartitionCode(partitionEntity.getCode());
                     item.setPartitionName(partitionEntity.getName());
                 }
+            }
+
+            //报关类型
+            if (StringUtils.isNotBlank(item.getDeclarationType())) {
+                item.setDeclarationTypeName(DeclarationTypeEnum.getByCode(item.getDeclarationType()).getName());
             }
 
             //最新审核人
@@ -4536,6 +4547,58 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
         }
         return resultList;
+    }
+
+    @Override
+    @Transactional
+    public List<BatchResultDTO> batchUpdateDeclarationType(List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
+
+        // 过滤无效数据
+        List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> validDtos = dtoList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getDeclarationType()))
+                .collect(Collectors.toList());
+
+        List<BatchResultDTO> results = new ArrayList<>(validDtos.size());
+
+        if (CollectionUtils.isEmpty(validDtos)) {
+            return results;
+        }
+
+        try {
+            List<String> ids = validDtos.stream().map(SoOutstockDTO.BatchUpdateDeclarationTypeDTO::getId).collect(Collectors.toList());
+
+            // 执行批量更新
+            boolean batchUpdateResult = this.lambdaUpdate()
+                    .set(SoOutstockEntity::getDeclarationType, validDtos.get(0).getDeclarationType())
+                    .in(SoOutstockEntity::getId, ids)
+                    .update();
+
+            // 构建结果
+            for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : validDtos) {
+                BatchResultDTO result = new BatchResultDTO();
+                result.setId(dto.getId());
+                result.setCode(dto.getCode());
+                result.setSuccess(batchUpdateResult); // 或者根据实际更新影响行数判断
+                results.add(result);
+            }
+        } catch (Exception e) {
+            // 记录错误日志
+            log.error("批量更新申报类型失败", e);
+
+            // 返回部分成功结果或全部标记为失败
+            for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : validDtos) {
+                BatchResultDTO result = new BatchResultDTO();
+                result.setId(dto.getId());
+                result.setCode(dto.getCode());
+                result.setSuccess(false);
+                results.add(result);
+            }
+        }
+
+        return results;
     }
 
     @Override

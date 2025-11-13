@@ -16,6 +16,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.rmi.MarshalException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
@@ -440,6 +441,16 @@ public class SoOutstockDTO implements Serializable {
          * 军区名称
          */
         private String partitionName;
+
+        /**
+         * 报关类型
+         */
+        private String declarationType;
+
+        /**
+         * 报关类型名称
+         */
+        private String declarationTypeName;
     }
 
     /**·
@@ -1026,6 +1037,16 @@ public class SoOutstockDTO implements Serializable {
          * 军区名称
          */
         private String partitionName;
+
+        /**
+         * 报关类型
+         */
+        private String declarationType;
+
+        /**
+         * 报关类型名称
+         */
+        private String declarationTypeName;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
@@ -1986,6 +2007,30 @@ public class SoOutstockDTO implements Serializable {
 
 
         private LocalDate billDate;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateDeclarationTypeDTO {
+
+        /**
+         * 销售出库单id
+         */
+        @NotBlank(message = "销售出库单id不能为空")
+        private String id;
+
+        /**
+         * 销售出库单编码
+         */
+        @NotBlank(message = "销售出库单编码不能为空")
+        private String code;
+
+        /**
+         * 报关类型
+         */
+        @NotBlank(message = "报关类型不能为空")
+        private String declarationType;
     }
 
     @Data
