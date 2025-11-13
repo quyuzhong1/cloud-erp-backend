@@ -1262,6 +1262,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         addDTO.setDeptId(sampleBackInfo.getDeptId());
         addDTO.setProcessApplyCode(sampleBackInfo.getCode());
         addDTO.setSourceCode(sampleBackInfo.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        addDTO.setSourceId(sampleBackInfo.getId());
         addDTO.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
         addDTO.setDetailList(detailAddDTOList);
 
