@@ -567,4 +567,23 @@ public class SoOutstockController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 批量更新报关类型
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新报关类型")
+    @PostMapping("/batchUpdateDeclarationType")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "wms:so:outstock:update",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<List<BatchResultDTO>> batchUpdateDeclarationType(@RequestBody @Validated List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> dto) {
+        List<BatchResultDTO> batchResultDTOList = soOutstockService.batchUpdateDeclarationType(dto);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
 }

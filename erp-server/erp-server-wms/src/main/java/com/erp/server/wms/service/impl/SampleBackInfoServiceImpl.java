@@ -29,6 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -1523,7 +1524,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 将查询结果转换为Map，方便后续取值
         Map<String, Integer> countMap = list.stream()
             .collect(Collectors.toMap(
-                SampleBackInfoDTO.TabListDTO::getTabFlag, 
+                SampleBackInfoDTO.TabListDTO::getTabFlag,
                 SampleBackInfoDTO.TabListDTO::getCount,
                 (v1, v2) -> v1  // 如果有重复key，保留第一个
             ));
@@ -1546,7 +1547,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         approveIngItem.setTabFlagName("审核中");
         approveIngItem.setCount(countMap.getOrDefault("approveIng", 0));
         appList.add(approveIngItem);
-        
+
         // 3. 已审核
         SampleBackInfoDTO.TabListDTO approveItem = new SampleBackInfoDTO.TabListDTO();
         approveItem.setTabFlag("approve");
