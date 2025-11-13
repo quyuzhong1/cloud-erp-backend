@@ -2309,14 +2309,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     log.info("成功更新其他出库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
                 }
                 // 提交
-                otherOutstockService.submit(outboundOrderId, Boolean.FALSE);
-                // 审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
-                baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                baseApproveParamDTO.setComment("");
-                otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
-
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    otherOutstockService.submit(outboundOrderId, Boolean.FALSE);
+                    // 审核
+                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                    baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
+                    baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    baseApproveParamDTO.setComment("");
+                    otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
                 log.info("成功创建其他出库单，ID：{}，来源：{}，明细数量：{}",
                         outboundOrderId, firstItem.getSourceCode(), detailList.size());
                 return BatchResultDTO.success(sourceId, firstItem.getSourceCode(), "下推其他出库单成功");
