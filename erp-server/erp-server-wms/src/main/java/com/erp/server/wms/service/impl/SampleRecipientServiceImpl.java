@@ -1387,6 +1387,14 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     */
     private void handleData(SampleRecipientEntity sampleRecipientEntity) {
 
+        if(Objects.isNull(sampleRecipientEntity.getIsOutstockRequired())){
+            sampleRecipientEntity.setIsOutstockRequired(Boolean.TRUE);
+        }
+
+        if(Objects.isNull(sampleRecipientEntity.getIsLedgerRequired())){
+            sampleRecipientEntity.setIsLedgerRequired(Boolean.TRUE);
+        }
+
         //若设置为无需出库， 则无需出库原因为必填
         if(sampleRecipientEntity.getIsOutstockRequired() && StringUtils.isBlank(sampleRecipientEntity.getWarehouseId())){
             throw new ServiceException("发货仓库ID不能为空");
