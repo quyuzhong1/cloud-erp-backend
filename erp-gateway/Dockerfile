@@ -5,10 +5,7 @@ MAINTAINER sdc-erp
 WORKDIR /app
 
 # 安装必要工具：curl jq（轻量且无交互）
-RUN yum -y install epel-release && \
-    yum -y install jq curl && \
-    yum clean all && \
-    rm -rf /var/cache/yum
+RUN apt-get update && apt-get install -y curl jq netcat-traditional && rm -rf /var/lib/apt/lists/*
 
 # 将构建的JAR文件复制到容器中的工作目录
 COPY target/*jar /app/app.jar
