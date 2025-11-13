@@ -921,15 +921,25 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         List<SoReceiptDetailEntity> existList;
         if(exist != null) {
             existList = soReceiptDetailService.listByMainIds(Arrays.asList((exist.getId())));
-            //如果是作废，erp单据也要作废
+            //如果是作废，erp单据要删除
             if(dto.getIsInvalid()){
-                if(exist.getInvalidStatus()){
-                    log.warn("PlatformReceiptConsumerService.handle 收款单已作废，参数：{}", JSONUtil.toJsonStr(dto));
-                    return;
+                //如果是审核中，撤销审核
+                if(ApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
+                    this.cancelProcess(exist.getId());
                 }
-                exist.setInvalidStatus(true);
-                exist.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-                this.updateById(exist);
+                //如果是已审核，反审核
+                if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                    this.updateForDisApprove(exist.getId(),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+                }
+                this.delete(exist.getId());
+                //重新更新订单收款金额
+                if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                    List<String> soIds = existList.stream().map(SoReceiptDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(soIds)){
+                        soInfoService.updateSoReceiptAmount(soIds);
+                    }
+                }
                 return;
             }
             //判断平台更新时间有更新
@@ -998,6 +1008,13 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             List<SoReceiptDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soReceiptDetailService.removeByIds(deleteDetailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList()));
+            }
+            //重新更新订单收款金额
+            if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                List<String> soIds = existList.stream().map(SoReceiptDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(soIds)){
+                    soInfoService.updateSoReceiptAmount(soIds);
+                }
             }
         }else{
             //如果是作废，直接跳过
