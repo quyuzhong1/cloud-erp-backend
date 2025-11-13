@@ -1552,13 +1552,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(StringUtils.isNotBlank(dto.getReceiveAccount()) && !dto.getReceiveAccount().equals(oldReceiptAccount) && CollectionUtils.isNotEmpty(dto.getSoReceiptDTOList())){
                 dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
             }
-            try {
-                UserContext.setIsUserSystem(true);
-                if(dto.getIsUpdateSoReceipt()){
+            //更新收款单信息
+            if(dto.getIsUpdateSoReceipt()){
+                try {
+                    UserContext.setIsUserSystem(true);
+                    //更新收款单信息
                     soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
+                }finally {
+                    UserContext.clearIsUserSystem();
                 }
-            }finally {
-                UserContext.clearIsUserSystem();
             }
 
             return id;

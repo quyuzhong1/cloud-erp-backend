@@ -26,9 +26,12 @@ import java.util.Map;
 @Component
 public class WildberriesSDKService {
 
-    public WildberriesResponse checkToken(String token) {
+    public String getSandbox(String sandbox){
+        return "-sandbox".equals(sandbox) ? sandbox : CharSequenceUtil.EMPTY;
+    }
+    public WildberriesResponse checkToken(String token, String sandbox) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_SHOP_CHECK_PING;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SHOP_CHECK_PING, getSandbox(sandbox));
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         String bodyStr = OkHttpUtils.doGet(url, new HashMap<>(), headerMap);
@@ -38,7 +41,7 @@ public class WildberriesSDKService {
     }
     public String getProductCategory(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_PRODUCT_CATEGORY;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_PRODUCT_CATEGORY, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -49,7 +52,7 @@ public class WildberriesSDKService {
     }
     public String getProductSubject(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_PRODUCT_SUBJECT;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_PRODUCT_SUBJECT, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -63,7 +66,7 @@ public class WildberriesSDKService {
     }
     public String getProductCharacteristic(String token, Integer subjectId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_PRODUCT_CHARACTERISTIC, subjectId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_PRODUCT_CHARACTERISTIC, WildberriesConstant.SANDBOX_STR, subjectId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -84,7 +87,7 @@ public class WildberriesSDKService {
      */
     public String createProduct(String token, List<CreateProductRequest> requestList) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(requestList));
-        String url = WildberriesConstant.POST_CREATE_PRODUCT_CARD;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_CREATE_PRODUCT_CARD,WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -100,7 +103,7 @@ public class WildberriesSDKService {
 
     public SkuResponse getSkuList(String token, SkuRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_GET_SKU_LIST;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_GET_SKU_LIST, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -112,7 +115,7 @@ public class WildberriesSDKService {
     }
     public String listProductError(String token, ProductErrorRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_LIST_PRODUCT_ERROR;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_LIST_PRODUCT_ERROR, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -124,7 +127,7 @@ public class WildberriesSDKService {
 
     public String getTagList(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_LIST_TAG;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_LIST_TAG, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -136,7 +139,7 @@ public class WildberriesSDKService {
     }
     public OrderResponse getOrderNewList(String token, OrderRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.GET_ORDERS_NEW;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_ORDERS_NEW, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -153,7 +156,7 @@ public class WildberriesSDKService {
     }
     public OrderResponse getOrderList(String token, OrderRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.GET_ORDERS;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_ORDERS, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -176,7 +179,7 @@ public class WildberriesSDKService {
      */
     public String createOrder(String token, CreateOrderRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_CREATE_FBS_ORDER;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_CREATE_FBS_ORDER, WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -197,7 +200,7 @@ public class WildberriesSDKService {
      */
     public OrderStatusResponse getOrderStatus(String token, OrderStatusRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_ORDERS_STATUS;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_ORDERS_STATUS, WildberriesConstant.SANDBOX_STR);
         String bodyStr = HttpRequest.post(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -210,14 +213,16 @@ public class WildberriesSDKService {
     }
     /**
      * 创建组包
+     *
      * @param token
      * @param request
+     * @param sandbox
      * @return
      */
-    public CreateSupplyResponse createSupply(String token, CreateSupplyRequest request) throws InterruptedException {
+    public CreateSupplyResponse createSupply(String token, CreateSupplyRequest request, String sandbox) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_CREATE_SUPPLY;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_CREATE_SUPPLY, getSandbox(sandbox));
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -233,7 +238,7 @@ public class WildberriesSDKService {
 
     public String getSupplyDetail(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_DETAIL,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_DETAIL,WildberriesConstant.SANDBOX_STR,supplyId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -246,15 +251,17 @@ public class WildberriesSDKService {
     }
     /**
      * 添加箱子到组包
+     *
      * @param token
      * @param supplyId
      * @param request
+     * @param sandbox
      * @return
      */
-    public AddBoxToSupplyResponse addBoxToSupply(String token, String supplyId, AddBoxToSupplyRequest request) throws InterruptedException {
+    public AddBoxToSupplyResponse addBoxToSupply(String token, String supplyId, AddBoxToSupplyRequest request, String sandbox) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.POST_ADD_BOX_TO_SUPPLY,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_ADD_BOX_TO_SUPPLY,getSandbox(sandbox),supplyId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -269,7 +276,7 @@ public class WildberriesSDKService {
     }
     public String delBoxFromSupply(String token, String supplyId, List<String> trbxIds) {
         log.error("接口请求：supplyId:{} trbxId:{}", supplyId, trbxIds);
-        String url = CharSequenceUtil.format(WildberriesConstant.DEL_BOX_FROM_SUPPLY,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.DEL_BOX_FROM_SUPPLY,WildberriesConstant.SANDBOX_STR,supplyId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -286,7 +293,7 @@ public class WildberriesSDKService {
 
     public String getSupplyBoxList(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_BOX_LIST,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_BOX_LIST,WildberriesConstant.SANDBOX_STR,supplyId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -299,14 +306,16 @@ public class WildberriesSDKService {
     }
     /**
      * 添加箱子到组包
+     *
      * @param token
      * @param request
+     * @param sandbox
      * @return
      */
-    public AddOrderToSupplyResponse addOrderToSupply(String token, AddOrderToSupplyRequest request) throws InterruptedException {
+    public AddOrderToSupplyResponse addOrderToSupply(String token, AddOrderToSupplyRequest request, String sandbox) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,request.getSupplyId(),request.getOrderId());
+        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(sandbox),request.getSupplyId(),request.getOrderId());
         String bodyStr = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -318,7 +327,7 @@ public class WildberriesSDKService {
     }
     public String getSupplyOrders(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_ORDER,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_ORDER,WildberriesConstant.SANDBOX_STR,supplyId);
         String bodyStr = HttpRequest.get(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -329,7 +338,7 @@ public class WildberriesSDKService {
     }
     public String getSupplyQrCode(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_QR_CODE,supplyId,"png");
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_QR_CODE,WildberriesConstant.SANDBOX_STR,supplyId,"png");
         String bodyStr = HttpRequest.get(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -341,13 +350,15 @@ public class WildberriesSDKService {
 
     /**
      * 获取订单面签
+     *
      * @param token
      * @param request
+     * @param sandbox
      * @return
      */
-    public OrderLabelResponse getOrderLabel(String token, OrderLabelRequest request) throws InterruptedException {
+    public OrderLabelResponse getOrderLabel(String token, OrderLabelRequest request, String sandbox) throws InterruptedException {
         Thread.sleep(1000);
-        String url = CharSequenceUtil.format(WildberriesConstant.POST_ORDER_LABEL,"png",58,40);
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_ORDER_LABEL,getSandbox(sandbox),"png",58,40);
         log.error("接口请求：{} token:{} url:{}", JSONUtil.toJsonStr(request),token,url);
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", token);
@@ -363,14 +374,16 @@ public class WildberriesSDKService {
 
     /**
      * Move the supply to the delivery
+     *
      * @param token
      * @param supplyId
+     * @param sandbox
      * @return
      */
-    public BaseResponse signDelivery(String token, String supplyId) throws InterruptedException {
+    public BaseResponse signDelivery(String token, String supplyId, String sandbox) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_SIGN_DELIVERY,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_SIGN_DELIVERY,getSandbox(sandbox),supplyId);
         String bodyStr = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -389,7 +402,7 @@ public class WildberriesSDKService {
     public CrossOrderLabelResponse getCrossOrderLabel(String token, OrderLabelRequest request) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.POST_CROSS_ORDER_LABEL;
+        String url = CharSequenceUtil.format(WildberriesConstant.POST_CROSS_ORDER_LABEL,WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -405,13 +418,15 @@ public class WildberriesSDKService {
 
     /**
      * 获取组包交接标签
+     *
      * @param token
      * @param supplyId
+     * @param sandbox
      * @return
      */
-    public SupplyLabelResponse getSupplyLabel(String token, String supplyId) {
+    public SupplyLabelResponse getSupplyLabel(String token, String supplyId, String sandbox) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_LABEL,supplyId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_LABEL,getSandbox(sandbox),supplyId);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -426,7 +441,7 @@ public class WildberriesSDKService {
     }
     public String getWarehouse(String token){
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_WAREHOUSE;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_WAREHOUSE,WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -438,7 +453,7 @@ public class WildberriesSDKService {
     }
     public String createWarehouse(String token, CreateWarehouseRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = WildberriesConstant.CREATE_WAREHOUSE;
+        String url = CharSequenceUtil.format(WildberriesConstant.CREATE_WAREHOUSE,WildberriesConstant.SANDBOX_STR);
         String bodyStr = HttpRequest.post(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -450,7 +465,7 @@ public class WildberriesSDKService {
     }
     public String updateInventory(String token, String warehouseId, UpdateInventoryRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.UPDATE_INVENTORY,warehouseId);
+        String url = CharSequenceUtil.format(WildberriesConstant.UPDATE_INVENTORY,WildberriesConstant.SANDBOX_STR,warehouseId);
         String bodyStr = HttpRequest.put(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -462,7 +477,7 @@ public class WildberriesSDKService {
     }
     public String getInventory(String token,String warehouseId,GetInventoryRequest request) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.GET_INVENTORY,warehouseId);
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_INVENTORY,WildberriesConstant.SANDBOX_STR,warehouseId);
         String bodyStr = HttpRequest.post(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
@@ -474,7 +489,7 @@ public class WildberriesSDKService {
     }
     public String getOffices(String token){
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_OFFICES;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_OFFICES,WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
@@ -487,7 +502,7 @@ public class WildberriesSDKService {
     }
     public String getOfficeForPass(String token){
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
-        String url = WildberriesConstant.GET_OFFICES_FOR_PASS;
+        String url = CharSequenceUtil.format(WildberriesConstant.GET_OFFICES_FOR_PASS,WildberriesConstant.SANDBOX_STR);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", token);
         headerMap.put("Content-Type", "application/json");
