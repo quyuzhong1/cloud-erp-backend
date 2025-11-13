@@ -175,7 +175,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ThirdProcessManagementService thirdProcessManagementService;
     @Resource
     private MqConsumerRecordService workflowMqConsumerRecordService;
-
+    @Resource
+    private DictBasicService dictBasicService;
 
 
     @Override
@@ -443,7 +444,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     /**
      * 校验创建审核人是否一致
      */
-    private void checkApproveUserSame (Map<String,Object> variablesMap) {
+    private void checkApproveUserSame (Map<String,Object> variablesMap,String businessKey) {
+        //查询DictBasic配置，白名单
+        List<DictBasicEntity> list = dictBasicService.getByType("checkApproveWhite");
+        if (CollUtil.isNotEmpty(list) && CharSequenceUtil.isNotBlank(businessKey)) {
+            //白名单
+            List<String> whiteList = Arrays.stream(list.get(0).getValue().split(",")).collect(Collectors.toList());
+            if (whiteList.contains(businessKey)) {
+                return;
+            }
+        }
         //创建人
         String createUserId = (String) variablesMap.get("createUserId");
         //当前登陆人
@@ -466,7 +476,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
             //未启动流程需要判断创建人和当前登陆人是否一致
-            checkApproveUserSame(dto.getVariablesMap());
+            checkApproveUserSame(dto.getVariablesMap(),dto.getBusinessKey());
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -1456,7 +1466,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
         //创建人和审核人不能一致
-        checkApproveUserSame(variables);
+        checkApproveUserSame(variables,"");
 
         EndProcessDTO dto;
         if (ProcessManagementOptionEnum.PASS.getCode().equals(entity.getOption())) {
