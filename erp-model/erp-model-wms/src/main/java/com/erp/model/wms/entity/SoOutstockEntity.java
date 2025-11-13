@@ -324,6 +324,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("dict_platform")
     private String dictPlatform;
 
+    /**
+     * 报关类型
+     */
+    @TableField("declaration_type")
+    private String declarationType;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

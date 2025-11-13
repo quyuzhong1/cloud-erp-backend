@@ -68,7 +68,8 @@
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name,
-        COALESCE(si.partition_id, sbr.partition_id) as partitionId
+        COALESCE(si.partition_id, sbr.partition_id) as partitionId,
+        so.declaration_type as declarationType
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">

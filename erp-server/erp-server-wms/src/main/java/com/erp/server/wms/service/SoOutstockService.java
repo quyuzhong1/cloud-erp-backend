@@ -11,6 +11,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -21,6 +22,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
@@ -614,4 +616,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateSkuStdCostOutstock(SoOutstockEntity entity);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
+
+    List<BatchResultDTO> batchUpdateDeclarationType(List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> dto);
 }
