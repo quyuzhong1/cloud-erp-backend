@@ -226,7 +226,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailEntity.setProductName(productDTO.getProductName());
                 detailEntity.setRecipientQty(productDTO.getQuantity());
                 detailEntity.setDeliveryQty(0); // 初始已出库数量为0
-                detailEntity.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                if(!sampleRecipientEntity.getIsOutstockRequired()){
+                    detailEntity.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                }else {
+                    detailEntity.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                }
                 detailEntity.setRemark(productDTO.getRemark());
                 detailEntities.add(detailEntity);
             }
@@ -356,6 +360,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     existingDetail.setRemark(productDTO.getRemark());
                     existingDetail.setSkuNo(productDTO.getSkuNo());
                     existingDetail.setSkuId(productDTO.getSkuId());
+                    if(!sampleRecipientEntity.getIsOutstockRequired()){
+                        existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                    }
                     // 注意：不重置已出库数量和执行状态，保持业务连续性
                     toSave.add(existingDetail);
                 } else {
@@ -367,7 +374,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
-                    newDetail.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                    if(!sampleRecipientEntity.getIsOutstockRequired()){
+                        newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                    }else {
+                        newDetail.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                    }
                     newDetail.setRemark(productDTO.getRemark());
                     toSave.add(newDetail);
                 }
@@ -531,13 +542,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 e.setTabFlagName("待出库");
             }else if(Objects.equals("completeOutstock", e.getTabFlag())){
                 e.setTabFlagName("已出库");
+            }else if(Objects.equals("noOutstock", e.getTabFlag())){
+                e.setTabFlagName("无需出库");
             }else {
                 e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
             }
         });
 
         // 按照指定顺序排序
-        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "waitOutstock", "completeOutstock", "rejected");
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "noOutstock","waitOutstock", "completeOutstock", "rejected");
         list.sort((a, b) -> {
             int indexA = orderList.indexOf(a.getTabFlag());
             int indexB = orderList.indexOf(b.getTabFlag());
