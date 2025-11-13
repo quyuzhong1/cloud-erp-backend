@@ -1002,7 +1002,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        startDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
