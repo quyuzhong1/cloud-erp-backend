@@ -271,6 +271,9 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             try {
                 UserContext.setIsUserSystem(true);
                 String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
+                if("".equals(transferOutId)){
+                    continue;
+                }
                 if (CharSequenceUtil.isNotBlank(transferOutId)) {
                     TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                     if (ObjUtil.isEmpty(entity)) {
