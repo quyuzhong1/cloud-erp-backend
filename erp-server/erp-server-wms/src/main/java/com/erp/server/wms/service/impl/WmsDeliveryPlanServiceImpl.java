@@ -1275,7 +1275,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 throw new ServiceException("店铺不能为空");
             }
             //明细中的fnsku不能为空
-            if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()){
+            if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
                 long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getFnSku())).count();
                 if (count > 0) {
                     throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
