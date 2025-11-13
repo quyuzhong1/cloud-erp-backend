@@ -213,7 +213,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 库存校验
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+            //去掉库存校验
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
 
             // 保存明细数据
             List<SampleRecipientDetailEntity> detailEntities = new ArrayList<>();
@@ -317,7 +318,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
+            //去掉库存校验
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
