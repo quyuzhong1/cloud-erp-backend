@@ -1,8 +1,12 @@
 package com.erp.server.dmp.mapper.doris;
-import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
+import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 
 
 /**
@@ -15,5 +19,7 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface AdsErpOutstockDiffFlowMapper extends BaseMapper<AdsErpOutstockDiffFlowEntity> {
-
+	IPage<AdsErpOutstockDiffFlowDTO.PagingDTO> paging(Page query, @Param("params") AdsErpOutstockDiffFlowDTO.PagingParamDTO params);
+	
+	AdsErpOutstockDiffFlowDTO.TotalDTO total(@Param("params") AdsErpOutstockDiffFlowDTO.PagingParamDTO params);
 }

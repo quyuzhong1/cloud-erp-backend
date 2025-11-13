@@ -71,6 +71,21 @@ public class AdsErpOutstockDiffFlowDTO implements Serializable {
          */
         private String checkMonth;
     }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateRemarkDTO{
+    	/**
+         * id
+         */
+        private String id;
+        
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 
 
     /**
@@ -347,7 +362,10 @@ public class AdsErpOutstockDiffFlowDTO implements Serializable {
          */
          private String remark;
 
-
+         /**
+          * 创建时间
+          */
+         private LocalDateTime createTime; 
      }
 
     /**

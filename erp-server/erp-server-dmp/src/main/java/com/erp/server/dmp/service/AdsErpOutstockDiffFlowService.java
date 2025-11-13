@@ -40,5 +40,7 @@ public interface AdsErpOutstockDiffFlowService extends SuperService<AdsErpOutsto
     
     Boolean reCreate(AdsErpOutstockDiffFlowDTO.ReCreateDTO dto);
     
+    Boolean updateRemark(AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO dto);
+    
     Boolean exportExcel(AdsErpOutstockDiffFlowDTO.ExpotParamDTO dto);
 }

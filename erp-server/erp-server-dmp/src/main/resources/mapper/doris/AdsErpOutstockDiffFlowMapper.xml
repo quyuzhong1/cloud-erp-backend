@@ -57,5 +57,38 @@
         unique_code, data_encrypt, source_system, source_platform, account_code, next_level_id, bill_topic, flow_id, node_id, instance_id, task_id, source_id, etl_status, check_month, source_system_name, outstock_code, so_delivery_code, so_code, platform_order_code, platform_warehouse, platform_bill_date, platform_bill_status, stock_sku, sku_id, sku_no, outstock_qty, flow_deduct_qty, diff_qty, remark
     </sql>
 
-
+<select id="paging" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$PagingDTO">
+        select 
+        t.id,
+        t.check_month, t.source_system_name, t.outstock_code, t.so_delivery_code, t.so_code, t.platform_order_code, t.platform_warehouse, 
+        t.platform_bill_date, t.platform_bill_status, t.stock_sku, t.sku_id, t.sku_no, t.outstock_qty, t.flow_deduct_qty, t.diff_qty, t.remark
+        from
+        ads_erp_outstock_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
+    
+    <select id="total" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$TotalDTO">
+        select 
+        sum(t.outstock_qty) totalOutstockQty, sum(t.flow_deduct_qty) totalFlowDeductQty, sum(t.diff_qty) totalDiffQty
+        from
+        ads_erp_outstock_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

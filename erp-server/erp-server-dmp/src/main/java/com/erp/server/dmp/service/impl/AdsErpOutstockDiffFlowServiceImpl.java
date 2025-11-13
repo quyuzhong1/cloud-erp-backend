@@ -1,34 +1,42 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
+import java.util.Optional;
+
+import javax.annotation.Resource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
-import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
-import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.erp.server.dmp.service.OperateLogService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ExpotParamDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
+import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
+import com.erp.server.dmp.service.OperateLogService;
 
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 /**
  * <p>
  * 第三方仓出库单据差异表 服务实现类
@@ -43,6 +51,8 @@ import com.common.core.enums.ApiError;
 public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOutstockDiffFlowMapper, AdsErpOutstockDiffFlowEntity> implements AdsErpOutstockDiffFlowService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -106,26 +116,31 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     }
 
 	@Override
-	public PagingVO<PagingDTO> paging(com.common.business.dto.base.PagingDTO<PagingParamDTO> dto) {
-		// TODO Auto-generated method stub
-		return null;
+	public PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		PagingParamDTO params = dto.getParams();
+		Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+		IPage<AdsErpOutstockDiffFlowDTO.PagingDTO> pageData = baseMapper.paging(query, params);
+		return new PagingVO<>(pageData);
 	}
 
 	@Override
-	public TotalDTO total(com.common.business.dto.base.PagingDTO<PagingParamDTO> dto) {
-		// TODO Auto-generated method stub
-		return null;
+	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
+		return baseMapper.total(dto.getParams());
 	}
 
+	@Override
+	public Boolean updateRemark(UpdateRemarkDTO dto) {
+		return lambdaUpdate().eq(AdsErpOutstockDiffFlowEntity::getId, dto.getId()).set(AdsErpOutstockDiffFlowEntity::getRemark, dto.getRemark()).update();
+	}
+	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		// TODO Auto-generated method stub
-		return null;
+		return true;
 	}
 
 	@Override
 	public Boolean exportExcel(ExpotParamDTO dto) {
-		// TODO Auto-generated method stub
-		return null;
+		downloadTaskFeign.saveDownloadTask("平台单据差异", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW.getCode(), dto);
+		return true;
 	}
 }
