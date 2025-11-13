@@ -795,7 +795,7 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 是否需要出库， true = 出库， false = 不出库
          */
-        private Boolean isOutstockRequired;
+        private Boolean isOutstockRequired = Boolean.TRUE;
         /**
          * 仓库无需出库原因
          */
@@ -804,7 +804,7 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 是否需要入台账：true =入账，false  =不入账
          */
-        private Boolean isLedgerRequired;
+        private Boolean isLedgerRequired = Boolean.TRUE;
 
     }
     /**
