@@ -145,7 +145,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         QcNoticeEntity qcNoticeEntity = BeanMapperUtils.map(QcNoticeEntity.class, updateDTO);
 
@@ -300,12 +300,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         QcNoticeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
@@ -323,7 +323,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 Integer noticeQty = detail.getQcNoticeQty();
                 Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
                 if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                    sb.append(StrUtil.format(ApiError.ERROR_92268.msg, skuNo, noticeQty, inventoryQty));
+                    sb.append(StrUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT.msg, skuNo, noticeQty, inventoryQty));
                     sb.append(";");
                 }
             }
@@ -362,7 +362,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -395,7 +395,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 sb.append(map.get(qcInfo.getSourceDetailId()));
                 sb.append(";");
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_92269.msg,sb.toString()));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.msg,sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -409,7 +409,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private Boolean validateDisApprove(QcNoticeEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -444,7 +444,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】", id);
         log.info("撤销 开始修改质检通知单状态，id：【{}】", id);
@@ -481,7 +481,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         qcNoticeEntities.forEach(e -> {
             if(!e.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-                throw new ServiceException( ApiError.ERROR_92270);
+                throw new ServiceException( ApiError.ERROR_QC_NOTICE_APPROVE_REQUIRED);
             }
         });
         return baseMapper.listQcInfoView(ids);
@@ -493,7 +493,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Override
     public void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto) {
         if(CollUtil.isEmpty(dto)){
-            throw new ServiceException( ApiError.ERROR_92271);
+            throw new ServiceException( ApiError.ERROR_QC_DETAIL_REQUIRED);
         }
         LocalDate billDate = LocalDate.now();
         LocalDateTime nowTime = LocalDateTime.now();
@@ -536,7 +536,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             String str = sb.toString();
             if(StringUtils.isNotBlank(str)){
-                throw new ServiceException( ApiError.ERROR_92272, str);
+                throw new ServiceException( ApiError.ERROR_QC_PACKAGE_NOT_FOUND, str);
             }
         }
         //质检单map
@@ -545,7 +545,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //质检通知单审核通过自动生成质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
             if(qcInfoView.getQcGoodQty().equals(0) && qcInfoView.getQcBadQty().equals(0)){
-                throw new ServiceException( ApiError.ERROR_92274, qcInfoView.getSkuNo());
+                throw new ServiceException( ApiError.ERROR_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN, qcInfoView.getSkuNo());
             }
             QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             //来源
@@ -731,7 +731,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<QcNoticeDetailEntity> waitList = qcNoticeDetailList.stream().filter(e -> e.getQcStatus().equals(QcNoticeStatusEnum.WAIT.getCode())).collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(waitList)){
                     String skuNos = waitList.stream().map(QcNoticeDetailEntity::getSkuNo).collect(Collectors.joining("，"));
-                    BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(ApiError.ERROR_92277.msg, qcNoticeEntity.getCode(),skuNos));
+                    BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NOT_COMPLETED_REVERSE_FORBIDDEN.msg, qcNoticeEntity.getCode(),skuNos));
                     results.add(fail);
                     continue;
                 }
@@ -746,7 +746,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                     for (QcNoticeDetailEntity qcNoticeDetailEntity : qcNoticeDetail) {
                         // 记录撤销质检操作
-                        operateLogService.addModuleOperateLog(StrUtil.format("【{}】撤销质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), "撤销质检");
+                        operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】撤销质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), "撤销质检");
                     }
                     BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), "撤销质检");
                     results.add(success);
@@ -759,14 +759,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), "撤销质检");
                             results.add(success);
                         }else {
-                            BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(ApiError.ERROR_92275.msg, qcNoticeEntity.getCode()));
+                            BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NO_TRANSFER_OUT.msg, qcNoticeEntity.getCode()));
                             results.add(fail);
                         }
                     }else {
                         for (TransferOutEntity transferOutEntity : transferOutMap.get(qcNoticeId)) {
                             if(transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())
                                     || transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(ApiError.ERROR_92276.msg, qcNoticeEntity.getCode(),transferOutEntity.getCode()));
+                                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_TRANSFER_OUT_ALREADY_GENERATED.msg, qcNoticeEntity.getCode(),transferOutEntity.getCode()));
                                 results.add(fail);
                             }else {
                                 List<TransferOutDetailEntity> transferOutDetailEntities = transferOutDetailService.listByMainId(transferOutEntity.getId());
@@ -784,7 +784,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                                     for (TransferOutDetailEntity transferOutDetailEntity : transferOutDetailEntities) {
                                         // 记录撤销质检操作
-                                        operateLogService.addModuleOperateLog(StrUtil.format("【{}】撤销质检", transferOutDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), transferOutEntity.getSourceId(), "撤销质检");
+                                        operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】撤销质检", transferOutDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), transferOutEntity.getSourceId(), "撤销质检");
                                     }
                                     BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), "撤销质检");
                                     results.add(success);
@@ -854,7 +854,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, StrUtil.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, CharSequenceUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM.msg, noticeQty, inventoryQty)));
             }
         }
         return results;
@@ -867,10 +867,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             EasyExcel.read(excelFile.getInputStream(), QcNoticeDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //导入数据处理
         List<QcNoticeDetailImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1102,7 +1102,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private void validateSubmit(QcNoticeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }

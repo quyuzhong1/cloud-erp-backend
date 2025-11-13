@@ -275,7 +275,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
         }
         if (old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -444,10 +444,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             EasyExcel.read(excelFile.getInputStream(), PurchaseSuggestMergeImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<PurchaseSuggestMergeImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -563,7 +563,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public PurchaseSuggestMergeDTO.ViewPushDTO viewPushPurchaseApplication(List<String> ids) {
         List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseSuggestMergeList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
 
         String codes = purchaseSuggestMergeList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeEntity::getCode).distinct().collect(Collectors.joining(","));
@@ -602,7 +602,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             viewPushDetailDTO.setSkuId(entry.getKey());
             SkuVO skuVO = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entry.getKey())).findFirst().orElse(null);
             if (ObjectUtil.isNull(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             //赋值采购组织id和名称
             orgSkuRefList.stream().filter(e -> e.getSkuId().equals(entry.getKey())).findFirst().ifPresent(f ->{
@@ -735,7 +735,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public List<PurchaseSuggestMergeDTO.MergeFrameDTO> viewMergeFrame(String id) {
         PurchaseSuggestMergeEntity old = this.getById(id);
         if (ObjectUtil.isEmpty(old) || Boolean.TRUE.equals(!old.getIsMerge())) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //查询独立采购数据
         List<String> sourceIdList = old.getSourceIdJson().stream().map(Object::toString).collect(Collectors.toList());

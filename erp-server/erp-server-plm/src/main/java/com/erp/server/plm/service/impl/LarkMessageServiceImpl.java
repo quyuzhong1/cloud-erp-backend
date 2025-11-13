@@ -221,7 +221,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
             if(null != entity) {
                 if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_95273.msg);
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_95273.getMsg());
                     continue;
                 }
                 //是否存在
@@ -251,7 +251,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //根据节点标示获取到通知消息实体
                 NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
                 if (Objects.isNull(notice)) {
-                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.msg);
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.getMsg());
                     continue;
                 }
                 //根据单据id查询审核流程

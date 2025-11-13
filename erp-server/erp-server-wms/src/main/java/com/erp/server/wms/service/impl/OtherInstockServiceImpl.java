@@ -48,7 +48,6 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -103,8 +102,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -121,7 +118,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
 
 /**
@@ -324,7 +320,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //提交
         this.submit(id,dto.getIsProcess());
@@ -372,11 +368,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //根据ids查询
         OtherInstockEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99059);
+            throw new ServiceException(ApiError.ERROR_WMS_OTHER_INBOUND_NOT_FOUND);
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("提交 开始修改其他入库单状态数据，id：【{}】", id);
         //更新审核状态
@@ -421,12 +417,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //主表信息
         OtherInstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         List<OtherInstockDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(OtherInstockDetailDTO.ViewDTO.class, detailList);
 
@@ -470,7 +466,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (OtherInstockEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -507,7 +503,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //待提交并且未作废允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus()).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         log.info("其他入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
@@ -528,7 +524,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public BatchResultDTO deleteEntity(OtherInstockEntity entity) {
         //待提交并且未作废允许删除
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         log.info("其他入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -558,11 +554,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("其他入库单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -589,7 +585,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         log.info("其他入库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
         // 调用流程审核
@@ -620,7 +616,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -641,7 +637,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99059);
+            throw new ServiceException(ApiError.ERROR_WMS_OTHER_INBOUND_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //SKU
@@ -693,7 +689,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         OtherInstockEntity entity = this.getById(id);
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         log.info("其他入库单反审核，ids=【{}】", JSONUtil.toJsonStr(id));
@@ -730,7 +726,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("其他入库单撤销流程，id=【{}】", ids);
 
@@ -776,7 +772,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //其他入库明细
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99060);
+            throw new ServiceException(ApiError.ERROR_WMS_OTHER_INBOUND_DETAIL_NOT_FOUND);
         }
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (OtherInstockDetailEntity detailEntity : detailList) {
@@ -822,7 +818,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //最新审核人
@@ -875,14 +871,14 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //仓库信息
         WarehouseEntity warehouse = warehouseService.getById(warehouseId);
         if (ObjectUtils.isEmpty(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         entity.setWarehouseName(warehouse.getName());
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouse.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         //仓库组织名称
         String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -903,11 +899,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      */
     private List<OtherInstockEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<OtherInstockEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99059);
+            throw new ServiceException(ApiError.ERROR_WMS_OTHER_INBOUND_NOT_FOUND);
         }
         return list;
     }
@@ -1026,7 +1022,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //提交
         this.submit(id,Boolean.FALSE);
@@ -1111,7 +1107,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate 下载失败 e={}", e.getMessage());
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -1123,15 +1119,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             EasyExcel.read(excelFile.getInputStream(), OtherInStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<OtherInStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<OtherInStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1148,10 +1144,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         try {
             new ExcelPrintUtils().patchExport(errorList,
                     response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    CharSequenceUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
     }
@@ -1235,7 +1231,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO) {
-                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -1499,7 +1495,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouseEntity.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList("1675799739955679233"));
         if (CollectionUtils.isEmpty(sysDepartmentEntity)) {

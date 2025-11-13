@@ -300,7 +300,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             throw new ServiceException("审核不通过请填写审核意见");
         }
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE_ING.getStatus(),entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //调用审核流程
         approveProcess(entity, dto);
@@ -332,7 +332,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -394,7 +394,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (TransferOutEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -806,7 +806,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> orgIds = Lists.newArrayList(warehouseIn.getOrgId(), warehouseOut.getOrgId()).stream().distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         Map<String,BaseIdDTO.CodeDTO> orgMap = accountingCompanyList.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, Function.identity()));
         transferOutEntity.setInOrgId(warehouseIn.getOrgId());
@@ -844,7 +844,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
         Map<String,ProductDetailEntity> skuMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
@@ -988,7 +988,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //查询调拨单明细数据
         List<TransferOutDetailEntity> transferDetailList = transferOutDetailService.listByMainId(entity.getId());
         if(transferDetailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         //查询三方仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getOutWarehouseId()), "wdt");

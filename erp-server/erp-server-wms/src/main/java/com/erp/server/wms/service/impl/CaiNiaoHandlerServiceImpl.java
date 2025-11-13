@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;

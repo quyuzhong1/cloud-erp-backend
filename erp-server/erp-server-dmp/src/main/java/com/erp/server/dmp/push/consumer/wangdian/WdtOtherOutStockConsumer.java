@@ -12,8 +12,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -31,8 +29,6 @@ import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Component;
 

@@ -14,7 +14,6 @@ import com.erp.server.oms.service.ShopChannelRefService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.oms.service.ShopInfoService;
 import io.seata.common.util.CollectionUtils;

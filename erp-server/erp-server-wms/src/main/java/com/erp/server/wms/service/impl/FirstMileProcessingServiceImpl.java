@@ -96,7 +96,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         boolean save = super.saveBatch(firstMileProcessingList);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         // 使用stream和flatMap将所有detailList合并成一个List
         List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> allDetailList = list.stream()

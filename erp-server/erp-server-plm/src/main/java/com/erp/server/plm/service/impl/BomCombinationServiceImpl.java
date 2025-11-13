@@ -561,7 +561,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         dto.setType(ApproveTypeEnum.PASS.getStatus());
         BatchResultDTO resultDTO = productDetailService.approve(dto,Boolean.FALSE);
         if (!resultDTO.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
     }
 

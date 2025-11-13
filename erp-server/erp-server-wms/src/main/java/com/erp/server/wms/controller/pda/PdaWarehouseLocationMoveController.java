@@ -23,7 +23,6 @@ import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;

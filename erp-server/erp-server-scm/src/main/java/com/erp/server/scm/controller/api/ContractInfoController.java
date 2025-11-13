@@ -14,10 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.server.scm.query.ContractInfoQueryHandler;
 import com.erp.server.scm.service.CfgSupplierSalesService;
@@ -32,7 +29,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;

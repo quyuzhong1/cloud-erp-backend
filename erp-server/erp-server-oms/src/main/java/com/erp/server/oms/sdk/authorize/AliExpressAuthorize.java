@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;

@@ -13,10 +13,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
-import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
@@ -39,17 +36,10 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -297,7 +287,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         SampleInitialLedgerEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -325,7 +315,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {

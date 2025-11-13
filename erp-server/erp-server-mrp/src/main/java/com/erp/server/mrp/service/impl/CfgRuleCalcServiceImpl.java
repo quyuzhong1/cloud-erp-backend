@@ -122,7 +122,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 historySaleList = excelListener.getDataList();
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
-                throw new ServiceException(ApiError.ERROR_1016);
+                throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
         } else {
             List<CalcSalesInfoHisEsEntity> historySales = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
@@ -139,7 +139,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 historySaleList = mergeSales(historySales, customSales);
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
-                throw new ServiceException(ApiError.ERROR_1016);
+                throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
         }
         save(entity);
@@ -201,13 +201,13 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
             throw new ServiceException(ApiError.ERROR_VERIFY_START_CALC_DATE);
         }
         if (addDTO.getStartCalcDate().isAfter(addDTO.getEndCalcDate())) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_END_CALC_DATE);
+            throw new ServiceException(ApiError.ERROR_VERIFY_END_CALC_DATE);
         }
         if (!addDTO.getStartCalcDate().plusYears(1).isAfter(addDTO.getEndCalcDate())) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_CALC_DATE);
+            throw new ServiceException(ApiError.ERROR_VERIFY_CALC_DATE);
         }
         if (addDTO.getSkuIds().size() * addDTO.getShopIds().size() > 999999) {
-            throw new ServiceException(ApiError.ERROR__CALC_SIZE);
+            throw new ServiceException(ApiError.ERROR_CALC_SIZE);
         }
     }
 

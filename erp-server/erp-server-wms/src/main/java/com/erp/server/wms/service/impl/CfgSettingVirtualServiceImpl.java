@@ -89,7 +89,7 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
         List<CfgSettingEntity> list = new ArrayList<>();
         List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING_VIRTUAL.getKey());
         if (CollectionUtils.isEmpty(dictList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //查询已有配置信息
         List<CfgSettingEntity> cfgSettingList = cfgSettingService.listCfgSetting();

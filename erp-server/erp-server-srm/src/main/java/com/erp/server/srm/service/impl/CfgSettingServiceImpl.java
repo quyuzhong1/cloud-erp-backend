@@ -99,7 +99,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
                 CfgSettingEntity old = super.getById(cfgSettingEntity.getId());
                 if(null == old){
-                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.CONTENT_96018.msg);
+                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.CONTENT_96018.getMsg());
                 }
                 log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
                 boolean save = super.updateById(cfgSettingEntity);
@@ -108,7 +108,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 // 记录主单操作日志
                 log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), ApiError.CONTENT_96018.msg);
+                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), ApiError.CONTENT_96018.getMsg());
                 operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), msg);
             }
         }

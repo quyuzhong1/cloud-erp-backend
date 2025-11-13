@@ -416,7 +416,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SoPriceEntity entity, ApproveOneDTO dto) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         approveProcess(entity, dto);
@@ -443,7 +443,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (Boolean.FALSE.equals(result)) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -906,7 +906,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(SoPriceEntity entity,  List<SoPriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
         }
         if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
@@ -1110,7 +1110,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || Boolean.TRUE.equals(!data.getIsExistProcess())) {

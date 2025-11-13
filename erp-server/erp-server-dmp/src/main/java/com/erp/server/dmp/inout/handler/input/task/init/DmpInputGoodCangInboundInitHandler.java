@@ -12,7 +12,6 @@ import javax.annotation.Resource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
@@ -27,9 +26,6 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetOutBoundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
-import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
 

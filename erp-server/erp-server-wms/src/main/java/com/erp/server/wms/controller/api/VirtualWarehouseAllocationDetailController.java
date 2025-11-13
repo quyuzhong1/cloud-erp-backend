@@ -119,7 +119,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                 } else {
                     //只有已处理状态且同步失败状态可以手动完结
                     if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
-                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_MANUAL_STATUS_ERROR.msg);
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_MANUAL_STATUS_ERROR.getMsg());
                     } else {
                         flagCode = vmAllocationEntity.getCode();
                         submit = virtualWarehouseAllocationDetailService.manualFinish(vmAllocationDetailEntity, vmAllocationEntity, dto);
@@ -167,7 +167,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                 } else {
                     //只有已处理状态且同步失败状态可以同步
                     if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
-                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.getMsg());
                     } else {
                         String thirdCode = vmAllocationDetailEntity.getThirdCode();
                         if (CharSequenceUtil.isBlank(thirdCode)){

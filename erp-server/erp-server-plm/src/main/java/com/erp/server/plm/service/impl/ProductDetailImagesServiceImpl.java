@@ -12,8 +12,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;

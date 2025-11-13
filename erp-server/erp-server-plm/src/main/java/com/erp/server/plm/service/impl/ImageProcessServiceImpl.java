@@ -1,18 +1,15 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ZipTaskResultDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.ProductDetailImprotTypeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ImageProcessService;
 import com.erp.server.plm.service.PlmAttachmentService;
 import com.erp.server.plm.service.ProductDetailService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 

@@ -8,7 +8,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.model.sys.entity.AuthUserShopEntity;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;

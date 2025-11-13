@@ -38,7 +38,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         //采购价目
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchasePriceService.cancelProcessEntity(entity);
         return resultDTO.getSuccess();
@@ -48,7 +48,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listDetailByMainId(dto.getId());
         List<String> priceDetailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -62,7 +62,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         //采购价目
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         return purchasePriceService.approveEnd(entity,dto.getApproveStatus().getStatus(),"");
     }

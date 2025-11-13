@@ -223,22 +223,22 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         List<String> skuIds = newList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //bom信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
 
         //主表信息
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         WarehouseEntity warehouseEntity = warehouseService.getById(machineInfoEntity.getWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
@@ -256,11 +256,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_99053);
+                    throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_DETAIL_NOT_FOUND);
                 }
                 MachineDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_99053);
+                    throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -285,7 +285,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //验证SKU及子件明细数量
         List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()) && obj.getBomVersion().equals(detail.getReferenceVersion())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         //明细子件数量验证
         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
@@ -293,7 +293,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             Integer qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.UpdateDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //如果子件明细合计数量 != 明细数量 * bom子件数量
             if (MathUtil.compareTo(qty,detail.getQty() * bomChildrenSkuDTO.getQuantity()) != MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_99057.code, String.format(ApiError.ERROR_99057.msg,detail.getIndex(), bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));
+                throw new ServiceException(ApiError.ERROR_WMS_PROCESS_CHILD_QTY_NOT_MATCH, detail.getIndex(), bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity());
             }
         }
         detail.setBomHistoryId(bomList.get(0).getBomHistoryId());
@@ -332,7 +332,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //新增加工单销售订单关联信息
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(machineInfoEntity.getSourceType())) {
             return;

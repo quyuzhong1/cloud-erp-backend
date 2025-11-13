@@ -7,10 +7,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -319,17 +317,17 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      */
     private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         Class<?> aClass ;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         String oldValue = handleEnumVale(valuePair.getKey(), aClass);
         String newValue = handleEnumVale(valuePair.getValue(), aClass);

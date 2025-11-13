@@ -1,30 +1,20 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.ShippingRegionCityEntity;
 import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
-import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.server.tms.mapper.ShippingTemplateCostSettingMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>

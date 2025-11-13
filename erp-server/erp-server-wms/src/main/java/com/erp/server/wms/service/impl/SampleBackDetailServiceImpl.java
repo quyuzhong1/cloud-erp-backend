@@ -14,7 +14,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.SampleBackDetailExcelListener;
 import com.erp.server.wms.mapper.SampleBackDetailMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SampleBackDetailService;
 import com.erp.server.wms.service.SampleLedgerService;

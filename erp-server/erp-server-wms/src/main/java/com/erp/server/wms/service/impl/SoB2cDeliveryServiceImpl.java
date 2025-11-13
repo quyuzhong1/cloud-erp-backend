@@ -360,7 +360,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg);
+            return BatchResultDTO.fail(id, entity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.getMsg());
         }
 
         //查询是否冻结
@@ -374,7 +374,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_MANUAL_DELIVERY.msg);
+            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_MANUAL_DELIVERY.getMsg());
         }
         if (Objects.nonNull(soB2cEntity)) {
             String transferStatus = soB2cEntity.getTransferStatus();
@@ -436,7 +436,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //手动标发，已发货，取消发货的数据不允许操作手动标发
         if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_FALSE_SHIPMENT.msg);
+            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_FALSE_SHIPMENT.getMsg());
         }
 
         //查询是否冻结
@@ -543,7 +543,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_AUTO_REPLENISH_PRINT_FORBIDDEN, CharSequenceUtil.join(",", codes));
         }
         //查询产品信息
         List<String> skuIds = deliveryDetailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -685,7 +685,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_AUTO_REPLENISH_PRINT_FORBIDDEN, CharSequenceUtil.join(",", codes));
         }
         //查询是否冻结
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
@@ -1272,7 +1272,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_92138, String.join(",", codeList));
+                throw new ServiceException(ApiError.ERROR_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
             }
         }
         String transferWarehouseIdList = "";
@@ -1304,7 +1304,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_AUTO_REPLENISH_PRINT_FORBIDDEN, CharSequenceUtil.join(",", codes));
         }
         //查询是否冻结
         List<String> soIds = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -1829,7 +1829,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codes)) {
-            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+            throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_AUTO_REPLENISH_PRINT_FORBIDDEN, CharSequenceUtil.join(",", codes));
         }
         //查询是否冻结
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
@@ -1871,7 +1871,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //查询是否允许打印面单和配货单
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
 //            if (ObjectUtil.isEmpty(authDTO)) {
-//                waybillDTO.setErrorMsg(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST.msg);
+//                waybillDTO.setErrorMsg(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST.getMsg());
 //                waybillDTO.setDisabled(Boolean.TRUE);
 //            }
 
@@ -2072,12 +2072,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         boolean isIntercept = soB2cEntities.stream().anyMatch(SoB2cEntity::getIsIntercept);
         if (Boolean.FALSE.equals(match) || Boolean.TRUE.equals(isIntercept)) {
-            throw new ServiceException(ApiError.ERROR_99116);
+            throw new ServiceException(ApiError.ERROR_WMS_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT);
         }
         List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(dto.getIds());
         List<String> warehouseIds = detailList.stream().map(SoB2cDeliveryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseIds) && warehouseIds.size() > 1) {
-            throw new ServiceException(ApiError.ERROR_99121);
+            throw new ServiceException(ApiError.ERROR_WMS_WAVE_SAME_WAREHOUSE_REQUIRED);
         }
         for (SoB2cDeliveryEntity entity : b2cDelivery) {
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
@@ -2191,10 +2191,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     private static void checkDelivery(SoB2cDeliveryEntity entity) {
         if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99113);
+            throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_HANDLE_ALLOWED_ONLY);
         }
         if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
-            throw new ServiceException(ApiError.ERROR_99112);
+            throw new ServiceException(ApiError.ERROR_WMS_WAVE_GENERATED_SHORTAGE_AUTO);
         }
     }
 
@@ -2423,7 +2423,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         // 数据处理
         fillList(page.getRecords());
@@ -2493,7 +2493,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
         if (CharSequenceUtil.isBlank(warehouseId)){
-            throw new ServiceException(ApiError.ERROR_92137, entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
         }
         List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(pickingList)) {

@@ -10,13 +10,8 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.plm.dto.SearchPagingDTO;
-import com.erp.model.plm.vo.ProductChangePagingVO;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -257,7 +252,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeActualEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_LOGISTICS_LARGE.msg));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_LOGISTICS_LARGE.getMsg()));
                 continue;
             }
             //预估账单只能推送一个
@@ -266,7 +261,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEstimatedEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.msg));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.getMsg()));
                 continue;
             }
 
@@ -276,7 +271,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.msg));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.getMsg()));
                 continue;
             }
 

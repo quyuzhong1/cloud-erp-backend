@@ -4,17 +4,14 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.*;
 import com.common.business.enums.*;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
@@ -43,7 +40,6 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**

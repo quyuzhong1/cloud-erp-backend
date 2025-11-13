@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.entity.ThirdLogisticsEntity;
 import com.erp.server.dmp.mapper.ThirdLogisticsMapper;
 import com.erp.server.dmp.service.ThirdLogisticsService;

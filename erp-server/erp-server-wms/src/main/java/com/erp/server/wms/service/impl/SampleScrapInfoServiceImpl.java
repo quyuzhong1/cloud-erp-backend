@@ -19,7 +19,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
@@ -172,7 +171,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
         SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(scrapUserId);
         if(Objects.isNull(sysUserDTO)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         sampleScrapInfoEntity.setScrapUserName(sysUserDTO.getUserName());
 
@@ -531,7 +530,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 调用流程审核
@@ -560,7 +559,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {

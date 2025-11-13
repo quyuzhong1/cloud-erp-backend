@@ -27,7 +27,7 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
         //委外订单
         SubcontractOrderEntity entity = subcontractOrderService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
         BatchResultDTO resultDTO = subcontractOrderService.cancelProcess(entity);
         return resultDTO.getSuccess();

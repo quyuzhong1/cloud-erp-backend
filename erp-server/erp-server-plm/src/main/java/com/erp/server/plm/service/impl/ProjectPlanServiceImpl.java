@@ -1,10 +1,7 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -31,8 +28,6 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -62,7 +57,6 @@ import java.util.stream.Stream;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
 import static cn.hutool.core.collection.CollUtil.isNotEmpty;
-import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * 项目计划表(ProjectPlan)表服务实现类
@@ -1168,7 +1162,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_1037.code, format(ApiError.ERROR_1037.msg, taskChargeName)));
+                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_USER_NOT_FOUND.code, format(ApiError.ERROR_USER_NOT_FOUND.msg, taskChargeName)));
                 }
                 chargeIds.add(chargeId);
             }

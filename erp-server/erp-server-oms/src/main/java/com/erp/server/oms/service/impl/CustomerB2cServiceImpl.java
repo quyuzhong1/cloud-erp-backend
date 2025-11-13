@@ -37,7 +37,6 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -633,7 +632,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //调用审核流程
         approveProcess(list, dto);
@@ -664,7 +663,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(list, approveStatus, user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
 //        if (dto.getType().equals(ApproveType.PASS)) {
 //            String sourceType=SourceTypeEnum.SHOP.getCode();
@@ -743,11 +742,11 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (CustomerB2cEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) ){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
                 continue;
             }
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92018.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92018.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1819,7 +1818,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
         List<String> updateIdList = data.stream()

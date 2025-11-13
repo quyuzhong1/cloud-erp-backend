@@ -207,7 +207,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         }
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
         if (ObjUtil.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+            throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userByThird.getUserId());
         }
         addDTO.setCreateUserId(findUserDTO.getUserId());
         addDTO.setCreateUserName(findUserDTO.getUserName());

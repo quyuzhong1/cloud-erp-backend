@@ -23,7 +23,6 @@ import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
 import io.seata.common.util.StringUtils;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * TikTok物流

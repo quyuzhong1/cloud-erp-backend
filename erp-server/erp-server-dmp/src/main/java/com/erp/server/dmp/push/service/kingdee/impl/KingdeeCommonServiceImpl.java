@@ -670,7 +670,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
         if (CollectionUtil.isEmpty(mapList)) {
-            log.error(ApiError.ERROR_97025.msg);
+            log.error(ApiError.ERROR_97025.getMsg());
             //错误日志
             throw new ServiceException(ApiError.ERROR_97025);
         }

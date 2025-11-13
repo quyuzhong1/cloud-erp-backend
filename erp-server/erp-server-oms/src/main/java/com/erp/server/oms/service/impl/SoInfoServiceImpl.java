@@ -108,8 +108,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -1502,7 +1500,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //审核流程
         approveProcess(entity, dto);
@@ -1531,7 +1529,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1616,7 +1614,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 
         if(!BillApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
         }
 
         //检查关联单据
@@ -1767,7 +1765,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoInfoEntity entity : list) {
             if (!statusList.contains(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92017.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92017.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -3741,7 +3739,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();

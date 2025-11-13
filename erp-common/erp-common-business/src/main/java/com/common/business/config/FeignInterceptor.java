@@ -7,6 +7,7 @@ import feign.RequestTemplate;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -72,7 +73,9 @@ public class FeignInterceptor implements RequestInterceptor {
                 }
             }
         }
-
+        Locale locale = LocaleContextHolder.getLocale();
+        // 统一 Accept-Language: zh-CN / en-US
+        requestTemplate.header("Accept-Language", locale.toLanguageTag());
         // seata分布式事务XID，防止事务无法回滚
         String xid = RootContext.getXID();
         if ((null != xid && xid.trim().length() > 0)) {

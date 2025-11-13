@@ -1215,7 +1215,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto) {
         Page<PackageForecastDTO.ExportViewDTO> page = baseMapper.listExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         //处理分页数据
         fillExportPaging(page.getRecords());

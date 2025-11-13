@@ -14,18 +14,10 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
-import com.amazonaws.http.AmazonHttpClient;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
-import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.api.ListingsApi;
-import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;

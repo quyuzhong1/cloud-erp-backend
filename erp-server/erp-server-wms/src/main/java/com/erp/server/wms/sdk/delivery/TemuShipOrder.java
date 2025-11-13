@@ -3,13 +3,10 @@ package com.erp.server.wms.sdk.delivery;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -20,12 +17,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
-import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -39,8 +31,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j

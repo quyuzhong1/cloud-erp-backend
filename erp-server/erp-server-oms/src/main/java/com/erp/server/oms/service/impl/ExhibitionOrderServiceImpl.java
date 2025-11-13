@@ -818,7 +818,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //判断上一次的反审核的任务是否已经全部执行成功
         Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, dto.getId())
@@ -861,7 +861,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1913,7 +1913,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String warehouseId = "";
                 String warehouseOrgId = "";
                 if (Objects.isNull(warehouse)) {
-                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
                 } else {
                     warehouseId = warehouse.getId();
                     warehouseOrgId = warehouse.getOrgId();
@@ -2113,7 +2113,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                                 .findFirst()
                                 .orElse(null);
                         if(Objects.isNull(skuAvailableQtyDTO)){
-                            msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                            msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
                         }else {
                             Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
                             if(qty.compareTo(availableQty) > 0){
@@ -2126,7 +2126,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                             }
                         }
                     }else {
-                        msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                        msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
                     }
 
                     //销售单价

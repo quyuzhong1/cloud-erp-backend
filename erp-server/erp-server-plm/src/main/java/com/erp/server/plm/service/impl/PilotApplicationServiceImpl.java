@@ -47,7 +47,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
@@ -425,7 +424,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //保存数据
         if (approveDTO.getProductDetailList() != null && !approveDTO.getProductDetailList().isEmpty()) {
@@ -522,7 +521,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1583,11 +1582,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BatchResultDTO invalid(String id, String remark) {
         PilotApplicationEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产量产单"));
         if (old.getInvalidStatus()) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.msg);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.getMsg());
         }
         //仅支持待提交/审核不通过可作废
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !old.getApproveStatus().equals(ApproveStatusEnum.REJECT)) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98005.msg);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98005.getMsg());
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();

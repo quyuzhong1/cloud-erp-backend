@@ -2,7 +2,6 @@ package com.erp.server.oms.shopify;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;

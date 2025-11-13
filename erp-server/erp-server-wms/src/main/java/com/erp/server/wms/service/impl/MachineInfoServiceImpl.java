@@ -261,7 +261,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //新增
         MachineInfoEntity entity = this.add(dto);
         if (CharSequenceUtil.isBlank(entity.getId())) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //提交
         this.submit(Collections.singletonList(entity.getId()));
@@ -274,10 +274,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
         MachineInfoEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         if(SourceTypeEnum.SO_INFO.getCode().equals(old.getSourceType())){
             throw new ServiceException("销售单生成的加工单不允许修改");
@@ -330,7 +330,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //待提交或审核不通过并且未作废允许提交
         long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("加工单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -350,19 +350,19 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //主表信息
         MachineInfoEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
         //查询明细子件
         List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
-            throw new ServiceException(ApiError.ERROR_99056);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
         }
         //库位信息查询
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList1 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(entity.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
@@ -431,7 +431,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                         && CharSequenceUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())
                 ).map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(quantity)) {
-                    throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
+                    throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND_FOR_PARENT_SKU,viewDetailDTO.getSkuNo());
                 }
                 subComponentsDTO.setItemQty(quantity);
                 //仓位信息
@@ -472,7 +472,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //sku信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
             if (!childHidden) {
@@ -518,20 +518,20 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //仓库信息
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
 
         for (MachineSubComponentsDTO.ViewDTO viewDTO : resultList) {
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setSkuNo(skuVO.getSkuNo());
             viewDTO.setProductName(skuVO.getSkuName());
@@ -552,7 +552,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //待提交并且未作废允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         log.info("加工单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除子件明细
@@ -580,11 +580,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("加工单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -609,7 +609,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public BatchResultDTO approve(MachineInfoEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("加工单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
@@ -639,7 +639,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public BatchResultDTO disApprove(MachineInfoEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         //已存在直接调拨单
         List<String> sourceIds = Stream.of(entity.getId(), entity.getSourceId())
@@ -701,7 +701,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("加工单撤销流程，id=【{}】", ids);
 
@@ -733,13 +733,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //加工明细
         List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99053);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_DETAIL_NOT_FOUND);
         }
         //加工子件明细
         List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
-            throw new ServiceException(ApiError.ERROR_99056);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
         }
         //父级SKU库存更新
         updateInventoryForMachineDetail(entity,detailList);
@@ -778,7 +778,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             soInfoEntity = FeignQuery.getById(SoInfoEntity.class, soDeliveryNoticeEntity.getSourceId());
         }
         if (ObjUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         if (CharSequenceUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
             return;
@@ -993,14 +993,14 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         for (MachineInfoDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
             if (CharSequenceUtil.isBlank(productName)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             obj.setProductName(productName);
 
@@ -1032,7 +1032,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if  (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         entity.setWarehouseName(warehouseEntity.getName());
         //库存组织
@@ -1041,7 +1041,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         //库存组织名称
         String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -1056,11 +1056,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      */
     private List<MachineInfoEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<MachineInfoEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         return list;
     }
@@ -1228,7 +1228,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public BatchResultDTO submit(String id) {
         MachineInfoEntity old = this.getById(id);
         if (ObjectUtils.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         return this.submitEntity(old);
     }
@@ -1240,7 +1240,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //待提交或审核不通过并且未作废允许提交
         long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("加工单提交，id=【{}】", entity.getId());
         //更新审核状态
@@ -1258,7 +1258,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //审核中允许审核
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("加工单撤销流程，id=【{}】", entity.getId());
 
@@ -1308,7 +1308,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 //sku信息
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
                 if (!childHidden) {
@@ -1336,18 +1336,18 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO invalid(String id, String reason) {
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //根据id查询
-        MachineInfoEntity entity = this.getByIdOpt(id).orElseThrow(()-> new ServiceException(ApiError.ERROR_99052));
+        MachineInfoEntity entity = this.getByIdOpt(id).orElseThrow(()-> new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND));
         //非待提交和审核不通过不能作废
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("加工单作废，id=【{}】", id);
 

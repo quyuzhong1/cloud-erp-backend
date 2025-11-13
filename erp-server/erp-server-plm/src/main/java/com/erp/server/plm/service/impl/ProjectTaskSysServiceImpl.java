@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,8 +18,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
-import com.erp.model.plm.enums.RelatedSkuTypeEnum;
-import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;

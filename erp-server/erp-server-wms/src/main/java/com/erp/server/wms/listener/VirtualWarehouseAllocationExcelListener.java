@@ -126,7 +126,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
         }
 
         if (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
         } else {
             if (Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
                 errorMsgList.add("实体仓非启用状态");

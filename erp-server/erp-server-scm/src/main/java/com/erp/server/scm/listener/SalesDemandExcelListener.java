@@ -114,7 +114,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
                 List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(salesDemandImportExcelDTO.getDestWarehouseName()));
                 if (CollUtil.isEmpty(warehouseList)) {
-                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
                 } else {
                     excelDTO.setDestWarehouseId(warehouseList.get(0).getId());
                 }

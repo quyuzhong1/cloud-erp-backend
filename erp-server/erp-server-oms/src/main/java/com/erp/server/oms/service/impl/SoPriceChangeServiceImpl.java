@@ -362,7 +362,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SoPriceChangeEntity entity, ApproveOneDTO dto) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         approveProcess(entity, dto);
@@ -389,7 +389,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (Boolean.FALSE.equals(result)) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (ApproveType.PASS.equals(dto.getType())) {
             //更新价目表数据
@@ -619,7 +619,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || Boolean.TRUE.equals(!data.getIsExistProcess())) {

@@ -64,7 +64,7 @@ public class SysRoleController extends BaseController {
         if(flag){
             return success();
         }else{
-            return  failure(ApiError.ERROR_1002);
+            return failure(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
 
     }

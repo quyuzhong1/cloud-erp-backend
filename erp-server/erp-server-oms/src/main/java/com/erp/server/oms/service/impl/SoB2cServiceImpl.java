@@ -1287,7 +1287,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //校验是否被冻结
         if (entity.getIsFrozen()) {
@@ -1342,7 +1342,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -2286,7 +2286,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-           return BatchResultDTO.fail(id,entity.getCode(),ApiError.ERROR_SO_B2C_NOT_EXIST.msg);
+           return BatchResultDTO.fail(id,entity.getCode(),ApiError.ERROR_SO_B2C_NOT_EXIST.getMsg());
         }
         //已作废订单不能提交发货
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
@@ -5125,7 +5125,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //自动审核通过
             BatchResultDTO approve = soB2cService.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE), isMatch, ruleOrderMatchResult.getRuleName());
             if (!approve.getSuccess()) {
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
             }
         } else {
             //标识异常并且审核不通过
@@ -10196,7 +10196,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //step1 获取销售订单信息
         SoB2cEntity entity = this.getById(dto.getMainId());
         if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(dto.getMainId(), dto.getMainId(), ApiError.ERROR_92016.msg);
+            return BatchResultDTO.fail(dto.getMainId(), dto.getMainId(), ApiError.ERROR_92016.getMsg());
         }
         //待提交和审核不通过的订单允许修改买家信息
         if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))) {
@@ -10782,7 +10782,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
                 soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
             }else {
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //订单金额
             if(mainInfo.getAmount().matches(regex)){
@@ -10949,7 +10949,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             detailEntity.setWarehouseId(warehouseId);
                             detailEntity.setWarehouseName(detail.getWarehouseName());
                         }else {
-                            msgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                            msgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
                         }
                     }
                     detailEntity.setMainId(soB2cEntity.getId());

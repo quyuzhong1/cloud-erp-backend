@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;

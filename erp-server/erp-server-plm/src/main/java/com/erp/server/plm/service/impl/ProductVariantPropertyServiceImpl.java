@@ -7,17 +7,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantDTO;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
-import com.erp.model.plm.entity.ProductVariantEntity;
-import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.mapper.ProductVariantPropertyMapper;
 import com.erp.server.plm.service.ProductVariantPropertyService;
 import com.erp.server.plm.service.ProductVariantService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

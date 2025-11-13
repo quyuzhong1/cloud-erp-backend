@@ -2,7 +2,6 @@ package com.sdk.wms.jifeng.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.common.core.exception.ServiceException;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 

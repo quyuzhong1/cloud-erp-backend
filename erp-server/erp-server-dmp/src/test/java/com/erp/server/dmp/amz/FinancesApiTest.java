@@ -22,7 +22,6 @@ import com.erp.sdk.oms.amz.spapi.model.finances.ListFinancialEventsResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.CfgAppClientService;
-import org.junit.Ignore;
 import org.junit.Test;
 import com.erp.sdk.oms.amz.spapi.api.*;
 import org.junit.runner.RunWith;
@@ -31,7 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import javax.xml.bind.util.JAXBSource;
 
 /**
  * API tests for DefaultApi

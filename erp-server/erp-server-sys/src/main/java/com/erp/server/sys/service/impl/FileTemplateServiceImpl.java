@@ -89,7 +89,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
         try {
              url = fileFeign.uploadFile(fastdfsAddDTO.getFile());
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
         }
         fileTemplateEntity.setUrl(url);
         this.saveOrUpdate(fileTemplateEntity);

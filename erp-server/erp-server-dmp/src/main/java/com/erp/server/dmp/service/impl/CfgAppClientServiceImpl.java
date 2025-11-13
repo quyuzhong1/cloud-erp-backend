@@ -7,7 +7,6 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;

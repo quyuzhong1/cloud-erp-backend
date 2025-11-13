@@ -209,7 +209,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -218,7 +218,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //根据成员id集合查询
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
         if (CollectionUtils.isEmpty(userList)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         membersEntityList.stream().forEach(obj -> {
             //成员数据处理
@@ -267,7 +267,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -286,7 +286,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         BeanMapperUtils.copy(templateMembersDTO, templateMembersEntity);
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(templateMembersDTO.getMemberId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         templateMembersEntity.setMemberName(findUserDTO.getUserName());
         templateMembersEntity.setTemplateId(dto.getTemplateId());

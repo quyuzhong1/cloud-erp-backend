@@ -6,7 +6,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -417,7 +416,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         // 判断是否已生成拣货单
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(dto.getId()));
         if (CollectionUtils.isNotEmpty(views)) {
-            throw new ServiceException(ApiError.ERROR_99140);
+            throw new ServiceException(ApiError.ERROR_WMS_NOTICE_ALREADY_PICKLIST_LOCKED);
         }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
@@ -511,7 +510,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         viewDTO.setDeliveryModeDictName(DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()));
         if (CharSequenceUtil.isNotBlank(soDeliveryNoticeEntity.getTransferWarehouseIds())){
-            List<String> split = StrUtil.split(soDeliveryNoticeEntity.getTransferWarehouseIds(), ",");
+            List<String> split = CharSequenceUtil.split(soDeliveryNoticeEntity.getTransferWarehouseIds(), ",");
             viewDTO.setTransferWarehouseIdList(split);
         }
         List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
@@ -523,7 +522,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(deliveryNoticeDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
+                throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
             }
             detailView.setProductName(productDetailEntity.getName());
             //销售单信息
@@ -550,7 +549,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public Boolean submit(List<String> ids,Boolean isNeedProcess) {
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
 
         //未作废、待提交、审核不通过才可以提交
@@ -560,7 +559,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ).count();
 
         if (count != soDeliveryNoticeEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //TODO 待加审核流程
         if(isNeedProcess){
@@ -581,7 +580,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public Boolean addAndSubmit(SoDeliveryNoticeDTO.Add dto) {
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         return this.submit(Collections.singletonList(id),Boolean.TRUE);
     }
@@ -590,7 +589,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public Boolean updateAndSubmit(SoDeliveryNoticeDTO.Update dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()),Boolean.TRUE);
     }
@@ -634,7 +633,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //销售通知明细信息
             List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99044);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
             }
 
             //针对拣货单进行库存的多退少补
@@ -656,14 +655,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
         //已审核支持反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //TODO 待加审核流程
 
         //下推出库单不能反审核
         List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_92004);
+            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -686,7 +685,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public Boolean cancelProcess(List<String> ids) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = deliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -694,7 +693,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ).count();
 
         if (count != deliveryNoticeEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         workflowFeign.cancelProcess(ids);
@@ -729,7 +728,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ).count();
 
         if (count != deliveryNoticeEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         pickingListsService.exist(ids);
 
@@ -778,7 +777,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ).count();
 
         if (count != deliveryNoticeEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).collect(Collectors.toList()));
         deliveryNoticeEntityList.forEach(v->{
@@ -817,7 +816,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         pickingListsService.exist(ids);
         //待提交支持删除
         if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(entity.getCode()));
         PackingTaskEntity taskEntity = taskEntityList.stream().filter(t->t.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
@@ -860,18 +859,18 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public BatchResultDTO generateSoDeliverySave(String id, LocalDate deliveryDate) {
         SoDeliveryNoticeEntity entity = getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98063);
+            throw new ServiceException(ApiError.ERROR_PUSH_ALLOWED_APPROVED_ONLY);
         }
         //更新发货通知单实际发货日期
         updateDeliveryDate(id, deliveryDate);
         entity.setActualDeliveryDate(Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now());
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99105);
+            throw new ServiceException(ApiError.ERROR_WMS_SO_NOT_APPROVED_PUSH_OUTBOUND_FORBIDDEN);
         }
         List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
-            throw new ServiceException(ApiError.ERROR_99129);
+            throw new ServiceException(ApiError.ERROR_WMS_SO_OUTBOUND_ALREADY_PUSHED);
         }
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
@@ -882,12 +881,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
             if (closeCount > 0) {
-                throw new ServiceException(ApiError.ERROR_98068);
+                throw new ServiceException(ApiError.ERROR_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH);
             }
         }
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
-            throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
+            throw new ServiceException(ApiError.ERROR_WMS_SO_PICKLIST_NOT_FOUND, entity.getCode());
         }
 
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
@@ -961,7 +960,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
                         .filter(staging -> staging.getWarehouseId().equals(warehouseId))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_DEFAULT_STAGING_NOT_FOUND));
                 detail.setWarehouseLocation(pickingStaging.getWarehouseLocation());
             }
             if (noInventorySkuIds.contains(item.getSkuId())) {
@@ -1004,10 +1003,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      */
     private void generateTransferInfo(String batchNo, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, List<String> transferWarehouseIdList) {
         if (CollUtil.isEmpty(transferWarehouseIdList)){
-            throw new ServiceException(ApiError.ERROR_92134);
+            throw new ServiceException(ApiError.ERROR_TRANSFER_WAREHOUSE_REQUIRED);
         }
         if (CharSequenceUtil.isBlank(entity.getWarehouseId())){
-            throw new ServiceException(ApiError.ERROR_92136, entity.getCode());
+            throw new ServiceException(ApiError.ERROR_DELIVERY_NOTICE_WAREHOUSE_REQUIRED, entity.getCode());
         }
         //订单调出仓和第一个中转仓一致时从第二个中转仓开始
         boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(entity.getWarehouseId());
@@ -1040,12 +1039,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
         WarehouseEntity toWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(toWarehouseId)).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(toWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_92263, toWarehouseId);
+            throw new ServiceException(ApiError.ERROR_WH_NOT_FOUND, toWarehouseId);
         }
         WarehouseEntity fromWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(fromWarehouseId)).findFirst().orElse(null);
         //获取仓库信息
         if (ObjectUtil.isEmpty(fromWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_92263, fromWarehouseId);
+            throw new ServiceException(ApiError.ERROR_WH_NOT_FOUND, fromWarehouseId);
         }
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -1068,7 +1067,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
                 .filter(staging -> staging.getWarehouseId().equals(entity.getWarehouseId()))
-                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_DEFAULT_STAGING_NOT_FOUND));
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (SoDeliveryNoticeDetailEntity view : entityList) {
             TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
@@ -1267,14 +1266,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public List<SoOutstockDTO.GenerateSoOutstockViewDTO> pdaDeliveryDetail(String id) {
         SoDeliveryNoticeEntity entity = this.getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98063);
+            throw new ServiceException(ApiError.ERROR_PUSH_ALLOWED_APPROVED_ONLY);
         }
         //获取到销售退货单 下推列表
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(Collections.singletonList(id), soDeliveryNotice);
         long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
         if (closeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98068);
+            throw new ServiceException(ApiError.ERROR_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH);
         }
 
         //详情id s
@@ -1330,7 +1329,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
         if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_99160);
+            throw new ServiceException(ApiError.ERROR_WMS_NOTICE_APPROVED_PICKLIST_GEN_FORBIDDEN);
         }
         List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.list(Wrappers.<SoDeliveryNoticeDetailEntity>lambdaQuery()
                 .eq(SoDeliveryNoticeDetailEntity::getMainId, picking.getId())
@@ -1390,7 +1389,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
         List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(page.getParams()));
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
-            throw new ServiceException(ApiError.ERROR_99110, "销售出库单");
+            throw new ServiceException(ApiError.ERROR_WMS_PICKLIST_ALREADY_EXISTS, "销售出库单");
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
@@ -1436,7 +1435,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 detailEntity.setPickingQty(qty);
             }
             if (detailEntity.getDeliveryQty() < detailEntity.getPickingQty()) {
-                throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_WMS_NOTICE_PICK_QTY_EXCEEDS_DELIVERY, detailEntity.getSkuNo());
             }
 
         }
@@ -1841,7 +1840,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_92138, String.join(",", codeList));
+                throw new ServiceException(ApiError.ERROR_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
             }
         }
         String transferWarehouseIdList = "";
@@ -1861,7 +1860,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(addList)) {
             addList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"新增sku"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("发货通知变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"新增sku"));
             });
             soDeliveryNoticeDetailService.saveBatch(addList);
         }
@@ -1869,9 +1868,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isNotEmpty(updateList)) {
             updateList.forEach(v->{
                 if(v.getSkuNo().equals(v.getChangeBeforeSkuNo())){
-                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
                 }else{
-                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku,从【{}】修改为【{}】，数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("发货通知变更单修改明细sku,从【{}】修改为【{}】，数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
                 }
             });
             soDeliveryNoticeDetailService.updateBatchById(updateList);
@@ -1879,7 +1878,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"删除明细"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"删除明细"));
             });
             List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
             soDeliveryNoticeDetailService.removeByIds(deleteIds);
@@ -1943,7 +1942,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
                         .filter(staging -> staging.getWarehouseId().equals(soDeliveryNoticeEntity.getWarehouseId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_DEFAULT_STAGING_NOT_FOUND));
                 addDetailDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(bomList)) {
@@ -2031,13 +2030,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public void printSkuLabelConfirm(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto, HttpServletResponse response) {
         List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> details = dto.getDetailList();
         if(CollUtil.isEmpty(details)){
-            throw new ServiceException(ApiError.ERROR_1041,"客户SKU标签");
+            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED,"客户SKU标签");
         }
         if (SkuPrintTypeEnum.BARCODE_INFO.getCode().equals(dto.getSkuPrintType()) && (CharSequenceUtil.isBlank(dto.getCompanyAddress()) || CharSequenceUtil.isBlank(dto.getCompanyName()))){
             throw new ServiceException("公司名称和公司地址不能为空");
         }
         //校验客户sku是否存在空值
-        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> collect = details.stream().filter(v -> StrUtil.isBlank(v.getPlatformSkuNo()) || StrUtil.isBlank(v.getSkuNo())).collect(Collectors.toList());
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> collect = details.stream().filter(v -> CharSequenceUtil.isBlank(v.getPlatformSkuNo()) || CharSequenceUtil.isBlank(v.getSkuNo())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(collect)){
             throw new ServiceException("SKU和客户SKU不能为空");
         }
@@ -2490,7 +2489,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoDeliveryNoticeEntity entity : deliveryNoticeEntityList) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);

@@ -5,7 +5,6 @@ import com.common.business.constant.MongoTableNameContant;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;

@@ -15,7 +15,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.sys.enums.OrgFunctionsEnum;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
@@ -95,7 +94,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public boolean updateCompany(SysAccountingCompanyDTO dto) {
         SysAccountingCompanyEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         checkName(dto.getId(), dto.getCompanyName());
         entity.setCompanyAddress(dto.getCompanyAddress());
@@ -123,7 +122,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public boolean updateCompanyState(UpdateStateDTO dto) {
         SysAccountingCompanyEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         entity.setDisabled(dto.getState());
         return this.updateById(entity);

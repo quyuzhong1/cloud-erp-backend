@@ -2,9 +2,7 @@ package com.sdk.tms.yuntu.server;
 
 import com.alibaba.fastjson.JSON;
 import com.common.core.exception.ServiceException;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.utils.BeanMapUtil;
 import com.sdk.tms.yuntu.constants.YunTuConstants;

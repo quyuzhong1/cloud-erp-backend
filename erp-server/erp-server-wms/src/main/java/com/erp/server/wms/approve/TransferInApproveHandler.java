@@ -32,7 +32,7 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         TransferInEntity entity = transferInService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99066);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferInService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -43,7 +43,7 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
         //调入单
         TransferInEntity entity = transferInService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99066);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
         }
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());

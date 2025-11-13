@@ -138,7 +138,7 @@ public class KingdeeOtherOutstockConsumerServiceImpl implements KingdeeOtherOuts
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
+            log.error(ApiError.ERROR_97025.getMsg());
             //错误日志
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }

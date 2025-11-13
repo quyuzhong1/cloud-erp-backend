@@ -81,10 +81,10 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
         SysUserDTO info = sysUserInfoService.accountLogin(dto);
         if (Objects.isNull(info)) {
-            return failure(ApiError.ERROR_9012, null);
+            return failure(ApiError.ERROR_AUTH_CREDENTIALS_INVALID, null);
         }
         if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
-            return failure(ApiError.ERROR_9016, null);
+            return failure(ApiError.ERROR_ACCOUNT_DISABLED, null);
         }
         return success(info);
     }
@@ -101,10 +101,10 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<SysUserDTO> scanCodeLogin(@RequestBody SysUserThirdDTO dto) {
         SysUserDTO info = sysUserInfoService.scanCodeLogin(dto);
         if (Objects.isNull(info)) {
-            return failure(ApiError.ERROR_9012, null);
+            return failure(ApiError.ERROR_AUTH_CREDENTIALS_INVALID, null);
         }
         if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
-            return failure(ApiError.ERROR_9016, null);
+            return failure(ApiError.ERROR_ACCOUNT_DISABLED, null);
         }
         return success(info);
     }

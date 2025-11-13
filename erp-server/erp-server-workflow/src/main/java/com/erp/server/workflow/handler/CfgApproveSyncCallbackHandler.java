@@ -89,17 +89,17 @@ public class CfgApproveSyncCallbackHandler {
 
                 ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
                 if (Objects.isNull(processTaskManagementExtEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
+                    throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
                 }
 
                 String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
                 ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
                 if (Objects.isNull(processTaskManagementEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
+                    throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
                 }
                 //判断流程节点状态是可以审批状态
                 if (!processTaskManagementEntity.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)) {
-                    throw new ServiceException(ApiError.ERROR_98006);
+                    throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
                 }
                 String processInstanceId = processTaskManagementEntity.getProcessInstanceId();
                 //流程实例管理

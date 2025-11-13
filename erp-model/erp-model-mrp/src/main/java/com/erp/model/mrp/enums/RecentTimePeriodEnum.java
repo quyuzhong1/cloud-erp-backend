@@ -40,7 +40,7 @@ public enum RecentTimePeriodEnum {
             case FOLLOWING_MONTH:
                 return date.plusMonths(2).getMonthValue() + "月";
             default:
-                throw new ServiceException(ApiError.ERROR_9028);
+                throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
     }
 

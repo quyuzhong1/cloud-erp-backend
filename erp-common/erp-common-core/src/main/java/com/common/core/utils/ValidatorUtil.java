@@ -231,7 +231,7 @@ public class ValidatorUtil {
 			List<ConstraintViolation<Object>> sortedConstraintViolations = new ArrayList<>(constraintViolations);
 			sortedConstraintViolations = sortedConstraintViolations.stream().sorted(Comparator.comparing(ConstraintViolation::getMessage)).collect(Collectors.toList());
 			ConstraintViolation<Object> constraint = sortedConstraintViolations.iterator().next();
-			throw new ServiceException(ApiError.ERROR_99999.code, constraint.getMessage());
+			throw new ServiceException(ApiError.ERROR_PARAM_INVALID.getCode(), constraint.getMessage());
 		}
 	}
 

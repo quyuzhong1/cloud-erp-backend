@@ -28,17 +28,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.dto.excel.SupplierPhaseExportExcelDTO;
-import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -58,9 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -300,7 +295,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     public BatchResultDTO approve(SupplierPhaseEntity entity,ApproveOneDTO dto) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         approveProcess(entity, dto);
         log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(dto.getType()), JSONUtil.toJsonStr(dto.getId()));
@@ -324,7 +319,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -373,7 +368,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         for (SupplierPhaseEntity entity : list) {
             SupplierEntity supplierEntity = stringSupplierEntityMap.get(entity.getSupplierId());
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(), ApiError.ERROR_98009.getMsg()));
                 continue;
             }
             removeList.add(entity);

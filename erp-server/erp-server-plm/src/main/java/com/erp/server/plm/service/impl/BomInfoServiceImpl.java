@@ -362,7 +362,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getState(), BomStateEnum.AUDIT_ING.getState())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -390,7 +390,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1276,12 +1276,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //父级sku是否审核
         SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getParentSku())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(parentSkuVO)) {
-            errorMsgList.add(ApiError.ERROR_95152.msg);
+            errorMsgList.add(ApiError.ERROR_95152.getMsg());
         }
         //子级sku是否审核
         SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getChildSku())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(childSkuVO)) {
-            errorMsgList.add(ApiError.ERROR_95153.msg);
+            errorMsgList.add(ApiError.ERROR_95153.getMsg());
         }
         //仅待提交或者审核不通过数据修改
         if (CollectionUtils.isNotEmpty(bomInfoList)) {

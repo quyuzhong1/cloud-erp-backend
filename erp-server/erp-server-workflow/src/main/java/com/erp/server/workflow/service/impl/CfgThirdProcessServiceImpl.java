@@ -77,7 +77,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         List<CfgThirdProcessEntity> existList = this.list(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, addDTO.getBussinessKey())
                 .eq(CfgThirdProcessEntity::getSourcePlatform, addDTO.getSourcePlatform()).eq(CfgThirdProcessEntity::getEnableStatus, true));
         if (CollUtil.isNotEmpty(existList)){
-            throw new ServiceException(ApiError.ERROR_1024);
+            throw new ServiceException(ApiError.ERROR_DATA_DUPLICATE);
         }
         CfgThirdProcessEntity cfgThirdProcessEntity = new CfgThirdProcessEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdProcessEntity);

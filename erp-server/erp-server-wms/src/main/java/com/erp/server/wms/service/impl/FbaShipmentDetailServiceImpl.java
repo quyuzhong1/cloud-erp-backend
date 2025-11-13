@@ -6,13 +6,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
-import com.rtfparserkit.rtf.Command;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +24,6 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>

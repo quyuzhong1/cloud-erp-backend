@@ -4,7 +4,6 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BatchResultDTO;
@@ -44,7 +43,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -287,7 +285,7 @@ public class PackageServiceImpl implements PackageService {
                     .map(SoB2cDeliveryEntity::getSoCode)
                     .collect(Collectors.joining(","));
             if (StringUtils.isNotEmpty(notShipmentSoCodes)) {
-                throw new ServiceException(ApiError.ERROR_99115, notShipmentSoCodes);
+                throw new ServiceException(ApiError.ERROR_WMS_SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN, notShipmentSoCodes);
             }
         }
         for (PackageForecastDTO.AddDTO item : addList) {

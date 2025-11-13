@@ -196,7 +196,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
         if(CollUtil.isEmpty(thirdUnionMap)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.getMsg());
         }
 
         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -228,7 +228,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推失败");
             }
         }else {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.getMsg());
         }
         return null;
     }

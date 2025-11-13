@@ -397,7 +397,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         SubcontractOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //调用审核流程
         approveProcess(entity, dto);
@@ -419,7 +419,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateForApprove(Arrays.asList(entity.getId()), approveStatus.getStatus());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
@@ -1257,7 +1257,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {

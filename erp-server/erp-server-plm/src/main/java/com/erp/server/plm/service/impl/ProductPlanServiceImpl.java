@@ -728,7 +728,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //获取当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (ObjectUtils.isEmpty(userInfo)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         LambdaUpdateWrapper<ProductPlanEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanEntity::getId, productPlanId);

@@ -631,7 +631,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
@@ -662,7 +662,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean  result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
 
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (ScmConstant.PASS.equals(type)) {
             //更新价目表数据
@@ -997,7 +997,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WF_APPROVAL_FAILED.getMsg());
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.REJECT;

@@ -310,18 +310,18 @@ public class PurchaseApplicationController extends BaseController {
             }
             List<PurchaseApplicationDetailEntity> detailEntityList = detailList.stream().filter(e -> e.getPurchaseApplicationId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98017.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98017.getMsg()));
                 continue;
             }
             //只有未生成的单才能反审核
             long createCount = detailEntityList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
             if (createCount > 0) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98030.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98030.getMsg()));
                 continue;
             }
             List<SubcontractOrderEntity> subcontractOrderEntityList = subcontractOrderList.stream().filter(e -> e.getSourceId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(subcontractOrderEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98090.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98090.getMsg()));
                 continue;
             }
             try {

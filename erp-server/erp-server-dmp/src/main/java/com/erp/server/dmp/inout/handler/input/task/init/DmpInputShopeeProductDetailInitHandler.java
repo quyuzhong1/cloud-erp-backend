@@ -33,7 +33,6 @@ import com.erp.server.dmp.service.CfgAppClientService;
 import com.google.common.collect.Lists;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.Item;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 
 import cn.hutool.core.collection.CollUtil;

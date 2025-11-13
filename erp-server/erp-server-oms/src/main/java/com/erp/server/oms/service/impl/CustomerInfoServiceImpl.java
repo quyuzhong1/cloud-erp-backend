@@ -424,11 +424,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
-            String content = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //审核不通过
-            String rejectContent = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String rejectContent = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
         return result;
@@ -569,7 +569,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public String addAndSubmit(CustomerDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         Boolean result = this.submit(Arrays.asList(id));
         if (result) {
@@ -593,7 +593,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerDTO.ViewDTO view = new CustomerDTO.ViewDTO();
         CustomerInfoEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
@@ -671,7 +671,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String id = dto.getId();
         CustomerInfoEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
 
         //检查名称
@@ -809,7 +809,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public Boolean updateAndSubmit(CustomerDTO.UpdateDTO dto) {
         String id = this.updateCustomer(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Arrays.asList(id));
     }
@@ -830,7 +830,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<CustomerInfoEntity> list = Arrays.asList(entity);
 
         if(!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         approveProcess(list, dto);
@@ -859,7 +859,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(list, approveStatus, user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //批量保存销售员信息
@@ -909,7 +909,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
 
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
@@ -919,7 +919,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            String ingContent = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //发送金蝶
@@ -955,11 +955,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (CustomerInfoEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92018.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1031,7 +1031,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> customerList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(customerList)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
 
         Boolean disabled = dto.getDisabled();
@@ -1041,7 +1041,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != customerList.size()) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         customerList.forEach(d -> {
         	d.setDisabled(disabled);
@@ -1091,7 +1091,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<CustomerInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -1162,7 +1162,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerDTO.BaseDTO base = new CustomerDTO.BaseDTO();
         CustomerInfoEntity customer = this.getById(customerId);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
@@ -1277,7 +1277,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         queryWrapper.last( SqlConstants.LIMIT_1);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_1028);
+            throw new ServiceException(ApiError.ERROR_DATA_CUSTOMER_NAME_DUPLICATE);
         }
     }
     /**
@@ -1506,13 +1506,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setRemark(remark);
             // 审核状态
             customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            customerInfoEntity.setApproveUserName(ApiError.ADMIN.msg);
+            customerInfoEntity.setApproveUserName(ApiError.ADMIN.getMsg());
             customerInfoEntity.setCreateTime(LocalDateTime.now());
             customerInfoEntity.setUpdateTime(LocalDateTime.now());
             customerInfoEntity.setCreateUserId("");
-            customerInfoEntity.setCreateUserName(ApiError.ADMIN.msg);
+            customerInfoEntity.setCreateUserName(ApiError.ADMIN.getMsg());
             customerInfoEntity.setUpdateUserId("");
-            customerInfoEntity.setUpdateUserName(ApiError.ADMIN.msg);
+            customerInfoEntity.setUpdateUserName(ApiError.ADMIN.getMsg());
 
             if (!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);
@@ -1999,7 +1999,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
         List<String> updateIdList = data.stream()

@@ -1,18 +1,14 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.core.config.JacksonConfig;
 import com.erp.model.workflow.entity.ProcessTaskManagementAttachmentEntity;
 import com.erp.server.workflow.mapper.ProcessTaskManagementAttachmentMapper;
 import com.erp.server.workflow.service.ProcessTaskManagementAttachmentService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;

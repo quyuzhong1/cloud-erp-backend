@@ -26,7 +26,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseApplicationService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -36,7 +36,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseApplicationService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -47,7 +47,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
         //采购申请订单
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_APPLY_NOT_FOUND);
         }
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());

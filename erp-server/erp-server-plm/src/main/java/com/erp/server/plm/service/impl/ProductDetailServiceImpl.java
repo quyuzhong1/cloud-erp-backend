@@ -4054,7 +4054,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt) {
         ProductDetailEntity entity = this.getById(dto.getId());
         if (!entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_95038.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_95038.getMsg());
         }
         // 调用流程审核
         entity.setIsPushWdt(isPushWdt);
@@ -4084,7 +4084,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -4196,7 +4196,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public BatchResultDTO disApprove(ProductDetailEntity entity) {
         //已审核支持反审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_99003.getMsg());
         }
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
@@ -5048,12 +5048,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<BasicCategoryEntity> categoryList = new ArrayList<>();
                     this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                     if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                        errorMsgList.add(ApiError.ERROR_95091.msg);
+                        errorMsgList.add(ApiError.ERROR_95091.getMsg());
                     }
                     //一级品类
                     BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_95091.msg);
+                        errorMsgList.add(ApiError.ERROR_95091.getMsg());
                     }
                     //二级品类
                     String secondaryCategory = dto.getSecondaryCategory();
@@ -5065,7 +5065,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     } else {
                         BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                         if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                            errorMsgList.add(ApiError.ERROR_95092.msg);
+                            errorMsgList.add(ApiError.ERROR_95092.getMsg());
                         }
                         if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                             errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
@@ -5156,7 +5156,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productLength = LengthConverterUtil.cmToMm(productLength);
                 }
                 if(boxLength.compareTo(productLength)<0){
-                    errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+                    errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getBoxWidth()) || StringUtils.isNotBlank(dto.getProductWidth())){
@@ -5173,7 +5173,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productWidth = LengthConverterUtil.cmToMm(productWidth);
                 }
                 if(boxWidth.compareTo(productWidth)<0){
-                    errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+                    errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getBoxHeight()) || StringUtils.isNotBlank(dto.getProductHeight())){
@@ -5190,7 +5190,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productHeight = LengthConverterUtil.cmToMm(productHeight);
                 }
                 if(boxHeight.compareTo(productHeight)<0){
-                    errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+                    errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getGrossWeight()) || StringUtils.isNotBlank(dto.getNetWeight())){
@@ -5203,7 +5203,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     netWeight = oldPackEntity.getNetWeight();
                 }
                 if(grossWeight.compareTo(netWeight)<0){
-                    errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+                    errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.getMsg());
                 }
             }
 
@@ -5751,7 +5751,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 判断是修改还是新增 1：新增 2：修改
             //sku重复
             if (ObjectUtil.isNotEmpty(productBy)) {
-                errorMsgList.add(ApiError.ERROR_95015.msg);
+                errorMsgList.add(ApiError.ERROR_95015.getMsg());
             }
             //spu名称，新增单规格名称给随机雪花编码
             productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
@@ -5885,12 +5885,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<BasicCategoryEntity> categoryList = new ArrayList<>();
                 this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                 if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                    errorMsgList.add(ApiError.ERROR_95091.getMsg());
                 }
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                    errorMsgList.add(ApiError.ERROR_95091.getMsg());
                 }
                 //二级品类
                 String secondaryCategory = dto.getSecondaryCategory();
@@ -5902,7 +5902,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 } else {
                     BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_95092.msg);
+                        errorMsgList.add(ApiError.ERROR_95092.getMsg());
                     }
                     if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
@@ -5985,16 +5985,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
             if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
-                errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+                errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.getMsg());
             }
             if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
-                errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+                errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.getMsg());
             }
             if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
-                errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+                errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.getMsg());
             }
             if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
-                errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+                errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.getMsg());
             }
 
             //存在错误信息则返回
@@ -6705,7 +6705,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         mergeSkuEan(dto, printEanDTO, document, writer, baseFont);
                         break;
                     default:
-                        throw new ServiceException(ApiError.ERROR_9028);
+                        throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
                 }
             }
             document.close();
@@ -7142,7 +7142,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             case DATE:
                 return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             default:
-                throw new ServiceException(ApiError.ERROR_9028);
+                throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
     }
 

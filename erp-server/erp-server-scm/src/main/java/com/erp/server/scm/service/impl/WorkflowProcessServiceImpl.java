@@ -2,15 +2,12 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.dto.ApproveDTO;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.factory.ApproveEndHandlerFactory;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.scm.service.*;
 import org.springframework.stereotype.Service;

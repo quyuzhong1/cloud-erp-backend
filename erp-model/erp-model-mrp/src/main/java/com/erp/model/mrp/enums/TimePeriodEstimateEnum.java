@@ -51,6 +51,6 @@ public enum TimePeriodEstimateEnum implements EnumMessage {
 
     public static TimePeriodEstimateEnum of(String code) {
         return Arrays.stream(TimePeriodEstimateEnum.values()).filter(v -> v.getCode().equals(code))
-                .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "时间段类型"));
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "时间段类型"));
     }
 }

@@ -39,7 +39,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         }
         String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         return this.updateById(new QuerySchemeFavoriteEntity(updateDTO,userId));
     }
@@ -48,7 +48,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
     public Boolean add(QuerySchemeFavoriteDTO.AddDTO addDTO) {
         String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         lambdaQuery().eq(QuerySchemeFavoriteEntity::getName,addDTO.getName())
                 .eq(QuerySchemeFavoriteEntity::getUserId,userId)
@@ -65,7 +65,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
             userId = UserContext.getLoginUser().getUid();
         }
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         List<QuerySchemeFavoriteEntity> list = lambdaQuery()
                 .eq(QuerySchemeFavoriteEntity::getUserId, userId)

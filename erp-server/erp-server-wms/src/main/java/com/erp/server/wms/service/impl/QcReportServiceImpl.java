@@ -16,7 +16,6 @@ import com.erp.server.wms.mapper.QcReportMapper;
 import com.erp.server.wms.service.QcReportService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -149,7 +148,7 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
             ExcelUtil.export(fileName, "质检报告", resultList, ExportQcReportExcelDTO.class, response);
         } catch (Exception e) {
             log.error("导出质检报告出错  ==e",e);
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
         }
 
     }

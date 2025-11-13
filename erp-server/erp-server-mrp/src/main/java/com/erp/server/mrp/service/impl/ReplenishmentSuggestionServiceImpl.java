@@ -1792,7 +1792,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
 
         switch (platformType) {
@@ -2071,7 +2071,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         long days = ChronoUnit.DAYS.between(LocalDate.now(), dto.getDate()) + 1;
         switch (platformType) {

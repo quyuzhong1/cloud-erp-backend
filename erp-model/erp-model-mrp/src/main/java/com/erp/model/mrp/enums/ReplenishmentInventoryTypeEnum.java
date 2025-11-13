@@ -40,6 +40,6 @@ public enum ReplenishmentInventoryTypeEnum implements EnumMessage {
         return Arrays.stream(ReplenishmentInventoryTypeEnum.values())
                 .filter(v -> v.getCode().equals(code))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_9028));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED));
     }
 }

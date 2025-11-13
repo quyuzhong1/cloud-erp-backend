@@ -189,7 +189,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO approve(InitFirstMileAllocationEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("期初头程分摊记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
@@ -212,7 +212,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO disApprove(InitFirstMileAllocationEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.getMsg());
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //数据是否已经被引用
@@ -245,7 +245,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO cancel(InitFirstMileAllocationEntity entity) {
         //审核中允许撤销
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.getMsg());
         }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
@@ -254,7 +254,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO submit(InitFirstMileAllocationEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.getMsg());
         }
         log.info("期初头程分摊记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中

@@ -176,7 +176,7 @@ public class SysLoggingAspect {
         //接口重复提交校验
         String idempotentKey = getIdempotentKey(joinPoint);
         if (redisUtil.hasKey(idempotentKey)) {
-            throw new ServiceException(ApiError.ERROR_1014);
+            throw new ServiceException(ApiError.ERROR_BIZ_DUPLICATE_OPERATION);
         }else {
             //如果没有表示不是重复提交并设置key存活的缓存时间
             redisUtil.set(idempotentKey, "", 3);
@@ -986,16 +986,16 @@ public class SysLoggingAspect {
                 } catch (Exception e) {
                     // 调用globalExceptionHandler失败：全局异常解析失败
                     ApiResult<?> result = new ApiResult<>();
-                    result.setCode(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.code);
-                    result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.msg, e.getMessage()));
+                    result.setCode(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.getCode());
+                    result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.getMsg(), e.getMessage()));
                     return result;
                 }
             }
         }
         // 找不到globalExceptionHandler异常, 默认提示未知异常
         ApiResult<?> result = new ApiResult<>();
-        result.setCode(ApiError.GLOBAL_EXCEPTION_UN_KNOW.code);
-        result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_UN_KNOW.msg, JSONUtil.toJsonStr(obj)));
+        result.setCode(ApiError.ERROR_SYS_UNKNOWN.getCode());
+        result.setMsg(StrUtil.format(ApiError.ERROR_SYS_UNKNOWN.getMsg(), JSONUtil.toJsonStr(obj)));
         return result;
     }
 

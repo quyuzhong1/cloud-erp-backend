@@ -1,7 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -223,7 +222,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
-                throw new ServiceException(ApiError.ERROR_92058);
+                throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
             }
             // 店铺已授权
             if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){

@@ -10,7 +10,6 @@ import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;

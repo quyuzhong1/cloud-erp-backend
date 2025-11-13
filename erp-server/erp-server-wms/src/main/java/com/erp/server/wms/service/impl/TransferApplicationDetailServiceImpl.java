@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -10,7 +9,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferApplicationDetailDTO;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferApplicationDetailMapper;
@@ -141,7 +139,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
         List<String> skuIds = newList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         for (TransferApplicationDetailEntity detail:newList) {
             //单位
@@ -151,11 +149,11 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_99044);
+                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 TransferApplicationDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_99044);
+                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

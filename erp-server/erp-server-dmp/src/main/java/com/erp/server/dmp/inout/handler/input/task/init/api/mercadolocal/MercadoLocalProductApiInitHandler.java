@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -92,7 +91,7 @@ public class MercadoLocalProductApiInitHandler implements DmpInputApiInitHandler
             if (!Objects.equals(apiResult.getCode(), 200)) {
                 nexflag = false;
                 log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
+                throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
@@ -104,7 +103,7 @@ public class MercadoLocalProductApiInitHandler implements DmpInputApiInitHandler
             } catch (JsonProcessingException e) {
                 nexflag = false;
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 

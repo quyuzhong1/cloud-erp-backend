@@ -9,7 +9,6 @@ import com.erp.server.wms.service.SampleReturnDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;

@@ -2,24 +2,12 @@ package com.erp.sdk.oms.amz.spapi.utils;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
-import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
-import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
 
 /**
  * 亚马逊异常工具类
@@ -40,7 +28,7 @@ public class AmazonSpApiExceptionUtils {
         // 系统内部定义授权异常
         if (exception instanceof ServiceException) {
             ServiceException serviceException = (ServiceException) exception;
-            if (ApiError.ERROR_MARKETPLACE_UNAUTHORIZED.code.equals(serviceException.getCode())) {
+            if (ApiError.ERROR_MARKETPLACE_UNAUTHORIZED.getCode().equals(serviceException.getCode())) {
                 return true;
             }
         }

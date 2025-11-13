@@ -11,7 +11,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.FirstMileSkuCostAllocationDetailDTO;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
-import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.mapper.FirstMileSkuCostAllocationDetailMapper;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import com.erp.server.tms.service.OperateLogService;

@@ -81,7 +81,6 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -490,7 +489,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         approveProcess(entity, type, comment);
@@ -517,7 +516,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         //审核通过发送金蝶
         if (type.equals(ScmConstant.PASS)) {
@@ -899,7 +898,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> purchasePriceDetailEntities,List<PurchasePriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
         }
         if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
@@ -1145,7 +1144,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {

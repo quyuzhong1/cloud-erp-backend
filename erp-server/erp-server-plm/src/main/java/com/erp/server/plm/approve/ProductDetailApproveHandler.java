@@ -32,7 +32,7 @@ public class ProductDetailApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         ProductDetailEntity entity = productDetailService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         BatchResultDTO resultDTO = productDetailService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -42,7 +42,7 @@ public class ProductDetailApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         ProductDetailEntity entity = productDetailService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());

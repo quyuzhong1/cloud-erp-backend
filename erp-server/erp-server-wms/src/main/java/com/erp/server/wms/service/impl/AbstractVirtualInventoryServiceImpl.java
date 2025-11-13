@@ -92,7 +92,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             isLock = multiLock.tryLock(60, TimeUnit.SECONDS);
             if (!isLock) {
                 log.error("加锁失败,rLockList = {}", rLockList);
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
             }
             // 1.验证参数
             List<VirtualTransRuleDTO.StockParamDTO> stockParamList = ruleList;
@@ -198,7 +198,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             // 5，更新库存
             boolean updateFlag =  virtualInventoryService.updateQtyById(virtualInventoryEntity.getId(), txnFlow.getQty());
             if(!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
             }
             //添加流水
             VirtualInventoryEntity entity = virtualInventoryService.getById(virtualInventoryEntity.getId());
@@ -234,7 +234,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), virtualTransFlowEntity.getWarehouseId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
 
         VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getById(virtualTransFlowEntity.getVirtualInventoryId());
@@ -256,7 +256,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 实物仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
         VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.addOrUpdate(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(),param.getQty());
@@ -307,7 +307,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         //实体仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         // 待出库数量
         Integer waitOutQty = param.getQty();
@@ -336,7 +336,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 仓库库存判断是否小于0
         if(curInventory.getQty() < 0 ) {
             log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", virtualInventoryEntity.getId(), curInventory.getQty());
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,curInventory.getQty(),param.getQty()));
+            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,curInventory.getQty(),param.getQty());
         }
 
         //出库添加本地任务表数据
@@ -374,7 +374,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         LocalDate billDate = param.getBillDate();
         log.info("库存状态从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
         if(CollUtil.isEmpty(ruleList)) {
-            throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            throw new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR, businessType.getName());
         }
         //对需要出库的仓库库存进行校验
         List<VirtualTransRuleDTO.StockParamDTO> outTransactionRules;
@@ -391,7 +391,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         }
         for (VirtualTransRuleDTO.StockParamDTO rule : outTransactionRules) {
             InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
-            ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
+            ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_STATUS_CONFIG_ERROR));
             this.checkStockQtyByWareLocalSkuStatus( param, ruleInventoryStatusEnum);
         }
     }
@@ -405,12 +405,12 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 虚拟仓库信息
         VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(param.getVirtualWarehouseId());
         if(Objects.isNull(virtualWarehouseEntity) || CharSequenceUtil.isEmpty(virtualWarehouseEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         //查询是否存在库存数据
         VirtualInventoryEntity inventory = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(),status.getCode());

@@ -4,7 +4,6 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -178,7 +177,7 @@ public class AsyncServiceImpl implements AsyncService {
 
         if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-            throw new ServiceException(ApiError.ERROR_99114);
+            throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
         }
 
         TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());

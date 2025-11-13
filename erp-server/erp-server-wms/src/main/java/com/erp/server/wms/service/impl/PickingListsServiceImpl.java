@@ -178,7 +178,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> staging.getBillType().equals(dto.getBillType()))
                         .filter(staging -> staging.getWarehouseId().equals(resultDTO.getWarehouseId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_DEFAULT_STAGING_NOT_FOUND));
                 // 获取产品信息
                 ProductDetailEntity productDetailEntity = detailEntityList.stream()
                         .filter(entityClass -> entityClass.getId().equals(resultDTO.getSkuId()))
@@ -399,7 +399,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_92258);
+            throw new ServiceException(ApiError.ERROR_PACKING_SKU_QTY_EXCEEDS_DELIVERY);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -440,7 +440,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                         .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST));
                 SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_NOT_FOUND));
                 printView.setCode(soDeliveryNotice.getSourceCode());
                 printView.setChannelName(soDeliveryNotice.getCustomerName());
                 printView.setHandlingUserName(soInfo.getCreateUserName());
@@ -808,12 +808,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //要货申请下推发货单后，拣货单不允许修改和删除
             int count = firstMileDeliveryService.countNotVoided(entity.getSourceId());
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99086);
+                throw new ServiceException(ApiError.ERROR_WMS_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED);
             }
             //要货申请完成后，拣货单不允许修改和删除
             RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
             if (RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(application.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_99130);
+                throw new ServiceException(ApiError.ERROR_WMS_REQ_COMPLETED_PICKLIST_LOCKED);
             }
             //校验明细是否有未审核的要货申请变更
             List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, entity.getId()).orderByDesc(PickingDetailEntity::getCreateTime));
@@ -827,11 +827,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
             int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99087);
+                throw new ServiceException(ApiError.ERROR_WMS_NOTICE_PUSHED_OUTBOUND_PICKLIST_LOCKED);
             }
             SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(entity.getSourceId());
             if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
-                throw new ServiceException(ApiError.ERROR_99161);
+                throw new ServiceException(ApiError.ERROR_WMS_NOTICE_APPROVED_PICKLIST_MODIFY_DELETE_FORBIDDEN);
             }
         }
     }
@@ -884,7 +884,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_92258);
+            throw new ServiceException(ApiError.ERROR_PACKING_SKU_QTY_EXCEEDS_DELIVERY);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -925,7 +925,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                         .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST));
                 SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_NOT_FOUND));
                 printView.setCode(soDeliveryNotice.getSourceCode());
                 printView.setChannelName(soDeliveryNotice.getCustomerName());
                 printView.setHandlingUserName(soInfo.getCreateUserName());
@@ -1204,7 +1204,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingDetailEntity detailEntity = detailList.stream()
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_PARAM_INVALID));
             if(!detailEntity.getWarehouseLocation().equals(view.getWarehouseLocation()) || !detailEntity.getActualQty().equals(view.getActualQty()) ){
                 String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，实拣数量由【{}】变更为【{}】", view.getSkuNo(),
                         detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getActualQty(), view.getActualQty());
@@ -1339,7 +1339,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             for (BomChildrenSkuDTO bomChild : bomChildren) {
                 BigDecimal temp = new BigDecimal(Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0)).divide(new BigDecimal(bomChild.getQuantity()), 6, RoundingMode.HALF_UP);
                 if (proportion.compareTo(temp) != 0) {
-                    throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
+                    throw new ServiceException(ApiError.ERROR_WMS_BUNDLE_PICK_QTY_RATIO_INVALID, String.join(",", skuMap.keySet()));
                 }
             }
         }
@@ -1409,7 +1409,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public void exist(String id) {
         int count = count(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, id));
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99102);
+            throw new ServiceException(ApiError.ERROR_WMS_PICKLIST_EXISTS_FORBID_VOID_DELETE);
         }
     }
 
@@ -1417,7 +1417,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public void exist(List<String> ids) {
         int count = count(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99102);
+            throw new ServiceException(ApiError.ERROR_WMS_PICKLIST_EXISTS_FORBID_VOID_DELETE);
         }
     }
 
@@ -1545,7 +1545,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingDetailEntity detailEntity = detailList.stream()
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_PARAM_INVALID));
             //处理仓位移动数据
             if (view.getWarehouseLocation().equals(detailEntity.getWarehouseLocation())) {
                 if (detailEntity.getQty() > view.getQty()) {

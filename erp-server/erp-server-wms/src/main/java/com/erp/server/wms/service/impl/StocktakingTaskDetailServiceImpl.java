@@ -278,7 +278,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             wb.close();
         } catch (Exception e) {
             log.error("盘点任务明细 downloadTemplate  出错了 e==={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -359,7 +359,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);
         if (CollectionUtils.isEmpty(exportList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);

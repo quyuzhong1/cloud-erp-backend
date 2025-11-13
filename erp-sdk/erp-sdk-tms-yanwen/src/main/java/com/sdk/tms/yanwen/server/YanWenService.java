@@ -40,7 +40,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO = JSON.parseObject(response,new TypeReference<YanWenResponse<List<YanWenChannel>>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -60,7 +60,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO = JSON.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -76,7 +76,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<YanWenGetLabel>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -92,7 +92,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -108,7 +108,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<List<YanWenQueryOrder>>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;

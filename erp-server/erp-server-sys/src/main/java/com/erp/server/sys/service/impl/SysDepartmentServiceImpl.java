@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
@@ -14,7 +13,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
@@ -30,7 +28,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -101,7 +98,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
             int count = this.count(queryWrapper);
             if (count>0){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_9013.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_DELETE_PARENT_NODE_EXISTS.getMsg()));
             }
             removeList.add(entity);
             resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));

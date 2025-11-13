@@ -51,7 +51,7 @@ public class LoginAuthService {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {
-            if(code == ApiError.ERROR_9012.code){
+            if(code == ApiError.ERROR_AUTH_CREDENTIALS_INVALID.getCode()){
                 loginAttempts++;
                 redisUtil.set(loginErrorKey, String.valueOf(loginAttempts),RedisCacheConstants.LOCK_DURATION_MINUTES*60L);
                 if(loginAttempts >= RedisCacheConstants.MAX_LOGIN_ATTEMPTS){
@@ -71,7 +71,7 @@ public class LoginAuthService {
         if(loginDTO.getUserType().equals(UserTypeEnum.SRM.getCode())){
             SupplierEntity supplier = supplierFeign.getSupplierByUid(info.getUid());
             if(Objects.isNull(supplier)){
-                return ApiResult.error(ApiError.ERROR_96001);
+                return ApiResult.error(ApiError.ERROR_SUPPLIER_NOT_FOUND);
             }
             if(supplier.getDisabled()){
                 return ApiResult.error(ApiError.ERROR_LOGIN_DISABLE);

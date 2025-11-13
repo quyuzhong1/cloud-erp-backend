@@ -118,7 +118,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
     public List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> viewIndependentFrame(String id) {
         PurchaseSuggestMergeEntity suggestMergeEntity = this.getById(id);
         if (ObjectUtil.isEmpty(suggestMergeEntity) || Boolean.TRUE.equals(suggestMergeEntity.getIsMerge())) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }  //采购建议
         List<String> sourceIdList = Stream.of(suggestMergeEntity).filter(obj -> CollectionUtils.isNotEmpty(obj.getSourceIdJson()))
                 .flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new)))

@@ -183,7 +183,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -231,7 +231,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             //获取登录人信息
             LoginUser loginUser = UserContext.getLoginUser();
             if (ObjectUtils.isEmpty(loginUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             String uid = loginUser.getUid();
             String userName = loginUser.getUserName();

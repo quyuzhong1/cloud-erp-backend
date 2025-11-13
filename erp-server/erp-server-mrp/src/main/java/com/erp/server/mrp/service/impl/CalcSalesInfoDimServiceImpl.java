@@ -481,7 +481,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
-        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "销量试算"));
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "销量试算"));
         List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
         List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
         if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
@@ -503,7 +503,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -568,7 +568,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             return endDate;
         }
         if (endDate1.isAfter(endDate)) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_END_DATE);
+            throw new ServiceException(ApiError.ERROR_VERIFY_END_DATE);
         }
         return endDate1;
     }
@@ -627,7 +627,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -798,7 +798,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
         LocalDate startCalcDate = list.get(0).getStartCalcDate();
         if (!ObjectUtils.isEmpty(startDate) && startDate.isBefore(startCalcDate)) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_START_DATE);
+            throw new ServiceException(ApiError.ERROR_VERIFY_START_DATE);
         }
     }
 

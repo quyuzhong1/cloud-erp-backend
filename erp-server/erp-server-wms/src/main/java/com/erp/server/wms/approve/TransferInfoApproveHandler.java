@@ -31,7 +31,7 @@ public class TransferInfoApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         TransferInfoEntity entity = transferInfoService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferInfoService.disApprove(entity,Boolean.TRUE,Boolean.TRUE);
         return resultDTO.getSuccess();
@@ -42,7 +42,7 @@ public class TransferInfoApproveHandler extends AbstractApproveHandler {
         //直接调拨单
         TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
     }

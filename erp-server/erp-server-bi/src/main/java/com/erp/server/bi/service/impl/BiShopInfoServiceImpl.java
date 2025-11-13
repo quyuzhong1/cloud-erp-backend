@@ -152,7 +152,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         biShopInfoEntity.setChargeId(dto.getChargeId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         biShopInfoEntity.setChargeName(findUserDTO.getUserName());
         biShopInfoEntity.setEnableTime(dto.getEnableTime());

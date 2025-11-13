@@ -22,7 +22,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;

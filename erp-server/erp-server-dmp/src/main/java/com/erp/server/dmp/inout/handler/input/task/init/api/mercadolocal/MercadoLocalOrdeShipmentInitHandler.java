@@ -2,7 +2,6 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.common.core.anno.ParamData;
@@ -11,7 +10,6 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -113,7 +111,7 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 
 			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 				log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 
@@ -126,7 +124,7 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
 				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData());
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {

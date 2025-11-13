@@ -365,7 +365,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         String shopId = groupEntity.getShopId();
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfoEntity) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
         // 不存在货件 拉取货件
         FbaShipmentDTO.PullShipmentDTO dto = new FbaShipmentDTO.PullShipmentDTO(shopId, Collections.singletonList(fbaShipmentId));

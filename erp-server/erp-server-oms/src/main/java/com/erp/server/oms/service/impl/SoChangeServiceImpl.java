@@ -62,7 +62,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
@@ -852,7 +851,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         //调用审核流程
@@ -883,7 +882,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
 
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
@@ -1008,7 +1007,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         for (SoChangeEntity entity : list) {
             if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus)
                     ||entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1133,7 +1132,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
         List<String> updateIdList = data.stream()

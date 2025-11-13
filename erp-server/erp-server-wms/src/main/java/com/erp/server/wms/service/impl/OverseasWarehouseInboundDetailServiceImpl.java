@@ -272,7 +272,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             if (CharSequenceUtil.isNotBlank(transferOutId)) {
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                 if (ObjUtil.isEmpty(entity)) {
-                    throw new ServiceException(ApiError.ERROR_99047);
+                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
                 }
                 //提交
                 transferInfoService.submit(entity, Boolean.FALSE);
@@ -281,7 +281,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     try {
                         TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
                         if (ObjUtil.isEmpty(approveEntity)) {
-                            throw new ServiceException(ApiError.ERROR_99047);
+                            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
                         }
                         transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
                     }catch (Exception e){

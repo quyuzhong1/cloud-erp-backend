@@ -320,7 +320,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     public ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO) {
         List<WaveListEntity> waveListEntities = this.listByIds(idsDTO.getIds());
         if (CollUtil.isEmpty(waveListEntities)) {
-            throw new ServiceException(ApiError.ERROR_1030);
+            throw new ServiceException(ApiError.ERROR_SOURCE_DOC_NOT_FOUND);
         }
         //全部都是全托管订单才能打印
         boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
@@ -377,7 +377,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_1031);
+            throw new ServiceException(ApiError.ERROR_SOURCE_DOC_DETAIL_NOT_FOUND);
         }
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);

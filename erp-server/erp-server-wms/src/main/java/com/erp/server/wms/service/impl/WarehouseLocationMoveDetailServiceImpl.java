@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +81,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Override
     public Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
         if (CollectionUtils.isEmpty(dto.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
+            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
 
         //原明细数据

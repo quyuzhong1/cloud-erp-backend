@@ -154,7 +154,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         List<PurchasePriceDetailEntity> purchasePriceDetailEntities = purchasePriceDetailService.listByIds(purchasePriceDetailId);
         //采购价目明细表数据
         if (CollectionUtils.isEmpty(purchasePriceDetailEntities)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         String purchasePriceIdStr = purchasePriceDetailEntities.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.joining(","));
         resultMap.put("purchasePriceIdStr", purchasePriceIdStr);
@@ -198,7 +198,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(detailIds);
         //价目明细
         if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98049);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_DETAIL_NOT_FOUND);
         }
 
         //查询供应商
@@ -214,7 +214,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
             PurchasePriceDetailEntity purchasePriceDetailEntity = purchasePriceDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchasePriceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchasePriceDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_98024);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
             }
 
             JSONObject jsonObject = new JSONObject();

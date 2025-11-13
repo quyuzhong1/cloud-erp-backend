@@ -3875,7 +3875,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
         if (!processInstanceIds.containsAll(processIds)) {
-            throw new ServiceException(ApiError.ERROR_95049);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL);
         }
 
         //检查任务状态是否一样
@@ -3974,7 +3974,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
         if (!processInstanceIds.containsAll(processIds)) {
-            throw new ServiceException(ApiError.ERROR_95049);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL);
         }
 
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);

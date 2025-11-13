@@ -2,15 +2,10 @@ package com.common.business.utils;
 
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.Collection;

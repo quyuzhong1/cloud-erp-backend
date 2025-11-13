@@ -2,9 +2,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
@@ -37,7 +35,6 @@ import com.erp.server.wms.service.MachineInfoService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

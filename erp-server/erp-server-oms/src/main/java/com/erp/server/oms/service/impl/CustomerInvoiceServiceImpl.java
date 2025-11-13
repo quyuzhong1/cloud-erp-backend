@@ -50,7 +50,7 @@ public class CustomerInvoiceServiceImpl extends SuperServiceImpl<CustomerInvoice
         }
         long count = invoiceList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92007);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_DEFAULT_BANK_LIMIT);
         }
 
     }

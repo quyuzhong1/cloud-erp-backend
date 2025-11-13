@@ -302,7 +302,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StringUtils.isEmpty(dto.getComment())) {
             // 审核不通过必须填写审核意见
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         StocktakingProfitLossEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -311,7 +311,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
         // 审核中的数据允许审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 盘点仓库，库区，仓位禁用时禁止审核
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
@@ -351,7 +351,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
         // 审核中的数据允许审核
         if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         LoginUser user = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -409,7 +409,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -523,7 +523,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private void syncStocktakingLossInfoToWdt(StocktakingProfitLossEntity entity, SyncOperateEnum syncOperateEnum) {
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
 
         HashSet<String> warehouseIdSet = new HashSet<>();
@@ -565,7 +565,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private void syncStocktakingProfitInfoToWdt(StocktakingProfitLossEntity entity, SyncOperateEnum syncOperateEnum) {
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
 
         HashSet<String> warehouseIdSet = new HashSet<>();
@@ -683,7 +683,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
         BeanMapper.copy(dto, entity);
@@ -910,7 +910,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     public void addAndSubmit(StocktakingProfitLossDTO.AddDTO dto) {
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         this.submit(id);
 
@@ -999,7 +999,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         StocktakingProfitLossEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘盈盘亏单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         this.removeById(id);
         // 删除明细数据
@@ -1055,7 +1055,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //获取导出数据
         Page<StocktakingProfitLossDTO.ExportViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         List<String> sourceIdList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
         List<String> idList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getId).collect(Collectors.toList());

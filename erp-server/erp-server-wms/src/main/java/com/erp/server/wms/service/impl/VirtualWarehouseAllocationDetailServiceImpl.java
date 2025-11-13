@@ -149,7 +149,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdate(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO, String mainId) {
         if (CollectionUtils.isEmpty(updateDTO.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_1040, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
+            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
         }
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
@@ -232,7 +232,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_400);
+                    throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
             }
         }
     }

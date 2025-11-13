@@ -26,7 +26,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseOrderService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -43,7 +43,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
         //采购订单
         PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());

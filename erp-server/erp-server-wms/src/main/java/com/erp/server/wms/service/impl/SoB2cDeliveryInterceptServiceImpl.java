@@ -370,7 +370,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
         if( SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
-            throw new ServiceException(ApiError.ERROR_99122, "发货拦截单来源类型为三方仓，不支持确认");
+            throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_AUTO_REPLENISH_PRINT_FORBIDDEN, "发货拦截单来源类型为三方仓，不支持确认");
         }
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
@@ -447,13 +447,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             if (ObjectUtil.isNotEmpty(soB2cDelivery)) {
                 if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())) {
-                    throw new ServiceException(ApiError.ERROR_99125);
+                    throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FORBIDDEN);
                 }
 
                 List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(Collections.singletonList(soB2cDelivery.getId()));
                 String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
                 if (ObjectUtil.isNotEmpty(cancelCodes)) {
-                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
+                    throw new ServiceException(ApiError.ERROR_WMS_DOC_IN_PICK_OR_SUSPENDED_INTERCEPT_FORBIDDEN, cancelCodes);
                 }
                 //取消发货库存回滚
                 soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
@@ -480,7 +480,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
                         || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
                         SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
-                    throw new ServiceException(ApiError.ERROR_99124);
+                    throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FAIL);
                 }
                 if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
                     soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
@@ -752,7 +752,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
         if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
-            throw new ServiceException(ApiError.ERROR_99124);
+            throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FAIL);
         }
         //更新拦截单状态
         entity.setHandleResult(HandleResultEnum.FAILURE.getCode());

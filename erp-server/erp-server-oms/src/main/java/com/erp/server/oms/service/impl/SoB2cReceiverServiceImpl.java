@@ -27,7 +27,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.dto.excel.B2CCustomerImportExcelDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;

@@ -291,7 +291,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.save(addEntity);
         //保存成功
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //供应商账号信息
         List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
@@ -349,7 +349,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean addAndSubmit(SupplierDTO.AddDTO dto) {
         SupplierEntity entity = this.addSupplier(dto);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         BatchResultDTO submit = this.submit(entity);
         return submit.getSuccess();
@@ -487,7 +487,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(supplier.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.ERROR_EDIT_ALLOWED_STATUS_ONLY);
         }
         //资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
@@ -500,7 +500,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierContactDTO.UpdateDTO> contactList = dto.getContactList();
         long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_98003);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE);
         }
         BeanUtil.copyProperties(dto, supplier);
 
@@ -539,7 +539,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.updateById(supplier);
         //修改成功
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         /**
          * 添加修改日志
@@ -772,7 +772,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SupplierEntity entity : supplierList) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -869,7 +869,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SupplierEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -883,7 +883,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WF_APPROVAL_FAILED.getMsg());
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -913,7 +913,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (ApproveType.PASS.equals(type)) {
             //发送金蝶
@@ -1059,7 +1059,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         if (!approveStatus.equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
@@ -1119,11 +1119,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto) {
         String supplierId = this.updateSupplier(dto);
         if (StringUtils.isBlank(supplierId)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         SupplierEntity entity = this.getById(supplierId);
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98031);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_INFO_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity);
         return submit.getSuccess();
@@ -1165,15 +1165,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<SupplierImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<SupplierImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1497,7 +1497,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("供应商撤销流程，ids=【{}】", ids);
 
@@ -1551,7 +1551,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CharSequenceUtil.isNotBlank(dto.getPoFollowerId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getPoFollowerId());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
             }
             entity.setPoFollowerId(dto.getPoFollowerId());
             content = CharSequenceUtil.format("采购跟单员更新为【{}】",  findUserDTO.getUserName());
@@ -1646,7 +1646,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN);
             }
         }
         List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
@@ -1811,7 +1811,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public SupplierEntity add(SupplierDTO.InsertDTO addDTO) {
         SupplierEntity supplierEntity = addSupplier(addDTO);
         if(Objects.isNull(supplierEntity)){
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         SupplierEntity oldEntity = this.getById(supplierEntity.getId());
         //直接审核通过
@@ -1834,7 +1834,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
             if (ObjUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userByThird.getUserId());
             }
             supplierEntity.setApproveUserId(findUserDTO.getUserId());
             supplierEntity.setApproveUserName(findUserDTO.getUserName());
@@ -2069,7 +2069,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98034);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_NAME_EXISTS);
         }
     }
 

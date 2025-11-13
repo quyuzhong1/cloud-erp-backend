@@ -285,7 +285,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public BatchResultDTO approve(PurchaseApplicationEntity entity, ApproveOneDTO dto) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
 
         log.info("采购申请订单【{}】，ids=【{}】", ApproveTypeEnum.getName(dto.getType()), JSONUtil.toJsonStr(entity.getId()));
@@ -319,7 +319,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -336,7 +336,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatusForApprove(entity, approveStatus);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -346,7 +346,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public BatchResultDTO disApprove(PurchaseApplicationEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
         }
         log.info("采购申请单反审核，id=【{}】", entity.getId());
         //更新单据为待提交
@@ -993,7 +993,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getPurchaseOrgId()).concat(obj.getReceiveOrgId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
@@ -1219,7 +1219,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (StringUtils.isNotBlank(applyUserId)) {
             FindUserDTO applyUser = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isEmpty(applyUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             entity.setApplyUserName(applyUser.getUserName());
         }
@@ -1493,7 +1493,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
 
         //产品包装信息
@@ -1666,7 +1666,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
             if (ObjUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userByThird.getUserId());
             }
             entity.setApproveUserId(findUserDTO.getUserId());
             entity.setApproveUserName(findUserDTO.getUserName());

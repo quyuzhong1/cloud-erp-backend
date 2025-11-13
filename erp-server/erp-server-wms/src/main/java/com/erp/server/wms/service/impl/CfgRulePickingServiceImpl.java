@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,7 +20,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.pickingstrategy.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.*;
@@ -258,7 +256,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "拣货规则");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST, "拣货规则");
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件

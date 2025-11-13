@@ -125,7 +125,7 @@ public class DmpMappingUtils {
                 LocalTime value1 = (LocalTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_hms));
             }
-            KingdeeUtils.makeFieldJson(json, mappingEntity.getConvertKey(), ".", StrUtil.isNotBlank(format) ? format : value);
+            KingdeeUtils.makeFieldJson(json, mappingEntity.getConvertKey(), ".", CharSequenceUtil.isNotBlank(format) ? format : value);
             return;
         }
         if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(mappingEntity.getFieldType())) {

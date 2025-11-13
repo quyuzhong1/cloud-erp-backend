@@ -94,7 +94,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceDetailIds(detailIds);
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
@@ -105,7 +105,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.ERROR_92010);
+                throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_EXCEEDS_SALES);
             }
             String idStr = IdWorker.getIdStr();
             soDeliveryNoticeDetailEntity.setId(idStr);
@@ -145,7 +145,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         //原明细数据
         List<SoDeliveryNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
@@ -192,7 +192,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
              */
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.ERROR_92010);
+                throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_EXCEEDS_SALES);
             }
 
             soDeliveryNoticeDetailEntity.setMainId(dto.getId());
@@ -244,7 +244,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //发货通知单
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
         if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST,"发货通知单");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"发货通知单");
         }
 
         //销售明细
@@ -269,12 +269,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //销售明细
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
             }
             //销售订单
             SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
             }
 
             //无虚拟仓不扣库存

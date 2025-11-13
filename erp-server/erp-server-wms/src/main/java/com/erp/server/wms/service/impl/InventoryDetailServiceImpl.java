@@ -1,9 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -67,7 +65,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
                 .update(new InventoryDetailEntity());
 
         if(!flag) {
-            throw new ServiceException(ApiError.ERROR_1027);
+            throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
         }
 
         return flag;
@@ -97,7 +95,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
             // 更新库存明细数量
             boolean updateFlag = this.updateQtyById(inventoryDetail.getId(), qty);
             if(!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
             }
         }
         return inventoryDetail;

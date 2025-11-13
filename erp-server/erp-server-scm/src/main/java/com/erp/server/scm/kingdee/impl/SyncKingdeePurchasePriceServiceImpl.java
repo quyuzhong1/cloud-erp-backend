@@ -100,12 +100,12 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     @Override
     public DmpPushTaskEntity syncDataDetailToKingdee(List<PurchasePriceDetailEntity> details, Boolean disabled) {
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98049);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_DETAIL_NOT_FOUND);
         }
         List<String> purchasePriceIds = details.stream().map(PurchasePriceDetailEntity::getPurchasePriceId).distinct().collect(Collectors.toList());
         List<PurchasePriceEntity> list = purchasePriceService.listByIds(purchasePriceIds);
         if (CollectionUtils.isEmpty(list)) {
-           throw new ServiceException(ApiError.ERROR_98024);
+           throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -273,7 +273,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         //价目明细
         List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98049);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_DETAIL_NOT_FOUND);
         }
         List<JSONObject> list = new ArrayList<>();
         for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {

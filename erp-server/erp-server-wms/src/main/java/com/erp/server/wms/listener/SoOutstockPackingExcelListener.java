@@ -118,7 +118,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
                 continue;
             }
             if (!ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())) {
-                packingExcelDTO.setErrorMsg(ApiError.APPROVE_ING_IS_PACKING.msg);
+                packingExcelDTO.setErrorMsg(ApiError.APPROVE_ING_IS_PACKING.getMsg());
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
@@ -126,7 +126,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
 
             //只允许B2B订单装箱
             if (!OrderTypeEnum.B2B.getCode().equals(soOutstockEntity.getOrderType())) {
-                packingExcelDTO.setErrorMsg(ApiError.B2B_ORDER_IS_PACK.msg);
+                packingExcelDTO.setErrorMsg(ApiError.B2B_ORDER_IS_PACK.getMsg());
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

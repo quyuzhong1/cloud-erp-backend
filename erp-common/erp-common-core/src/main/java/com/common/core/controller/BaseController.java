@@ -3,7 +3,6 @@ package com.common.core.controller;
 
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import lombok.NoArgsConstructor;
 
 
@@ -199,7 +198,7 @@ public class BaseController {
      * @return
      */
     protected <T> ApiResult<T> failure(ApiError error, T data) {
-        return message(error.code, error.msg, data);
+        return message(error.getCode(), error.getMsg(), data);
     }
 
 
@@ -210,7 +209,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiResult<T> failure(ServiceException ex) {
-        return message(ex.getCode(), ex.getMsg(), null);
-    }
+//    protected <T> ApiResult<T> failure(ServiceException ex) {
+//        return message(ex.getCode(), ex.getMsg(), null);
+//    }
 }

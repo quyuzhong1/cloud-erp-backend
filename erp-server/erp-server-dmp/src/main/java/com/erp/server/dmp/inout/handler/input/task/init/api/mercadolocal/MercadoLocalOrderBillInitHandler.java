@@ -2,7 +2,6 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.common.core.anno.ParamData;
@@ -106,7 +105,7 @@ public class MercadoLocalOrderBillInitHandler extends DmpInputInitHandler {
 
 			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 				log.error("调用url={},入参params={}, 美客多本地站查询账单信息数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 
@@ -117,7 +116,7 @@ public class MercadoLocalOrderBillInitHandler extends DmpInputInitHandler {
 				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), BillViewDTO.class);
 			} catch (JsonProcessingException e) {
 				log.error("美客多本地站查询账单信息接口数据解析错误，数据={}", apiResult.getData());
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {

@@ -35,7 +35,6 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -459,7 +458,7 @@ public class ExcelUtil {
             excelWriter.finish(); // 必须调用 finish 确保写入完成
             return outputFile;
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
         } finally {
             // 关闭模板流（重要！）
             if (templateStream != null) {
@@ -675,7 +674,7 @@ public class ExcelUtil {
             wb.write(output);
         } catch (Exception e) {
             log.error("ExcelUtil.downloadTemplate 下载失败 e={}", ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -708,7 +707,7 @@ public class ExcelUtil {
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {
-            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_95131);
+            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
     public static File customExportUtil(String fileName, List<JSONObject> list, List<String> heads) {

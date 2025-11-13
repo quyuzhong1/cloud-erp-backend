@@ -106,11 +106,11 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
             dto.setChildId(id);
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-                errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
             }else {
                 SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(addDTO.getSkuId()) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
-                    errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                    errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
                 }else {
                     addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                     addDTO.setAvailableQty(skuAvailableQtyDTO.getAvailableQty());

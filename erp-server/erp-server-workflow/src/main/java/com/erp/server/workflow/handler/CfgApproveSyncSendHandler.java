@@ -262,7 +262,7 @@ public class CfgApproveSyncSendHandler {
                 if(thirdUnionMap.containsKey(userId)){
                     newRecord.setReceiverName(thirdUnionMap.get(userId).getUserName());
                     if(StringUtils.isBlank(thirdUnionMap.get(userId).getThirdUserId())){
-                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
                         list.add(newRecord);
                     }else {
                         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -274,7 +274,7 @@ public class CfgApproveSyncSendHandler {
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
                     list.add(newRecord);
                 }
             }
@@ -348,7 +348,7 @@ public class CfgApproveSyncSendHandler {
                     ThirdUnionDTO thirdUnionDTO = thirdUnionMap.get(e.getCurApproveId());
                     newRecord.setReceiverName(thirdUnionDTO.getUserName());
                     if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId())){
-                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
                         list.add(newRecord);
                     }else {
                         params.setThirdUserId(thirdUnionDTO.getThirdUserId());
@@ -360,7 +360,7 @@ public class CfgApproveSyncSendHandler {
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
                     list.add(newRecord);
                 }
             }

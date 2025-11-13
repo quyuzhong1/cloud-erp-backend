@@ -35,7 +35,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -291,11 +290,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         TransferInfoEntity entity = this.getById(id);
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         //提交
         this.submit(entity, Boolean.FALSE);
@@ -309,11 +308,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         TransferInfoEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         //提交
         this.submit(entity, Boolean.FALSE);
@@ -321,7 +320,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //审核
         TransferInfoEntity approveEntity = this.getById(entity.getId());
         if (ObjectUtil.isEmpty(approveEntity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         return id;
@@ -333,13 +332,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         TransferInfoEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         if (CharSequenceUtil.isNotBlank(old.getBatchNo())){
-            throw new ServiceException(ApiError.ERROR_92248);
+            throw new ServiceException(ApiError.ERROR_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         //马帮直接调拨单不允许修改 TODO
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(dto.getCode())) {
@@ -370,7 +369,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         this.update(dto);
         TransferInfoEntity entity = this.getById(dto.getId());
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         //提交
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
@@ -381,17 +380,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(TransferInfoEntity entity, Boolean isStartProcess) {
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         //验证调出入仓库是否相同
         for (TransferInfoDetailEntity detailEntity : detailList) {
             if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.code,CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.msg,entity.getCode())));
             }
         }
         log.info("直接调拨单提交，id=【{}】", entity.getId());
@@ -412,12 +411,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //主表信息
         TransferInfoEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
 
@@ -481,7 +480,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //待提交并且未作废允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
         //马帮直接调拨单不允许删除 TODO
@@ -523,11 +522,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (TransferInfoEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getCode())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_TRANSFER_MB_UPDATE.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_TRANSFER_MB_UPDATE.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -565,11 +564,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("直接调拨单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -599,7 +598,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("调拨申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
 
@@ -616,7 +615,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public BatchResultDTO notProcessApprove(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee){
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
@@ -630,7 +629,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //直接调拨单明细
             List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99048);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
             }
             //更新库存
             updateInventoryTransCore(Collections.singletonList(entity),detailList);
@@ -686,7 +685,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()){
@@ -714,7 +713,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //直接调拨单明细
             List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99048);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
             }
             //更新库存
             updateInventoryTransCore(Collections.singletonList(entity),detailList);
@@ -1103,7 +1102,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             TransferInfoEntity transferInfoEntity = pushList.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(transferInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
             }
             //要货申请明细数据
             RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream()
@@ -1203,7 +1202,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //查询直接调拨单明细数据
         List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
         if(transferDetailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
 
         HashSet<String> warehouseIdSet = new HashSet<>();
@@ -1255,7 +1254,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public BatchResultDTO disApprove(TransferInfoEntity entity, Boolean isPushKingDee,Boolean isManual) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单反审核，id=【{}】", entity.getId());
@@ -1312,7 +1311,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("直接调拨单撤销流程，id=【{}】", ids);
 
@@ -1369,7 +1368,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         BeanMapperUtils.copy(entity, viewDTO);
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
         viewDTO.setDetailList(viewDetailList);
@@ -1465,7 +1464,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             TransferInfoEntity transferInfoEntity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(transferInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
             }
 
             //调拨操作请求实体
@@ -1617,13 +1616,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isEmpty(transferDirectionList)) {
-            throw new ServiceException(ApiError.ERROR_99049);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECTION_NOT_FOUND);
         }
 
 
@@ -1637,7 +1636,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
             if (CharSequenceUtil.isBlank(productName)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             obj.setProductName(productName);
             //来源类型名称
@@ -1646,7 +1645,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {
-                throw new ServiceException(ApiError.ERROR_99049);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECTION_NOT_FOUND);
             }
             obj.setTransferDirectionName(transferDirectionName);
 
@@ -1707,7 +1706,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(),entity.getOutOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
 
         //调入组织名称
@@ -1734,11 +1733,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      */
     private List<TransferInfoEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<TransferInfoEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         return list;
     }
@@ -1958,7 +1957,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())
                 && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
         //马帮直接调拨单不允许删除 TODO
@@ -2205,7 +2204,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         List<TransferInfoDetailDTO.ApproveDTO> detailList = detailMap.get(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         variablesMap.put("detailList", detailList);
         //调拨总数

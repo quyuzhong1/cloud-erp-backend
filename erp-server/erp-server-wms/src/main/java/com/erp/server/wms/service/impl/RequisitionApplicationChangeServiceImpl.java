@@ -158,7 +158,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         this.checkExist(businessDetailIds,updateDTO.getBusinessId(), updateDTO.getId());
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         if(!SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(old.getSourceType())){
             throw new ServiceException("拣货单修改提交生成的变更单，不允许编辑");
@@ -292,7 +292,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         RequisitionApplicationChangeEntity entity = getById(id);
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //保存虚拟仓数据
         detailService.updateVirtualWarehouse(approveViewList, approveType);
@@ -352,7 +352,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -381,7 +381,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         super.removeById(id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
@@ -398,7 +398,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
@@ -1083,7 +1083,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     private void validateSubmit(RequisitionApplicationChangeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
     }
 

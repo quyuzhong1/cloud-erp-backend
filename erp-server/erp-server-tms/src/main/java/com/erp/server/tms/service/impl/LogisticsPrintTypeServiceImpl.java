@@ -1,10 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;

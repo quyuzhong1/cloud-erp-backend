@@ -32,8 +32,6 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -336,7 +334,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
-            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.msg);
+            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.getMsg());
         }
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");

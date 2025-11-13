@@ -141,12 +141,12 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                    errorMsgList.add(ApiError.ERROR_95091.getMsg());
                 }
                 //二级品类
                 BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_95092.msg);
+                    errorMsgList.add(ApiError.ERROR_95092.getMsg());
                 }
                 productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }

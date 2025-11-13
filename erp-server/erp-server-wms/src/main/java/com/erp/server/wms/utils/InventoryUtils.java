@@ -37,15 +37,15 @@ public class InventoryUtils {
     public static void checkTransRule(TransactionRuleDTO transactionRule) {
         // 交易规则-选项错误
         InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = transactionRule.getWarehouseOption();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_99033));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_WAREHOUSE_CONFIG_ERROR));
 
         // 交易规则-库存状态错误
         InventoryStatusEnum inventoryStatusEnum = transactionRule.getInventoryStatus();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.ERROR_99036));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_STATUS_CONFIG_ERROR));
 
         // 交易规则-交易类型错误
         InventoryModeEnum inventoryModeEnum = transactionRule.getTransactionMode();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_99038));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_TX_TYPE_ERROR));
     }
 
     /**

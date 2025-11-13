@@ -233,7 +233,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity = BeanMapperUtils.map(WarehouseLocationMoveEntity.class, updateDTO);
         // 数据处理
@@ -279,7 +279,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity =  BeanMapperUtils.map(WarehouseLocationMoveEntity.class, pcUpdateDTO);
         if (CharSequenceUtil.isBlank(pcUpdateDTO.getWarehouseId())){
@@ -508,12 +508,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         WarehouseLocationMoveEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -548,7 +548,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -657,10 +657,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private Boolean validateDisApprove(WarehouseLocationMoveEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType()) || SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(entity.getSourceType())){
-            throw new ServiceException(ApiError.ERROR_99135);
+            throw new ServiceException(ApiError.ERROR_WMS_PICKLIST_GENERATED_TRANSFER_REVERSE_FORBIDDEN);
         }
         return true;
     }
@@ -671,7 +671,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         WarehouseLocationMoveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除明细数据
         warehouseLocationMoveDetailService.removeByMainId(id);
@@ -691,7 +691,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         WarehouseLocationMoveEntity entity = super.getByIdOpt(warehouseLocationMoveDetailEntity.getMainId()).orElseThrow(()->new ServiceException("未找到仓位移动主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除明细数据
         warehouseLocationMoveDetailService.removeByMainId(warehouseLocationMoveDetailEntity.getMainId());
@@ -741,10 +741,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         WarehouseLocationMoveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         if (SourceTypeEnum.pickingLists().contains(entity.getSourceType())) {
-            throw new ServiceException(ApiError.ERROR_99141);
+            throw new ServiceException(ApiError.ERROR_WMS_PICKLIST_PUSHED_DELIVERY_WH_MOVE_LOCKED);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -775,7 +775,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         WarehouseLocationMoveEntity entity = super.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",mainId);
@@ -1110,7 +1110,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private void validateSubmit(WarehouseLocationMoveEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -1141,7 +1141,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     public Boolean invalid(List<String> ids, String remark) {
         List<WarehouseLocationMoveEntity> infoEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //审核不通过 待提交可以作废
         long count = infoEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1150,7 +1150,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         ).count();
 
         if (count != infoEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
 
         //修改状态为待提交
@@ -1202,15 +1202,15 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         try {
             EasyExcel.read(excelFile.getInputStream(), MoveInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error("导入错误！", e);  throw new ServiceException(ApiError.ERROR_95124);
+            log.error("导入错误！", e);  throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！",e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<MoveInfoExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         WarehouseLocationMoveDTO.ImportDTO importDTO = new WarehouseLocationMoveDTO.ImportDTO();
         List<WarehouseLocationMoveDTO.DetailViewDTO> successList = excelListenerUtil.getSuccessList();

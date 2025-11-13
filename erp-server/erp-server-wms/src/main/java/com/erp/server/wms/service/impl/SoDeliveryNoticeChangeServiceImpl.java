@@ -165,7 +165,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         this.checkExist(sourceDetailIds,old.getSourceId(), updateDTO.getId());
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity =  BeanMapperUtils.map(SoDeliveryNoticeChangeEntity.class, old);
         soDeliveryNoticeChangeEntity.setChangeReason(updateDTO.getChangeReason());
@@ -303,12 +303,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         SoDeliveryNoticeChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
@@ -348,7 +348,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -399,7 +399,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -739,7 +739,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     private void validateSubmit(SoDeliveryNoticeChangeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
     }
 
@@ -773,7 +773,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         //销售订单
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soDeliveryNoticeEntity.getSourceId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         //无虚拟仓不扣库存
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -782,7 +782,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         //销售订单明细
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
         }
         //销售订单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> subParamList = new ArrayList<>();
@@ -829,7 +829,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             SoDeliveryNoticeDetailEntity finalDetailEntity = detailEntity;
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), finalDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
             }
             //删除类型时新数量设置为0
             Integer newQty = StrUtil.equals(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode(),changeDetailEntity.getChangeType())

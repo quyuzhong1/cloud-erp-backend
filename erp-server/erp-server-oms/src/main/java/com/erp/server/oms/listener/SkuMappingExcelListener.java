@@ -215,7 +215,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(shop)) {
-            errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;

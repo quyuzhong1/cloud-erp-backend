@@ -100,12 +100,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public BatchResultDTO add(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
         String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
         if(StringUtils.isBlank(addDTO.getChangeSellerId())){
-            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92158.msg);
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92158.getMsg());
         }
         String changeSellerId = addDTO.getChangeSellerId();
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(changeSellerId);
         if (Objects.isNull(userByUserId)) {
-            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92157.msg);
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92157.getMsg());
         }else{
             addDTO.setChangeSellerName(userByUserId.getUserName());
         }
@@ -244,11 +244,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(CustomerB2bSellerChangeDTO.UpdateDTO dto) {
         if(StringUtils.isBlank(dto.getChangeSellerId())){
-            throw new ServiceException(ApiError.ERROR_92158.msg);
+            throw new ServiceException(ApiError.ERROR_92158.getMsg());
         }
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(dto.getChangeSellerId());
         if (Objects.isNull(userByUserId)) {
-            throw new ServiceException(ApiError.ERROR_92157.msg);
+            throw new ServiceException(ApiError.ERROR_92157.getMsg());
         }else{
             dto.setChangeSellerName(userByUserId.getUserName());
         }
@@ -284,7 +284,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_92159.msg);
+                batchResultDTO.setMsg(ApiError.ERROR_92159.getMsg());
                 resultDTOList.add(batchResultDTO);
                 continue;
             }
@@ -331,7 +331,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_92159.msg);
+                batchResultDTO.setMsg(ApiError.ERROR_92159.getMsg());
                 continue;
             }
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
@@ -366,7 +366,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_92159.msg);
+                batchResultDTO.setMsg(ApiError.ERROR_92159.getMsg());
                 continue;
             }
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
@@ -406,7 +406,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Override
     public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,CustomerB2bSellerChangeEntity entity,CustomerInfoEntity customerInfo) {
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-            return BatchResultDTO.fail(entity.getId(),customerInfo.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),customerInfo.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         BatchResultDTO batchResultDTO = new BatchResultDTO();
         batchResultDTO.setId(entity.getId());
@@ -574,18 +574,18 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public Boolean update(CustomerB2bSellerChangeDTO.UpdateDTO updateDTO) {
         CustomerB2bSellerChangeEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_92155.msg);
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_92155.getMsg());
         }
         // 待提交和审核不通过允许修改
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
         if(StringUtils.isBlank(updateDTO.getChangeSellerId())){
-            throw new ServiceException(ApiError.ERROR_92158.msg);
+            throw new ServiceException(ApiError.ERROR_92158.getMsg());
         }
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(updateDTO.getChangeSellerId());
         if (Objects.isNull(userByUserId)) {
-            throw new ServiceException(ApiError.ERROR_92157.msg);
+            throw new ServiceException(ApiError.ERROR_92157.getMsg());
         }else{
             updateDTO.setChangeSellerName(userByUserId.getUserName());
 
@@ -606,7 +606,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             throw new ServiceException("b2b客户销售员变更单保存失败");
         }
         log.info("编辑 开始记录b2b客户销售员变更单日志数据，id：【{}】", customerB2bSellerChangeEntity.getId());
-        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerB2bSellerChangeEntity.getId(), ApiError.ERROR_92155.msg);
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerB2bSellerChangeEntity.getId(), ApiError.ERROR_92155.getMsg());
         operateLogService.addModuleOperateLogByObj(old, customerB2bSellerChangeEntity, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }

@@ -339,7 +339,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //待提交或审核不通过并且未作废允许提交
         long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //本次下推入库明细信息
         List<PoInstockDetailEntity> thisDetailList = poInstockDetailService.listByMainIds(ids);
@@ -379,11 +379,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
                 //入库完成
                 if (purchaseOrderDetailEntity.getPurchaseQty() + returnQty == hasInstockQty.intValue()) {
-                    throw new ServiceException(ApiError.ERROR_99075, poCode, purchaseOrderDetailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.ERROR_WMS_PO_INBOUND_ALREADY_COMPLETED, poCode, purchaseOrderDetailEntity.getSkuNo());
                 }
                 //未入库完成，但剩余数量不够
                 if (thisInstockQty > purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue() + returnQty) {
-                    throw new ServiceException(ApiError.ERROR_99074, poCode, purchaseOrderDetailEntity.getSkuNo(), purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue() + returnQty);
+                    throw new ServiceException(ApiError.ERROR_WMS_PO_INBOUND_REMAIN_QTY_EXCEEDS, poCode, purchaseOrderDetailEntity.getSkuNo(), purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue() + returnQty);
                 }
             }
         }
@@ -450,7 +450,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //主表信息
         PoInstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98050);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, dto);
 
@@ -459,7 +459,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //采购信息
         PurchaseOrderDTO.GetOneDTO purchaseOrderDTO = scmTaskFeign.getByOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderDTO)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         dto.setPurchaseOrderCode(purchaseOrderDTO.getCode());
         WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(entity.getSourceId());
@@ -472,7 +472,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //明细信息
         List<PoInstockDetailEntity> entityDetails = poInstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(entityDetails)) {
-            throw new ServiceException(ApiError.ERROR_98002);
+            throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
         }
         List<PoInstockDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PoInstockDetailDTO.ViewDTO.class, entityDetails);
         List<String> skuIds = entityDetails.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
@@ -483,7 +483,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> podIds = entityDetails.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         //采购订单明细下所有入库数据
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
@@ -499,7 +499,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             if (CollectionUtils.isNotEmpty(skuVOList)) {
                 SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 obj.setProductName(skuVO.getSkuName());
                 obj.setSpuNo(skuVO.getSpuNo());
@@ -567,7 +567,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询采购供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         PoInstockDTO.SupplierDTO supplierDTO = new PoInstockDTO.SupplierDTO();
         supplierDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
@@ -600,7 +600,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //待提交允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         log.info("采购入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
@@ -624,11 +624,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("采购入库单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -652,13 +652,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(PoInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         List<PoInstockEntity> list = Collections.singletonList(entity);
         //采购入库单明细
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_DETAIL_NOT_FOUND);
         }
 
         log.info("采购入库单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
@@ -757,12 +757,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //采购入库单明细-父级
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(Collections.singletonList(poInstockEntity.getId()));
         if (CollectionUtils.isEmpty(poInstockDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_DETAIL_NOT_FOUND);
         }
         //查询采购订单记录-父级
         List<PurchaseOrderEntity> purchaseOrderEntities = scmTaskFeign.listPurchaseOrderByIds(Collections.singletonList(poInstockEntity.getPurchaseOrderId()));
         if (CollectionUtils.isEmpty(purchaseOrderEntities)){
-            log.error(ApiError.ERROR_98025.msg);
+            log.error(ApiError.ERROR_SCM_PO_NOT_FOUND.getMsg());
             return;
         }
         List<String> sourceIds = purchaseOrderEntities.stream().filter(e -> Objects.nonNull(e) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(e.getSubcontractType())).map(PurchaseOrderEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -795,13 +795,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //采购订单明细-成品
             PurchaseOrderDetailEntity purchaseOrderDetail = purchaseOrderDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (Objects.isNull(purchaseOrderDetail)) {
-                log.error(ApiError.ERROR_98026.msg);
+                log.error(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND.getMsg());
                 continue;
             }
             //子级委外订单明细
             List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentId(), purchaseOrderDetail.getSourceDetailId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(subDetailList)) {
-                log.error(ApiError.ERROR_98070.msg);
+                log.error(ApiError.ERROR_SCM_OUTSOURCING_ORDER_DETAIL_NOT_FOUND.getMsg());
                 continue;
             }
             //获取委外订单中的sku版本及用量
@@ -815,7 +815,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(poDetailEntity.getSkuId()))
                         .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(quantity)) {
-                    log.error(ApiError.ERROR_95166.msg);
+                    log.error(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND.getMsg());
                     continue;
                 }
                 //匹配对应采购订单明细记录
@@ -896,7 +896,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
         for (PoInstockDetailEntity detailEntity : detailList) {
@@ -936,12 +936,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public BatchResultDTO disApprove(PoInstockEntity entity,List<PoReturnEntity> returnEntityList,List<SubcontractIssueEntity> issueEntityList) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<PoInstockEntity> list = Collections.singletonList(entity);
         //判断是否已经下推退货单
         if (CollectionUtils.isNotEmpty(returnEntityList)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WMS_ALREADY_PUSHED_RETURN_REVERSE_FORBIDDEN.getMsg());
         }
         //判断是否已经生成委外发料单
         if (CollectionUtils.isNotEmpty(issueEntityList)) {
@@ -1006,7 +1006,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private void syncDisApproveInStockToWdt(PoInstockEntity entity, SyncOperateEnum syncOperateEnum) {
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
 
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getDeliveryWarehouseId()), "wdt");
@@ -1035,7 +1035,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("采购入库单撤销流程，id=【{}】", ids);
 
@@ -1070,7 +1070,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> podIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getDeliveryWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
@@ -1084,7 +1084,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_98026);
+                throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
             }
             dto.setPurchaseOrderDetailId(detailEntity.getId());
             //币别
@@ -1119,23 +1119,23 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //来源单据为采购入库单
         List<PoInstockEntity> sourceList = this.listByIds(sourceIds);
         if (CollectionUtils.isEmpty(sourceList)) {
-            throw new ServiceException(ApiError.ERROR_98050);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
         }
         long count = sourceList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99012);
+            throw new ServiceException(ApiError.ERROR_WMS_PO_INBOUND_ONLY_CAN_PUSH_RETURN);
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //采购入库单
         List<PoInstockDetailEntity> sourceDetailList = poInstockDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(sourceDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_DETAIL_NOT_FOUND);
         }
         //采购订单
         List<String> poIdList = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
         if (CollectionUtils.isEmpty(purchaseOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
@@ -1148,12 +1148,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //采购入库单
             PoInstockEntity poInstockEntity = sourceList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(poInstockEntity)) {
-                throw new ServiceException(ApiError.ERROR_98050);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
             }
             //采购订单
             PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
+                throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
             }
 
             BeanMapperUtils.copy(poInstockEntity, addDTO);
@@ -1279,11 +1279,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      */
     private List<PoInstockEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<PoInstockEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98050);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
         }
         return list;
     }
@@ -1295,7 +1295,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询采购订单信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         entity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         entity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
@@ -1308,7 +1308,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         entity.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
         entity.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
@@ -1323,7 +1323,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CharSequenceUtil.isNotBlank(stockInUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(stockInUserId);
             if (ObjectUtils.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
             }
             entity.setStockInUserName(userDTO.getUserName());
         }
@@ -1331,7 +1331,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CharSequenceUtil.isNotBlank(stockInDeptId)) {
             SysDepartmentDTO depart = sysUserFeign.getUserDeptById(stockInDeptId);
             if (ObjectUtils.isEmpty(depart)) {
-                throw new ServiceException(ApiError.ERROR_9029);
+                throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
             }
             entity.setStockInDeptName(depart.getName());
         }
@@ -1340,7 +1340,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //仓库信息
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(deliveryWarehouseId));
             if (CollectionUtils.isEmpty(warehouseList)) {
-                throw new ServiceException(ApiError.ERROR_99002);
+                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
             }
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDeliveryWarehouseName(warehouseName);
@@ -1349,7 +1349,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         String purchaseOrderId = entity.getPurchaseOrderId();
         PurchaseOrderDTO.GetOneDTO getOneDTO = scmTaskFeign.getByOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(getOneDTO)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         entity.setSubcontractType(getOneDTO.getSubcontractType());
         //采购订单类型
@@ -1409,11 +1409,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderList)) {
             log.error("未找到订单信息，ids={}", JSONUtil.toJsonStr(ids));
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98054);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_APPROVED_ONLY_CAN_PUSH_INBOUND);
         }
 
         //订单明细信息集合
@@ -1421,7 +1421,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailIdList);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             log.error("未找到订单明细信息，detailIdList={}", JSONUtil.toJsonStr(detailIdList));
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
 
 
@@ -1443,7 +1443,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseOrderId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 log.error("未找到订单明细信息，id={}", purchaseOrderId);
-                throw new ServiceException(ApiError.ERROR_98025);
+                throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
             }
             addDTO.setPurchaseOrderId(purchaseOrderId);
             addDTO.setSourceId(purchaseOrderId);
@@ -1991,7 +1991,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //新增
         String id = this.pdaAdd(dto, Boolean.FALSE);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //提交
         this.submit(Collections.singletonList(id));
@@ -2017,7 +2017,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> podIds = entityDetails.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
 
         Map<String, PoInstockDetailDTO.ViewDTO> collect = viewDTO.getDetails().stream().collect(Collectors.groupingBy(n -> n.getSkuNo() + "-" + n.getWarehouseLocation(), Collectors.collectingAndThen(Collectors.toList(), m -> {
@@ -2096,7 +2096,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> poInIds = resultList.stream().map(PoInstockEntity::getId).collect(Collectors.toList());
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(poInIds);
         if (CollectionUtils.isEmpty(poInstockDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_DETAIL_NOT_FOUND);
         }
 
         //委外订单明细父级SKU信息ids
@@ -2137,12 +2137,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //采购订单明细
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(poDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_98026);
+                    throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
                 }
                 //子级委外订单明细
                 List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentId(), poDetailEntity.getSourceDetailId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(subDetailList)) {
-                    throw new ServiceException(ApiError.ERROR_98070);
+                    throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_DETAIL_NOT_FOUND);
                 }
                 List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
@@ -2154,7 +2154,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                             .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
                             .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(quantity)) {
-                        throw new ServiceException(ApiError.ERROR_95166);
+                        throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND);
                     }
                     addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
                     addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
@@ -2223,7 +2223,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //待提交允许删除
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -2251,11 +2251,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //非待提交和审核不通过不能作废
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("采购入库单作废，ids=【{}】", JSONUtil.toJsonStr(entity.getId()));
 
@@ -2280,7 +2280,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //审核中允许审核
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("采购入库单撤销流程，id=【{}】", entity.getId());
 

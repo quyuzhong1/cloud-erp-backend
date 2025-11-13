@@ -298,7 +298,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                                   List<WarehouseReceiveDetailEntity> receiveDetailEntityList) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //验证存货核算是否关账
        /* List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = new ArrayList<>(2);
@@ -543,7 +543,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (StringUtils.isNotBlank(changeUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(changeUserId);
             if (ObjectUtils.isEmpty(purchaseUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             entity.setChangeUserName(purchaseUser.getUserName());
         }

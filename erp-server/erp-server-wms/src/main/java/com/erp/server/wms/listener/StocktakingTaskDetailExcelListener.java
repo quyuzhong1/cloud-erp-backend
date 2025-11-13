@@ -99,7 +99,7 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
         }
         //仓位
         String warehouseLocation = Objects.isNull(excelDTO.getWarehouseLocation()) ? "" : excelDTO.getWarehouseLocation();

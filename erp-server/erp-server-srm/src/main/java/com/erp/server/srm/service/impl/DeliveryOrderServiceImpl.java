@@ -385,7 +385,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderFeign.getPurchaseOrderByIds(orderIds);
         //订单数据为空直接返回
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98025.msg));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98025.getMsg()));
             return dtos;
         }
         List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
@@ -400,7 +400,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIds);
 
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.msg));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.getMsg()));
             return dtos;
         }
         for (Map.Entry<String, List<DeliveryOrderDTO.AddDeliveryDTO>> entry  :purchaseMap.entrySet()) {
@@ -409,7 +409,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS = entry.getValue();
             PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
             if (Objects.isNull(purchaseOrderEntity)){
-                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_98025.msg));
+                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_98025.getMsg()));
                 continue;
             }
             try {

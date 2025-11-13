@@ -550,7 +550,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         String type = dto.getType();
 
@@ -572,7 +572,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
@@ -1856,7 +1856,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1935,7 +1935,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
             if (ObjectUtils.isEmpty(purchaseUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             entity.setPurchaseUserName(purchaseUser.getUserName());
             // 部门
@@ -2525,7 +2525,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (ObjectUtil.isEmpty(entity)) {
                 batchResultDTO.setId(id);
                 batchResultDTO.setSuccess(false);
-                batchResultDTO.setMsg(ApiError.ERROR_98025.msg);
+                batchResultDTO.setMsg(ApiError.ERROR_98025.getMsg());
                 dtos.add(batchResultDTO);
                 continue;
             }

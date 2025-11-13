@@ -37,23 +37,23 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 	@Override
 	protected Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
 		ApiError defaultError = ApiError.DEFAULT;
-		String code = StrUtils.null2EmptyWithTrim(defaultError.code);
-		String errorMessage = defaultError.msg;
+		String code = StrUtils.null2EmptyWithTrim(defaultError.getCode());
+		String errorMessage = defaultError.getMsg();
 		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
 		log.error(CharSequenceUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
 		// 1023服务暂时不可用
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
-			ApiError apiError503 = ApiError.ERROR_1023;
-			code = StrUtils.null2EmptyWithTrim(apiError503.code);
-			errorMessage = apiError503.msg;
+			ApiError apiError503 = ApiError.ERROR_SERVICE_UNAVAILABLE;
+			code = StrUtils.null2EmptyWithTrim(apiError503.getCode());
+			errorMessage = apiError503.getMsg();
 		}
 		// 404接口路径不存在
 		if (error instanceof org.springframework.web.server.ResponseStatusException
 				&& HttpStatus.NOT_FOUND.equals(((ResponseStatusException) error).getStatus())){
-			ApiError apiError404 = ApiError.ERROR_404_NOT_FIND;
-			code = apiError404.code.toString();
-			errorMessage = apiError404.msg;
+			ApiError apiError404 = ApiError.ERROR_HTTP_NOT_FOUND;
+			code = String.valueOf(apiError404.getCode());
+			errorMessage = apiError404.getMsg();
 		}
 		map.put("code", code);
 		map.put("msg", errorMessage);

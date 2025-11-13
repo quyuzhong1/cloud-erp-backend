@@ -11,7 +11,6 @@ import com.erp.server.wms.service.VirtualWarehouseChannelPartitionRefService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;

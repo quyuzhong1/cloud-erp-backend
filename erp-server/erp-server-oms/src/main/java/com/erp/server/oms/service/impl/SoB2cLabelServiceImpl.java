@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.SoB2cLabelEntity;
 import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
@@ -17,7 +16,6 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

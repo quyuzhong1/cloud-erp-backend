@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -11,7 +10,6 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerSellerMapper;
 import com.erp.server.oms.service.CustomerSellerService;

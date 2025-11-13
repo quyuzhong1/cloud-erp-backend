@@ -10,7 +10,6 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.DictCountryOrgDTO;
 import java.util.*;

@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -44,7 +42,6 @@ import com.erp.server.wms.mapper.StocktakingPlanMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,7 +130,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
         }
     }
 
@@ -172,7 +169,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 数据处理
         handleData(updateDTO);
@@ -200,7 +197,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         validateSubmit(entity);
         // 更新单据审核状态
@@ -233,7 +230,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         detailList.stream().forEach( item -> {
             // 校验明细数据
             // 按仓库盘点必须有仓库id
-            ValidatorUtil.isNotBlank(item.getWarehouseId(), ApiError.ERROR_99001);
+            ValidatorUtil.isNotBlank(item.getWarehouseId(), ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
             // 按照仓位盘点必须有仓库id和仓位和库区
             if (Objects.equals(StocktakingTypeEnum.BY_LOCATION, entity.getType())) {
                 ValidatorUtil.isNotNull(item.getWarehouseLocation(), ApiError.WAREHOUSE_LOCATION_IS_NULL);
@@ -241,7 +238,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             }
             // 按照sku盘点必须有仓库id和sku
             if (Objects.equals(StocktakingTypeEnum.BY_SKU, entity.getType())) {
-                ValidatorUtil.isNotBlank(item.getSkuId(), ApiError.ERROR_95198);
+                ValidatorUtil.isNotBlank(item.getSkuId(), ApiError.ERROR_PLM_SKU_CODE_REQUIRED);
                 ValidatorUtil.isNotNull(item.getWarehouseLocation(), ApiError.WAREHOUSE_LOCATION_IS_NULL);
                 ValidatorUtil.isNotNull(item.getWarehouseArea(), ApiError.WAREHOUSE_AREA_IS_NULL);
             }
@@ -296,12 +293,12 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             // 审核不通过必须填写审核意见
-           throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+           throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         StocktakingPlanEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -329,7 +326,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -374,7 +371,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private Boolean validateDisApprove(StocktakingPlanEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // 下游盘点计划单全部为未开始时允许反审核
         List<StocktakingTaskEntity> taskEntityList = stocktakingTaskService.listBySourceId(entity.getId());
@@ -394,7 +391,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除日志数据
         log.info("删除 开始删除盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(id));
@@ -416,7 +413,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // 撤销流程
         log.info("撤销 开始修改盘点计划单状态，id：【{}】", id);

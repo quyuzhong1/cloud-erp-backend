@@ -1,45 +1,28 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.inout.utils.DmpMappingUtils;
 import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -97,7 +97,7 @@ public class EmailSendServiceImpl extends BaseMessageSendService {
         } else {
             ApiError sendMailError = ApiError.ERROR_1010;
             msgResult.setCode(sendMailError.code);
-            msgResult.setMsg(sendMailError.msg);
+            msgResult.setMsg(sendMailError.getMsg());
         }
         return msgResult;
     }

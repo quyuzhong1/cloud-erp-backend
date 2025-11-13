@@ -138,7 +138,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         boolean flag = this.save(entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
 
         return flag;
@@ -210,7 +210,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         boolean flag = this.updateById(docsNameEntity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName =loginUser.getUserName();
@@ -277,7 +277,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         this.save(entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         return entity.getId();
     }

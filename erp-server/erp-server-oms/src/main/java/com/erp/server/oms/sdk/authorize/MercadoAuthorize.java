@@ -20,7 +20,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.MercadolibreBusinessModelEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;

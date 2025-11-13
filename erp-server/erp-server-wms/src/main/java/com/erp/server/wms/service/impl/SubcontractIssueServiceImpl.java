@@ -164,7 +164,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         SubcontractIssueEntity subcontractIssueEntity =  BeanMapperUtils.map(SubcontractIssueEntity.class, updateDTO);
 
@@ -241,7 +241,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         // 更新单据审核状态
@@ -266,12 +266,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         SubcontractIssueEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -299,7 +299,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -334,7 +334,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除主单数据
         log.info("删除 开始删除委外发料单主单数据，id：【{}】", id);
@@ -359,7 +359,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改委外发料单状态数据，id：【{}】", id);
         lambdaUpdate().eq(SubcontractIssueEntity::getId, id)
@@ -383,7 +383,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         log.info("撤销 开始修改委外发料单状态，id：【{}】", id);
@@ -425,17 +425,17 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         String sourceId = dto.getSourceId();
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(sourceId));
         if (CollUtil.isEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
         //委外明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(sourceId));
         if (CollUtil.isEmpty(subcontractOrderDetailList)) {
-            throw  new ServiceException(ApiError.ERROR_98070);
+            throw  new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_DETAIL_NOT_FOUND);
         }
         //委外父级SKU明细
         List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getParentId()) && (CollUtil.isEmpty(dto.getSkuNoList()) ? Boolean.TRUE : dto.getSkuNoList().contains(obj.getSkuNo()))).collect(Collectors.toList());
         if (CollUtil.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98071);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_PARENT_SKU_NOT_FOUND);
         }
 
         //bom信息
@@ -445,7 +445,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外子级SKU明细
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98072);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_CHILD_SKU_NOT_FOUND);
         }
 
         //已审核发料数量
@@ -468,7 +468,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(parentDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95010);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
             }
             detailListDTO.setCategoryName(skuVO.getCategoryName());
             detailListDTO.setBrandName(skuVO.getBrandName());
@@ -503,7 +503,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                    throw new ServiceException(ApiError.ERROR_95163);
+                    throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
                 }
                 detailDTO.setProductName(bomChildrenSkuDTO.getSkuName());
                 detailDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
@@ -553,7 +553,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //提交
         BatchResultDTO submit = this.submit(add.getId(),Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042,"委外发料");
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"委外发料");
         }
         //审核
         ApproveOneDTO oneDTO = new ApproveOneDTO();
@@ -670,7 +670,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setProductName(skuVO.getSkuName());
             //即时库存
@@ -771,7 +771,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(subcontractIssueEntity.getSubcontractOrderId()));
         if (CollUtil.isEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
         subcontractIssueEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
         //来源单号为委外订单时
@@ -781,7 +781,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             //来源单号是入库单
             PoInstockEntity poInstockEntity = poInstockService.getById(subcontractIssueEntity.getSourceId());
             if (ObjectUtil.isEmpty(poInstockEntity)) {
-                throw new ServiceException(ApiError.ERROR_98050);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
             }
             subcontractIssueEntity.setSourceCode(poInstockEntity.getCode());
         }
@@ -869,7 +869,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //所有父级数据
         List<SubcontractOrderDetailEntity> parentDetailList = subcontractOrderDetailList.stream().filter(obj -> parentIdList.contains(obj.getId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(parentDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98071);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_PARENT_SKU_NOT_FOUND);
         }
         //录入单据父级SKU供应商需要一致
         long count = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).distinct().count();

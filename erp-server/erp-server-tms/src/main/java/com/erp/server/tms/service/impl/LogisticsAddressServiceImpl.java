@@ -19,7 +19,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;

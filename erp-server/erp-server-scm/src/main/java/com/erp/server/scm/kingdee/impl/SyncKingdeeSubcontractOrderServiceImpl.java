@@ -167,7 +167,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         //父级数据
         List<SubcontractOrderDetailEntity> parentList = details.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_DETAIL_NOT_FOUND);
         }
 
         //仓库信息

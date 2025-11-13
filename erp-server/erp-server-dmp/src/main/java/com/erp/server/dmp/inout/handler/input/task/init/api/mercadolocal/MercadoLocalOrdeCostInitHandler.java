@@ -2,7 +2,6 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.common.core.anno.ParamData;
@@ -11,7 +10,6 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -112,7 +110,7 @@ public class MercadoLocalOrdeCostInitHandler extends DmpInputInitHandler {
 
 			if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
 				log.error("调用url={},入参params={}, 美客多费用明细数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细请求失败，返回值 responseMap={}",
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 费用明细请求失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
 			}
 
@@ -125,7 +123,7 @@ public class MercadoLocalOrdeCostInitHandler extends DmpInputInitHandler {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
 				log.error("美客多费用明细接口数据解析错误，数据={}", shipmentResult.getData());
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细数据解析失败，返回值 responseMap={}",
+				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 费用明细数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
 			}
 			if (ObjectUtil.isEmpty(costDTO)) {

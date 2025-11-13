@@ -7,8 +7,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FileUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -24,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
@@ -198,26 +197,26 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
                 continue;
             }
             if (!dbEntity.getChangeType().equals(viewDetail.getChangeType())) {
-                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了sku【{}】变更类型从【{}】为【{}】", viewDetail.getSkuNo(), RequisitionChangeTypeEnum.getName(dbEntity.getChangeType()), RequisitionChangeTypeEnum.getName(viewDetail.getChangeType())), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("编辑了sku【{}】变更类型从【{}】为【{}】", viewDetail.getSkuNo(), RequisitionChangeTypeEnum.getName(dbEntity.getChangeType()), RequisitionChangeTypeEnum.getName(viewDetail.getChangeType())), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
             }
             if (!dbEntity.getSkuNo().equals(viewDetail.getSkuNo()) || !dbEntity.getNewQty().equals(viewDetail.getNewRequisitionQty())) {
                 if (dbEntity.getSkuNo().equals(viewDetail.getSkuNo())) {
-                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的要货申请sku【{}】新要货申请数量从【{}】为【{}】", dbEntity.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("编辑了SKU的要货申请sku【{}】新要货申请数量从【{}】为【{}】", dbEntity.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
                 } else {
-                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的要货申请sku从【{}】为【{}】,数量从【{}】为【{}】", dbEntity.getSkuNo(), viewDetail.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("编辑了SKU的要货申请sku从【{}】为【{}】,数量从【{}】为【{}】", dbEntity.getSkuNo(), viewDetail.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
                 }
             }
             if (!dbEntity.getRemark().equals(viewDetail.getRemark())) {
-                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了备注从【{}】为【{}】", dbEntity.getRemark(),viewDetail.getRemark()),  ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("编辑了备注从【{}】为【{}】", dbEntity.getRemark(),viewDetail.getRemark()),  ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
             }
             buildUpdateDetail(viewDetail, dbEntity);
             updateList.add(dbEntity);
         }
         addList.forEach(v -> {
-            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("新增一行sku{}", v.getSkuNo()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), v.getMainId(), "编辑操作"));
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("新增一行sku{}", v.getSkuNo()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), v.getMainId(), "编辑操作"));
         });
         deleteList.forEach(v -> {
-            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除一行sku{}", v.getSkuNo()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), v.getMainId(), "编辑操作"));
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("删除一行sku{}", v.getSkuNo()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), v.getMainId(), "编辑操作"));
         });
 
         this.update(addList, updateList, deleteList);

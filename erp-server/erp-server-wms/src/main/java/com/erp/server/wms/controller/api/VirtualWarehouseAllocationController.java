@@ -180,7 +180,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
                 } else {
                     //只有待提交状态可以修改
                     if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
-                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.IS_SUBMIT_IN_SUBMIT.msg);
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.IS_SUBMIT_IN_SUBMIT.getMsg());
                     } else {
                         flagCode = allocationEntity.getCode();
                         submit = virtualWarehouseAllocationService.submit(allocationEntity);
@@ -219,7 +219,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
                 } else {
                     //只有待提交状态可以修改
                     if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
-                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.msg);
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.getMsg());
                     } else {
                         flagCode = allocationEntity.getCode();
                         submit = virtualWarehouseAllocationService.invalid(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());

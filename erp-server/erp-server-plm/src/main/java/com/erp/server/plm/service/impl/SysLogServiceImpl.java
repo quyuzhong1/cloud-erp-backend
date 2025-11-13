@@ -97,17 +97,17 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             } else if (type == 2) {
                 //枚举
                 if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
-                    throw new ServiceException(ApiError.ERROR_9028);
+                    throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
                 }
                 Class<?> aClass = null;
                 try {
                     aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
                 } catch (ClassNotFoundException e) {
-                    throw new ServiceException(ApiError.ERROR_9028);
+                    throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
                 }
                 boolean anEnum = aClass.isEnum();
                 if (!anEnum) {
-                    throw new ServiceException(ApiError.ERROR_9028);
+                    throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
                 }
                 if (StringUtils.isNotBlank(oldValue)) {
                     EnumMessage enumObject = EnumsUtil.getEnumObject(oldValue, aClass);

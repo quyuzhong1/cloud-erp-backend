@@ -566,7 +566,7 @@ public class NfeInvoiceService {
         //店铺名称
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
         if (ObjUtil.isEmpty(shopInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
 
         BigDecimal valorTotal = BigDecimal.ZERO;

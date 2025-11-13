@@ -28,7 +28,6 @@ import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -37,7 +36,6 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.mrp.listener.*;
 import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.bcel.generic.IF_ACMPEQ;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -214,11 +212,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -270,7 +268,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -467,11 +465,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), StockingRatioImportExcelDTO.class, excelListenerUtil).sheet(1).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<StockingRatioImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -534,7 +532,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -611,11 +609,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), DefaultSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(2).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DefaultSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -671,7 +669,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -790,11 +788,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), DynamicSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(3).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DynamicSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -852,7 +850,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -919,11 +917,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), FixedSalesQtyImportExcelDTO.class, excelListenerUtil).sheet(4).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<FixedSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -981,7 +979,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -1049,11 +1047,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), SalesDenoisingImportExcelDTO.class, excelListenerUtil).sheet(5).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<SalesDenoisingImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -1111,7 +1109,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -1234,16 +1232,16 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<JSONObject> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<JSONObject> successList = excelListenerUtil.getSuccessList();
@@ -1377,7 +1375,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");

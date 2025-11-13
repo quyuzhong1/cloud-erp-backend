@@ -32,7 +32,7 @@ public class TransferApplicationApproveHandler extends AbstractApproveHandler {
         //申请调拨单
         TransferApplicationEntity entity = transferApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferApplicationService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -43,7 +43,7 @@ public class TransferApplicationApproveHandler extends AbstractApproveHandler {
         //申请调拨单
         TransferApplicationEntity entity = transferApplicationService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_NOT_FOUND);
         }
         return transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", null);
     }

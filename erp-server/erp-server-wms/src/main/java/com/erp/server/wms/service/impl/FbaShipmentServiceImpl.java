@@ -7,7 +7,6 @@ import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -295,7 +294,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 检查当前店铺是否授权
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
         if (!AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfoEntity.getAuthStatus())) {
             throw new ServiceException(ApiError.SHOP_AUTH_SHIPMENT_ERROR);
@@ -380,7 +379,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishShipment(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<FbaShipmentEntity> fbaShipmentEntities = super.listByIds(ids);
         List<FbaShipmentEntity> list = fbaShipmentEntities.stream()
@@ -589,7 +588,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
         List<String> mskuList = fbaShipmentDetailEntities.stream().filter(req -> CharSequenceUtil.isBlank(req.getSkuNo())).map(req -> req.getMsku()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(mskuList)) {
-            throw new ServiceException(ApiError.NOT_MAPPER_SKU, StrUtil.join(",", mskuList));
+            throw new ServiceException(ApiError.NOT_MAPPER_SKU, CharSequenceUtil.join(",", mskuList));
         }
 
         //查询产品信息
@@ -1671,7 +1670,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             TransferInfoEntity submitEntity = transferInfoService.getById(transferOutId);
             if (ObjUtil.isEmpty(submitEntity)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
             }
             //提交
             transferInfoService.submit(submitEntity, Boolean.FALSE);
@@ -1679,7 +1678,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //审核
             TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
             if (ObjUtil.isEmpty(approveEntity)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
             }
             transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         } else {

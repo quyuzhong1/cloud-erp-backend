@@ -124,12 +124,12 @@ public class SysLoginAuthController extends BaseController {
     public ApiResult<SysLoginUserVO> getByToken( HttpServletRequest request) {
         String token= request.getHeader(TokenConstants.AUTHENTICATION);
         if(StringUtils.isBlank(token)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         SysLoginUserVO result = new SysLoginUserVO();
         LoginUser loginUser = authTokenService.getLoginUser(token);
         if (Objects.isNull(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
         result.setAccessToken(token);

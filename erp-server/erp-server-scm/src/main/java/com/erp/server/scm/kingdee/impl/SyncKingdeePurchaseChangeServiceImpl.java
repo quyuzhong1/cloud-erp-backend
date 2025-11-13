@@ -151,7 +151,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
 		//采购订单未同步成功则无需推送采购变更
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
@@ -239,13 +239,13 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         List<PurchaseChangeDetailEntity> detailList = purchaseChangeDetailService.listByPurchaseChangeIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             log.error("未找到变更明细，changeId = {}",entity.getId());
-            throw new ServiceException(ApiError.ERROR_98042);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_NOT_FOUND);
         }
         List<String> purchaseDetailIdList = detailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseDetailIdList);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             log.error("未找到采购订单明细，purchaseDetailIdList = {}",purchaseDetailIdList);
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
 
         //交货仓库信息
@@ -279,7 +279,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
                 log.error("未找到采购订单明细，purchaseDetailIdList = {}",detailEntity.getPurchaseOrderDetailId());
-                throw new ServiceException(ApiError.ERROR_98026);
+                throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
             }
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {

@@ -140,7 +140,7 @@ public class ProcessManagementController extends BaseController {
         for (String id : dto.getIds()) {
             ProcessManagementDTO.ManagementTaskDTO entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id, ApiError.TASK_NOT_EXIST.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id, ApiError.TASK_NOT_EXIST.getMsg()));
                 continue;
             }
             try {

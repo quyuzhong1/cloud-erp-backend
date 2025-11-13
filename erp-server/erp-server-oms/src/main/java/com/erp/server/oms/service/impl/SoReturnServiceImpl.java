@@ -715,7 +715,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ).count();
 
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
@@ -950,7 +950,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public BatchResultDTO disApprove(SoReturnEntity entity) {
         //已审核支持反审核
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.getMsg());
         }
         List<String> ids = Arrays.asList(entity.getId());
         //TODO 待加审核流程
@@ -1078,7 +1078,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         for (SoReturnEntity entity : entityList) {
             if (!entity.getApproveStatus().equals(waitSubmitStatus)
                     ||entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
                 continue;
             }
             removeList.add(entity);

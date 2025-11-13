@@ -327,7 +327,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
         List<String> errorMsgList = new ArrayList<>();
         if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())){
-            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
+            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.getMsg());
             return errorMsgList;
         }
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -340,15 +340,15 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             //供应商状态判断
             if(Objects.isNull(supplierEntity.getDisabled()) ||  supplierEntity.getDisabled()){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.getMsg());
                 return errorMsgList;
             }
             if(Objects.isNull(supplierEntity.getApproveStatus()) ||  !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.getMsg());
                 return errorMsgList;
             }
             if(Objects.isNull(supplierEntity.getSrmDisabled()) ||  supplierEntity.getSrmDisabled()){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.getMsg());
                 return errorMsgList;
             }
             supplierEntity.getApproveStatus();
@@ -357,13 +357,13 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             refUserEntity.setDisabled(false);
             refUserEntity.setIsSuper(true);
         }else {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.getMsg());
             return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)){
-            errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
+            errorMsgList.add(ApiError.MOBILE_IS_EXIST.getMsg());
             return errorMsgList;
         }
         return errorMsgList;

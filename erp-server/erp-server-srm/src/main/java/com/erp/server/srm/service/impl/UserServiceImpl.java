@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
             //判断用户是否有效 防止账号被删除
             if (Objects.isNull(user)){
                 //用户不存在
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }else if (Objects.isNull(user.getUserState()) || 0 == user.getUserState()){
                 throw new ServiceException(ApiError.ERROR_9016);
             }
@@ -199,7 +199,7 @@ public class UserServiceImpl implements UserService {
 
         List<String> errorMsgList = new ArrayList<>();
         if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())) {
-            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
+            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.getMsg());
             return errorMsgList;
         }
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -212,15 +212,15 @@ public class UserServiceImpl implements UserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             //供应商状态判断
             if (Objects.isNull(supplierEntity.getDisabled()) || supplierEntity.getDisabled()) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.getMsg());
                 return errorMsgList;
             }
             if (Objects.isNull(supplierEntity.getApproveStatus()) || !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.getMsg());
                 return errorMsgList;
             }
             if (Objects.isNull(supplierEntity.getSrmDisabled()) || supplierEntity.getSrmDisabled()) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.getMsg());
                 return errorMsgList;
             }
             supplierEntity.getApproveStatus();
@@ -229,13 +229,13 @@ public class UserServiceImpl implements UserService {
             refUserEntity.setDisabled(false);
             refUserEntity.setIsSuper(true);
         } else {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.getMsg());
             return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)) {
-            errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
+            errorMsgList.add(ApiError.MOBILE_IS_EXIST.getMsg());
             return errorMsgList;
         }
         return errorMsgList;

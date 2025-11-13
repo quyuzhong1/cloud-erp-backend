@@ -33,7 +33,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
@@ -56,7 +55,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
@@ -705,7 +703,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
         }
         String code = dto.getKingdeeWarehouseCode();
         String name = dto.getName();
@@ -786,7 +784,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         Boolean result = this.submit(Collections.singletonList(warehouseId));
         return result;
@@ -849,7 +847,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
         }
         //仓库下绑定第三方店铺不能修改为禁用状态
         //Delete by Edison.qu 2024-07-23 去除不必要的限制
@@ -893,7 +891,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         if (WmsConstant.PASS.equals(type)) {
             //审核通过
@@ -923,7 +921,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
@@ -981,7 +979,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (WarehouseEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1011,7 +1009,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public WarehouseDTO.UpdateDTO view(String warehouseId) {
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
         }
         WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
         BeanMapper.copy(warehouse, dto);
@@ -1137,7 +1135,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -1197,7 +1195,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
 
@@ -1378,7 +1376,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99000);
+            throw new ServiceException(ApiError.ERROR_WMS_K3_WAREHOUSE_CODE_EXISTS);
         }
 
     }

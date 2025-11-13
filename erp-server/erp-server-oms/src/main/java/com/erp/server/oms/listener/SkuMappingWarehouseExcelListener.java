@@ -141,7 +141,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(warehouseName));
         //仓库名称
         if (CollUtil.isEmpty(warehouseList) && StringUtils.isBlank(importExcelDTO.getAccount())) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
         }else {
             warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                     findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");

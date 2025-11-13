@@ -6,22 +6,18 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.common.business.dto.base.PagingDTO;
@@ -34,7 +30,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -47,27 +42,19 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import feign.Feign;
 import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
 import javax.annotation.Resource;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT;
 
 /**

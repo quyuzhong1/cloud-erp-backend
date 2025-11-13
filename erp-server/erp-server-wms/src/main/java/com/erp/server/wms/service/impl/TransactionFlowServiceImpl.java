@@ -143,7 +143,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setOrgId(param.getOrgId());
         // 获取仓库名称
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(param.getWarehouseId());
-        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.ERROR_99002));
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND));
 
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());
@@ -846,7 +846,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             wb.write(outputStream);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
         } finally {
             IOUtils.closeQuietly(outputStream);
         }

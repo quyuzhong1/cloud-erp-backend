@@ -437,11 +437,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.msg);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.getMsg());
         }
 
         if (old.getInvalidStatus()) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.msg);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN.getMsg());
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -488,16 +488,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids,String shopId,String warehouseId) {
         List<DeliverySuggestEntity> deliverySuggestList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(deliverySuggestList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
-        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode()))
+        String codes = deliverySuggestList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode()))
                 .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(codes)) {
+        if (CharSequenceUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH,codes);
         }
         String invalidCodes = deliverySuggestList.stream().filter(obj -> obj.getInvalidStatus().equals(Boolean.TRUE))
                 .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(invalidCodes)) {
+        if (CharSequenceUtil.isNotBlank(invalidCodes)) {
             throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH_INVALID,codes);
         }
 
@@ -580,14 +580,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 //补货计划
                 WmsDeliveryPlanDetailEntity deliveryPlanDetail = deliveryPlanDetailList.stream().filter(obj -> {
                     long planCount = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class)
-                            .stream().filter(e -> StrUtil.equals(e.getSourceId(),deliverySuggestEntity.getId())).count();
+                            .stream().filter(e -> CharSequenceUtil.equals(e.getSourceId(),deliverySuggestEntity.getId())).count();
                     if (planCount > 0) {
                         return Boolean.TRUE;
                     }
                     return Boolean.FALSE;
                 }).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(deliveryPlanDetail)) {
-                    throw new ServiceException(StrUtil.format("发货建议【{}】已下推发货计划【{}】，不支持再次下推",deliverySuggestEntity.getCode(),deliveryPlanDetail.getCode()));
+                    throw new ServiceException(CharSequenceUtil.format("发货建议【{}】已下推发货计划【{}】，不支持再次下推",deliverySuggestEntity.getCode(),deliveryPlanDetail.getCode()));
                 }
                 DeliverySuggestDTO.DeliverySuggestInfoDTO deliverySuggestInfoDTO = new DeliverySuggestDTO.DeliverySuggestInfoDTO();
                 deliverySuggestInfoDTO.setSourceId(deliverySuggestEntity.getId());
@@ -773,10 +773,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             EasyExcel.read(excelFile.getInputStream(), DeliverySuggestImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DeliverySuggestImportExcelDTO> excelDateList = excelListenerUtil.getAllList();

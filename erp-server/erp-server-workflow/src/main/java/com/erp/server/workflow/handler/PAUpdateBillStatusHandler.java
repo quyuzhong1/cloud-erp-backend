@@ -198,7 +198,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(applyUserName)) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(String.valueOf(applyUserName), UserTypeEnum.ERP.getCode());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_1037,applyUserName);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND,applyUserName);
             }
             map.put("applyUserId", findUserDTO.getUserId());
             map.put("applyDeptId", findUserDTO.getDepartmentId());
@@ -230,7 +230,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(destWarehouseName)) {
                 List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, destWarehouseName).list();
                 if (ObjectUtil.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_92263, destWarehouseName);
+                    throw new ServiceException(ApiError.ERROR_WH_NOT_FOUND, destWarehouseName);
                 }
                 detailMap.put("destWarehouseId", list.get(0).getId());
             }

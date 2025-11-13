@@ -1,9 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -12,19 +10,11 @@ import com.erp.model.sys.entity.MqConsumerRecordEntity;
 import com.erp.server.sys.mapper.MqConsumerRecordMapper;
 import com.erp.server.sys.service.MqConsumerRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.sys.service.OperateLogService;
-import com.common.core.exception.ServiceException;
 import com.google.gson.Gson;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * mq消费记录 服务实现类

@@ -274,7 +274,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 //获取退货单信息
                 SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
                 if (ObjectUtil.isEmpty(soReturnEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023);
+                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
                 }
                 if(null != soReturnEntity){
                     entity.setSourceCode(soReturnEntity.getCode());
@@ -418,7 +418,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean submit(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
 
         //未作废、待提交、审核不通过才可以提交
@@ -428,7 +428,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         ).count();
 
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         //TODO 待加审核流程
@@ -447,7 +447,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean addAndSubmit(SoReturnReceiveDTO.Add dto) {
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
     }
@@ -456,7 +456,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean updateAndSubmit(SoReturnReceiveDTO.Update dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()));
     }
@@ -467,7 +467,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public BatchResultDTO approve(SoReturnReceiveEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -592,13 +592,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public BatchResultDTO disApprove(SoReturnReceiveEntity entity) {
         //已审核支持反审核
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         //下推质检单不能反审核
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_99042,codes);
+            throw new ServiceException(ApiError.ERROR_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN,codes);
         }
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(Collections.singletonList(entity.getId())).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
@@ -621,14 +621,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean cancelProcess(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         workflowFeign.cancelProcess(ids);
@@ -649,7 +649,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //审核不通过 待提交可以作废
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -657,7 +657,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnReceiveEntity::getInvalidStatus, Boolean.TRUE)
@@ -675,14 +675,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean delete(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //待提交支持删除
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         //删除详情表
         soReturnReceiveDetailService.delete(ids);
@@ -695,7 +695,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
 
@@ -710,7 +710,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoReturnReceiveEntity entity : entityList) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -743,7 +743,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public BatchResultDTO deleteEntity(SoReturnReceiveEntity entity) {
         //待提交支持删除
         if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //删除详情表
@@ -771,7 +771,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<String> soReturnNoticeIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnNoticeService.listByIds(soReturnNoticeIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92021);
+            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_APPROVED_REQUIRED_PUSH);
         }
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
@@ -838,7 +838,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98063);
+            throw new ServiceException(ApiError.ERROR_PUSH_ALLOWED_APPROVED_ONLY);
         }
         return list;
     }
@@ -854,7 +854,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
         long receiveCount = list.stream().filter(req -> !req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).count();
         if (receiveCount > 0) {
-            throw new ServiceException(ApiError.ERROR_99081);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_INBOUND_ALLOWED_APPROVED_ONLY);
         }
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
@@ -927,14 +927,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean pdaDisApprove(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //已审核支持反审核
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
+            throw new ServiceException(ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //TODO 待加审核流程
 
@@ -942,7 +942,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_99042,codes);
+            throw new ServiceException(ApiError.ERROR_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN,codes);
         }
 
         //下推退货入库单不能反审核

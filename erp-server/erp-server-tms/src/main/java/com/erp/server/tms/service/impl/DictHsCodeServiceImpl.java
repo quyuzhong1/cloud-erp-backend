@@ -12,8 +12,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.erp.model.oms.dto.DictInvoiceHsDTO;
-import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.excel.DictHsCodeExcelDTO;

@@ -76,8 +76,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cn.hutool.core.text.CharSequenceUtil.format;
-
 /**
  * @author Lambda
  * @Classname SyncB2CSoOutstockServiceImpl

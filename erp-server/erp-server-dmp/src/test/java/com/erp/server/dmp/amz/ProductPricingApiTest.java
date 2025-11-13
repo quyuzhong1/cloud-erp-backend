@@ -15,7 +15,6 @@ package com.erp.server.dmp.amz;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.sdk.oms.amz.spapi.api.ListingsApi;
 import com.erp.sdk.oms.amz.spapi.api.ProductPricingApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
@@ -24,7 +23,6 @@ import com.erp.sdk.oms.amz.spapi.model.productpricing.GetPricingResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.CfgAppClientService;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,7 +31,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**

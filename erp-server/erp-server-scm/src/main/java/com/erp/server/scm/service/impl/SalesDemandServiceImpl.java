@@ -42,7 +42,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -229,7 +228,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public BatchResultDTO approve(SalesDemandEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("备货申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
@@ -283,7 +282,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public BatchResultDTO disApprove(SalesDemandEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
         }
         log.info("备货申请单反审核，id=【{}】", entity.getId());
 
@@ -310,7 +309,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SalesDemandEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -513,7 +512,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (StringUtils.isNotBlank(applyUserId)) {
             FindUserDTO applyUser = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isEmpty(applyUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             entity.setApplyUserName(applyUser.getUserName());
         }

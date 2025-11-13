@@ -41,7 +41,6 @@ import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.bcel.generic.I2F;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

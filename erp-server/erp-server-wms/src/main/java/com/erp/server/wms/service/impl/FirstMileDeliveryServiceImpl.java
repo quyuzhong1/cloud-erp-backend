@@ -314,7 +314,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         // 待提交和审核不通过允许修改
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || old.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         FirstMileDeliveryEntity firstMileDeliveryEntity =  BeanMapperUtils.map(FirstMileDeliveryEntity.class, updateDTO);
         if (CollectionUtils.isNotEmpty(updateDTO.getTransferWarehouseIdList())){
@@ -534,12 +534,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         FirstMileDeliveryEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         //是否存在下游关联的未作废或未删除的直接调拨单
@@ -765,7 +765,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -851,7 +851,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private Boolean validateDisApprove(FirstMileDeliveryEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         //已经有签收数量的发货单不允许反审核
@@ -897,7 +897,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskEntity packingTask) {
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1043);
+            throw new ServiceException(ApiError.ERROR_DELETE_STATUS_NOT_ALLOWED);
         }
         if (Objects.nonNull(packingTask)  && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingTask.getPackingStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
@@ -951,7 +951,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskEntity packingTask) {
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         if (Objects.nonNull(packingTask)  && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingTask.getPackingStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
@@ -978,7 +978,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -1126,10 +1126,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     private void generateTransferByRule(List<String> transferWarehouseIdList, FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList,String batchNo) {
         if (CollUtil.isEmpty(transferWarehouseIdList)){
-            throw new ServiceException(ApiError.ERROR_92134);
+            throw new ServiceException(ApiError.ERROR_TRANSFER_WAREHOUSE_REQUIRED);
         }
         if (CharSequenceUtil.isBlank(entity.getDeliveryWarehouseId())){
-            throw new ServiceException(ApiError.ERROR_92135, entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_FIRST_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
         }
         //订单调出仓和第一个中转仓一致时从第二个中转仓开始
         boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(entity.getDeliveryWarehouseId());
@@ -1734,7 +1734,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 addDetailDTO.setSkuId(skuVO.getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
@@ -1752,7 +1752,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     //产品信息
                     SkuVO child = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(sonItem.getSonSkuNo())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(child)) {
-                        throw new ServiceException(ApiError.ERROR_95166);
+                        throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND);
                     }
                     addSubComponentsDTO.setSkuId(child.getSkuId());
                     addSubComponentsDTO.setSkuNo(child.getSkuNo());
@@ -1971,7 +1971,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         // 待提交或审核不通过并且未作废允许提交
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -2258,7 +2258,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_92138, String.join(",", codeList));
+                throw new ServiceException(ApiError.ERROR_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
             }
         }
         String transferWarehouseIdList = "";
@@ -2280,11 +2280,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
 
         if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.firstMilePackingTaskDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getParams().getPermissionSql());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         //补充数据
         buildPackingDetailTask(page.getRecords());
@@ -2694,11 +2694,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO generateFirstMileDeclare(String id) {
         FirstMileDeliveryEntity entity = getById(id);
         if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL.getMsg());
         }
         //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92284.msg );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_DELIVERY_NOTICE_REQUIRED.msg );
         }
         //根据装箱状态生成报关单
         generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
@@ -2717,11 +2717,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private void generateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTiming) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
         if (CollectionUtils.isEmpty(taskEntityList)) {
-            throw new ServiceException(ApiError.ERROR_92285);
+            throw new ServiceException(ApiError.ERROR_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
         } else {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if (Boolean.FALSE.equals(packed) && billGenerateTiming.equals(BillGenerateTimingEnum.AFTER_PACKING)) {
-                throw new ServiceException(ApiError.ERROR_92285);
+                throw new ServiceException(ApiError.ERROR_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
             } else {
                 if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
                     throw new ServiceException("报关单状态不为待生成，不能下推生成报关单");

@@ -207,7 +207,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         //产品名称
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 

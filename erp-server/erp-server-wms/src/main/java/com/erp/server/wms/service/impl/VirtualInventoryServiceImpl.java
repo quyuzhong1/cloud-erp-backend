@@ -125,7 +125,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(found.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
             }
         }
         return found;
@@ -140,7 +140,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1027);
+            throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
         }
         return flag;
     }
@@ -352,7 +352,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
         List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }

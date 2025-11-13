@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -671,7 +670,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -836,7 +835,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -937,7 +936,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String customsCode = item.getCustomsCode();
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
-                    errorMsgList.add(ApiError.ERROR_95292.msg);
+                    errorMsgList.add(ApiError.ERROR_95292.getMsg());
                 }else {
                     //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
                     newLogistics.setDeclareChineseName(isBlank(newLogistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : newLogistics.getDeclareChineseName());

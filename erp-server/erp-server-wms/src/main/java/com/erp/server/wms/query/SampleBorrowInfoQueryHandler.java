@@ -1,14 +1,12 @@
 package com.erp.server.wms.query;
 
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;

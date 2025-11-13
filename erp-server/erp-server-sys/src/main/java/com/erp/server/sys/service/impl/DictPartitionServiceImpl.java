@@ -2,19 +2,16 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.sys.dto.DictPartitionDTO;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.server.sys.mapper.DictPartitionMapper;

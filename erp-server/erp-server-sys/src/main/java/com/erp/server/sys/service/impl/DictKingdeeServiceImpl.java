@@ -4,7 +4,6 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;

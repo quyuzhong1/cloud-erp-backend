@@ -296,7 +296,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         variablesMap.put("creator", dto.getUserId());
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processDefinitionId, dto.getBusinessId(), variablesMap);
         if (Objects.isNull(processInstance)) {
-            throw new ServiceException(ApiError.ERROR_94004);
+            throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
         }
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
         ExecutionEntity executionEntity = ((ProcessInstanceWithVariablesImpl) processInstance).getExecutionEntity();
@@ -308,27 +308,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             ActivityInstance[] childActivityInstances = activityInstance.getChildActivityInstances();
             if (ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0) {
                 log.error("流程实例[{}]没有多实例子节点", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_94004);
+                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
             }
             activityId = childActivityInstances[0].getActivityId();
             activityId = activityId.contains("#") ? activityId.substring(0, activityId.indexOf("#")) : activityId;
             List<ExecutionEntity> executions = executionEntity.getExecutions();
             if (CollectionUtils.isEmpty(executions)) {
                 log.error("流程实例[{}]没有多实例执行任务", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_94004);
+                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
             }
             List<TaskEntity> tasks = executions.get(0).getTasks();
             if (CollectionUtils.isEmpty(tasks)) {
                 List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
                 if (CollectionUtils.isEmpty(executionChild)) {
                     log.error("流程实例[{}]没有多实例执行子任务", processInstance.getId());
-                    throw new ServiceException(ApiError.ERROR_94004);
+                    throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
                 }
                 tasks = executionChild.get(0).getTasks();
             }
             if (CollectionUtils.isEmpty(tasks)) {
                 log.error("流程实例[{}]没有多实例执行任务列表为空", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_94004);
+                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
             }
             taskId = tasks.get(0).getId();
         } else {
@@ -340,7 +340,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition, processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
-            throw new ServiceException(ApiError.ERROR_94004);
+            throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
         }
 
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
@@ -633,7 +633,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return managementTaskDTOS.stream()
                 .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_95049));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL));
     }
 
     @Override
@@ -815,7 +815,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         identityService.setAuthenticatedUserId(dto.getSourceUserId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
         if(null == findUserDTO){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
         }
         taskService.delegateTask(task.getId(), dto.getTargetUserId());
         // 更新流程任务数据
@@ -877,11 +877,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if(null == processInstance || processInstance.isEnded()){
-            throw new ServiceException(ApiError.ERROR_94000);
+            throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
         }
         BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processInstance.getProcessDefinitionId());
         if (null == modelInstance) {
-            throw new ServiceException(ApiError.ERROR_94001);
+            throw new ServiceException(ApiError.ERROR_WF_NOT_STARTED);
         }
         String initialActivityId = null;
         Collection<FlowElement> flowElements = modelInstance.getModelElementsByType(FlowElement.class);
@@ -1108,7 +1108,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<String> candidateUsers = getCandidateUsers(task, execution, propertiesDTO);
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
         if (CollectionUtils.isEmpty(userList)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
+            throw new ServiceException(ApiError.ERROR_ACCOUNT_NOT_FOUND, JSONUtil.toJsonStr(candidateUsers));
         }
 
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
@@ -1334,7 +1334,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             identityService.setAuthenticatedUserId(dto.getTargetUserId());
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
             if(null == findUserDTO){
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }
             taskService.delegateTask(task.getId(), dto.getTargetUserId());
             // 更新流程任务数据

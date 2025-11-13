@@ -11,7 +11,6 @@ import com.common.business.constant.AuthPassPath;
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -20,7 +19,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -73,7 +71,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             //判断是否有feign
             if (uri.contains(FEIGN_URL)) {
                 //文件头使用JSON格式
-                return unauthorizedResponse(exchange, ApiError.ERROR_5001.msg, ApiError.ERROR_5001.code);
+                return unauthorizedResponse(exchange, ApiError.ERROR_UNAUTHORIZED_ACCESS.getMessageKey(), ApiError.ERROR_UNAUTHORIZED_ACCESS.getCode());
             }
             //判断是否是app 如果是 直接放行
             if (uri.contains(OPEN_API_URL)) {
@@ -104,13 +102,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             String token = headers.getFirst(TokenConstants.AUTHENTICATION);
             if (StringUtils.isBlank(token)) {
                 // 响应中放入返回的状态吗, 没有权限访问
-                Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_403.msg, ApiError.ERROR_403.code);
+                Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMsg(), ApiError.ERROR_FORBIDDEN.getCode());
                 return mono;
             }
             //解析token
             LoginUser loginUser = tokenService.getLoginUser(token);
             if (Objects.isNull(loginUser)) {
-                return unauthorizedResponse(exchange, ApiError.ERROR_403.msg, ApiError.ERROR_403.code);
+                return unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMsg(), ApiError.ERROR_FORBIDDEN.getCode());
             }
             loginUser.setAccessToken(token);
             request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
@@ -145,7 +143,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         //解析token
                         LoginUser loginUser = tokenService.getLoginUser(token);
                         if (Objects.isNull(loginUser)) {
-//                            ServiceException.runError(ApiError.ERROR_403.msg);
+//                            ServiceException.runError(ApiError.ERROR_403.getMsg());
                             log.info("埋点接口token失效:{}", data);
                             return;
                         }

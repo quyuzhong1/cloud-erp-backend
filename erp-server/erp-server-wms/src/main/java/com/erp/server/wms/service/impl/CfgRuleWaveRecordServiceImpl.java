@@ -13,13 +13,12 @@ import com.erp.server.wms.service.CfgRuleWaveRecordService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Objects;
-import java.util.Optional;
+
 /**
  * <p>
  * 波次规则执行记录表 服务实现类

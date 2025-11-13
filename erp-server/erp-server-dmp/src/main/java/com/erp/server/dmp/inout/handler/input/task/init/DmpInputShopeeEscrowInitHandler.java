@@ -4,7 +4,6 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -17,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSON;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -37,7 +35,6 @@ import com.sdk.oms.shopee.service.ShopeeOrderService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
