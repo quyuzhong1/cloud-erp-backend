@@ -377,21 +377,6 @@
         </if>
         
         UNION ALL
-
-        SELECT
-        'noOutstock' AS tabFlag,
-        COUNT(DISTINCT srd.id) AS count
-        FROM sample_recipient sr
-        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
-        WHERE sr.is_deleted = FALSE
-        and srd.is_deleted = FALSE
-        AND sr.approve_status = 'approve'
-        AND srd.exec_status = 'noOutstock'
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
-        </if>
-
-        UNION ALL
         
         SELECT 
             'waitOutstock' AS tabFlag,
