@@ -7,18 +7,18 @@ import ${package.Entity}.${entity};
 import ${superMapperClassPackage};
 
 import org.apache.ibatis.annotations.Mapper;
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
 import ${package.Dto}.${table.dtoName};
 import com.common.business.dto.base.ApproveStatusQtyDTO;
-</#if>
+<#--</#if>-->
 
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import java.util.List;
-</#if>
+<#--</#if>-->
 
 /**
  * <p>
@@ -34,7 +34,7 @@ interface ${table.mapperName} : ${superMapperClass}<${entity}>
 @Mapper
 public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
     /**
     * 分页查询
     * @param query
@@ -64,6 +64,6 @@ public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
     * @return
     */
     List<${table.dtoName}.TabListDTO> tabList(@Param("params") ${table.dtoName}.PagingParamDTO searchParam);
-    </#if>
+<#--    </#if>-->
 }
 </#if>

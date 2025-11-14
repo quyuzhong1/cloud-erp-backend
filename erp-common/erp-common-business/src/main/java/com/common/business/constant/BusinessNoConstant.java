@@ -246,4 +246,6 @@ public interface BusinessNoConstant {
     //资产编码
     String ZC="ZC";
 
+    //差异策略配置
+    String HD="HD";
 }
