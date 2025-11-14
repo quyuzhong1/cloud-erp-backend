@@ -176,8 +176,9 @@ public enum ModuleTypeEnum {
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
+    ADS_ERP_INVENTORY_DIFF_KINGDEE("2001", "金蝶库存差异"),
+    ADS_ERP_FIRST_MILE_IN_TRANSIT_DIFF("2002", "在途库存报告"),
     ;
-
 
 
     private String code;

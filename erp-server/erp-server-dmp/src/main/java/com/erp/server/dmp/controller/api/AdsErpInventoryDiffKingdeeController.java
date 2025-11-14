@@ -1,8 +1,12 @@
 package com.erp.server.dmp.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +21,11 @@ import com.common.core.controller.BaseController;
 import com.erp.server.dmp.service.AdsErpInventoryDiffKingdeeService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 
 /**
  * 金蝶库存差异
@@ -42,51 +42,19 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
     @Resource
     private AdsErpInventoryDiffKingdeeService adsErpInventoryDiffKingdeeService;
 
-    /**
-    * 新增
-    * @author Jim
-    * @date:  2025-11-13
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "金蝶库存差异新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.AddDTO dto) {
-        return success(adsErpInventoryDiffKingdeeService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author Jim
-    * @date:  2025-11-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "金蝶库存差异修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:adsErpInventoryDiffKingdee:update",
-        serviceClass = AdsErpInventoryDiffKingdeeService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.UpdateDTO dto) {
-        adsErpInventoryDiffKingdeeService.update(dto);
-        return success();
-    }
-
 
     /**
     * 获取状态统计
     * @return
     */
-    @PostMapping("/tabList")
+    @PostMapping("/statistics")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
-            tableAlias = ""
+            tableAlias = "aeidk"
     )
-    public ApiResult<List<AdsErpInventoryDiffKingdeeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(adsErpInventoryDiffKingdeeService.tabList(dto));
+    public ApiResult<AdsErpInventoryDiffKingdeeDTO.StatisticsDTO> statistics(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
+       return success(adsErpInventoryDiffKingdeeService.statistics(dto));
     }
 
     /**
@@ -100,7 +68,7 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
-            tableAlias = ""
+            tableAlias = "aeidk"
     )
     public ApiResult<PagingVO<AdsErpInventoryDiffKingdeeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffKingdeeService.paging(dto));
@@ -126,6 +94,34 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
     }
 
     /**
+     * 编辑备注
+     * @author Jim
+     * @date: 2025-11-13
+     */
+    @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = adsErpInventoryDiffKingdeeService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("金蝶库存差异编辑备注",e);
+                AdsErpInventoryDiffKingdeeEntity entity = adsErpInventoryDiffKingdeeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "金蝶库存差异不存在,平台库存差异备注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 导出Excel数据
     * @author Jim
     * @date:  2025-11-13
@@ -137,12 +133,22 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpInventoryDiffKingdee:export",
-            tableAlias = ""
+            tableAlias = "aeidk"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "金蝶库存差异导出Excel数据")
     public void exportList(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response) {
         adsErpInventoryDiffKingdeeService.exportList(dto, response);
     }
 
-
+    /**
+     * 重新生成
+     * @author Jim
+     * @date: 2025-11-13
+     */
+    @PostMapping("/generateDiff")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成")
+    public ApiResult<Boolean> generateDiff(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto) {
+        // TODO 请求restCloud
+        return ApiResult.success(true);
+    }
 }

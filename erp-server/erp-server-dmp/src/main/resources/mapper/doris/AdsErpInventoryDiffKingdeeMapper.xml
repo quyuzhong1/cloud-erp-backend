@@ -79,7 +79,8 @@
     <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$ListDTO">
 
     </select>
-    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$TabListDTO">
+
+    <select id="statistics" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$StatisticsDTO">
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
@@ -88,7 +89,6 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
     </select>
 
 </mapper>
