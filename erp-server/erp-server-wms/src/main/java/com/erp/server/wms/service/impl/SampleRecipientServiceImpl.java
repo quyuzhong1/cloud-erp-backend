@@ -1248,6 +1248,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        if(StringUtils.isNotBlank(data.getWarehouseChargeId())){
+            FindUserDTO userByUserId = sysUserFeign.getUserByUserId(data.getWarehouseChargeId());
+            data.setWarehouseChargeName(userByUserId.getUserName());
+        }
         data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
         data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
     }
@@ -1322,8 +1326,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 //        Map<String, String> warehouseNameMap = warehouseList.stream()
 //            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
         // 用户
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(list.stream().map(SampleRecipientDTO.ListDTO::getUserId).collect(Collectors.toList()));
-
+        // 收集所有需要查询的用户ID
+        Set<String> userIdSet = new HashSet<>();
+        list.forEach(dto -> {
+            if (StringUtils.isNotBlank(dto.getUserId())) {
+                userIdSet.add(dto.getUserId());
+            }
+            if (StringUtils.isNotBlank(dto.getUseUserId())) {
+                userIdSet.add(dto.getUseUserId());
+            }
+            if (StringUtils.isNotBlank(dto.getWarehouseChargeId())) {
+                userIdSet.add(dto.getWarehouseChargeId());
+            }
+        });
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
         Map<String, String> userNameMap = userList.stream()
                 .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
         
@@ -1345,6 +1361,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
             data.setIsOutstockRequiredName(BooleanEnum.getByCode(data.getIsOutstockRequired()));
             data.setIsLedgerRequiredName(BooleanEnum.getByCode(data.getIsLedgerRequired()));
+            data.setWarehouseChargeName(userNameMap.get(data.getWarehouseChargeId()));
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -1384,6 +1401,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         if(Objects.isNull(sampleRecipientEntity.getIsLedgerRequired())){
             sampleRecipientEntity.setIsLedgerRequired(Boolean.TRUE);
+        }
+
+        if(StringUtils.isNotBlank(sampleRecipientEntity.getWarehouseId()) && StringUtils.isBlank(sampleRecipientEntity.getWarehouseChargeId())){
+            throw new ServiceException("仓库不为空则仓库负责人不能为空");
         }
 
         //若设置为无需出库， 则无需出库原因为必填

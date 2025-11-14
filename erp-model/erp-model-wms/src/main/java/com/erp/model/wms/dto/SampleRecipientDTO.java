@@ -326,6 +326,15 @@ public class SampleRecipientDTO implements Serializable {
         private Boolean isLedgerRequired;
         private String isLedgerRequiredName;
 
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
+        /**
+         * 仓库负责人名称
+         */
+        private String warehouseChargeName;
+
     }
 
     /**
@@ -534,7 +543,14 @@ public class SampleRecipientDTO implements Serializable {
         private Boolean isLedgerRequired;
         private String isLedgerRequiredName;
 
-
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
+        /**
+         * 仓库负责人名称
+         */
+        private String warehouseChargeName;
     }
 
     /**
@@ -805,6 +821,12 @@ public class SampleRecipientDTO implements Serializable {
          * 是否需要入台账：true =入账，false  =不入账
          */
         private Boolean isLedgerRequired = Boolean.TRUE;
+
+
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
 
     }
     /**
