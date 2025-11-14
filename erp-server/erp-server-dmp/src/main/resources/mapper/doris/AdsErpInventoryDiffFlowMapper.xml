@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="unique_code" property="uniqueCode" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="account_code" property="accountCode" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="bill_topic" property="billTopic" />
+       <result column="flow_id" property="flowId" />
+       <result column="node_id" property="nodeId" />
+       <result column="instance_id" property="instanceId" />
+       <result column="task_id" property="taskId" />
+       <result column="source_id" property="sourceId" />
+       <result column="etl_status" property="etlStatus" />
+       <result column="check_key" property="checkKey" />
+       <result column="check_month" property="checkMonth" />
+       <result column="source_system_name" property="sourceSystemName" />
+       <result column="platform_warehouse_code" property="platformWarehouseCode" />
+       <result column="platform_warehouse_name" property="platformWarehouseName" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="stock_sku" property="stockSku" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="init_qty" property="initQty" />
+       <result column="in_qty" property="inQty" />
+       <result column="return_qty" property="returnQty" />
+       <result column="out_qty" property="outQty" />
+       <result column="adjust_qty" property="adjustQty" />
+       <result column="check_qty" property="checkQty" />
+       <result column="other_qty" property="otherQty" />
+       <result column="move_qty" property="moveQty" />
+       <result column="closing_qty" property="closingQty" />
+       <result column="real_qty" property="realQty" />
+       <result column="next_month_qty" property="nextMonthQty" />
+       <result column="estimate_closing_qty" property="estimateClosingQty" />
+       <result column="diff_qty" property="diffQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, source_platform, account_code, next_level_id, bill_topic, flow_id, node_id, instance_id, task_id, source_id, etl_status, check_key, check_month, source_system_name, platform_warehouse_code, platform_warehouse_name, warehouse_code, warehouse_name, stock_sku, sku_id, sku_no, init_qty, in_qty, return_qty, out_qty, adjust_qty, check_qty, other_qty, move_qty, closing_qty, real_qty, next_month_qty, estimate_closing_qty, diff_qty, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$ListDTO">
+	select 
+        t.id,
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.platform_warehouse_name platformWarehouseName, 
+        t.warehouse_name warehouseName, 
+        t.stock_sku stockSku, 
+        t.sku_no skuNo, 
+        t.init_qty initQty, 
+        t.in_qty inQty, 
+        t.return_qty returnQty, 
+        t.out_qty outQty, 
+        t.adjust_qty adjustQty, 
+        t.check_qty checkQty, 
+        t.other_qty otherQty, 
+        t.move_qty moveQty, 
+        t.closing_qty closingQty, 
+        t.real_qty realQty, 
+        t.next_month_qty nextMonthQty, 
+        t.estimate_closing_qty estimateClosingQty, 
+        t.diff_qty diffQty, 
+        t.remark,
+        t.create_time createTime
+        from
+        ads_erp_inventory_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from ads_erp_inventory_diff_flow where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  ads_erp_inventory_diff_flow
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$TotalDTO">
+        select 
+        sum(t.closing_qty) totalClosingQty, sum(t.estimate_closing_qty) totalRealQty, sum(t.diff_qty) totalDiffQty
+        from
+        ads_erp_inventory_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+</mapper>

@@ -60,8 +60,23 @@
 <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$PagingDTO">
         select 
         t.id,
-        t.check_month, t.source_system_name, t.outstock_code, t.so_delivery_code, t.so_code, t.platform_order_code, t.platform_warehouse, 
-        t.platform_bill_date, t.platform_bill_status, t.stock_sku, t.sku_id, t.sku_no, t.outstock_qty, t.flow_deduct_qty, t.diff_qty, t.remark
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.outstock_code outstockCode, 
+        t.so_delivery_code soDeliveryCode, 
+        t.so_code soCode, 
+        t.platform_order_code platformOrderCode, 
+        t.platform_warehouse platformWarehouse, 
+        t.platform_bill_date platformBillDate, 
+        t.platform_bill_status platformBillStatus, 
+        t.stock_sku stockSku, 
+        t.sku_id skuId, 
+        t.sku_no skuNo, 
+        t.outstock_qty outstockQty, 
+        t.flow_deduct_qty flowDeductQty, 
+        t.diff_qty diffQty, 
+        t.remark,
+        t.create_time createTime
         from
         ads_erp_outstock_diff_flow t
         WHERE ${params.sqlMap.default}

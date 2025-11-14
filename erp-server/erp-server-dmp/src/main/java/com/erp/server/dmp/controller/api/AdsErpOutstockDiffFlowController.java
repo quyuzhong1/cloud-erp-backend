@@ -88,7 +88,7 @@ public class AdsErpOutstockDiffFlowController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "平台单据差异重新生成")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "平台单据差异修改备注")
     @PostMapping(value = "/updateRemark")
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO dto) {
     	return success(adsErpOutstockDiffFlowService.updateRemark(dto));

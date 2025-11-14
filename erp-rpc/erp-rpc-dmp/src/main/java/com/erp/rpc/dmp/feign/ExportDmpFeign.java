@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
@@ -39,4 +40,7 @@ public interface ExportDmpFeign {
     
     @PostMapping("/feign/export/exportAdsErpOutstockDiffFlow")
     PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> exportAdsErpOutstockDiffFlow(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
+    
+    @PostMapping("/feign/export/exportAdsErpInventoryDiffFlow")
+    PagingVO<AdsErpInventoryDiffFlowDTO.ListDTO> exportAdsErpInventoryDiffFlow(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDTO.PagingParamDTO> dto);
 }
