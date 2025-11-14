@@ -706,6 +706,14 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             mapList.add(mapPush);
             //销售单金蝶明细id
             map.put("FEntity_Link", mapList);
+
+            if (StringUtils.isNotBlank(entity.getDeclarationType())) {
+                if (DeclarationTypeEnum.INDEPENDENT_DECLARATION.getCode().equals(entity.getDeclarationType())) {
+                    map.put("declarationType", "A");
+                } else {
+                    map.put("declarationType", "B");
+                }
+            }
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
