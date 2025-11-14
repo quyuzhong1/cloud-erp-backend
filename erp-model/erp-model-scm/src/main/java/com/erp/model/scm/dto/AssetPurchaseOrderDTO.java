@@ -1103,6 +1103,16 @@ public class AssetPurchaseOrderDTO implements Serializable {
          */
         private String supplierName;
 
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
     }
 
     @Data

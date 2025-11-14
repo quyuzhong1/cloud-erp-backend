@@ -1513,7 +1513,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             detailDTO.setCostType(detail.getCostType()); // 费用项目
             detailDTO.setRemark(detail.getRemark()); // 备注
             detailDTO.setQty(1); // 每个实物信息数量为1
-            
+            detailDTO.setSourceDetailId(detail.getId());
             detailList.add(detailDTO);
         }
         
@@ -2143,7 +2143,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         assetAcceptEntity.setAcceptDate(LocalDate.now());
 
         //验收人
-        if (StringUtils.isNotBlank(dtoList.get(0).getPurchaseOrgId())) {
+        if (StringUtils.isNotBlank(dtoList.get(0).getAcceptUserId())) {
             assetAcceptEntity.setAcceptUserId(dtoList.get(0).getAcceptUserId());
             assetAcceptEntity.setAcceptUserName(dtoList.get(0).getAcceptUserName());
             //部门
