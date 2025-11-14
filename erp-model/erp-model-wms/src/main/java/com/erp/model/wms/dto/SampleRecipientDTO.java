@@ -670,8 +670,6 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 发货仓库ID  接口： warehouse/list
          */
-        @NotBlank(message = "发货仓库ID不能为空")
-        @Size(max = 19, message = "发货仓库ID最大长度不能超过19位")
         private String warehouseId;
 
         /**
@@ -797,7 +795,7 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 是否需要出库， true = 出库， false = 不出库
          */
-        private Boolean isOutstockRequired;
+        private Boolean isOutstockRequired = Boolean.TRUE;
         /**
          * 仓库无需出库原因
          */
@@ -806,7 +804,7 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 是否需要入台账：true =入账，false  =不入账
          */
-        private Boolean isLedgerRequired;
+        private Boolean isLedgerRequired = Boolean.TRUE;
 
     }
     /**
