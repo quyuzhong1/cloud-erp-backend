@@ -118,22 +118,23 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 保存主单信息
         this.save(instockForcastEntity);
         // 保存入库预报明细
-        List<InstockForcastDetailEntity> instockForcastDetails = instockForcastDetailService.add(dto, instockForcastEntity.getId());
+        instockForcastDetailService.add(dto, instockForcastEntity.getId());
+
         // 调用库存组件，更新库存信息
         InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();
-        inventoryDto.setBusinessType(InventoryBusinessTypeEnum.INSTOCK_FORCAST.getCode());
-        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(instockForcastDetails.size());
-        instockForcastDetails.stream().forEach(instockForcastDetailEntity -> {
+        inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER.getCode());
+        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(dto.getDetails().size());
+        dto.getDetails().stream().forEach(purchaseOrderDetailEntity -> {
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
-            inOutStockDTO.setSourceId(instockForcastEntity.getId());
-            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
-            inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
-            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
-            inOutStockDTO.setSkuId(instockForcastDetailEntity.getSkuId());
-            inOutStockDTO.setSkuNo(instockForcastDetailEntity.getSkuNo());
-            inOutStockDTO.setQty(instockForcastDetailEntity.getQty());
+            inOutStockDTO.setWarehouseId(dto.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
+            inOutStockDTO.setSourceId(dto.getPurchaseOrderId());
+            inOutStockDTO.setSourceCode(dto.getPurchaseOrderCode());
+            inOutStockDTO.setBillDate(dto.getBillDate());
+            inOutStockDTO.setSourceDetailId(purchaseOrderDetailEntity.getPurchaseOrderDetailId());
+            inOutStockDTO.setSkuId(purchaseOrderDetailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
+            inOutStockDTO.setQty(purchaseOrderDetailEntity.getQty());
             inventorySkus.add(inOutStockDTO);
         });
         inventoryDto.setParamList(inventorySkus);
@@ -156,8 +157,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             return;
         }
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
-        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
-        inventoryUnApproveDTO.setBillId(instockForcastEntity.getId());
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
+        inventoryUnApproveDTO.setBillId(purchaseOrderId);
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());

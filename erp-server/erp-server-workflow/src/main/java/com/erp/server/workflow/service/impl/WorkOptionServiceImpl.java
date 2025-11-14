@@ -668,7 +668,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_IN:
-                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferInApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_OUT:
                 resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);

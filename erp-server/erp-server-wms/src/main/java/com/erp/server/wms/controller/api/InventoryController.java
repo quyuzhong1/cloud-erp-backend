@@ -337,6 +337,14 @@ public class InventoryController extends BaseController {
         InventoryDTO.LocationInventory inventory = inventoryService.recommendedLocation(param);
         return ApiResult.success(inventory);
     }
+    /**
+     * 根据仓库id sku 数量获取最优仓位 (批量)
+     * @param params params
+     */
+    @PostMapping("/recommendedLocations")
+    public ApiResult<List<InventoryDTO.LocationInventory>> recommendedLocations(@RequestBody @Validated InventoryDTO.RecommendedLocationParams params){
+        return ApiResult.success(inventoryService.recommendedLocations(params));
+    }
 
     /**
      * 查询Tab

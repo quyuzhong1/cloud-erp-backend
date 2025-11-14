@@ -531,4 +531,18 @@ public class SampleRecipientController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 根据领用人带出领用组织
+     * @author jack
+     * @date: 2025-11-14
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/getBaseByUserId")
+    public ApiResult<SampleRecipientDTO.BaseUserDTO> getBaseByUserId(@RequestBody  @Validated SampleRecipientDTO.BaseUserDTO dto) {
+        return success(sampleRecipientService.getBaseByUserId(dto));
+    }
+
+
+
 }

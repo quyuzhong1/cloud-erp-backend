@@ -30,6 +30,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import org.springframework.beans.BeanUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
@@ -411,6 +412,20 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     public List<SampleBorrowInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
         SampleBorrowInfoDTO.PagingParamDTO searchParam = new SampleBorrowInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+
         List<SampleBorrowInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -425,7 +440,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         list.stream().forEach(e ->{
             if(Objects.equals(ApproveStatusEnum.APPROVE.getCode(), e.getTabFlag())){
                 e.setTabFlagName("待归还");
-            }else {
+            }else if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
                 e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
             }
         });
@@ -434,6 +451,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
             return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
         }));
+        // 在列表开头添加"全部"统计
+        list.add(0, new SampleBorrowInfoDTO.TabListDTO("all","全部", 0));
         return list;
     }
 
@@ -1363,7 +1382,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         List<SampleBorrowInfoDTO.TabListDTO> list = new ArrayList<>();
         list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
-        list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
+        list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "待我审核" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
         list.add(new SampleBorrowInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "待归还" , map.get(ApproveStatusEnum.APPROVE.getCode())));
         return list;
     }

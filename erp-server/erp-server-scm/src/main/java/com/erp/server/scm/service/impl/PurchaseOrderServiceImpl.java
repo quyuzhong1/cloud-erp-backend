@@ -122,6 +122,8 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1564,7 +1566,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> warehouseLocationList = records.stream().map(v -> v.getWarehouseLocation()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
-            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationEntityList).list();
+            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationList).list();
         }
         for (PurchaseOrderDTO.ListDTO obj : records) {
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v -> v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -1836,13 +1838,91 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
 
+    @Resource(name = "tabExecutorPool")
+    private ExecutorService tabExecutorPool;
+
+
     @Override
     public PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto) {
         PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
         if (ObjectUtil.isEmpty(pagingTotalDTO)) {
-            return new PurchaseOrderDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO);
+            pagingTotalDTO = new PurchaseOrderDTO.PagingTotalDTO();
+            pagingTotalDTO.setTotalQty(MathUtil.ZERO);
+            pagingTotalDTO.setTotalAmount(BigDecimal.ZERO);
+            pagingTotalDTO.setTotalStockInQty(MathUtil.ZERO);
+            pagingTotalDTO.setTotalReturnQty(MathUtil.ZERO);
+            return pagingTotalDTO;
         }
-        return pagingTotalDTO;
+        // 基于主键游标分页获取命中的采购订单明细ID，边页取边统计，避免一次加载过多ID
+        final int idPageSize = 5000;
+        final int batchSize = 1000;
+        final int maxPages = 10000; // 安全阈值，防止极端情况死循环
+        int pageCount = 0;
+        String lastId = null;
+        boolean anyFound = false;
+        int totalStockInQty = MathUtil.ZERO;
+        int totalReturnQty = MathUtil.ZERO;
+        while (true) {
+            if (++pageCount > maxPages) {
+                log.warn("pagingTotal 分页获取采购明细ID达到最大页数阈值，已提前终止。maxPages={}", maxPages);
+                break;
+            }
+            List<String> podIdsPage = baseMapper.listPurchaseDetailIdsByLastId(dto, lastId, idPageSize);
+            if (CollectionUtils.isEmpty(podIdsPage)) {
+                break;
+            }
+            anyFound = true;
+
+            List<CompletableFuture<int[]>> futureList = new ArrayList<>();
+            for (int i = 0; i < podIdsPage.size(); i += batchSize) {
+                List<String> subList = podIdsPage.subList(i, Math.min(i + batchSize, podIdsPage.size()));
+                CompletableFuture<int[]> future = CompletableFuture.supplyAsync(() -> {
+                    int stockInSum = MathUtil.ZERO;
+                    List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(subList);
+                    if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                        stockInSum = stockInDetails.stream()
+                                .map(PoInstockDetailEntity::getStockInQty)
+                                .filter(Objects::nonNull)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                    }
+                    int returnSum = MathUtil.ZERO;
+                    List<PoReturnDetailEntity> returnDetails = wmsTaskFeign.listReturnOrderDetailByPodIds(subList);
+                    if (CollectionUtils.isNotEmpty(returnDetails)) {
+                        returnSum = returnDetails.stream()
+                                .map(PoReturnDetailEntity::getReturnQty)
+                                .filter(Objects::nonNull)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                    }
+                    return new int[]{stockInSum, returnSum};
+                }, tabExecutorPool);
+                futureList.add(future);
+            }
+            CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
+            for (CompletableFuture<int[]> future : futureList) {
+                int[] result = future.join();
+                totalStockInQty += result[0];
+                totalReturnQty += result[1];
+            }
+
+            String newLastId = podIdsPage.get(podIdsPage.size() - 1);
+            if (Objects.equals(newLastId, lastId)) {
+                log.warn("pagingTotal 检测到 lastId 未推进，可能存在排序或条件异常，已提前终止。lastId={}", lastId);
+                break;
+            }
+            lastId = newLastId;
+            if (podIdsPage.size() < idPageSize) {
+                break;
+            }
+        }
+        if (!anyFound) {
+            pagingTotalDTO.setTotalStockInQty(MathUtil.ZERO);
+            pagingTotalDTO.setTotalReturnQty(MathUtil.ZERO);
+            return pagingTotalDTO;
+        } else {
+            pagingTotalDTO.setTotalStockInQty(totalStockInQty);
+            pagingTotalDTO.setTotalReturnQty(totalReturnQty);
+            return pagingTotalDTO;
+        }
     }
 
     @Override
