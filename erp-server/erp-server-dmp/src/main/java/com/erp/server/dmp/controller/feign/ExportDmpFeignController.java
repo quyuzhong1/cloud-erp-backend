@@ -6,11 +6,21 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
+import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
+import com.erp.server.dmp.query.AdsErpOutstockDiffFlowQueryHandler;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
+import com.erp.server.dmp.query.CfgDiffStrategyQueryHandler;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,7 +65,10 @@ public class ExportDmpFeignController {
     private DmpInputTaskService dmpInputTaskService;
     @Resource
     private DmpOutputTaskService dmpOutputTaskService;
-
+    @Resource
+    private CfgDiffStrategyService cfgDiffStrategyService;
+    @Resource
+    private AdsErpOutstockDiffFlowService adsErpOutstockDiffFlowService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -144,5 +157,17 @@ public class ExportDmpFeignController {
     @PostMapping("/exportDmpOutputTaskDetail")
     public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTaskDetail(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
         return dmpOutputTaskService.paging(dto);
+    }
+    
+    @PostMapping("/exportCfgDiffStrategy")
+    @WebAdvanceQuery(handler = CfgDiffStrategyQueryHandler.class)
+    public PagingVO<CfgDiffStrategyDTO.ViewDTO> exportCfgDiffStrategy(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto) {
+    	return cfgDiffStrategyService.paging(dto);
+    }
+    
+    @PostMapping("/exportAdsErpOutstockDiffFlow")
+    @WebAdvanceQuery(handler = AdsErpOutstockDiffFlowQueryHandler.class)
+    public PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> exportAdsErpOutstockDiffFlow(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto) {
+    	return adsErpOutstockDiffFlowService.paging(dto);
     }
 }

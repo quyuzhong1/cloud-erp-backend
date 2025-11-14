@@ -45,6 +45,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_DMP_ETL_TASK("EXPORT_DMP_ETL_TASK", "DMP清洗任务导出", "", "", ""),
     EXPORT_DMP_INPUT_TASK("EXPORT_DMP_INPUT_TASK", "DMP拉取任务导出", "", "", ""),
     EXPORT_DMP_OUTPUT_TASK("EXPORT_DMP_OUTPUT_TASK", "DMP推送任务导出", "", "", ""),
+    EXPORT_CFG_DIFF_STRATEGY("EXPORT_CFG_DIFF_STRATEGY","差异策略配置表","","",""),
+    EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW("EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW","平台单据差异","","",""),
 
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据","","",""),

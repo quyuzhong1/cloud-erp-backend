@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -50,8 +51,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         TongYouCreateInboundReq tongYouCreateInboundReq =  this.buildInboundDto(createInboundReq);
         TongYouBaseResp<TongYouInboundResp> TongYouInboundRespTongYouBaseResp = tongYouService.createInboundBill(tongYouCreateInboundReq);
-        if(!isSuccess(TongYouInboundRespTongYouBaseResp.getCode())){
-            return failure(TongYouInboundRespTongYouBaseResp.getMessage());
+        if(!isSuccess(TongYouInboundRespTongYouBaseResp.getError())){
+            return failure(TongYouInboundRespTongYouBaseResp.getContent());
         }
         return success(TongYouInboundRespTongYouBaseResp.getData().getOrderNo());
     }
@@ -100,8 +101,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(TongYouCreateOutboundReq));
         TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createOutboundBill(TongYouCreateOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
-        if(!isSuccess(tongYouBaseResp.getCode())){
-            return failure(tongYouBaseResp.getMessage());
+        if(!isSuccess(tongYouBaseResp.getError())){
+            return failure(tongYouBaseResp.getContent());
         }
         return success(tongYouBaseResp.getData().getOrderCode());
     }
@@ -123,15 +124,16 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
-        TongYouBaseResp<String> response = tongYouService.getWarehouse();
-        if(!isSuccess(response.getCode())){
-            throw new ServiceException("授权失败,"+response.getMessage());
+        dto.getAuthJson().put("token",dto.getAuthJson().get("appToken"));
+        TongYouBaseResp<String> response = tongYouService.getWarehouse(dto.getAuthJson());
+        if(!isSuccess(response.getError())){
+            throw new ServiceException("授权失败,"+response.getContent());
         }
         return true;
     }
 
-    public boolean isSuccess(Integer code){
-        return code.equals(0);
+    public boolean isSuccess(String code){
+        return CharSequenceUtil.equals(code,"T");
     }
 
 }

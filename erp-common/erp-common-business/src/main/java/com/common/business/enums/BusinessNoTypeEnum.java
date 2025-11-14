@@ -146,6 +146,7 @@ public enum BusinessNoTypeEnum {
     CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
 
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
+    CODE_HD(115 ,"HD","差异策略配置表",BusinessNoConstant.HD),
 
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
     CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),

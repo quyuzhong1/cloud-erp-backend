@@ -54,13 +54,23 @@ public class TongYouService {
     /**
      * 获取仓库列表
      */
-    public TongYouBaseResp<String> getWarehouse(){
+    public TongYouBaseResp<String> getWarehouse(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_storage_list.php";
-        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,new HashMap<>(), headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
         return TongYouUtils.parseToTongYouResp(bodyStr, String.class);
     }
 
+
+    /**
+     * 获取物流渠道列表
+     */
+    public TongYouBaseResp<String> getLogisticsChannel(Map<String, Object> authJson){
+        Map<String, String> headerMap = new HashMap<>();
+        String path = "hwc_api/hwc_paisongx.php";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
+        return TongYouUtils.parseToTongYouResp(bodyStr, String.class);
+    }
 
     /**
      * 创建入库单
