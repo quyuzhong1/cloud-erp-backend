@@ -195,7 +195,6 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             if(CollUtil.isNotEmpty(dto.getAgeInfoList())){
                 List<OverseasInventoryAgeDetailEntity> addList = new ArrayList<>();
                 List<OverseasInventoryAgeDetailEntity> oldDetails = overseasInventoryAgeDetailService.lambdaQuery()
-                        .eq(OverseasInventoryAgeDetailEntity::getPullDate, LocalDate.now())
                         .eq(OverseasInventoryAgeDetailEntity::getMainId,entity.getId())
                         .list();
                 for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {

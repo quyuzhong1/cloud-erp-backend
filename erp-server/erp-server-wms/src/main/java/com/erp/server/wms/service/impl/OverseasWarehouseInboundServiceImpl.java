@@ -1065,6 +1065,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (null == receiverQty){
                 throw new ServiceException("签收数据异常");
             }
+            if(destWarehouse.getOnwayWarehouseId().equals(mainEntity.getToWarehouseId())){
+                continue;
+            }
             TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
             //映射产品信息
             detailAddDto.setSkuId(detailEntity.getSkuId());
@@ -1076,6 +1079,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             detailAddDtoList.add(detailAddDto);
+        }
+        if(CollectionUtils.isEmpty(detailAddDtoList)){
+            return "";
         }
 
         addDTO.setDetailList(detailAddDtoList);
