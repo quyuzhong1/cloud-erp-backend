@@ -85,7 +85,7 @@ public class SampleTransferInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleTransferInfo:paging",
-            tableAlias = ""
+            tableAlias = "sti"
     )
     public ApiResult<List<SampleTransferInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleTransferInfoService.tabList(dto));
