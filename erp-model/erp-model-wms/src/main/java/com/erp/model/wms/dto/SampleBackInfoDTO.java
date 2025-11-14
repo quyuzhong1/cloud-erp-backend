@@ -622,14 +622,6 @@ public class SampleBackInfoDTO implements Serializable {
          */
         private String deptName;
         /**
-         * 收货仓库ID
-         */
-        private String warehouseId;
-        /**
-         * 收货仓库名称
-         */
-        private String warehouseName;
-        /**
          * 退回组织ID
          */
         private String orgId;

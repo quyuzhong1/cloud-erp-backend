@@ -362,4 +362,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryEntity> listInventoryBySkuNos(List<String> skuNoList);
 
     List<InventoryDTO.RealQtyDTO> getRealQty(List<String> skuIds, List<String> warehouseIds, List<String> inventoryStatusList);
+
+    List<InventoryDTO.LocationInventory> recommendedLocations(List<InventoryDTO.RecommendedLocationParam> param);
 }
