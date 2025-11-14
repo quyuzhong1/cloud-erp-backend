@@ -1597,6 +1597,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     .one();
             viewGeneratePurchaseOrderDTO.setSupplierId(assetPurchaseOrderSupplierEntity.getSupplierId());
             viewGeneratePurchaseOrderDTO.setSupplierName(assetPurchaseOrderSupplierEntity.getSupplierName());
+
+            viewGeneratePurchaseOrderDTO.setPurchaseOrgId(assetPurchaseOrderEntity.getPurchaseOrgId());
+            viewGeneratePurchaseOrderDTO.setPurchaseOrgName(assetPurchaseOrderEntity.getPurchaseOrgName());
             /**
              * 1、待验收数量=采购数量-已验收数量
              * 2、已验收数量=已审核资产验收单订单验收数量
