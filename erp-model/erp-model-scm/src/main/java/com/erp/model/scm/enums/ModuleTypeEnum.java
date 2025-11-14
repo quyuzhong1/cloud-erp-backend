@@ -171,6 +171,7 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PACKAGE_PLAN("138", "组包计划"),
     SAMPLE_TRANSFER_INFO("146", "样品转移单"),
+    SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
     PAYABLE_INFO("145", "应付单"),
     SO_B2C_REFUND("146", "售后订单"),
 
