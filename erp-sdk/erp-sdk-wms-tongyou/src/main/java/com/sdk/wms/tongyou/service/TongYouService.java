@@ -1,6 +1,7 @@
 package com.sdk.wms.tongyou.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
@@ -9,6 +10,7 @@ import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
 import com.sdk.wms.tongyou.dto.response.TongYouInboundResp;
+import com.sdk.wms.tongyou.dto.response.TongYouLogisticChannelResp;
 import com.sdk.wms.tongyou.dto.response.TongYouOutboundResp;
 import com.sdk.wms.tongyou.utils.TongYouUtils;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,11 +68,12 @@ public class TongYouService {
     /**
      * 获取物流渠道列表
      */
-    public TongYouBaseResp<String> getLogisticsChannel(Map<String, Object> authJson){
+    public TongYouBaseResp<List<TongYouLogisticChannelResp>> getLogisticsChannel(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_paisongx.php";
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
-        return TongYouUtils.parseToTongYouResp(bodyStr, String.class);
+        return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouLogisticChannelResp>>>() {});
+
     }
 
     /**
