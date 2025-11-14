@@ -275,12 +275,41 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 更新单据审核状态
         log.info("提交 开始修改分步式调出状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
         this.updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
-        // TODO 启动流程
+
+        //启动流程
+        startProcess(list);
 
         // 记录操作日志
         log.info("提交 开始记录分步式调出日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("提交了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "提交操作");
+    }
+
+
+    /**
+     * 启动流程
+     * @author will
+     * @date 2025/11/14 11:19
+     * @param list
+     * @return void
+     */
+    private void startProcess (List<TransferOutEntity> list) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        list.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userInfo.getUid());
+            startDTO.setVariablesMap(getVariablesMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
