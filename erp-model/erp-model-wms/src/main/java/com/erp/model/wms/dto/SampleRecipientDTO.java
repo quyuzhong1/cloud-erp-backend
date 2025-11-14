@@ -1192,4 +1192,39 @@ public class SampleRecipientDTO implements Serializable {
         private Boolean disabled = false;
     }
 
+    /**
+     * 领用人基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BaseUserDTO {
+
+        /**
+         * 领用人ID
+         */
+        @NotBlank(message = "领用人ID不能为空")
+        private String userId;
+        /**
+         * 领用人姓名
+         */
+        private String userName;
+        /**
+         * 领用部门ID
+         */
+        private String deptId;
+        /**
+         * 领用部门名称
+         */
+        private String deptName;
+        /**
+         * 领料组织ID
+         */
+        private String pickOrgId;
+        /**
+         * 领料组织名称
+         */
+        private String pickOrgName;
+    }
+
 }

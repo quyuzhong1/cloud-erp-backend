@@ -22,8 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.erp.model.wms.enums.SampleRecipientTabEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -47,14 +46,12 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
-import com.common.core.utils.ExcelUtil;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.business.utils.SampleLedgerLockUtil;
 import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.utils.SampleDocumentAuditUtil;
@@ -1796,6 +1793,22 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public SampleBackInfoDTO.BaseUserDTO getBaseByUserId(SampleBackInfoDTO.BaseUserDTO dto) {
+        // 查询最新的已审批记录
+        SampleBackInfoEntity entity = lambdaQuery()
+                .eq(SampleBackInfoEntity::getUserId, dto.getUserId())
+                .eq(SampleBackInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(SampleBackInfoEntity::getApproveTime)
+                .last("limit 1")
+                .one();
+        // 数据拷贝
+        if (Objects.nonNull(entity)) {
+            BeanMapper.copy(entity,dto);
+        }
+        return dto;
     }
 
     /**

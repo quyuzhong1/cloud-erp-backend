@@ -16,8 +16,8 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.core.utils.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -39,11 +39,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import org.springframework.beans.BeanUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductSkuDTO;
@@ -121,7 +117,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Autowired
     private SampleRecipientDetailService sampleRecipientDetailService;
     @Autowired
-    private InventoryService inventoryService;
+    private InventoryService sampleRecipientEntity;
     @Autowired
     private WarehouseService warehouseService;
     @Autowired
@@ -1145,7 +1141,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 inventoryParams.add(param);
             }
 
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryList = inventoryService.getInventoryQty(inventoryParams);
+            List<InventoryDTO.InventoryViewQtyDTO> inventoryList = this.sampleRecipientEntity.getInventoryQty(inventoryParams);
             Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
                     .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item));
             for (SampleRecipientDetailEntity detail : detailList) {
@@ -1466,7 +1462,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         // 查询库存信息
-        List<InventoryDTO.InventoryViewQtyDTO> inventoryList = inventoryService.getInventoryQty(inventoryParams);
+        List<InventoryDTO.InventoryViewQtyDTO> inventoryList = sampleRecipientEntity.getInventoryQty(inventoryParams);
         Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
             .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
 
@@ -1793,7 +1789,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 stockDTO.setSkuId(skuId);
                 stockDTO.setWarehouseId(warehouseId);
                 // 查询可用库存
-                Integer availableQty = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
+                Integer availableQty = sampleRecipientEntity.getUsableInventoryTotal(warehouseId, skuId);
                 stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
                 result.add(stockDTO);
             }
@@ -1850,7 +1846,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     // 查询指定仓库的库存信息，使用现有的getRealQty方法
                     List<String> warehouseIds = Collections.singletonList(dto.getWarehouseId());
                     List<String> inventoryStatusList = Collections.singletonList(InventoryStatusEnum.USABLE.getCode()); // 只查询可用库存
-                    List<InventoryDTO.RealQtyDTO> inventoryList = inventoryService.getRealQty(skuIds, warehouseIds, inventoryStatusList);
+                    List<InventoryDTO.RealQtyDTO> inventoryList = sampleRecipientEntity.getRealQty(skuIds, warehouseIds, inventoryStatusList);
                     if (CollUtil.isNotEmpty(inventoryList)) {
                         inventoryMap = inventoryList.stream()
                                 .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity()));
@@ -2010,7 +2006,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String skuId : skuIds) {
                 for (String warehouseId : warehouseIds) {
                     try {
-                        Integer inventoryQty = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
+                        Integer inventoryQty = sampleRecipientEntity.getUsableInventoryTotal(warehouseId, skuId);
                         String key = skuId + "_" + warehouseId;
                         inventoryMap.put(key, inventoryQty != null ? inventoryQty : 0);
                     } catch (Exception e) {
@@ -2228,7 +2224,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 for (Map.Entry<Key, Integer> entry : locationOutQtySumMap.entrySet()) {
                     Key key = entry.getKey();
                     Integer sumOutQty = entry.getValue();
-                    Integer usable = inventoryService.getUsableInventoryTotal(key.warehouseId, key.skuId, key.location);
+                    Integer usable = sampleRecipientEntity.getUsableInventoryTotal(key.warehouseId, key.skuId, key.location);
                     int usableQty = ObjectUtil.defaultIfNull(usable, 0);
                     if (sumOutQty > usableQty) {
                         // 反查SKU编号用于提示
@@ -2856,6 +2852,22 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public SampleRecipientDTO.BaseUserDTO getBaseByUserId(SampleRecipientDTO.BaseUserDTO dto) {
+        // 查询最新的已审批记录
+        SampleRecipientEntity entity = lambdaQuery()
+                .eq(SampleRecipientEntity::getUserId, dto.getUserId())
+                .eq(SampleRecipientEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(SampleRecipientEntity::getApproveTime)
+                .last("limit 1")
+                .one();
+        // 数据拷贝
+        if (Objects.nonNull(entity)) {
+            BeanMapper.copy(entity,dto);
+        }
+        return dto;
     }
 
     /**
