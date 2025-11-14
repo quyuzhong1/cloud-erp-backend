@@ -138,7 +138,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  sample_transfer_info
+        FROM  sample_transfer_info sti
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

@@ -42,8 +42,9 @@
         <redisson.version>3.10.7</redisson.version>
         <commons-text.version>1.9</commons-text.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <hutool.version>5.8.12</hutool.version>
+        <hutool.version>5.8.16</hutool.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <postgresql.version>42.5.4</postgresql.version>
     </properties>
 
     <!--公共依赖组件-->
