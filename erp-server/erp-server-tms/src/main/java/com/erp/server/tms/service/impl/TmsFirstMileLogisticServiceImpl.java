@@ -288,8 +288,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costDetailList.add(dto);
         }
         costAddDTO.setCostDetailList(costDetailList);
-        logisticsBillCostService.add(costAddDTO);
-
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+             logisticsBillCostService.add(costAddDTO);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
 
         //设置附件信息
         Class<LogisticsBillEntity> credentialClass = LogisticsBillEntity.class;
@@ -307,8 +314,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
 
-        //新增暂估账单
-        firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
+
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            //新增暂估账单
+            firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 

@@ -44,4 +44,9 @@ public class SampleBackInfoApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleBackInfoService.approveEnd(approveOneDTO, entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

@@ -56,7 +56,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-16 9:32
      */
-    void addSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.AddDTO> detailList);
+    void addSoDetail(SoInfoEntity addEntity,Boolean isTax, List<SoDetailDTO.AddDTO> detailList);
 
     /**
      * 添加详情按钮-列表查询
@@ -141,7 +141,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-17 16:00
      */
-    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
+    void updateSoDetail(SoInfoEntity soInfo,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
 
     /**
      * 根据主表ids 删除数据
@@ -354,4 +354,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
+
+    void resetSkuVo(List<String> skuIdList, List<SkuVO> skuList, SoInfoEntity soInfoEntity);
+
+    /**
+     * 更新平台订单明细id
+     * @author will
+     * @date 2025/9/23 12:17
+     * @param id
+     * @param platformDetailIdList
+     * @return Boolean
+     */
+    Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
 }

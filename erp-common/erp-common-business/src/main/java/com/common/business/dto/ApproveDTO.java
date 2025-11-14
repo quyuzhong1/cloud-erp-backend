@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -55,6 +56,15 @@ public class ApproveDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 平台，默认设置成erp
+         */
+        private String sourcePlatform = "erp";
+
+
+        public CancelProcessDTO(String id) {
+            this.id = id;
+        }
     }
 
 
@@ -62,6 +72,11 @@ public class ApproveDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class EndProcessDTO{
+
+        /**
+         * 审核平台，默认erp
+         */
+        private ApprovePlatformEnum approvePlatformEnum = ApprovePlatformEnum.ERP;
 
         /**
          * 业务key
@@ -101,5 +116,32 @@ public class ApproveDTO implements Serializable {
          * 流程参数map
          */
         private Map<String,Object> variablesMap;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddCommentDTO{
+        /**
+         * 审核平台，默认erp
+         */
+        private ApprovePlatformEnum approvePlatformEnum = ApprovePlatformEnum.ERP;
+        /**
+         * 单据类型
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String businessKey;
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 评论信息
+         */
+        private List<String> comments;
     }
 }

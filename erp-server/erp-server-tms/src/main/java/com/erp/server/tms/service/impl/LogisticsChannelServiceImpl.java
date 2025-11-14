@@ -15,6 +15,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -28,6 +29,7 @@ import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -651,6 +653,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(logisticsChannelEntity.getLastMileCarrier())){
             logisticsChannelEntity.setLastMileCarrier("");
         }
+        if(StringUtils.isBlank(logisticsChannelEntity.getHandoverDocType())){
+            logisticsChannelEntity.setHandoverDocType("");
+        }
         logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
         BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();
         if (Objects.isNull(minCustomsAmount)) {
@@ -696,6 +701,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(platform)
                     && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(platform)
                     && !LogisticsPlatformEnum.CAINIAO.getCode().equals(platform)
+                    && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(platform)
                     && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
@@ -933,5 +939,21 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformCode(platformCodeList);
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
+        return baseMapper.getByPlatformWarehouseAndType(dto);
+    }
+
+    @Override
+    public LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(String logisticsProductCode, String transferWarehouseId) {
+        if(StringUtils.isBlank(logisticsProductCode) || StringUtils.isBlank(transferWarehouseId)){
+            return null;
+        }
+        return logisticsSaleChannelService.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,logisticsProductCode)
+                .eq(LogisticsSaleChannelEntity::getOverseasWarehouseId,transferWarehouseId)
+                .last(SqlConstants.LIMIT_1)
+                .one();
     }
 }

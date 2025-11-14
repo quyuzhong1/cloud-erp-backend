@@ -50,10 +50,10 @@ public interface TransferApplicationMapper extends BaseMapper<TransferApplicatio
      * @description: 查询调拨申请单数据
      * @author Will
      * @date: 2023/5/11 16:08
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(@Param("ids") List<String> ids);
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(@Param("detailIdList") List<String> detailIdList);
 
     /**
      * 下推加工单列表查询

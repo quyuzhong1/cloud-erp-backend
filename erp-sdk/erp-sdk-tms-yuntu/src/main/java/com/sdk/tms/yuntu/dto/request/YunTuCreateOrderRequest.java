@@ -324,4 +324,36 @@ public class YunTuCreateOrderRequest {
         //额外服务备注
         private String extraNote;
     }
+
+    private Platform platform;
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Platform {
+
+        private String platformCode;
+
+        private String platformName;
+
+        private String province;
+
+        private String address;
+
+        private String postalCode;
+
+        private String phoneNumber;
+
+        private String email;
+
+        private String goodsType;
+
+        private String payPlatform;
+
+        private String payAccount;
+
+        private String payTransaction;
+
+    }
 }

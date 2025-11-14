@@ -821,7 +821,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException(e.getMessage());
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
-            entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
+            entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
             this.updateById(entity);
         } else {
             throw new ServiceException("打印失败");

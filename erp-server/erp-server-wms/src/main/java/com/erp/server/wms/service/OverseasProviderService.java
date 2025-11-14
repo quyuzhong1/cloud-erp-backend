@@ -123,4 +123,8 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse();
 
     OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName);
+
+    List<OverseasProviderEntity> listByAuthStatus(String code);
+
+    OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

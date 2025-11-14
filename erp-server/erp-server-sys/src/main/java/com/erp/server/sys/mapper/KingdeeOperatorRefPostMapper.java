@@ -52,4 +52,12 @@ public interface KingdeeOperatorRefPostMapper extends BaseMapper<KingdeeOperator
     List<UserInfoDTO.BusinessOperationUserDTO> listInfo(@Param("params") KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 
     List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(@Param("userIdList") List<String> userIdList);
+    /**
+     * 根据业务员类型和组织id集合查询用户信息
+     * @author will
+     * @date 2025/8/6 14:29
+     * @param dto
+     * @return List<BusinessOperationUserDTO>
+     */
+    List<UserInfoDTO.BusinessOperationUserDTO> listUser(@Param("params")KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto);
 }

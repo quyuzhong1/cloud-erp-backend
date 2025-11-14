@@ -157,6 +157,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("platform_so_detail_id")
     private String platformSoDetailId;
 
+    /**
+     * 客户PO号
+     */
+    @TableField("customer_po")
+    private String customerPO;
+
     @TableField(exist = false)
     private String approveStatus;
 

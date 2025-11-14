@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -47,8 +48,10 @@ public class SysUserInfoEntity implements Serializable {
 	/**
 	 * 用户删除状态 1:正常 0：已删除
 	 */
-	@TableLogic(value = "1",delval = "0")
-	private Integer deleteState;
+	@TableField(value = "is_deleted")
+	@TableLogic
+	private Boolean isDeleted;
+
 	/**
 	 * 最后登录的ip
 	 */
@@ -61,12 +64,12 @@ public class SysUserInfoEntity implements Serializable {
 	 * 创建时间
 	 */
 	@TableField(fill= FieldFill.INSERT)
-	private Date createTime;
+	private LocalDateTime createTime;
 	/**
 	 * 更新时间
 	 */
 	@TableField(fill= FieldFill.INSERT_UPDATE)
-	private Date updateTime;
+	private LocalDateTime updateTime;
 
 
 	/**

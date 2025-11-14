@@ -147,6 +147,11 @@ public class SoB2cDetailDTO implements Serializable {
         private Boolean isCombination;
 
         /**
+         * 是否手工添加明细
+         */
+        private Boolean isSelfAdd;
+
+        /**
         * 明细标签对象
         */
        private DetailLabelDTO detailLabelDTO;

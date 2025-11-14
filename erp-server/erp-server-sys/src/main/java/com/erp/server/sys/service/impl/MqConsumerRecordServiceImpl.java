@@ -1,7 +1,11 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -10,11 +14,19 @@ import com.erp.model.sys.entity.MqConsumerRecordEntity;
 import com.erp.server.sys.mapper.MqConsumerRecordMapper;
 import com.erp.server.sys.service.MqConsumerRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.erp.server.sys.service.OperateLogService;
+import com.common.core.exception.ServiceException;
 import com.google.gson.Gson;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
-
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * mq消费记录 服务实现类
@@ -45,5 +57,30 @@ public class MqConsumerRecordServiceImpl extends SuperServiceImpl<MqConsumerReco
             return mqConsumerRecord.getId();
         }
         return "";
+    }
+
+    @Override
+    public String buildMqDTO(MqConsumerRecordDTO.BuildMqDTO dto){
+        String jsonStr ="";
+        if(Objects.nonNull(dto)){
+            List<Map<String, Map<String, Object>>> list = new ArrayList<>();
+            Map<String, Map<String, Object>> beforeMap = new HashMap<>();
+            Map<String, Map<String, Object>> afterMap = new HashMap<>();
+            Object before = dto.getBefore();
+            if(Objects.nonNull(before)){
+                beforeMap.put("before", BeanUtil.beanToMap(before));
+                list.add(beforeMap);
+            }
+            Object after = dto.getAfter();
+            if(Objects.nonNull(after)){
+                afterMap.put("after", BeanUtil.beanToMap(after));
+                list.add(afterMap);
+            }
+            if(list.size() > 0){
+                //把list转出String类型的json
+                jsonStr = JSONUtil.toJsonStr(list);
+            }
+        }
+        return jsonStr;
     }
 }

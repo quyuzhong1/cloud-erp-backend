@@ -22,6 +22,9 @@ public interface BusinessNoConstant {
 
     String GYSDM = "A";
 
+    String SKD = "SKD";
+
+    String KHSX = "KHSX";
 
     String CGJM = "CGJM";
 
@@ -198,11 +201,11 @@ public interface BusinessNoConstant {
     //合同管理
     String GYSHT = "GYSHT";
     //样品作废单
-    String YPZF = "YPZF";
+    String YPBF = "YPBF";
     //样品借用单
     String YPJY = "YPJY";
     String YPGH = "YPGH";
-    String ZHDD = "ZHDD";
+    String ZHXS = "ZHXS";
 
     //样品领用
     String YPLY="YPLY";
@@ -210,6 +213,12 @@ public interface BusinessNoConstant {
     String YPTH="YPTH";
     //期初台账
     String QCTZ="QCTZ";
+    //组包计划
+    String ZBJH="ZBJH";
+    //样品转移单
+    String YPZY="YPZY";
+    //资质字典
+    String DC="DC";
 
 
 }

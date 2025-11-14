@@ -43,7 +43,7 @@ public enum ApiError implements Serializable {
 
     ERROR_FORBIDDEN(403, "您未登录,请登录后操作"),
     ERROR_UNAUTHORIZED(401, "未授权"),
-
+    ERROR_429(429, "访问频率过高，请稍后再试"),
     /**
      * 高级查询异常
      */
@@ -107,6 +107,8 @@ public enum ApiError implements Serializable {
     ERROR_DOC_SUBMIT_FAILED(1042,"{}单据提交失败"),
     ERROR_DELETE_STATUS_NOT_ALLOWED(1043,"只有待提交数据支持删除"),
     ERROR_DATA_DELETE(1046, "数据删除失败"),
+    ERROR_DATA_APPROVE(1046, "数据审核失败"),
+    ERROR_DATA_DISAPPROVE(1046, "数据反审核失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -297,6 +299,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
+    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
 
     /**
      * PLM 错误
@@ -1220,6 +1223,14 @@ public enum ApiError implements Serializable {
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
 
+    ERROR_FBA_FNSKU_NOT_EXIST(92281, "平台SKU【{}】未匹配到FNSKU，请检查SKU是否已绑定FNSKU"),
+    ERROR_TRANSFER_NOT_RETRY_OUTSTOCK(92288, "发货单已调拨出库，不允许重新出库"),
+    ERROR_FBA_FNSKU_NOT_BLANK(92289, "FNSKU不能为空"),
+
+    ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
+    ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
+
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1281,6 +1292,7 @@ public enum ApiError implements Serializable {
     ERROR_SHOP_NOT_EXIST_NO_PERMISSION(92058,"店铺不存在或没有店铺权限"),
     ERROR_DEMAND_DATE_GT_ORDER_DATE(92059,"要货日期必须大于单据日期"),
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED(92061,"WB订单【{}】不支持拆分和合并"),
     ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP(92061,"B2C销售订单【{}】平台和店铺不能为空"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
@@ -1629,6 +1641,20 @@ public enum ApiError implements Serializable {
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 
     ERROR_PO_APPLY_QTY_MORE(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
+    ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
+    ERROR_99999(99999, "参数错误"),
+
+    // 单点登录相关错误码
+    SSO_APP_NOT_FOUND(20001, "应用不存在"),
+    SSO_DISABLED(20002, "单点登录功能已禁用"),
+    SSO_DECRYPT_FAILED(20003, "解密失败"),
+    SSO_PARSE_PAYLOAD_FAILED(20004, "解析payload失败"),
+    SSO_INVALID_PAYLOAD(20005, "payload内容无效"),
+    SSO_USER_NOT_BOUND(20006, "用户未绑定ERP"),
+    SSO_SYSTEM_ERROR(20007, "系统异常：{}"),
+
+    // 会话密钥相关错误码
+    SESSION_EXPIRED(29999, "会话过期，请重新协商密钥"),
     ;
     @Getter
     private final Integer code;

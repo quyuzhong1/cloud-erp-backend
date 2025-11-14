@@ -73,6 +73,7 @@ public class DmpOutputLxFbaReceivedRocketMQTaskHandler extends DmpOutputRocketMQ
         Map<String, List<FbaReceiveDetailEntity>> sourceGroupMap = dmpEntityMap.values().stream()
                 .filter(ObjectUtil::isNotEmpty)
                 .map(e -> this.convert(e, cfgOutputId))
+                .filter(ObjectUtil::isNotEmpty)
                 .filter(e -> changeFbaShipmentIds.contains(e.getFbaShipmentId()))
                 .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
 

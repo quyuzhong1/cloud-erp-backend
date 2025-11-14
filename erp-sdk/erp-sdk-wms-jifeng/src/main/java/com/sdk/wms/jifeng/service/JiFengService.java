@@ -2,6 +2,7 @@ package com.sdk.wms.jifeng.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.parser.ParserConfig;
@@ -31,19 +32,14 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","e330fe613e1a49e68f44d9f26a0dee28");
+        authMap.put("accessToken","8914cc5779b04c9992b0418011b2c73a");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
-        JiFengCreateInboundRequest jiFengCreateInboundRequest = new JiFengCreateInboundRequest();
-        jiFengCreateInboundRequest.setErpNo("FHD123456");
-        jiFengCreateInboundRequest.setTrackingNo("test123456");
-        jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
-        JiFengReturnOrderRequest request = new JiFengReturnOrderRequest();
-        request.setBeginTime("2025-05-23 05:00:10");
-        request.setEndTime("2025-05-23 10:00:10");
-        jiFengService.getInbound(authMap,"IN5200050");
-        System.out.println(123);
+        List<String> erpNo = new ArrayList<>();
+        erpNo.add("WFHD25101603694");
+        JiFengBaseResp<List<JiFengOutboundResp>> a = jiFengService.getOrder(authMap,erpNo);
+        System.out.println(JSONObject.toJSONString( a));
     }
 //    public static void main(String[] args) {
 //        String clientId = "a03b35bf7f0c4c4f8e23e0599b5be649";
@@ -371,6 +367,28 @@ public class JiFengService {
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }
+
+    /**
+     * 查询出库单
+     * @param authMap
+     * @param erpNo
+     * @return
+     */
+    public JiFengBaseResp<JiFengOutboundResp> getOutBound(Map<String,Object> authMap, String erpNo){
+        String path = "/api/order/get";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("erpNo",erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<JiFengOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengOutboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风获取入库单详情失败，返回结果为空");
+        }
+        return response;
+    }
+
     /**
      * 取消出库单
      * @param authMap

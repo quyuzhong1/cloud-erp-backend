@@ -2,16 +2,21 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.BaseStatusEnum;
+import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.UserTypeEnum;
+import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -57,6 +62,7 @@ import java.util.stream.Stream;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
 import static cn.hutool.core.collection.CollUtil.isNotEmpty;
+import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * 项目计划表(ProjectPlan)表服务实现类
@@ -87,7 +93,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
 
     @Value("${pmoCharge}")
@@ -186,7 +192,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             sb.append(userName).append(" ").append(nowTime).append(" ").append("提交 ");
             sb.append("计划开始时间  ");
             sb.append(task.getPlanStartTime()).append("  计划结束时间 ").append(task.getPlanEndTime());
-            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
+            operateLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
         }
 
 
@@ -736,6 +742,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //是不是第一次审核
         Boolean isFirst = false;
 
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(plan.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(plan.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+
         //已存在的审核状态
         String dbStatus = plan.getStatus();
         //意见
@@ -796,7 +808,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                     sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
                     sb.append("计划开始时间 ");
                     sb.append(task.getOriginStartTime()).append("  计划结束时间").append(task.getOriginEndTime());
-                    sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
+                    operateLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
                 }
 
             }
@@ -1162,7 +1174,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_USER_NOT_FOUND.code, format(ApiError.ERROR_USER_NOT_FOUND.msg, taskChargeName)));
+                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_1037.code, format(ApiError.ERROR_1037.msg, taskChargeName)));
                 }
                 chargeIds.add(chargeId);
             }

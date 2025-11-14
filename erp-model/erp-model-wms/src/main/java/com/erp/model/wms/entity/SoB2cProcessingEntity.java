@@ -135,6 +135,12 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     private LocalDate billDate;
 
     /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
      * 拣货明细id
      */
     @TableField(exist = false)

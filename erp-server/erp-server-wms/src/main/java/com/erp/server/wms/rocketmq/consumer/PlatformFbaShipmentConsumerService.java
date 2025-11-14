@@ -148,7 +148,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             paramDTO.setIsExpire(false);
             // 查询ListingInfo和skuMapping的关系

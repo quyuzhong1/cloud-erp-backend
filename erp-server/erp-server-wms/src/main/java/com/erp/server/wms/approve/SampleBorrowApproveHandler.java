@@ -40,4 +40,9 @@ public class SampleBorrowApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleBorrowInfoService.approveEnd(approveOneDTO,entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

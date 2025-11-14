@@ -91,7 +91,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setPlatformSkuNoList(mskuList);
         paramDTO.setShopIdList(Collections.singletonList(fbaShipmentEntity.getShopId()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系

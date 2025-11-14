@@ -39,4 +39,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     String getPcLinkByEnv();
 
     Map<String, Object> getFsActionCallback();
+    /**
+     * 根据key查询
+     * @author will
+     * @date 2025/11/13 20:39
+     * @param businessKey
+     * @return CfgSettingEntity
+     */
+    CfgSettingEntity getByKey(String businessKey);
 }

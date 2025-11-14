@@ -2,8 +2,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -27,12 +30,16 @@ import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
 import com.erp.wms.aliexpress.service.AliexpressWarehouseService;
 import com.erp.wms.aliexpress.util.ApiException;
+import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
+import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
+import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -156,7 +163,9 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AliexpressOrderDTO aliexpressOrderDTO = convertToOrderDto(createOutboundReq);
         try {
+            log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(aliexpressOrderDTO));
             ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressOrderDTO);
+            log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(apiOrderResponseDTO));
             if(!apiOrderResponseDTO.isSuccess()){
                 log.error("创建菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
@@ -228,6 +237,10 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
 
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
+    }
 
     private AliexpressAuthDTO buildAuthDTO(String shopId,String ownerCode) {
         AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
@@ -263,6 +276,10 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
     }
 
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        return ApiResult.error("查询菜鸟仓出库单失败");
+    }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         Map<String, Object> authJson = dto.getAuthJson();

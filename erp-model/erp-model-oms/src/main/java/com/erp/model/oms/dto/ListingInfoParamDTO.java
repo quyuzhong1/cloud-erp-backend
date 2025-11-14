@@ -101,7 +101,7 @@ public class ListingInfoParamDTO {
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setShopIdList(new ArrayList<>(shopIds));
         paramDTO.setPlatformSkuNoList(new ArrayList<>(sellerSkuList));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         return paramDTO;

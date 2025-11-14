@@ -87,7 +87,7 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform", "warehouse","customer"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform","b2bPlatform", "warehouse","customer"}, message = "类型有误")
         private String type;
 
 
@@ -308,7 +308,6 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 店铺
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
@@ -611,6 +610,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String matchResultStr;
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
          * 更新人名称
@@ -1378,6 +1381,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MappingSkuViewDTO {
+        /**
+         * listingId
+         */
+        private String listingId;
 
         private String id;
 
@@ -1609,6 +1616,14 @@ public class SkuMappingDTO implements Serializable {
          * 客户id
          */
         private String cutomerId;
+        /**
+         *
+         */
+        private String type;
+        /**
+         * 匹配结果吧true 已匹配 false 未匹配
+         */
+        private String matchResult;
     }
 
 
@@ -1733,5 +1748,46 @@ public class SkuMappingDTO implements Serializable {
          * 标签文件名称
          */
         private String labelFileName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncPlatformProductDTO {
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String platform;
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺ID不能为空")
+        private String shopId;
+
+        /**
+         * 平台sku集合
+         */
+        @NotEmpty(message = "平台Sku不能为空")
+        private List<String> platformSkuNoList;
+    }
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncSkuDTO {
+        /**
+         * 开始时间
+         */
+        @NotNull(message = "开始时间不能为空")
+        private LocalDateTime startTime;
+
+        /**
+         * 结束时间
+         */
+        @NotNull(message = "结束时间不能为空")
+        private LocalDateTime endTime;
     }
 }

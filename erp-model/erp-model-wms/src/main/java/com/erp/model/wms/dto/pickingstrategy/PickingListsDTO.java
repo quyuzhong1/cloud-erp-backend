@@ -72,9 +72,25 @@ public class PickingListsDTO {
          */
         private String updateUserName;
         /**
+         * 打印人
+         */
+        private String printUserName;
+        /**
+         * 打印状态
+         */
+        private String printStatus;
+        /**
+         * 打印状态名称
+         */
+        private String printStatusName;
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 打印时间
+         */
+        private LocalDateTime printTime;
         /**
          * 创建时间
          */
@@ -154,6 +170,15 @@ public class PickingListsDTO {
          */
         private String stagingAreaName;
         /**
+         * 打印状态
+         * PackagePrintStatusEnum
+         */
+        private String printStatus;
+        /**
+         * 打印状态名称
+         */
+        private String printStatusName;
+        /**
          * 暂存库位
          */
         private String stagingLocation;
@@ -161,11 +186,13 @@ public class PickingListsDTO {
          * 更新人
          */
         private String updateUserName;
+        private String printUserName;
 
         /**
          * 更新时间
          */
         private LocalDateTime updateTime;
+        private LocalDateTime printTime;
     }
 
 
@@ -302,6 +329,10 @@ public class PickingListsDTO {
          * 推荐仓位
          */
         private String warehouseLocation;
+        /**
+         * 推荐仓位名称
+         */
+        private String warehouseLocationName;
         /**
          * 明细来源Id
          */

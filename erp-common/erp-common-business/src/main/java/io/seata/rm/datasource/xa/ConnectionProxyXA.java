@@ -121,6 +121,7 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
     public synchronized void xaCommit(String xid, long branchId, String applicationData) throws XAException {
         XAXid xaXid = XAXidBuilder.build(xid, branchId);
         xaResource.commit(xaXid, false);
+        InventoryXAUtil.xaCommit(xaXid);
         releaseIfNecessary();
     }
 
@@ -147,6 +148,7 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
      */
     public void xaRollback(XAXid xaXid) throws XAException {
         xaResource.rollback(xaXid);
+        InventoryXAUtil.xaRollback(xaXid);
         releaseIfNecessary();
     }
 

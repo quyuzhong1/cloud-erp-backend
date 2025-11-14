@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -220,7 +223,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         DaMaiCreateOrderRequest daMaiCreateOrderRequest = this.buildOrderDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
@@ -238,7 +243,20 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        DaMaiGetOrderRequest daMaiGetOrderRequest = new DaMaiGetOrderRequest();
+        daMaiGetOrderRequest.setCustRefNoList(Collections.singletonList(queryOutboundReq.getErpOrderCode()));
+        DaMaiBaseResp<List<DaMaiGetOrderResp>> orderList = daMaiService.getOrderList(ThirdWarehouseContext.getAuthMap(), daMaiGetOrderRequest);
+        if(!isSuccess(orderList)){
+            return failure(orderList.getMsg());
+        }
+        List<DaMaiGetOrderResp> data = orderList.getData();
+        if(CollectionUtils.isEmpty(data)){
+            return failure("订单不存在");
+        }
+        return success(data.get(0).getSoNo());
+    }
     private DaMaiCreateOrderRequest buildOrderDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
 
         List<DaMaiCreateOrderRequest.SoSkuListDTO> soSkuList = new ArrayList<>();
@@ -280,6 +298,10 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .soSkuList(soSkuList)
                 .build();
         return daMaiCreateOrderRequest;
+    }
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
     }
 
     @Override

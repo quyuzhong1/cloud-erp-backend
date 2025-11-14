@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -302,6 +303,26 @@ public class SampleRecipientDTO implements Serializable {
          */
         private String detailRemark;
 
+        /**
+         * 商品种类
+         */
+        private String skuCount;
+
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired;
+        private String isOutstockRequiredName;
+        /**
+         * 仓库无需出库原因
+         */
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired;
+        private String isLedgerRequiredName;
+
     }
 
     /**
@@ -329,10 +350,54 @@ public class SampleRecipientDTO implements Serializable {
         private String  id;
 
         /**
+        * 创建人id
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 修改人id
+        */
+        private String updateUserId;
+
+        /**
+        * 修改人名称
+        */
+        private String updateUserName;
+
+        /**
+        * 更新时间
+        */
+        private LocalDateTime updateTime;
+
+        /**
         * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回) /wms/drop/down/approveStatus/list
         */
         private String approveStatus;
 
+        /**
+        * 审批时间
+        */
+        private LocalDateTime approveTime;
+
+        /**
+        * 审批人ID
+        */
+        private String approveUserId;
+
+        /**
+        * 审批人姓名
+        */
+        private String approveUserName;
 
         /**
         * 样品领用单号
@@ -437,6 +502,37 @@ public class SampleRecipientDTO implements Serializable {
          * 产品列表
          */
         private List<ProductDTO>detailList;
+
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废状态(false:有效,true:已作废)
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired;
+        private String isOutstockRequiredName;
+        /**
+         * 仓库无需出库原因
+         */
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired;
+        private String isLedgerRequiredName;
 
 
     }
@@ -574,8 +670,6 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 发货仓库ID  接口： warehouse/list
          */
-        @NotBlank(message = "发货仓库ID不能为空")
-        @Size(max = 19, message = "发货仓库ID最大长度不能超过19位")
         private String warehouseId;
 
         /**
@@ -698,6 +792,19 @@ public class SampleRecipientDTO implements Serializable {
             return StringUtils.isNotBlank(receivePhone);
         }
 
+        /**
+         * 是否需要出库， true = 出库， false = 不出库
+         */
+        private Boolean isOutstockRequired = Boolean.TRUE;
+        /**
+         * 仓库无需出库原因
+         */
+        @Size(max = 200, message = "无需出库原因最大长度不能超过200位")
+        private String noOutstockReason;
+        /**
+         * 是否需要入台账：true =入账，false  =不入账
+         */
+        private Boolean isLedgerRequired = Boolean.TRUE;
 
     }
     /**

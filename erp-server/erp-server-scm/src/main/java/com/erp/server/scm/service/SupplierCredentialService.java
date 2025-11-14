@@ -101,5 +101,4 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
 
     BatchResultDTO updateStatus(String id);
 
-    DictBasicDTO addDictCredential(String credentialName);
 }

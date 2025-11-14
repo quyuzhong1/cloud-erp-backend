@@ -34,6 +34,22 @@ public class LogisticsChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PlatformWarehouseDTO extends SortDTO {
+
+        /**
+         * 平台仓
+         */
+        @NotBlank(message = "平台仓不能为空")
+        private String platformWarehouseId;
+
+        /**
+         * 渠道类型
+         */
+        private String channelType;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
         /**
@@ -416,6 +432,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isPushLabel;
         /**
+         * 推送交接文件类型
+         */
+        private String handoverDocType;
+        /**
          * 分拣码
          */
         private String sortingCode;
@@ -730,12 +750,16 @@ public class LogisticsChannelDTO implements Serializable {
         @NotBlank(message = "纸张大小不能为空")
         private String paperSize;
 
-
         /**
          * 分拣码
          */
         @Size(max = 30, message = "分拣码最大长度不能超过10位")
         private String sortingCode;
+
+        /**
+         * 推送交接文件类型
+         */
+        private String handoverDocType;
 
         /**
          * 是否推送海外仓面单

@@ -47,10 +47,10 @@ public interface TransferOutMapper extends BaseMapper<TransferOutEntity> {
 
     /**
      * 查询调出单数据
-     * @param ids
+     * @param detailIdList
      * @return
      */
-    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransfer(@Param("ids") List<String> ids);
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransfer(@Param("detailIdList") List<String> detailIdList);
 
     List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(@Param("detailId") String detailId);
 }

@@ -202,7 +202,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            packingTaskDetailEntity.setFnSku(soDetailEntity.getPlatformSkuNo());
+            packingTaskDetailEntity.setFnSku(soDetailEntity.getCustomerSkuNo());
             if( null != soDeliveryNoticeDetailEntity){
                 packingTaskDetailEntity.setDeliveryQty(soDeliveryNoticeDetailEntity.getPickingQty());
             }else{
@@ -2074,7 +2074,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void addPackingByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity) {
         String demandType = firstMileDeliveryEntity.getDemandType();
-        String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode(): PickingSourceTypeEnum.FBA.getCode();
+        String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode():FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(firstMileDeliveryEntity.getId(), sourceType);
         if (CollectionUtils.isNotEmpty(taskEntityList)){
@@ -2270,9 +2270,24 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
         List<String> skuList = detailEntityList.stream().map(e -> e.getSkuNo() + "*" + e.getPackQty()).collect(Collectors.toList());
         printDTO.setSkuList(skuList);
+
+        //发货通知单
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTaskEntity.getSourceId());
+        //要货申请
+        RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
+        //显示店铺负责人
+        if (Objects.nonNull(soDeliveryNoticeEntity)){
+            //取发货通知单创建人
+            printDTO.setChargeId(soDeliveryNoticeEntity.getCreateUserId());
+            printDTO.setChargeName(soDeliveryNoticeEntity.getCreateUserName());
+        }else if(Objects.nonNull(requisitionApplication)){
+            //取要货申请创建人
+            printDTO.setChargeId(requisitionApplication.getCreateUserId());
+            printDTO.setChargeName(requisitionApplication.getCreateUserName());
+        }
+
         //新增店铺 店铺,国家,SKU,运营负责人
         if (PickingSourceTypeEnum.B2B.getCode().equals(packingTaskEntity.getSourceType())){
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTaskEntity.getSourceId());
             String sourceId = soDeliveryNoticeEntity.getSourceId();
             if (CharSequenceUtil.isBlank(sourceId)){
                 return printDTO;
@@ -2286,14 +2301,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setCountryName(country.getNameCn());
                     }
                 }
-                printDTO.setChargeId(customerDTOS.get(0).getSellerId());
-                printDTO.setChargeName(customerDTOS.get(0).getSellerName());
             }
         }else {
             //发货单
             FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTaskEntity.getSourceId());
-            //要货申请
-            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
             if (Objects.nonNull(firstMileDelivery)){
                 if( CharSequenceUtil.isBlank(firstMileDelivery.getCountryId()) && StringUtils.isNotBlank(firstMileDelivery.getDestWarehouseId())){
                     WarehouseEntity warehouseEntity = warehouseService.getById(firstMileDelivery.getDestWarehouseId());
@@ -2314,8 +2325,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(firstMileDelivery.getShopId());
                     if (Objects.nonNull(shopInfo)){
                         printDTO.setShopName(shopInfo.getName());
-                        printDTO.setChargeId(shopInfo.getChargeId());
-                        printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
             }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
@@ -2326,18 +2335,31 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     printDTO.setCountryId(shopInfo.getDictCountryCode());
                     printDTO.setCountryName(shopInfo.getCountryName());
                     printDTO.setShopName(shopInfo.getName());
-                    printDTO.setChargeId(shopInfo.getChargeId());
-                    printDTO.setChargeName(shopInfo.getChargeName());
                 }
             }else if (Objects.nonNull(requisitionApplication)  && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
-                WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
-                if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
-                    DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
-                    printDTO.setCountryId(warehouseEntity.getCountry());
-                    if (Objects.nonNull(country)){
-                        printDTO.setCountryName(country.getNameCn());
+                String countryId = "";
+                String countryName = "";
+                //优先取三方仓关联的仓库的国家
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplication.getChannelId());
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    countryId = overseasProviderWarehouseEntity.getCountry() ;
+                    countryName = overseasProviderWarehouseEntity.getCountryName() ;
+                }
+
+                if(StringUtils.isBlank(countryName)){
+                    WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
+                    if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
+                        countryId = warehouseEntity.getCountry();
+                        DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+               
+                        if (Objects.nonNull(country)){
+                            countryName = country.getNameCn();
+
+                        }
                     }
                 }
+                printDTO.setCountryId(countryId);
+                printDTO.setCountryName(countryName);
             }
         }
         return printDTO;
@@ -2347,7 +2369,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void addPackingByRequisition(RequisitionApplicationEntity entity) {
         String type = entity.getType();
-        String sourceType = RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)? PickingSourceTypeEnum.THIRD.getCode(): PickingSourceTypeEnum.FBA.getCode();
+        String sourceType = RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)? PickingSourceTypeEnum.THIRD.getCode():RequisitionApplicationTypeEnum.FBA.getCode().equals(type)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(entity.getId(), sourceType);
         //是否是第三方仓
@@ -2710,9 +2732,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public void processThirdBarcode() {
+    public void processThirdBarcode(List<String> sourceCodeList) {
         //获取符合条件的列表
-        List<PackingTaskEntity> list = this.lambdaQuery().eq(PackingTaskEntity::getSourceType, PickingSourceTypeEnum.THIRD.getCode()).list();
+        List<PackingTaskEntity> list = this.lambdaQuery().eq(PackingTaskEntity::getSourceType, PickingSourceTypeEnum.THIRD.getCode())
+                .in(CollUtil.isNotEmpty(sourceCodeList), PackingTaskEntity::getSourceCode, sourceCodeList)
+                .list();
         if (CollUtil.isEmpty(list)){
             return;
         }

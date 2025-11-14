@@ -30,12 +30,12 @@
         period_setting,
         check_type,
         ci.country_id,
-        ccp.partition_id as partitionId,
-        ccp.partition_code as partitionCode,
-        ccp.partition_name as partitionName,
+        ccp.id as partitionId,
+        ccp.code as partitionCode,
+        ccp.name as partitionName,
         ci.sales_dept_id as salesDeptId
         FROM customer_info ci
-        left join foreign_cfg_country_partition ccp on ccp.country = ci.country_id and ccp.is_deleted = false and ccp.disabled = false
+        left join foreign_dict_partition ccp on ccp.id = ci.partition_id and ccp.is_deleted = false and ccp.disabled = false
         WHERE
 
         ${params.sqlMap.default}
@@ -77,13 +77,13 @@
         ci.create_user_name,
         ci.create_time,
         ci.country_id,
-        ccp.partition_id as partitionId,
-        ccp.partition_code as partitionCode,
-        ccp.partition_name as partitionName,
+        ccp.id as partitionId,
+        ccp.code as partitionCode,
+        ccp.name as partitionName,
         ci.sales_dept_id as salesDeptId
         FROM
         customer_info ci
-        left join foreign_cfg_country_partition ccp on ccp.country = ci.country_id and ccp.is_deleted = false and ccp.disabled = false
+        left join foreign_dict_partition ccp on ccp.id = ci.partition_id and ccp.is_deleted = false and ccp.disabled = false
         WHERE
         ${params.sqlMap.default}
         and    ci.is_deleted=FALSE
@@ -133,14 +133,16 @@
         ORDER BY ca.is_default desc limit 1
     </select>
     <select id="pageSelect" resultType="com.erp.model.oms.dto.CustomerDTO$PageSelectDTO">
-        select id, name,short_name,code , approve_status ,disabled from (
+        select id, name,short_name,code , approve_status ,disabled,currency,use_org_id from (
         select
         ci.id,
         ci.code,
         ci.short_name,
         ci.name,
         ci.approve_status,
-        ci.disabled
+        ci.disabled,
+        ci.currency,
+        ci.use_org_id
         from customer_info ci
         where  ci.is_deleted = FALSE
         and ci.approve_status = 'approve'

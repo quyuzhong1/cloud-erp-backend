@@ -2155,7 +2155,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsCostDetailDTO.UpdateDTO oldUpdateDTO = updateListMap.get(erpFieldDropDownDTO.getSourceId());
             if (null != oldUpdateDTO) {
                 if (oldUpdateDTO.isHasUpdate()) {
-                    excelDTO.setErrorMsg(CharSequenceUtil.format("当前页面费用已存在【{}】", erpFieldDropDownDTO.getSourceCodeValue()));
+                    excelDTO.setErrorMsg(CharSequenceUtil.format("当前页面费用已存在【{}】", erpFieldDropDownDTO.getErpFieldName()));
                     errorList.add(excelDTO);
                     return true;
                 } else {

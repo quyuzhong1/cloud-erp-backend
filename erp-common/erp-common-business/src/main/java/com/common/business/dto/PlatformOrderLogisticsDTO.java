@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -102,4 +103,8 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      * 物流类型
      */
     private String logisticType;
+    /**
+     * 买家自选物流
+     */
+    private String buyerSelectedLogistics;
 }

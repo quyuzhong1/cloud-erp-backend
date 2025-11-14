@@ -91,6 +91,13 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
      @TableField("next_exec_time")
      private LocalDateTime nextExecTime;
 
+    /**
+     * 执行系统:默认:dmp
+     */
+    @TableField("exec_system")
+    private String execSystem;
+
+
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 
     public static final String START_TIME = "start_time";

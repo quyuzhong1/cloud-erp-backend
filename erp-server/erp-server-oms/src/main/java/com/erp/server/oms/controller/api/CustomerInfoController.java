@@ -522,4 +522,27 @@ public class CustomerInfoController extends BaseController {
     public ApiResult<VirtualWarehouseDTO.VwDTO> getVirtualWarehouseByCustomerId(@RequestBody @Validated CustomerDTO.VirtualDTO dto) {
         return success(customerInfoService.getVirtualWarehouseByCustomerId(dto));
     }
+
+    /**
+     * 查询第三方客户余额
+     **/
+    @PostMapping("/getThirdCustomerAccount")
+    public ApiResult<CustomerDTO.ThirdCustomerAccountDTO> getThirdCustomerAccount(@RequestBody @Validated BaseIdDTO dto) {
+        return success(customerInfoService.getThirdCustomerAccount(dto));
+    }
+
+    /**
+     * 启用的非2C客户列表
+     */
+    @PostMapping("/listEnable2cCustomer")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "customer_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable2cCustomer(PermissionsDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable2cCustomer(dto.getPermissionSql());
+        return success(list);
+    }
+
 }

@@ -351,7 +351,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                                 equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                         if (planQty > inventory) {
-                            throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
+//                            throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
                         }
                     }
                 }
@@ -626,7 +626,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                     if (actualQty > inventory) {
-                        throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
+//                        throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
                     }
 
                 }
@@ -885,6 +885,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
             detailEntity.setRemark(soDetailEntity.getRemark());
+            detailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
         }
     }
 
@@ -902,7 +903,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if(StringUtils.isBlank(entity.getSoId())){
             return;
         }
-        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         if(Objects.isNull(soB2cEntity)){

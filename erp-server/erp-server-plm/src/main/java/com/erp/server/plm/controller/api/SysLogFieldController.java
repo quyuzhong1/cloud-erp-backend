@@ -2,7 +2,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.server.plm.service.SysLogFieldService;
+import com.erp.server.plm.service.CfgOperateLogFieldService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class SysLogFieldController extends BaseController {
 
     @Autowired
-    private SysLogFieldService sysLogFieldService;
+    private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     /**
      * 操作日志-操作日志字段新增
@@ -27,7 +27,7 @@ public class SysLogFieldController extends BaseController {
      */
     @PostMapping("/saveBatchSysLogField")
     public ApiResult saveBatchSysLogField() {
-       Boolean flag = sysLogFieldService.saveBatchSysLogField();
+       Boolean flag = cfgOperateLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();
     }
 

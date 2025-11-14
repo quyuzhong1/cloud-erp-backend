@@ -151,7 +151,7 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(invoiceTaxEntity.getPlatform());
             paramDTO.setShopIdList(Collections.singletonList(invoiceTaxEntity.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             paramDTO.setPlatformSkuNoList(Collections.singletonList(invoiceTaxEntity.getPlatformSkuNo()));
             // 所有包含历史映射关系
             List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);

@@ -163,6 +163,22 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         lambdaUpdate().in(ModuleOperateLogEntity::getBusinessId,businessIds).remove();
     }
 
+    @Override
+    public void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
+        if (CollectionUtils.isNotEmpty(operateLogList)) {
+            List<ModuleOperateLogEntity> addList = new ArrayList<>(operateLogList.size());
+            for (OperateLogDTO.AddModuleOperateLogDTO item : operateLogList) {
+                ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+                entity.setModuleType(item.getModuleType())
+                        .setBusinessId(item.getBusinessId())
+                        .setContent(item.getContent())
+                        .setOperation(item.getOperation());
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
+    }
+
 
     /**
      * 设置布尔值

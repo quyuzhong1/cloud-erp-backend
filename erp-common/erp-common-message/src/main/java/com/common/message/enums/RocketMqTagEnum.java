@@ -349,13 +349,17 @@ public enum RocketMqTagEnum {
     KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
 
     /**
-     * 对账单同步金蝶
+     * 应付单同步金蝶
      */
-    KINGDEE_PO_RECONCILIATION_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_reconciliation_tag"),
+    KINGDEE_PAYABLE_INFO_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_payable_info_tag"),
     /**
      * 多渠道订单同步金蝶
      */
     KINGDEE_SO_MULTI_CHANNEL_TAG(1037, RocketMqTagEnum.SYNC_AMAZON,"kingdee_so_multi_channel_tag"),
+    /**
+     * 第三方仓库存业务处理实现
+     */
+    ERP_THIRD_WAREHOUSE_TAG(1038, RocketMqTagEnum.SYNC_THIRD_WAREHOUSE,"erp_third_warehouse_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -642,6 +646,7 @@ public enum RocketMqTagEnum {
     public static final String SKU_INFO = "sku";
 
     public static final String SYNC_KINGDEE = "sync_kingdee";
+    public static final String SYNC_THIRD_WAREHOUSE = "sync_third_warehouse";
     public static final String SYNC_AMAZON = "sync_amazon";
 
     public static final String STOCK = "stock";
@@ -672,7 +677,7 @@ public enum RocketMqTagEnum {
 
     public static final String FBA_DELIVERY = "fba_delivery";
 
-    public static final String SYS_LOG = "sys_log";
+    public static final String SYS_LOG = "operate_log";
 
     public static final String AMZ_REPORT = "amz_report";
 

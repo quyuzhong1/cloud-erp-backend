@@ -6,9 +6,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
-import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoMultiChannelService;
 import org.springframework.stereotype.Component;
 
@@ -40,5 +38,10 @@ public class SoMultiChannelApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
         return soMultiChannelService.approveEnd(approveOneDTO,entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

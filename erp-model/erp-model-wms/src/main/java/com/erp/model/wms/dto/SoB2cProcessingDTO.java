@@ -441,6 +441,11 @@ public class SoB2cProcessingDTO implements Serializable {
          * 单据日期
          */
         private LocalDate billDate;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
 

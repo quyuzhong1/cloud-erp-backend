@@ -124,6 +124,50 @@ public class FsService {
     }
 
     /**
+     * 获取飞书用户信息（自定义client_id和client_secret）
+     *
+     * @param dto         查找第三方用户DTO
+     * @param clientId    飞书应用客户端ID
+     * @param clientSecret 飞书应用客户端密钥
+     * @return 用户信息Map
+     */
+    public Map<String, Object> getFsUser(FindThirdUserDTO dto, String clientId, String clientSecret) {
+
+        String redirectUri = fsProperties.getRedirectLoginUri();
+        String thirdType = dto.getThirdType();
+        if (StringUtils.isNotBlank(thirdType) && ThirdConstants.THIRD_BINDING_TYPE.equals(thirdType)) {
+            redirectUri = fsProperties.getRedirectBindingUri();
+        }
+        Map<String, Object> paramsMap = new HashMap<>();
+        paramsMap.put("grant_type", ThirdConstants.FS_GRANT_TYPE);
+        paramsMap.put("code", dto.getCode());
+        paramsMap.put("client_secret", clientSecret);
+        paramsMap.put("client_id", clientId);
+        paramsMap.put("redirect_uri", redirectUri);
+        String bodyStr = OkHttpUtils.doPost(ThirdConstants.FS_TOKEN_URL, paramsMap, null);
+        try {
+            if (StringUtils.isNotBlank(bodyStr)) {
+                Map<String, Object> tokenMap = JSON.parseObject(bodyStr, Map.class);
+                if (tokenMap.containsKey("access_token")) {
+                    String accessToken = tokenMap.get("access_token").toString();
+                    String authorization = FS_AUTHORIZATION + accessToken;
+                    Map<String, String> headerMap = new HashMap<>();
+                    headerMap.put(AUTHORIZATION, authorization);
+                    headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
+                    String userStr = OkHttpUtils.doGet(ThirdConstants.FS_USER_URL, null, headerMap);
+                    Map<String, Object> userMap = JSON.parseObject(userStr, Map.class);
+                    return userMap;
+                }
+            }
+        } catch (Exception e) {
+            log.error("扫码获取飞书信息出错>>>>>{}", e);
+            log.info("bodyStr >>>>>>{}", bodyStr);
+        }
+
+        return Collections.emptyMap();
+    }
+
+    /**
      * 根据code 获取飞书用户信息
      *
      * @param code

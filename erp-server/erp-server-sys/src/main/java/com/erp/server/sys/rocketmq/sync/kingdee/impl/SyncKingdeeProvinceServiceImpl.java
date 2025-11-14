@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -123,7 +124,11 @@ public class SyncKingdeeProvinceServiceImpl implements SyncKingdeeProvinceServic
         resultMap.put("code",entity.getKingdeeCode());
         //名称
         resultMap.put("name",entity.getName());
-        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        Class<DictCityEntity> AreaClass = DictCityEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId() , businessType);
         String syncKingdeeId="";
         if (Objects.nonNull(thirdpartyRef)) {
             syncKingdeeId = thirdpartyRef.getThirdpartyId();
@@ -147,8 +152,10 @@ public class SyncKingdeeProvinceServiceImpl implements SyncKingdeeProvinceServic
             //上级编码
             resultMap.put("parentCode",countryEntity.getKingdeeCode());
 
+            Class<DictCountryEntity> CountryClass = DictCountryEntity.class;
+            TableName CountrytableName = CountryClass.getDeclaredAnnotation(TableName.class);
             //上级
-            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(countryEntity.getId());
+            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(countryEntity.getId() , CountrytableName.value());
             if (Objects.nonNull(parentThirdpartyRef)) {
                 resultMap.put("pid",parentThirdpartyRef.getThirdpartyId());
             }

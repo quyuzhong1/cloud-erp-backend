@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
@@ -23,6 +24,16 @@ public class SysAccountingCompanyDTO {
 
 
     private String id;
+
+    /**
+     * 纳税人性质
+     */
+    private String taxpayerType;
+
+    /**
+     * 增值税税率
+     */
+    private BigDecimal vatRate;
 
     /**
      * 金蝶id

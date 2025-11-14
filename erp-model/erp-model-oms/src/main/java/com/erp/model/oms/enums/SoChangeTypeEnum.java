@@ -1,13 +1,14 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * 销售订单变更类型
  */
-public enum SoChangeTypeEnum {
+public enum SoChangeTypeEnum implements EnumMessage {
     ADD("add", "新增"),
     UPDATE("update", "修改"),
     DELETE("delete", "删除"),

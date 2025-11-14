@@ -23,10 +23,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cLogisticSourceSystemEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -87,6 +84,10 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private SoB2cErrorService soB2cErrorService;
+    @Resource
+    private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private PackagePlanService packagePlanService;
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -193,14 +194,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId) {
-        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
-                set(SoB2cLogisticsEntity::getCode, transportNo).
-                set(SoB2cLogisticsEntity::getTrackNo, trackNo).
-                set(SoB2cLogisticsEntity::getIossTaxNo, iossTaxNo).
-                set(SoB2cLogisticsEntity::getDeclareOrgId, declareOrgId).
-                set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.THIRD.getCode()).
-                update();
+    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
+        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId)
+                .set(SoB2cLogisticsEntity::getCode, transportNo)
+                .set(SoB2cLogisticsEntity::getTrackNo, trackNo)
+                .set(SoB2cLogisticsEntity::getIossTaxNo, iossTaxNo)
+                .set(SoB2cLogisticsEntity::getDeclareOrgId, declareOrgId)
+                .set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.THIRD.getCode())
+                .set(SoB2cLogisticsEntity::getPushPlatformCode, pushPlatformCode).update();
     }
 
     @Override
@@ -323,7 +324,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 entity2.setWidth(maxWidth);
                 entity2.setHeight(totalHeight);
                 entity2.setId(entity.getId());
-
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
@@ -420,6 +420,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus) {
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
@@ -442,6 +443,16 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         if(TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus()) && checkBillStatus){
             throw new ServiceException( CharSequenceUtil.format("订单信息已预报，请取消订单预报后支持重新获取跟踪号"));
+        }
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(soB2cEntity.getDictPlatform())){
+            //取消物流单成功并删除组包计划
+            workflowTaskRecordService.removeBySourceIdAndSourceType(soB2cEntity.getId(), WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+            workflowTaskRecordService.removeBySourceIdAndSourceType(soB2cEntity.getId(), WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
+            //删除组包计划
+            packagePlanService.removeBySoId(soB2cEntity.getId());
+            //清除异常
+            soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
+            soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().

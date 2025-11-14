@@ -60,7 +60,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
 
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -115,7 +115,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                 .update();
 
         if (save) {
-            sysLogService.addSysLogBySave("sku图片由[" + oldImagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+            operateLogService.addSysLogBySave("sku图片由[" + oldImagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
 
             if(StringUtils.isNotBlank(oldImagesUrl)){
                 List<String> list = Arrays.asList(oldImagesUrl.split(","));

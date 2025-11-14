@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.SqlUtils;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
@@ -315,5 +316,28 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
         }
+    }
+
+    @Override
+    public List<AuthUserShopDTO.ShopAuthListDTO> listAuthShop(AuthUserShopDTO.ShopAuthParamDTO paramDTO) {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<SysUserDTO.ShopDTO> authShopList = this.listShopIdByUserIds(Collections.singletonList(userInfo.getUid()));
+        if (CollUtil.isEmpty(authShopList)) {
+            log.error("当前用户没有店铺权限,用户:{}", userInfo.getUid());
+            return Collections.emptyList();
+        }
+        //获取平台下的店铺
+        List<ShopInfoEntity> omsShopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getDictPlatform, paramDTO.getPlatform()).eq(ShopInfoEntity::getDisabled, Boolean.FALSE).list();
+        if (CollUtil.isEmpty(omsShopList)) {
+            log.error("平台下没有店铺信息,平台:{}", paramDTO.getPlatform());
+            return Collections.emptyList();
+        }
+        long authCount = authShopList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter(obj -> obj.contains(ShopAuthTypeEnum.ENUM_ALL.getCode())).count();
+        if (authCount > 0) {
+            return omsShopList.stream().map(obj -> new AuthUserShopDTO.ShopAuthListDTO(obj.getDictPlatform(), obj.getId(), obj.getName())).collect(Collectors.toList());
+        }
+        List<String> shopIdList = authShopList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
+        return omsShopList.stream().filter(obj -> shopIdList.contains(obj.getId())).map(obj -> new AuthUserShopDTO.ShopAuthListDTO(obj.getDictPlatform(), obj.getId(), obj.getName())).collect(Collectors.toList());
     }
 }

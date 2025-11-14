@@ -27,6 +27,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -105,6 +106,16 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
         entity.setUsciCode(dto.getUsciCode());
+        if(Objects.isNull(dto.getVatRate())){
+            entity.setVatRate(BigDecimal.ZERO);
+        }else{
+            entity.setVatRate(dto.getVatRate());
+        }
+        if(Objects.isNull(dto.getTaxpayerType())){
+            entity.setTaxpayerType("");
+        }else{
+            entity.setTaxpayerType(dto.getTaxpayerType());
+        }
         entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
@@ -288,6 +299,19 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         } else {
             LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName, companyName);
+            queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+            queryWrapper.last("LIMIT 1");
+            return this.getOne(queryWrapper);
+        }
+    }
+
+    @Override
+    public SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId) {
+        if (StringUtils.isBlank(kindgeeId)) {
+            return null;
+        } else {
+            LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysAccountingCompanyEntity::getKingdeeId, kindgeeId);
             queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
             queryWrapper.last("LIMIT 1");
             return this.getOne(queryWrapper);

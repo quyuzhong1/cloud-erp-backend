@@ -161,4 +161,26 @@ public class PickingListsController extends BaseController {
         pickingListsService.initDelivery(codes);
     }
 
+    /**
+     * 确认打印
+     *
+     * @param idsDTO idsDTO
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程拣货单")
+    @PostMapping("/printConfirm")
+    public ApiResult<Boolean> printConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        pickingListsService.printConfirm(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+        return success(true);
+    }
+    /**
+     * 取消打印
+     *
+     * @param idsDTO idsDTO
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程拣货单")
+    @PostMapping("/printCancel")
+    public ApiResult<Boolean> printCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        pickingListsService.printCancel(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+        return success(true);
+    }
 }

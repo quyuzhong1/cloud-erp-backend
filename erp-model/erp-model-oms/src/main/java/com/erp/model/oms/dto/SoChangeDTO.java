@@ -154,6 +154,10 @@ public class SoChangeDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
 
         /**
          * sku no
@@ -621,6 +625,10 @@ public class SoChangeDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
         /**
          * sku no
          */

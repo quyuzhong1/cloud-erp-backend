@@ -71,6 +71,24 @@ public class AccountingCompanyFeignController extends BaseController {
     }
 
     /**
+     * 根据主键id查询组织信息
+     *
+     * @param id id:组织id
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("/getCompanyByKindgeeId")
+    public SysAccountingCompanyEntity getCompanyByKindgeeId(@RequestBody String KindgeeId) {
+        if (StringUtils.isBlank(KindgeeId)) {
+            return new SysAccountingCompanyEntity();
+        } else {
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getCompanyByKindgeeId(KindgeeId);
+            return sysAccountingCompanyEntity;
+        }
+    }
+
+    /**
      * 根据公司名称查询公司信息
      *
      * @param orgName 公司名称

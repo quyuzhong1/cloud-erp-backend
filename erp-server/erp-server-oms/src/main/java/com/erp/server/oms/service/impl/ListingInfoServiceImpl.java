@@ -243,7 +243,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
             skuMappingEntity.setWarehouseId("");
             skuMappingEntity.setWarehouseName("");
-            skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
+            skuMappingEntity.setType(RuleTypeEnum.B2C_PLATFORM);
             skuMappingEntity.setShopId(dto.getShopId());
             skuMappingEntity.setProductSkuId(skuVO.getSkuId());
             skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
@@ -304,7 +304,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 skuMappingEntity.setIsExpire(Boolean.TRUE);
                 updateList.add(skuMappingEntity);
                 SkuMappingEntity addSkuMappingEntity = new SkuMappingEntity();
-                addSkuMappingEntity.setType(RuleTypeEnum.PLATFORM);
+                addSkuMappingEntity.setType(RuleTypeEnum.B2C_PLATFORM);
                 addSkuMappingEntity.setShopId(skuMappingEntity.getShopId());
                 addSkuMappingEntity.setProductSkuId(skuVO.getSkuId());
                 addSkuMappingEntity.setProductSkuNo(skuVO.getSkuNo());

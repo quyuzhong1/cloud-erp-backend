@@ -108,6 +108,7 @@ public abstract class DmpOutputDetailCreateHandler extends DmpOutputBaseCreateHa
 			dmpOutputTaskEntity.setStatus(DmpOutputTaskStatusEnum.INIT.getCode());
 			dmpOutputTaskEntity.setTaskType(taskType.getCode());
 			dmpOutputTaskEntity.setExecTimeout(dmpCfgOutputDetailEntity.getExecTimeout());
+			dmpOutputTaskEntity.setExecSystem(dmpCfgOutputEntity.getExecSystem());
 			
 			dmpOutputTaskEntityList.add(dmpOutputTaskEntity);
 			

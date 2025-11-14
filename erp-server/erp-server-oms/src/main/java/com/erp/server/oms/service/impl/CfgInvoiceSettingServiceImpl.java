@@ -99,7 +99,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
         TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
-        omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
+        omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> AddCompanyDTO
         AddCompanyDTO addCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToAddCompanyDTOTo(entity);
         //username
@@ -155,7 +155,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
             TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
             String type = tableName.value();
-            omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
         }
         //调用TF
         UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);

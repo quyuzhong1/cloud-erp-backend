@@ -46,7 +46,10 @@ public class PlatformWarehouseDTO extends UniqueDto {
     //仓库所在国家名称
     private String countryName;
 
+    private String type;
 
     //仓库状态 0:不可用;1:可用;2:停用
     private String platformWarehouseStatus;
+
+    private String platformWarehouseType;
 }

@@ -62,6 +62,7 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        log.warn("创建订单请求参数：{}", ext);
         SoMultiChannelDTO.CreateResultDTO createResultDTO = new SoMultiChannelDTO.CreateResultDTO();
         JSONObject jsonObject = JSONUtil.parseObj(ext);
         String id = jsonObject.getStr("id", "");
@@ -80,15 +81,17 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
             createResultDTO.setCreateStatus(CreateStatusEnum.SUCCESS.getCode());
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
         } catch (ApiException e) {
+            log.warn("创建订单异常：{}", JSONUtil.toJsonStr(e.getResponseBody()));
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
             createResultDTO.setMsg(JSONUtil.toJsonStr(e.getResponseBody()));
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
-            throw new ServiceException(JSONUtil.toJsonStr(e.getResponseBody()));
+//            throw new ServiceException(JSONUtil.toJsonStr(e.getResponseBody()));
         } catch (LWAException e) {
+            log.warn("创建订单异常：{}", JSONUtil.toJsonStr(e.getErrorMessage()));
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
             createResultDTO.setMsg(JSONUtil.toJsonStr(e.getErrorMessage()));
             soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
-            throw new ServiceException(JSONUtil.toJsonStr(e.getErrorMessage()));
+//            throw new ServiceException(JSONUtil.toJsonStr(e.getErrorMessage()));
         }
         return ApiResult.success();
     }

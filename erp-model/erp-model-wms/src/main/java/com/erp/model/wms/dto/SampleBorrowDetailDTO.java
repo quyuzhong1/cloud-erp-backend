@@ -93,6 +93,15 @@ public class SampleBorrowDetailDTO implements Serializable {
          */
         private String useUserName;
 
+        /**
+         * 已归还数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 归还周期
+         */
+        private String returnPeriod;
 
 
     }

@@ -657,6 +657,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
+            map.put("customerPO", detailEntity.getCustomerPO());
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             SoOutstockDetailDTO.DeliveryQtyDTO deliveryQtyDTO = deliveryQtyDTOS.stream().filter(req -> req.getId().equals(detailEntity.getId())).findFirst().orElse(new SoOutstockDetailDTO.DeliveryQtyDTO());
@@ -1088,6 +1089,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(s -> s.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             Map<String, Object> map = new HashMap<>();
+            map.put("customerPO", detailEntity.getCustomerPO());
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             map.put("salesQty", Objects.nonNull(soB2cDetailEntity) ? soB2cDetailEntity.getQty() : detailEntity.getActualQty());

@@ -196,6 +196,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DictCredentialService dictCredentialService;
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
@@ -404,7 +406,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //产品分类名称名称
         String productCategoryNames = supplier.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,Boolean.TRUE)).collect(Collectors.joining(","));
         result.setProductCategoryNames(productCategoryNames);
-
+        //根据 key list 获取到对应数据
+        List<String> keyList = new ArrayList<>(1);
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+        result.setCategoryName(getCategoryName(dictMap,result.getCategoryId(),Boolean.TRUE));
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
@@ -578,7 +585,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        List<String> keyList = new ArrayList<>(3);
+        List<String> keyList = new ArrayList<>(5);
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
@@ -681,7 +688,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
             SupplierConfigVO configVO = configVOMap.get(item.getId());
             if (Objects.nonNull(configVO)){
@@ -826,6 +833,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(SupplierEntity entity) {
+        //提交前审核状态
+        String approveStatus = entity.getApproveStatus().getCode();
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -843,11 +852,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.getName(approveStatus), ApproveStatusEnum.APPROVE_ING.getName());
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
-            //审核不通过
-            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            addModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
@@ -1741,7 +1747,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                exportExcel.setApproveUserName(curApprove);
+                exportExcel.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,exportExcel.getApproveUserName()));
             }
             exportExcel.setApproveTime(item.getApproveTime());
 
@@ -2260,6 +2266,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierAccountEntity> accountList = supplierAccountService.list();
         //资质信息
         List<SupplierCredentialEntity> credentialList = supplierCredentialService.list();
+        //资质字典表
+        List<DictCredentialDTO.ListDTO> dictCredentialList = dictCredentialService.listAll();
+        Map<String, String> dictCredentialMap = dictCredentialList.stream().collect(Collectors.toMap(DictCredentialDTO.ListDTO::getName, DictCredentialDTO.ListDTO::getId, (o1, o2) -> o1));
 
         for (SupplierImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -2295,7 +2304,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierAccountDTO.ImportAddDTO accountAddDTO = checkImportAccount(dictBasicList,bankList,accountList,excelDTO, addDTO, errorMsgList, isUpdatePart);
 
             //账户信息
-            SupplierCredentialDTO.ImportAddDTO credentialAddDTO = checkImportCredential(credentialList,excelDTO, addDTO, errorMsgList, isUpdatePart);
+            SupplierCredentialDTO.ImportAddDTO credentialAddDTO = checkImportCredential(dictCredentialMap,credentialList,excelDTO, addDTO, errorMsgList, isUpdatePart);
 
             //存在错误数据则直接返回
             if (errorMsgList.size() > 0) {
@@ -2400,6 +2409,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 资质信息处理
      * @author will
      * @date 2025/7/24 16:26
+     * @param dictCredentialMap
      * @param credentialList
      * @param excelDTO
      * @param addDTO
@@ -2407,7 +2417,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param isUpdatePart
      * @return ImportAddDTO
      */
-    private SupplierCredentialDTO.ImportAddDTO checkImportCredential (List<SupplierCredentialEntity> credentialList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
+    private SupplierCredentialDTO.ImportAddDTO checkImportCredential (Map<String, String> dictCredentialMap,List<SupplierCredentialEntity> credentialList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
             ,List<String> errorMsgList,boolean isUpdatePart) {
         //资质信息
         SupplierCredentialDTO.ImportAddDTO credential = new SupplierCredentialDTO.ImportAddDTO();
@@ -2426,6 +2436,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             errorMsgList.add("资质不存在,不支持部分更新");
             return null;
         }
+
+        String dictCredentialId = dictCredentialMap.getOrDefault(excelDTO.getCredentialName(), "");
+        if(StringUtils.isBlank(dictCredentialId)){
+            errorMsgList.add("资质不存在");
+            return null;
+        }
+        credential.setCode(dictCredentialId);
         credential.setName(excelDTO.getCredentialName());
         //资质备注
         if (CharSequenceUtil.isNotBlank(excelDTO.getCredentialRemark())) {

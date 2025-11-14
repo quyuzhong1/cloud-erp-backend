@@ -420,6 +420,8 @@ public class CfgApproveSyncDTO implements Serializable {
         private String curTaskId;
         //流程操作人（创建人、审批人）
         private String operator;
+        //流程操作人（创建人）
+        private String createUserId;
         //流程类型
         private String businessKey;
         //erp的操作动作（发起流程，审批通过，审批不通过，撤销）

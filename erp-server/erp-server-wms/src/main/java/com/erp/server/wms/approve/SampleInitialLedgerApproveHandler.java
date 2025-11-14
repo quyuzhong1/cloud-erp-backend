@@ -44,4 +44,9 @@ public class SampleInitialLedgerApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleInitialLedgerService.approveEnd(approveOneDTO, entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

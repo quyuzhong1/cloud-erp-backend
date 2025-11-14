@@ -104,4 +104,14 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/updateApproveStatus")
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    /**
+     * 更新订货通平台订单ID
+     * @author will
+     * @date 2025/9/23 11:58
+     * @param dto
+     * @return void
+     */
+    @PostMapping("feign/soInfo/updateDhfPlatformOrderId")
+    Boolean updateDhfPlatformOrderId(@RequestBody SoInfoDTO.UpdatePlatformOrderIdDTO dto);
 }

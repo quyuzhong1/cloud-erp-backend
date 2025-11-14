@@ -2,6 +2,8 @@ package com.common.business.dto;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -640,51 +642,6 @@ public class ShudiyunB2cOrderDTO {
     }
     
     public void setDefaultValue() {
-    	if(StringUtils.isBlank(country_code) || StringUtils.equals("ALL", country_code)) {
-    		country_code = "CN";
-    	}
-    	if(StringUtils.isBlank(country)) {
-    		country = "中国大陆";
-    	}
-    	if(StringUtils.isBlank(region_code)) {
-    		region_code = "AS";
-    	}
-    	if(StringUtils.isBlank(region_name)) {
-    		region_name = "亚洲";
-    	}
-    	if(StringUtils.isBlank(military_region_code)) {
-    		military_region_code = "china";
-    	}
-    	if(StringUtils.isBlank(military_region_name)) {
-    		military_region_name = "中国军区";
-    	}
-    	if(StringUtils.isBlank(department_code)) {
-    		if(StringUtils.isNotBlank(organization_name)) {
-    			if(organization_name.equals("深圳市十二篮子电商有限公司")){department_code = "BM002008";}
-        		if(organization_name.equals("深圳市七筐子科技有限公司")){department_code = "BM001992";}
-        		if(organization_name.equals("Ulanzi US co., LTD.")){department_code = "BM001976";}
-        		if(organization_name.equals("深圳市小隼智能数码有限公司")){department_code = "BM001804";}
-        		if(organization_name.equals("深圳市小隼商贸有限公司")){department_code = "BM001760";}
-        		if(organization_name.equals("深圳市前海优拍供应链有限公司")){department_code = "BM001939";}
-        		if(organization_name.equals("小隼智創科技有限公司 FALCAM LIMITED")){department_code = "BM001832";}
-        		if(organization_name.equals("深圳市小隼智造科技有限公司")){department_code = "BM001861";}
-        		if(organization_name.equals("优篮迹（厦门）科技有限公司")){department_code = "BM001932";}
-        		if(organization_name.equals("深圳市小隼智创科技有限公司")){department_code = "BM001890";}
-        		if(organization_name.equals("ULANZI SG PTE. LTD.")){department_code = "BM001949";}
-        		if(organization_name.equals("Filmeasy US CO., LTD.")){department_code = "BM001958";}
-        		if(organization_name.equals("深圳市珍赏科技有限公司")){department_code = "BM001967";}
-        		if(organization_name.equals("广州市简拍科技有限公司")){department_code = "BM001983";}
-        		if(organization_name.equals("东莞市简拍智造科技有限公司")){department_code = "BM002000";}
-        		if(organization_name.equals("深圳市优篮子科技有限公司")){department_code = "BM002018";}
-        		if(organization_name.equals("唯跡有限公司VIJIM LIMITED")){department_code = "BM002086";}
-        		if(organization_name.equals("深圳市唯迹科技有限公司")){department_code = "BM002094";}
-    		}
-    	}
-    	if(StringUtils.isBlank(department_code)) {
-    		department_code = "BM002094";
-    	}
-    	if(StringUtils.isBlank(department_name)) {
-    		department_name = "直播电商组（中国军区 ）";
-    	}
+    	
     }
 }

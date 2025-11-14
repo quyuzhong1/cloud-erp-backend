@@ -178,7 +178,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private TaskRefSkuConfigService taskRefSkuConfigService;
 
     @Autowired
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Autowired
     private BasicDictService basicDictService;
@@ -360,7 +360,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setRemark(toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             //操作日志
-            sysLogService.addSysLogBySave("生成了一个产品：[" + entity.getName() + "]", CLASSPATH, entity.getId(), entity.getId());
+            operateLogService.addSysLogBySave("生成了一个产品：[" + entity.getName() + "]", CLASSPATH, entity.getId(), entity.getId());
             //通知新建产品
             noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
@@ -444,7 +444,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
             //新增操作日志
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+            operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
                     .setOperation("更新产品分类").setContent(CharSequenceUtil.format("对SPU【{}】更新产品分类为【{}】",productInfoEntity.getSpuNo(),categoryNames)));
         });
         if (CollectionUtils.isNotEmpty(list)) {
@@ -1143,7 +1143,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         productOperateRecordDTO.setRemark(toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(productId).setPid(productId)
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(CLASSPATH).setBusinessId(productId).setPid(productId)
                 .setOperation("产品状态变更").setContent("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]"));
         this.update(updateWrapper);
     }
@@ -2044,7 +2044,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
+        operateLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
     /**
@@ -2055,7 +2055,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
+        operateLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
     /**
@@ -2604,7 +2604,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
             //新增操作日志
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+            operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
                     .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),newName)));
         });
         if (CollectionUtils.isNotEmpty(list)) {

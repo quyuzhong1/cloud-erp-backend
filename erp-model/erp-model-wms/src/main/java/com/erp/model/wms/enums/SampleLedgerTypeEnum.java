@@ -17,6 +17,7 @@ public enum SampleLedgerTypeEnum implements EnumMessage {
     BACK("back", "退回单"),
     SCRAP("scrap", "报废单"),
     EXHIBITION("exhibition", "展会订单"),
+    TRANSFER("transfer", "转移单"),
     ;
 
     @EnumValue

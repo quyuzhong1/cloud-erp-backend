@@ -71,4 +71,12 @@ public enum KingdeePushModuleEnum {
         this.name = name;
     }
 
+    public static String getName(String code) {
+        for (KingdeePushModuleEnum state : KingdeePushModuleEnum.values()) {
+            if (code.equals(state.getCode())) {
+                return state.getName();
+            }
+        }
+        return "";
+    }
 }

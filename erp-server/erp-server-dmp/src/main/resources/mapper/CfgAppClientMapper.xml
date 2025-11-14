@@ -19,6 +19,7 @@
         <result column="client_secret" property="clientSecret" />
         <result column="url" property="url" />
         <result column="redirect_url" property="redirectUrl" />
+        <result column="extend_data" property="extendData" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

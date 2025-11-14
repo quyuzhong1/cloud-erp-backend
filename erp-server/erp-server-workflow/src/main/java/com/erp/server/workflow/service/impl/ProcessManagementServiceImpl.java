@@ -3,7 +3,6 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -12,6 +11,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -36,6 +36,7 @@ import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -60,6 +61,7 @@ import com.erp.server.workflow.service.*;
 import io.netty.util.internal.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.camunda.bpm.engine.*;
@@ -171,7 +173,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private FsService fsService;
     @Resource
     private ThirdProcessManagementService thirdProcessManagementService;
-
+    @Resource
+    private MqConsumerRecordService workflowMqConsumerRecordService;
+    @Resource
+    private DictBasicService dictBasicService;
 
 
     @Override
@@ -358,6 +363,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
+                //为空表示submit
+                mqDto.setApproveType("");
                 syncFsExternalInstance(mqDto);
             }
         });
@@ -434,6 +441,28 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
+    /**
+     * 校验创建审核人是否一致
+     */
+    private void checkApproveUserSame (Map<String,Object> variablesMap,String businessKey) {
+        //查询DictBasic配置，白名单
+        List<DictBasicEntity> list = dictBasicService.getByType("checkApproveWhite");
+        if (CollUtil.isNotEmpty(list) && CharSequenceUtil.isNotBlank(businessKey)) {
+            //白名单
+            List<String> whiteList = Arrays.stream(list.get(0).getValue().split(",")).collect(Collectors.toList());
+            if (whiteList.contains(businessKey)) {
+                return;
+            }
+        }
+        //创建人
+        String createUserId = (String) variablesMap.get("createUserId");
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(createUserId,userInfo.getUid()) && !CharSequenceUtil.equals(createUserId, UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
@@ -446,6 +475,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
+            //未启动流程需要判断创建人和当前登陆人是否一致
+            checkApproveUserSame(dto.getVariablesMap(),dto.getBusinessKey());
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -557,8 +588,33 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID(),1);
+
+            //保存mq消费记录
+            if (addMqConsumerRecord(mqDto)) return;
+
+            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
         }
+    }
+
+    private boolean addMqConsumerRecord(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
+        log.info("addMqConsumerRecord开始 保存MQ消费记录, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+        //保存mq消费记录
+        Map<String, Object> convertedMap = BeanUtil.beanToMap(mqDto);
+
+        // 构建DTO
+        WorkflowMqConsumerRecordDTO.MqDTO dto = new WorkflowMqConsumerRecordDTO.MqDTO();
+        dto.setDataJson(convertedMap);
+        dto.setBusinessKey(mqDto.getBusinessKey());
+        dto.setTopic(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC);
+        dto.setConsumerGroup(RocketMqConsumerGroup.WORKFLOW_SYNC_FS_INSTANCE_CONSUMER);
+        dto.setTag(RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName());
+        String id = workflowMqConsumerRecordService.addMqRecord(dto);
+        if (StringUtils.isBlank(id)) {
+            log.error("addMqConsumerRecord 保存MQ消费记录失败, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+            return true;
+        }
+        log.info("addMqConsumerRecord结束 保存MQ消费记录");
+        return false;
     }
 
     //    @Transactional(rollbackFor = Exception.class)
@@ -851,7 +907,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         //判断是否走飞书流程
         Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
-        if (isFsApprove) {
+        if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
             throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
         }
 
@@ -925,6 +981,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+
+            //保存mq消费记录
+            addMqConsumerRecord(mqDto);
+
             mqSyncFsHandler.handler(mqDto);
         }
         // 删除本地流程任务数据
@@ -1049,26 +1109,51 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public ProcessManagementDTO.ProcessResultDTO progress(ProcessManagementDTO.ProgressDTO dto) {
-        // Get the process definition ID from the process instance ID
-        String processDefinitionId = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(dto.getProcessInstanceId())
-                .singleResult()
-                .getProcessDefinitionId();
-        // Get the BPMN model instance
-        BpmnModelInstance bpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
-        // Convert the BpmnModelInstance to a XML string
-        String bpmnXml = Bpmn.convertToString(bpmnModelInstance);
-        // 返回当前任务
-        List<Task> taskList = taskService.createTaskQuery()
-                .processInstanceId(dto.getProcessInstanceId())
-                .active()
-                .list();
-        ActivityInstance activityInstance = runtimeService.getActivityInstance(dto.getProcessInstanceId());
-        List<ProcessManagementDTO.TaskResultDTO> tasks = new ArrayList<>(taskList.size());
-        if(!CollectionUtils.isEmpty(taskList)){
-            tasks = taskList.stream().map(task -> new ProcessManagementDTO.TaskResultDTO(task.getId(), task.getName(), task.getTaskDefinitionKey())).collect(Collectors.toList());
+        String processDefinitionId;
+        String processInstanceId = dto.getProcessInstanceId();
+        boolean isCompleted = false;
+
+        // 查询流程定义ID
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+
+        if (processInstance != null) {
+            processDefinitionId = processInstance.getProcessDefinitionId();
+        } else {
+            HistoricProcessInstance historicInstance = historyService.createHistoricProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+
+            if (historicInstance == null) {
+                throw new RuntimeException("未找到流程实例: " + processInstanceId);
+            }
+
+            processDefinitionId = historicInstance.getProcessDefinitionId();
+            isCompleted = true;
         }
-        return new ProcessManagementDTO.ProcessResultDTO(tasks, bpmnXml, activityInstance.getProcessInstanceId(), activityInstance.getProcessDefinitionId());
+
+        // 获取 BPMN XML
+        BpmnModelInstance bpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
+        String bpmnXml = Bpmn.convertToString(bpmnModelInstance);
+
+        // 查询任务（仅运行中的流程）
+        List<ProcessManagementDTO.TaskResultDTO> tasks = new ArrayList<>();
+        if (!isCompleted) {
+            List<Task> taskList = taskService.createTaskQuery()
+                    .processInstanceId(processInstanceId)
+                    .active()
+                    .list();
+
+            if (!CollectionUtils.isEmpty(taskList)) {
+                tasks = taskList.stream()
+                        .map(task -> new ProcessManagementDTO.TaskResultDTO(
+                                task.getId(), task.getName(), task.getTaskDefinitionKey()))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        return new ProcessManagementDTO.ProcessResultDTO(tasks, bpmnXml, processInstanceId, processDefinitionId, isCompleted);
     }
 
     @Override
@@ -1380,6 +1465,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+        //创建人和审核人不能一致
+        checkApproveUserSame(variables,"");
 
         EndProcessDTO dto;
         if (ProcessManagementOptionEnum.PASS.getCode().equals(entity.getOption())) {

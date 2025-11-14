@@ -185,6 +185,16 @@ public interface DmpTaskFeign {
     @PostMapping("feign/saveOrUpdate/push/task")
     String saveOrUpdateDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
 
+
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("feign/save/push/task")
+    String saveDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
+
     /**
      * 创建第三方仓任务
      * @return
@@ -311,5 +321,30 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/pagingOutLatest")
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
+
+    /**
+     * 创建推送任务
+     * @param msgList
+     */
+    @PostMapping("feign/batchCreateDmpPushMsg")
+    void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList);
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("feign/checkKingdeeSyncApprove")
+    String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO);
+
+    /**
+     * 获取最新推送记录
+     */
+    @GetMapping("feign/outputTaskRecord/getLastOutputTaskRecordList")
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@RequestParam(value = "sourceCodeList",required = false) List<String> sourceCodeList,
+                                                                @RequestParam(value = "outputClass",required = false) String outputClass
+    );
+
 
 }

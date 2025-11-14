@@ -70,4 +70,14 @@ public class BiSettlementExchangeRateController extends BaseController {
         return  success(exchangeRate);
     }
 
+
+    /**
+     * 将最新的汇率同步订货通
+     */
+    @PostMapping("/syncLastestRateToDht")
+    public ApiResult<Boolean> syncLastestRateToDht() {
+        biSettlementExchangeRateService.syncLastestRateToDht();
+        return  success();
+    }
+
 }

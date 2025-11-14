@@ -242,7 +242,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformList(platformList);
         paramDTO.setShopIdList(shopIds);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setSkuIdList(skuIds);
         paramDTO.setIsExpire(false);
         // 所有包含历史映射关系

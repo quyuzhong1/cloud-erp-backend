@@ -19,6 +19,7 @@ public enum DictBasicTypeEnum {
     SALES_PLATFORM_OTHER("otherSalesPlatform" , "其他"),
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式"),
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
+    DHT_ACCOUNT_TYPE("dhtAccountType",  "订货通账户类型"),
     LOGISTICS_METHOD("logisticsMethod",  "b2c销售订单物流方式"),
     COMPARE("compare",  "订单规则的匹配"),
     FIELD("field","字段选项"),
@@ -34,12 +35,15 @@ public enum DictBasicTypeEnum {
     ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
     MINI_PROGRAM_SALES_PLATFORM_INTERNAL("miniProgramSalesPlatform" , "微信小程序国内销售平台"),
 
+    CREDIT_PERIOD("creditPeriod",  "授信账期"),
+    CREDIT_TYPE("creditType",  "授信类型"),
+
     // 数帝云
     SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),
     SDY_PARTITION_LEVEL1_DEPT("sdyPartitionLevel1Dept" , "数帝云军区一级部门映射"),
     SDY_PLATFORM_LEVEL2_DEPT("sdyPlatformLevel2Dept" , "数帝云平台二级部门映射"),
 
-    WORKFLOW_TASK_NODE("workflowTaskNode" , "展会订单任务节点"),
+    WORKFLOW_TASK_NODE("workflowTaskNode" , "任务节点"),
 
     ;
 

@@ -340,7 +340,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         //数据库存在的
         List<DictCountryEntity> dbList = this.list();
         List<String> idList = dbList.stream().map(DictCountryEntity::getId).collect(Collectors.toList());
-        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList);
+        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList , businessType);
         for (KingdeeDTO.AssistDTO item : countryList) {
             String kingdeeId = item.getKingdeeId();
             String kingdeeCode = item.getKingdeeCode();
@@ -427,12 +427,12 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
                     .update();
         }
 
-        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        Class<DictCountryEntity> AreaClass = DictCountryEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id , businessType);
         if (Objects.isNull(refBusinessEntity)) {
-            Class<DictCountryEntity> AreaClass = DictCountryEntity.class;
-            TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String businessType = tableName.value();
             ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
             refEntity.setBusinessType(businessType);
             refEntity.setBusinessId(id);
@@ -470,7 +470,11 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
                 dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
             }
         });
-        thirdpartyRefBusinessService.removeByBusinessId(id);
+        Class<DictCountryEntity> AreaClass = DictCountryEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        thirdpartyRefBusinessService.removeByBusinessId(id , businessType);
         return BatchResultDTO.success(entity.getId(), entity.getNameCn(), OperationTypeEnum.DELETE);
 
     }

@@ -268,7 +268,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 
         return omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);
@@ -295,7 +295,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setShopIdList(queryDTO.getShopIds());
-        paramDTO.setType(RuleTypeEnum.PLATFORM.code);
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.code);
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
@@ -359,7 +359,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             updateFnSkulist.stream()
                     .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equals(addDTO.getPlatformSku()))
                     .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
-
         }
     }
 

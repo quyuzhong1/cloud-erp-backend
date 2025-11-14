@@ -85,5 +85,15 @@
         dp.index asc
     </select>
 
+    <select id="listByAdvanceQuery" resultType="com.erp.model.sys.entity.DictPartitionEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from dict_partition dp
+        where dp.is_deleted = false
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null">
+            and ${params.sqlMap.default}
+        </if>
+        order by dp.index asc
+    </select>
 
 </mapper>

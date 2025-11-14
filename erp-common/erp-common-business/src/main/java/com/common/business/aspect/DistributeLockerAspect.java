@@ -1,5 +1,6 @@
 package com.common.business.aspect;
 
+import cn.hutool.core.util.ReflectUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.core.exception.ServiceException;
 import io.seata.core.context.RootContext;
@@ -431,14 +432,15 @@ public class DistributeLockerAspect {
      * @return          字段值
      */
     private Object getField(Object obj, String fieldName) {
-        try {
-            Field field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return field.get(obj);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            log.debug("获取字段{}值失败: {}", fieldName, e.getMessage());
-            return null;
-        }
+        return ReflectUtil.getFieldValue(obj,fieldName);
+//        try {
+//            Field field = obj.getClass().getDeclaredField(fieldName);
+//            field.setAccessible(true);
+//            return field.get(obj);
+//        } catch (NoSuchFieldException | IllegalAccessException e) {
+//            log.debug("获取字段{}值失败: {}", fieldName, e.getMessage());
+//            return null;
+//        }
     }
 
     /**

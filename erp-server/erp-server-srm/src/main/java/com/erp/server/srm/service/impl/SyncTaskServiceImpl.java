@@ -6,13 +6,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
-import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.entity.PayableDetailEntity;
+import com.erp.model.srm.entity.PayableInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
-import com.erp.server.srm.service.SyncTaskService;
-import com.erp.server.srm.service.PoReconciliationDetailScmService;
-import com.erp.server.srm.service.PoReconciliationService;
+import com.erp.server.srm.kingdee.SyncKingdeePayableInfoService;
+import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -39,11 +37,16 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private PoReconciliationService poReconciliationService;
 
     @Resource
-    private SyncKingdeePoReconciliationService syncKingdeePoReconciliationService;
+    private SyncKingdeePayableInfoService syncKingdeePayableInfoService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private PayableInfoService payableInfoService;
+
+    @Resource
+    private PayableDetailService payableDetailService;
 
 
     @Override
@@ -52,8 +55,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();
         Map<String , Map<String, Object>> resultList = new HashMap<>();
         switch (sourceType) {
-            case PO_RECONCILIATION:
-                resultList = syncPoReconciliation(sourceDetailList);
+            case PAYABLE_INFO:
+                resultList = syncPayableInfo(sourceDetailList);
                 break;
             default:
                 break;
@@ -66,27 +69,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * 其他出库单
      * @param sourceDetailList
      */
-    private Map<String , Map<String, Object>> syncPoReconciliation(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private Map<String , Map<String, Object>> syncPayableInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         Map<String , Map<String, Object>> resultList = new HashMap<>();
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
-        List<PoReconciliationEntity> list = poReconciliationService.listByIds(sourceIdList);
+        List<PayableInfoEntity> list = payableInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
-            log.error("syncPoReconciliation >>>> 未找到数据！");
+            log.error("syncPayableInfo >>>> 未找到数据！");
             return resultList;
         }
         //明细信息
-        List<PoReconciliationDetailEntity> detailList = poReconciliationDetailScmService.listMainIdList(sourceIdList);
-        Map<String, List<PoReconciliationDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PoReconciliationDetailEntity::getMainId));
+        List<PayableDetailEntity> detailList = payableDetailService.listMainIdList(sourceIdList);
+        Map<String, List<PayableDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PayableDetailEntity::getMainId));
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
-            PoReconciliationEntity entity = list.stream().filter(obj -> {
+            PayableInfoEntity entity = list.stream().filter(obj -> {
                 return obj.getId().equals(sourceId);
             }).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            Map<String, Object> newSyncDataToKingdee = syncKingdeePoReconciliationService.newSyncDataToKingdee(entity,map.get(sourceId), syncParamDetailDTO.getSyncOperate());
+            Map<String, Object> newSyncDataToKingdee = syncKingdeePayableInfoService.newSyncDataToKingdee(entity,map.get(sourceId), syncParamDetailDTO.getSyncOperate());
             if(newSyncDataToKingdee == null) {
                 continue;
             }
@@ -109,13 +112,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         Object details = params.get("details");
 
         //采购对账单
-        if (ApiModuleTypeEnum.PO_RECONCILIATION.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.PAYABLE_INFO.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {
                 JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
-                poReconciliationDetailScmService.updateKingdeeDetailId(list);
+                payableDetailService.updateKingdeeDetailId(list);
                 return;
             }
-            poReconciliationService.updateSyncKingdeeId(businessId, syncKingdeeId);
+            payableInfoService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
 
     }

@@ -15,6 +15,7 @@ import com.sdk.tms.express.utils.CallExpressServiceTools;
 import com.sdk.tms.express.utils.HttpClientUtil;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
@@ -36,6 +37,8 @@ public class ExpressShipperService {
     private static String CLIENT_ID = "clientId";
     private static String CLIENT_SECRET = "clientSecret";
 
+    @Value("${tms.sf-express.monthlyCard}")
+    private String monthCard;
     /**
      * 创建订单
      * <p>
@@ -59,7 +62,8 @@ public class ExpressShipperService {
         validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_CREATE_ORDER; //下订单
         if (StringUtils.isEmpty(orderRequest.getMonthlyCard())) {
-            orderRequest.setMonthlyCard(PathConstants.MONTH_CARD);
+            log.info("monthCard {}",monthCard);
+            orderRequest.setMonthlyCard(monthCard);
         }
         return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
     }

@@ -43,6 +43,12 @@ public class SoChangeDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空")
         private String skuId;
 
+
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
+
         /**
          * 变更类型
          * 来源 http://172.16.100.11:3002/project/110/interface/api/13480  type=SoChangeType
@@ -131,6 +137,11 @@ public class SoChangeDetailDTO implements Serializable {
          * sku no
          */
         private String skuNo;
+
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称
@@ -276,6 +287,10 @@ public class SoChangeDetailDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
         /**
          * sku no
          */
@@ -466,6 +481,10 @@ public class SoChangeDetailDTO implements Serializable {
          */
         private String productName;
 
+        /**
+         *  平台sku
+         */
+        private String platformSkuNo;
         /**
          * 销售数量
          */

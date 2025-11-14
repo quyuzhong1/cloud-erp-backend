@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 
 import java.util.List;
 
@@ -20,4 +21,6 @@ public interface ThirdWarehouseDeliveryDetailService extends SuperService<ThirdW
     List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(List<String> mainIds);
 
     void removeByMainIds(List<String> mainIds);
+
+    List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(List<String> warehouseIds);
 }

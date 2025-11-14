@@ -14,8 +14,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum CfgApproveSyncSyncPlatformEnum implements EnumMessage {
 	FEISHU("feishu", "飞书"),
-	DD("dd", "钉钉"),
-	QW("qw", "企业微信"),
+//	DD("dd", "钉钉"),
+//	QW("qw", "企业微信"),
     ;
     /**
      * 类型

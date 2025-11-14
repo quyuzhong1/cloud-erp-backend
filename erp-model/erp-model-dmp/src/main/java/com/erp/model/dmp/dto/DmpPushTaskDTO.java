@@ -372,4 +372,65 @@ public class DmpPushTaskDTO implements Serializable {
          */
         private String lastSyncTime;
     }
-}
+
+    /**
+     * 参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LastPullParamDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 业务类型
+         */
+        private String billType;
+    }
+
+    /**
+     * 最后一条拉取记录
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LastPullDTO {
+
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+
+        /**
+         * 拉取区间开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 拉取区间结束时间
+         */
+        private LocalDateTime endTime;
+
+        /**
+         * 最后推送时间
+         */
+        private LocalDateTime lastSyncTime;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 状态明细
+         */
+        private String statusName;
+    }
+
+    }

@@ -23,7 +23,21 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
 
     List<WorkflowTaskRecordEntity> listErrorTask();
 
-    void WorkflowTaskRecordRetryJob();
+    void WorkflowTaskRecordRetryJob(String id);
 
     List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
+
+    /**
+     * 根据sourceId和sourceType删除任务记录
+     * @param sourceId
+     * @param sourceType
+     */
+    void removeBySourceIdAndSourceType(String sourceId, String sourceType);
+
+    /**
+     * 根据sourceId查询任务记录
+     * @param soId
+     * @return
+     */
+    List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType);
 }

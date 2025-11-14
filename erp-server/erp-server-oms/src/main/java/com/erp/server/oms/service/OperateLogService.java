@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -77,6 +78,10 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
      * @return Boolean
      */
     Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation);
+
+
+    Boolean addModuleOperateLogBySystem(String content, String moduleType, String businessId, String operation);
+
     /**
      * @description: 批量新增日志
      * @author Will

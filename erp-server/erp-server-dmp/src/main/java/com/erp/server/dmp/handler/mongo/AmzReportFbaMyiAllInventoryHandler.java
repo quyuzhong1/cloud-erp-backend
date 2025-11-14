@@ -85,7 +85,7 @@ public class AmzReportFbaMyiAllInventoryHandler extends DmpMongoHandler {
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setShopIdList(shopIds);
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             paramDTO.setIsExpire(false);
             listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)

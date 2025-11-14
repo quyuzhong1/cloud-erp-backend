@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -159,6 +160,7 @@ public class SoB2cDeliveryController extends BaseController {
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
+                    UserContext.setIsUserSystem(true);
                     //波次列表波次状态自动变更
                     waveListService.waveListStatusAutoChange(id);
                     //生产直接调拨单
@@ -176,6 +178,8 @@ public class SoB2cDeliveryController extends BaseController {
                     continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }finally {
+                UserContext.clearIsUserSystem();
             }
             resultDTOS.add(result);
         }
@@ -472,29 +476,34 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/retryOutstock")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "重新出库")
     public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO resultDTO;
-            try {
-                resultDTO = soB2cDeliveryService.retryOutstock(id);
-                if (resultDTO.getSuccess()) {
+        try {
+            UserContext.setIsUserSystem(true);
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+            for (String id : dto.getIds()) {
+                BatchResultDTO resultDTO;
+                try {
+                    resultDTO = soB2cDeliveryService.retryOutstock(id);
+                    if (resultDTO.getSuccess()) {
+                        SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                        entity.setBatchNo(resultDTO.getId());
+                        soB2cDeliveryService.generateB2cSoOutstock(entity);
+                    }
+                }catch (Exception e){
+                    log.error("重新出库失败",e);
                     SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-                    entity.setBatchNo(resultDTO.getId());
-                    soB2cDeliveryService.generateB2cSoOutstock(entity);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+                        resultDTOS.add(resultDTO);
+                        continue;
+                    }
+                    resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-            }catch (Exception e){
-                log.error("重新出库失败",e);
-                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
-                    resultDTOS.add(resultDTO);
-                    continue;
-                }
-                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(resultDTO);
             }
-            resultDTOS.add(resultDTO);
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }finally {
+            UserContext.clearIsUserSystem();
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

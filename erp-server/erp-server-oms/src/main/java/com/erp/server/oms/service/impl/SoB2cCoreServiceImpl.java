@@ -206,7 +206,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(shopIdList);
         paramDTO.setPlatformList(platformList);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setPlatformSpuNoList(platformSpuNoList);
         // 所有包含历史映射关系

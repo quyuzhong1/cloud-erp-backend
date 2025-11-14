@@ -102,5 +102,20 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     IPage<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(Page<T> query,@Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
 
     List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@Param("sourceIdList") List<String> sourceIdList, @Param("sourceType") String sourceType);
+    /**
+     * 获取最后一条拉取记录
+     * @author will
+     * @date 2025/8/27 18:25
+     * @param paramDTO
+     * @return LastPullDTO
+     */
+    DmpPushTaskDTO.LastPullDTO getLastPullRecord(@Param("params")DmpPushTaskDTO.LastPullParamDTO paramDTO);
 
+    /**
+     * 获取最新的推送记录
+     * @param sourceCodeList 来源编码列表
+     * @param outputClass 输出处理器
+     * @return 分组后的推送记录列表
+     */
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@Param("sourceCodeList") List<String> sourceCodeList, @Param("outputClass") String outputClass);
 }

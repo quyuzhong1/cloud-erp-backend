@@ -44,4 +44,9 @@ public class SampleRecipientApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleRecipientService.approveEnd(approveOneDTO, entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

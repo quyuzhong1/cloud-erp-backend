@@ -109,6 +109,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Resource
     private SoPriceFeign soPriceFeign;
 
+    @Resource
+    private ExhibitionOrderFeign exhibitionOrderFeign;
+
     /**
      * 待办模块-模块分类下拉
      *
@@ -650,11 +653,33 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_IN:
-                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferInApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_OUT:
                 resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);
                 break;
+            case SAMPLE_RECIPIENT:
+                resultDTOList = wmsTaskFeign.sampleRecipientApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_RETURN_INFO:
+                resultDTOList = wmsTaskFeign.sampleReturnApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_BORROW_INFO:
+                resultDTOList = wmsTaskFeign.sampleBorrowApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_SCRAP_INFO:
+                resultDTOList = wmsTaskFeign.sampleScrapApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_BACK_INFO:
+                resultDTOList = wmsTaskFeign.sampleBackApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_LEDGER_INIT:
+                resultDTOList = wmsTaskFeign.sampleLedgerInitApprove(baseApproveParamDTO);
+                break;
+            case SAMPLE_TRANSFER_INFO:
+                resultDTOList = wmsTaskFeign.sampleTransferApprove(baseApproveParamDTO);
+                break;
+                
             default:
                 throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
@@ -693,6 +718,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case SO_PRICE_CHANGE:
                 ApiResult<List<BatchResultDTO>> soPriceChangeResult  =  soPriceFeign.approveChange(baseApproveParamDTO);
                 resultDTOList = soPriceChangeResult.getData();
+                break;
+            case EXHIBITION_ORDER:
+                resultDTOList = exhibitionOrderFeign.approve(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);

@@ -174,7 +174,12 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
 		if(CollectionUtils.isEmpty(detailEntityList)){
-			throw new ServiceException("没有映射");
+			//因为极风可能查到别的客户的单，所以没有映射的情况就忽略
+			if (PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(dto.getPlatform())){
+				return;
+			}else{
+				throw new ServiceException("没有映射");
+			}
 		}
 		//关联销售退货单
 		this.matchSoReturn(soReturnInstockEntity,detailEntityList,dto,soB2cEntity);
@@ -534,7 +539,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
 		paramDTO.setShopIdList(shopIds);
-		paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 		paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		paramDTO.setIsExpire(false);
 		// 查询ListingInfo和skuMapping的关系

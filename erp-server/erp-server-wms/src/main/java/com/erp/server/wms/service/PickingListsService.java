@@ -120,4 +120,12 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @return
      */
     List<PickingListsDTO.PrintCombinationView> printCombination(List<String> ids);
+
+    /**
+     * 确认打印
+     * @param ids
+     */
+    void printConfirm(List<String> ids);
+
+    void printCancel(List<String> collect);
 }

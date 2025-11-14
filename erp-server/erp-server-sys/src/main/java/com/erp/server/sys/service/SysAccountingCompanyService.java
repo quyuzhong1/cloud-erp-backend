@@ -92,4 +92,6 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @Date 2023/4/13 12:19
      **/
     SysAccountingCompanyEntity getCompanyByName(String companyName);
+
+    SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId);
 }

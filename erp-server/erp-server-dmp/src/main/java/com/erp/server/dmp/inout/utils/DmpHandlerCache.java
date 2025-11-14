@@ -31,6 +31,7 @@ import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpCfgDbEntity;
+import com.erp.model.dmp.entity.DmpCfgEtlEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
@@ -48,6 +49,7 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgApiService;
 import com.erp.server.dmp.service.DmpCfgDbService;
+import com.erp.server.dmp.service.DmpCfgEtlService;
 import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgInputConvertValueService;
@@ -81,6 +83,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private List<DmpBasicSystemEntity> dmpBasicSystemCache;
 	
 	private List<DmpCfgInputEntity> dmpCfgInputCache;
+	
+	private List<DmpCfgEtlEntity> dmpCfgEtlCache;
 	
 	private List<DmpCfgInputDetailEntity> dmpCfgInputDetailCache;
 	
@@ -116,6 +120,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
 	private DmpCfgInputService dmpCfgInputService;
+	@Autowired
+	private DmpCfgEtlService dmpCfgEtlService;
 	@Autowired
 	private DmpCfgInputConvertService dmpCfgInputConvertService;
 	@Autowired
@@ -153,6 +159,14 @@ public class DmpHandlerCache implements CommandLineRunner{
 					.eq(DmpCfgInputEntity::getDisabled, false).list();
 		}
 		return dmpCfgInputCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+	
+	public List<DmpCfgEtlEntity> getDmpCfgEtlEntityList(Predicate<? super DmpCfgEtlEntity> paramPredicate) {
+		if(dmpCfgEtlCache == null) {
+			dmpCfgEtlCache = dmpCfgEtlService.lambdaQuery()
+					.eq(DmpCfgEtlEntity::getDisabled, false).list();
+		}
+		return dmpCfgEtlCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
 	public List<DmpCfgInputConvertEntity> getDmpCfgInputConvertEntityList(Predicate<? super DmpCfgInputConvertEntity> paramPredicate) {
@@ -351,6 +365,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 				.eq(DmpBasicSystemEntity::getDisabled, false).list();
 		dmpCfgInputCache = dmpCfgInputService.lambdaQuery()
 				.eq(DmpCfgInputEntity::getDisabled, false).list();
+		dmpCfgEtlCache = dmpCfgEtlService.lambdaQuery()
+				.eq(DmpCfgEtlEntity::getDisabled, false).list();
 		dmpCfgInputConvertCache = dmpCfgInputConvertService.lambdaQuery()
 				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 		dmpCfgInputDetailCache = dmpCfgInputDetailService.lambdaQuery()
@@ -408,6 +424,19 @@ public class DmpHandlerCache implements CommandLineRunner{
 					List<String> newIds = dmpCfgInputEntityFreshList.stream().map(DmpCfgInputEntity::getId).collect(Collectors.toList());
 					dmpCfgInputCache.removeIf(d -> newIds.contains(d.getId()));
 					dmpCfgInputCache.addAll(dmpCfgInputEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 1, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgEtlEntity> dmpCfgEtlEntityFreshList = dmpCfgEtlService.lambdaQuery()
+						.gt(DmpCfgEtlEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgEtlEntityFreshList)) {
+					List<String> newIds = dmpCfgEtlEntityFreshList.stream().map(DmpCfgEtlEntity::getId).collect(Collectors.toList());
+					dmpCfgEtlCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgEtlCache.addAll(dmpCfgEtlEntityFreshList.stream()
 							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
 				}
 				

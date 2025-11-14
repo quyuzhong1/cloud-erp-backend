@@ -288,7 +288,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     /**
      * 处理第三方仓产品条形码字段
      */
-    void processThirdBarcode();
+    void processThirdBarcode(List<String> sourceCodeList);
 
     /**
      * 删除装箱

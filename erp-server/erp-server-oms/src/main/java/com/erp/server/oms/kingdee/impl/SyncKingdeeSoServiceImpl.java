@@ -130,6 +130,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SoReceiptService soReceiptService;
+
     /**
      * 销售订单同步金碟
      *
@@ -504,13 +507,41 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             resultMap.put("receiveAmount", entity.getReceiveAmount());
         }
         // 收款账号
-        String receiveAccount = entity.getReceiveAccount();
-        if (StrUtils.isNotEmpty(receiveAccount)) {
-            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
-            if (Objects.nonNull(bankAccount)) {
-                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+        List<SoReceiptEntity> soReceiptEntityList = soReceiptService.listBySoId(entity.getId());
+        //过滤已审核并且有收款账号按照创建时间排序
+        if (CollectionUtils.isNotEmpty(soReceiptEntityList)) {
+            List<SoReceiptEntity> filteredList = soReceiptEntityList.stream()
+                    .filter(soReceiptEntity -> ApproveStatusEnum.APPROVE.equals(soReceiptEntity.getApproveStatus())
+                            && StrUtils.isNotEmpty(soReceiptEntity.getReceiptAccount()))
+                    .sorted(Comparator.comparing(SoReceiptEntity::getCreateTime))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(filteredList)) {
+                resultMap.put("receiveDate", LocalDateTimeUtil.format(filteredList.get(0).getReceiptDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), filteredList.get(0).getDictReceiptMethod())).findFirst().orElse(null);
+                if (Objects.nonNull(dictBasicEntity)) {
+                    resultMap.put("receiveMethod", dictBasicEntity.getRemark());
+                }
+                BankAccountEntity bankAccount = bankAccountService.getById(filteredList.get(0).getReceiptAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
+            }else if (StringUtils.isNotBlank(entity.getReceiveAccount())) {
+                //如果没有已审核的收款单，则使用订单上的收款账号
+                BankAccountEntity bankAccount = bankAccountService.getById(entity.getReceiveAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
+            }
+        }else{
+            if (StringUtils.isNotBlank(entity.getReceiveAccount())) {
+                //如果没有已审核的收款单，则使用订单上的收款账号
+                BankAccountEntity bankAccount = bankAccountService.getById(entity.getReceiveAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
             }
         }
+
 
         //报关费 贸易条件
         BigDecimal customsFee = entity.getCustomsFee();

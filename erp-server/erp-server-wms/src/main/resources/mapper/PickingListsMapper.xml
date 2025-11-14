@@ -36,6 +36,9 @@
                pl.source_code,
                pl.sku_total,
                pl.location_total,
+               pl.print_user_name,
+               pl.print_time,
+               pl.print_status,
                pl.create_time as createTime
         from picking_lists pl
         where ${params.sqlMap.default}
@@ -57,6 +60,9 @@
                pd.warehouse_location,
                pd.qty,
                pd.staging_location,
+               pl.print_user_name,
+               pl.print_time,
+               pl.print_status,
                pl.update_user_name,
                pl.update_time
         from picking_lists as pl

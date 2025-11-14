@@ -4,6 +4,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.wms.enums.IsAllowOutstockEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +20,13 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
             if ("toBeApprove".equals(value)) {
                 super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
             }
+            if ("packingCompleted".equals(value)) {
+                super.buildSplicingSQLDTO("sdn.is_allow_outstock", QueryConditionEnum.EQ, IsAllowOutstockEnum.WAIT_NOTICE.getCode(), QueryDataTypeEnum.BOOLEAN);
+                super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE.getCode());
+                super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
+            }
             if ("unShipped".equals(value)) {
+                super.buildSplicingSQLDTO("sdn.is_allow_outstock", QueryConditionEnum.EQ, IsAllowOutstockEnum.PERMIT.getCode(), QueryDataTypeEnum.BOOLEAN);
                 super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE.getCode());
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
             }
