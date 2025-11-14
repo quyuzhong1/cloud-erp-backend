@@ -37,4 +37,6 @@ public interface ProcessTaskManagementMapper extends BaseMapper<ProcessTaskManag
     List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(@Param("businessId") String businessId);
 
     List<ProcessTaskManagementEntity> listProcessByBusinessKey(@Param("params")ProcessManagementDTO.TaskKeyInfoDTO params);
+
+    List<ProcessTaskManagementEntity> listTaskByProcessInstanceId(@Param("processInstanceId")String processInstanceId);
 }
