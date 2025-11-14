@@ -63,6 +63,16 @@ public class TongYouService {
 
 
     /**
+     * 获取物流渠道列表
+     */
+    public TongYouBaseResp<String> getLogisticsChannel(Map<String, Object> authJson){
+        Map<String, String> headerMap = new HashMap<>();
+        String path = "hwc_api/hwc_paisongx.php";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
+        return TongYouUtils.parseToTongYouResp(bodyStr, String.class);
+    }
+
+    /**
      * 创建入库单
      */
     public TongYouBaseResp<TongYouInboundResp> createInboundBill(@Valid TongYouCreateInboundReq TongYouGetReceiptReq){
