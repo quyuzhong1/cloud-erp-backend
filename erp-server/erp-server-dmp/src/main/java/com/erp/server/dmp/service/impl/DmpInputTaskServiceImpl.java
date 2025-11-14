@@ -24,11 +24,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -48,7 +47,6 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
@@ -80,6 +78,8 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 	
 	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -302,11 +302,11 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         if(CollUtil.isEmpty(list)) {
             return;
         }
-
+        String globalErrorValue = cfgSettingService.getValue(SettingEnum.DMP_INPUT_TASK_ERROR_COUNT);
         // 属性赋值
         for(DmpInputTaskDTO.ListDTO data : list) {
             // 其他如需要显示名称的字段赋值
-            data.setStatusName(DmpInputTaskStatusEnum.getName(data.getStatus()));
+            data.setStatusName(DmpInputTaskStatusEnum.convertStateName(data.getStatus(), data.getErrorCount(), globalErrorValue));
 
             data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
         }

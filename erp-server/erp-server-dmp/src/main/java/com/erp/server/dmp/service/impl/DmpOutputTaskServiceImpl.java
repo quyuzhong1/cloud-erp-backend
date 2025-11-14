@@ -13,11 +13,10 @@ import com.common.business.vo.LoginUser;
 
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
-import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.mapper.DmpOutputTaskMapper;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 
@@ -76,6 +74,8 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -233,10 +233,10 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
         if(CollUtil.isEmpty(list)) {
             return;
         }
-
+        String globalErrorValue = cfgSettingService.getValue(SettingEnum.DMP_OUTPUT_TASK_ERROR_COUNT);
         // 属性赋值
         for(DmpOutputTaskDTO.ListDTO data : list) {
-            data.setStatusName(DmpTaskStatuEnum.getName(data.getStatus()));
+            data.setStatusName(DmpInputTaskStatusEnum.convertStateName(data.getStatus(), data.getErrorCount(), globalErrorValue));
             //  其他如需要显示名称的字段赋值
         }
     }

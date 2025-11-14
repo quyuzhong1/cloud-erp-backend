@@ -27,13 +27,16 @@ import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpEtlTaskMapper;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpEtlTaskService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,10 +58,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, DmpEtlTaskEntity> implements DmpEtlTaskService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -206,11 +211,12 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
         if (CollUtil.isEmpty(list)) {
             return;
         }
-
+        String globalErrorValue = cfgSettingService.getValue(SettingEnum.DMP_ETL_TASK_ERROR_COUNT);
         // 属性赋值
         for (DmpEtlTaskDTO.ListDTO data : list) {
-            data.setStatusName(DmpTaskStatuEnum.getName(data.getStatus()));
             // 其他如需要显示名称的字段赋值
+            // 区分系统重试还是人工重试
+            data.setStatusName(DmpInputTaskStatusEnum.convertStateName(data.getStatus(), data.getErrorCount(), globalErrorValue));
         }
     }
 
