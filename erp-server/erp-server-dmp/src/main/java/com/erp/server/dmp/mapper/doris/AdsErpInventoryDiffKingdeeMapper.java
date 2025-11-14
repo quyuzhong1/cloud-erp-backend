@@ -52,5 +52,5 @@ public interface AdsErpInventoryDiffKingdeeMapper extends BaseMapper<AdsErpInven
     * @param searchParam
     * @return
     */
-    List<AdsErpInventoryDiffKingdeeDTO.TabListDTO> tabList(@Param("params") AdsErpInventoryDiffKingdeeDTO.PagingParamDTO searchParam);
+    List<AdsErpInventoryDiffKingdeeDTO.StatisticsDTO> statistics(@Param("params") AdsErpInventoryDiffKingdeeDTO.PagingParamDTO searchParam);
 }

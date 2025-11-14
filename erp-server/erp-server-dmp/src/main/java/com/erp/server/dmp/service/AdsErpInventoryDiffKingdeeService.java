@@ -1,10 +1,12 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -52,7 +54,7 @@ public interface AdsErpInventoryDiffKingdeeService extends SuperService<AdsErpIn
     * @param dto
     * @return List<AdsErpInventoryDiffKingdeeDTO.TabListDTO>>
     */
-    List<AdsErpInventoryDiffKingdeeDTO.TabListDTO> tabList(PermissionsDTO dto);
+    AdsErpInventoryDiffKingdeeDTO.StatisticsDTO statistics(PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto);
 
     /**
     * 详情
@@ -73,4 +75,13 @@ public interface AdsErpInventoryDiffKingdeeService extends SuperService<AdsErpIn
     * @return
     */
     void exportList(AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    /**
+     * 更新备注
+     * @author Jim
+     * @date: 2025-11-13
+     * @return
+     */
+    BatchResultDTO updateRemark(String id,String remark);
 }

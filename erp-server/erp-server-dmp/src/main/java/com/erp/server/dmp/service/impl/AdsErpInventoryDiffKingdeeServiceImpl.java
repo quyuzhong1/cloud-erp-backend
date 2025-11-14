@@ -1,10 +1,10 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -16,6 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +29,8 @@ import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
@@ -121,23 +117,16 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
     }
 
     @Override
-    public List<AdsErpInventoryDiffKingdeeDTO.TabListDTO> tabList(PermissionsDTO param) {
-        AdsErpInventoryDiffKingdeeDTO.PagingParamDTO searchParam = new AdsErpInventoryDiffKingdeeDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<AdsErpInventoryDiffKingdeeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AdsErpInventoryDiffKingdeeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AdsErpInventoryDiffKingdeeDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new AdsErpInventoryDiffKingdeeDTO.TabListDTO("all", list.stream().mapToInt(AdsErpInventoryDiffKingdeeDTO.TabListDTO::getCount).sum()));
+    public AdsErpInventoryDiffKingdeeDTO.StatisticsDTO statistics(PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> pagingParamDTO) {
         // 计算合计数量
-        return list;
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        List<AdsErpInventoryDiffKingdeeDTO.StatisticsDTO> list = baseMapper.statistics(pagingParamDTO.getParams());
+        if (CollectionUtils.isNotEmpty(list)){
+            if (null != list.get(0)){
+                return list.get(0);
+            }
+        }
+        return AdsErpInventoryDiffKingdeeDTO.StatisticsDTO.init();
     }
 
     @Override
@@ -161,6 +150,8 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
+
+
     /**
     * 新增修改处理数据
     */
@@ -196,4 +187,21 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
         // TODO 其他如需要显示名称的字段赋值
         }
    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        AdsErpInventoryDiffKingdeeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("金蝶库存差异数据"));
+
+        // 删除主单数据
+        log.info("删除 金蝶库存主单数据，id：【{}】", id);
+        this.lambdaUpdate()
+                .set(AdsErpInventoryDiffKingdeeEntity::getRemark, remark)
+                .eq(AdsErpInventoryDiffKingdeeEntity::getId, id)
+                .update();
+        // 删除日志数据
+        log.info("删除 开始金蝶库存差异日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】更新备注操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "金蝶库存差异");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ADS_ERP_INVENTORY_DIFF_KINGDEE.getCode(), entity.getId(), "更新备注金蝶库存差异");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
+    }
 }

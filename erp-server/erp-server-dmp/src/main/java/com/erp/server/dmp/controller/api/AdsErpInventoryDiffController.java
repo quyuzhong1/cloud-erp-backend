@@ -189,7 +189,7 @@ public class AdsErpInventoryDiffController extends BaseController {
      * @date: 2025-11-13
      */
     @PostMapping("/generateDiff")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "仓库配置新增/修改")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成")
     public ApiResult<Boolean> generateDiff(@RequestBody @Validated AdsErpInventoryDiffDTO.GenerateDiffDTO dto) {
         // TODO 请求restCloud
         return ApiResult.success(true);

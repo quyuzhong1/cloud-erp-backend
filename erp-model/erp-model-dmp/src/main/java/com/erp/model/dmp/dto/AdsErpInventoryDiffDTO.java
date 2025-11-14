@@ -101,11 +101,6 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         private String uniqueCode;
 
         /**
-         * 数据字段md5值（数据json+account_code+next_level_id+bill_topic）
-         */
-        private String dataEncrypt;
-
-        /**
          * 来源平台：gyy，kingdee，mabang
          */
         private String sourceSystem;
@@ -124,31 +119,6 @@ public class AdsErpInventoryDiffDTO implements Serializable {
          * 业务类型
          */
         private String billTopic;
-
-        /**
-         * 流程id
-         */
-        private String flowId;
-
-        /**
-         * ETL处理状态：ready=可处理，unready=不可处理
-         */
-        private String etlStatus;
-
-        /**
-         * 节点id
-         */
-        private String nodeId;
-
-        /**
-         * 实例id/etl任务id
-         */
-        private String instanceId;
-
-        /**
-         * 拉取任务id
-         */
-        private String taskId;
 
         /**
          * 来源ID
@@ -209,6 +179,11 @@ public class AdsErpInventoryDiffDTO implements Serializable {
          * 本期入库数量
          */
         private Integer instockQty;
+
+        /**
+         * 本期在途数量
+         */
+        private Integer intransitQty;
 
         /**
          * 本月期末库存（计算值：期初+入库-出库）
@@ -738,7 +713,7 @@ public class AdsErpInventoryDiffDTO implements Serializable {
     }
 
     /**
-     * 仓库IDS
+     *
      */
     @Data
     @NoArgsConstructor

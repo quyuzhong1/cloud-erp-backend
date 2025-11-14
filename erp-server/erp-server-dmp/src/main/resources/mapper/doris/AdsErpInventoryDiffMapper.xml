@@ -86,6 +86,7 @@
             aeid.outstock_qty AS outstockQty,
             aeid.instock_qty AS instockQty,
             aeid.closing_qty AS closingQty,
+            aeid.intransit_qty AS intransitQty,
             aeid.estimated_closing_qty AS estimatedClosingQty,
             aeid.platform_closing_intransit_qty AS platformClosingIntransitQty,
             aeid.platform_closing_qty AS platformClosingQty,
