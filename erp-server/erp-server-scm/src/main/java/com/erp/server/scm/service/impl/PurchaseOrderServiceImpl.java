@@ -1564,7 +1564,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> warehouseLocationList = records.stream().map(v -> v.getWarehouseLocation()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
-            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationEntityList).list();
+            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationList).list();
         }
         for (PurchaseOrderDTO.ListDTO obj : records) {
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v -> v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
