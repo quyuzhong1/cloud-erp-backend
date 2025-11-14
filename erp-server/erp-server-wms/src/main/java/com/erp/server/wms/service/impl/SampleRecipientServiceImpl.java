@@ -531,6 +531,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
             List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
             searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
         }
 
         // 使用一个SQL查询获取所有状态的统计数量
@@ -2740,22 +2742,30 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     // ========== APP端专用方法实现 ==========
 
     @Override
-    public List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
+    public List<SampleRecipientDTO.TabListDTO> tabListApp(PermissionsDTO param) {
         SampleRecipientDTO.PagingParamDTO searchParam = new SampleRecipientDTO.PagingParamDTO();
-        searchParam.setPermissionSql(dto.getPermissionSql());
+        searchParam.setPermissionSql(param.getPermissionSql());
+
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
 
         // 使用一个SQL查询获取所有状态的统计数量
         List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(searchParam);
 
         // 设置tabFlagName
         list.stream().forEach(e ->{
-            if(Objects.equals("waitOutstock", e.getTabFlag())){
-                e.setTabFlagName("待出库");
-            }else if(Objects.equals("completeOutstock", e.getTabFlag())){
-                e.setTabFlagName("已出库");
-            }else {
-                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
-            }
+            e.setTabFlagName(SampleRecipientTabEnum.getName(e.getTabFlag()));
         });
 
         // 移动端特殊处理：合并待提交和不通过

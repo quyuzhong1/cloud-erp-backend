@@ -72,6 +72,11 @@ public class SampleBackInfoDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
+
      }
     /**
     * 分页列表
@@ -246,10 +251,7 @@ public class SampleBackInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**

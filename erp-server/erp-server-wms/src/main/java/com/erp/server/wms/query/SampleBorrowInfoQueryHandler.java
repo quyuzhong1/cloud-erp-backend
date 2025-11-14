@@ -14,8 +14,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import jodd.util.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -83,8 +85,23 @@ public class SampleBorrowInfoQueryHandler extends AbstractQueryHandler {
             super.buildSplicingSQLDTO("sbd.wait_return_qty", QueryConditionEnum.GT,0, QueryDataTypeEnum.NUMBER);
             super.buildDefaultDTO("sbi.approve_status", value);
         }else if(Objects.equals(value, ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode())){ //待提交/审核不通过
-            return "sbi.approve_status in ('"+ApproveStatusEnum.WAIT_SUBMIT.getCode()+"','"+ApproveStatusEnum.REJECT.getCode()+"')";
-        }else {
+            super.buildSplicingSQLDTO("sbi.approve_status", QueryConditionEnum.IN_LIST,
+                    java.util.Arrays.asList("waitSubmit", "reject"), QueryDataTypeEnum.STRING);
+        }else if(Objects.equals(value, ApproveStatusEnum.APPROVE_ING.getCode())){ //待我审核
+            super.buildDefaultDTO("sbi.approve_status", value);
+            //待我审批流程信息
+            ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+            dto.setBusinessKey(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode());
+            dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+            dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+            List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(ids)){
+                super.buildSplicingSQLDTO("sbi.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
+            }else {
+                super.buildDefaultDTO("sbi.id", "-1");
+            }
+        }else  {
             super.buildDefaultDTO("sbi.approve_status", value);
         }
         return super.getSplicingSQL();
