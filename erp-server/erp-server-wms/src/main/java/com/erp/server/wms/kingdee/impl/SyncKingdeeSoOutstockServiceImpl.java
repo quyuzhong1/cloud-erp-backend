@@ -49,6 +49,7 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.DeclarationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -705,6 +706,14 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             mapList.add(mapPush);
             //销售单金蝶明细id
             map.put("FEntity_Link", mapList);
+
+            if (StringUtils.isNotBlank(entity.getDeclarationType())) {
+                if (DeclarationTypeEnum.INDEPENDENT_DECLARATION.getCode().equals(entity.getDeclarationType())) {
+                    map.put("declarationType", "A");
+                } else {
+                    map.put("declarationType", "B");
+                }
+            }
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);

@@ -4434,9 +4434,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(validDtos)) {
             return results;
         }
-
+        List<String> ids = new ArrayList<>();
         try {
-            List<String> ids = validDtos.stream().map(SoOutstockDTO.BatchUpdateDeclarationTypeDTO::getId).collect(Collectors.toList());
+
+            ids.addAll(validDtos.stream().map(SoOutstockDTO.BatchUpdateDeclarationTypeDTO::getId).collect(Collectors.toList()));
+
+            List<SoOutstockEntity> oldList = this.listByIds(ids);
 
             // 执行批量更新
             boolean batchUpdateResult = this.lambdaUpdate()
@@ -4451,7 +4454,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setCode(dto.getCode());
                 result.setSuccess(batchUpdateResult); // 或者根据实际更新影响行数判断
                 results.add(result);
+                //添加日志
+                for (SoOutstockEntity soOutstockEntity : oldList) {
+                    if (soOutstockEntity.getId().equals(dto.getId())) {
+                        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据修改报关类型操作,修改前【{}】,修改后【{}】",
+                                UserContext.getDefaultLoginUser().getUserName(),
+                                dto.getCode(),
+                                StringUtils.isBlank(soOutstockEntity.getDeclarationType()) ? "" : DeclarationTypeEnum.getByCode(soOutstockEntity.getDeclarationType()).getName(),
+                                DeclarationTypeEnum.getByCode(dto.getDeclarationType()));
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), dto.getId(), "修改操作");
+                    }
+                }
             }
+
         } catch (Exception e) {
             // 记录错误日志
             log.error("批量更新申报类型失败", e);
@@ -4466,6 +4481,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
+        if (!ids.isEmpty()) {
+            List<SoOutstockEntity> soOutstockEntityList = this.listByIds(ids);
+            //B2B发送金蝶
+            sendPushTask(soOutstockEntityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
         return results;
     }
 
