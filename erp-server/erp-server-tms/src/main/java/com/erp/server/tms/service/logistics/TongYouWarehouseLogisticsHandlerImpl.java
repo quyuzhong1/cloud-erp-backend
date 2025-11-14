@@ -52,7 +52,7 @@ public class TongYouWarehouseLogisticsHandlerImpl extends AbstractLogisticsHandl
     @Override
     public ApiResult<Object>authorization(Map<String, String> authMap) {
         Map<String,Object> map = new HashMap<>();
-        map.put("appToken",authMap.get("appToken"));
+        map.put("token",authMap.get("appToken"));
         TongYouBaseResp<String> authResp = tongYouService.getLogisticsChannel(map);
         if(!isSuccess(authResp)){
             throw new ServiceException(getPlatForm().getName() +"授权失败,"+authResp.getContent());
