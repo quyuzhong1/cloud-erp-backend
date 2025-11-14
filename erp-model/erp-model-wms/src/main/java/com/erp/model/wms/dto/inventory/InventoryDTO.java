@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -1820,6 +1821,12 @@ public class InventoryDTO implements Serializable {
         private String warehouseId;
         @NotNull(message = "数量不能空")
         private Integer usableQty;
+    }
+    @Getter
+    @Setter
+    public static class RecommendedLocationParams {
+        @NotEmpty(message = "推荐仓位参数不能为空")
+        List<InventoryDTO.@Valid RecommendedLocationParam> list;
     }
 
     @AllArgsConstructor

@@ -1157,12 +1157,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
 
     @Override
-    public List<InventoryDTO.LocationInventory> recommendedLocations(List<InventoryDTO.RecommendedLocationParam> param) {
-        if(CollUtil.isEmpty(param)){
-            return Collections.emptyList();
-        }
+    public List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params) {
         List<InventoryDTO.LocationInventory> result = new ArrayList<>();
-        for (InventoryDTO.RecommendedLocationParam locationParam : param) {
+        for (InventoryDTO.RecommendedLocationParam locationParam : params.getList()) {
             result.add(recommendedLocation(locationParam)) ;
         }
         return result;
