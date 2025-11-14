@@ -4,6 +4,12 @@ import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
+import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -58,4 +64,10 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportDmpOutputTask")
     PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.ExportDTO> dto);
+    
+    @PostMapping("/feign/export/exportCfgDiffStrategy")
+    PagingVO<CfgDiffStrategyDTO.ViewDTO> exportCfgDiffStrategy(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto);
+    
+    @PostMapping("/feign/export/exportAdsErpOutstockDiffFlow")
+    PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> exportAdsErpOutstockDiffFlow(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
 }

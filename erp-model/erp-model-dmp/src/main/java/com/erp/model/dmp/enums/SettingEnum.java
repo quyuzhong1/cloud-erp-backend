@@ -88,6 +88,8 @@ public enum SettingEnum {
     DMP_ETL_TASK_ERROR_COUNT("dmpEtlTaskErrorCount", SettingEnum.DMP_TASK_CFG, "中台清洗任务页面判断需人工处理次数"),
     DMP_OUTPUT_TASK_ERROR_COUNT("dmpOutputTaskErrorCount", SettingEnum.DMP_TASK_CFG, "中台推送任务页面判断需人工处理次数"),
 
+    // ADS配置
+    ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST("adsErpInventoryDiffWarehouseList", SettingEnum.ADS_CFG,"ADS平台库存差异仓库配置"),
     ;
 
     @EnumValue
@@ -190,6 +192,11 @@ public enum SettingEnum {
      * 中台任务配置
      */
     public static final String DMP_TASK_CFG = "dmp_task_cfg";
+    
+    /**   
+    * 数仓ADS配置
+     */
+    public static final String ADS_CFG = "ads_cfg";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;
