@@ -25,7 +25,7 @@
        <result column="task_id" property="taskId" />
        <result column="source_id" property="sourceId" />
        <result column="last_update_flag" property="lastUpdateFlag" />
-       <result column="check_period" property="checkPeriod" />
+       <result column="check_month" property="checkMonth" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="warehouse_code" property="warehouseCode" />
        <result column="warehouse_name" property="warehouseName" />
@@ -58,7 +58,7 @@
         update_user_id,
         version,
         is_deleted,
-        unique_code, data_encrypt, source_system, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_period, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, init_qty, outstock_qty, instock_qty, closing_qty, estimated_closing_qty, platform_closing_intransit_qty, platform_closing_qty, platform_closing_total_qty, diff_closing_total_qty, diff_closing_qty, diff_closing_intransit_qty, remark, finish_time
+        unique_code, data_encrypt, source_system, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_month, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, init_qty, outstock_qty, instock_qty, closing_qty, estimated_closing_qty, platform_closing_intransit_qty, platform_closing_qty, platform_closing_total_qty, diff_closing_total_qty, diff_closing_qty, diff_closing_intransit_qty, remark, finish_time
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffDTO$ListDTO">
@@ -75,7 +75,7 @@
             aeid.account_code AS accountCode,
             aeid.source_id AS sourceId,
             aeid.last_update_flag AS lastUpdateFlag,
-            aeid.check_period AS checkPeriod,
+            aeid.check_month AS checkMonth,
             aeid.warehouse_id AS warehouseId,
             aeid.warehouse_code AS warehouseCode,
             aeid.warehouse_name AS warehouseName,

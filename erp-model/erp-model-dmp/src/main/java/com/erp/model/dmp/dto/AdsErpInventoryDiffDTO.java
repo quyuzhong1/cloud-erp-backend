@@ -163,7 +163,7 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         /**
          * 核对周期（YYYY-MM）
          */
-        private String checkPeriod;
+        private String checkMonth;
 
         /**
          * 来源仓库ID
@@ -372,7 +372,7 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         /**
          * 核对周期（YYYY-MM）
          */
-        private String checkPeriod;
+        private String checkMonth;
 
         /**
          * 来源仓库ID
@@ -590,7 +590,7 @@ public class AdsErpInventoryDiffDTO implements Serializable {
          */
         @NotBlank(message = "核对周期（YYYY不能为空")
         @Size(max = 96, message = "核对周期（YYYY最大长度不能超过96位")
-        private String checkPeriod;
+        private String checkMonth;
 
         /**
          * 来源仓库ID

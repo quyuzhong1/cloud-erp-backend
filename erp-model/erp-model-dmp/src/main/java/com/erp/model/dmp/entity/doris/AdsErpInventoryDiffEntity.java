@@ -95,8 +95,8 @@ public class AdsErpInventoryDiffEntity extends BaseEntity<AdsErpInventoryDiffEnt
     /**
     * 核对周期（YYYY-MM）
     */
-    @TableField("check_period")
-    private String checkPeriod;
+    @TableField("check_month")
+    private String checkMonth;
     /**
     * 来源仓库ID
     */
@@ -220,7 +220,7 @@ public class AdsErpInventoryDiffEntity extends BaseEntity<AdsErpInventoryDiffEnt
 
     public static final String LAST_UPDATE_FLAG = "last_update_flag";
 
-    public static final String CHECK_PERIOD = "check_period";
+    public static final String check_month = "check_month";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
