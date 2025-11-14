@@ -2143,7 +2143,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         assetAcceptEntity.setAcceptDate(LocalDate.now());
 
         //验收人
-        if (StringUtils.isNotBlank(dtoList.get(0).getPurchaseOrgId())) {
+        if (StringUtils.isNotBlank(dtoList.get(0).getAcceptUserId())) {
             assetAcceptEntity.setAcceptUserId(dtoList.get(0).getAcceptUserId());
             assetAcceptEntity.setAcceptUserName(dtoList.get(0).getAcceptUserName());
             //部门
