@@ -713,6 +713,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 } else {
                     map.put("declarationType", "B");
                 }
+            } else {
+                map.put("declarationType", "");
             }
             fEntityList.add(map);
         }
