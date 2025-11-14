@@ -634,7 +634,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(entity.getSellerId());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {

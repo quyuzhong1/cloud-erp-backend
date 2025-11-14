@@ -474,7 +474,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(entity.getSellerId());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {

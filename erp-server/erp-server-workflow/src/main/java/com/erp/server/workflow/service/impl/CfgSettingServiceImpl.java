@@ -4,22 +4,25 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.workflow.dto.CfgSettingDTO;
 import com.erp.model.workflow.entity.CfgSettingEntity;
 import com.erp.server.workflow.mapper.CfgSettingMapper;
 import com.erp.server.workflow.service.CfgSettingService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgSettingDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 /**
  * <p>
  * 系统配置管理 服务实现类
@@ -145,5 +148,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             dataJson.put("actionCallbackUrl",url);
         }
         return dataJson;
+    }
+
+    @Override
+    public CfgSettingEntity getByKey(String businessKey) {
+        return lambdaQuery()
+                .eq(CfgSettingEntity::getKey, businessKey)
+                .eq(CfgSettingEntity::getDisabled,Boolean.FALSE)
+                .last("limit 1")
+                .one();
     }
 }
