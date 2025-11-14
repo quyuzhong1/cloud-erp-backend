@@ -27,7 +27,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@LogisticsPlatformType(LogisticsPlatformEnum.TONG_YOU)
+@LogisticsPlatformType(LogisticsPlatformEnum.TONG_YOU_WAREHOUSE)
 public class TongYouWarehouseLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
@@ -62,7 +62,7 @@ public class TongYouWarehouseLogisticsHandlerImpl extends AbstractLogisticsHandl
 
     @Override
     public LogisticsPlatformEnum getPlatForm() {
-        return LogisticsPlatformEnum.TONG_YOU;
+        return LogisticsPlatformEnum.TONG_YOU_WAREHOUSE;
     }
 
     @Override
