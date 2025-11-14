@@ -126,10 +126,29 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$TabListDTO">
         SELECT
+        'approveIng' AS tabFlag,
+        COUNT ( 1 ) AS COUNT
+        FROM
+        FROM  sample_initial_ledger_detail sil
+        WHERE
+        sil.is_deleted = FALSE
+        AND sil.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and sil.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
         sil.approve_status AS tabFlag,
         count(*) AS count
         FROM  sample_initial_ledger sil
         WHERE sil.is_deleted=FALSE
+        AND sil.approve_status != 'approveIng'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

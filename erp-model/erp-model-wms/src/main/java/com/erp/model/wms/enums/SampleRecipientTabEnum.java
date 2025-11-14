@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum SampleRecipientTabEnum implements EnumMessage {
     WAIT_SUBMIT("waitSubmit", "待提交"),
     WAIT_ME_APPROVE("approveIng", "待我审核"),
+    NO_OUTSTOCK("noOutstock", "无需出库"),
     WAIT_OUTSTOCK("waitOutstock", "待出库"),
     COMPLETE_OUTSTOCK("completeOutstock", "已出库"),
     REJECT("reject", "不通过"),
