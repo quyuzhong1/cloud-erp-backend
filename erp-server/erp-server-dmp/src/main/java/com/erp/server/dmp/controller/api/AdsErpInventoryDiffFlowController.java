@@ -1,10 +1,19 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +28,9 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
 import com.erp.server.dmp.query.AdsErpInventoryDiffFlowQueryHandler;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
@@ -104,6 +115,33 @@ public class AdsErpInventoryDiffFlowController extends BaseController {
     @PostMapping(value = "/exportExcel")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated AdsErpInventoryDiffFlowDTO.ExpotParamDTO dto) {
         return success(adsErpInventoryDiffFlowService.exportExcel(dto));
+    }
+    
+    /**
+     * 下载期初模板
+     */
+    @GetMapping("/exportTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载期初模板")
+    public ApiResult<Object> exportTrackTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "excel/platformInitStock.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
     }
     
     /**

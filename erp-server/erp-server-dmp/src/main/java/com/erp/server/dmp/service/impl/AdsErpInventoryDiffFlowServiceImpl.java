@@ -1,5 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -34,8 +38,10 @@ import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -231,7 +237,34 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 	
 	@Override
 	public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		PlatformInitStockExcelListener billListener = new PlatformInitStockExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PlatformInitStockExcelDTO.class, billListener).sheet(0).doRead();
+            List<PlatformInitStockExcelDTO> errorList = billListener.getErrorList();
+            if (!errorList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                String excelPath = "excel/platformInitStockError.xlsx";
+                String name = "期初导入错误信息.xlsx";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        }catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return Boolean.TRUE;
 	}
 }

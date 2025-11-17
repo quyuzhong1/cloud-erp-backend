@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
+import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 
 /**
@@ -54,4 +55,8 @@ public interface AdsErpInventoryDiffFlowMapper extends BaseMapper<AdsErpInventor
     List<AdsErpInventoryDiffFlowDTO.TabListDTO> tabList(@Param("params") AdsErpInventoryDiffFlowDTO.PagingParamDTO searchParam);
     
     AdsErpInventoryDiffFlowDTO.TotalDTO total(@Param("params") AdsErpInventoryDiffFlowDTO.PagingParamDTO params);
+    
+    List<PlatformInitStockExcelDTO> listInit(@Param("warehouseNameList") List<String> warehouseNameList , @Param("checkMonthList") List<String> checkMonthList);
+    
+    void batchInsertInit(@Param("dtoList") List<PlatformInitStockExcelDTO> dtoList);
 }
