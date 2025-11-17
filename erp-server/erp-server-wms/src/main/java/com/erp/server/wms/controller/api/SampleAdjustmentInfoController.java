@@ -128,10 +128,10 @@ public class SampleAdjustmentInfoController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
-    @PostMapping("/update")
+    @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleAdjustmentInfo:updateAndSubmit",
+            menuCode = "wms:sampleAdjustmentInfo:update",
             serviceClass = SampleAdjustmentInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleAdjustmentInfoDTO.UpdateDTO dto) {
