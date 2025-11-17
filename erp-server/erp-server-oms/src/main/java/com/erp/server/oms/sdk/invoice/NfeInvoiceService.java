@@ -849,6 +849,7 @@ public class NfeInvoiceService {
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("用户【{}】销售订单【{}】生成NF-e发票【{}】",UserContext.getDefaultLoginUser().getUserName(),soB2cEntity.getCode(),invoiceInfoEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "开票失败");
             }
         }catch (Exception e){
+            log.error("创建发票失败,返回错误信息,返回信息:{}", e.getMessage());
             InvoiceInfoEntity entity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             entity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             entity.setRemark(e.getMessage());
