@@ -33,13 +33,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.5.4</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-plm</artifactId>
             <version>0.0.1-SNAPSHOT</version>

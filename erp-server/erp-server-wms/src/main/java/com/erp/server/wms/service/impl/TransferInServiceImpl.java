@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -24,7 +25,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDTO;
@@ -268,6 +268,22 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TRANSFER_IN.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         for (TransferInDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -280,6 +296,12 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
+            }
         }
         return new PagingVO<>(pageData);
     }
@@ -321,6 +343,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE_ING, "");
         if (result) {
+            //启动流程
+            startProcess(list);
+
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
@@ -330,6 +355,32 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         return result;
 
+    }
+
+    /**
+     * 启动流程
+     * @author will
+     * @date 2025/11/14 11:19
+     * @param list
+     * @return void
+     */
+    private void startProcess (List<TransferInEntity> list) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        list.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userInfo.getUid());
+            startDTO.setVariablesMap(getVariablesMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
     }
 
     /**
@@ -909,6 +960,21 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         List<String> skuIdList = page.getRecords().stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        page.getRecords().forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TRANSFER_IN.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         for (TransferInDTO.PagingViewDTO item : page.getRecords()) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -921,6 +987,12 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
+            }
         }
         return new PagingVO<>(page);
     }
