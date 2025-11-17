@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -51,6 +52,9 @@ public class JiFengReturnInstockInitHandler extends DmpInputInitHandler {
     @Resource
     private JiFengService jiFengService;
 
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
+
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
@@ -79,8 +83,20 @@ public class JiFengReturnInstockInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
         if (resp.getCode() != 0) {
-            log.error("极风接口返回异常:{}", JSON.toJSONString(resp));
-            throw new ServiceException("极风接口返回异常:" + resp.getMessage());
+            if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+                overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+                resp = jiFengService.getReturnOrder(overseasProviderEntity.getAuthJson(),request);
+                if (resp == null) {
+                    return Collections.emptyList();
+                }
+                if (resp.getCode() != 0) {
+                    log.error("极风接口返回异常:{}", JSON.toJSONString(resp));
+                    throw new ServiceException("极风接口返回异常:" + resp.getMessage());
+                }
+            }else{
+                log.error("极风接口返回异常:{}", JSON.toJSONString(resp));
+                throw new ServiceException("极风接口返回异常:" + resp.getMessage());
+            }
         }
         if(CollUtil.isEmpty(resp.getData())) {
             return Collections.emptyList();
