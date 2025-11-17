@@ -32,6 +32,7 @@ import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
 import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.model.fms.enums.AssetStatusEnum;
+import com.erp.model.fms.enums.CardSourceEnum;
 import com.erp.model.fms.enums.ChangeMethodEnum;
 import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
@@ -824,7 +825,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 
                 // 基础信息（根据字段映射表）
                 cardDTO.setSourceCode(mainEntity.getCode()); // 来源单号
-                cardDTO.setSourceType(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode()); // 卡片来源类型：盘盈盘亏单
+                cardDTO.setSourceType(CardSourceEnum.INVENTORY_SURPLUS.getCode()); // 卡片来源类型：盘盈盘亏单
                 cardDTO.setSourceId(mainEntity.getId()); // 来源ID
                 cardDTO.setOrgId(mainEntity.getAssetOrgId()); // 资产组织ID
                 cardDTO.setOrgName(mainEntity.getAssetOrgName()); // 资产组织名称
