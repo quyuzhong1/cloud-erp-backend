@@ -466,7 +466,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId(), false);
+        this.submit(result.getId(), true);
         return result;
     }
 
@@ -477,7 +477,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId(), false);
+        this.submit(dto.getId(), true);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
