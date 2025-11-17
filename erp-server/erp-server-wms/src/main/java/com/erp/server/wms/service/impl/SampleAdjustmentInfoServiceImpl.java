@@ -6,6 +6,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -1055,6 +1056,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             searchDTO.setUserId(importMainDTO.getAdjustmentUserId());
             searchDTO.setUseUserId(importMainDTO.getUseUserId());
             searchDTO.setSkuIds(skuIds);
+            searchDTO.setType( SampleLedgerTypeEnum.ADJUSTMENT.getCode());
             List<com.erp.model.wms.dto.SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
 
             Boolean isAdd = Boolean.TRUE;
