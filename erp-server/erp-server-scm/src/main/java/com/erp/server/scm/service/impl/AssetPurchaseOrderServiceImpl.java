@@ -1648,6 +1648,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         try {
             for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {
                 assetAceptFeign.generateAssetAccept(generateAssetAcceptDTOList);
+                for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO generateAssetAcceptDTO : generateAssetAcceptDTOList) {
+                    String msg = StrUtil.format("用户【{}】下推【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "模具采购单", generateAssetAcceptDTO.getCode());
+                    moduleOperateLogService.addModuleOperateLog(String.format(msg, generateAssetAcceptDTO.getCode()), ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), generateAssetAcceptDTO.getId(), "更新");
+                }
             }
             return Boolean.TRUE;
         } catch (Exception e) {
