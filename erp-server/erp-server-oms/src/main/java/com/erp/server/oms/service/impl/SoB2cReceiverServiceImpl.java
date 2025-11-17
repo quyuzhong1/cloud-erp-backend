@@ -303,7 +303,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             EasyExcel.read(excelFile.getInputStream(), B2CCustomerImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<B2CCustomerImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
             }
             //错误的
             List<B2CCustomerImportExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -321,7 +321,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
                 }
             }
         } catch (SocketTimeoutException e) {
@@ -329,10 +329,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
     }
 

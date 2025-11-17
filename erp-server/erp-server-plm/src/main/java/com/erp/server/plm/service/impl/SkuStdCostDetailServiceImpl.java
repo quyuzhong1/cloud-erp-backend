@@ -766,7 +766,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             EasyExcel.read(new ByteArrayInputStream(bytes), SkuStdCostChangeExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         }catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -799,7 +799,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             EasyExcel.read(new ByteArrayInputStream(bytes), SkuStdCostUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         }catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

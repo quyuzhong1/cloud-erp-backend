@@ -967,7 +967,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(ApiError.ERROR_500);
+                    throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN);
                 }
             }
             for (PurchasePriceDTO.PagingViewDTO item : page.getRecords()) {
@@ -1217,7 +1217,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<String> skuIdList = purchasePriceDetailList.stream().map(PurchasePriceDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         String skuNos = productDetailList.stream().filter(obj -> !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
         if  (CharSequenceUtil.isNotBlank(skuNos)) {

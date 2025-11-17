@@ -95,7 +95,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
     public Boolean uploadProductImage(ProductDetailDTO.ProductImagesDTO dto) {
         ProductDetailEntity productDetailEntity = getById(dto.getSkuId());
         if (ObjectUtils.isEmpty(productDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         Integer status = productDetailEntity.getStatus();
         if (status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {

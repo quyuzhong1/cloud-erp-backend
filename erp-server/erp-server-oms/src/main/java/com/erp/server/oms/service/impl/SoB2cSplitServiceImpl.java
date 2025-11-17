@@ -1109,7 +1109,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //查询订单是否是合并订单或拆分子订单
@@ -1130,7 +1130,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 BeanMapperUtils.copy(detailEntity, viewSplitDetailDTO);
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 viewSplitDetailDTO.setProductName(skuVO.getSkuName());
                 viewSplitDetailDTO.setSourceAmount(detailEntity.getAmount());

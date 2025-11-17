@@ -1053,10 +1053,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             EasyExcelFactory.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<MouldDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
         for (MouldDetailDTO.ViewDTO dto : successList) {

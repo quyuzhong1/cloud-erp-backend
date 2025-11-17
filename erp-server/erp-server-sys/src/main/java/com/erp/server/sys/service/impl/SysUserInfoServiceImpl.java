@@ -1889,7 +1889,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             // 检查应用类型是否为飞书
             if (!"FS".equalsIgnoreCase(config.getAppType())) {
-                throw new ServiceException(ApiError.ERROR_400.code, "应用类型不是飞书");
+                throw new ServiceException(ApiError.ERROR_PARAM_INVALID.code, "应用类型不是飞书");
             }
             
             // 调用FsService获取用户信息
@@ -1897,13 +1897,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             if (userInfo == null || userInfo.isEmpty()) {
                 log.warn("获取飞书用户信息失败，appId: {}", appId);
-                throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户信息失败");
+                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.code, "获取飞书用户信息失败");
             }
             
             // 提取unionId
             Object unionIdObj = userInfo.get("union_id");
             if (unionIdObj == null) {
-                throw new ServiceException(ApiError.ERROR_500.code, "未获取到用户UnionId");
+                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.code, "未获取到用户UnionId");
             }
             
             String unionId = unionIdObj.toString();
@@ -1916,7 +1916,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw e;
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
-            throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户UnionId失败：" + e.getMessage());
+            throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.code, "获取飞书用户UnionId失败：" + e.getMessage());
         }
     }
 }

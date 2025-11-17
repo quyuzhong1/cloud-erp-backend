@@ -109,15 +109,15 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
             EasyExcel.read(excelFile.getInputStream(), LogisticsCarrierExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<LogisticsCarrierExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<LogisticsCarrierExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -137,7 +137,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
 //            try {
 //                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
 //            } catch (IOException e) {
-//                throw new ServiceException(ApiError.ERROR_95125);
+//                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
 //            }
 //        }
         return Boolean.TRUE;

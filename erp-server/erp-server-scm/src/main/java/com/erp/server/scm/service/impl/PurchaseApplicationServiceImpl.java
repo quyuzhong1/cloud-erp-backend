@@ -486,7 +486,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         log.info("生成采购订单 ids= {}",ids);
@@ -557,7 +557,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 //采购申请对应明细信息
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(generatePurchaseOrderDTO.getSkuId())).findFirst().orElse(null);
                 if (org.springframework.util.ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
                 addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
@@ -610,15 +610,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             EasyExcelFactory.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！",e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！",e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<PurchaseApplicationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         PurchaseApplicationDetailDTO.ImportDTO importDTO = new PurchaseApplicationDetailDTO.ImportDTO();
         //导入数据处理
@@ -985,7 +985,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //创建人
@@ -1696,15 +1696,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             EasyExcel.read(excelFile.getInputStream(), PurchaseApplicationMainExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<PurchaseApplicationMainExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<PurchaseApplicationMainExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1735,7 +1735,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
     }

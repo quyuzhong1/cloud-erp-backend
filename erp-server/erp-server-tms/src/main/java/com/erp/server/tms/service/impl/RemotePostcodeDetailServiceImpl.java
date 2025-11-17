@@ -295,7 +295,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             EasyExcel.read(excelFile.getInputStream(), RemotePostcodeDetailDTO.ImportDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         RemotePostcodeDetailDTO.ImportResultDTO result = new RemotePostcodeDetailDTO.ImportResultDTO();
         //导入数据处理

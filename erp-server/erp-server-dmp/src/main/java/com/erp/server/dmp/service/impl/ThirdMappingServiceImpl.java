@@ -736,7 +736,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 sysName = logisticsChannelEntity.getName();
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_400);
+                throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
         }
         addDTO.setSysName(sysName);
 
@@ -861,7 +861,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_400);
+                    throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
             }
 
             thirdAddDTO.setThirdName(thirdName);

@@ -144,17 +144,17 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     fileSize = size / (1024 * 1024);
                     fileSize = (double) Math.round(fileSize * 100) / 100;
                     if (fileSize > 300) {
-                        throw new ServiceException(ApiError.ERROR_95160, 300);
+                        throw new ServiceException(ApiError.ERROR_PLM_FILE_SIZE_EXCEEDS_LIMIT, 300);
                     }
                     fileName = multipartFile.getOriginalFilename().toLowerCase();
                     fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
                     File file = FileUtil.multiToFile(multipartFile);
                     String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
                     if (StringUtils.isBlank(fileUrl)) {
-                        throw new ServiceException(ApiError.ERROR_95018);
+                        throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
                     }
                     if (fileName.length() > 200) {
-                        throw new ServiceException(ApiError.ERROR_1018);
+                        throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
                     }
                     entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
@@ -337,7 +337,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //文件名
             fileName = multipartFile.getOriginalFilename().toLowerCase();
             if (fileName.length() > 200) {
-                throw new ServiceException(ApiError.ERROR_1018);
+                throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
             }
             finishEntity.setFileName(fileName);
             //文件后缀
@@ -347,7 +347,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             double fileSize = size / (1024 * 1024);
             fileSize = (double) Math.round(fileSize * 100) / 100;
             if (fileSize > 300) {
-                throw new ServiceException(ApiError.ERROR_95160, 300);
+                throw new ServiceException(ApiError.ERROR_PLM_FILE_SIZE_EXCEEDS_LIMIT, 300);
             }
             finishEntity.setFileSize(fileSize);
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
@@ -458,10 +458,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //                        File file = FileUtil.multiToFile(multipartFile);
 //                        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
 //                        if (StringUtils.isBlank(fileUrl)) {
-//                            throw new ServiceException(ApiError.ERROR_95018);
+//                            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
 //                        }
 //                        if (fileName.length() > 200) {
-//                            throw new ServiceException(ApiError.ERROR_1018);
+//                            throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
 //                        }
 //                        finishEntity.setUploadType(IsConstant.NO);
 //                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());

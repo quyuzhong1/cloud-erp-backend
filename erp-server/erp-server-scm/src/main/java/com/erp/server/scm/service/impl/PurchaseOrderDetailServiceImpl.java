@@ -159,7 +159,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
                 PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
                 if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                    throw new ServiceException(ApiError.ERROR_98025);
+                    throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
                 }
                 //采购申请单生成日志
                 List<Pair<String, String>> pairList = refList.stream().map(obj -> new Pair<>(obj.getPurchaseApplicationId(), purchaseOrderEntity.getCode())).distinct().collect(Collectors.toList());
@@ -295,7 +295,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseOrderDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98026);
+                    throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -312,7 +312,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         //采购日期不能大于预计交货日期
         String skuNos = details.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getPlanDeliveryDate()) && entity.getPurchaseDate().isAfter(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailDTO.AddDTO::getSkuNo).collect(Collectors.joining(","));
@@ -333,7 +333,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
 
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
@@ -583,7 +583,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //采购订单
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         if (StringUtils.isBlank(purchaseOrderEntity.getSubcontractType())) {
             return Boolean.TRUE;
@@ -604,7 +604,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     public void updateArrivalStatusByIds(String executionStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
         List<PurchaseOrderDetailEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
 
         // 结束交货备注追加在原sku备注
@@ -726,7 +726,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //ids为采购订单明细id集合
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         //已确认、已拒绝、送货中允许结束交货
         long count = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())

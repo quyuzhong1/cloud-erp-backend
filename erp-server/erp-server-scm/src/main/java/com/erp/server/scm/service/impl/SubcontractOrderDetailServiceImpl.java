@@ -312,7 +312,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
@@ -405,7 +405,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         List<SupplierEntity> supplierList = null;
         if (CollectionUtils.isNotEmpty(supplierIds)) {
@@ -420,7 +420,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             //父级SKU信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
 
             //申请数量校验
@@ -490,7 +490,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //产品信息
                 SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(childSkuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
                     throw new ServiceException(ApiError.ERROR_SUB_CHILD_LOCATION_BLANK,childEntity.getSkuNo());

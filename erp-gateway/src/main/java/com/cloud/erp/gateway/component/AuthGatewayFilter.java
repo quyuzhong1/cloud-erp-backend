@@ -91,7 +91,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String clientIp = getClientIp(request);
                 if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
                     log.warn("开放接口访问频率过高，IP: {}, URI: {}", clientIp, uri);
-                    return unauthorizedResponse(exchange, ApiError.ERROR_429.msg, ApiError.ERROR_429.code);
+                    return unauthorizedResponse(exchange, ApiError.ERROR_429.getMsg(), ApiError.ERROR_429.getCode());
                 }
                 return chain.filter(exchange);
             }
@@ -146,7 +146,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                     boolean hasPermission = checkPathPermission(uri, jwtPathList);
                     if (!hasPermission) {
                         log.warn("接口无权限，URI: {}, 用户权限: {}", uri, Arrays.toString(jwtPathList));
-                        return unauthorizedResponse(exchange, "接口无权限", ApiError.ERROR_FORBIDDEN.getMsg());
+                        return unauthorizedResponse(exchange, "接口无权限", ApiError.ERROR_FORBIDDEN.getCode());
                     }
                 }
 
@@ -274,7 +274,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         //解析token
                         LoginUser loginUser = tokenService.getLoginUser(token);
                         if (Objects.isNull(loginUser)) {
-//                            ServiceException.runError(ApiError.ERROR_403.getMsg());
+//                            ServiceException.runError(ApiError.ERROR_FORBIDDEN.getMsg());
                             log.info("埋点接口token失效:{}", data);
                             return;
                         }

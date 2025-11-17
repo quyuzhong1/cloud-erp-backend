@@ -385,7 +385,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderFeign.getPurchaseOrderByIds(orderIds);
         //订单数据为空直接返回
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98025.getMsg()));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_SCM_PO_NOT_FOUND.getMsg()));
             return dtos;
         }
         List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
@@ -400,7 +400,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIds);
 
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.getMsg()));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND.getMsg()));
             return dtos;
         }
         for (Map.Entry<String, List<DeliveryOrderDTO.AddDeliveryDTO>> entry  :purchaseMap.entrySet()) {
@@ -409,7 +409,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS = entry.getValue();
             PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
             if (Objects.isNull(purchaseOrderEntity)){
-                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_98025.getMsg()));
+                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_SCM_PO_NOT_FOUND.getMsg()));
                 continue;
             }
             try {
@@ -488,7 +488,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                                           List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         //没有采购明细记录
         if (Objects.isNull(detailEntity)){
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;

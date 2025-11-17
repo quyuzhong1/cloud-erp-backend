@@ -4215,7 +4215,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
@@ -4308,7 +4308,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SkuVO skuVO = skuVOMap.get(viewDTO.getSkuId());
 //            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
 //            if (ObjectUtils.isEmpty(skuVO)) {
-//                throw new ServiceException(ApiError.ERROR_95084);
+//                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
 //            }
 
             viewDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
@@ -5282,7 +5282,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未发现产品详细，skuIdList = {}", skuIdList);
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
 
@@ -8338,7 +8338,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //产品信息
             ProductDetailEntity productDetailEntity = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), skuId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             String skuNo = productDetailEntity.getSkuNo();
             // 合计销售数量
@@ -11004,7 +11004,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             EasyExcel.read(excelFile.getInputStream(), B2CSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<B2CSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
             }
             //错误的
             List<B2CSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -11024,7 +11024,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     errorList.sort(Comparator.comparingInt(dto -> Integer.parseInt(dto.getNo())));
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
                 }
             }
         } catch (SocketTimeoutException e) {
@@ -11032,10 +11032,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
     }
 

@@ -103,7 +103,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         List<BasicLabelEntity> basicLabelEntities = BeanMapperUtils.copyList(BasicLabelEntity.class, list);
         //校验数据是否存在重复
@@ -199,7 +199,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     private void handleData(BasicLabelEntity basicLabelEntity) {
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
-        ValidatorUtil.isNotNull(loginUser, ApiError.ERROR_403);
+        ValidatorUtil.isNotNull(loginUser, ApiError.ERROR_FORBIDDEN);
         ValidatorUtil.isNotBlank(LabelLevelEnum.getName(basicLabelEntity.getLevel()), ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, basicLabelEntity.getLevel());
         int count = countByLabelName(basicLabelEntity.getName(), basicLabelEntity.getId());
         if (0 != count) throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, basicLabelEntity.getName());

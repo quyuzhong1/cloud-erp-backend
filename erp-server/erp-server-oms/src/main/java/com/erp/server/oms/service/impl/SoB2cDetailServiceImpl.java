@@ -1004,7 +1004,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未找到SKU，warehouseIds = {}",skuList);
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //重置sku含税成本
         resetSkuVo(skuList,list,soB2cEntity);
@@ -1032,7 +1032,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
                     .orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             detailEntity.setMainId(soB2cEntity.getId());
             detailEntity.setSkuNo(skuVO.getSkuNo());
@@ -1081,7 +1081,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (StringUtils.isNotBlank(detailEntity.getId())) {
                 SoB2cDetailEntity old = this.getById(detailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98026);
+                    throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.SO_B2C.getCode(),old.getMainId(),"",String.format("【%s】",old.getSkuNo()));
             }

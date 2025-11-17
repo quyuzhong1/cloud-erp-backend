@@ -270,13 +270,13 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             // 检查文件名是否为空或为null
             String originalFilename = imageFile.getOriginalFilename();
             if (CharSequenceUtil.isBlank(originalFilename)) {
-                throw new ServiceException(ApiError.ERROR_95018);
+                throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
             }
 
             String fileName = (originalFilename != null) ? originalFilename.toLowerCase() : "";
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
-                throw new ServiceException(ApiError.ERROR_95018);
+                throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
             }
         }
         module.setImageUrl(fileUrl);
@@ -373,13 +373,13 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             // 检查文件名是否为null
             String originalFilename = imageFile.getOriginalFilename();
             if (originalFilename == null) {
-                throw new ServiceException(ApiError.ERROR_95018);
+                throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
             }
 
             String fileName = originalFilename.toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
-                throw new ServiceException(ApiError.ERROR_95018);
+                throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
             }
             module.setImageUrl(fileUrl);
         }

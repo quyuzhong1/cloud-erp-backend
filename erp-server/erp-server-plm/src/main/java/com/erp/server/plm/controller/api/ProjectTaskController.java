@@ -916,11 +916,11 @@ public class ProjectTaskController extends BaseController {
         try {
             read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         List<ProjectTaskExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         List<ProjectTaskExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
@@ -933,7 +933,7 @@ public class ProjectTaskController extends BaseController {
             try {
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
             }
 
             return failure();

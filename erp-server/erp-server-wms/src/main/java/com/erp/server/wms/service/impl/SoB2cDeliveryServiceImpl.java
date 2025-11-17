@@ -1931,7 +1931,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             && req.getLogisticsChannelId().equals(deliveryEntities.get(0).getLogisticsChannelId())
                     ).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsPrintTypeEntity) && !param.getPrintType().equals(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode())) {
-                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST.msg, deliveryEntities.get(0).getLogisticsChannelName()));
+                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST.msg(), deliveryEntities.get(0).getLogisticsChannelName()));
                 waybillDTO.setDisabled(Boolean.TRUE);
             }
 
@@ -1957,7 +1957,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     case LOGISTICS_BILL :
                         //打印面单预览
                         if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
-                            waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
+                            waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg(), logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
                         break;
@@ -1965,7 +1965,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         //打印配货单预览
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
                             if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
-                                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg, logisticsPlatformEnum.getName()));
+                                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg(), logisticsPlatformEnum.getName()));
                                 waybillDTO.setDisabled(Boolean.TRUE);
                             }
                         }
@@ -2000,7 +2000,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(deliveryEntity.getSourceId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     if (soB2cEntity.getIsFrozen()) {
-                        waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE.msg, soB2cEntity.getCode()));
+                        waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE.msg(), soB2cEntity.getCode()));
                         waybillDTO.setDisabled(Boolean.TRUE);
                     }
                 }

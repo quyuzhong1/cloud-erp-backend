@@ -134,7 +134,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         List<String> childSkuIds = bomSkuDTO.getChildren().stream().flatMap(obj -> Stream.of(obj.getParentSkuId(),obj.getSkuId())).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listByIds(childSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //父级SKU名称
         String parentSkuName = skuList.stream().filter(obj -> obj.getId().equals(bomSkuDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -166,15 +166,15 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             read(excelFile.getInputStream(), BomCombinationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<BomCombinationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         //导入数据处理
         List<BomCombinationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -194,7 +194,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
             }
         }
         return Boolean.TRUE;
@@ -478,7 +478,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
         ProductDetailEntity child = productDetailService.getById(childSkuId);
         if (ObjectUtils.isEmpty(child)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         ProductInfoEntity productInfoEntity = productInfoService.getById(child.getProductId());
@@ -606,13 +606,13 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         List<String> skuIds = dto.getDetailList().stream().map(BomCombinationDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> childList = productDetailService.listByIds(skuIds);
         if (CollectionUtils.isEmpty(childList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         for (BomCombinationDetailDTO.AddDTO addDetail : dto.getDetailList()) {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
             ProductDetailEntity child = childList.stream().filter(obj -> obj.getId().equals(addDetail.getSkuId())).findFirst().orElse(null);
             if (child == null) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             childrenSkuDTO.setSkuId(addDetail.getSkuId());
             childrenSkuDTO.setSkuNo(child.getSkuNo());
@@ -668,7 +668,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         List<String> skuIds = dto.getDetailList().stream().map(BomCombinationDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> childList = productDetailService.listByIds(skuIds);
         if (CollectionUtils.isEmpty(childList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //子级SKU
         List<BomChildrenSkuDTO> children = new ArrayList<>();
@@ -679,7 +679,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
             ProductDetailEntity child = childList.stream().filter(obj -> obj.getId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
             if (child == null) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(child.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU_APPROVE_PASS);

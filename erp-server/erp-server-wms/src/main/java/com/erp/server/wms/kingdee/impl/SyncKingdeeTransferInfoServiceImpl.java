@@ -199,7 +199,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         List<String> warehouseIds = detailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());

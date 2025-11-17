@@ -114,7 +114,7 @@ public class LoginAuthService {
         SysLoginUserVO result = new SysLoginUserVO();
         LoginUser loginUser = authTokenService.getLoginUser(token);
         if (Objects.isNull(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
         result.setAccessToken(token);

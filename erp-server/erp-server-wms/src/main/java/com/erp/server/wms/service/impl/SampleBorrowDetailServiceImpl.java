@@ -70,7 +70,7 @@ public class SampleBorrowDetailServiceImpl extends SuperServiceImpl<SampleBorrow
             EasyExcel.read(excelFile.getInputStream(), SampleBorrowDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品借用单错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         List<SampleBorrowDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";

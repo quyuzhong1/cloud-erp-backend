@@ -134,7 +134,7 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
             EasyExcel.read(excelFile.getInputStream(), SampleBackDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品退回详情错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         List<SampleBackDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";

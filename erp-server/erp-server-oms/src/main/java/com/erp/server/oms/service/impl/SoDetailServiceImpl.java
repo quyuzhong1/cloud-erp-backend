@@ -743,7 +743,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误=={}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         SoDetailDTO.ImportDTO result = new SoDetailDTO.ImportDTO();
         List<SoDetailDTO.SkuDTO> successList = excelListenerUtil.getSuccessList();

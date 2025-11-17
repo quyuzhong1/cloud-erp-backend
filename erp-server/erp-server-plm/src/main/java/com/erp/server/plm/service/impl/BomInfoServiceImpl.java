@@ -196,14 +196,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！",e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！",e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<BomInfoExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         List<BomInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -222,7 +222,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }

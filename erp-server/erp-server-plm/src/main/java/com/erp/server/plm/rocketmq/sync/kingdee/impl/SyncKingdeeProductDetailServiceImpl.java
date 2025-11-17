@@ -176,7 +176,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //销售信息
         ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(entity.getId());

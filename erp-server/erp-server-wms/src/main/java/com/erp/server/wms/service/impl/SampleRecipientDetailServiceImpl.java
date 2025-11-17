@@ -125,7 +125,7 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
             EasyExcel.read(excelFile.getInputStream(), SampleRecipientDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品领用单明细错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
 
         List<SampleRecipientDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

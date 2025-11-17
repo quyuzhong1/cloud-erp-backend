@@ -58,7 +58,7 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         SkuStdCostDetailEntity entity = skuStdCostDetailService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());

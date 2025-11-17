@@ -71,7 +71,7 @@ public class HomePageServiceImpl implements HomePageService {
     public HomePageDTO.AccountInfoDTO getAccountInfo() {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         //查询微信
         SysUserWechatEntity sysUserWechatEntity = userInfoFeign.getWxInfo(loginUser.getUid());

@@ -184,7 +184,7 @@ public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfo
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //退货id集合
         Map<String,String> returnMap = new HashMap<>();

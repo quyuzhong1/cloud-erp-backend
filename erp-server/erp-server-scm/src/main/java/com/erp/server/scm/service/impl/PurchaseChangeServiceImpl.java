@@ -199,17 +199,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //主表信息
         PurchaseChangeEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98042);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity,dto);
 
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-           throw new ServiceException(ApiError.ERROR_98025);
+           throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         Map<String, PurchaseOrderDetailEntity> podMap = purchaseOrderDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
 
@@ -227,7 +227,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //明细信息
         List<PurchaseChangeDetailEntity> entityDetails = purchaseChangeDetailService.listByPurchaseChangeIds(Arrays.asList(id));
         if (CollectionUtils.isEmpty(entityDetails)) {
-            throw new ServiceException(ApiError.ERROR_98043);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_DETAIL_NOT_FOUND);
         }
         List<PurchaseChangeDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseChangeDetailDTO.UpdateDTO.class, entityDetails);
         //查最新的采购价目表信息
@@ -631,7 +631,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      */
     private void updatePurchaseOrderData (PurchaseChangeEntity purchaseChangeEntity,List<PurchaseChangeDetailEntity> purchaseChangeDetailList) {
         if (CollectionUtils.isEmpty(purchaseChangeDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98043);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_DETAIL_NOT_FOUND);
         }
         //审核时明细数量验证
         purchaseChangeDetailService.checkPurchasePrice(purchaseChangeDetailList, purchaseChangeEntity.getId());
@@ -658,7 +658,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //采购订单
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98045);

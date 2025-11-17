@@ -640,7 +640,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoPriceChangeDetailEntity> detailList = soPriceChangeDetailService.lambdaQuery().eq(SoPriceChangeDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;

@@ -807,7 +807,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         //变更前数据
         ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
         if (ObjectUtils.isEmpty(oldbom)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         List<String> resultList = new ArrayList<>();
         setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);

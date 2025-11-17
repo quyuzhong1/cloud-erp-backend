@@ -333,14 +333,14 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             EasyExcel.read(excelFile.getInputStream(), InventorySkuCostDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 //        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
 //        if (CollectionUtils.isEmpty(excelDateList)) {
-//            throw new ServiceException(ApiError.ERROR_95123);
+//            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
 //        } else if (excelDateList.size() > 5000) {
 //            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
 //        }

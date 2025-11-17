@@ -1075,7 +1075,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             //验证导入数据是否为空
             List<DmpOrderInfoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
             }
 
             //成功数据

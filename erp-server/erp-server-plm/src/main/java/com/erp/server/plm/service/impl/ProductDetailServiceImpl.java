@@ -1562,7 +1562,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
                 if (ObjectUtils.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 operateLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
             }
@@ -1840,7 +1840,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(obj.getParentSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getParentSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         });
@@ -3011,7 +3011,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean applyChange(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //验证sku是否审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
@@ -3246,7 +3246,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean sendKingDeeData(String id) {
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
@@ -3917,7 +3917,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productCostDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productCostDTO, SKUCLASSPATH, productCostDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -3935,7 +3935,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productPurchaseDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productPurchaseDTO, SKUCLASSPATH, productPurchaseDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -3953,7 +3953,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productSaleDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productSaleDTO, SKUCLASSPATH, productSaleDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -3971,7 +3971,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productLogisticsDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productLogisticsDTO, SKUCLASSPATH, productLogisticsDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -3989,7 +3989,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productPackDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productPackDTO, SKUCLASSPATH, productPackDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4047,7 +4047,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         checkRequiredField(Collections.singletonList(id), isStartProcess);
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         if (!ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95117);
@@ -4172,7 +4172,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtil.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         Map<String, Object> productMap = BeanUtil.beanToMap(productInfoEntity);
         variablesMap.putAll(productMap);
@@ -4727,7 +4727,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //SPU信息
             ProductInfoEntity productInfo = productInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getProductId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productInfo)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
@@ -4823,14 +4823,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailImprotUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailImprotUpdateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         List<ProductDetailImprotUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -5743,14 +5743,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         List<ProductDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -6805,7 +6805,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
         if (isBlank(viewDTO.getSkuId())) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         checkSizeAndWeight(viewDTO);
@@ -6921,10 +6921,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();

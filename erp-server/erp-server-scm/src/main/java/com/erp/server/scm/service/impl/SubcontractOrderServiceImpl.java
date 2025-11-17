@@ -553,7 +553,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         log.info("查询产品信息，skuId集合：【{}】", JSONUtil.toJsonStr(skuIds));
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         //供应商信息
         List<String> supplierIds = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.toList());
@@ -669,7 +669,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> skuIds = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         List<String> sourceDetailIds = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getSourceDetailId).collect(Collectors.toList());
@@ -705,7 +705,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
 
             //bom信息
@@ -784,7 +784,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //供应商默认联系人
@@ -808,7 +808,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         for (String poId : poIds) {
             PurchaseOrderEntity entity = entityMap.get(poId);
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
+                throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
             }
             //提交
             BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
@@ -897,7 +897,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //产品信息
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(addDetailDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
                 }
                 BeanMapperUtils.copy(skuVO,poDetailAddDTO);
                 poDetailAddDTO.setSourceDetailId(addDetailDTO.getSourceDetailId());
@@ -1011,7 +1011,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> skuIds = detailList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         List<String> sourceDetailIds = detailList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
@@ -1282,7 +1282,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //价税合计

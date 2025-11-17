@@ -63,7 +63,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         Map<String, List<BiSalesMonitoringDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getMetrics().concat(obj.getType().toString())));
         for (Map.Entry<String, List<BiSalesMonitoringDTO>> entry:map.entrySet()) {
@@ -87,7 +87,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         //数据较少，可删除后重新新增
         removeByChargeId(loginUser.getUid());
@@ -102,7 +102,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         List<BiSalesMonitoringEntity> list = listByChargeId(loginUser.getUid());
         if (CollectionUtils.isNotEmpty(list)) {
@@ -116,7 +116,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
         }
         LinkedHashMap<String,Object> map = new LinkedHashMap<>();
         List<BiSalesMonitoringEntity> list = listByChargeId(loginUser.getUid());

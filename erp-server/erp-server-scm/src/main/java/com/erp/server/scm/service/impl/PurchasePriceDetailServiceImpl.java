@@ -415,7 +415,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             EasyExcel.read(excelFile.getInputStream(), PurchasePriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         PurchasePriceDetailDTO.ImportDTO result = new PurchasePriceDetailDTO.ImportDTO();
         //导入数据处理
@@ -947,7 +947,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //采购价目表

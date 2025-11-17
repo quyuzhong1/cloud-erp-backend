@@ -191,7 +191,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
             }
             entity.setSkuNo(skuVO.getSkuNo());
             entity.setProductName(skuVO.getSkuName());

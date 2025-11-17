@@ -118,7 +118,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             // 2. 验证必要参数
             if (StringUtils.isBlank(appId)) {
                 log.warn("App-Id不能为空，支持的请求头格式：App-Id, appId, AppId, app-id, Referer, referer");
-                return unauthorizedResponse(exchange, "应用ID不能为空，", ApiError.ERROR_600.code);
+                return unauthorizedResponse(exchange, "应用ID不能为空，", ApiError.ERROR_PARAM_INVALID.getCode());
             }
             // 3. 检查应用配置
             AppConfigResult configResult = checkAppConfig(appId);
@@ -134,12 +134,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             if (StringUtils.isBlank(apiSignature)) {
                 log.warn("API-Signature不能为空");
-                return unauthorizedResponse(exchange, ApiError.ERROR_600.msg, ApiError.ERROR_600.code);
+                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             if (StringUtils.isBlank(signSessionId)) {
                 log.warn("Sign-Session-Id不能为空");
-                return unauthorizedResponse(exchange, ApiError.ERROR_600.msg, ApiError.ERROR_600.code);
+                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             boolean ssoEnabled = configResult.isSsoEnabled();
@@ -151,7 +151,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 String token = headers.getFirst("Authorization");
                 if (StringUtils.isBlank(token)) {
                     log.warn("开启单点登录但未提供JWT Token");
-                    return unauthorizedResponse(exchange, "未提供JWT Token", ApiError.ERROR_403.code);
+                    return unauthorizedResponse(exchange, "未提供JWT Token", ApiError.ERROR_FORBIDDEN.getCode());
                 }
 
                 // 移除Bearer前缀
@@ -162,7 +162,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 loginUser = tokenService.getLoginUser(token);
                 if (loginUser == null) {
                     log.warn("JWT Token无效或已过期");
-                    return unauthorizedResponse(exchange, "JWT Token无效", ApiError.ERROR_403.code);
+                    return unauthorizedResponse(exchange, "JWT Token无效", ApiError.ERROR_FORBIDDEN.getCode());
                 }
 
                 // 从JWT Token中获取用户ID
@@ -194,7 +194,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             if (StringUtils.isBlank(symmetricKey)) {
                 log.warn("会话过期，Redis Key: {}", redisKey);
-                return unauthorizedResponse(exchange, ApiError.SESSION_EXPIRED.msg, ApiError.SESSION_EXPIRED.code);
+                return unauthorizedResponse(exchange, ApiError.SESSION_EXPIRED.getMsg(), ApiError.SESSION_EXPIRED.getCode());
             }
 
             log.info("获取到对称密钥，Redis Key: {}", redisKey);
@@ -203,7 +203,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String[] parsedSignature = ApiSignUtil.parseSignatureHeader(apiSignature);
             if (parsedSignature == null || parsedSignature.length != 2) {
                 log.warn("API-Signature格式错误");
-                return unauthorizedResponse(exchange, ApiError.ERROR_400.msg, ApiError.ERROR_400.code);
+                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             String timestampStr = parsedSignature[0];
@@ -219,7 +219,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, "");
                 if (!isValidSignature) {
                     log.warn("签名验证失败");
-                    return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
+                    return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_FORBIDDEN.getCode());
                 }
                 log.info("签名验证成功，URI: {}", uri);
                 return addHeadersAndContinue(exchange, chain, appId, finalUserId, signSessionId, finalLoginUser, finalSsoEnabled);
@@ -241,7 +241,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                     boolean isValidSignature = verifySignature(request, signature, timestampStr, finalSymmetricKey, body);
                     if (!isValidSignature) {
                         log.warn("签名验证失败");
-                        return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_403.code);
+                        return unauthorizedResponse(exchange, "签名验证失败", ApiError.ERROR_FORBIDDEN.getCode());
                     }
                     
                     log.info("签名验证成功，URI: {}", uri);
@@ -279,12 +279,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 })
                 .onErrorResume(e -> {
                     log.error("处理请求体异常", e);
-                    return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
+                    return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
                 });
 
         } catch (Exception e) {
             log.error("签名验证异常", e);
-            return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
+            return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
         }
     }
     
@@ -295,7 +295,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                                               String appId, String userId, String signSessionId,
                                               LoginUser loginUser, boolean ssoEnabled) {
         try {
-            ServerHttpRequest.Builder builder = exchange.getRequest().mutate()
+            ServerHttpRequest  .Builder builder = exchange.getRequest().mutate()
                     .header("App-Id", appId)
                     .header("User-Id", userId)
                     .header("Sign-Session-Id", signSessionId);
@@ -314,7 +314,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             return chain.filter(exchange.mutate().request(finalRequest).build());
         } catch (Exception e) {
             log.error("添加请求头失败", e);
-            return unauthorizedResponse(exchange, ApiError.ERROR_500.msg, ApiError.ERROR_500.code);
+            return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
         }
     }
 

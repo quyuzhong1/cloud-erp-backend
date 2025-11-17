@@ -2269,13 +2269,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //未审核完成不支持下推备货申请单
         SoInfoDTO.ViewGenerateSalesDemandDTO viewGenerateSalesDemandDTO = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).findFirst().orElse(null);
         if (ObjectUtils.isNotEmpty(viewGenerateSalesDemandDTO)) {
-            throw new ServiceException(ApiError.ERROR_92025.code, String.format(ApiError.ERROR_92025.msg, viewGenerateSalesDemandDTO.getSourceCode()));
+            throw new ServiceException(ApiError.ERROR_92025.code, String.format(ApiError.ERROR_92025.msg(), viewGenerateSalesDemandDTO.getSourceCode()));
         }
 
         List<String> skuIds = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
         List<String> soIdList = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSourceId).collect(Collectors.toList());
         //发货通知单的
@@ -3280,7 +3280,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
             }
             //错误的
             List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -3298,7 +3298,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
@@ -3307,10 +3307,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         return Boolean.TRUE;

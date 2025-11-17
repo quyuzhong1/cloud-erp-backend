@@ -55,7 +55,7 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         List<DocsDTO> docksNames = getDocsNameList(productId);
         List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_NAME_DUPLICATE);
         }
         TaskDocsNameEntity entity = new TaskDocsNameEntity();
         entity.setName(name);
@@ -151,7 +151,7 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         List<DocsDTO> docksNames = getDocsNameList(productId);
         List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_NAME_DUPLICATE);
         }
         TaskDocsNameEntity entity = new TaskDocsNameEntity();
         entity.setName(name);

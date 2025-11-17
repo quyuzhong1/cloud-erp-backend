@@ -364,7 +364,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
                         StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                         excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
             }
         }
 

@@ -189,10 +189,10 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
             EasyExcel.read(excelFile.getInputStream(), LogisticsChannelConstraintExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流国家设置错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<LogisticsChannelConstraintDTO.AddOrUpdateDTO> addOrUpdateDTOList = excelListenerUtil.getAddOrUpdateDTOList();
         List<LogisticsChannelConstraintExcelDTO> errorList = excelListenerUtil.getErrorList();

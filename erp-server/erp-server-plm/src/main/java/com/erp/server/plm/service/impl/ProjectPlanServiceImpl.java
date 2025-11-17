@@ -1088,7 +1088,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public Boolean importProjectSchedule(MultipartFile excelFile, String productId) {
         List<Task> tasks = ProjectImportUtil.readMmpFile(excelFile);
         if (CollectionUtils.isEmpty(tasks)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
         List<ProjectImportDTO> list = new ArrayList<>();
         Map<Integer, String> map = new LinkedHashMap<>();
@@ -1108,7 +1108,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(phaseList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "二级")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg(), "二级")));
         }
         List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
 
@@ -1131,12 +1131,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "三")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg(), "三")));
         }
         //任务负责人不能为空
         long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
         if (chargeCount > 0) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1036.code, format(ApiError.ERROR_1036.msg, "二")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1036.code, format(ApiError.ERROR_1036.msg(), "二")));
         }
         //任务交付物
         List<DocsDTO> docsList = handleDocName(taskList, productId);

@@ -125,7 +125,7 @@ public class SampleInitialLedgerDetailServiceImpl extends SuperServiceImpl<Sampl
             EasyExcel.read(excelFile.getInputStream(), SampleInitialLedgerDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品期初台账明细错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
 
         List<SampleInitialLedgerDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

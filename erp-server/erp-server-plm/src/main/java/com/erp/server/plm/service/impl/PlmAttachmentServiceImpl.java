@@ -99,18 +99,18 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         double fileSize = size / (1024 * 1024);
         fileSize = (double) Math.round(fileSize * 100) / 100;
         if (fileSize > 300) {
-            throw new ServiceException(ApiError.ERROR_95160, 300);
+            throw new ServiceException(ApiError.ERROR_PLM_FILE_SIZE_EXCEEDS_LIMIT, 300);
         }
         String fileName = multipartFile.getOriginalFilename();
         if (org.springframework.util.StringUtils.isEmpty(fileName)) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
         }
         if (fileName.length() > 200) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
         }
         String fileUrl = fileFeign.uploadFile(multipartFile);
         if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
         }
         PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
         attachmentEntity.setAttachUrl(fileUrl);
@@ -137,7 +137,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     @Transactional(rollbackFor = Exception.class)
     public List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type) {
         if (CollectionUtils.isEmpty(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
         }
         List<PlmAttachmentEntity> resultList = new ArrayList<>();
         for(MultipartFile multipartFile :multipartFileList) {

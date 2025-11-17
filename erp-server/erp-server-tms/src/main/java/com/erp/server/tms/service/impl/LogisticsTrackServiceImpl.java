@@ -277,7 +277,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             EasyExcel.read(new ByteArrayInputStream(bytes), LogisticsTrackInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());

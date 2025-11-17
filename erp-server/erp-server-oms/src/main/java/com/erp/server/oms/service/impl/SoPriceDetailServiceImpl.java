@@ -498,12 +498,12 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             EasyExcel.read(excelFile.getInputStream(), SoPriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         }
         //验证导入数据是否为空
         List<SoPriceDetailImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         }
 
         SoPriceDetailDTO.ImportDTO result = new SoPriceDetailDTO.ImportDTO();
@@ -753,7 +753,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
 
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
         //销售价目表
