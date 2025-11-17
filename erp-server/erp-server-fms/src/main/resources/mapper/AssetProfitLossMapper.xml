@@ -73,6 +73,8 @@
             apld.asset_code AS assetCode,
             apld.unit,
             apld.diff_qty AS qty,
+            apld.book_qty AS bookQty,
+            apld.actual_qty AS actualQty,
             asp.plan_name AS planName
         FROM asset_profit_loss apl
         LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
@@ -125,6 +127,8 @@
             apld.asset_code AS assetCode,
             apld.unit,
             apld.diff_qty AS qty,
+            apld.book_qty AS bookQty,
+            apld.actual_qty AS actualQty,
             asp.plan_name AS planName
         FROM asset_profit_loss apl
         LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false

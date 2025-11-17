@@ -206,6 +206,16 @@ public class AssetProfitLossDTO implements Serializable {
         private Integer qty;
 
         /**
+        * 账存数量
+        */
+        private Integer bookQty;
+
+        /**
+        * 实际数量
+        */
+        private Integer actualQty;
+
+        /**
         * 创建人
         */
         private String createUserName;
