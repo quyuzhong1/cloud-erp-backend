@@ -27,11 +27,6 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-model-dmp</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-business</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>

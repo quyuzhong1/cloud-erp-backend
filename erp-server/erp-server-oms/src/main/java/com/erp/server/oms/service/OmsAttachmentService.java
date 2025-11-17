@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
@@ -87,4 +89,11 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
     List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
 
     List<OmsAttachmentEntity> listByBusinessIdsAndType(List<String> businessIds,String type);
+
+    /**
+     * 新增附件
+     * @param addAttachmentDTO
+     * @return
+     */
+    BatchResultDTO addAttachment(BaseDTO.AddAttachmentDTO addAttachmentDTO);
 }

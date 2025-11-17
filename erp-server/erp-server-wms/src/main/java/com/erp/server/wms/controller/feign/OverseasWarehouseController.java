@@ -43,11 +43,11 @@ public class OverseasWarehouseController extends BaseController {
      * 通过状态获取入库单号
      */
     @PostMapping("/getReceiptNumbersForStatus")
-    public List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "platform") String platform){
+    public List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "authId") String authId){
         if (CollectionUtils.isEmpty(statusList)) {
             return Collections.emptyList();
         }
-        return overseasWarehouseInboundService.getReceiptNumbersForStatus(statusList, platform);
+        return overseasWarehouseInboundService.getReceiptNumbersForStatus(statusList, authId);
     }
 
     /**

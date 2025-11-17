@@ -1,20 +1,17 @@
 package com.erp.server.wms.approve;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
 import com.erp.server.wms.service.SampleBackInfoService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 
 /**
  * 样品退回单审核处理器
@@ -46,5 +43,10 @@ public class SampleBackInfoApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleBackInfoService.approveEnd(approveOneDTO, entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

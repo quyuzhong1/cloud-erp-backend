@@ -13,12 +13,6 @@
     <dependencies>
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-model-plm</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-mrp</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>

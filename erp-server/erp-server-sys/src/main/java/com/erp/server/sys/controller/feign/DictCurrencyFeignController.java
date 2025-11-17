@@ -45,4 +45,8 @@ public class DictCurrencyFeignController extends BaseController {
     public List<DictCurrencyEntity> list() {
         return dictCurrencyService.list();
     }
+    @GetMapping("/getCurrencyByNum")
+    DictCurrencyEntity getCurrencyByNum(@RequestParam(value = "num") String num){
+        return dictCurrencyService.getCurrencyByNum(num);
+    }
 }

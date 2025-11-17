@@ -1,6 +1,9 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
@@ -40,13 +43,16 @@ public class ThirdWarehouseRefreshTokenJob {
     @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
 
+    @Resource
+    private RedisUtil redisUtil;
+
     /**
      * 刷新三方仓token
      */
     @XxlJob("refreshThirdWarehouseToken")
     public ReturnT<String> refreshThirdWarehouseToken() {
         XxlJobHelper.log("[刷新三方仓token] 任务开始--------------------------------------->");
-        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.list();
         //refreshToken过期的，将状态更新为未授权
         List<OverseasProviderEntity> refreshTokenExpireList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
@@ -81,6 +87,7 @@ public class ThirdWarehouseRefreshTokenJob {
         if(CollectionUtils.isNotEmpty(refreshTokenExpireList)){
             overseasProviderService.updateBatchById(refreshTokenExpireList);
         }
+        overseasProviderEntityList = overseasProviderService.list();
         overseasProviderEntityList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
                     Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
@@ -101,10 +108,6 @@ public class ThirdWarehouseRefreshTokenJob {
                     return false;
                 })
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(overseasProviderEntityList)){
-            XxlJobHelper.log("[刷新三方仓token] 任务结束: 无需要刷新token的仓库--------------------------------------->");
-            return ReturnT.SUCCESS;
-        }
         for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
             try {
                 overseasProviderService.refreshToken(overseasProviderEntity);
@@ -117,6 +120,14 @@ public class ThirdWarehouseRefreshTokenJob {
                 );
 
             }
+        }
+        //将三方仓的token封装到redis
+        List<OverseasProviderEntity> alreadyAuthList = overseasProviderService.listByAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        for (OverseasProviderEntity overseasProviderEntity : alreadyAuthList) {
+            String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, overseasProviderEntity.getCode(), overseasProviderEntity.getId());
+            Map<String,Object> map = overseasProviderEntity.getAuthJson();
+            map.put("ownerCode",overseasProviderEntity.getOwnerCode());
+            redisUtil.set(tokenKey, map, 86400);
         }
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");
         return ReturnT.SUCCESS;

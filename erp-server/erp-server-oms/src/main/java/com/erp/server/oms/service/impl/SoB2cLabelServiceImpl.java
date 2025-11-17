@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -81,6 +82,14 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
         addEntity.setLogisticsLabelBase64(base64);
         addEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
         this.save(addEntity);
+    }
+
+    @Override
+    public void updateCrossLabelUrl(String mainId, String crossLabelUrl) {
+        if (CharSequenceUtil.isBlank(mainId)){
+            return;
+        }
+        lambdaUpdate().set(SoB2cLabelEntity::getCrossLabelUrl, crossLabelUrl).eq(SoB2cLabelEntity::getMainId, mainId).update();
     }
 
     /**

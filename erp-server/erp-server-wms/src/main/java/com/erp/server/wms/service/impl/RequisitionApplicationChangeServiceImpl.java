@@ -189,7 +189,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))" , shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))" , shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
     @Override
     public List<RequisitionApplicationChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -1067,7 +1067,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    data.setApproveUserName(curApprove);
+                    data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
                 }
             }
             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(data.getSkuId())).findFirst().orElse(new SkuVO());

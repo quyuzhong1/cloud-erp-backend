@@ -318,7 +318,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -1315,15 +1315,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<String> shopIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getToWarehouseId).distinct().collect(Collectors.toList());
+        List<String> shopIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getChannelId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
 
-            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())) {
-                ShopInfoEntity shopInfo = shopInfoEntities.stream().filter(v -> v.getId().equals(viewDTO.getToWarehouseId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
-                viewDTO.setToWarehouseId(shopInfo.getWarehouseId());
-                viewDTO.setToWarehouseName(shopInfo.getWarehouseName());
-            }
             WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
                     .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanId()))
                     .findFirst()
@@ -1331,6 +1326,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
             viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
+                ShopInfoEntity shopInfo = shopInfoEntities.stream()
+                        .filter(req -> req.getId().equals(viewDTO.getChannelId()))
+                        .findFirst()
+                        .orElse(new ShopInfoEntity());
+                viewDTO.setShopId(viewDTO.getChannelId());
+                viewDTO.setShopName(viewDTO.getChannelName());
+                viewDTO.setCountry(shopInfo.getDictCountryCode());
+            }
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
@@ -1913,7 +1919,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(view);
 
             //备货类型
-            addDTO.setDemandType(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) ? FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode():FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            }else{
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode());
+            }
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
             List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
@@ -2064,7 +2076,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         pickingListsService.add(addDTO);
         requisitionApplicationDetailService.updateBatchById(updateDetails);
         //生成装箱任务
-        packingTaskService.addPackingByRequisition(application);
+        try {
+            UserContext.setIsUserSystem(true);
+            packingTaskService.addPackingByRequisition(application);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         //回写要货申请的拣货单生成状态
         writeBackRequisitionPickPushDownStatus(application.getId());
         return Collections.emptyList();
@@ -2419,7 +2436,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+            ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();
@@ -2429,6 +2447,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(warehouseEntity)){
                     channelName =  warehouseEntity.getName();
+                }
+                if(StringUtils.isBlank(requisitionApplicationEntity.getToWarehouseId())){
+                    requisitionApplicationEntity.setToWarehouseId(requisitionApplicationEntity.getChannelId());
                 }
             }
             requisitionApplicationEntity.setChannelName(channelName);
@@ -2444,6 +2465,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> skuIdList = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
+        if(StringUtils.isNotBlank(data.getToWarehouseId())){
+            WarehouseEntity warehouseEntity = warehouseService.getById(data.getToWarehouseId());
+            if(Objects.nonNull(warehouseEntity)){
+                data.setToWarehouseName(warehouseEntity.getName());
+            }
+        }
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 

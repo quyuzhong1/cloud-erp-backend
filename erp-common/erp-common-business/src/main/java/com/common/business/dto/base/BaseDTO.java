@@ -5,9 +5,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Will
@@ -112,5 +115,40 @@ public class BaseDTO implements Serializable {
          */
         private String taskId;
 
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddAttachmentDTO implements Serializable {
+        /**
+         * 订单id(业务id)
+         */
+        @NotBlank(message = "业务id不能为空")
+        private String id;
+        /**
+         * 附件类型
+         * so_info b2b销售订单
+         */
+        @NotBlank(message = "附件类型不能为空")
+        private String type;
+        /**
+         * 附件列表
+         */
+        @NotEmpty(message = "附件列表不能为空")
+        private List<AttachmentDTO> fileList;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AttachmentDTO implements Serializable {
+        /**
+         * 附件id
+         */
+        @NotBlank(message = "附件URL不能为空")
+        private String attachUrl;
+        /**
+         * 附件名称
+         */
+        private String attachName;
     }
 }

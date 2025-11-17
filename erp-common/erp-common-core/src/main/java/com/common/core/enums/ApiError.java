@@ -300,6 +300,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
+    WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
 
     /**
      * PLM 错误
@@ -1421,6 +1422,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),
     ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED(92061,"WB订单【{}】不支持拆分和合并"),
     ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP(92061,"B2C销售订单【{}】平台和店铺不能为空"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
