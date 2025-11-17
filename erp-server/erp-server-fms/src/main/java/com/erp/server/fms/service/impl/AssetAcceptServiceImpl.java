@@ -1269,6 +1269,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         if (StringUtils.isNotBlank(detail.getUseDeptId()) && StringUtils.isBlank(detail.getUseDeptName())) {
                             detailView.setUseDeptName(finalDeptMap.get(detail.getUseDeptId()));
                         }
+
+                        //费用项目中文
+                        if (StringUtils.isNotBlank(detail.getCostType())){
+                            detailView.setCostTypeName(CostTypeEnum.getName(detail.getCostType()));;
+                        }
                         
                         // 计算数量（参考queryMoldPurchaseOrderDetails的逻辑）
                         if (StringUtils.isNotBlank(detail.getSourceDetailId())) {

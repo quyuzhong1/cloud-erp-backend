@@ -13,9 +13,9 @@ import lombok.Getter;
 public enum AssetCategoryEnum {
     
     /**
-     * 机械设备
+     * 机器设备
      */
-    MACHINERY("machinery", "机械设备");
+    MACHINERY("machinery", "机器设备");
     
     /**
      * 类别编码
