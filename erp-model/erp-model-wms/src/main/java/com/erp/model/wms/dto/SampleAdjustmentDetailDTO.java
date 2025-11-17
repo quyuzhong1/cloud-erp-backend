@@ -115,7 +115,6 @@ public class SampleAdjustmentDetailDTO implements Serializable {
         /**
         * 关联主表ID
         */
-        @NotBlank(message = "关联主表ID不能为空")
         @Size(max = 19,message = "关联主表ID最大长度不能超过19位")
         private String mainId;
 
