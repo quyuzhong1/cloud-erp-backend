@@ -3,6 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.utils.SampleDocumentAuditUtil;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,7 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_adjustment_detail")
-public class SampleAdjustmentDetailEntity extends BaseEntity<SampleAdjustmentDetailEntity> {
+public class SampleAdjustmentDetailEntity extends BaseEntity<SampleAdjustmentDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 关联主表ID
@@ -92,6 +94,15 @@ public class SampleAdjustmentDetailEntity extends BaseEntity<SampleAdjustmentDet
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    /**
+     * 实现接口方法：获取数量
+     * 调整单使用差异数量（differenceQty）字段
+     */
+    @Override
+    public Integer getQty() {
+        return this.differenceQty;
     }
 
 }

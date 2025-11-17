@@ -152,4 +152,40 @@ public interface SampleAdjustmentInfoService extends SuperService<SampleAdjustme
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleAdjustmentInfoEntity entity);
 
+    /**
+     * 导入Excel
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param dto
+     * @return
+     */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+     * 异步导入样品调整单
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param dto
+     */
+    void importSampleAdjustment(BaseDTO.ImportDTO dto);
+
+    /**
+     * 处理导入成功列表
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param successList
+     * @param errorNoList
+     * @param errorList2
+     * @param importType
+     */
+    void handleImportSuccessList(List<com.erp.model.wms.dto.excel.SampleAdjustmentImportExcelDTO> successList, List<String> errorNoList, List<com.erp.model.wms.dto.excel.SampleAdjustmentImportExcelDTO> errorList2, String importType);
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
 }

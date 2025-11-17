@@ -103,18 +103,79 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SampleAdjustmentInfoDTO$ListDTO">
-
+        SELECT
+        <include refid="Query_Column_List"></include>
+        FROM
+        sample_adjustment_info sai
+        LEFT JOIN sample_adjustment_detail sad ON sai.id = sad.main_id AND sad.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sai.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sai.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sai.create_time desc
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleAdjustmentInfoDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  sample_adjustment_info
-        WHERE is_deleted=FALSE
+        'approveIng' AS tabFlag,
+        COUNT ( 1 ) AS COUNT
+        FROM
+        sample_adjustment_info sai
+        WHERE
+        sai.is_deleted = FALSE
+        AND sai.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and sai.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+
+        UNION ALL
+
+        SELECT
+        'approve' AS tabFlag,
+        COUNT ( 1 ) AS COUNT
+        FROM
+        sample_adjustment_info sai
+        WHERE
+        sai.is_deleted = FALSE
+        AND sai.approve_status = 'approve'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+        UNION ALL
+
+        SELECT
+        sai.approve_status AS tabFlag,
+        COUNT ( * ) AS COUNT
+        FROM
+        sample_adjustment_info sai
+        WHERE
+        sai.is_deleted = FALSE
+        AND sai.approve_status in ('waitSubmit', 'reject')
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY
+        sai.approve_status
     </select>
 
 </mapper>

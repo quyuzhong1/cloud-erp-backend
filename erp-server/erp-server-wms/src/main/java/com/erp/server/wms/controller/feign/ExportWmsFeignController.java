@@ -201,6 +201,8 @@ public class ExportWmsFeignController {
     private SampleBorrowInfoService sampleBorrowInfoService;
     @Resource
     private SampleReturnInfoService sampleReturnInfoService;
+    @Resource
+    private SampleAdjustmentInfoService sampleAdjustmentInfoService;
 
     @Resource
     private SampleBackInfoService sampleBackInfoService;
@@ -1234,6 +1236,24 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleTransferInfoQueryHandler.class)
     public PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto) {
         return sampleTransferInfoService.getSampleTransferInfoPageData(dto);
+    }
+
+    /**
+     * 导出样品调整单Excel数据
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleAdjustmentInfo")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleAdjustmentInfo:export",
+            tableAlias = "sai"
+    )
+    @WebAdvanceQuery(handler = SampleAdjustmentInfoQueryHandler.class)
+    public PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto) {
+        return sampleAdjustmentInfoService.paging(dto);
     }
 
 }

@@ -388,4 +388,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/getSampleTransferInfoPageData")
     PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品调整单
+     */
+    @PostMapping("/feign/export/exportSampleAdjustmentInfo")
+    PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto);
 }
