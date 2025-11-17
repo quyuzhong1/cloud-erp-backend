@@ -1517,6 +1517,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             detailDTO.setUseDeptName(detail.getUseDeptName()); // 使用部门名称
             detailDTO.setCostType(detail.getCostType()); // 费用项目
             detailDTO.setRemark(detail.getRemark()); // 备注
+            detailDTO.setSupplierId(acceptEntity.getSupplierId());
+            detailDTO.setSupplierName(acceptEntity.getSupplierName());
             detailDTO.setQty(1); // 每个实物信息数量为1
             detailDTO.setSourceDetailId(detail.getId());
             detailList.add(detailDTO);

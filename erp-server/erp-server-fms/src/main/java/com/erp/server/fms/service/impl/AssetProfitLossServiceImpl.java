@@ -485,10 +485,12 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             }
         }
         List<AssetProfitLossDetailDTO.ViewDTO> detailList = data.getDetailList();
-        for (AssetProfitLossDetailDTO.ViewDTO viewDTO : detailList) {
-            // 差异数量取绝对值
-            if (viewDTO.getDiffQty()!=null) {
-                viewDTO.setDiffQty(Math.abs(viewDTO.getDiffQty()));
+        if (CollUtil.isNotEmpty(detailList)) {
+            for (AssetProfitLossDetailDTO.ViewDTO viewDTO : detailList) {
+                // 差异数量取绝对值
+                if (viewDTO.getDiffQty()!=null) {
+                    viewDTO.setDiffQty(Math.abs(viewDTO.getDiffQty()));
+                }
             }
         }
     }

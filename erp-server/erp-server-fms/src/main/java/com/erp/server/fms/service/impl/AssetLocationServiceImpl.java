@@ -544,6 +544,10 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     * 分页查询、导出 数据处理
     */
     private void validateSubmit(AssetLocationEntity entity) {
+        // 已作废的资产位置不支持提交操作
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的资产位置不支持提交操作");
+        }
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
