@@ -152,22 +152,22 @@ public class SoMultiChannelDetailDTO implements Serializable {
         /**
         * 平台sku
         */
-        @NotBlank(message = "平台sku不能为空")
-        @Size(max = 100,message = "平台sku最大长度不能超过100位")
+//        @NotBlank(message = "平台sku不能为空")
+//        @Size(max = 100,message = "平台sku最大长度不能超过100位")
         private String platformSkuNo;
 
         /**
         * 平台产品id
         */
-        @NotBlank(message = "平台产品id不能为空")
-        @Size(max = 100,message = "平台产品id最大长度不能超过100位")
+//        @NotBlank(message = "平台产品id不能为空")
+//        @Size(max = 100,message = "平台产品id最大长度不能超过100位")
         private String platformSpuNo;
 
         /**
         * 平台产品名称
         */
-        @NotBlank(message = "平台产品名称不能为空")
-        @Size(max = 100,message = "平台产品名称最大长度不能超过100位")
+//        @NotBlank(message = "平台产品名称不能为空")
+//        @Size(max = 100,message = "平台产品名称最大长度不能超过100位")
         private String platformProductName;
 
         /**
@@ -193,7 +193,7 @@ public class SoMultiChannelDetailDTO implements Serializable {
         * FNSKU
         */
 //        @NotBlank(message = "FNSKU不能为空")
-        @Size(max = 100,message = "FNSKU最大长度不能超过100位")
+//        @Size(max = 100,message = "FNSKU最大长度不能超过100位")
         private String fnSku;
         /**
          * 出库状态
