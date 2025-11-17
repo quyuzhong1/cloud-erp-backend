@@ -73,6 +73,11 @@ public class ThirdMappingDTO implements Serializable {
         private String thirdName;
 
         /**
+         * 三方编号
+         */
+        private String thirdCode;
+
+        /**
          * 编号
          */
         private String code;

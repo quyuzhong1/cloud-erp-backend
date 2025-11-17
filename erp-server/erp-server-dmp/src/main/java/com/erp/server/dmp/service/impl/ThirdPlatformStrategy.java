@@ -147,6 +147,7 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
             viewDTO.setThirdName(thirdMappingEntity.getThirdName());
             viewDTO.setCode(thirdMappingEntity.getThirdId());
+            viewDTO.setThirdCode(thirdMappingEntity.getThirdCode());
             viewDTO.setId(thirdMappingEntity.getId());
             DictBasicEntity dictBasicEntity = thirdPlatformSysTypeMap.get(thirdMappingEntity.getThirdSysType());
             if (null != dictBasicEntity) {
