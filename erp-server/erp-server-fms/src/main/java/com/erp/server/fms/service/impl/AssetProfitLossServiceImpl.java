@@ -23,6 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
@@ -483,6 +484,13 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 data.setPlanName(planEntity.getPlanName());
             }
         }
+        List<AssetProfitLossDetailDTO.ViewDTO> detailList = data.getDetailList();
+        for (AssetProfitLossDetailDTO.ViewDTO viewDTO : detailList) {
+            // 差异数量取绝对值
+            if (viewDTO.getDiffQty()!=null) {
+                viewDTO.setDiffQty(Math.abs(viewDTO.getDiffQty()));
+            }
+        }
     }
 
     /**
@@ -590,6 +598,10 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 if (StringUtils.isNotBlank(curApprove)) {
                     data.setApproveUserName(curApprove);
                 }
+            }
+            // 差异数量取绝对值
+            if (data.getQty()!=null) {
+                data.setQty(Math.abs(data.getQty()));
             }
         }
     }

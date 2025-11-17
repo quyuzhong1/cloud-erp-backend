@@ -121,6 +121,10 @@ public class AssetAcceptDetailDTO implements Serializable {
          * 资产位置名称
          */
         private String assetLocationName;
+        /**
+         * 费用项目名称
+         */
+        private String costTypeName;
 
     }
 

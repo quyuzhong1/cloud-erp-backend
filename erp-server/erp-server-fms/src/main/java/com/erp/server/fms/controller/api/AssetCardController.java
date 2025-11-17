@@ -166,7 +166,7 @@ public class AssetCardController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = assetCardService.submit(id, false);
+                submit = assetCardService.submit(id, true);
             }catch (Exception e){
                 log.error("资产卡片主单 提交审核失败",e);
                 AssetCardEntity entity = idEntityMap.get(id);
