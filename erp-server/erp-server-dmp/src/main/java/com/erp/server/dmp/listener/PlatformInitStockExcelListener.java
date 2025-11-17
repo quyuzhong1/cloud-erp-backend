@@ -87,7 +87,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         Map<String, PlatformInitStockExcelDTO> checkMonthAndWarehouseMap = new HashMap<>();
         List<PlatformInitStockExcelDTO> listInit = adsErpInventoryDiffFlowMapper.listInit(warehouseNameList, checkMonthList);
         if(CollUtil.isNotEmpty(listInit)) {
-        	checkMonthAndWarehouseMap = listInit.stream().collect(Collectors.toMap(c -> c.getPlatformWarehouseName() + "_" + c.getCheckMonth(), v -> v , (c1 , c2) -> c1));
+        	checkMonthAndWarehouseMap = listInit.stream().collect(Collectors.toMap(c -> c.getCheckMonth() + "_" + c.getPlatformWarehouseName() + "_" + c.getStockSku(), v -> v , (c1 , c2) -> c1));
         }
         List<PlatformInitStockExcelDTO> insertDbList = new ArrayList<>();
         for (PlatformInitStockExcelDTO excelDTO : dataList) {
@@ -104,7 +104,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
                 continue;
         	}
         	OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = list.get(0);
-        	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getCheckMonth());
+        	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(excelDTO.getCheckMonth() + "_" + excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getStockSku());
         	if(dbExcelDTO != null) {
         		excelDTO.setId(dbExcelDTO.getId());
         		excelDTO.setCreateUserId(dbExcelDTO.getCreateUserId());
