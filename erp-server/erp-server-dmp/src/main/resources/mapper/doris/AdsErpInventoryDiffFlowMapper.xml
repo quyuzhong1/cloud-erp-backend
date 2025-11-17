@@ -156,12 +156,12 @@
     </select>
     
     <insert id="batchInsertInit" parameterType="java.util.List">
-        insert into dmp_ods.ods_excel_platform_init_stock_f (id , create_time , update_time , create_user_name , create_user_id , update_user_name , update_user_id
+        insert into dmp_ods.ods_excel_platform_init_stock_f (id , create_time , update_time , create_user_name , create_user_id , update_user_name , update_user_id ,
         account_code , check_month , stock_sku , platform_warehouse_code , platform_warehouse_name , init_qty) 
         values 
         <foreach collection="dtoList" item="dto" separator="," >
-        (#{dto.id}, #{dto.create_time} , #{dto.update_time} , #{dto.create_user_name} , #{dto.create_user_id} , #{dto.update_user_name} , #{dto.update_user_id} , #{dto.account_code}
-         , #{dto.check_month} , #{dto.stock_sku} , #{dto.platform_warehouse_code} , #{dto.platform_warehouse_name} , #{dto.init_qty})
+        (#{dto.id}, #{dto.createTime} , #{dto.updateTime} , #{dto.createUserName} , #{dto.createUserId} , #{dto.updateUserName} , #{dto.updateUserId} , #{dto.accountCode}
+         , #{dto.checkMonth} , #{dto.stockSku} , #{dto.platformWarehouseCode} , #{dto.platformWarehouseName} , #{dto.initQty})
     	</foreach>
     </insert>
 </mapper>
