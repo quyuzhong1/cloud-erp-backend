@@ -1490,7 +1490,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 基础信息映射
         cardDTO.setSourceCode(acceptEntity.getCode()); // 来源单号
-        cardDTO.setSourceType(SourceTypeEnum.ASSET_ACCEPTANCE.getCode()); // 卡片来源
+        cardDTO.setSourceType(CardSourceEnum.PURCHASE_RECEIPT.getCode()); // 卡片来源
         cardDTO.setSourceId(acceptEntity.getId()); // 来源ID
         cardDTO.setOrgId(acceptEntity.getAcceptOrgId()); // 资产组织 = 验收组织
         cardDTO.setOrgName(acceptEntity.getAcceptOrgName()); // 资产组织名称
