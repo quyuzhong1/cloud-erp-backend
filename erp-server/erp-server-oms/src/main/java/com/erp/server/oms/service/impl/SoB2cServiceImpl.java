@@ -7444,6 +7444,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.setPlanQty(wantQty);
                     addDTO.setActualQty(wantQty);
                     addDTO.setWarehouseLocation(warehouseLocation);
+                    addDTO.setPlatformSubSoCode(detailItem.getPlatformSubSoCode());
                     addDTO.setRemark(detailRemark);
                     wantDetailList.add(addDTO);
                 }
@@ -7458,6 +7459,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setSourceDetailId(detailItem.getSourceDetailId());
                 addDTO.setSoDetailId(detailId);
                 addDTO.setPlanQty(qty);
+                addDTO.setPlatformSubSoCode(detailItem.getPlatformSubSoCode());
                 addDTO.setActualQty(qty);
                 addDTO.setWarehouseId(detailItem.getWarehouseId());
                 addDTO.setWarehouseLocation(warehouseLocation);
