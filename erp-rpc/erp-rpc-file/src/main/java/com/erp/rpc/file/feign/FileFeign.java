@@ -41,7 +41,7 @@ public interface FileFeign {
      * @param urlList
      */
     @PostMapping("/feign/file/deleteBatchFile")
-    void deleteBatchFile(@RequestParam("urlList") List<String> urlList);
+    void deleteBatchFile(@RequestBody List<String> urlList);
 
     /**
      * 下载文件
@@ -59,5 +59,5 @@ public interface FileFeign {
     Response getInputStream(@PathVariable("fileId") String fileId);
 
     @PostMapping(value = "/feign/file/uploadFileByBase64")
-    String uploadFileByBase64(@RequestParam("base64Str")String base64Str);
+    String uploadFileByBase64(@RequestBody String base64Str);
 }

@@ -3,6 +3,7 @@ package com.erp.server.file.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
@@ -45,7 +46,7 @@ public class FileFeignController {
         return fileService.deleteFile(url);
     }
     @PostMapping("/deleteBatchFile")
-    public void deleteBatchFile(@RequestParam("urlList") List<String> urlList){
+    public void deleteBatchFile(@RequestBody List<String> urlList){
         if(CollUtil.isNotEmpty(urlList)){
             FileService fileService = fileRegistry.getHandler();
             fileService.deleteBatchFile(urlList);
@@ -75,11 +76,22 @@ public class FileFeignController {
         }
     }
     @PostMapping(value = "/uploadFileByBase64")
-    public String uploadFileByBase64(@RequestParam("base64Str")String base64Str){
+    public String uploadFileByBase64(@RequestBody String base64Str){
         FileService fileService = fileRegistry.getHandler();
         String[] parts = base64Str.split(",");
         byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
-        String fileName = UUID.randomUUID().toString();
+        String fileName = UUID.randomUUID().toString() + ".pdf";
         return fileService.uploadFile(bytes,fileName,null);
+    }
+
+    /**
+     * 合并多个文件为一个文件
+     * @param fileIds 文件id列表
+     * @return 合并后的文件url
+     */
+    @PostMapping(value = "/mergeFiles")
+    public String mergeFiles(@RequestBody List<String> fileIds){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.mergeFiles(fileIds);
     }
 }
