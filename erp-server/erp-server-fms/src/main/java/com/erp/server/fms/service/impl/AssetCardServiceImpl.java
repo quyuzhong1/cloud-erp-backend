@@ -779,7 +779,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         
         // 填充卡片来源名称
         if (StringUtils.isNotBlank(data.getSourceType())) {
-            data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
+            data.setSourceTypeName(CardSourceEnum.getName(data.getSourceType()));
         }
 
         // 查询明细数据
@@ -1022,6 +1022,9 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     * 新增修改处理数据
     */
     private void handleData(AssetCardEntity assetCardEntity) {
+        if (StringUtils.isBlank(assetCardEntity.getSourceType())){
+            assetCardEntity.setSourceType(CardSourceEnum.MANUAL_CREATE.getCode());
+        }
     // TODO 验证数据 & 数据赋值
     }
 
