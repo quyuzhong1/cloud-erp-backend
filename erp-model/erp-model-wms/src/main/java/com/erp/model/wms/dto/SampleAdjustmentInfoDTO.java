@@ -221,10 +221,6 @@ public class SampleAdjustmentInfoDTO implements Serializable {
          */
         private String productName;
 
-        /**
-         * 使用方
-         */
-        private String userSide;
 
         /**
          * 台账数量

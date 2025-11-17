@@ -70,7 +70,6 @@
         sad.sku_id AS skuId,
         sad.sku_no AS skuNo,
         sad.product_name AS productName,
-        sad.user_side AS userSide,
         sad.ledger_qty AS ledgerQty,
         sad.actual_qty AS actualQty,
         sad.difference_qty AS differenceQty,
