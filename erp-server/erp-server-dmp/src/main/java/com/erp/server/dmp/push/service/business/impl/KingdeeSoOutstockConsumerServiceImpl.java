@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -90,7 +91,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
          * 修改
          */
         if (SyncOperateEnum.OPERATE_UPDATE.getCode().equals(operate)) {
-            operateAddOrUpdate(apiUtils,platformEntity, map,type);
+            operateUpdate(apiUtils,platformEntity, map,type);
         }
     }
 
@@ -166,7 +167,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         return;
     }
 
-    public void operateAddOrUpdate(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
+    public void operateUpdate(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         //业务id
         String businessId = String.valueOf(map.get("id"));
         //根据录入值和字段配置生成JSONObject
@@ -184,11 +185,8 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         }catch (Exception e){
-            //未查找到数据，新增数据
-            JSONObject firstJson = json;
-            //更新数据
-            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
-            return;
+            log.error("销售出库单【{}】不存在",map.get("code"));
+            throw new ServiceException(ApiError.ERROR_KINGDEE_CODE_NOT_EXIST);
         }
         //查找到数据后，判断其审核状态
         String documentStatus = (String) model.get("DocumentStatus");
@@ -199,9 +197,10 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
             flag = kingdeeCommonService.unAudit(apiUtils,id);
         }
         //创建状态则直接修改、删除
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+//        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+        if (StringUtils.isNotBlank(id)){
             //给修改json对象赋值ID
-            KingdeeUtils.makeFieldJson(json, "FDEPTID", ".", id);
+            KingdeeUtils.makeFieldJson(json, "FID", ".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
