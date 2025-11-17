@@ -98,6 +98,11 @@ public class AdsErpInventoryDiffEntity extends BaseEntity<AdsErpInventoryDiffEnt
     @TableField("check_month")
     private String checkMonth;
     /**
+     * 核对周期页面查询
+     */
+    @TableField("check_month_query")
+    private String checkMonthQuery;
+    /**
     * 来源仓库ID
     */
     @TableField("warehouse_id")

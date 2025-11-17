@@ -98,6 +98,11 @@ public class AdsErpFirstMileInTransitDiffEntity extends BaseEntity<AdsErpFirstMi
     @TableField("check_month")
     private String checkMonth;
     /**
+     * 核对周期页面查询
+     */
+    @TableField("check_month_query")
+    private String checkMonthQuery;
+    /**
     * 货件ID
     */
     @TableField("shipment_id")

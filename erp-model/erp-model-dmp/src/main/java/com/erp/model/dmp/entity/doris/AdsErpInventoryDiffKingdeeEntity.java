@@ -97,6 +97,11 @@ public class AdsErpInventoryDiffKingdeeEntity extends BaseEntity<AdsErpInventory
     @TableField("check_month")
     private String checkMonth;
     /**
+     * 核对周期页面查询
+     */
+    @TableField("check_month_query")
+    private String checkMonthQuery;
+    /**
     * 核对仓库ID
     */
     @TableField("warehouse_id")
@@ -186,6 +191,11 @@ public class AdsErpInventoryDiffKingdeeEntity extends BaseEntity<AdsErpInventory
     */
     @TableField("kingdee_closing_qty")
     private Integer kingdeeClosingQty;
+    /**
+     * 金蝶期初库存
+     */
+    @TableField("kingdee_init_qty")
+    private Integer kingdeeInitQty;
     /**
     * 金蝶本期在库出库数量
     */

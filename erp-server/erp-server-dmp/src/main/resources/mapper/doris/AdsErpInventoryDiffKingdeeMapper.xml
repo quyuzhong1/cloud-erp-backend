@@ -43,6 +43,7 @@
        <result column="kingdee_sku_no" property="kingdeeSkuNo" />
        <result column="kingdee_product_name" property="kingdeeProductName" />
        <result column="kingdee_owner" property="kingdeeOwner" />
+       <result column="kingdee_init_qty" property="kingdeeInitQty" />
        <result column="kingdee_closing_qty" property="kingdeeClosingQty" />
        <result column="kingdee_outstock_qty" property="kingdeeOutstockQty" />
        <result column="kingdee_instock_qty" property="kingdeeInstockQty" />
@@ -69,7 +70,64 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$ListDTO">
-
+        SELECT
+        aeidk.id AS id,
+        aeidk.create_time AS createTime,
+        aeidk.update_time AS updateTime,
+        aeidk.create_user_name AS createUserName,
+        aeidk.create_user_id AS createUserId,
+        aeidk.update_user_name AS updateUserName,
+        aeidk.update_user_id AS updateUserId,
+        aeidk.version AS version,
+        aeidk.is_deleted AS isDeleted,
+        aeidk.unique_code AS uniqueCode,
+        aeidk.data_encrypt AS dataEncrypt,
+        aeidk.source_system AS sourceSystem,
+        aeidk.account_code AS accountCode,
+        aeidk.next_level_id AS nextLevelId,
+        aeidk.bill_topic AS billTopic,
+        aeidk.flow_id AS flowId,
+        aeidk.etl_status AS etlStatus,
+        aeidk.node_id AS nodeId,
+        aeidk.instance_id AS instanceId,
+        aeidk.task_id AS taskId,
+        aeidk.source_id AS sourceId,
+        aeidk.last_update_flag AS lastUpdateFlag,
+        aeidk.check_month AS checkMonth,
+        aeidk.check_month_query AS checkMonthQuery,
+        aeidk.warehouse_id AS warehouseId,
+        aeidk.warehouse_code AS warehouseCode,
+        aeidk.warehouse_name AS warehouseName,
+        aeidk.sku_id AS skuId,
+        aeidk.sku_no AS skuNo,
+        aeidk.product_name AS productName,
+        aeidk.closing_qty AS closingQty,
+        aeidk.intransit_qty AS intransitQty,
+        aeidk.kingdee_warehouse_id AS kingdeeWarehouseId,
+        aeidk.kingdee_warehouse_code AS kingdeeWarehouseCode,
+        aeidk.kingdee_warehouse_name AS kingdeeWarehouseName,
+        aeidk.kingdee_warehouse_location AS kingdeeWarehouseLocation,
+        aeidk.kingdee_warehouse_location_name AS kingdeeWarehouseLocationName,
+        aeidk.kingdee_sku_id AS kingdeeSkuId,
+        aeidk.kingdee_sku_no AS kingdeeSkuNo,
+        aeidk.kingdee_product_name AS kingdeeProductName,
+        aeidk.kingdee_owner AS kingdeeOwner,
+        aeidk.kingdee_closing_qty AS kingdeeClosingQty,
+        aeidk.kingdee_init_qty AS kingdeeInitQty,
+        aeidk.kingdee_outstock_qty AS kingdeeOutstockQty,
+        aeidk.kingdee_instock_qty AS kingdeeInstockQty,
+        aeidk.kingdee_closing_intransit_qty AS kingdeeClosingIntransitQty,
+        aeidk.kingdee_outstock_intransit_qty AS kingdeeOutstockIntransitQty,
+        aeidk.kingdee_instock_intransit_qty AS kingdeeInstockIntransitQty,
+        aeidk.diff_closing_intransit_qty AS diffClosingIntransitQty,
+        aeidk.diff_closing_qty AS diffClosingQty,
+        aeidk.remark AS remark
+        FROM ads_erp_inventory_diff_kingdee aeidk
+        WHERE ${params.sqlMap.default}
+        and aeidk.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -82,10 +140,12 @@
 
     <select id="statistics" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$StatisticsDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  ads_erp_inventory_diff_kingdee
-        WHERE is_deleted=FALSE
+            sum(closing_qty) AS closingQty,
+            sum(kingdee_closing_qty) AS kingdeeClosingQty,
+            sum(diff_closing_qty) AS diffClosingQty
+        FROM ads_erp_inventory_diff_kingdee aeidk
+        WHERE ${params.sqlMap.default}
+        and aeidk.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

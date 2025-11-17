@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
@@ -53,6 +54,7 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
             tableAlias = "aeidk"
     )
+    @WebAdvanceQuery
     public ApiResult<AdsErpInventoryDiffKingdeeDTO.StatisticsDTO> statistics(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
        return success(adsErpInventoryDiffKingdeeService.statistics(dto));
     }
@@ -70,6 +72,7 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
             tableAlias = "aeidk"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<AdsErpInventoryDiffKingdeeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffKingdeeService.paging(dto));
     }
