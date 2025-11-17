@@ -456,7 +456,7 @@
         INNER JOIN po_instock_detail pid ON pi.id = pid.main_id
         WHERE pi.is_deleted = FALSE
           AND pi.approve_status = 'approve'
-          AND pi.purchase_org_id = #{purchaseOrgId}
+          AND pi.receive_org_id = #{purchaseOrgId}
           AND pi.supplier_id = #{supplierId}
           AND pid.is_deleted = FALSE
           AND pid.sku_id IN
