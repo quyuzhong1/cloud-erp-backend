@@ -2176,11 +2176,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO generateAssetAcceptDTO : dtoList) {
             AssetAcceptDetailEntity detailEntity = new AssetAcceptDetailEntity();
             BeanUtils.copyProperties(generateAssetAcceptDTO,detailEntity,"id");
+
             detailEntity.setMainId(assetAcceptEntity.getId());
             detailEntity.setSourceDetailId(generateAssetAcceptDTO.getDetailId());
             detailEntity.setSkuId(generateAssetAcceptDTO.getAssetId());
             detailEntity.setSkuNo(generateAssetAcceptDTO.getAssetCode());
             detailEntity.setProductName(generateAssetAcceptDTO.getAssetName());
+            detailEntity.setCostType(generateAssetAcceptDTO.getCostType());
+
             detailEntity.setAcceptQty(generateAssetAcceptDTO.getAcceptQty() != null ? generateAssetAcceptDTO.getAcceptQty().intValue() : 0);
             // 1. 已验收数量 = 已审核资产验收单验收数量
             detailEntity.setAcceptedQty(generateAssetAcceptDTO.getAcceptedQty() != null ? generateAssetAcceptDTO.getAcceptedQty().intValue() : 0);
