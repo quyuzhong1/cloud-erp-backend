@@ -776,6 +776,11 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             return;
         }
         String id = data.getId();
+        
+        // 填充卡片来源名称
+        if (StringUtils.isNotBlank(data.getSourceType())) {
+            data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
+        }
 
         // 查询明细数据
         List<AssetCardDetailEntity> detailList = assetCardDetailService.lambdaQuery()
