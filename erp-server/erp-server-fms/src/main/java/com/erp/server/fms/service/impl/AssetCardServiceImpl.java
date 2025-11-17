@@ -931,6 +931,32 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             }
         }
 
+        // 收集所有需要查询的部门ID
+        List<String> useDeptIds = list.stream()
+                .map(AssetCardDTO.ListDTO::getUseDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询部门信息
+        Map<String, String> deptMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(useDeptIds)) {
+            try {
+                List<com.erp.model.sys.entity.SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(useDeptIds);
+                if (CollUtil.isNotEmpty(deptList)) {
+                    deptMap = deptList.stream()
+                            .filter(dept -> StringUtils.isNotBlank(dept.getId()) && StringUtils.isNotBlank(dept.getName()))
+                            .collect(Collectors.toMap(
+                                    com.erp.model.sys.entity.SysDepartmentEntity::getId,
+                                    com.erp.model.sys.entity.SysDepartmentEntity::getName,
+                                    (v1, v2) -> v1
+                            ));
+                }
+            } catch (Exception e) {
+                log.error("批量查询部门信息失败", e);
+            }
+        }
+
         // 属性赋值
         for(AssetCardDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -954,6 +980,11 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             // 变动方式枚举转换
             if (StringUtils.isNotBlank(data.getChangeMethod())) {
                 data.setChangeMethodName(com.erp.model.fms.enums.ChangeMethodEnum.getName(data.getChangeMethod()));
+            }
+            
+            // 填充部门名称
+            if (StringUtils.isNotBlank(data.getUseDeptId())) {
+                data.setUseDeptName(deptMap.get(data.getUseDeptId()));
             }
             
             // 明细字段的枚举值转换
