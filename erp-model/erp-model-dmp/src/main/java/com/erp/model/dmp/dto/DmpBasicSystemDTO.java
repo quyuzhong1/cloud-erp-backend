@@ -185,6 +185,11 @@ public class DmpBasicSystemDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用
+         */
+        private String disabledDesc;
+
+        /**
          * 创建人【可排序】
          */
         private String createUserName;

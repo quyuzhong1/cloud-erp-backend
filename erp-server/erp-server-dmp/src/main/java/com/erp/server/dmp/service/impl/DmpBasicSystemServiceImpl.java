@@ -21,6 +21,7 @@ import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemTypeEnum;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -241,6 +242,10 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     private void fillList(List<DmpBasicSystemDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
+        }
+        for (DmpBasicSystemDTO.ListDTO data : list) {
+            data.setTypeName(DmpBasicSystemTypeEnum.getName(data.getType()));
+            data.setDisabledDesc(data.getDisabled() ? "停用" : "启用");
         }
 
     }

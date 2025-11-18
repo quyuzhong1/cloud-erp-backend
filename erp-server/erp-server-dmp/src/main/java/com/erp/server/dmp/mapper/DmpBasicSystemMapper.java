@@ -49,13 +49,6 @@ public interface DmpBasicSystemMapper extends BaseMapper<DmpBasicSystemEntity> {
      */
     List<ApproveStatusQtyDTO> listCount(@Param("params") DmpBasicSystemDTO.PagingParamDTO params);
 
-    /**
-     * 导出Excel查询
-     * @param params
-     * @return
-     */
-    List<DmpBasicSystemDTO.ListDTO> listExport(@Param("params") DmpBasicSystemDTO.ExportDTO params);
-
 
     /**
      * 获取状态统计
