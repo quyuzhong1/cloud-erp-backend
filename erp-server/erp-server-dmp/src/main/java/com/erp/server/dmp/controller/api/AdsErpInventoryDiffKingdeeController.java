@@ -139,8 +139,9 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
             tableAlias = "aeidk"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "金蝶库存差异导出Excel数据")
-    public void exportList(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response) {
-        adsErpInventoryDiffKingdeeService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = adsErpInventoryDiffKingdeeService.exportList(dto, response);
+        return result ? ApiResult.success(result) : ApiResult.error(result.toString());
     }
 
     /**

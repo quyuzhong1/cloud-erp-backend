@@ -130,25 +130,26 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
     }
 
     @Override
-    public void exportList(AdsErpInventoryDiffKingdeeDTO.ExportDTO param, HttpServletResponse response) {
+    public Boolean exportList(AdsErpInventoryDiffKingdeeDTO.ExportDTO param, HttpServletResponse response) {
         List<AdsErpInventoryDiffKingdeeDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
-           return;
+           return false;
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/adsErpInventoryDiffKingdee.xlsx";
-        String name = "金蝶库存差异导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+//        fillList(list);
+//
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/adsErpInventoryDiffKingdee.xlsx";
+//        String name = "金蝶库存差异导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
+        return false;
     }
 
 

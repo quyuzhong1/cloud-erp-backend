@@ -74,7 +74,7 @@ public interface AdsErpInventoryDiffKingdeeService extends SuperService<AdsErpIn
     * @param response
     * @return
     */
-    void exportList(AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(AdsErpInventoryDiffKingdeeDTO.ExportDTO dto, HttpServletResponse response);
 
 
     /**
