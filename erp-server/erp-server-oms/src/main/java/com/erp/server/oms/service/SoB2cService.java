@@ -1139,4 +1139,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity);
+
+    /**
+     * 生成组包计划预览
+     * @param soIds
+     * @return
+     */
+    List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
+
+    BatchResultDTO retryPackagePlan(String soId);
 }

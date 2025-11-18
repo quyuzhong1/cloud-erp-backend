@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -551,7 +552,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
@@ -738,7 +744,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             }
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         qcInfoService.autoReceiveToQcDTO(addList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1727,37 +1738,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .update();
     }
 
-    @Override
-    public Boolean generateStockInWhenQcFinish(List<String> ids) {
-        List<WarehouseReceiveEntity> warehouseReceiveEntityList = this.listByIds(ids);
-        if(CollectionUtils.isEmpty(warehouseReceiveEntityList)){
-            return true;
-        }
-        List<WarehouseReceiveDetailEntity> allDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
-        Map<String,List<WarehouseReceiveDetailEntity>> detailMap = allDetailList.stream().collect(Collectors.groupingBy(WarehouseReceiveDetailEntity::getMainId));
-        //去掉质检单还没有全部质检的
-        for(WarehouseReceiveEntity main : warehouseReceiveEntityList){
-            List<WarehouseReceiveDetailEntity> detailList = detailMap.get(main.getId());
-            if(CollectionUtils.isEmpty(detailList)){
-                continue;
-            }
-            List<QcInfoEntity> qcInfoList = poInstockService.getReceiveQcInfo(detailList,new ArrayList<>());
-            if(CollectionUtils.isEmpty(qcInfoList)){
-                continue;
-            }
-            if(!qcInfoList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
-                continue;
-            }
-            //暂停需求，因为入货数量不确定，可能质检不良率达到一定比例会整单退掉，后面质检规则确定后再看开发
-            List<WarehouseReceiveDTO.GenerateStockInDTO> dtos = new ArrayList<>();
-//            for(WarehouseReceiveDetailEntity detail : detailList){
-//                WarehouseReceiveDTO.GenerateStockInDTO addDTO = WarehouseReceiveConverter.INSTANCE.entityToGenerateStockConvert(detail,main);
-//                dtos.add(addDTO);
-//            }
-//            this.generateStockIn(dtos);
-        }
-        return true;
-    }
 
     @Override
     public SupplierCountDTO countOrderBySupplierId(String supplierId) {

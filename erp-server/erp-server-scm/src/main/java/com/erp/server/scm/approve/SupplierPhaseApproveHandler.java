@@ -41,4 +41,9 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
         }
         return supplierPhaseService.approveEnd(new ApproveOneDTO(entity.getId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
     }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
+    }
 }

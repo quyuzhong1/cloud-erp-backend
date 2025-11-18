@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -765,11 +766,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
         //库存校验
         checkInventoryQty(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购退货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "审核操作");
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             String confirmStatus = "";
@@ -823,7 +828,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<String> purchaseDetailIdList = new ArrayList<>();
 
             //审核通过-自动生成-委外退料单，purchaseDetailIdList用于取退货子级采购订单明细更新执行状态
-            List<PoReturnEntity> poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            List<PoReturnEntity> poReturnEntityList1;
+            try {
+                poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            } finally {
+                UserContext.setIsUserSystem(originalValue);
+            }
+
             if (CollectionUtils.isNotEmpty(poReturnEntityList1)){
                 poReturnEntityList1.add(entity);
             }else {
@@ -863,10 +876,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
             updateArrivalState(purchaseDetailIdList);
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //自动生成补货采购订单
         autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
         //审核通过生成对账明细
         autoAddPoReconciliationDetail(poReturnEntityList1);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1674,24 +1692,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
 
-    /**
-     * 批量生成退货单
-     *
-     * @param list
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-04-25 11:09
-     */
-    @Override
-    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                this.add(item);
-            }
-        }
-        return Boolean.TRUE;
-
-    }
 
     /**
      * 修改到货状态

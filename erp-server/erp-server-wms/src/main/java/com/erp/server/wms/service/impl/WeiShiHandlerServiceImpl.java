@@ -160,6 +160,11 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return success();
+    }
+
+    @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));

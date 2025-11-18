@@ -48,7 +48,6 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -103,8 +102,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -121,7 +118,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
 
 /**
@@ -844,7 +840,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
         }
     }
@@ -1758,6 +1754,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             return mqResponseDTO;
         }
 
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try{
             // 生成其他入库单
             OtherInstockDTO.AddDTO otherInstockAddDTO = downstreamDTO.getOtherInstockAddDTO();
@@ -1784,7 +1783,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             List<String> soOutstockIds = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
 
             //提审
-            soOutstockService.submit(soOutstockIds,Boolean.FALSE);
+            soOutstockService.submit(soOutstockEntities.get(0),Boolean.FALSE);
+
 
             //审核通过
             ApproveOneDTO approveOneDTO = new ApproveOneDTO();
@@ -1804,6 +1804,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             log.error("生成其他入库单和销售出库单失败，exhibitionOrderId: {}", exhibitionOrderId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
         return mqResponseDTO;
     }
@@ -1835,6 +1838,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             log.warn("soId 类型转换失败: {} 或 exhibitionOrderId 类型转换失败: {}", data.get("soId"), data.get("exhibitionOrderId"));
             return mqResponseDTO;
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
 
         //销售出库单
         List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSoId, soId).list();
@@ -1842,6 +1847,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             StringBuilder sb = new StringBuilder();
             List<BatchResultDTO> resultDTOS = new ArrayList<>(soOutstockEntities.size());
             for (SoOutstockEntity entity : soOutstockEntities) {
+                //自动生成功能系统标识
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     BatchResultDTO result = soOutstockService.disApprove(entity, Boolean.TRUE);
                     if(!result.getSuccess()){
@@ -1851,6 +1858,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 }catch (Exception e){
                     sb.append(StrUtil.format("销售出库单反审核失败,soOutstockId:{},e:{};",entity.getId(),e.getMessage()));
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }
 
@@ -1859,6 +1869,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 String idsStr = soOutstockEntities.stream()
                         .map(SoOutstockEntity::getId)
                         .collect(Collectors.joining(","));
+                //自动生成功能系统标识
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = soOutstockService.delete(ids);
                     if(!delete){
@@ -1870,6 +1882,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                     mqResponseDTO.setErrorMsg(StrUtil.format("销售出库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.warn(sb.toString());
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());
@@ -1885,6 +1900,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             StringBuilder sb = new StringBuilder();
             List<BatchResultDTO> resultDTOS = new ArrayList<>(otherInstockEntities.size());
             for (OtherInstockEntity entity : otherInstockEntities) {
+
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     BatchResultDTO result = bean.disApprove(entity.getId(), Boolean.TRUE);
                     if(!result.getSuccess()){
@@ -1895,6 +1912,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                     log.error("其他入库单反审核失败",e);
                     sb.append(StrUtil.format("其他入库单反审核失败,otherInstockId:{},e:{} ;",entity.getId(),e.getMessage()));
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }
 
@@ -1903,6 +1923,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 String idsStr = otherInstockEntities.stream()
                         .map(OtherInstockEntity::getId)
                         .collect(Collectors.joining(","));
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = bean.delete(ids);
                     if(!delete){
@@ -1914,6 +1935,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                     mqResponseDTO.setErrorMsg(StrUtil.format("其他入库单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.error("其他入库单删除失败",e);
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());

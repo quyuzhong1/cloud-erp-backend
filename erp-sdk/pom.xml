@@ -52,6 +52,7 @@
         <module>erp-sdk-wms-weishi</module>
         <module>erp-sdk-wms-damai</module>
         <module>erp-sdk-oms-dht</module>
+        <module>erp-sdk-oms-wildberries</module>
     </modules>
 
     <dependencies>

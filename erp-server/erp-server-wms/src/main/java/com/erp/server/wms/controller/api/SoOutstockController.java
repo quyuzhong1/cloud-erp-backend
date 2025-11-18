@@ -24,7 +24,6 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -139,9 +138,23 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.submit(dto.getIds(),Boolean.TRUE);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soOutstockService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("销售出库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

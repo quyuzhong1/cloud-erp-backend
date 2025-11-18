@@ -195,14 +195,18 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             if(CollUtil.isNotEmpty(dto.getAgeInfoList())){
                 List<OverseasInventoryAgeDetailEntity> addList = new ArrayList<>();
                 List<OverseasInventoryAgeDetailEntity> oldDetails = overseasInventoryAgeDetailService.lambdaQuery()
-                        .eq(OverseasInventoryAgeDetailEntity::getPullDate, LocalDate.now())
                         .eq(OverseasInventoryAgeDetailEntity::getMainId,entity.getId())
                         .list();
                 for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {
                     // 计算日期差
-                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
+                    int daysBetween;
+                    if(Objects.nonNull(ageDTO.getInventoryAge())){
+                        daysBetween = ageDTO.getInventoryAge();
+                    }else{
+                        daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
+                    }
 
-                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
+                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate()) && v.getInventoryAge().equals(daysBetween)).findFirst().orElse(null);
                     if(null == oldDetail){
                         OverseasInventoryAgeDetailEntity detailEntity = new OverseasInventoryAgeDetailEntity();
                         BeanMapper.copy(ageDTO, detailEntity);

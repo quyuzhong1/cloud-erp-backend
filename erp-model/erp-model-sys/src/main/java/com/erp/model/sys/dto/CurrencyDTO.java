@@ -41,8 +41,10 @@ public class CurrencyDTO implements Serializable {
          * 金蝶编码
          */
         private String kingdeeCode;
-
-
+        /**
+         * 数字代码
+         */
+        private String currencyNum;
         /**
          * 是否禁用
          * true 禁用

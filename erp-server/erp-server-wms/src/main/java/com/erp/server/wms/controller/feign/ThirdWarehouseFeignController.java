@@ -97,4 +97,18 @@ public class ThirdWarehouseFeignController extends BaseController {
             return failure(serviceException.getMsg());
         }
     }
+
+    /**
+     * 上传面单
+     * @return
+     */
+    @PostMapping("/uploadHandoverFile")
+    public ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@RequestBody ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        try {
+            ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(uploadHandoverFileReq.getThirdWarehouseProvideCode());
+            return service.uploadHandoverFile(uploadHandoverFileReq, uploadHandoverFileReq.getAuthId());
+        } catch (ServiceException serviceException) {
+            return failure(serviceException.getMsg());
+        }
+    }
 }

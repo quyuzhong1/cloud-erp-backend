@@ -163,6 +163,12 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("declare_org_id")
     private String declareOrgId;
 
+    /**
+     * 推送平台单号（记录物流下单时单号）
+     */
+    @TableField("push_platform_code")
+    private String pushPlatformCode;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String CODE = "code";

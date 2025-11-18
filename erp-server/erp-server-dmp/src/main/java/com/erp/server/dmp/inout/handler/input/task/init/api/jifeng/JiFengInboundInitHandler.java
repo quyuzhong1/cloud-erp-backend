@@ -12,6 +12,7 @@ import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -52,6 +53,9 @@ public class JiFengInboundInitHandler extends DmpInputInitHandler {
 	
 	@Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
+
+	@Resource
+	private OverseasProviderFeign overseasProviderFeign;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -81,24 +85,48 @@ public class JiFengInboundInitHandler extends DmpInputInitHandler {
             
             for(String receiveCode : receiveCodeList) {
 				JiFengBaseResp<JiFengInboundResp> resp = jiFengService.getInbound(overseasProviderEntity.getAuthJson(),receiveCode);
-            	if(Objects.isNull(resp) || resp.getCode() != 0) {
-					log.error("极风获取入库单失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
-            		continue;
-            	}
-				JiFengInboundResp jiFengInboundResp = resp.getData();
-				if(jiFengInboundResp == null || Objects.isNull(jiFengInboundResp.getPutawayLastTime())) {
-					log.error("极风获取入库单失败，入库单号：{}，入库单数据或时间为空",receiveCode);
-					continue;
+            	if(resp.getCode() != 0) {
+					if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+						overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+						resp = jiFengService.getInbound(overseasProviderEntity.getAuthJson(),receiveCode);
+						if(resp.getCode() != 0) {
+							log.error("极风获取入库单失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+							continue;
+						}
+						JiFengInboundResp jiFengInboundResp = resp.getData();
+						if(jiFengInboundResp == null || Objects.isNull(jiFengInboundResp.getPutawayLastTime())) {
+							log.error("极风获取入库单失败，入库单号：{}，入库单数据或时间为空",receiveCode);
+							continue;
+						}
+						List<JiFengInboundResp.SkuListDTO> skuListDTOS = jiFengInboundResp.getSkuList();
+						if(CollUtil.isEmpty(skuListDTOS)) {
+							log.warn("极风获取入库单失败，入库单号：{}，sku列表信息为空",receiveCode);
+							continue;
+						}
+						skuListDTOS.forEach(v->{
+							v.setPutawayLastTime(jiFengInboundResp.getPutawayLastTime());
+						});
+						allResult.add(resp.getData());
+					}else{
+						log.error("极风获取入库单失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+						continue;
+					}
+            	}else{
+					JiFengInboundResp jiFengInboundResp = resp.getData();
+					if(jiFengInboundResp == null || Objects.isNull(jiFengInboundResp.getPutawayLastTime())) {
+						log.error("极风获取入库单失败，入库单号：{}，入库单数据或时间为空",receiveCode);
+						continue;
+					}
+					List<JiFengInboundResp.SkuListDTO> skuListDTOS = jiFengInboundResp.getSkuList();
+					if(CollUtil.isEmpty(skuListDTOS)) {
+						log.warn("极风获取入库单失败，入库单号：{}，sku列表信息为空",receiveCode);
+						continue;
+					}
+					skuListDTOS.forEach(v->{
+						v.setPutawayLastTime(jiFengInboundResp.getPutawayLastTime());
+					});
+					allResult.add(resp.getData());
 				}
-				List<JiFengInboundResp.SkuListDTO> skuListDTOS = jiFengInboundResp.getSkuList();
-				if(CollUtil.isEmpty(skuListDTOS)) {
-					log.warn("极风获取入库单失败，入库单号：{}，sku列表信息为空",receiveCode);
-					continue;
-				}
-				skuListDTOS.forEach(v->{
-					v.setPutawayLastTime(jiFengInboundResp.getPutawayLastTime());
-				});
-            	allResult.add(resp.getData());
             }
         }
 		
