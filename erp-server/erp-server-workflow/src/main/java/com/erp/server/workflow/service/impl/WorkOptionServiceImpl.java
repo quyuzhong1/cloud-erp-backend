@@ -561,6 +561,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveDTO.setType(dto.getType());
                 plmTaskFeign.productChangeApprove(approveDTO);
                 break;
+            case MOLD_INFO:
+                ApproveOneDTO moldApproveDTO = new ApproveOneDTO();
+                moldApproveDTO.setId(dto.getId());
+                moldApproveDTO.setComment(dto.getComment());
+                moldApproveDTO.setType(dto.getType());
+                plmTaskFeign.moldInfoApprove(moldApproveDTO);
+                break;
+            case MOLD_REF_SKU:
+                ApproveOneDTO moldRefSkuApproveDTO = new ApproveOneDTO();
+                moldRefSkuApproveDTO.setId(dto.getId());
+                moldRefSkuApproveDTO.setComment(dto.getComment());
+                moldRefSkuApproveDTO.setType(dto.getType());
+                plmTaskFeign.moldRefSkuApprove(moldRefSkuApproveDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }

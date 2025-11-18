@@ -690,4 +690,24 @@ public interface PlmTaskFeign {
 
     @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
+
+
+
+    /**
+     * 模具档案审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldInfoApprove")
+    void moldInfoApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 模具关联SKU审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
+    void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
 }
