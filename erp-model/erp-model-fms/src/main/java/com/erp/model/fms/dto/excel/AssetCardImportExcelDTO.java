@@ -33,6 +33,12 @@ public class AssetCardImportExcelDTO {
     private String orgName;
 
     /**
+     * 资产组织ID（从资产组织名称解析得到）
+     */
+    @ExcelIgnore
+    private String orgId;
+
+    /**
      * 计量单位名称（Excel输入）
      */
     @ExcelProperty(value = "*计量单位", index = 2)

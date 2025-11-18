@@ -10,6 +10,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.enums.*;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -27,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -54,6 +56,7 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
     private static final String CACHE_DEPT_NAME_TO_ID = "asset_card:dept_name_to_id:";
     private static final String CACHE_ASSET_LOCATION_NAME_TO_ID = "asset_card:asset_location_name_to_id:";
     private static final String CACHE_SUPPLIER_NAME_TO_ID = "asset_card:supplier_name_to_id:";
+    private static final String CACHE_ORG_NAME_TO_ID = "asset_card:org_name_to_id:";
     private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
 
     private final AssetCardService assetCardService = SpringUtil.getBean(AssetCardService.class);
@@ -222,6 +225,14 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
      * 验证并解析关联数据ID
      */
     private void validateAndResolveIds(AssetCardImportExcelDTO data, List<String> errorMsgList) {
+        // 验证资产组织名称是否存在并解析资产组织ID
+        String orgId = getOrgIdByName(data.getOrgName());
+        if (StrUtil.isBlank(orgId)) {
+            errorMsgList.add("资产组织【" + data.getOrgName() + "】不存在");
+        } else {
+            data.setOrgId(orgId);
+        }
+        
         // 验证供应商名称是否存在并解析供应商ID（如果填写了）
         if (StringUtils.isNotBlank(data.getSupplierName())) {
             String supplierId = getSupplierIdByName(data.getSupplierName());
@@ -352,6 +363,39 @@ public class AssetCardExcelListener extends AnalysisEventListener<AssetCardImpor
             return null;
         } catch (Exception e) {
             log.error("查询部门ID失败，部门名称：{}，错误：{}", deptName, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 根据组织名称查询组织ID（带缓存）
+     */
+    private String getOrgIdByName(String orgName) {
+        if (StrUtil.isBlank(orgName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_ORG_NAME_TO_ID + orgName;
+        String orgId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(orgId)) {
+            return orgId;
+        }
+
+        try {
+            // 调用组织服务根据名称查询组织信息
+            SysAccountingCompanyEntity company = sysUserFeign.getCompanyByName(orgName);
+
+            if (Objects.nonNull(company) && StrUtil.isNotBlank(company.getId())) {
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(company.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return company.getId();
+            }
+
+            log.warn("未找到组织名称：{}", orgName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询组织ID失败，组织名称：{}，错误：{}", orgName, e.getMessage(), e);
             return null;
         }
     }

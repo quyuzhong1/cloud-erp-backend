@@ -1097,42 +1097,68 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             successList = filteredList;
         }
         
+        // 按序号分组
+        Map<String, List<AssetCardImportExcelDTO>> groupedByNo = successList.stream()
+                .collect(Collectors.groupingBy(e -> e.getNo() != null ? String.valueOf(e.getNo()) : ""));
+        
         // 批量保存数据
-        for (AssetCardImportExcelDTO excelDTO : successList) {
+        for (Map.Entry<String, List<AssetCardImportExcelDTO>> entry : groupedByNo.entrySet()) {
+            List<AssetCardImportExcelDTO> excelDTOList = entry.getValue();
+            if (CollUtil.isEmpty(excelDTOList)) {
+                continue;
+            }
+            
+            // 使用第一行数据作为主表数据
+            AssetCardImportExcelDTO mainExcelDTO = excelDTOList.get(0);
+            
             try {
                 AssetCardDTO.AddDTO addDTO = new AssetCardDTO.AddDTO();
                 
                 // 主表数据（枚举字段已经在Listener中转换为code）
-                addDTO.setOrgName(excelDTO.getOrgName());
-                addDTO.setType(excelDTO.getType());
-                addDTO.setName(excelDTO.getName());
-                addDTO.setUnit(excelDTO.getUnit());
-                addDTO.setQty(excelDTO.getQty());
-                addDTO.setStartUseDate(excelDTO.getStartUseDate());
-                addDTO.setRemark(excelDTO.getRemark());
-                addDTO.setStatus(excelDTO.getStatus());
-                addDTO.setChangeMethod(excelDTO.getChangeMethod());
+                addDTO.setOrgId(mainExcelDTO.getOrgId());
+                addDTO.setOrgName(mainExcelDTO.getOrgName());
+                addDTO.setType(mainExcelDTO.getType());
+                addDTO.setName(mainExcelDTO.getName());
+                addDTO.setUnit(mainExcelDTO.getUnit());
+                // 主表数量应该是所有明细数量的总和
+                Integer totalQty = excelDTOList.stream()
+                        .map(AssetCardImportExcelDTO::getQty)
+                        .filter(Objects::nonNull)
+                        .reduce(0, Integer::sum);
+                addDTO.setQty(totalQty);
+                addDTO.setStartUseDate(mainExcelDTO.getStartUseDate());
+                addDTO.setRemark(mainExcelDTO.getRemark());
+                addDTO.setStatus(mainExcelDTO.getStatus());
+                addDTO.setChangeMethod(mainExcelDTO.getChangeMethod());
                 addDTO.setSourceType(CardSourceEnum.MANUAL_CREATE.getCode());
                 
-                // 明细数据
-                AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
-                detailDTO.setAssetLocationId(excelDTO.getAssetLocationId());
-                detailDTO.setQty(excelDTO.getQty());
-                detailDTO.setSupplierId(excelDTO.getSupplierId());
-                detailDTO.setSupplierName(excelDTO.getSupplierName());
-                detailDTO.setUseDeptName(excelDTO.getUseDeptName());
-                detailDTO.setCostType(excelDTO.getCostType());
-                detailDTO.setRemark(excelDTO.getDetailRemark());
+                // 明细数据：将所有同序号的行作为明细
+                List<AssetCardDetailDTO.AddDTO> detailList = new ArrayList<>();
+                for (AssetCardImportExcelDTO excelDTO : excelDTOList) {
+                    AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
+                    detailDTO.setAssetLocationId(excelDTO.getAssetLocationId());
+                    detailDTO.setQty(excelDTO.getQty());
+                    detailDTO.setSupplierId(excelDTO.getSupplierId());
+                    detailDTO.setSupplierName(excelDTO.getSupplierName());
+                    detailDTO.setUseDeptName(excelDTO.getUseDeptName());
+                    detailDTO.setCostType(excelDTO.getCostType());
+                    detailDTO.setRemark(excelDTO.getDetailRemark());
+                    detailList.add(detailDTO);
+                }
                 
-                addDTO.setDetailList(Collections.singletonList(detailDTO));
+                addDTO.setDetailList(detailList);
                 
                 // 保存
                 this.add(addDTO);
                 
             } catch (Exception e) {
-                log.error("保存资产卡片失败：{}", e.getMessage(), e);
-                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
-                errorList2.add(excelDTO);
+                log.error("保存资产卡片失败，序号：{}，错误：{}", entry.getKey(), e.getMessage(), e);
+                // 将所有同序号的数据都标记为错误
+                String errorMsg = e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage();
+                excelDTOList.forEach(excelDTO -> {
+                    excelDTO.setErrorMsg(errorMsg);
+                    errorList2.add(excelDTO);
+                });
             }
         }
     }
