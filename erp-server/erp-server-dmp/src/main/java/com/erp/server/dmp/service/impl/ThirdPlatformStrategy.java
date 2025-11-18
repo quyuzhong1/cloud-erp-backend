@@ -184,8 +184,11 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
             //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
             if (Objects.isNull(thirdAddDTO)) {
                 // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                        existMapping.getThirdName(), "");
+                String msg = StrUtil.format("编辑绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                        existMapping.getSysName(),
+                        existMapping.getThirdCode(),
+                        existMapping.getThirdName()
+                );
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 thirdMappingMapper.deleteById(existMapping.getId());
             } else {
@@ -219,8 +222,11 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
     public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
-            String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                    existMapping.getThirdName(), "");
+            String msg = StrUtil.format("解除绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                    existMapping.getSysName(),
+                    existMapping.getThirdCode(),
+                    existMapping.getThirdName()
+            );
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
         });
         thirdMappingMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
