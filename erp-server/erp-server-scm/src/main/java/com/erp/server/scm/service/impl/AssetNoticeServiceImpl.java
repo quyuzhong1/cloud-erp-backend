@@ -487,13 +487,15 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
                 List<SupplierContactDTO.UpdateDTO> updateDTOS = supplierContactService.listBySupplierId(supplierId);
 
-                updateDTOS.stream()
-                        .filter(obj -> obj.getIsDefault())
+                SupplierContactDTO.UpdateDTO selectedDTO = updateDTOS.stream()
+                        .filter(obj -> Boolean.TRUE.equals(obj.getIsDefault()))
                         .findFirst()
-                        .ifPresent(defaultContact -> {
-                            supplierDTO.setContactName(defaultContact.getPerson());
-                            supplierDTO.setContactTelNumber(defaultContact.getTelNumber());
-                        });
+                        .orElse(updateDTOS.isEmpty() ? null : updateDTOS.get(0));
+
+                if (selectedDTO != null) {
+                    supplierDTO.setContactName(selectedDTO.getPerson());
+                    supplierDTO.setContactTelNumber(selectedDTO.getTelNumber());
+                }
 
             }
             List<SupplierAccountDTO.UpdateDTO> supplierAccountList = supplierAccountService.getBySupplierId(supplierId);
