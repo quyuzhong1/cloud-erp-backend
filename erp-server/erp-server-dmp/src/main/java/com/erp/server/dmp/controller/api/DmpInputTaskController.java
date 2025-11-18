@@ -84,7 +84,7 @@ public class DmpInputTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpInputTask:paging",
-            tableAlias = ""
+            tableAlias = "dit"
     )
     public ApiResult<List<DmpInputTaskDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(dmpInputTaskService.tabList(dto));
@@ -101,7 +101,7 @@ public class DmpInputTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpInputTask:paging",
-            tableAlias = ""
+            tableAlias = "dit"
     )
     @WebAdvanceQuery(handler = DmpInputTaskQueryHandler.class)
     public ApiResult<PagingVO<DmpInputTaskDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
@@ -180,7 +180,7 @@ public class DmpInputTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpInputTask:export",
-            tableAlias = ""
+            tableAlias = "dit"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取任务导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpInputTaskDTO.ExportDTO dto, HttpServletResponse response) {

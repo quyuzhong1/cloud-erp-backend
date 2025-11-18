@@ -112,7 +112,7 @@ public class DmpCfgInputController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgInput:paging",
-            tableAlias = ""
+            tableAlias = "dci"
     )
     public ApiResult<List<DmpCfgInputDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(dmpCfgInputService.tabList(dto));
@@ -129,7 +129,7 @@ public class DmpCfgInputController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgInput:paging",
-            tableAlias = ""
+            tableAlias = "dci"
     )
     @WebAdvanceQuery(handler = DmpCfgInputQueryHandler.class)
     public ApiResult<PagingVO<DmpCfgInputDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.PagingParamDTO> dto) {
@@ -289,7 +289,7 @@ public class DmpCfgInputController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgInput:export",
-            tableAlias = ""
+            tableAlias = "dci"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取配置导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgInputDTO.ExportDTO dto, HttpServletResponse response) {
@@ -308,7 +308,7 @@ public class DmpCfgInputController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgInput:paging",
-            tableAlias = ""
+            tableAlias = "dci"
     )
     public ApiResult<PagingVO<DmpCfgInputDTO.ListDmpCfgInputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.SimplePagingParamDTO> dto) {
         Page<DmpCfgInputEntity> page = dmpCfgInputService.lambdaQuery()
