@@ -1833,6 +1833,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(subList);
                     if (CollectionUtils.isNotEmpty(stockInDetails)) {
                         stockInSum = stockInDetails.stream()
+                                .filter(e -> ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                                 .map(PoInstockDetailEntity::getStockInQty)
                                 .filter(Objects::nonNull)
                                 .reduce(MathUtil.ZERO, Integer::sum);
@@ -1841,6 +1842,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     List<PoReturnDetailEntity> returnDetails = wmsTaskFeign.listReturnOrderDetailByPodIds(subList);
                     if (CollectionUtils.isNotEmpty(returnDetails)) {
                         returnSum = returnDetails.stream()
+                                .filter(e -> ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                                 .map(PoReturnDetailEntity::getReturnQty)
                                 .filter(Objects::nonNull)
                                 .reduce(MathUtil.ZERO, Integer::sum);
