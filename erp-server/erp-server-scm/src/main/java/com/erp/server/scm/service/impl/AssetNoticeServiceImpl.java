@@ -484,10 +484,17 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 supplierDTO.setPayMethodId(supplier.getPayMethodId());
                 //结算币种
                 supplierDTO.setPayCurrency(supplier.getPayCurrency());
-                //联系人名称
-                supplierDTO.setContactName(supplier.getPerson());
-                //联系电话
-                supplierDTO.setContactTelNumber(supplier.getTelNumber());
+
+                List<SupplierContactDTO.UpdateDTO> updateDTOS = supplierContactService.listBySupplierId(supplierId);
+
+                updateDTOS.stream()
+                        .filter(obj -> obj.getIsDefault())
+                        .findFirst()
+                        .ifPresent(defaultContact -> {
+                            supplierDTO.setContactName(defaultContact.getPerson());
+                            supplierDTO.setContactTelNumber(defaultContact.getTelNumber());
+                        });
+
             }
             List<SupplierAccountDTO.UpdateDTO> supplierAccountList = supplierAccountService.getBySupplierId(supplierId);
             SupplierAccountDTO.UpdateDTO supplierAccount = supplierAccountList.stream().filter(obj -> obj.getIsDefault().equals(Boolean.TRUE)).findFirst().get();
