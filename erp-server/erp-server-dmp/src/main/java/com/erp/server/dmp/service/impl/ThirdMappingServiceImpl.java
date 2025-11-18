@@ -153,6 +153,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         String kingDeeCode = checkData(addDTO, addDTO.getSaveList(), addDTO.getDeleteList(), addDTO.getUpdateList());
         //删除数据
         List<ThirdMappingEntity> deleteList = addDTO.getDeleteList();
+        // 平台系统信息
+        Map<String, String> thirdPlatformSysTypeMap =  dictBasicService.lambdaQuery()
+                    .eq(DictBasicEntity::getType, "thirdPlatformSysType")
+                    .list().stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,  (v1, v2) -> v1));
+
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(existMapping -> {
                 if("logistics".equals(existMapping.getType())){
@@ -161,8 +166,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                             existMapping.getThirdName(), "");
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 } else if ("platform".equals(existMapping.getType())){
-                    String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                            existMapping.getThirdName(), "");
+                    String msg = StrUtil.format("解除绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
@@ -192,8 +200,12 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                             oldEntity.getThirdName(), existMapping.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 } else if ("platform".equals(existMapping.getType())){
-                    String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                            oldEntity.getThirdName(), existMapping.getThirdName());
+                    // 操作日志
+                    String msg = StrUtil.format("编辑绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
@@ -219,10 +231,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                             "", newEntity.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 } else if ("platform".equals(newEntity.getType())){
-                        // 操作日志
-                        String msg = StrUtil.format("编辑了【{}】的平台由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
-                                "", newEntity.getThirdName());
-                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                    // 操作日志
+                    String msg = StrUtil.format("新增了绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            newEntity.getSysName(),
+                            newEntity.getThirdCode(),
+                            newEntity.getThirdName()
+                    );
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),

@@ -43,7 +43,19 @@
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$ListDTO">
         select
-        <include refid="Base_Column_List"></include>
+            id,
+            create_time as createTime,
+            update_time as updateTime,
+            create_user_name as createUserName,
+            create_user_id as createUserId,
+            update_user_name as updateUserName,
+            update_user_id as updateUserId,
+            version,
+            is_deleted,
+            code,
+            name,
+            type,
+            disabled
         from dmp_basic_system
         where
             ${params.sqlMap.default}

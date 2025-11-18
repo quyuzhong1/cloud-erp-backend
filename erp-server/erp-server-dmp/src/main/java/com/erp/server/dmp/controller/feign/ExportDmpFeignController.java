@@ -89,57 +89,57 @@ public class ExportDmpFeignController {
         return afterSaleService.exportList(dto);
     }
 
-    @PostMapping("/exportBasicSystemDetail")
+    @PostMapping("/exportDmpBasicSystem")
     @WebAdvanceQuery(handler = DmpBasicSystemQueryHandler.class)
-    public PagingVO<DmpBasicSystemDTO.ListDTO> exportBasicSystemDetail(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpBasicSystemDTO.ListDTO> exportBasicSystem(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto) {
         return dmpBasicSystemService.paging(dto);
     }
 
-    @PostMapping("/exportDmpCfgEtlDetail")
+    @PostMapping("/exportDmpCfgEtl")
     @WebAdvanceQuery(handler = DmpCfgEtlQueryHandler.class)
-    public PagingVO<DmpCfgEtlDTO.ListDTO> exportDmpCfgEtlDetail(@RequestBody @Validated PagingDTO<DmpCfgEtlDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpCfgEtlDTO.ListDTO> exportDmpCfgEtl(@RequestBody @Validated PagingDTO<DmpCfgEtlDTO.PagingParamDTO> dto) {
         return dmpCfgEtlService.paging(dto);
     }
 
     @PostMapping("/exportDmpCfgInput")
     @WebAdvanceQuery(handler = DmpCfgInputQueryHandler.class)
-    public PagingVO<DmpCfgInputDTO.ListDTO> exportDmpCfgInputDetail(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpCfgInputDTO.ListDTO> exportDmpCfgInput(@RequestBody @Validated PagingDTO<DmpCfgInputDTO.PagingParamDTO> dto) {
         return dmpCfgInputService.paging(dto);
     }
 
     @PostMapping("/exportDmpCfgInputDetail")
     @WebAdvanceQuery(handler = DmpCfgOutputDetailQueryHandler.class)
-    public PagingVO<DmpCfgInputDetailDTO.ListDTO> exportDmpCfgInputDetailDetail(@RequestBody @Validated PagingDTO<DmpCfgInputDetailDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpCfgInputDetailDTO.ListDTO> exportDmpCfgInputDetail(@RequestBody @Validated PagingDTO<DmpCfgInputDetailDTO.PagingParamDTO> dto) {
         return dmpCfgInputDetailService.paging(dto);
     }
 
-    @PostMapping("/exportDmpCfgOutputDetail")
+    @PostMapping("/exportDmpCfgOutput")
     @WebAdvanceQuery(handler = DmpCfgOutputQueryHandler.class)
-    public PagingVO<DmpCfgOutputDTO.ListDTO> exportDmpCfgOutputDetail(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpCfgOutputDTO.ListDTO> exportDmpCfgOutput(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.PagingParamDTO> dto) {
         return dmpCfgOutputService.paging(dto);
     }
 
-    @PostMapping("/exportDmpCfgOutputDetailDetail")
+    @PostMapping("/exportDmpCfgOutputDetail")
     @WebAdvanceQuery(handler = DmpCfgInputDetailQueryHandler.class)
-    public PagingVO<DmpCfgOutputDetailDTO.ListDTO> exportDmpCfgOutputDetailDetail(@RequestBody @Validated PagingDTO<DmpCfgOutputDetailDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpCfgOutputDetailDTO.ListDTO> exportDmpCfgOutputDetai(@RequestBody @Validated PagingDTO<DmpCfgOutputDetailDTO.PagingParamDTO> dto) {
         return dmpCfgOutputDetailService.paging(dto);
     }
 
-    @PostMapping("/exportDmpEtlTaskDetail")
+    @PostMapping("/exportDmpEtlTask")
     @WebAdvanceQuery(handler = DmpEtlTaskQueryHandler.class)
-    public PagingVO<DmpEtlTaskDTO.ListDTO> exportDmpEtlTaskDetail(@RequestBody @Validated PagingDTO<DmpEtlTaskDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpEtlTaskDTO.ListDTO> exportDmpEtlTask(@RequestBody @Validated PagingDTO<DmpEtlTaskDTO.PagingParamDTO> dto) {
         return dmpEtlTaskService.paging(dto);
     }
 
-    @PostMapping("/exportDmpInputTaskDetail")
+    @PostMapping("/exportDmpInputTask")
     @WebAdvanceQuery(handler = DmpInputTaskQueryHandler.class)
-    public PagingVO<DmpInputTaskDTO.ListDTO> exportDmpInputTaskDetail(@RequestBody @Validated PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpInputTaskDTO.ListDTO> exportDmpInputTask(@RequestBody @Validated PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
         return dmpInputTaskService.paging(dto);
     }
 
-    @PostMapping("/exportDmpOutputTaskDetail")
+    @PostMapping("/exportDmpOutputTask")
     @WebAdvanceQuery(handler = DmpOutputTaskQueryHandler.class)
-    public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTaskDetail(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
         return dmpOutputTaskService.paging(dto);
     }
 }
