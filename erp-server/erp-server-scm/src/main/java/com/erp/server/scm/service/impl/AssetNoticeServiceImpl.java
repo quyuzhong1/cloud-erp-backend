@@ -12,9 +12,9 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.enums.AssetNoticeTabListEnum;
 import com.erp.model.scm.enums.AssetPurchaseOrderTypeEnum;
@@ -961,17 +961,24 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
         }
 
-        List<String> collect = list.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(item -> item.getAssetId()).collect(Collectors.toList());
 
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleInfo = suppliserService.getSupplierSimpleInfo(collect);
+        List<ProductPurchaseEntity> productPurchaseEntityList = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
         // 属性赋值
         for(AssetNoticeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setCreatePoTypeName(CreatePoTypeEnum.getName(data.getCreatePoType()));
-            if (StringUtils.isNotBlank(data.getSupplierId())) {
-                SupplierDTO.SupplierSimpleDTO supplierSimpleDTO = supplierSimpleInfo.get(data.getSupplierId());
-                data.setSupplierName(StringUtils.isNotBlank(supplierSimpleDTO.getName()) ? supplierSimpleDTO.getName() : null);
+            //供应商来自sku信息
+            for (ProductPurchaseEntity productPurchaseEntity : productPurchaseEntityList) {
+                if (data.getAssetId().equals(productPurchaseEntity.getSkuId())) {
+                    if (StringUtils.isNotBlank(productPurchaseEntity.getMainSupplier())) {
+                        data.setSupplierId(productPurchaseEntity.getMainSupplier());
+                        SupplierEntity supplierEntity = suppliserService.getById(productPurchaseEntity.getMainSupplier());
+                        data.setSupplierName(supplierEntity.getName());
+
+                    }
+                }
             }
 
             //最新审核人
