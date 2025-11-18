@@ -7,6 +7,8 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.utils.PdfUtil;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.file.dto.FileDTO;
+import com.erp.model.oms.entity.SoB2cLabelEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoLabelEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -20,6 +22,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,6 +149,40 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_PDF_SO_MERGE);
         }
+    }
+
+    @Override
+    public void changeLogisticsLabelToUrl() {
+        //获取所有订单标签数量
+        Integer count = lambdaQuery().eq(SoLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).count();
+        if(count == 0){
+            return;
+        }
+        //分批处理订单标签数据
+        // 分页处理
+        int pageSize = 100;
+        int totalPages = (int) Math.ceil((double) count / pageSize);
+        for (int pageNum = 0; pageNum < totalPages; pageNum++) {
+            //每次处理100条数据
+            List<SoLabelEntity> soB2cLabelEntities = lambdaQuery().eq(SoLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).orderByAsc(SoLabelEntity::getCreateTime).last("LIMIT 100").list();
+            if(CollectionUtils.isEmpty(soB2cLabelEntities)){
+                return;
+            }
+            //处理数据
+            soB2cLabelEntities.forEach(this::uploadFile);
+        }
+    }
+
+    private void uploadFile(SoLabelEntity entity) {
+        if (Objects.isNull(entity)){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getLogisticsLabelUrl())){
+            return;
+        }
+        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(entity.getLogisticsLabelBase64()).fileName(entity.getMainId() + ".pdf").build();
+        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        this.lambdaUpdate().set(SoLabelEntity::getLogisticsLabelUrl, url).eq(SoLabelEntity::getId, entity.getId()).update();
     }
 
     private List<SoLabelEntity> listByMainIds(List<String> soIds) {

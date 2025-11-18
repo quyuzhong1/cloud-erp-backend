@@ -51,4 +51,6 @@ public interface SoB2cLabelService extends SuperService<SoB2cLabelEntity> {
      */
 
     void updateCrossLabelUrl(String mainId, String crossLabelUrl);
+
+    void changeLogisticsLabelToUrl();
 }

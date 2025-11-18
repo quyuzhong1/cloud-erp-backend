@@ -56,4 +56,6 @@ public interface SoLabelService extends SuperService<SoLabelEntity> {
      * @return
      */
     String printLogisticsLabel(List<String> ids);
+
+    void changeLogisticsLabelToUrl();
 }

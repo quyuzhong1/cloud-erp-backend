@@ -30,6 +30,11 @@ public class SoLabelEntity extends BaseEntity<SoLabelEntity> {
     @TableField("main_id")
     private String mainId;
     /**
+     * 平台物流面单base64
+     */
+    @TableField("logistics_label_base64")
+    private String logisticsLabelBase64;
+    /**
      * 平台物流面单URL
      */
     @TableField("logistics_label_url")
