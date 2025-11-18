@@ -30,6 +30,7 @@ import com.erp.model.fms.dto.AssetCardDetailDTO;
 import com.erp.model.fms.dto.AssetProfitLossDTO;
 import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
 import com.erp.model.fms.dto.DictBasicDTO;
+import com.erp.model.fms.entity.AssetCardEntity;
 import com.erp.model.fms.entity.AssetLocationEntity;
 import com.erp.model.fms.enums.AssetStatusEnum;
 import com.erp.model.fms.enums.CardSourceEnum;
@@ -813,12 +814,19 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                     continue;
                 }
                 
-                // 4. 校验该明细是否已经下推过
-                if (detailEntity != null && StrUtil.isNotBlank(detailEntity.getCardId())) {
+                // 4. 校验该盘盈盘亏单是否已经下推过资产卡片
+                // 检查是否存在资产卡片主单的sourceId等于当前盘盈盘亏单的主单ID
+                List<AssetCardEntity> existingCards = assetCardService.lambdaQuery()
+                        .eq(AssetCardEntity::getSourceId, mainEntity.getId())
+                        .eq(AssetCardEntity::getSourceType, CardSourceEnum.INVENTORY_SURPLUS.getCode())
+                        .list();
+                
+                if (CollUtil.isNotEmpty(existingCards)) {
+                    String cardCode = existingCards.get(0).getCode();
                     result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
-                            StrUtil.format("已下推过资产卡片【{}】", detailEntity.getCardCode()));
+                            StrUtil.format("该单据已下推过资产卡片【{}】", cardCode));
                     resultDTOS.add(result);
-                    log.warn("明细【{}】已经下推过资产卡片【{}】", item.getAssetName(), detailEntity.getCardCode());
+                    log.warn("盘盈盘亏单【{}】已经下推过资产卡片【{}】", mainEntity.getCode(), cardCode);
                     continue;
                 }
                 // 5. 创建资产卡片主表（一个明细对应一个卡片）
@@ -853,7 +861,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 detailDTO.setUseDeptId(item.getUseDeptId()); // 使用部门ID
                 detailDTO.setUseDeptName(item.getUseDeptName()); // 使用部门名称
                 detailDTO.setCostType(item.getCostType()); // 费用项目
-                
+                detailDTO.setSourceDetailId(item.getDetailId());
+
                 detailList.add(detailDTO);
                 cardDTO.setDetailList(detailList);
                 
