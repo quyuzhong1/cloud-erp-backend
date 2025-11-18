@@ -499,9 +499,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmApprove(dto, entity);
                 break;
             case WMS:
+            case FM:
                 wmsApprove(dto, entity);
                 break;
-            case FM:
+            case FMS:
                 fmsApprove(dto, entity);
                 break;
             case OMS:
