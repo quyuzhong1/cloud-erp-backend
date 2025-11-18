@@ -74,6 +74,10 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         if (count > 0) {
             ServiceException.runError("平台编码已存在，请修改后重新添加");
         }
+        Integer countName = lambdaQuery().eq(DmpBasicSystemEntity::getName, addDTO.getName()).count();
+        if (countName > 0) {
+            ServiceException.runError("平台名称已存在，请修改后重新添加");
+        }
 
         // 数据处理
         handleData(dmpBasicSystemEntity);
@@ -100,6 +104,21 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         DmpBasicSystemEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "平台管理"));
         DmpBasicSystemEntity dmpBasicSystemEntity = BeanMapperUtils.map(DmpBasicSystemEntity.class, updateDTO);
+
+        Integer count = lambdaQuery()
+                .eq(DmpBasicSystemEntity::getCode, updateDTO.getCode())
+                .ne(DmpBasicSystemEntity::getId, old.getId())
+                .count();
+        if (count > 0) {
+            ServiceException.runError("平台编码已存在，请修改");
+        }
+        Integer countName = lambdaQuery()
+                .eq(DmpBasicSystemEntity::getName, updateDTO.getName())
+                .ne(DmpBasicSystemEntity::getId, old.getId())
+                .count();
+        if (countName > 0) {
+            ServiceException.runError("平台名称已存在，请修改");
+        }
 
         // 数据处理
         handleData(dmpBasicSystemEntity);
