@@ -5,7 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -155,6 +155,15 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             if (count > 0) {
                 throw new ServiceException("执行系统是RestCloud下, 拉取系统/执行Url不能重复");
             }
+        }
+        if (StringUtils.isBlank(dmpCfgInputEntity.getExtendJson())) {
+            dmpCfgInputEntity.setExtendJson("{}");
+        } else {
+            // 校验是否json格式
+            if (!JSON.isValid(dmpCfgInputEntity.getExtendJson())) {
+                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+            }
+            dmpCfgInputEntity.setExtendJson(dmpCfgInputEntity.getExtendJson());
         }
     }
 
@@ -307,7 +316,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         for(DmpCfgInputDTO.ListDTO data : list) {
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
-            data.setBillTypeName(sourceTypeMap.getOrDefault(data.getType(), ""));
+            data.setBillTypeName(sourceTypeMap.getOrDefault(data.getBillType(), ""));
         }
     }
 

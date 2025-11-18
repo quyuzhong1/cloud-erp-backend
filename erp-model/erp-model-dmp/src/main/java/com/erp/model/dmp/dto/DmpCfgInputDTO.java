@@ -184,7 +184,7 @@ public class DmpCfgInputDTO implements Serializable {
         /**
          * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
          */
-        @NotBlank(message = "输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表不能为空")
+//        @NotBlank(message = "输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表不能为空")
         @Size(max = 50, message = "输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表最大长度不能超过50位")
         private String typeId;
 
