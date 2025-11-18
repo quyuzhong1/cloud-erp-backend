@@ -7,6 +7,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.server.wms.convert.TongYouCreateInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
@@ -58,11 +60,31 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
 
-
+    /**
+     * 处理request信息
+     * @author will
+     * @date 2025/11/17 17:35
+     * @param createInboundReq
+     * @return TongYouCreateInboundReq
+     */
     private TongYouCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
-
-
-        return new TongYouCreateInboundReq();
+        TongYouCreateInboundReq request = new TongYouCreateInboundReq();
+        //主表信息
+        TongYouCreateInboundReq.AddDTO addDTO = TongYouCreateInboundConverter.INSTANCE.InboundToThird(createInboundReq);
+        if (CharSequenceUtil.equals(createInboundReq.getReceivingType(), OverseasInstockTypeEnum.SELF_HEADWAY.getCode())) {
+            addDTO.setJhfs("693");
+            addDTO.setOrder_types("718");
+        } else if (CharSequenceUtil.equals(createInboundReq.getReceivingType(), OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())) {
+            addDTO.setJhfs("731");
+            addDTO.setOrder_types("717");
+            addDTO.setTcck(createInboundReq.getTransitWarehouseCode());
+            addDTO.setChqd(createInboundReq.getLogisticsChannel());
+        }
+        //明细信息
+        List<TongYouCreateInboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateInboundConverter.INSTANCE.InboundDetailToThird(createInboundReq.getItems());
+        addDTO.setOrder_products(addDetailDTOList);
+        request.setOrder_list(Collections.singletonList(addDTO));
+        return request;
     }
 
     @Override

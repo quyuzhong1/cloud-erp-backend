@@ -1,5 +1,6 @@
 package com.sdk.wms.tongyou.service;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
@@ -83,6 +84,10 @@ public class TongYouService {
 
         String path = "hwc_api/add_order_tc.php";
         Map<String, String> headerMap = new HashMap<>();
+        //密钥
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        TongYouGetReceiptReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
+
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouGetReceiptReq), headerMap);
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouGetReceiptReq));
         TongYouBaseResp<TongYouInboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouInboundResp.class);

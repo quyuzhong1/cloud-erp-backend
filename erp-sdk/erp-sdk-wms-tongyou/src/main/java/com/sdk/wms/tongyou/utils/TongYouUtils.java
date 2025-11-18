@@ -15,16 +15,6 @@ public class TongYouUtils {
     private TongYouUtils() {
         throw new IllegalStateException("Utility TongYouUtils class");
     }
-    public static String callService(String service, Object obj){
-        String appToken = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appToken"));
-        String appKey = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appKey"));
-        if(StringUtil.isBlank(appKey) || StringUtil.isBlank(appToken)){
-            throw new ServiceException("获取不到授权值，正确授权值为：appToken,appKey");
-        }
-        String param = JSON.toJSONString(obj);
-        ThirdWarehouseContext.setRequestJson(param);
-        return "response";
-    }
 
     /**
      * 解析 JSON 字符串，返回 TongYouBaseResp<T>
