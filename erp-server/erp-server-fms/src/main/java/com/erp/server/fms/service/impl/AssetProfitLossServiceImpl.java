@@ -84,6 +84,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private AssetStocktakingPlanService assetStocktakingPlanService;
     @Autowired
     private AssetCardService assetCardService;
+    @Autowired
     private AssetLocationService assetLocationService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
