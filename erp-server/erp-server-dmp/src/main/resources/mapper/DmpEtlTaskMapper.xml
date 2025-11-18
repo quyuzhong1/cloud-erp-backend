@@ -21,7 +21,7 @@
        <result column="exec_timeout" property="execTimeout" />
        <result column="extend_json" property="extendJson" />
        <result column="next_exec_time" property="nextExecTime" />
-       <result column="etl_instance_id" property="etlInstanceId" />
+       <result column="instance_id" property="instanceId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -68,18 +68,26 @@
         where
         ${params.sqlMap.default}
         and det.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and dci.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by det.update_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dci.update_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from dmp_etl_task where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpEtlTaskDTO$ListDTO">
-
     </select>
 
     <select id="tabList" resultType="com.erp.model.dmp.dto.DmpEtlTaskDTO$TabListDTO">

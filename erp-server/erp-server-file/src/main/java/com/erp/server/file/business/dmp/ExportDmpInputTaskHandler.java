@@ -34,7 +34,7 @@ public class ExportDmpInputTaskHandler extends AbstractPageFileEventHandler<DmpI
 
     @Override
     protected String getExcelPath() {
-        return "excel/dmp/dmpinputtask.xlsx";
+        return "excel/dmp/dmpInputTask.xlsx";
     }
 
     @Override

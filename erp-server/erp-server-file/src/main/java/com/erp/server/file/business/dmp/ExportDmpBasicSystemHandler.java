@@ -34,7 +34,7 @@ public class ExportDmpBasicSystemHandler extends AbstractPageFileEventHandler<Dm
 
     @Override
     protected String getExcelPath() {
-        return "excel/dmp/dmpbasicsystem.xlsx";
+        return "excel/dmp/dmpBasicSystem.xlsx";
     }
 
     @Override

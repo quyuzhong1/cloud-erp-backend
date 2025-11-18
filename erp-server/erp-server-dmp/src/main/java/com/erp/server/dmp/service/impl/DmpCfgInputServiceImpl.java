@@ -3,8 +3,6 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,22 +18,16 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.sys.entity.DictBasicEntity;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpCfgInputMapper;
 import com.erp.server.dmp.service.DmpBasicSystemService;
@@ -317,6 +309,8 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
             data.setBillTypeName(sourceTypeMap.getOrDefault(data.getBillType(), ""));
+            data.setMainTaskDesc(data.getIsMainTask() ? "是":"否");
+            data.setDisabledDesc(data.getDisabled() ? "是":"否");
         }
     }
 

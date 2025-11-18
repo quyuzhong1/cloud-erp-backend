@@ -314,6 +314,11 @@ public class DmpCfgInputDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用
+         */
+        private String disabledDesc;
+
+        /**
          * 扩展json
          */
         private String extendJson;
@@ -324,10 +329,21 @@ public class DmpCfgInputDTO implements Serializable {
         private Boolean isMainTask;
 
         /**
+         * 是否主任务
+         */
+        private String mainTaskDesc;
+
+        /**
          * 单据业务类型
          * 来源接口：/api/sys/dictBasic/list?type=sourceType
          */
         private String billType;
+
+        /**
+         * 单据业务类型
+         * 来源接口：/api/sys/dictBasic/list?type=sourceType
+         */
+        private String billTypeName;
 
         /**
          * 执行系统:默认:dmp
@@ -340,7 +356,25 @@ public class DmpCfgInputDTO implements Serializable {
          */
         private String execUrl;
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -359,6 +393,11 @@ public class DmpCfgInputDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
 
     }
 
@@ -415,6 +454,11 @@ public class DmpCfgInputDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用描述
+         */
+        private String disabledDesc;
+
+        /**
          * 扩展json
          */
         private String extendJson;
@@ -423,6 +467,11 @@ public class DmpCfgInputDTO implements Serializable {
          * 是否主任务
          */
         private Boolean isMainTask;
+
+        /**
+         * 是否主任务
+         */
+        private String mainTaskDesc;
 
         /**
          * 单据业务类型

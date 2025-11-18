@@ -38,13 +38,6 @@ public interface DmpCfgEtlMapper extends BaseMapper<DmpCfgEtlEntity> {
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") DmpCfgEtlDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<DmpCfgEtlDTO.ListDTO> listExport(@Param("params") DmpCfgEtlDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计

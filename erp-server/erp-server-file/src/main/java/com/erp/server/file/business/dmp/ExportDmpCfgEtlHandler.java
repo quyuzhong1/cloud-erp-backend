@@ -34,7 +34,7 @@ public class ExportDmpCfgEtlHandler extends AbstractPageFileEventHandler<DmpCfgE
 
     @Override
     protected String getExcelPath() {
-        return "excel/dmp/dmpcfgetl.xlsx";
+        return "excel/dmp/dmpCfgEtl.xlsx";
     }
 
     @Override
