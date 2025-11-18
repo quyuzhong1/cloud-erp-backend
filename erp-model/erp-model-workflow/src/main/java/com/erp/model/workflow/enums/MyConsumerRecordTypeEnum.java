@@ -9,15 +9,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * erp审批同步失败类型枚举
+ * mq消费类型
  * @author jack
- * @date 2025-06-10
+ * @date 2025-11-17
  */
-public enum ApproveSyncFailedTypeEnum implements EnumMessage {
-    CREATEINSTANCE("createInstanceFailed", "创建实例失败"),
-    SENDNOTICE("sendNoticeFailed", "发送消息失败"),
-    SENDAPPROVENOTICE("sendApproveNoticeFailed", "发送审批消息失败"),
-    UPDATEAPPROVENOTICE("updateApproveNoticeFailed", "更新审批消息失败"),
+public enum MyConsumerRecordTypeEnum implements EnumMessage {
+    SYNC_FS("syncFs", "ERP审批同步回调"),
     SYNC_COMMENT("syncComment", "ERP审批日志回调"),
     ;
 
@@ -26,7 +23,7 @@ public enum ApproveSyncFailedTypeEnum implements EnumMessage {
     private String code;
     private String name;
 
-    ApproveSyncFailedTypeEnum(String code, String name) {
+    MyConsumerRecordTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -40,7 +37,7 @@ public enum ApproveSyncFailedTypeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        for (ApproveSyncFailedTypeEnum state : ApproveSyncFailedTypeEnum.values()) {
+        for (MyConsumerRecordTypeEnum state : MyConsumerRecordTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();
             }
@@ -48,8 +45,8 @@ public enum ApproveSyncFailedTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static ApproveSyncFailedTypeEnum getByCode(String code) {
-        for (ApproveSyncFailedTypeEnum state : ApproveSyncFailedTypeEnum.values()) {
+    public static MyConsumerRecordTypeEnum getByCode(String code) {
+        for (MyConsumerRecordTypeEnum state : MyConsumerRecordTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state;
             }
@@ -57,7 +54,7 @@ public enum ApproveSyncFailedTypeEnum implements EnumMessage {
         return null;
     }
 
-    public static List<ApproveSyncFailedTypeEnum> getAll() {
-        return Arrays.stream(ApproveSyncFailedTypeEnum.values()).collect(Collectors.toList());
+    public static List<MyConsumerRecordTypeEnum> getAll() {
+        return Arrays.stream(MyConsumerRecordTypeEnum.values()).collect(Collectors.toList());
     }
 }

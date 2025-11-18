@@ -55,6 +55,13 @@ public class WorkflowMqConsumerRecordDTO implements Serializable {
          */
         @NotBlank(message = "消费者group不能为空")
         private String consumerGroup;
+
+
+        /**
+         * 类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
     }
 
 

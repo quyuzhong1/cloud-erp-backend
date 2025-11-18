@@ -2,6 +2,7 @@ package com.erp.model.workflow.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import lombok.Data;
@@ -414,12 +415,15 @@ public class CfgApproveSyncDTO implements Serializable {
         private String businessName;
         //单据编码
         private String businessCode;
+        //单据id
+        private String businessId;
         //实例id
         private String instanceId;
         //任务id
         private String curTaskId;
         //流程操作人（创建人、审批人）
         private String operator;
+        private String operatorName;
         //流程操作人（创建人）
         private String createUserId;
         //流程类型
@@ -432,6 +436,23 @@ public class CfgApproveSyncDTO implements Serializable {
          * 流程参数map
          */
         private Map<String,Object> variablesMap;
+
+        //mq消费类型
+        private String type;
+        //审批意见
+        private String comment;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncFsCommentToMqDTO {
+        //审批同步定义
+        private SyncFsProcessToMqDTO syncFsProcessToMqDTO;
+
+        private ApproveSyncRecordEntity approveSyncRecordEntity;
 
     }
 

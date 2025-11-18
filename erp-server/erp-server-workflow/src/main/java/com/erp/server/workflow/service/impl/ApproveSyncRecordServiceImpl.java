@@ -194,6 +194,18 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             }
         }
 
+        //日志记录失败
+        if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.SYNC_COMMENT.getCode())) {
+            CfgApproveSyncDTO.SyncFsCommentToMqDTO commentToMqDTO = new CfgApproveSyncDTO.SyncFsCommentToMqDTO();
+
+            //dataJson转实体类CfgApproveSyncDTO.SyncFsProcessToMqDTO
+            CfgApproveSyncDTO.SyncFsProcessToMqDTO dto = BeanUtil.toBean(dataJson, CfgApproveSyncDTO.SyncFsProcessToMqDTO.class);
+
+            commentToMqDTO.setSyncFsProcessToMqDTO(dto);
+            commentToMqDTO.setApproveSyncRecordEntity(entity);
+
+            processManagementService.syncComment(commentToMqDTO, MyConsumerRecordTypeEnum.SYNC_COMMENT);
+        }
         return BatchResultDTO.success(entity.getId(), entity.getId(), "重推成功");
     }
 
@@ -270,7 +282,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
         Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(dto.getClassPath());
 
-        List<BaseEntity> list = FeignQuery.create(clazz).in(SampleRecipientEntity::getId, dto.getIds()).list();
+        List<BaseEntity> list = FeignQuery.create(clazz).in("id", dto.getIds()).list();
         List<ProcessManagementEntity> processManagementEntities = processManagementService.lambdaQuery().eq(ProcessManagementEntity::getIsDeleted,false).in(ProcessManagementEntity::getBusinessId, dto.getIds()).list();
 
         for (BaseEntity entity : list) {
@@ -298,55 +310,12 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                     mqDto.setVariablesMap(variables);
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
                     mqDto.setApproveType(managementTask.getApproveStatus().getStatus());
-                    syncFsExternalInstance(mqDto);
+                    mqDto.setComment("");
+                    processManagementService.syncFsExternalInstance(mqDto, MyConsumerRecordTypeEnum.SYNC_FS);
 
                 }
             }
-
         }
     }
 
-    /**
-     * 飞书三方审批实例同步
-     * @author jack
-     * @date 2025-05-21
-     */
-    private void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
-        //判断该单据类型是否有ERP审批同步定义
-        List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(mqDto.getBusinessKey()))
-                .stream()
-                .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
-            CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
-            mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-
-            //保存mq消费记录
-            if (addMqConsumerRecord(mqDto)) return;
-
-            mqSyncFsHandler.handler(mqDto);
-//            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
-        }
-    }
-
-    private boolean addMqConsumerRecord(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
-        log.info("addMqConsumerRecord开始 保存MQ消费记录, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
-        //保存mq消费记录
-        Map<String, Object> convertedMap = BeanUtil.beanToMap(mqDto);
-
-        // 构建DTO
-        WorkflowMqConsumerRecordDTO.MqDTO dto = new WorkflowMqConsumerRecordDTO.MqDTO();
-        dto.setDataJson(convertedMap);
-        dto.setBusinessKey(mqDto.getBusinessKey());
-        dto.setTopic(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC);
-        dto.setConsumerGroup(RocketMqConsumerGroup.WORKFLOW_SYNC_FS_INSTANCE_CONSUMER);
-        dto.setTag(RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName());
-        String id = workflowMqConsumerRecordService.addMqRecord(dto);
-        if (StringUtils.isBlank(id)) {
-            log.error("addMqConsumerRecord 保存MQ消费记录失败, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
-            return true;
-        }
-        log.info("addMqConsumerRecord结束 保存MQ消费记录");
-        return false;
-    }
 }

@@ -174,7 +174,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ThirdProcessManagementService thirdProcessManagementService;
     @Resource
     private MqConsumerRecordService workflowMqConsumerRecordService;
-
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
 
 
     @Override
@@ -363,7 +364,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 //为空表示submit
                 mqDto.setApproveType("");
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
@@ -509,17 +510,38 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             @Override
             public void afterCommit() {
                 //判断该单据类型是否有ERP审批同步定义
-                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-                mqDto.setProcessManagementId(managementTask.getManagementId());
-                mqDto.setBusinessName(managementTask.getBusinessName());
-                mqDto.setBusinessCode(managementTask.getBusinessCode());
-                mqDto.setInstanceId(processInstanceId);
-                mqDto.setCurTaskId(managementTask.getTaskId());
-                mqDto.setOperator(dto.getUserId());
-                mqDto.setVariablesMap(variables);
-                mqDto.setBusinessKey(dto.getBusinessKey());
-                mqDto.setApproveType(dto.getApproveType().getStatus());
-                syncFsExternalInstance(mqDto);
+                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(dto.getBusinessKey()))
+                        .stream()
+                        .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
+                        .collect(Collectors.toList());
+
+                if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
+                    CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
+
+                    //判断该单据类型是否有ERP审批同步定义
+                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                    mqDto.setProcessManagementId(managementTask.getManagementId());
+                    mqDto.setBusinessName(managementTask.getBusinessName());
+                    mqDto.setBusinessCode(managementTask.getBusinessCode());
+                    mqDto.setBusinessId(managementTask.getBusinessId());
+                    mqDto.setInstanceId(processInstanceId);
+                    mqDto.setCurTaskId(managementTask.getTaskId());
+                    mqDto.setOperator(dto.getUserId());
+                    mqDto.setVariablesMap(variables);
+                    mqDto.setBusinessKey(dto.getBusinessKey());
+                    mqDto.setApproveType(dto.getApproveType().getStatus());
+                    mqDto.setComment(dto.getComment());
+                    mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+
+                    //飞书实例同步
+                    syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
+
+                    CfgApproveSyncDTO.SyncFsCommentToMqDTO commentToMqDTO = new CfgApproveSyncDTO.SyncFsCommentToMqDTO();
+                    commentToMqDTO.setSyncFsProcessToMqDTO(mqDto);
+                    //回写审批意见到各个服务日志记录
+                    syncComment(commentToMqDTO,MyConsumerRecordTypeEnum.SYNC_COMMENT);
+
+                }
             }
         });
         // 返回结果
@@ -549,29 +571,51 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     /**
+     * 同步三方审批意见到erp
+     * @author jack
+     * @date 2025-11-17
+     */
+    @Override
+    public void syncComment(CfgApproveSyncDTO.SyncFsCommentToMqDTO commentToMqDTO, MyConsumerRecordTypeEnum myConsumerRecordTypeEnum) {
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = commentToMqDTO.getSyncFsProcessToMqDTO();
+        String sysClassify = workMenuService.getSysClassifyByCode(mqDto.getBusinessKey());
+        if(StringUtils.isNotBlank(sysClassify)){
+            String topic = "${spring.cloud.nacos.discovery.namespace}-{}_workflow_sync_fs_comment_topic";
+
+            topic = StrUtil.format(topic, sysClassify);
+
+            //mq消费类型
+            mqDto.setType(myConsumerRecordTypeEnum.getCode());
+            //保存mq消费记录
+            if (addMqConsumerRecord(mqDto,topic)) return;
+
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(mqDto.getOperator());
+            if(Objects.nonNull(findUserDTO)){
+                mqDto.setOperatorName(findUserDTO.getUserName());
+            }
+
+            mqProducerService.syncClassMsgWithDelayLevel(topic, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
+        }
+    }
+
+
+    /**
      * 飞书三方审批实例同步
      * @author jack
      * @date 2025-05-21
      */
-    private void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
-        //判断该单据类型是否有ERP审批同步定义
-        List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(mqDto.getBusinessKey()))
-                .stream()
-                .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
-            CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
-            mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+    @Override
+    public void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto, MyConsumerRecordTypeEnum myConsumerRecordTypeEnum) {
+        //mq消费类型
+        mqDto.setType(myConsumerRecordTypeEnum.getCode());
+        //保存mq消费记录
+        if (addMqConsumerRecord(mqDto,RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC)) return;
 
-            //保存mq消费记录
-            if (addMqConsumerRecord(mqDto)) return;
-
-            mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
-        }
+        mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
     }
 
-    private boolean addMqConsumerRecord(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
-        log.info("addMqConsumerRecord开始 保存MQ消费记录, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+    private boolean addMqConsumerRecord(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto,String toipc) {
+        log.info("addMqConsumerRecord开始 保存MQ消费记录,toipc={}, businessKey={}, processManagementId={}, curTaskId={}",toipc, mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
         //保存mq消费记录
         Map<String, Object> convertedMap = BeanUtil.beanToMap(mqDto);
 
@@ -579,12 +623,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkflowMqConsumerRecordDTO.MqDTO dto = new WorkflowMqConsumerRecordDTO.MqDTO();
         dto.setDataJson(convertedMap);
         dto.setBusinessKey(mqDto.getBusinessKey());
-        dto.setTopic(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC);
+        dto.setTopic(toipc);
         dto.setConsumerGroup(RocketMqConsumerGroup.WORKFLOW_SYNC_FS_INSTANCE_CONSUMER);
         dto.setTag(RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName());
+        dto.setType(mqDto.getType());
         String id = workflowMqConsumerRecordService.addMqRecord(dto);
         if (StringUtils.isBlank(id)) {
-            log.error("addMqConsumerRecord 保存MQ消费记录失败, businessKey={}, processManagementId={}, curTaskId={}", mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
+            log.error("addMqConsumerRecord 保存MQ消费记录失败,toipc={}, businessKey={}, processManagementId={}, curTaskId={}",toipc, mqDto.getBusinessKey(), mqDto.getProcessManagementId(), mqDto.getCurTaskId());
             return true;
         }
         log.info("addMqConsumerRecord结束 保存MQ消费记录");
@@ -869,7 +914,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(managementTask.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return Boolean.TRUE;
@@ -955,9 +1000,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-
+            //mq消费类型
+            mqDto.setType(MyConsumerRecordTypeEnum.SYNC_FS.getCode());
             //保存mq消费记录
-            addMqConsumerRecord(mqDto);
+            addMqConsumerRecord(mqDto,RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC);
 
             mqSyncFsHandler.handler(mqDto);
         }
@@ -1417,7 +1463,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     mqDto.setVariablesMap(variables);
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
                     mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
-                    syncFsExternalInstance(mqDto);
+                    syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
                 }
             });
         }
@@ -1707,7 +1753,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.PROCESSED.getCode());
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
@@ -1783,7 +1829,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.ROLLBACK.getCode());
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
@@ -1833,7 +1879,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.RESTORE.getCode());
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.RESTORE);
@@ -1872,7 +1918,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.SUSPEND.getCode());
-                syncFsExternalInstance(mqDto);
+                syncFsExternalInstance(mqDto,MyConsumerRecordTypeEnum.SYNC_FS);
             }
         });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.SUSPEND);

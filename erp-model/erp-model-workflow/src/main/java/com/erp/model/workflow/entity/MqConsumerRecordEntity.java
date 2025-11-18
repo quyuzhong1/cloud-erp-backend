@@ -52,6 +52,12 @@ public class MqConsumerRecordEntity extends BaseEntity<MqConsumerRecordEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 消费的mq类型：
+     */
+    @TableField("type")
+    private String type;
+
 
     public static final String TOPIC = "topic";
 

@@ -35,17 +35,14 @@
 
     <insert id="insertMqConsumerRecord" parameterType="com.erp.model.workflow.entity.MqConsumerRecordEntity">
         INSERT INTO mq_consumer_record (
-            id, topic, tag, consumer_group, data_json,
+            id,type,topic, tag, consumer_group, data_json,
             create_user_id, create_user_name, create_time,
             update_user_id, update_user_name, update_time
         )
         VALUES (
-                   #{record.id}, #{record.topic}, #{record.tag}, #{record.consumerGroup}, CAST(#{record.dataJson, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
+                   #{record.id}, #{record.type}, #{record.topic}, #{record.tag}, #{record.consumerGroup}, CAST(#{record.dataJson, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler} AS jsonb),
                    #{record.createUserId}, #{record.createUserName}, #{record.createTime},
                    #{record.updateUserId}, #{record.updateUserName}, #{record.updateTime}
                )
     </insert>
-
-
-
 </mapper>
