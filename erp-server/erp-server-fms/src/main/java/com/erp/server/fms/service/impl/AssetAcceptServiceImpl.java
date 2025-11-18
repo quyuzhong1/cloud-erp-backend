@@ -1462,13 +1462,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         LocalDate currentDate = LocalDate.now();
         
         // 一个验收明细生成一张资产卡片，但卡片包含多个实物信息明细
+        AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
+        BaseResultDTO.AddDTO cardResult = assetCardService.add(cardAddDTO);
+        String generatedCardId = cardResult.getId();
 
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
-            AssetCardDTO.AddDTO cardAddDTO = buildAssetCardFromAcceptDetail(assetAcceptEntity, detail, currentDate);
-            BaseResultDTO.AddDTO cardResult = assetCardService.add(cardAddDTO);
-            String generatedCardId = cardResult.getId();
+
             assetCardService.submit(generatedCardId,false);
             assetCardService.approve(new ApproveOneDTO(generatedCardId,ApproveTypeEnum.PASS.getStatus(),""));
             // 更新明细状态为已生成
