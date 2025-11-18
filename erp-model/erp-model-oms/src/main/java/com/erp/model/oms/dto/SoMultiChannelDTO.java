@@ -530,7 +530,7 @@ public class SoMultiChannelDTO implements Serializable {
          */
 //        @NotBlank(message = "收货人电话不能为空")
 //        @Size(max = 11,message = "收货人电话最大长度不能超过11位")
-        private String telNumber;
+        private String receiverTelNumber;
 
         /**
          * 地址1

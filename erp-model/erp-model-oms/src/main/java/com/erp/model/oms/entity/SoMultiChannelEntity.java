@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
@@ -191,7 +192,7 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     /**
      * 国家二字码
      */
-    @TableField("country")
+    @TableField(value = "country", fill = FieldFill.INSERT_UPDATE)
     private String country;
 
     /**
