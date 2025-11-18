@@ -38,6 +38,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_CFG_DIFF_STRATEGY("EXPORT_CFG_DIFF_STRATEGY","差异策略配置表","","",""),
     EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW("EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW","平台单据差异","","",""),
     EXPORT_ADS_ERP_INVENTORY_DIFF_FLOW("EXPORT_ADS_ERP_INVENTORY_DIFF_FLOW","平台流水差异","","",""),
+    EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC("EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC","出库同步差异","","",""),
 
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据","","",""),

@@ -1,49 +1,50 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
-import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
-import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import cn.hutool.core.util.ObjectUtil;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
+import com.baomidou.dynamic.datasource.annotation.DS;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
+import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
+import com.erp.server.dmp.service.OperateLogService;
 
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.baomidou.dynamic.datasource.annotation.DS;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * <p>
@@ -59,6 +60,8 @@ import javax.servlet.http.HttpServletResponse;
 public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDiffOutstockSyncMapper, AdsErpDiffOutstockSyncEntity> implements AdsErpDiffOutstockSyncService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -206,25 +209,28 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 
 	@Override
 	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
-		// TODO Auto-generated method stub
-		return null;
+		return baseMapper.total(dto.getParams());
 	}
 	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public Boolean updateErp(UpdateErpDTO dto) {
 		return null;
 	}
 	
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
-		// TODO Auto-generated method stub
-		return null;
+		return lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getId()).set(AdsErpDiffOutstockSyncEntity::getRemark, dto.getRemark()).update();
 	}
 	
 	@Override
 	public Boolean exportExcel(ExpotParamDTO dto) {
-		// TODO Auto-generated method stub
-		return null;
+		downloadTaskFeign.saveDownloadTask("出库同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), dto);
+		return true;
 	}
+
 }

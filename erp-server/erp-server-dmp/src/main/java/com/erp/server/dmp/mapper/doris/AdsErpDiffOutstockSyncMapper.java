@@ -1,15 +1,15 @@
 package com.erp.server.dmp.mapper.doris;
-import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
-import java.util.List;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 
 /**
  * <p>
@@ -51,4 +51,6 @@ public interface AdsErpDiffOutstockSyncMapper extends BaseMapper<AdsErpDiffOutst
     * @return
     */
     List<AdsErpDiffOutstockSyncDTO.TabListDTO> tabList(@Param("params") AdsErpDiffOutstockSyncDTO.PagingParamDTO searchParam);
+    
+    AdsErpDiffOutstockSyncDTO.TotalDTO total(@Param("params") AdsErpDiffOutstockSyncDTO.PagingParamDTO params);
 }

@@ -127,6 +127,16 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
            */
           private List<String> ids;
       }
+      
+      @Data
+      @NoArgsConstructor
+      @AllArgsConstructor
+      public static class UpdateErpDTO extends PagingParamDTO{
+      	/**
+           * 主键id
+           */
+          private List<String> ids;
+      }
 
 
     /**
@@ -136,80 +146,10 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
 
-        /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * 数据唯一md5值
-        */
-        private String uniqueCode;
-
-        /**
-        * 数据字段md5值（数据json+account_code+next_level_id+bill_topic）
-        */
-        private String dataEncrypt;
-
-        /**
-        * 来源平台：gyy，kingdee，mabang
-        */
-        private String sourceSystem;
-
-        /**
-        * 数据来源平台
-        */
-        private String sourcePlatform;
-
-        /**
-        * 平台账号编码
-        */
-        private String accountCode;
-
-        /**
-        * 店铺ID/海外仓授权ID
-        */
-        private String nextLevelId;
-
-        /**
-        * 业务类型
-        */
-        private String billTopic;
-
-        /**
-        * 流程id
-        */
-        private String flowId;
-
-        /**
-        * 节点id
-        */
-        private String nodeId;
-
-        /**
-        * 实例id/etl任务id
-        */
-        private String instanceId;
-
-        /**
-        * 任务id
-        */
-        private String taskId;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * ETL处理状态：ready=可处理，unready=不可处理
-        */
-        private String etlStatus;
-
-        /**
-        * 核对唯一键
-        */
-        private String checkKey;
+    	/**
+         * id
+         */
+         private String id;
 
         /**
         * 核对周期
@@ -217,14 +157,14 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private String checkMonth;
 
         /**
-        * 核对周期页面查询
-        */
-        private String checkMonthQuery;
-
-        /**
         * 核对仓库
         */
         private String sourceSystemName;
+        
+        /**
+         * 平台单据名称
+         */
+         private String platformBillName;
 
         /**
         * 平台单据状态名称
@@ -257,24 +197,14 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private String platformOutstockCode;
 
         /**
-        * 平台库存SKU
-        */
-        private String stockSku;
-
-        /**
-        * 平台库存SKU数量
-        */
-        private Integer stockQty;
-
-        /**
-        * 平台ERP_SKU
-        */
-        private String platformSkuNo;
+         * 平台库存SKU数量
+         */
+         private String stockSkuQty;
 
         /**
         * 平台ERP_SKU数量
         */
-        private Integer platformQty;
+        private String platformSkuQty;
 
         /**
         * 平台出库仓库名称
@@ -327,14 +257,9 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private String outstockCode;
 
         /**
-        * ERP_SKU
-        */
-        private String skuNo;
-
-        /**
         * ERP_SKU数量
         */
-        private Integer qty;
+        private String skuQty;
 
         /**
         * ERP仓库名称
@@ -387,16 +312,9 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private String execStatusName;
 
         /**
-        * 执行完成时间
-        */
+         * 执行完成时间
+         */
         private Date finishTime;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
 
         /**
         * 创建时间
