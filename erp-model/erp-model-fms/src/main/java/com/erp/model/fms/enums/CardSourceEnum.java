@@ -16,17 +16,17 @@ public enum CardSourceEnum {
     /**
      * 采购收货
      */
-    PURCHASE_RECEIPT("purchaseReceipt", "采购收货"),
+    PURCHASE_RECEIPT("purchase", "采购收货"),
     
     /**
      * 手工建卡
      */
-    MANUAL_CREATE("manualCreate", "手工建卡"),
+    MANUAL_CREATE("manual", "手工建卡"),
     
     /**
      * 盘盈建卡
      */
-    INVENTORY_SURPLUS("inventorySurplus", "盘盈建卡");
+    INVENTORY_SURPLUS("inventory", "盘盈建卡");
     
     /**
      * 类型
