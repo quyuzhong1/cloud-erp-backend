@@ -525,9 +525,11 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //审核完成也做台账数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
