@@ -24,16 +24,6 @@ public class DmpCfgOutputDetailQueryHandler extends AbstractQueryHandler {
             if ("all".equals(value)) {
                 return getQueryAllSql();
             }
-            //待我审核
-            if (DmpInputTaskStatusEnum.FINISH.getCode().equals(value)) {
-                approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-                //需要审核的业务ids
-                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
-                if (CollectionUtils.isEmpty(businessIds)) {
-                    return null;
-                }
-                super.buildDefaultDTO("pl.id", businessIds);
-            }
         }
         return null;
     }
