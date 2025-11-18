@@ -495,4 +495,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/sampleTransferApprove")
     List<BatchResultDTO> sampleTransferApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品调整单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleAdjustmentApprove")
+    List<BatchResultDTO> sampleAdjustmentApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 }
