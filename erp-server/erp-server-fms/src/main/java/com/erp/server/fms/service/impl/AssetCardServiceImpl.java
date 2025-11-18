@@ -969,7 +969,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             
             // 主表字段的枚举值转换
             // 卡片来源枚举转换
-            data.setSourceTypeName(com.erp.model.fms.enums.CardSourceEnum.getNameFromSourceType(data.getSourceType()));
+            data.setSourceTypeName(com.erp.model.fms.enums.CardSourceEnum.getName(data.getSourceType()));
             // 资产类别枚举转换
             if (StringUtils.isNotBlank(data.getType())) {
                 data.setTypeName(com.erp.model.fms.enums.AssetCategoryEnum.getName(data.getType()));
