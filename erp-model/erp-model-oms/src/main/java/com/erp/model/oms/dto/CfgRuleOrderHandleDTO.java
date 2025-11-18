@@ -81,6 +81,14 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private List<String> filterPhoneTextList;
         private List<String> filterZipCodeTextList;
         private List<String> filterReceiveTextList;
+        /**
+         * 省/州 转换列表
+         */
+        private List<TransferDTO> provinceTransferDTOList;
+        /**
+         * 市/区 转换列表
+         */
+        private List<TransferDTO> cityTransferDTOList;
     }
     /**
      * 分页列表

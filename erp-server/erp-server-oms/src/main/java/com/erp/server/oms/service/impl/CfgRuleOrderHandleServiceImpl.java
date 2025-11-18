@@ -159,6 +159,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             logDTO.getAddressHandlerContent().setFilterAddress1TextList(null);
             logDTO.getAddressHandlerContent().setFilterAddress1TextNameList(null);
         }
+        if(Objects.nonNull(logDTO.getAddressHandlerContent()) && Objects.nonNull(logDTO.getAddressHandlerContent().getProvinceTransferDTOList())){
+            logDTO.setProvinceTransferDTOList(logDTO.getAddressHandlerContent().getProvinceTransferDTOList());
+            logDTO.getAddressHandlerContent().setProvinceTransferDTOList(null);
+        }
+        if(Objects.nonNull(logDTO.getAddressHandlerContent()) && Objects.nonNull(logDTO.getAddressHandlerContent().getCityTransferDTOList())){
+            logDTO.setCityTransferDTOList(logDTO.getAddressHandlerContent().getCityTransferDTOList());
+            logDTO.getAddressHandlerContent().setCityTransferDTOList(null);
+        }
         if(Objects.nonNull(logDTO.getPhoneHandleContent()) && Objects.nonNull(logDTO.getPhoneHandleContent().getFilterPhoneTextList())){
             logDTO.setFilterPhoneTextList(logDTO.getPhoneHandleContent().getFilterPhoneTextList());
             logDTO.getPhoneHandleContent().setFilterPhoneTextList(null);
