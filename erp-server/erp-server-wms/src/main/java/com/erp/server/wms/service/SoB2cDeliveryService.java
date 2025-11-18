@@ -142,7 +142,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @Author Luo_WG
      * @Date 2023/12/19 16:39
      **/
-    void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response);
+    String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response);
 
     /**
      * 根据来源id查询发货单
@@ -310,7 +310,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author will
      * @date 2024/7/1 18:14
      */
-    void printLogisticsBillConfirmById(String id, HttpServletResponse response);
+    String printLogisticsBillConfirmById(String id, HttpServletResponse response);
 
     /**
      * 查询id集合

@@ -6,13 +6,14 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.convert.BaoHongCreateOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -41,7 +42,8 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
@@ -130,7 +132,11 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                     return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMessage());
                 }
                 LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
-                logisticsPrintLabelResponse.setBase64(response.getData());
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(response.getData())
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                logisticsPrintLabelResponse.setLabelUrl(fileFeign.uploadFileByBase64(uploadBase64));
                 logisticsPrintLabelResponse.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
                 logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
                 logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));

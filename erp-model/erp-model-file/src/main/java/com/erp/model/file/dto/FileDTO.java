@@ -13,7 +13,9 @@ import lombok.*;
 @NoArgsConstructor
 public class FileDTO {
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UploadBase64{
         private String base64;
         private String fileName;

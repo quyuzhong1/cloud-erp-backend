@@ -42,7 +42,7 @@ public interface SoB2cLabelService extends SuperService<SoB2cLabelEntity> {
      **/
     List<SoB2cLabelEntity> listSoB2cLabelByMainIds(List<String> mainIds);
 
-    void ManualUploadLabel(String base64, String id);
+    void ManualUploadLabel(String url, String id);
 
     /**
      * 更新跨境物流面单url

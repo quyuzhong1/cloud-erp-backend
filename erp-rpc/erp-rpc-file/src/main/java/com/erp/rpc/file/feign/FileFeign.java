@@ -1,6 +1,7 @@
 package com.erp.rpc.file.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.file.dto.FileDTO;
 import feign.Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -59,5 +60,13 @@ public interface FileFeign {
     Response getInputStream(@PathVariable("fileId") String fileId);
 
     @PostMapping(value = "/feign/file/uploadFileByBase64")
-    String uploadFileByBase64(@RequestBody String base64Str);
+    String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64);
+
+    /**
+     * 合并多个文件为一个文件
+     * @param fileIds 文件id列表
+     * @return 合并后的文件url
+     */
+    @PostMapping(value = "/feign/file/mergeFiles")
+    String mergeFiles(@RequestBody List<String> fileIds);
 }

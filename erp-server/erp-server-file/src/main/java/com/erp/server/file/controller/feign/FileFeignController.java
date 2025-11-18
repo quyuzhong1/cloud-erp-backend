@@ -2,10 +2,8 @@ package com.erp.server.file.controller.feign;
 
 
 import cn.hutool.core.collection.CollUtil;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
-import com.erp.model.sys.dto.SysCommonDTO;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
 import org.springframework.http.MediaType;
@@ -14,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -76,11 +73,11 @@ public class FileFeignController {
         }
     }
     @PostMapping(value = "/uploadFileByBase64")
-    public String uploadFileByBase64(@RequestBody String base64Str){
+    public String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64){
         FileService fileService = fileRegistry.getHandler();
-        String[] parts = base64Str.split(",");
+        String[] parts = uploadBase64.getBase64().split(",");
         byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
-        String fileName = UUID.randomUUID().toString() + ".pdf";
+        String fileName = uploadBase64.getFileName() != null ? uploadBase64.getFileName() : UUID.randomUUID().toString() + ".pdf";
         return fileService.uploadFile(bytes,fileName,null);
     }
 

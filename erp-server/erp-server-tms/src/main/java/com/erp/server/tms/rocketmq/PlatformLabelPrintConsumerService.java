@@ -11,7 +11,6 @@ import com.erp.server.tms.service.LogisticsBillService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -36,9 +35,9 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
         List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(Arrays.asList(dto));
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            for (String labelBase : waybillDTO.getDistributeBase64()) {
+            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
                 SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-                updateDTO.setLogisticsLabelBase64(labelBase);
+                updateDTO.setLogisticsLabelUrl(labelBase);
                 updateDTO.setMainId(waybillDTO.getSoB2cId());
                 dtoList.add(updateDTO);
             }

@@ -3121,10 +3121,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
-            String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();
-            if (CharSequenceUtil.isBlank(logisticsLabelBase64)){
+            String logisticsLabelUrl = soB2cLabelEntity.getLogisticsLabelUrl();
+            if (CharSequenceUtil.isBlank(logisticsLabelUrl)){
                 throw new ServiceException("未找到面单信息");
             }
+            byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
+            String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
             thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
@@ -7697,15 +7699,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
             printWayBillPdfDTO.setAmount(soB2cEntity.getAmount());
             printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
-            List<String> base64List = soB2cLabelEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(SoB2cLabelEntity::getLogisticsLabelBase64).collect(Collectors.toList());
+            List<String> base64UrlList = soB2cLabelEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(SoB2cLabelEntity::getLogisticsLabelUrl).collect(Collectors.toList());
             List<String> crossUrlList = soB2cLabelEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(SoB2cLabelEntity::getCrossLabelUrl).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(crossUrlList)){
-                crossUrlList.forEach(fileId ->{
-                    byte[] bytes = fileFeign.downloadFile(fileId);
-                    base64List.add("data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes));
-                });
+                base64UrlList.addAll(crossUrlList);
             }
-            printWayBillPdfDTO.setLogisticsLabelBase64List(base64List);
+            printWayBillPdfDTO.setLogisticsLabelUrlList(base64UrlList);
             printWayBillPdfDTO.setPrintTime(cn.hutool.core.date.DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
             //店铺信息
             ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
@@ -10797,9 +10796,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(!"application/pdf".equals(multipartFile.getContentType())){
             throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
         }
-        String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-        String prefix = "data:application/pdf;base64,";
-        soB2cLabelService.ManualUploadLabel(prefix + base64,dto.getId());
+        String url = fileFeign.uploadFile(multipartFile);
+//        String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+//        String prefix = "data:application/pdf;base64,";
+        soB2cLabelService.ManualUploadLabel(url,dto.getId());
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
 
         operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");

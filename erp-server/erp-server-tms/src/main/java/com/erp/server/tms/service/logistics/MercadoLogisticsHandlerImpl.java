@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -24,6 +25,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -52,6 +54,8 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 查询店铺授权
      * @param shopId
@@ -138,14 +142,19 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<String> errorList = new ArrayList<>();
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
             try {
-                String labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
-                String prefix = "data:application/pdf;base64,";
-                String base64 = prefix + labelUrl;
+                String base64 = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(base64)
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
+//                String prefix = "data:application/pdf;base64,";
+//                String base64 = prefix + labelUrl;
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
-                        .base64(base64).build();
+                        .labelUrl(url).build();
                 logisticsOperateService.pullOperateLog(vo.getOrderId(), vo.getDeliveryNo(), BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(base64));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(url));
                 responseList.add(response);
             }catch (Exception e){
                 String message = e.getMessage();

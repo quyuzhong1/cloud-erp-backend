@@ -121,7 +121,7 @@ public class SoLabelDTO implements Serializable {
         //客户名称
         private String customerName;
         //文件编码
-        private String fileData;
+        private String logisticsLabelUrl;
         //是否存在物流单
         private Boolean hasLabel;
     }

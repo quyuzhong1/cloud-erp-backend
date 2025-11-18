@@ -8,6 +8,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -18,6 +19,7 @@ import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -49,6 +51,8 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private ShopInfoFeign shopInfoFeign;
     @Value("${oms.sdk.wildberries.sandbox}")
     private String sandbox;
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 查询店铺授权
      * @param shopId
@@ -105,9 +109,14 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.WILDBERRIES.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderLabelResponse));
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(PdfUtil.ImageToPdfBase64(orderLabelResponse.getStickers().get(0).getFile()))
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
                 response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
-                        .base64("data:application/pdf;base64," + PdfUtil.ImageToPdfBase64(orderLabelResponse.getStickers().get(0).getFile())).build();
+                        .labelUrl(url).build();
                 response.success();
                 responses.add(response);
                 return success(responses);

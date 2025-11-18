@@ -1119,11 +1119,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     }
                 }
                 //获取标签信息
-                List<String> logisticsBase64 = labelList.getData().stream().map(req -> req.getBase64()).distinct().collect(Collectors.toList());
+                List<String> labelUrl = labelList.getData().stream().map(LogisticsPrintLabelResponse::getLabelUrl).distinct().collect(Collectors.toList());
                 //返回值
                 SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
-                waybillDTO.setLogisticsBase64(logisticsBase64);
-                waybillDTO.setDistributeBase64(logisticsBase64);
+                waybillDTO.setLogisticsBase64Url(labelUrl);
+                waybillDTO.setDistributeBase64Url(labelUrl);
                 waybillDTO.setSoB2cId(dto.getB2cSoId());
                 waybillDTO.setTrackNo(getLabelVO.getTrackNo());
                 waybillDTO.setTransportNo(getLabelVO.getTransportNo());
@@ -1352,9 +1352,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            for (String labelBase : waybillDTO.getDistributeBase64()) {
+            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
                 SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-                updateDTO.setLogisticsLabelBase64(labelBase);
+                updateDTO.setLogisticsLabelUrl(labelBase);
                 updateDTO.setMainId(waybillDTO.getSoB2cId());
                 dtoList.add(updateDTO);
             }

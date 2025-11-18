@@ -65,7 +65,7 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
     }
 
     @Override
-    public void ManualUploadLabel(String base64, String id) {
+    public void ManualUploadLabel(String url, String id) {
 
         SoB2cLabelEntity existApiEntity = lambdaQuery().eq(SoB2cLabelEntity::getMainId, id).eq(SoB2cLabelEntity::getSourceType, SoB2cLabelSourceTypeEnum.API.getCode()).last("LIMIT 1").one();
         if(Objects.nonNull(existApiEntity)){
@@ -79,7 +79,7 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
         }
         SoB2cLabelEntity addEntity = new SoB2cLabelEntity();
         addEntity.setMainId(id);
-        addEntity.setLogisticsLabelBase64(base64);
+        addEntity.setLogisticsLabelUrl(url);
         addEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
         this.save(addEntity);
     }

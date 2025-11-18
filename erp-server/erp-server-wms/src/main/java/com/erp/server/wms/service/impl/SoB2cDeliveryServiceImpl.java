@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -40,6 +41,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.entity.*;
@@ -74,6 +76,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -217,7 +220,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private TikTokFullService tikTokFullService;
     @Resource
     private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
-
+    @Resource
+    private FileFeign fileFeign;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -806,7 +810,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         //打印类型
         String printType = dto.getPrintType();
 
@@ -815,7 +819,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> logisticsChannelIdList = detailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
 
 
-        List<String> base64List = new ArrayList<>();
+//        List<String> base64List = new ArrayList<>();
+        List<String> base64UrlList = new ArrayList<>();
 
         //查询打印类型
         List<String> channelIds = detailList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO::getLogisticsChannelId).collect(Collectors.toList());
@@ -877,13 +882,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 //如果打印面单
                 if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
-                    if (CollectionUtils.isNotEmpty(printWayBillPdf.getLogisticsLabelBase64List())) {
-                        base64List.addAll(printWayBillPdf.getLogisticsLabelBase64List());
+                    if (CollectionUtils.isNotEmpty(printWayBillPdf.getLogisticsLabelUrlList())) {
+                        base64UrlList.addAll(printWayBillPdf.getLogisticsLabelUrlList());
                     } else {
                         //没有就请求sdk获取
-                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
+                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64Url()).findFirst().orElse(null);
                         if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
-                            base64List.addAll(logisticsWaybillList);
+                            base64UrlList.addAll(logisticsWaybillList);
                         }
                     }
 
@@ -893,19 +898,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
                         PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(printWayBillPdf, logisticsWaybillDetailDTO);
                         // 自定义配货单
-                        customDistribute(base64List, printWayBillPdfDTO);
+                        customDistribute(base64UrlList, printWayBillPdfDTO);
                     }else{
                         throw new ServiceException(CharSequenceUtil.format("{}未设置打印配货单",logisticsWaybillDetailDTO.getLogisticsChannelName()));
                     }
                 } else {
                     //先获取订单的面单，没有就请求sdk获取
-                    if (CollectionUtils.isNotEmpty(printWayBillPdf.getLogisticsLabelBase64List())) {
-                        base64List.addAll(printWayBillPdf.getLogisticsLabelBase64List());
+                    if (CollectionUtils.isNotEmpty(printWayBillPdf.getLogisticsLabelUrlList())) {
+                        base64UrlList.addAll(printWayBillPdf.getLogisticsLabelUrlList());
                     } else {
                         //没有就请求sdk获取
-                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
+                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64Url()).findFirst().orElse(null);
                         if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
-                            base64List.addAll(logisticsWaybillList);
+                            base64UrlList.addAll(logisticsWaybillList);
                         }
                     }
 
@@ -913,7 +918,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
                         PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(printWayBillPdf, logisticsWaybillDetailDTO);
                         // 自定义配货单
-                        customDistribute(base64List, printWayBillPdfDTO);
+                        customDistribute(base64UrlList, printWayBillPdfDTO);
                     }
                 }
 
@@ -926,38 +931,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
-        if(CollectionUtils.isEmpty(base64List)){
+        if(CollectionUtils.isEmpty(base64UrlList)){
             throw new ServiceException("未找到面单数据");
         }
+        String mergePdfUrl = null;
         try {
-            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-
-            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
-            response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-            BASE64Decoder decoder = new BASE64Decoder();
-            try (OutputStream out = response.getOutputStream()) {
-                // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
-                // 将字节数组写入到响应输出流中
-                out.write(pdfBytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            mergePdfUrl = fileFeign.mergeFiles(base64UrlList);
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_PDF_MERGE);
         }
+        return mergePdfUrl;
     }
 
     private void saveLable(List<SoB2cDTO.WaybillDTO> platformWaybill) {
         if (CollectionUtils.isNotEmpty(platformWaybill)) {
             List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
             for (SoB2cDTO.WaybillDTO waybillDTO : platformWaybill) {
-                for (String labelBase : waybillDTO.getDistributeBase64()) {
+                for (String labelBase : waybillDTO.getDistributeBase64Url()) {
                     SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-                    updateDTO.setLogisticsLabelBase64(labelBase);
+                    updateDTO.setLogisticsLabelUrl(labelBase);
                     updateDTO.setMainId(waybillDTO.getSoB2cId());
                     dtoList.add(updateDTO);
                 }
@@ -967,7 +960,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO) {
+    public void customDistribute(List<String> base64UrlList, PrintWayBillPdfDTO printWayBillPdfDTO) {
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
         getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
@@ -984,7 +977,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         map.put("detail", detail);
         byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(printWayBillPdfDTO));
         String base = Base64.getEncoder().encodeToString(bytes);
-        base64List.add("data:application/pdf;base64," + base);
+        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(base).fileName(RandomUtil.randomNumbers(5) + ".pdf").build();
+        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        base64UrlList.add(url);
     }
 
     @Override
@@ -1092,7 +1087,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public void printLogisticsBillConfirmById(String id, HttpServletResponse response) {
+    public String printLogisticsBillConfirmById(String id, HttpServletResponse response) {
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
         dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
@@ -1113,7 +1108,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailDTO.setLogisticType(soB2cLogisticsList.get(0).getLogisticType());
         detailList.add(detailDTO);
         dto.setDetailList(detailList);
-        printLogisticsBillConfirm(dto,response);
+        return printLogisticsBillConfirm(dto,response);
     }
 
     @Override
@@ -2667,7 +2662,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 //                .filter(req -> CharSequenceUtil.isBlank(req.getLogisticsWaybill()))
 //                .collect(Collectors.toList());
         for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO detailDTO : waybillDetailDTOList) {
-            PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfResultList.stream().filter(req -> detailDTO.getSoB2cId().equals(req.getSoId()) && CollectionUtils.isEmpty(req.getLogisticsLabelBase64List())).findFirst().orElse(null);
+            PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfResultList.stream().filter(req -> detailDTO.getSoB2cId().equals(req.getSoId()) && CollectionUtils.isEmpty(req.getLogisticsLabelUrlList())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(printWayBillPdfDTO)) {
                 continue;
             }
