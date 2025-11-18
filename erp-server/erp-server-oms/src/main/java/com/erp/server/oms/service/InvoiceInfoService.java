@@ -79,7 +79,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     List<InvoiceInfoEntity> listBySoIds(List<String> soIds);
 
-    void retryInvoice();
+    void retryInvoice(String jobParam);
 
     void queryUploadingInvoice() throws Exception;
     /**

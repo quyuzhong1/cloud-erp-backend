@@ -8,6 +8,7 @@ import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -47,6 +48,7 @@ import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -640,10 +642,19 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    public void retryInvoice() {
-        //查开票中的发票
-        List<InvoiceInfoEntity> allInvoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).list();
+    public void retryInvoice(String jobParam) {
+        JSONObject jsonObject = JSONObject.parseObject(jobParam);
+        List<InvoiceInfoEntity> allInvoiceInfoEntityList;
+        if(Objects.nonNull(jsonObject) && Objects.nonNull(jsonObject.getBoolean("queryHistory")) && jsonObject.getBoolean("queryHistory")){
+            allInvoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).list();
+
+        }else{
+            //查三个月内开票中的发票
+            LocalDateTime queryTime = LocalDateTime.now().minusMonths(3);
+            allInvoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).ge(InvoiceInfoEntity::getCreateTime,queryTime).list();
+        }
         if(CollectionUtils.isEmpty(allInvoiceInfoEntityList)){
+            XxlJobHelper.log("没有需要重试的开票中的发票");
             log.warn("没有需要重试的开票中的发票");
             return;
         }

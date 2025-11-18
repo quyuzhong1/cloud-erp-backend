@@ -21,8 +21,8 @@ public class InvoiceJob {
 
     @XxlJob("InvoiceJob")
     public ReturnT<String> invoiceJob() {
-        invoiceInfoService.retryInvoice();
-
+        String jobParam = XxlJobHelper.getJobParam();
+        invoiceInfoService.retryInvoice(jobParam);
         return ReturnT.SUCCESS;
     }
 
