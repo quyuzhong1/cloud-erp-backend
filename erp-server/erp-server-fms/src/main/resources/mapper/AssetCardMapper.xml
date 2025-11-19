@@ -247,4 +247,32 @@
         </if>
     </select>
 
+    <select id="listApproveDetailByIds" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDetailDTO">
+        SELECT
+        ac.id,
+        ac.code,
+        ac.name,
+        ac.type,
+        ac.unit,
+        ac.qty,
+        ac.change_method,
+        ac.org_id,
+        ac.org_name,
+        ac.status,
+        acd.id AS detailId,
+        acd.asset_code AS assetCode,
+        acd.asset_location_id AS assetLocationId,
+        acd.qty AS detailQty,
+        FROM asset_card ac
+        left join asset_card_detail acd on acd.main_id = ac.id and acd.is_deleted = false
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="ids != null and ids.size() > 0">
+            AND ac.id IN
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
 </mapper>

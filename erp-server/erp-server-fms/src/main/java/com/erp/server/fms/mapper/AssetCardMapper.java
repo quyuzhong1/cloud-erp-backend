@@ -61,4 +61,6 @@ public interface AssetCardMapper extends BaseMapper<AssetCardEntity> {
     List<AssetCardDTO.ApprovedCardDTO> getApprovedCardList(@Param("params") AssetCardDTO.QueryApprovedDTO params);
 
     List<AssetCardDTO.ApprovedCardDTO> searchApprovedCard(@Param("params")AssetCardDTO.SearchParamDTO params);
+
+    List<AssetCardDTO.ApprovedCardDetailDTO> listApproveDetailByIds(@Param("ids")List<String> ids);
 }

@@ -1211,4 +1211,12 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         }
         return list;
     }
+
+    @Override
+    public List<AssetCardDTO.ApprovedCardDetailDTO>  listApproveDetailByIds(List<String> ids){
+        if(CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listApproveDetailByIds(ids);
+    }
 }

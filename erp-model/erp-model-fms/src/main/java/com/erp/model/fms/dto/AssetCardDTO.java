@@ -659,4 +659,28 @@ public class AssetCardDTO implements Serializable {
          */
         private Integer qty;
     }
+    /**
+    * 已审核资产卡片明细返回结果
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ApprovedCardDetailDTO extends ApprovedCardDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 资产编码
+         */
+        private String assetCode;
+        /**
+         * 资产位置ID
+         */
+        private String assetLocationId;
+        /**
+         * 明细数量
+         */
+        private Integer detailQty;
+
+    }
 }

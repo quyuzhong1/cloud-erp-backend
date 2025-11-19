@@ -210,4 +210,6 @@ public interface AssetCardService extends SuperService<AssetCardEntity> {
     * @return Map<String, Object>
     */
     Map<String, Object> getVariablesMap(AssetCardEntity entity);
+
+    List<AssetCardDTO.ApprovedCardDetailDTO>  listApproveDetailByIds(List<String> ids);
 }

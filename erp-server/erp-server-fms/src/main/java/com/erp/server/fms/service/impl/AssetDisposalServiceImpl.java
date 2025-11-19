@@ -11,9 +11,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.CurrencyEnum;
-import com.erp.model.fms.dto.AssetDisposalDetailDTO;
-import com.erp.model.fms.dto.AssetDisposalPhysicalDetailDTO;
-import com.erp.model.fms.dto.AssetLocationDTO;
+import com.erp.model.fms.dto.*;
 import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
@@ -45,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.fms.dto.AssetDisposalDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -428,8 +425,71 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 资产处置单【提交审核】、【审核】需校验资产卡片+资产编码（处置）数量-资产卡片+资产编码数量是否小于0，小于0则提示“资产编码【123】处置数量不能大于账存数量”，提示需批量
+        List<AssetDisposalDetailEntity> assetDisposalDetailEntities = assetDisposalDetailService.lambdaQuery().eq(AssetDisposalDetailEntity::getMainId, entity.getId()).list();
+        List<String> cardIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<AssetCardDTO.ApprovedCardDetailDTO> approvedCardDetailDTOS = assetCardService.listApproveDetailByIds(cardIds);
+        if(CollUtil.isEmpty(approvedCardDetailDTOS)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产卡片"));
+        }
+        Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map = approvedCardDetailDTOS.stream().collect(Collectors.groupingBy(AssetCardDTO.ApprovedCardDetailDTO::getId));
+
+        StringBuffer sb = new StringBuffer();
+        for (AssetDisposalDetailEntity disposalDetailEntity : assetDisposalDetailEntities) {
+            List<AssetCardDTO.ApprovedCardDetailDTO> cardDetailDTOS = map.getOrDefault(disposalDetailEntity.getSourceId(), null);
+            if(CollUtil.isEmpty(cardDetailDTOS)){
+                sb.append(disposalDetailEntity.getSourceCode());
+                sb.append(";");
+            }
+        }
+        String error = sb.toString();
+        if(StringUtils.isNotBlank(error)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100001.msg,error));
+        }
+
+        List<String> detailIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
+        List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId, detailIds).list();
+        if(CollUtil.isEmpty(assetDisposalPhysicalDetailEntities)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产处置单实物明细"));
+        }
+
+        //key 由资产卡片编码 + 资产编码 组成，value 由相同key进行求和
+        Map<String, Integer> cardDetailMap = approvedCardDetailDTOS.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getId() +":"+ item.getDetailId(),
+                        item -> Optional.ofNullable(item.getDetailQty()).orElse(0),
+                        Integer::sum // 当key冲突时，对value进行求和
+                ));
+
+        for (AssetDisposalDetailEntity disposalDetailEntity : assetDisposalDetailEntities) {
+            //处置单实物明细
+            List<AssetDisposalPhysicalDetailEntity> listByDetailIdDTOs = assetDisposalPhysicalDetailEntities.stream().filter(e -> e.getAssetDisposalDetailId().equals(disposalDetailEntity.getId())).collect(Collectors.toList());
+            //资产卡片编码
+            String sourceId = disposalDetailEntity.getSourceId();
+            for (AssetDisposalPhysicalDetailEntity listByDetailIdDTO : listByDetailIdDTOs) {
+                //资产编码
+                String sourceDetailId = listByDetailIdDTO.getSourceDetailId();
+                //处置单数量
+                Integer qty = listByDetailIdDTO.getQty();
+
+                String key = sourceId + ":" + sourceDetailId;
+                Integer cardDetailQty = cardDetailMap.get(key);
+                if(cardDetailQty - qty < 0){
+                    sb.append(sourceDetailId);
+                    sb.append(";");
+                }
+                cardDetailMap.put(key,cardDetailQty - qty);
+            }
+        }
+
+        error = sb.toString();
+        if(StringUtils.isNotBlank(error)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100002.msg,error));
+        }
+
         // 调用流程审核
-        approveProcess(entity, dto);
+        approveProcess(entity, dto,map,cardDetailMap);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "审核操作");
@@ -443,7 +503,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
      * @param entity
      * @param dto
      */
-    private void approveProcess(AssetDisposalEntity entity, ApproveOneDTO dto) {
+    private void approveProcess(AssetDisposalEntity entity, ApproveOneDTO dto,Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map,Map<String, Integer> cardDetailMap) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -459,8 +519,41 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 审核通过需要更新资产卡片（卡片编码 + 资产编码 维度）
+            if(Objects.equals(ApproveTypeEnum.PASS.getStatus(),dto.getType())){
+                updateAssetCard(map,cardDetailMap);
+            }
+
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
+
+        }
+    }
+
+    private void updateAssetCard(Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map,Map<String, Integer> cardDetailMap) {
+
+        for (Map.Entry<String, List<AssetCardDTO.ApprovedCardDetailDTO>> entry : map.entrySet()) {
+            Integer qty = 0;
+
+            String cardId = entry.getKey();
+
+            List<AssetCardDTO.ApprovedCardDetailDTO> value = entry.getValue();
+            for (AssetCardDTO.ApprovedCardDetailDTO approvedCardDetailDTO : value) {
+
+                Integer cardDetailQty = cardDetailMap.get(cardId + ":" + approvedCardDetailDTO.getDetailId());
+                assetCardDetailService.lambdaUpdate()
+                        .eq(AssetCardDetailEntity::getId,approvedCardDetailDTO.getDetailId())
+                        .set(AssetCardDetailEntity::getQty,cardDetailQty)
+                        .update();
+
+                qty += cardDetailQty;
+            }
+
+
+            assetCardService.lambdaUpdate()
+                    .eq(AssetCardEntity::getId,cardId)
+                    .set(AssetCardEntity::getQty,qty)
+                    .update();
         }
     }
 
@@ -471,6 +564,66 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        // 资产处置单【提交审核】、【审核】需校验资产卡片+资产编码（处置）数量-资产卡片+资产编码数量是否小于0，小于0则提示“资产编码【123】处置数量不能大于账存数量”，提示需批量
+        List<AssetDisposalDetailEntity> assetDisposalDetailEntities = assetDisposalDetailService.lambdaQuery().eq(AssetDisposalDetailEntity::getMainId, entity.getId()).list();
+        List<String> cardIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<AssetCardDTO.ApprovedCardDetailDTO> approvedCardDetailDTOS = assetCardService.listApproveDetailByIds(cardIds);
+        if(CollUtil.isEmpty(approvedCardDetailDTOS)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产卡片"));
+        }
+        Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map = approvedCardDetailDTOS.stream().collect(Collectors.groupingBy(AssetCardDTO.ApprovedCardDetailDTO::getId));
+
+        StringBuffer sb = new StringBuffer();
+        for (AssetDisposalDetailEntity disposalDetailEntity : assetDisposalDetailEntities) {
+            List<AssetCardDTO.ApprovedCardDetailDTO> cardDetailDTOS = map.getOrDefault(disposalDetailEntity.getSourceId(), null);
+            if(CollUtil.isEmpty(cardDetailDTOS)){
+                sb.append(disposalDetailEntity.getSourceCode());
+                sb.append(";");
+            }
+        }
+        String error = sb.toString();
+        if(StringUtils.isNotBlank(error)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100001.msg,error));
+        }
+
+        List<String> detailIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
+        List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId, detailIds).list();
+        if(CollUtil.isEmpty(assetDisposalPhysicalDetailEntities)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产处置单实物明细"));
+        }
+
+        //key 由资产卡片编码 + 资产编码 组成，value 由相同key进行求和
+        Map<String, Integer> cardDetailMap = approvedCardDetailDTOS.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getId() +":"+ item.getDetailId(),
+                        item -> Optional.ofNullable(item.getDetailQty()).orElse(0),
+                        Integer::sum // 当key冲突时，对value进行求和
+                ));
+
+        for (AssetDisposalDetailEntity disposalDetailEntity : assetDisposalDetailEntities) {
+            //处置单实物明细
+            List<AssetDisposalPhysicalDetailEntity> listByDetailIdDTOs = assetDisposalPhysicalDetailEntities.stream().filter(e -> e.getAssetDisposalDetailId().equals(disposalDetailEntity.getId())).collect(Collectors.toList());
+            //资产卡片编码
+            String sourceId = disposalDetailEntity.getSourceId();
+            for (AssetDisposalPhysicalDetailEntity listByDetailIdDTO : listByDetailIdDTOs) {
+                //资产编码
+                String sourceDetailId = listByDetailIdDTO.getSourceDetailId();
+                //处置单数量
+                Integer qty = listByDetailIdDTO.getQty();
+                String key = sourceId + ":" + sourceDetailId;
+                Integer cardDetailQty = cardDetailMap.get(key);
+                cardDetailMap.put(key,cardDetailQty + qty);
+            }
+        }
+
+        error = sb.toString();
+        if(StringUtils.isNotBlank(error)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100002.msg,error));
+        }
+
+        // 审核通过需要更新资产卡片（卡片编码 + 资产编码 维度）
+        updateAssetCard(map,cardDetailMap);
+
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
