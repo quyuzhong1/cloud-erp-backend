@@ -19,18 +19,15 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetStocktakingPlanDTO;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
 import com.erp.model.fms.dto.AssetStocktakingDetailDTO;
 import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
 import com.erp.model.fms.entity.AssetStocktakingEntity;
-import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
 import com.erp.model.fms.entity.AssetCardEntity;
 import com.erp.model.fms.entity.AssetCardDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -46,7 +43,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
@@ -60,13 +56,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 /**
  * <p>
  * 资产盘点方案表 服务实现类
@@ -126,7 +121,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "资产盘点方案单" , assetStocktakingPlanEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), assetStocktakingPlanEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), assetStocktakingPlanEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(assetStocktakingPlanEntity.getId(), code);
     }
@@ -163,7 +158,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 记录主单操作日志
             log.info("编辑 开始记录资产盘点方案单日志数据，单号：【{}】", old.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "资产盘点方案单");
-        operateLogService.addModuleOperateLogByObj(old, assetStocktakingPlanEntity,  ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), assetStocktakingPlanEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, assetStocktakingPlanEntity,  ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), assetStocktakingPlanEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -261,7 +256,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 记录操作日志
         log.info("提交 开始记录资产盘点方案单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点方案单");
-        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -303,7 +298,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点方案单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -318,7 +313,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(SourceTypeEnum.INVENTORY_PLAN.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -349,7 +344,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点方案单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -362,7 +357,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 校验是否存在资产盘点表(未删除或未作废)
         long count = assetStocktakingService.lambdaQuery()
                 .eq(AssetStocktakingEntity::getSourceId, entity.getId())
-                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.STOCKTAKING_PLAN.getCode())
+                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode())
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .eq(AssetStocktakingEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
                 .count();
@@ -412,7 +407,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点方案单", remark);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -437,11 +432,11 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点方案单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -521,7 +516,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 创建资产盘点表主单（包含明细）
         AssetStocktakingDTO.AddDTO addDTO = new AssetStocktakingDTO.AddDTO();
         addDTO.setSourceCode(planEntity.getCode());
-        addDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
+        addDTO.setSourceType(SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode());
         addDTO.setSourceId(planEntity.getId());
         addDTO.setAssetOrgId(planEntity.getAssetOrgId());
         addDTO.setAssetOrgName(planEntity.getAssetOrgName());
@@ -570,7 +565,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(SourceTypeEnum.INVENTORY_PLAN.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -640,7 +635,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.INVENTORY_PLAN.getCode(), obj.getId()));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -735,7 +730,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 检查是否已经生成过资产盘点表
         long existCount = assetStocktakingService.lambdaQuery()
                 .eq(AssetStocktakingEntity::getSourceId, planEntity.getId())
-                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.INVENTORY_PLAN.getCode())
+                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode())
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .count();
         
@@ -749,7 +744,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         // 查询刚生成的资产盘点表并提交
         List<AssetStocktakingEntity> stocktakingList = assetStocktakingService.lambdaQuery()
                 .eq(AssetStocktakingEntity::getSourceId, planEntity.getId())
-                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.INVENTORY_PLAN.getCode())
+                .eq(AssetStocktakingEntity::getSourceType, SourceTypeEnum.ASSET_STOCKTAKING_PLAN.getCode())
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .list();
         
@@ -774,7 +769,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
                 UserContext.getDefaultLoginUser().getUserName(), 
                 planEntity.getCode(), 
                 stocktakingList != null ? stocktakingList.size() : 0);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_PLAN.getCode(), 
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING_PLAN.getCode(),
                 planEntity.getId(), "下推操作");
         
         return BatchResultDTO.success(planEntity.getId(), planEntity.getCode());
@@ -901,7 +896,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     @Override
     public Map<String, Object> getVariablesMap(AssetStocktakingPlanEntity entity) {
         com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
-        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.INVENTORY_PLAN.getCode());
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.ASSET_STOCKTAKING_PLAN.getCode());
         dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;

@@ -733,13 +733,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case ASSET_ACCEPTANCE:
                 resultDTOList = fmsTaskFeign.assetAcceptApprove(baseApproveParamDTO);
                 break;
-            case INVENTORY_GAIN_LOSS:
+            case ASSET_PROFIT_LOSS:
                 resultDTOList = fmsTaskFeign.assetProfitLossApprove(baseApproveParamDTO);
                 break;
-            case ASSET_INVENTORY_SHEET:
+            case ASSET_STOCKTAKING:
                 resultDTOList = fmsTaskFeign.assetStocktakingApprove(baseApproveParamDTO);
                 break;
-            case INVENTORY_PLAN:
+            case ASSET_STOCKTAKING_PLAN:
                 resultDTOList = fmsTaskFeign.assetStocktakingPlanApprove(baseApproveParamDTO);
                 break;
             case ASSET_LOCATION:

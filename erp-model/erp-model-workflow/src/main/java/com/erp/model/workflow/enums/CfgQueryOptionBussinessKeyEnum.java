@@ -58,9 +58,9 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	ASSET_CARD("assetCard", "资产卡片"),
 	ASSET_ACCEPTANCE("assetAcceptance", "资产验收单"),
 	ASSET_DISPOSAL("assetDisposal", "资产处置单"),
-	INVENTORY_GAIN_LOSS("inventoryGainLoss", "盘盈盘亏单"),
-	ASSET_INVENTORY_SHEET("assetInventorySheet", "资产盘点表"),
-	INVENTORY_PLAN("inventoryPlan", "盘点方案"),
+	ASSET_PROFIT_LOSS("assetProfitLoss", "盘盈盘亏单"),
+	ASSET_STOCKTAKING("assetStocktaking", "资产盘点表"),
+	ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案"),
 	ASSET_LOCATION("assetLocation", "资产位置"),
     ;
     /**

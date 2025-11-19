@@ -79,7 +79,7 @@ public enum CardSourceEnum {
         switch (sourceTypeCode) {
             case "assetAcceptance":
                 return PURCHASE_RECEIPT.getCode();
-            case "inventoryGainLoss":
+            case "assetProfitLoss":
                 return INVENTORY_SURPLUS.getCode();
             default:
                 return MANUAL_CREATE.getCode();

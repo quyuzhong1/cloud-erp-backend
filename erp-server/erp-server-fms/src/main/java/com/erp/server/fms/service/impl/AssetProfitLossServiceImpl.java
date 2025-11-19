@@ -23,7 +23,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.fms.dto.AssetCardDTO;
 import com.erp.model.fms.dto.AssetCardDetailDTO;
@@ -111,7 +110,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "盘盈盘亏单主单" , assetProfitLossEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), assetProfitLossEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(assetProfitLossEntity.getId(), code);
@@ -144,7 +143,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录主单操作日志
             log.info("编辑 开始记录盘盈盘亏单主单日志数据，单号：【{}】", old.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, assetProfitLossEntity, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), assetProfitLossEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -243,7 +242,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 记录操作日志
         log.info("提交 开始记录盘盈盘亏单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -285,7 +284,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -299,7 +298,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.ASSET_PROFIT_LOSS.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -330,7 +329,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -381,7 +380,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单", remark);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -406,10 +405,10 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘盈盘亏单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(), entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_PROFIT_LOSS.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -461,7 +460,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        startDTO.setBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.ASSET_PROFIT_LOSS.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -553,7 +552,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.INVENTORY_GAIN_LOSS.getCode(), obj.getId()));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.ASSET_PROFIT_LOSS.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -751,7 +750,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     @Override
     public Map<String, Object> getVariablesMap(AssetProfitLossEntity entity) {
         com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO dto = new com.erp.model.workflow.dto.CfgQueryOptionDTO.VariablesParamsDTO();
-        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.INVENTORY_GAIN_LOSS.getCode());
+        dto.setBusinessKey(com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum.ASSET_PROFIT_LOSS.getCode());
         dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
@@ -887,7 +886,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                         mainEntity.getCode(),
                         item.getAssetName(),
                         cardResult.getCode());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_GAIN_LOSS.getCode(),
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(),
                         mainEntity.getId(), "下推资产卡片操作");
                 
                 result = BatchResultDTO.success(item.getDetailId(), item.getAssetName(), OperationTypeEnum.UPDATE);

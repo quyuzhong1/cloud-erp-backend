@@ -20,7 +20,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Component
-@ApproveBusinessKey(SourceTypeEnum.INVENTORY_GAIN_LOSS)
+@ApproveBusinessKey(SourceTypeEnum.ASSET_PROFIT_LOSS)
 public class AssetProfitLossApproveHandler extends AbstractApproveHandler {
 
     @Resource
