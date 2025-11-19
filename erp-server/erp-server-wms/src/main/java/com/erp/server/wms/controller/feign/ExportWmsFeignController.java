@@ -776,7 +776,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/transferInfo")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
