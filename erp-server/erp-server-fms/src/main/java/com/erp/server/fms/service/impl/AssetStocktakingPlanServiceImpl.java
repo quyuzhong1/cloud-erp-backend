@@ -748,24 +748,24 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
                 .eq(AssetStocktakingEntity::getIsDeleted, false)
                 .list();
         
-        if (CollUtil.isNotEmpty(stocktakingList)) {
-            // 批量提交资产盘点表
-            int submitCount = 0;
-            for (AssetStocktakingEntity stocktaking : stocktakingList) {
-                try {
-                    assetStocktakingService.submit(stocktaking.getId());
-                    submitCount++;
-                    log.info("成功提交资产盘点表，编号：{}", stocktaking.getCode());
-                } catch (Exception e) {
-                    log.error("提交资产盘点表失败，编号：{}，原因：{}", stocktaking.getCode(), e.getMessage());
-                }
-            }
-            log.info("盘点方案下推完成，方案编号：{}，成功提交{}个资产盘点表", 
-                    planEntity.getCode(), submitCount);
-        }
+//        if (CollUtil.isNotEmpty(stocktakingList)) {
+//            // 批量提交资产盘点表
+//            int submitCount = 0;
+//            for (AssetStocktakingEntity stocktaking : stocktakingList) {
+//                try {
+//                    assetStocktakingService.submit(stocktaking.getId());
+//                    submitCount++;
+//                    log.info("成功提交资产盘点表，编号：{}", stocktaking.getCode());
+//                } catch (Exception e) {
+//                    log.error("提交资产盘点表失败，编号：{}，原因：{}", stocktaking.getCode(), e.getMessage());
+//                }
+//            }
+//            log.info("盘点方案下推完成，方案编号：{}，成功提交{}个资产盘点表",
+//                    planEntity.getCode(), submitCount);
+//        }
         
         // 操作日志
-        String msg = StrUtil.format("用户【{}】对盘点方案【{}】执行下推操作，生成并提交{}个资产盘点表", 
+        String msg = StrUtil.format("用户【{}】对盘点方案【{}】执行下推操作，生成{}个资产盘点表",
                 UserContext.getDefaultLoginUser().getUserName(), 
                 planEntity.getCode(), 
                 stocktakingList != null ? stocktakingList.size() : 0);
