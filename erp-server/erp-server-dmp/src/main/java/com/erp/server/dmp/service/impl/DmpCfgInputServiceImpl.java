@@ -126,26 +126,24 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem()) && StringUtils.isBlank(dmpCfgInputEntity.getExecUrl())) {
             throw new ServiceException("执行系统为RestCloud时，执行Url不能为空");
         }
-        if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())) {
-            Integer count = lambdaQuery()
+        Integer count = lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, dmpCfgInputEntity.getSystemId())
+                .eq(DmpCfgInputEntity::getExecSystem, dmpCfgInputEntity.getExecSystem())
+                .eq(DmpCfgInputEntity::getType, dmpCfgInputEntity.getType())
+                .eq(DmpCfgInputEntity::getCode, dmpCfgInputEntity.getCode())
+                .ne(null != dmpCfgInputEntity.getId(), DmpCfgInputEntity::getId, dmpCfgInputEntity.getId())
+                .count();
+        if (count > 0) {
+            throw new ServiceException("执行系统/拉取系统/数据类型/数据编码不能重复");
+        }
+        if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem())) {
+            Integer count2 = lambdaQuery()
                     .eq(DmpCfgInputEntity::getSystemId, dmpCfgInputEntity.getSystemId())
-                    .eq(DmpCfgInputEntity::getExecSystem, dmpCfgInputEntity.getExecSystem())
-                    .eq(DmpCfgInputEntity::getType, dmpCfgInputEntity.getType())
-                    .eq(DmpCfgInputEntity::getCode, dmpCfgInputEntity.getCode())
-                    .ne(null != dmpCfgInputEntity.getId(), DmpCfgInputEntity::getId, dmpCfgInputEntity.getId())
-                    .count();
-            if (count > 0) {
-                throw new ServiceException("执行系统是DMP下, 拉取系统/数据类型/数据编码不能重复");
-            }
-        } else if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem())) {
-            Integer count = lambdaQuery()
-                    .eq(DmpCfgInputEntity::getSystemId, dmpCfgInputEntity.getSystemId())
-                    .eq(DmpCfgInputEntity::getExecSystem, dmpCfgInputEntity.getExecSystem())
                     .eq(DmpCfgInputEntity::getExecUrl, dmpCfgInputEntity.getExecUrl())
                     .ne(null != dmpCfgInputEntity.getId(), DmpCfgInputEntity::getId, dmpCfgInputEntity.getId())
                     .count();
-            if (count > 0) {
-                throw new ServiceException("执行系统是RestCloud下, 拉取系统/执行Url不能重复");
+            if (count2 > 0) {
+                throw new ServiceException("执行系统是RestCloud下, 执行Url不能重复");
             }
         }
         if (StringUtils.isBlank(dmpCfgInputEntity.getExtendJson())) {
