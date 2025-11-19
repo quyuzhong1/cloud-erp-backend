@@ -146,7 +146,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单"));
         // 检查是否已作废
         if (Objects.equals(old.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "编辑");
+            throw new ServiceException(ApiError.ERROR_99200, "编辑");
         }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
@@ -266,7 +266,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "提审");
+            throw new ServiceException(ApiError.ERROR_99200, "提审");
         }
         validateSubmit(entity);
         // 更新单据审核状态
@@ -314,7 +314,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = getById(dto.getId());
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "审核");
+            throw new ServiceException(ApiError.ERROR_99200, "审核");
         }
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -391,7 +391,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单单数据"));
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "反审核");
+            throw new ServiceException(ApiError.ERROR_99200, "反审核");
         }
         // 反审核条件判断
         validateDisApprove(entity);
@@ -437,7 +437,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "删除");
+            throw new ServiceException(ApiError.ERROR_99200, "删除");
         }
         // 只有待提交数据允许删除
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
@@ -491,7 +491,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99090, "撤销");
+            throw new ServiceException(ApiError.ERROR_99200, "撤销");
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
