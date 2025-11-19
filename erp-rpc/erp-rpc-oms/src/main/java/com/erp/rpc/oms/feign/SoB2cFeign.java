@@ -36,6 +36,11 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listSoB2cLogisticsByMainIdList")
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList);
+    /**
+     * 根据b2c订单id获取标签信息
+     */
+    @PostMapping("/feign/soB2c/listSoB2cLabelByMainIdList")
+    List<SoB2cLabelEntity> listSoB2cLabelByMainIdList(@RequestBody List<String> mainIdList);
 
     /**
      * 根据跟踪单号查询订单物流信息
