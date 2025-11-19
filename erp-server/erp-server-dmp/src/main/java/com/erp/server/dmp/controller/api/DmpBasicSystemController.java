@@ -276,6 +276,7 @@ public class DmpBasicSystemController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "平台管理导出Excel数据")
+    @WebAdvanceQuery(handler = DmpBasicSystemQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpBasicSystemDTO.ExportDTO dto, HttpServletResponse response) {
         dmpBasicSystemService.exportList(dto, response);
         return success(true);

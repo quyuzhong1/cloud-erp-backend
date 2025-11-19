@@ -89,7 +89,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             throw new ServiceException("平台管理保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台管理", dmpBasicSystemEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】平台【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台管理", dmpBasicSystemEntity.getName());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "新增平台管理数据");
 
@@ -132,9 +132,8 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
 
         // 记录主单操作日志
         log.info("编辑 开始记录平台管理日志数据，单号：【{}】", dmpBasicSystemEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "平台管理");
-        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), "更新平台管理数据");
+        String msg = StrUtil.format("用户【{}】编辑代号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "平台管理");
+        operateLogService.addModuleOperateLogByObj(old, dmpBasicSystemEntity, ModuleTypeEnum.DMP_BASIC_SYSTEM.getCode(), dmpBasicSystemEntity.getId(), msg);
 
         return Boolean.TRUE;
     }
