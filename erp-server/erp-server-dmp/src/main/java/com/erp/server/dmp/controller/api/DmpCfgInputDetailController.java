@@ -260,6 +260,7 @@ public class DmpCfgInputDetailController extends BaseController {
             tableAlias = "dcid"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取调度导出Excel数据")
+    @WebAdvanceQuery(handler = DmpCfgOutputDetailQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgInputDetailDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgInputDetailService.exportList(dto, response);
         return success(true);

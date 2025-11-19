@@ -2,9 +2,7 @@ package com.erp.model.dmp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -210,39 +208,13 @@ public class DmpBasicSystemDTO implements Serializable {
         private LocalDateTime updateTime;
     }
 
-    /**
-     * 详情
-     */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO {
-
+    public static class ExportDTO extends PagingParamDTO {
         /**
-         * 主键id
+         * 勾选的id集合
          */
-        private String id;
-
-        /**
-         * 系统代码：amazon=亚马逊，kingdee=金蝶
-         */
-        private String code;
-
-        /**
-         * 系统名称
-         */
-        private String name;
-
-        /**
-         * 系统类型：wms=仓储,tms=物流,finance=财务
-         */
-        private String type;
-
-        /**
-         * 是否禁用
-         */
-        private Boolean disabled;
-
-
+        private List<String> ids;
     }
 
     /**

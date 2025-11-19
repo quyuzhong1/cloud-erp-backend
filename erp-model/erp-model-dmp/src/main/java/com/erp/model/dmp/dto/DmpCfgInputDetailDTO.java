@@ -9,9 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -379,71 +377,15 @@ public class DmpCfgInputDetailDTO implements Serializable {
     }
 
 
-    /**
-     * 详情
-     */
-    @Data
+    @Getter
+    @Setter
     @NoArgsConstructor
-    public static class ExportDTO {
-
+    public static class ExportDTO extends PagingParamDTO {
         /**
-         * 主键id
+         * 勾选的id集合
          */
-        private String  id;
-
-        /**
-         * 输入信息id
-         */
-        private String mainId;
-
-        /**
-         * 下一层级id
-         */
-        private String nextLevelId;
-
-        /**
-         * 最后成功时间
-         */
-        private LocalDateTime lastTime;
-
-        /**
-         * 下次执行结束时间
-         */
-        private LocalDateTime nextTime;
-
-        /**
-         * 间隔时间长度单位秒
-         */
-        private Integer intervalTime;
-
-        /**
-         * 覆盖时间单位秒
-         */
-        private Integer overrideTime;
-
-        /**
-         * 最大重试次数
-         */
-        private Integer maxRetryCount;
-
-        /**
-         * 执行超时时间，单位秒
-         */
-        private Integer execTimeout;
-
-        /**
-         * 是否禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 扩展json
-         */
-        private String extendJson;
-
-
+        private List<String> ids;
     }
-
     /**
      * 分页列表查询参数
      */

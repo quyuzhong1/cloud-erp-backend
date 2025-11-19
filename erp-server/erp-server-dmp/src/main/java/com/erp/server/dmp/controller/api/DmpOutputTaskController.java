@@ -184,6 +184,7 @@ public class DmpOutputTaskController extends BaseController {
             tableAlias = "dot"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "推送任务导出Excel数据")
+    @WebAdvanceQuery(handler = DmpOutputTaskQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpOutputTaskDTO.ExportDTO dto, HttpServletResponse response) {
         dmpOutputTaskService.exportList(dto, response);
         return success(true);

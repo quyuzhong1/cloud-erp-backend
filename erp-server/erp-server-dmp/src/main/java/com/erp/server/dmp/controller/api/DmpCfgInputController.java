@@ -292,6 +292,7 @@ public class DmpCfgInputController extends BaseController {
             tableAlias = "dci"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取配置导出Excel数据")
+    @WebAdvanceQuery(handler = DmpCfgInputQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgInputDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgInputService.exportList(dto, response);
         return success(true);

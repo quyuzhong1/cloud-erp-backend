@@ -183,6 +183,7 @@ public class DmpInputTaskController extends BaseController {
             tableAlias = "dit"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "拉取任务导出Excel数据")
+    @WebAdvanceQuery(handler = DmpInputTaskQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpInputTaskDTO.ExportDTO dto, HttpServletResponse response) {
         dmpInputTaskService.exportList(dto, response);
         return success(true);

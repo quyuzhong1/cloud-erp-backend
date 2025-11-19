@@ -30,7 +30,7 @@ public interface ExportDmpFeign {
     PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/exportDmpBasicSystem")
-    PagingVO<DmpBasicSystemDTO.ListDTO> exportDmpBasicSystem(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.ExportDTO> dto);
+    PagingVO<DmpBasicSystemDTO.ListDTO> exportDmpBasicSystem(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/exportDmpCfgEtl")
     PagingVO<DmpCfgEtlDTO.ListDTO> exportDmpCfgEtl(@RequestBody @Validated PagingDTO<DmpCfgEtlDTO.ExportDTO> dto);

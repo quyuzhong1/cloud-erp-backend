@@ -262,6 +262,7 @@ public class DmpCfgEtlController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "清洗调度导出Excel数据")
+    @WebAdvanceQuery(handler = DmpCfgEtlQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgEtlDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgEtlService.exportList(dto, response);
         return success(true);

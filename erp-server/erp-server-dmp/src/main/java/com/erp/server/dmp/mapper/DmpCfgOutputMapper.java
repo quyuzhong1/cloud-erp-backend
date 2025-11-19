@@ -38,13 +38,6 @@ public interface DmpCfgOutputMapper extends BaseMapper<DmpCfgOutputEntity> {
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") DmpCfgOutputDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<DmpCfgOutputDTO.ListDTO> listExport(@Param("params") DmpCfgOutputDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计

@@ -184,6 +184,7 @@ public class DmpEtlTaskController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "清洗任务导出Excel数据")
+    @WebAdvanceQuery(handler = DmpEtlTaskQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpEtlTaskDTO.ExportDTO dto, HttpServletResponse response) {
         dmpEtlTaskService.exportList(dto, response);
         return success(true);

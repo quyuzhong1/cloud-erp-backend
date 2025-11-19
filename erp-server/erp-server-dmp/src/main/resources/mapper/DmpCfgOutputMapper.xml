@@ -95,16 +95,14 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dco.update_time DESC
+        dco.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from dmp_cfg_output where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$ListDTO">
 
-    </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$TabListDTO">
         SELECT
         disabled AS tabFlag,

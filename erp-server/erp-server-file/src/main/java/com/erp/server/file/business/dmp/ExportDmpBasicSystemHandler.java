@@ -17,18 +17,18 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_DMP_BASIC_SYSTE
  * 平台管理 - 导出处理器
  */
 @Component
-public class ExportDmpBasicSystemHandler extends AbstractPageFileEventHandler<DmpBasicSystemDTO.ListDTO, DmpBasicSystemDTO.ExportDTO> {
+public class ExportDmpBasicSystemHandler extends AbstractPageFileEventHandler<DmpBasicSystemDTO.ListDTO, DmpBasicSystemDTO.PagingParamDTO> {
     @Resource
     private ExportDmpFeign exportDmpFeign;
 
     @Override
-    protected PagingVO<DmpBasicSystemDTO.ListDTO> getPageData(PagingDTO<DmpBasicSystemDTO.ExportDTO> dto) {
+    protected PagingVO<DmpBasicSystemDTO.ListDTO> getPageData(PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto) {
         return exportDmpFeign.exportDmpBasicSystem(dto);
     }
 
     @Override
     protected List<DmpBasicSystemDTO.ListDTO> getData(FileTask fileTask) {
-        DmpBasicSystemDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpBasicSystemDTO.ExportDTO>() {});
+        DmpBasicSystemDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpBasicSystemDTO.PagingParamDTO>() {});
         return listSeqData(dto);
     }
 

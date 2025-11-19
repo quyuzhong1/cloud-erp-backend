@@ -5,9 +5,8 @@ import java.time.LocalDateTime;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -404,84 +403,13 @@ public class DmpCfgEtlDTO implements Serializable {
         private List<String> ids;
     }
 
-    /**
-     * ETL配置导出
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO {
-
+    @Getter
+    @Setter
+    public static class ExportDTO extends PagingParamDTO {
         /**
-         * 主键id
+         * 勾选的id集合
          */
-        private String  id;
-
-        /**
-         * 是否禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 应用id
-         */
-        private String appId;
-
-        /**
-         * 流程编号
-         */
-        private String flowCode;
-
-        /**
-         * 流程名称
-         */
-        private String flowName;
-
-        /**
-         * 最后成功时间
-         */
-        private LocalDateTime lastTime;
-
-        /**
-         * 下次执行结束时间
-         */
-        private LocalDateTime nextTime;
-
-        /**
-         * 间隔时间长度，单位秒
-         */
-        private Integer intervalTime;
-
-        /**
-         * 覆盖时间，单位秒
-         */
-        private Integer overrideTime;
-
-        /**
-         * 最大重试次数
-         */
-        private Integer maxRetryCount;
-
-        /**
-         * 执行超时时间，单位秒
-         */
-        private Integer execTimeout;
-
-        /**
-         * 延迟时间，单位秒
-         */
-        private Integer dealyTime;
-
-        /**
-         * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间-延迟时间
-         */
-        private Integer maxIntervalTime;
-
-        /**
-         * 扩展json
-         */
-        private String extendJson;
-
-
+        private List<String> ids;
     }
 
     @Data

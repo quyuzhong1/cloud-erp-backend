@@ -266,116 +266,15 @@ public class DmpCfgInputDTO implements Serializable {
     }
 
 
-    /**
-     * 导出
-     */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO {
-
+    public static class ExportDTO extends PagingParamDTO {
         /**
-         * 主键id
+         * 勾选的id集合
          */
-        private String id;
-
-        /**
-         * 系统id
-         */
-        private String systemId;
-
-        /**
-         * 系统名称
-         */
-        private String systemName;
-
-        /**
-         * 数据代码
-         */
-        private String code;
-
-        /**
-         * 数据名称
-         */
-        private String name;
-
-        /**
-         * 输入类型：api=接口拉取,mq=MQ订阅,db=DB直连
-         */
-        private String type;
-
-        /**
-         * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
-         */
-        private String typeId;
-
-        /**
-         * 是否禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 是否禁用
-         */
-        private String disabledDesc;
-
-        /**
-         * 扩展json
-         */
-        private String extendJson;
-
-        /**
-         * 是否主任务
-         */
-        private Boolean isMainTask;
-
-        /**
-         * 是否主任务
-         */
-        private String mainTaskDesc;
-
-        /**
-         * 单据业务类型
-         * 来源接口：/api/sys/dictBasic/list?type=sourceType
-         */
-        private String billType;
-
-        /**
-         * 单据业务类型
-         * 来源接口：/api/sys/dictBasic/list?type=sourceType
-         */
-        private String billTypeName;
-
-        /**
-         * 执行系统:默认:dmp
-         */
-        private String execSystem;
-
-        /**
-         * RestCloud执行流程地址:
-         * 来源接口：/api/dmp/restCloud/paging
-         */
-        private String execUrl;
-
-        /**
-         * 创建人名称
-         */
-        private String createUserName;
-
-        /**
-         * 创建时间【可排序】
-         */
-        private LocalDateTime createTime;
-
-        /**
-         * 修改人名称
-         */
-        private String updateUserName;
-
-        /**
-         * 修改时间【可排序】
-         */
-        private LocalDateTime updateTime;
+        private List<String> ids;
     }
+
 
     /**
      * 分页列表查询参数

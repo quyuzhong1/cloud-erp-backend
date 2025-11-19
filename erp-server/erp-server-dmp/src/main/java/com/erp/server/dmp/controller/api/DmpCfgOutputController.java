@@ -275,6 +275,7 @@ public class DmpCfgOutputController extends BaseController {
             tableAlias = "dco"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "推送配置导出Excel数据")
+    @WebAdvanceQuery(handler = DmpCfgOutputQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated DmpCfgOutputDTO.ExportDTO dto, HttpServletResponse response) {
         dmpCfgOutputService.exportList(dto, response);
         return success(true);
