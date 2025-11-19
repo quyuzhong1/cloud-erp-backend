@@ -329,6 +329,11 @@ public class DmpCfgInputDetailDTO implements Serializable {
         /**
          * 是否禁用
          */
+        private String disabledDesc;
+
+        /**
+         * 备注
+         */
         private String remark;
 
         /**

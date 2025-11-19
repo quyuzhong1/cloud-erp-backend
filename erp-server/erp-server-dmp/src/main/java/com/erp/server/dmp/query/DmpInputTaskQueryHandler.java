@@ -17,13 +17,15 @@ public class DmpInputTaskQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("dit.status".equals(field)) {
+        if ("tab".equals(field)) {
             if ("all".equals(value)) {
                 return getQueryAllSql();
             }
             if ("waitFinish".equals(value)) {
                 List<String> waitFinishStatus = Arrays.asList("init", "fds", "mongo", "dmp");
                 super.buildSplicingSQLDTO("dit.status", QueryConditionEnum.IN_LIST, waitFinishStatus, QueryDataTypeEnum.STRING);
+            } else {
+                return " dit.status " + compareCodeSplicingValueSql;
             }
         }
         return null;

@@ -286,6 +286,11 @@ public class DmpCfgEtlDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用
+         */
+        private String disabledDesc;
+
+        /**
          * 应用id
          */
         private String appId;

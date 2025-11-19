@@ -287,6 +287,10 @@ public class DmpCfgOutputDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
     }
 
     /**
@@ -345,6 +349,11 @@ public class DmpCfgOutputDTO implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+
+        /**
+         * 是否禁用
+         */
+        private String disabledDesc;
 
         /**
          * 扩展json
