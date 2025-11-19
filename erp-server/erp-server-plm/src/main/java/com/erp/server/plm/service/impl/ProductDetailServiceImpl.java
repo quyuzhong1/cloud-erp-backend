@@ -1526,9 +1526,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
-        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
-                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0
-                && larger.compareTo(smaller) < 0) {
+        // 【为空则忽略不校验】- 如果larger或smaller为null，则不校验
+        // 如果两个值都不为null，则进行校验（允许值为0的情况也校验）
+        if (Objects.nonNull(larger) && Objects.nonNull(smaller) && larger.compareTo(smaller) < 0) {
              throw new ServiceException(apiError);
         }
     }
