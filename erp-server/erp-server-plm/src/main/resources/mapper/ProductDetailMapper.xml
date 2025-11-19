@@ -57,6 +57,7 @@
         pi.property,
         pi.name_en,
         pi.brand_name,
+        pi.rdt_team_name,
         pi.grade,
         pd.charge_name AS productChargeName,
         pd.first_mass_product_date,
@@ -178,6 +179,13 @@
             AND pi.brand_id IN
             <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
                 #{brandId}
+            </foreach>
+        </if>
+
+        <if test="params.rdtTeamList !=null and params.rdtTeamList.size>0">
+            AND pi.rdt_team_id IN
+            <foreach collection="params.rdtTeamList" item="rdtTeamId" open="(" separator="," close=")">
+                #{rdtTeamId}
             </foreach>
         </if>
 
@@ -343,6 +351,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -391,6 +401,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -433,6 +445,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -475,6 +489,7 @@
         pd.name_en,
         pi.property,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pd.product_state as productStateName,
         pi.grade,
         pi.sales_channel,
@@ -634,6 +649,13 @@
             </foreach>
         </if>
 
+        <if test="params.rdtTeamList !=null and params.rdtTeamList.size>0">
+            AND pi.rdt_team_id IN
+            <foreach collection="params.rdtTeamList" item="rdtTeamId" open="(" separator="," close=")">
+                #{rdtTeamId}
+            </foreach>
+        </if>
+
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
@@ -773,6 +795,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         ps.sale_state as saleState,
         pd.unit_name,
         pd.status,
@@ -1002,6 +1025,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id AS categoryId,
         ps.sale_state as saleState,
         pp.moq,
@@ -1741,6 +1765,7 @@
             pi.function_desc,
             pi.grade AS productGrade,
             pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
             ps.sale_state as saleState,
             pd.unit_name,
             pd.status,
@@ -1905,6 +1930,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -1937,6 +1963,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -1979,6 +2006,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2014,6 +2042,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2053,6 +2082,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2088,6 +2118,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,

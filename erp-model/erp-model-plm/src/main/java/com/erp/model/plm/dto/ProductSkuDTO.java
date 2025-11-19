@@ -98,6 +98,10 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<String> brandList;
 
+    /**
+     * 研发团队
+     */
+    private List<String> rdtTeamList;
 
     /**
      * 产品 经理

@@ -255,6 +255,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductUnitService productUnitService;
 
     @Autowired
+    private ProductBrandService productBrandService;
+
+    @Autowired
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Autowired
     private ProductVariantPropertyService productVariantPropertyService;
 
     @Autowired
@@ -1264,6 +1270,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSpuBaseInfoDTO.setGrade(basicDict.getValue());
             }
         }
+        //品牌
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBrandId())) {
+            //根据id查询品牌表中的品牌
+            ProductBrandEntity productBrand = productBrandService.getById(productSpuBaseInfoDTO.getBrandId());
+            if (ObjectUtils.isNotEmpty(productBrand)) {
+                productSpuBaseInfoDTO.setBrandName(productBrand.getName());
+            }
+        }
+        //研发团队
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productSpuBaseInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+        }
 
         //产品款名和产品品名关系处理
         handleProductNames(productNoSpecDTO);
@@ -1621,6 +1643,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             BasicDictEntity basicDict = basicDictService.getById(productInfoDTO.getGradeId());
             if (ObjectUtils.isNotEmpty(basicDict)) {
                 productInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
+        //品牌
+        if (StringUtils.isNotBlank(productInfoDTO.getBrandId())) {
+            //根据id查询品牌表中的品牌
+            ProductBrandEntity productBrand = productBrandService.getById(productInfoDTO.getBrandId());
+            if (ObjectUtils.isNotEmpty(productBrand)) {
+                productInfoDTO.setBrandName(productBrand.getName());
+            }
+        }
+        //研发团队
+        if (StringUtils.isNotBlank(productInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productInfoDTO.setRdtTeamName(productRDTTeam.getName());
             }
         }
         if(CollectionUtils.isNotEmpty(productInfoDTO.getApplicationCategoryIdList())){
@@ -4990,15 +5028,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
 
-                BasicDictEntity productBrand = null;
+                //品牌处理 - 从品牌管理表中获取
                 if(StringUtils.isNotBlank(dto.getBrandName())){
-                    productBrand = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_BRAND.getCode().equals(b.getType()) && b.getValue().
-                            equals(dto.getBrandName())).findFirst().orElse(null);
+                    ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
                     if (ObjectUtils.isEmpty(productBrand)) {
                         errorMsgList.add("产品品牌在系统中未找到");
                     }else {
                         productInfoDTO.setBrandId(productBrand.getId());
-                        productInfoDTO.setBrandName(productBrand.getValue());
+                        productInfoDTO.setBrandName(productBrand.getName());
+                    }
+                }
+                //研发团队处理 - 从研发团队管理表中获取
+                if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                    ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                    if (ObjectUtils.isEmpty(productRDTTeam)) {
+                        errorMsgList.add("研发团队在系统中未找到");
+                    }else {
+                        productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                        productInfoDTO.setRdtTeamName(productRDTTeam.getName());
                     }
                 }
 
@@ -5857,10 +5904,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
-            BasicDictEntity productBrand = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_BRAND.getCode().equals(b.getType()) && b.getValue().
-                    equals(dto.getBrandName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(productBrand)) {
-                errorMsgList.add("产品品牌在系统中未找到");
+            //品牌处理 - 从品牌管理表中获取
+            if(StringUtils.isNotBlank(dto.getBrandName())){
+                ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
+                if (ObjectUtils.isEmpty(productBrand)) {
+                    errorMsgList.add("产品品牌在系统中未找到");
+                }else {
+                    productInfoDTO.setBrandId(productBrand.getId());
+                    productInfoDTO.setBrandName(productBrand.getName());
+                }
+            }
+            //研发团队处理 - 从研发团队管理表中获取
+            if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(productRDTTeam)) {
+                    errorMsgList.add("研发团队在系统中未找到");
+                }else {
+                    productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                    productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
             }
 
             //迭代产品校验
@@ -6076,8 +6138,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
 
 
-            productInfoDTO.setBrandId(productBrand.getId());
-            productInfoDTO.setBrandName(productBrand.getValue());
+            //品牌处理 - 从品牌管理表中获取
+            if(StringUtils.isNotBlank(dto.getBrandName())){
+                ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
+                if (ObjectUtils.isEmpty(productBrand)) {
+                    errorMsgList.add("产品品牌在系统中未找到");
+                }else {
+                    productInfoDTO.setBrandId(productBrand.getId());
+                    productInfoDTO.setBrandName(productBrand.getName());
+                }
+            }
+            //研发团队处理 - 从研发团队管理表中获取
+            if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(productRDTTeam)) {
+                    errorMsgList.add("研发团队在系统中未找到");
+                }else {
+                    productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                    productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
+            }
             productInfoDTO.setApprovalStatus(0);
 
             productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);

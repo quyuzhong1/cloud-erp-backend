@@ -110,6 +110,18 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     private String brandId;
 
     /**
+     * 研发团队名称
+     */
+    @TableField("rdt_team_name")
+    private String rdtTeamName;
+
+    /**
+     * 研发团队id
+     */
+    @TableField("rdt_team_id")
+    private String rdtTeamId;
+
+    /**
      * 分类id
      */
     @TableField("category_id")
