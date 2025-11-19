@@ -849,12 +849,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "状态同步");
         if (CharSequenceUtil.isNotBlank(bean.getTrackNo()) && CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId())) {
             //更新销售订单物流跟踪号 和三方仓发货单跟踪号
+            LocalDateTime deliveryTime = bean.getDeliveryTime();
+            String logisticsChannelId = Objects.nonNull(logisticsChannelEntity) ? logisticsChannelEntity.getId() : "";
+            String logisticsChannelName = Objects.nonNull(logisticsChannelEntity) ? logisticsChannelEntity.getName() : "";
             soB2cLogisticsService.lambdaUpdate()
                     .set(SoB2cLogisticsEntity::getTrackNo, bean.getTrackNo())
                     .set(SoB2cLogisticsEntity::getCode, bean.getTrackNo())
                     .set(Objects.nonNull(bean.getDeliveryTime()), SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
-                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelId, logisticsChannelEntity.getId())
-                    .set(Objects.nonNull(logisticsChannelEntity), SoB2cLogisticsEntity::getLogisticsChannelName, logisticsChannelEntity.getName())
+                    .set(CharSequenceUtil.isNotBlank(logisticsChannelId), SoB2cLogisticsEntity::getLogisticsChannelId, logisticsChannelId)
+                    .set(CharSequenceUtil.isNotBlank(logisticsChannelName), SoB2cLogisticsEntity::getLogisticsChannelName, logisticsChannelName)
                     .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
                     .update();
             String msg = "";

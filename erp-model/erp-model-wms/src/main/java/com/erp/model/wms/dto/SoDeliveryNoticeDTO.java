@@ -403,6 +403,8 @@ public class SoDeliveryNoticeDTO {
         /**
          * 明细信息
          */
+        @NotEmpty(message = "明细信息不能为空")
+        @Valid
         private List<SoDeliveryNoticeDetailDTO.Update> detailList;
     }
 

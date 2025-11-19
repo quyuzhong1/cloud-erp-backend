@@ -47,6 +47,11 @@ public class SoDeliveryNoticeDetailDTO {
          * 附件url集合
          */
         private List<String> attachUrlList;
+        /**
+         * 单位名称
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
 
     }
 
