@@ -48,8 +48,7 @@ public enum InventoryBusinessTypeEnum {
     OTHER_IN("other_in", "19", "其他入库"),
     OTHER_OUT("other_out", "20", "其他出库"),
 
-
-    PURCHASE_ORDER("purchase_order", "21","采购订单"),
+    PURCHASE_ORDER("purchase_order", "21", "采购订单"),
 
     INVENTORY_ADJUST("inventory_adjust", "22", "库存调整单"),
 
