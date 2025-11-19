@@ -74,7 +74,7 @@ public class ThirdWarehouseCreateInboundReq {
     /**
      * 目的仓库国家编码
      */
-    private String country;
+    private String countryName;
 
     /**
      * 备注

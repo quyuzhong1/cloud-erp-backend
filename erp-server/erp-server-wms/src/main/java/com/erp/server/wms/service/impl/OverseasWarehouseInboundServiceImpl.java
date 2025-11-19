@@ -22,7 +22,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -43,7 +42,6 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -60,6 +58,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -685,6 +684,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setDeliveryWarehouseId(deliveryEntity.getDeliveryWarehouseId());
         mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
         mainEntity.setPlatformToWarehouseCode(null == toEntity ? "" : toEntity.getPlatformWarehouseCode());
+        mainEntity.setCountryName(null == toEntity ? "" : toEntity.getCountryName());
         if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
             mainEntity.setPlatformTransferWarehouseCode(null == transferWarehouse ? "" : transferWarehouse.getPlatformWarehouseCode());
         }else{
@@ -700,6 +700,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("发货单未对接海外仓, 单号不能为空");
             }
             mainEntity.setCode(commonDTO.getCode());
+        }else if (CharSequenceUtil.equals(dictPlatform,OmsPlatformEnum.TONG_YOU.getCode())) {
+            if (CharSequenceUtil.isBlank(commonDTO.getCode())) {
+                throw new ServiceException("通邮海外仓入库单，单号不能为空");
+            }
+            // 通邮推送需要默认ERP的头程发货单号-HH+MM+SS
+            String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+            mainEntity.setCode(CharSequenceUtil.format("{}{}",commonDTO.getCode(),timeFormatter));
         }
         mainEntity.setSourceId(deliveryEntity.getId());
         mainEntity.setSourceCode(deliveryEntity.getCode());

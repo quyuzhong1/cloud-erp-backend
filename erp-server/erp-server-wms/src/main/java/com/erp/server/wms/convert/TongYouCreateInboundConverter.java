@@ -25,7 +25,7 @@ public interface TongYouCreateInboundConverter {
             @Mapping(target = "waybill", source = "receivingCode"),
             @Mapping(target = "mdck", source = "warehouseCode"),
             @Mapping(target = "beizhu", source = "remark"),
-            @Mapping(target = "country", source = "country"),
+            @Mapping(target = "country", source = "countryName"),
     })
     TongYouCreateInboundReq.AddDTO InboundToThird(ThirdWarehouseCreateInboundReq req);
 
