@@ -58,6 +58,7 @@ import com.erp.server.wms.service.SampleLedgerFlowBuilder;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.validator.ValidList;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -637,11 +638,40 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
            return;
         }
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         // 属性赋值
         for(SampleAdjustmentInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setAdjustmentTypeName(SampleAdjustmentTypeEnum.getName(data.getAdjustmentType()));
+            
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                    .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                        .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
         }
     }
     /**
