@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgEtlEntity;
@@ -302,14 +303,7 @@ public class DmpCfgEtlController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
-                DmpEtlHotfixCreateRequest dmpRequest = new DmpEtlHotfixCreateRequest();
-                dmpRequest.setCfgEtlId(id);
-                dmpRequest.setStartTime(dto.getStartTime());
-                dmpRequest.setEndTime(dto.getEndTime());
-                dmpRequest.setSplitFlag(dto.isSplitFlag());
-                dmpRequest.setExecTimeout(dto.getExecTimeout());
-                dmpRequest.setNextExecTime(dto.getNextExecTime());
-                dmpRequest.setExtendJson(dto.getDetailExtendJson());
+                DmpEtlHotfixCreateRequest dmpRequest = buildDmpEtlHotfixCreateRequest(dto, id);
                 dmpEtlCreateFactory.createHotfixEtlTask(dmpRequest);
                 result = BatchResultDTO.success(id, id, "生成清洗任务成功");
             }catch (Exception e){
@@ -319,5 +313,20 @@ public class DmpCfgEtlController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    private static DmpEtlHotfixCreateRequest buildDmpEtlHotfixCreateRequest(DmpCfgEtlDTO.DoTaskDTO dto, String id) {
+        if (!dto.getStartTime().isBefore(dto.getEndTime())){
+            ServiceException.runError("结束时间不能小于开始时间");
+        }
+        DmpEtlHotfixCreateRequest dmpRequest = new DmpEtlHotfixCreateRequest();
+        dmpRequest.setCfgEtlId(id);
+        dmpRequest.setStartTime(dto.getStartTime());
+        dmpRequest.setEndTime(dto.getEndTime());
+        dmpRequest.setSplitFlag(dto.isSplitFlag());
+        dmpRequest.setExecTimeout(dto.getExecTimeout());
+        dmpRequest.setNextExecTime(dto.getNextExecTime());
+        dmpRequest.setExtendJson(dto.getDetailExtendJson());
+        return dmpRequest;
     }
 }

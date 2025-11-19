@@ -336,6 +336,9 @@ public class DmpCfgInputDetailController extends BaseController {
     private static DmpInputHotfixCreateRequest buildDmpInputHotfixCreateRequest(DmpCfgInputDetailDTO.DoTaskDTO dto,
                                                                                 DmpCfgInputEntity dmpCfgInputEntity,
                                                                                 DmpCfgInputDetailEntity entity) {
+        if (!dto.getStartTime().isBefore(dto.getEndTime())){
+           ServiceException.runError("结束时间不能小于开始时间");
+        }
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputId(dmpCfgInputEntity.getId());
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(entity.getId()));

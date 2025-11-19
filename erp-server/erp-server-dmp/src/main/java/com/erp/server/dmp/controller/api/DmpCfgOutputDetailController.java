@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
@@ -340,6 +341,9 @@ public class DmpCfgOutputDetailController extends BaseController {
     private static DmpOutputHotfixCreateRequest buildDmpOutputHotfixCreateRequest(DmpCfgOutputDetailDTO.DoTaskDTO dto,
                                                                                 DmpCfgOutputEntity dmpCfgOutputEntity,
                                                                                 DmpCfgOutputDetailEntity entity) {
+        if (!dto.getStartTime().isBefore(dto.getEndTime())){
+            ServiceException.runError("结束时间不能小于开始时间");
+        }
         DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
         dmpOutputHotfixCreateRequest.setCfgOutputId(dmpCfgOutputEntity.getId());
         dmpOutputHotfixCreateRequest.setTaskType(dto.getTaskType());
