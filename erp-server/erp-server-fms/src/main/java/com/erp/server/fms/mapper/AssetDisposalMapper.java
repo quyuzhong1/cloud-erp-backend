@@ -1,4 +1,5 @@
 package com.erp.server.fms.mapper;
+import com.erp.model.fms.entity.AssetDisposalDetailEntity;
 import com.erp.model.fms.entity.AssetDisposalEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -52,4 +53,6 @@ public interface AssetDisposalMapper extends BaseMapper<AssetDisposalEntity> {
     * @return
     */
     List<AssetDisposalDTO.TabListDTO> tabList(@Param("params") AssetDisposalDTO.PagingParamDTO searchParam);
+
+    List<AssetDisposalDTO.SourceDetailDTO> listBySourceIds(@Param("sourceType") String sourceType,@Param("ids")  List<String> ids);
 }

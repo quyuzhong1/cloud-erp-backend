@@ -2,7 +2,7 @@ package com.erp.server.fms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +17,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.fms.service.AssetProfitLossService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -446,6 +445,20 @@ public class AssetProfitLossController extends BaseController {
         List<BatchResultDTO> resultDTOS = assetProfitLossService.pushToCard(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 校验盘盈盘亏单明细是否可以下推到资产处置单
+     * @author jack
+     * @date:  2025-11-19
+     * @param dto 下推请求参数
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/existAsset")
+    public ApiResult<List<BatchResultDTO>> existAsset(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = assetProfitLossService.existAsset(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
 
 

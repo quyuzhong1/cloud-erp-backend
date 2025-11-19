@@ -112,5 +112,25 @@ add.tax_amount AS taxAmount
         </if>
         GROUP BY approve_status
     </select>
+    <select id="listBySourceIds" resultType="com.erp.model.fms.dto.AssetDisposalDTO$SourceDetailDTO">
+        SELECT
+            ad.code,
+            ad.source_type,
+            add.source_id AS sourceId
+        FROM
+            asset_disposal AS ad
+                INNER JOIN asset_disposal_detail AS add on ad.id = add.main_id and add.is_deleted = false
+        where ad.is_deleted = false
+          and ad.invalid_status = false
+        <if test="sourceType != null and sourceType != ''">
+            and ad.source_type = #{sourceType}
+        </if>
+        <if test="ids != null and ids.size > 0">
+            and add.source_id in
+            <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

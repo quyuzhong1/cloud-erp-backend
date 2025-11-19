@@ -20,9 +20,6 @@ import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.wms.dto.SampleBorrowDetailDTO;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -63,7 +60,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
 
@@ -822,5 +818,10 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             //执行新增
             bean.add(addDTO);
         }
+    }
+
+    @Override
+    public List<AssetDisposalDTO.SourceDetailDTO> listBySourceIds(String sourceType,List<String> ids){
+        return baseMapper.listBySourceIds(sourceType,ids);
     }
 }

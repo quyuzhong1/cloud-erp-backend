@@ -75,7 +75,8 @@
             apld.diff_qty AS qty,
             apld.book_qty AS bookQty,
             apld.actual_qty AS actualQty,
-            asp.plan_name AS planName
+            asp.plan_name AS planName,
+            apld.actual_location as actualLocation
         FROM asset_profit_loss apl
         LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
         LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false

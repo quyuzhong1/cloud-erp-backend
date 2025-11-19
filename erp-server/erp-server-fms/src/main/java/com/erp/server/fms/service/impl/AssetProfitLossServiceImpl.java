@@ -24,23 +24,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.model.fms.dto.AssetCardDTO;
-import com.erp.model.fms.dto.AssetCardDetailDTO;
-import com.erp.model.fms.dto.AssetProfitLossDTO;
-import com.erp.model.fms.dto.AssetProfitLossDetailDTO;
-import com.erp.model.fms.dto.DictBasicDTO;
-import com.erp.model.fms.entity.AssetCardEntity;
-import com.erp.model.fms.entity.AssetLocationEntity;
-import com.erp.model.fms.enums.AssetStatusEnum;
-import com.erp.model.fms.enums.CardSourceEnum;
-import com.erp.model.fms.enums.ChangeMethodEnum;
-import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
-import com.erp.model.fms.entity.AssetProfitLossEntity;
-import com.erp.model.fms.entity.AssetStocktakingPlanEntity;
-import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
+import com.erp.model.fms.dto.*;
+import com.erp.model.fms.entity.*;
+import com.erp.model.fms.enums.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetProfitLossMapper;
@@ -58,6 +49,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -88,6 +80,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private AssetLocationService assetLocationService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private AssetDisposalService assetDisposalService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -578,7 +572,12 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         }
         
         final Map<String, String> finalAssetCategoryMap = assetCategoryMap;
-        
+
+        // 获取资产位置
+        List<String> actualLocationList = list.stream().map(AssetProfitLossDTO.ListDTO::getActualLocation).collect(Collectors.toList());
+        List<AssetLocationEntity> assetLocationEntities = assetLocationService.listByIds(actualLocationList);
+        Map<String, String> assetLocationMap = assetLocationEntities.stream().collect(Collectors.toMap(AssetLocationEntity::getId, AssetLocationEntity::getAddress));
+
         // 属性赋值
         for(AssetProfitLossDTO.ListDTO data : list) {
             // 审核状态名称
@@ -607,6 +606,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             if (data.getQty()!=null) {
                 data.setQty(Math.abs(data.getQty()));
             }
+            //资产位置
+            data.setActualLocationName(assetLocationMap.getOrDefault(data.getActualLocation(),""));
         }
     }
     /**
@@ -904,5 +905,33 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 resultDTOS.stream().filter(r -> !r.getSuccess()).count());
         
         return resultDTOS;
+    }
+
+
+    @Override
+    public List<BatchResultDTO> existAsset(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> result = new ArrayList<>();
+
+        List<AssetProfitLossEntity> assetProfitLossEntities = listByIds(dto.getIds());
+        Map<String, AssetProfitLossEntity> assetProfitLossMap = assetProfitLossEntities.stream().collect(Collectors.toMap(AssetProfitLossEntity::getId, Function.identity()));
+
+        List<AssetDisposalDTO.SourceDetailDTO> sourceDetailDTOS = assetDisposalService.listBySourceIds(AssetDisposalDisposalMethodEnum.LOSS.getSourceType(), dto.getIds());
+
+        Map<String, AssetDisposalDTO.SourceDetailDTO> assetDisposalMap = sourceDetailDTOS.stream().collect(Collectors.toMap(AssetDisposalDTO.SourceDetailDTO::getSourceId, Function.identity()));
+
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO = null;
+            AssetProfitLossEntity assetProfitLossEntity = assetProfitLossMap.get(id);
+            AssetDisposalDTO.SourceDetailDTO sourceDetailDTO = assetDisposalMap.get(id);
+            if(Objects.isNull(assetProfitLossEntity)){
+                resultDTO = BatchResultDTO.fail(id,id, "盘盈盘亏单不存在");
+            }else if(Objects.equals(assetProfitLossEntity.getDocType(),AssetProfitLossTypeEnum.PROFIT.getCode())){
+                resultDTO = BatchResultDTO.fail(id,assetProfitLossEntity.getCode(), "只有盘亏类型才允许下推资产处置单");
+            }else if(Objects.nonNull(sourceDetailDTO)){
+                resultDTO = BatchResultDTO.fail(id,assetProfitLossEntity.getCode(), StrUtil.format(sourceDetailDTO.getCode(),"已存在资产处置单【{}】，不允许重复下推"));
+            }
+            result.add(resultDTO);
+        }
+        return result;
     }
 }

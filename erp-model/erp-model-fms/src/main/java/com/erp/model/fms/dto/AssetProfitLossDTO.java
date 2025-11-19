@@ -224,6 +224,16 @@ public class AssetProfitLossDTO implements Serializable {
         * 创建时间
         */
         private LocalDateTime createTime;
+
+        /**
+         * 实际资产位置ID
+         */
+        private String actualLocation;
+
+        /**
+         * 实际资产位置名称
+         */
+        private String actualLocationName;
     }
 
     /**

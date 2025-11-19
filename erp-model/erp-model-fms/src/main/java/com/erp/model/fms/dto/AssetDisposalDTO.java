@@ -379,5 +379,29 @@ public class AssetDisposalDTO implements Serializable {
         private List<AssetDisposalDetailDTO.@Valid UpdateDTO> assetDisposalDetailDTOList;
     }
 
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SourceDetailDTO {
+
+        /**
+         * 处置单编码
+         */
+        private String code;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+    }
+
 
 }

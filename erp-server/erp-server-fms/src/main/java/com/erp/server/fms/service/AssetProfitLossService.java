@@ -184,4 +184,6 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
     * @return Map<String, Object>
     */
     Map<String, Object> getVariablesMap(AssetProfitLossEntity entity);
+
+    List<BatchResultDTO> existAsset(BaseIdsDTO.IdsDTO dto);
 }
