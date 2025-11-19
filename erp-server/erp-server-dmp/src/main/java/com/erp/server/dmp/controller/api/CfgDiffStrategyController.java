@@ -24,10 +24,14 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.server.dmp.query.CfgDiffStrategyQueryHandler;
 import com.erp.server.dmp.service.CfgDiffStrategyService;
+import com.erp.server.dmp.service.DictBasicService;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -44,6 +48,8 @@ public class CfgDiffStrategyController extends BaseController {
 
     @Resource
     private CfgDiffStrategyService cfgDiffStrategyService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 获取 tab列表
@@ -148,4 +154,32 @@ public class CfgDiffStrategyController extends BaseController {
       public ApiResult<CfgDiffStrategyDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
           return success(cfgDiffStrategyService.view(dto.getId()));
       }
+      
+      /**
+       * 新增建议处理方式
+       * @author shukai
+       * @date:  2025-11-11
+       * @param dto
+       * @return ApiResult<String>
+       */
+       @PostMapping("/addDictSuggestType")
+       @LogAction(value = LogActionEnum.INSERT, desc = "新增建议处理方式")
+       public ApiResult<Boolean> addDictSuggestType(@RequestBody @Validated CfgDiffStrategyDTO.AddDictSuggestTypeDTO dto) {
+    	   DictBasicEntity entity = new DictBasicEntity();
+    	   String suggestType = dto.getSuggestType();
+    	   entity.setType("dictSuggestType");
+    	   entity.setName(suggestType);
+    	   entity.setValue(suggestType);
+    	   entity.setStatus(true);
+    	   List<DictBasicEntity> list = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "dictSuggestType").orderByDesc(DictBasicEntity::getSort).list();
+    	   if(list.stream().anyMatch(l -> l.getName().equals(suggestType))) {
+    		   throw new ServiceException(suggestType + "建议处理方式已存在");
+    	   }
+    	   if(CollUtil.isNotEmpty(list)) {
+    		   entity.setSort(list.get(0).getSort() + 1);
+    	   }else {
+    		   entity.setSort(0);
+    	   }
+    	   return success(dictBasicService.save(entity));
+       }
 }

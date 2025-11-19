@@ -83,7 +83,61 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO$ListDTO">
-
+	select 
+        t.id,
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.platform_bill_name platformBillName,
+        t.platform_bill_status_name platformBillStatusName,
+        t.platform_shop_name platformShopName,
+        t.platform_sales_platform_name platformSalesPlatformName,
+        t.platform_order_code platformOrderCode,
+        t.platform_so_code platformSoCode,
+        t.platform_return_instock_code platformReturnInstockCode,
+        t.stock_sku stockSku,
+        t.stock_qty stockQty,
+        t.stock_sku_qty stockSkuQty,
+        t.platform_sku_no platformSkuNo,
+        t.platform_qty platformQty,
+        t.platform_sku_qty platformSkuQty,
+        t.platform_warehouse_name platformWarehouseName,
+        t.warehouse_name warehouseName,
+        t.platform_bill_date platformBillDate,
+        t.bill_name billName,
+        t.bill_status_name billStatusName,
+        t.shop_name shopName,
+        t.sales_platform_name salesPlatformName,
+        t.order_code orderCode,
+        t.so_code soCode,
+        t.return_instock_code returnInstockCode,
+        t.sku_no skuNo,
+        t.qty,
+        t.sku_qty skuQty,
+        t.erp_warehouse_name erpWarehouseName,
+        t.bill_date billDate,
+        t.diff_qty diffQty, 
+        t.diff_tag_name diffTagName, 
+        t.diff_desc diffDesc,
+        t.suggest_type suggestType,
+        t.remark,
+        t.exec_status_name execStatusName,
+        t.finish_time finishTime,
+        t.create_time createTime
+        from
+        ads_erp_diff_return_instock_sync t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -95,14 +149,26 @@
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        diff_tag AS tabFlag,
         count(*)  AS count
         FROM  ads_erp_diff_return_instock_sync
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY diff_tag
     </select>
 
+	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO$TotalDTO">
+        select sum(case when platform_bill_name is not null and platform_bill_name != '' then 1 else 0 end) totalPlatformQty,
+        sum(case when bill_name is not null and bill_name != '' then 1 else 0 end) totalErpQty,
+        sum(abs(diff_qty)) totalDiffQty 
+        from ads_erp_diff_return_instock_sync t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

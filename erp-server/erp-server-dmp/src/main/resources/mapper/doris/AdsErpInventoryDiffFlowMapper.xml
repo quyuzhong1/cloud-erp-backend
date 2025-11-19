@@ -86,7 +86,9 @@
         t.real_qty realQty, 
         t.next_month_qty nextMonthQty, 
         t.estimate_closing_qty estimateClosingQty, 
-        t.diff_qty diffQty, 
+        t.diff_qty diffQty,
+        t.exec_status_name execStatusName,
+        t.finish_time finishTime, 
         t.remark,
         t.create_time createTime
         from
@@ -127,7 +129,7 @@
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$TotalDTO">
         select 
-        sum(t.closing_qty) totalClosingQty, sum(t.estimate_closing_qty) totalRealQty, sum(t.diff_qty) totalDiffQty
+        sum(t.closing_qty) totalClosingQty, sum(t.estimate_closing_qty) totalRealQty, sum(abs(t.diff_qty)) totalDiffQty
         from
         ads_erp_inventory_diff_flow t
         WHERE ${params.sqlMap.default}

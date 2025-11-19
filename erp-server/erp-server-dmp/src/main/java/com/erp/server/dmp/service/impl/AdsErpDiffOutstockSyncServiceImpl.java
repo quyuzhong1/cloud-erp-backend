@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ReCreateDTO;
@@ -132,20 +134,27 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 
     @Override
     public List<AdsErpDiffOutstockSyncDTO.TabListDTO> tabList(PermissionsDTO param) {
+    	List<AdsErpDiffOutstockSyncDTO.TabListDTO> list = new ArrayList<>();
         AdsErpDiffOutstockSyncDTO.PagingParamDTO searchParam = new AdsErpDiffOutstockSyncDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<AdsErpDiffOutstockSyncDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AdsErpDiffOutstockSyncDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AdsErpDiffOutstockSyncDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new AdsErpDiffOutstockSyncDTO.TabListDTO("all", list.stream().mapToInt(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).sum()));
+        List<AdsErpDiffOutstockSyncDTO.TabListDTO> dblist = baseMapper.tabList(searchParam);
+        AdsErpDiffOutstockSyncDTO.TabListDTO l = new AdsErpDiffOutstockSyncDTO.TabListDTO();
+        l.setTabFlag("platform");
+        l.setTabFlagName("单据1多");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffOutstockSyncDTO.TabListDTO();
+        l.setTabFlag("erp");
+        l.setTabFlagName("单据2多");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("erp")).map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffOutstockSyncDTO.TabListDTO();
+        l.setTabFlag("field");
+        l.setTabFlagName("字段错误");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
         // 计算合计数量
         return list;
     }

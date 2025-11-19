@@ -161,7 +161,7 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
     		for(AddDetailDTO addDetailDTO : detailList) {
     			String suggestType = addDetailDTO.getSuggestType();
 				if(!suggestTypeSet.add(suggestType)) {
-    				throw new ServiceException(suggestType + "建议处理方式重复");
+//    				throw new ServiceException(suggestType + "建议处理方式重复");
     			}
     			List<AddConditionDTO> conditionList = addDetailDTO.getConditionList();
     			StringBuilder conditionSql = new StringBuilder();

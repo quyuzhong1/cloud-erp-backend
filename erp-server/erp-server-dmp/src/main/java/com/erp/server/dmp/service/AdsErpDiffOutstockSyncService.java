@@ -87,4 +87,5 @@ public interface AdsErpDiffOutstockSyncService extends SuperService<AdsErpDiffOu
     Boolean updateRemark(AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffOutstockSyncDTO.ExpotParamDTO dto);
+    
 }

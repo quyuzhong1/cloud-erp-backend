@@ -1,7 +1,9 @@
 package com.erp.server.dmp.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -26,16 +29,15 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO;
-import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffReturnInstockSyncMapper;
 import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -54,6 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author shukai
  * @since 2025-11-19
  */
+@DS("adsDoris")
 @Slf4j
 @Service
 public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<AdsErpDiffReturnInstockSyncMapper, AdsErpDiffReturnInstockSyncEntity> implements AdsErpDiffReturnInstockSyncService {
@@ -131,20 +134,27 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 
     @Override
     public List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> tabList(PermissionsDTO param) {
+        List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> list = new ArrayList<>();
         AdsErpDiffReturnInstockSyncDTO.PagingParamDTO searchParam = new AdsErpDiffReturnInstockSyncDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AdsErpDiffReturnInstockSyncDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new AdsErpDiffReturnInstockSyncDTO.TabListDTO("all", list.stream().mapToInt(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).sum()));
+        List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> dblist = baseMapper.tabList(searchParam);
+        AdsErpDiffReturnInstockSyncDTO.TabListDTO l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
+        l.setTabFlag("platform");
+        l.setTabFlagName("单据1多");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
+        l.setTabFlag("erp");
+        l.setTabFlagName("单据2多");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("erp")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
+        l.setTabFlag("field");
+        l.setTabFlagName("字段错误");
+        l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
+        list.add(l);
         // 计算合计数量
         return list;
     }
@@ -228,7 +238,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 	
 	@Override
 	public Boolean exportExcel(ExpotParamDTO dto) {
-		downloadTaskFeign.saveDownloadTask("出库同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), dto);
+		downloadTaskFeign.saveDownloadTask("退货同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC.getCode(), dto);
 		return true;
 	}
 }

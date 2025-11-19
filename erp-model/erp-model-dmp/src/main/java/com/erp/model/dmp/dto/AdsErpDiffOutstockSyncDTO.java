@@ -43,6 +43,11 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         
+         /**
+         * 类型名称
+         */
+        private String tabFlagName;
 
          /**
          * 数量

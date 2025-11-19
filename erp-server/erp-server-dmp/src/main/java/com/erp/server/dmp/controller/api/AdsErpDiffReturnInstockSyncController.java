@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.util.List;
+
 import javax.annotation.Resource;
 
 import org.springframework.validation.annotation.Validated;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -21,6 +24,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.server.dmp.query.AdsErpDiffOutstockSyncQueryHandler;
+import com.erp.server.dmp.query.AdsErpDiffReturnInstockSyncQueryHandler;
 import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -48,13 +52,21 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     * @return ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.ListDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "dmp:adsErpDiffReturnInstockSync:paging",
-            tableAlias = ""
-    )
+    @WebAdvanceQuery(handler = AdsErpDiffReturnInstockSyncQueryHandler.class)
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
         return success(adsErpDiffReturnInstockSyncService.paging(dto));
+    }
+    
+    /**
+     *  获取 tab列表
+     * @author Will
+     * @date: 2023/11/13 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<AdsErpDiffReturnInstockSyncDTO.TabListDTO>> tabList(@RequestBody @Validated PermissionsDTO dto) {
+        return success(adsErpDiffReturnInstockSyncService.tabList(dto));
     }
 
     /**
@@ -65,7 +77,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/total")
-    @WebAdvanceQuery(handler = AdsErpDiffOutstockSyncQueryHandler.class)
+    @WebAdvanceQuery(handler = AdsErpDiffReturnInstockSyncQueryHandler.class)
     public ApiResult<AdsErpDiffReturnInstockSyncDTO.TotalDTO> total(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
         return success(adsErpDiffReturnInstockSyncService.total(dto));
     }

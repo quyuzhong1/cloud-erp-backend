@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import com.common.business.query.AbstractQueryHandler;
 
 @Component
-public class AdsErpDiffOutstockSyncQueryHandler extends AbstractQueryHandler {
+public class AdsErpDiffReturnInstockSyncQueryHandler extends AbstractQueryHandler {
 
 
 	@Override

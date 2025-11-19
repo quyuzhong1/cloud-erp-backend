@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -361,6 +362,21 @@ public class AdsErpOutstockDiffFlowDTO implements Serializable {
          * 备注
          */
          private String remark;
+         
+         /**
+          * 执行状态
+          */
+          private String execStatus;
+
+          /**
+          * 执行状态名称
+          */
+          private String execStatusName;
+
+          /**
+          * 执行完成时间
+          */
+          private Date finishTime;
 
          /**
           * 创建时间

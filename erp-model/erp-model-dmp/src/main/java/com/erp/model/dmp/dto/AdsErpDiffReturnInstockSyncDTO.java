@@ -43,6 +43,11 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -152,84 +157,9 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         private String  id;
 
         /**
-        * 数据唯一md5值
-        */
-        private String uniqueCode;
-
-        /**
-        * 数据字段md5值（数据json+account_code+next_level_id+bill_topic）
-        */
-        private String dataEncrypt;
-
-        /**
-        * 来源平台：gyy，kingdee，mabang
-        */
-        private String sourceSystem;
-
-        /**
-        * 数据来源平台
-        */
-        private String sourcePlatform;
-
-        /**
-        * 平台账号编码
-        */
-        private String accountCode;
-
-        /**
-        * 店铺ID/海外仓授权ID
-        */
-        private String nextLevelId;
-
-        /**
-        * 业务类型
-        */
-        private String billTopic;
-
-        /**
-        * 流程id
-        */
-        private String flowId;
-
-        /**
-        * 节点id
-        */
-        private String nodeId;
-
-        /**
-        * 实例id/etl任务id
-        */
-        private String instanceId;
-
-        /**
-        * 任务id
-        */
-        private String taskId;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * ETL处理状态：ready=可处理，unready=不可处理
-        */
-        private String etlStatus;
-
-        /**
-        * 核对唯一键
-        */
-        private String checkKey;
-
-        /**
         * 核对周期
         */
         private String checkMonth;
-
-        /**
-        * 核对周期页面查询
-        */
-        private String checkMonthQuery;
 
         /**
         * 核对仓库
@@ -423,20 +353,10 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
 
 
         /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-
-        /**
         * 创建时间
         */
         private LocalDateTime createTime;
 
-        /**
-        * 创建人名称
-        */
-        private String createUserName;
 
     }
 

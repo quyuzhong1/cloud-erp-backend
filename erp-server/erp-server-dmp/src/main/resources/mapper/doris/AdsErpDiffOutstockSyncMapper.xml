@@ -112,7 +112,7 @@
         t.erp_warehouse_name erpWarehouseName,
         t.bill_date billDate,
         t.diff_qty diffQty, 
-        t.diff_tag_name difftagName, 
+        t.diff_tag_name diffTagName, 
         t.diff_desc diffDesc,
         t.suggest_type suggestType,
         t.remark,
@@ -145,20 +145,20 @@
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        diff_tag AS tabFlag,
         count(*)  AS count
         FROM  ads_erp_diff_outstock_sync
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY diff_tag
     </select>
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$TotalDTO">
         select sum(case when platform_bill_name is not null and platform_bill_name != '' then 1 else 0 end) totalPlatformQty,
         sum(case when bill_name is not null and bill_name != '' then 1 else 0 end) totalErpQty,
-        sum(diff_qty) totalDiffQty 
+        sum(abs(diff_qty)) totalDiffQty 
         from ads_erp_diff_outstock_sync t
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false

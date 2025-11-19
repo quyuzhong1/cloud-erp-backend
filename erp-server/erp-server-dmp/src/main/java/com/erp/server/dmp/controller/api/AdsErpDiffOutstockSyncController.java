@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.util.List;
+
 import javax.annotation.Resource;
 
 import org.springframework.validation.annotation.Validated;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -49,6 +52,18 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     @WebAdvanceQuery(handler = AdsErpDiffOutstockSyncQueryHandler.class)
     public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
         return success(adsErpDiffOutstockSyncService.paging(dto));
+    }
+    
+    /**
+     *  获取 tab列表
+     * @author Will
+     * @date: 2023/11/13 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<AdsErpDiffOutstockSyncDTO.TabListDTO>> tabList(@RequestBody @Validated PermissionsDTO dto) {
+        return success(adsErpDiffOutstockSyncService.tabList(dto));
     }
 
     /**

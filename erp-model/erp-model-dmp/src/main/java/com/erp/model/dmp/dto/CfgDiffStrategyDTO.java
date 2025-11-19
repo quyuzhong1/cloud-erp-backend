@@ -200,6 +200,20 @@ public class CfgDiffStrategyDTO implements Serializable {
     	 */
     	private List<AddDetailDTO> detailList;
     }
+    
+    /**
+     * 新增
+     */
+     @Data
+     @NoArgsConstructor
+     public static class AddDictSuggestTypeDTO {
+
+     	/**
+     	 * 建议处理方式
+     	 */
+    	@NotBlank(message = "建议处理方式不能为空")
+     	private String suggestType;
+     }
 
     /**
      * 新增明细
@@ -218,6 +232,7 @@ public class CfgDiffStrategyDTO implements Serializable {
           private String diffTag;
           
           /**
+           * http://172.16.100.11:3002/project/119/interface/api/24109		key传dictSuggestType
            * 建议处理方式：下拉固定为：新增单据、无需处理、请核实单据，选下拉或自定义都传中文即可
            */
           @NotBlank(message = "建议处理方式不能为空")

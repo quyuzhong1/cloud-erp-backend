@@ -3,6 +3,7 @@ package com.erp.model.dmp.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingParamDTO;
 
+import java.util.Date;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -256,6 +257,20 @@ public class AdsErpInventoryDiffFlowDTO implements Serializable {
         private String remark;
 
 
+        /**
+         * 执行状态
+         */
+         private String execStatus;
+
+         /**
+         * 执行状态名称
+         */
+         private String execStatusName;
+
+         /**
+         * 执行完成时间
+         */
+         private Date finishTime;
 
         /**
         * 创建时间
