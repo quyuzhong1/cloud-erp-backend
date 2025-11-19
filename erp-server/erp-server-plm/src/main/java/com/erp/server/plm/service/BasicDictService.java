@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -22,6 +23,7 @@ public interface BasicDictService extends IService<BasicDictEntity> {
 
     List<BasicDictEntity>  listByType(String type);
 
+    BasicDictEntity getByTypeAndValue(String type, String value);
     /**
      * 批量获取字典
      * @param typeList

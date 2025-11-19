@@ -296,6 +296,18 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 throw new ServiceException("物流产品信息不存在");
             }
         }
+        //如果是单品，校验申报要素和报关单位 不能为空
+        List<BomChildrenSkuDTO> bomChildrenList = bomSkuService.listBomChildBySkuIds(Arrays.asList(oldEntity.getSkuId()));
+        //是否是组合SKU
+        if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+            long count = bomChildrenList.stream().filter(e ->  BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
+            if (count <= 0) {
+                if(StringUtils.isBlank(dto.getDeclareInfo().getDeclareUnit()) || StringUtils.isBlank(dto.getDeclareInfo().getDeclareElement()) ){
+                    throw new ServiceException("单品SKU申报要素和报关单位不能为空");
+                }
+            }
+        }
+
         //报关信息
         LogisticsProductDTO.DeclareInfoDTO declareInfo = dto.getDeclareInfo();
         ProductLogisticsEntity productLogistics = new ProductLogisticsEntity();

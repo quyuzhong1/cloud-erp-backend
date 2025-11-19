@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -134,4 +135,17 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
                 .collect(Collectors.toList());
         return result;
     }
+
+    @Override
+    public BasicDictEntity getByTypeAndValue(String type, String value) {
+        if(isNotBlank(type) && isNotBlank(value)){
+            return null;
+        }
+        LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BasicDictEntity::getType, type);
+        queryWrapper.eq(BasicDictEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
 }

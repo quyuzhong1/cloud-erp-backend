@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.LoginUser;
@@ -16,11 +18,18 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
+import com.erp.model.oms.entity.BankAccountEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.OperateLogShowDTO;
 import com.erp.model.plm.dto.OperateLogSelectDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.entity.CfgOperateLogFieldEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.OperateLogMapper;
 import com.erp.server.plm.service.BasicDictService;
@@ -32,6 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +59,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
 
     @Autowired
     private BasicDictService basicDictService;
+
 
     @Autowired
     private SysUserFeign sysUserFeign;
@@ -84,70 +96,44 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
             }
             String fieldName = cfgOperateLogFieldEntity.getFieldName();
             Integer type = cfgOperateLogFieldEntity.getType();
+            if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
+                valuePair = setBooleanValue(cfgOperateLogFieldEntity, valuePair);
+            }
+            //枚举
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
+                valuePair = setEnumValue(cfgOperateLogFieldEntity,valuePair);
+            }
+            //字典
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
+                valuePair = setDistValue(valuePair,cfgOperateLogFieldEntity.getValue());
+            }
+            //人员
+            if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
+                valuePair = setUserValue(valuePair);
+            }
+            //部门
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DEPT.getCode().equals(type)) {
+                valuePair = setDeptValue(valuePair);
+            }
+            //国家
+            if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
+                valuePair = setCountryValue(valuePair);
+            }
+            //城市
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CITY.getCode().equals(type)) {
+                valuePair = setCityValue(valuePair);
+            }
+            //币别
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
+                valuePair = setCurrencyValue(valuePair);
+            }
+            //组织
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ORG.getCode().equals(type)) {
+                valuePair = setOrg(valuePair);
+            }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
-            if (type == 1) {
-                //是或否
-                oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
-                newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
-                //值不变则不用新增操作日志
-                if (oldValue.equals(newValue)) {
-                    continue;
-                }
-            } else if (type == 2) {
-                //枚举
-                if (StringUtils.isBlank(cfgOperateLogFieldEntity.getEnumClass())) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                Class<?> aClass = null;
-                try {
-                    aClass = Class.forName(PACKAGEPATH.concat(".").concat(cfgOperateLogFieldEntity.getEnumClass()));
-                } catch (ClassNotFoundException e) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                boolean anEnum = aClass.isEnum();
-                if (!anEnum) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                if (StringUtils.isNotBlank(oldValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(oldValue, aClass);
-                    if (ObjectUtils.isNotEmpty(enumObject)) {
-                        oldValue = enumObject.getName();
-                    } else {
-                        oldValue = "";
-                    }
-                }
-                if (StringUtils.isNotBlank(newValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(newValue, aClass);
-                    if (ObjectUtils.isNotEmpty(enumObject)) {
-                        newValue = enumObject.getName();
-                    } else {
-                        newValue = "";
-                    }
-                }
 
-            } else if (type == 3) {
-                //字典
-                List<BasicDictEntity> oldList = basicDictService.listByIds(Arrays.asList(oldValue.split(",")));
-                if (CollectionUtils.isNotEmpty(oldList)) {
-                    oldValue = oldList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
-                }
-                List<BasicDictEntity> newList = basicDictService.listByIds(Arrays.asList(newValue.split(",")));
-                if (CollectionUtils.isNotEmpty(newList)) {
-                    newValue = newList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
-                }
-            } else if (type == 4) {
-                //人员
-                List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
-                if (CollectionUtils.isNotEmpty(oldList)) {
-                    oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
-                }
-                List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(newValue.split(",")));
-                if (CollectionUtils.isNotEmpty(newList)) {
-                    newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
-                }
-
-            }
             if (oldValue.equals(newValue)) {
                 continue;
             }
@@ -259,5 +245,175 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         OperateLogShowDTO.PagingParamDTO params = dto.getParams();
         IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
         return new PagingVO(pageData);
+    }
+    /**
+     * 设置布尔值
+     */
+    private Pair<String,String> setBooleanValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
+        String trueValue = "是";
+        String falseValue = "否";
+
+        //是或否
+        String oldValue = Boolean.TRUE.toString().equals(valuePair.getKey()) ? trueValue : falseValue;
+        String newValue = Boolean.TRUE.toString().equals(valuePair.getValue()) ? trueValue : falseValue;
+
+        return new Pair<>(oldValue,newValue);
+    }
+    /**
+     * 设置字典值
+     */
+    private Pair<String,String> setDistValue (Pair<String, String> valuePair,String value) {
+        String  oldValue = "";
+        String  newValue = "";
+        BasicDictEntity oldEntity = basicDictService.getByTypeAndValue(value, valuePair.getKey());
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            oldValue = oldEntity.getName();
+        }
+        BasicDictEntity newEntity = basicDictService.getByTypeAndValue(value, valuePair.getValue());
+        if (ObjectUtils.isNotEmpty(newEntity)) {
+            newValue = newEntity.getName();
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置人员值
+     */
+    private Pair<String,String> setUserValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+        }
+        List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置部门值
+     */
+    private Pair<String,String> setDeptValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(deptList)) {
+            oldValue = deptList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = deptList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置国家值
+     */
+    private Pair<String,String> setCountryValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        if (CollectionUtils.isNotEmpty(countryList)) {
+            oldValue = countryList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            newValue = countryList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置城市值
+     */
+    private Pair<String,String> setCityValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictCityEntity> cityList = sysUserFeign.listCityByIds(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(cityList)) {
+            oldValue = cityList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = cityList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置币别值
+     */
+    private Pair<String,String> setCurrencyValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(currencyList)) {
+            oldValue = currencyList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = currencyList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+    /**
+     * 组织
+     */
+    private Pair<String,String> setOrg (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<String> orgIds = Arrays.asList(valuePair.getKey(), valuePair.getValue());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            oldValue = accountingCompanyList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = accountingCompanyList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+
+    /**
+     * 设置枚举值
+     */
+    private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
+        if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        String  oldValue = "";
+        String  newValue = "";
+        Class<?> aClass ;
+        try {
+            aClass = Class.forName(fieldEntity.getEnumClass());
+        } catch (ClassNotFoundException e) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        boolean anEnum = aClass.isEnum();
+        if (!anEnum) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        if (StringUtils.isNotBlank(valuePair.getKey())) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                oldValue = enumObject.getName();
+            } else {
+                oldValue = "";
+            }
+        }
+        if (StringUtils.isNotBlank(valuePair.getValue())) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                newValue = enumObject.getName();
+            } else {
+                newValue = "";
+            }
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    private String removeDigits(String input) {
+        if(StringUtils.isBlank(input)){
+            return input;
+        }
+        // 定义匹配数字的正则表达式
+        String regex = "\\d";
+        // 创建 Pattern 对象
+        Pattern pattern = Pattern.compile(regex);
+        // 创建 Matcher 对象
+        Matcher matcher = pattern.matcher(input);
+        // 使用 replaceAll 方法替换匹配的数字为空字符串
+        String result = matcher.replaceAll("");
+        return result;
     }
 }
