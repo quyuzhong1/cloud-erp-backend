@@ -48,8 +48,7 @@ public enum InventoryBusinessTypeEnum {
     OTHER_IN("other_in", "19", "其他入库"),
     OTHER_OUT("other_out", "20", "其他出库"),
 
-
-    INSTOCK_FORCAST("instock_forcast", "21", "入库预报"),
+    PURCHASE_ORDER("purchase_order", "21", "采购订单"),
 
     INVENTORY_ADJUST("inventory_adjust", "22", "库存调整单"),
 
@@ -98,7 +97,7 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY_INTERCEPT("so_b2c_delivery_intercept", "53", "发货拦截单返还库存"),
     SO_INFO_PUSH_TRANSFER_INFO("so_info_push_transfer_info", "54", "中转调拨单（销售订单下推）"),
     REQUISITION_APPLICATION_RELEASE("requisition_application_release", "55", "要货申请释放库存"),
-    PURCHASE_ORDER("purchase_order", "56","采购订单"),
+
     ;
 
     private String code;
