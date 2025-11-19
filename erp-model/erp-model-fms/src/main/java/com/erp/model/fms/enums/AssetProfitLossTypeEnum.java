@@ -1,6 +1,7 @@
 package com.erp.model.fms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
  * @date 2025-10-31
  */
 @NoArgsConstructor
-public enum AssetProfitLossTypeEnum {
+public enum AssetProfitLossTypeEnum implements EnumMessage {
     
     /**
      * 盘盈

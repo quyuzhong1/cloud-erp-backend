@@ -1,5 +1,6 @@
 package com.erp.model.fms.enums;
 
+import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AssetCategoryEnum {
+public enum AssetCategoryEnum implements EnumMessage {
     
     /**
      * 机器设备

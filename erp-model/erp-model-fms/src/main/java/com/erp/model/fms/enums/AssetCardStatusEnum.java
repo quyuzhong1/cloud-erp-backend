@@ -1,5 +1,6 @@
 package com.erp.model.fms.enums;
 
+import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AssetCardStatusEnum {
+public enum AssetCardStatusEnum implements EnumMessage {
     
     /**
      * 未生成
@@ -64,5 +65,10 @@ public enum AssetCardStatusEnum {
      */
     public static String[] getStatusList() {
         return new String[]{NOT_GENERATED.getStatus(), GENERATED.getStatus()};
+    }
+
+    @Override
+    public Object getCode() {
+        return status;
     }
 }
