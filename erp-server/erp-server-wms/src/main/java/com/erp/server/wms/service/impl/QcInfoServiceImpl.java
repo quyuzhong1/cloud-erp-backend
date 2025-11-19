@@ -514,6 +514,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
+        // 检查是否已作废
+        if (Objects.equals(bill.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "完成质检");
+        }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
         //采购订单
@@ -992,6 +996,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
+        // 检查是否已作废
+        if (Objects.equals(bill.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "免检");
+        }
         if (!CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
             throw new ServiceException(ApiError.ERROR_99020);
         }
@@ -1113,6 +1121,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO finish(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        // 检查是否已作废
+        if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "完成质检");
+        }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
@@ -1165,6 +1177,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchExemption(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        // 检查是否已作废
+        if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "免检");
+        }
         long count = qcList.stream().filter(s -> !Arrays.asList(QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_QC.getCode()).contains(s.getQcStatus().getCode())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99020);
@@ -1223,6 +1239,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchCancel(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        // 检查是否已作废
+        if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "取消质检");
+        }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
@@ -1327,6 +1347,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public BatchResultDTO cancelProcess(QcInfoEntity entity) {
         List<String> ids = Collections.singletonList(entity.getId());
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        // 检查是否已作废
+        if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99080, "撤销质检");
+        }
         List<String> statusList = new ArrayList<>(2);
         statusList.add(QcBillStatusEnum.EXEMPTION.getCode());
         statusList.add(QcBillStatusEnum.FINISH_QC.getCode());
@@ -2550,6 +2574,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             QcInfoEntity qcInfoEntity = super.getById(id);
             if (Objects.isNull(qcInfoEntity)){
                 throw new ServiceException(ApiError.NOT_EXIST_BILL,"质检单信息");
+            }
+            // 检查是否已作废
+            if (Objects.equals(qcInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_99080, "复检抽检");
             }
             if(qcInfoEntity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
                 throw new ServiceException("数据来源质检通知单不可在此操作");
