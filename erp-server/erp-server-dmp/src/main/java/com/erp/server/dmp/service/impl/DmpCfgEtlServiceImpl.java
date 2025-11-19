@@ -126,7 +126,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
             dmpCfgEtlEntity.setExtendJson(addDTO.getExtendJson());
         }
         Integer count = lambdaQuery()
-                .eq(DmpCfgEtlEntity::getExecUrl, dmpCfgEtlEntity.getExecTimeout())
+                .eq(DmpCfgEtlEntity::getExecUrl, dmpCfgEtlEntity.getExecUrl())
                 .ne(StringUtils.isNotBlank(dmpCfgEtlEntity.getId()), DmpCfgEtlEntity::getId, dmpCfgEtlEntity.getId())
                 .count();
         if (count > 0) {
