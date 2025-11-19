@@ -1,21 +1,22 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -23,13 +24,11 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -129,12 +128,16 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
     }
 
     private void setCountryName(OverseasProviderWarehouseEntity mqEntity){
-        if(StrUtils.isNotEmpty(mqEntity.getCountryName())){
+        if(StrUtils.isEmpty(mqEntity.getCountryName())){
+            Optional.ofNullable(mqEntity.getCountry())
+                    .map(sysUserFeign::getCountryById)
+                    .ifPresent(dictCountryEntity -> mqEntity.setCountryName(dictCountryEntity.getNameCn()));
             return;
         }
-        Optional.ofNullable(mqEntity.getCountry())
-                .map(sysUserFeign::getCountryById)
-                .ifPresent(dictCountryEntity -> mqEntity.setCountryName(dictCountryEntity.getNameCn()));
+        List<DictCountryEntity> list = FeignQuery.create(DictCountryEntity.class).eq(DictCountryEntity::getNameCn, mqEntity.getCountryName()).list();
+        if (CollUtil.isNotEmpty(list)) {
+            mqEntity.setCountry(list.get(0).getId());
+        }
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
