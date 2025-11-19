@@ -60,6 +60,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.SampleDocumentAuditUtil;
 import com.common.business.validator.ValidList;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -584,6 +585,40 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        
+        // 设置调整人名称
+        if (StrUtil.isNotBlank(data.getAdjustmentUserId())) {
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(data.getAdjustmentUserId()));
+            if (CollUtil.isNotEmpty(userList)) {
+                FindUserDTO user = userList.get(0);
+                data.setAdjustmentUserName(user.getUserName());
+            }
+        }
+        
+        // 设置调整部门名称
+        if (StrUtil.isNotBlank(data.getAdjustmentDeptId())) {
+            List<SysDepartmentEntity> departments = sysUserFeign.getDeptByIds(Arrays.asList(data.getAdjustmentDeptId()));
+            if (CollUtil.isNotEmpty(departments)) {
+                SysDepartmentEntity department = departments.get(0);
+                if (department != null && StrUtil.isNotBlank(department.getName())) {
+                    data.setAdjustmentDeptName(department.getName());
+                }
+            }
+        }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(curApprove)) {
+                data.setApproveUserName(curApprove);
+            }
+        }
     }
 
     /**
@@ -652,11 +687,64 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             }
         }
 
+        // 批量获取调整人ID和部门ID
+        List<String> adjustmentUserIds = list.stream()
+                .map(SampleAdjustmentInfoDTO.ListDTO::getAdjustmentUserId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        List<String> adjustmentDeptIds = list.stream()
+                .map(SampleAdjustmentInfoDTO.ListDTO::getAdjustmentDeptId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询用户信息
+        Map<String, String> userIdNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(adjustmentUserIds)) {
+            try {
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(adjustmentUserIds);
+                if (CollUtil.isNotEmpty(userList)) {
+                    userIdNameMap = userList.stream()
+                            .filter(user -> StrUtil.isNotBlank(user.getUserId()) && StrUtil.isNotBlank(user.getUserName()))
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (v1, v2) -> v1));
+                }
+            } catch (Exception e) {
+                log.warn("批量查询调整人信息失败，错误：{}", e.getMessage());
+            }
+        }
+        
+        // 批量查询部门信息
+        Map<String, String> deptIdNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(adjustmentDeptIds)) {
+            try {
+                List<SysDepartmentEntity> departments = sysUserFeign.getDeptByIds(adjustmentDeptIds);
+                if (CollUtil.isNotEmpty(departments)) {
+                    deptIdNameMap = departments.stream()
+                            .filter(dept -> dept != null && StrUtil.isNotBlank(dept.getId()) && StrUtil.isNotBlank(dept.getName()))
+                            .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+                }
+            } catch (Exception e) {
+                log.warn("批量查询调整部门信息失败，错误：{}", e.getMessage());
+            }
+        }
+
         // 属性赋值
         for(SampleAdjustmentInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setAdjustmentTypeName(SampleAdjustmentTypeEnum.getName(data.getAdjustmentType()));
+            
+            // 设置调整人名称
+            if (StrUtil.isNotBlank(data.getAdjustmentUserId()) && userIdNameMap.containsKey(data.getAdjustmentUserId())) {
+                data.setAdjustmentUserName(userIdNameMap.get(data.getAdjustmentUserId()));
+            }
+            
+            // 设置调整部门名称
+            if (StrUtil.isNotBlank(data.getAdjustmentDeptId()) && deptIdNameMap.containsKey(data.getAdjustmentDeptId())) {
+                data.setAdjustmentDeptName(deptIdNameMap.get(data.getAdjustmentDeptId()));
+            }
             
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
