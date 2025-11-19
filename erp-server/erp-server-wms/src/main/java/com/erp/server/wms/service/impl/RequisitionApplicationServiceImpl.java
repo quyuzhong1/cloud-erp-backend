@@ -3329,6 +3329,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             e.setFromWarehouseName(planEntity.getFromWarehouseName());
         });
         requisitionApplicationDetailService.saveBatch(detailEntityList);
+
+        //三方仓发三方仓生成装箱任务
+        if(ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
+            packingTaskService.addPackingByRequisition(entity);
+        }
     }
 
     @Override
