@@ -29,6 +29,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.PagingParamDTO;
@@ -141,6 +142,12 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> dblist = baseMapper.tabList(searchParam);
         AdsErpDiffReturnInstockSyncDTO.TabListDTO l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
+        l.setTabFlag("all");
+        l.setTabFlagName("所有");
+        l.setCount(dblist.stream().map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).reduce(Integer::sum).orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
         l.setTabFlag("platform");
         l.setTabFlagName("单据1多");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
@@ -157,6 +164,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         l.setTabFlagName("字段错误");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
+        
         // 计算合计数量
         return list;
     }

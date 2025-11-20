@@ -141,6 +141,12 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AdsErpDiffOutstockSyncDTO.TabListDTO> dblist = baseMapper.tabList(searchParam);
         AdsErpDiffOutstockSyncDTO.TabListDTO l = new AdsErpDiffOutstockSyncDTO.TabListDTO();
+        l.setTabFlag("all");
+        l.setTabFlagName("所有");
+        l.setCount(dblist.stream().map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).reduce(Integer::sum).orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffOutstockSyncDTO.TabListDTO();
         l.setTabFlag("platform");
         l.setTabFlagName("单据1多");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
@@ -157,6 +163,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         l.setTabFlagName("字段错误");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpDiffOutstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
+        
         // 计算合计数量
         return list;
     }
