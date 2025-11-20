@@ -80,7 +80,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             addDTO.setTcck(createInboundReq.getTransitWarehouseCode());
             addDTO.setChqd(createInboundReq.getLogisticsChannel());
         }
-        addDTO.setWaybill(createInboundReq.getc);
+        addDTO.setWaybill(createInboundReq.getReceivingCode());
 
         //明细信息
         List<TongYouCreateInboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateInboundConverter.INSTANCE.InboundDetailToThird(createInboundReq.getItems());
