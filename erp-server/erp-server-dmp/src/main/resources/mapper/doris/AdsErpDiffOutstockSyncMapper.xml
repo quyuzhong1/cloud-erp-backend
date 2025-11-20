@@ -167,4 +167,21 @@
             ${params.permissionSql}
         </if>
     </select>
+    
+    <update id="updateDws" parameterType="java.util.List">
+    	update dmp_dws.dws_check_so_outstock_platform_f set update_time = now() where 
+    	is_deleted = false
+        and source_system in
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.sourceSystem}
+        </foreach>
+        and account_code in 
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.accountCode}
+        </foreach>
+        and check_month in 
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.checkMonth}
+        </foreach>
+    </update>
 </mapper>

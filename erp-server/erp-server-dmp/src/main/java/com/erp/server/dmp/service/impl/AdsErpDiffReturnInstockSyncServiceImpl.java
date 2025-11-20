@@ -253,7 +253,27 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 	
 	@Override
 	public Boolean updateErp(UpdateErpDTO dto) {
-		return null;
+		String querySql = dto.getSqlMap().get("default");
+		String permissionSql = dto.getPermissionSql();
+		List<AdsErpDiffReturnInstockSyncEntity> list = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false)
+		.select(AdsErpDiffReturnInstockSyncEntity::getSourceSystem , AdsErpDiffReturnInstockSyncEntity::getAccountCode , AdsErpDiffReturnInstockSyncEntity::getCheckMonth)
+		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
+		.list();
+		if(CollUtil.isNotEmpty(list)) {
+			Integer count = lambdaQuery().in(AdsErpDiffReturnInstockSyncEntity::getCheckMonth, list.stream().map(AdsErpDiffReturnInstockSyncEntity::getCheckMonth).collect(Collectors.toSet()))
+					.eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing").count();
+			if(count != null && count > 0) {
+				throw new ServiceException(list.stream().map(AdsErpDiffReturnInstockSyncEntity::getCheckMonth).collect(Collectors.joining("、")) + "中有核对任务正在执行中");
+			}
+			RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
+			baseMapper.updateDws(list);
+			lambdaUpdate().eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
+			.set(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing")
+			.set(AdsErpDiffReturnInstockSyncEntity::getExecStatusName, "执行中")
+			.setSql(" finish_time = null ")
+			.update();
+		}
+		return true;
 	}
 	
 	@Override

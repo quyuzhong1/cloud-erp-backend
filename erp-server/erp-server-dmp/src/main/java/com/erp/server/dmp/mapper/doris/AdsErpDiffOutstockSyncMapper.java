@@ -53,4 +53,6 @@ public interface AdsErpDiffOutstockSyncMapper extends BaseMapper<AdsErpDiffOutst
     List<AdsErpDiffOutstockSyncDTO.TabListDTO> tabList(@Param("params") AdsErpDiffOutstockSyncDTO.PagingParamDTO searchParam);
     
     AdsErpDiffOutstockSyncDTO.TotalDTO total(@Param("params") AdsErpDiffOutstockSyncDTO.PagingParamDTO params);
+    
+    void updateDws(@Param("params") List<AdsErpDiffOutstockSyncEntity> params);
 }

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 
 /**
@@ -53,4 +54,6 @@ public interface AdsErpDiffReturnInstockSyncMapper extends BaseMapper<AdsErpDiff
     List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> tabList(@Param("params") AdsErpDiffReturnInstockSyncDTO.PagingParamDTO searchParam);
     
     AdsErpDiffReturnInstockSyncDTO.TotalDTO total(@Param("params") AdsErpDiffReturnInstockSyncDTO.PagingParamDTO params);
+    
+    void updateDws(@Param("params") List<AdsErpDiffReturnInstockSyncEntity> params);
 }

@@ -104,6 +104,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP退货入库单差异表ERP数据更新")
     @PostMapping(value = "/updateErp")
+    @WebAdvanceQuery(handler = AdsErpDiffReturnInstockSyncQueryHandler.class)
     public ApiResult<Boolean> updateErp(@RequestBody @Validated AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO dto) {
     	return success(adsErpDiffReturnInstockSyncService.updateErp(dto));
     }

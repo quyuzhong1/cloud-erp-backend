@@ -101,6 +101,7 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表ERP数据更新")
     @PostMapping(value = "/updateErp")
+    @WebAdvanceQuery(handler = AdsErpDiffOutstockSyncQueryHandler.class)
     public ApiResult<Boolean> updateErp(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.UpdateErpDTO dto) {
     	return success(adsErpDiffOutstockSyncService.updateErp(dto));
     }
