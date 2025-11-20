@@ -127,7 +127,7 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "期末在途调整")
     @PostMapping(value = "/adjustTransitQty")
-    public ApiResult<Boolean> adjustTransitQty(@RequestBody FbaTransitCalculateReportDTO.AdjustDTO adjustDTO){
+    public ApiResult<Boolean> adjustTransitQty(@RequestBody AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO){
         Boolean flag = adsErpFirstMileInTransitDiffService.adjustTransitQty(adjustDTO);
         return flag ? success() : failure();
     }

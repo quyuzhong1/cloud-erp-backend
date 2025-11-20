@@ -58,7 +58,7 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
     /**
      * 期末在途调整
      */
-    Boolean adjustTransitQty(FbaTransitCalculateReportDTO.AdjustDTO adjustDTO);
+    Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO);
 
     /**
      * 期初导入

@@ -174,7 +174,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     }
 
     @Override
-    public Boolean adjustTransitQty(FbaTransitCalculateReportDTO.AdjustDTO adjustDTO) {
+    public Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO) {
         AdsErpFirstMileInTransitDiffEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)){
             throw new ServiceException(ApiError.NOT_EXIST,"平台在途报告记录");

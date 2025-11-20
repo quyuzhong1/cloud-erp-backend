@@ -928,12 +928,9 @@ public class AdsErpFirstMileInTransitDiffDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AdjustDTO {
-        //主表id
-        @NotBlank(message = "主表id不能为空")
+        //id
+        @NotBlank(message = "id不能为空")
         private String id;
-        //明细Id
-        @NotBlank(message = "明细id不能为空")
-        private String detailId;
         //调整数量
         @NotNull(message = "期末在途调整数量不能为空")
         @Min(value = -999999999, message = "期末在途调整数量最小值为-999999999")
