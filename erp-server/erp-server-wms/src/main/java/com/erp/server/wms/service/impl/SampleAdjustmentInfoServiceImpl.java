@@ -189,6 +189,9 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
                 sampleAdjustmentDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleAdjustmentDetailEntity.setProductName(skuVO.getSkuName());
             }
+
+            // 校验调整类型与差异数量
+            validateAdjustmentTypeAndDifferenceQty(sampleAdjustmentInfoEntity.getAdjustmentType(), differenceQty, sampleAdjustmentDetailEntity.getSkuNo());
         }
 
         sampleAdjustmentDetailService.saveBatch(sampleAdjustmentDetailEntities);
@@ -902,6 +905,9 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
                 sampleAdjustmentDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleAdjustmentDetailEntity.setProductName(skuVO.getSkuName());
             }
+
+            // 校验调整类型与差异数量
+            validateAdjustmentTypeAndDifferenceQty(sampleAdjustmentInfoEntity.getAdjustmentType(), differenceQty, sampleAdjustmentDetailEntity.getSkuNo());
         }
 
         if(CollUtil.isNotEmpty(oldList)){
@@ -1258,5 +1264,41 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         String standardPath = "classpath:excel/sampleAdjustmentInfoTemplate.xlsx";
         String standardExcelName = "sampleAdjustmentInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+    }
+
+    /**
+     * 校验调整类型与差异数量
+     * 调整类型=盘盈，差异数量必须大于0
+     * 调整类型=盘亏，差异数量必须小于0
+     * 调整类型=其他，不对差异数量进行校验
+     *
+     * @param adjustmentType 调整类型
+     * @param differenceQty 差异数量
+     * @param skuNo SKU编号（用于错误提示）
+     */
+    private void validateAdjustmentTypeAndDifferenceQty(String adjustmentType, Integer differenceQty, String skuNo) {
+        if (StrUtil.isBlank(adjustmentType) || differenceQty == null) {
+            return;
+        }
+
+        SampleAdjustmentTypeEnum adjustmentTypeEnum = SampleAdjustmentTypeEnum.getByCode(adjustmentType);
+        if (adjustmentTypeEnum == null) {
+            return;
+        }
+
+        String skuInfo = StrUtil.isNotBlank(skuNo) ? String.format("SKU【%s】", skuNo) : "";
+
+        if (SampleAdjustmentTypeEnum.INVENTORY_PROFIT.equals(adjustmentTypeEnum)) {
+            // 盘盈：差异数量必须大于0
+            if (differenceQty <= 0) {
+                throw new ServiceException(String.format("%s调整类型为盘盈时，差异数量必须大于0", skuInfo));
+            }
+        } else if (SampleAdjustmentTypeEnum.INVENTORY_LOSS.equals(adjustmentTypeEnum)) {
+            // 盘亏：差异数量必须小于0
+            if (differenceQty >= 0) {
+                throw new ServiceException(String.format("%s调整类型为盘亏时，差异数量必须小于0", skuInfo));
+            }
+        }
+        // 其他类型：不进行校验
     }
 }
