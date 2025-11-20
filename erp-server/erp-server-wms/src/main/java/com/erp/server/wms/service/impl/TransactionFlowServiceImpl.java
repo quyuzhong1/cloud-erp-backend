@@ -461,13 +461,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         List<String> warehouseIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIdList);
-
-        Map<String, WarehouseLocationEntity> locationMap = warehouseLocationEntities.stream().filter(e-> Objects.equals(e.getType(), WarehouseLocationTypeEnum.LOCATION.getCode())).collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (o1, o2) -> o1));
-
-        Map<String, WarehouseLocationEntity> areaMap = warehouseLocationEntities.stream().filter(e-> Objects.equals(e.getType(), WarehouseLocationTypeEnum.AREA.getCode())).collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity(), (o1, o2) -> o1));
-
         List<String> orgIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
@@ -485,25 +478,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(obj -> obj.getId().equals(inventoryDTO.getOrgId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(codeDTO)) {
                 inventoryDTO.setOrgName(codeDTO.getName());
-            }
-
-            //仓位
-            if(StringUtils.isNotBlank(inventoryDTO.getWarehouseLocation())){
-
-                WarehouseLocationEntity locationEntity = locationMap.get(inventoryDTO.getWarehouseLocation());
-                if(Objects.nonNull(locationEntity)){
-                    inventoryDTO.setWarehouseLocationName((locationEntity.getName()));
-
-                    //库区
-                    String parentId = locationEntity.getParentId();
-                    if(StringUtils.isNotBlank(parentId)){
-                        WarehouseLocationEntity areaEntity = areaMap.get(parentId);
-                        if(Objects.nonNull(areaEntity)){
-                            inventoryDTO.setWarehouseArea(areaEntity.getCode());
-                            inventoryDTO.setWarehouseAreaName(areaEntity.getName());
-                        }
-                    }
-                }
             }
         }
     }
