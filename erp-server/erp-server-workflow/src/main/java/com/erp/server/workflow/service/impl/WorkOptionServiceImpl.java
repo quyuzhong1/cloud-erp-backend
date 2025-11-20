@@ -111,6 +111,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private ExhibitionOrderFeign exhibitionOrderFeign;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     /**
      * 待办模块-模块分类下拉
@@ -704,7 +706,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = soB2cFeign.approve(baseApproveParamDTO);
                 break;
             case SO_MULTI_CHANNEL:
-                resultDTOList = soB2cFeign.approve(baseApproveParamDTO);
+                resultDTOList = soMultiChannelFeign.approve(baseApproveParamDTO);
                 break;
             case SO_CHANGE:
                 ApiResult<List<BatchResultDTO>> approve = soChangeFeign.approve(baseApproveParamDTO);
