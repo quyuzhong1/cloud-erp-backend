@@ -4422,7 +4422,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String excelPath = "excel/exportLogisticsHandover.xlsx";
         List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list = baseMapper.exportLogisticsHandover(idsDTO.getIds());
         if(CollectionUtils.isEmpty(list)){
-            return;
+            throw new ServiceException("无可导出的物流交接单");
         }
         fillExportLogisticsHandoverListDTO(list);
         //按照销售订单，审核人，出库日期分组
