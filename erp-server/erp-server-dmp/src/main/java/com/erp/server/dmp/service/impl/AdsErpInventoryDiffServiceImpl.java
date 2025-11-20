@@ -2,7 +2,15 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.ThirdMappingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,6 +23,7 @@ import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +55,10 @@ import javax.servlet.http.HttpServletResponse;
 public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInventoryDiffMapper, AdsErpInventoryDiffEntity> implements AdsErpInventoryDiffService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private CfgSettingService cfgSettingService;
+    @Resource
+    private ThirdMappingService thirdMappingService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -200,5 +213,47 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】更新备注操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "平台库存差异");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ADS_ERP_INVENTORY_DIFF.getCode(), entity.getId(), "更新备注平台库存差异");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<AdsErpInventoryDiffDTO.WarehouseListDTO> getCanDiffWarehouseList() {
+        Map<SettingEnum, String> cfgMap = cfgSettingService.getMap(SettingEnum.ADS_CFG);
+        // 核对库存差异的仓库
+        List<String> warehouseList = Arrays.asList("oms");
+        String warehouseListStr = cfgMap.get(SettingEnum.ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST);
+        List<String> platformList = Arrays.asList("antu");
+        // 核对库存差异的平台
+        String platformListStr = cfgMap.get(SettingEnum.ADS_ERP_INVENTORY_DIFF_PLATFORM_LIST);
+        if (StringUtils.isNotBlank(warehouseListStr)) {
+            warehouseList = Arrays.stream(warehouseListStr.split(",")).collect(Collectors.toList());
+        }
+        if (StringUtils.isNotBlank(platformListStr)) {
+            platformList = Arrays.stream(platformListStr.split(",")).collect(Collectors.toList());
+        }
+        List<AdsErpInventoryDiffDTO.WarehouseListDTO> resultList = new ArrayList<>();
+        // 仓储平台
+        List<ThirdMappingEntity> mapppingWarehouseList = thirdMappingService.lambdaQuery()
+                .in(ThirdMappingEntity::getThirdSysType, platformList)
+                .list();
+        if (CollectionUtils.isNotEmpty(mapppingWarehouseList)){
+            List<String> finalWarehouseList = warehouseList;
+            List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mapppingWarehouseList.stream()
+                    .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getSysId(), e.getSysName(), finalWarehouseList.contains(e.getSysId())))
+                    .collect(Collectors.toList());
+            resultList.addAll(collect);
+        }
+
+        // 销售平台
+        List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class)
+                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .list();
+        if (CollectionUtils.isNotEmpty(shopList)){
+            List<String> finalWarehouseList = warehouseList;
+            List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
+                    .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getWarehouseName(), finalWarehouseList.contains(e.getWarehouseId())))
+                    .collect(Collectors.toList());
+            resultList.addAll(collect);
+        }
+        return resultList;
     }
 }

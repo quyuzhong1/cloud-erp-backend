@@ -725,4 +725,29 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         private String checkMonth;
 
     }
+
+
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WarehouseListDTO {
+
+        /**
+         * 参考id
+         */
+        private String id;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 配置是否已选择
+         */
+        private Boolean selected;
+    }
 }
