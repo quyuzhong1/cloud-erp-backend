@@ -596,36 +596,63 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
     /**
      * 更新资产卡片
-     * 先对资产卡片反审核，然后更新资产数量和处置状态，再提交，最后审核通过
+     * 直接更新资产卡片数量和处置状态，不进行反审核、提交、审核流程
      *
      * @param map 资产卡片明细映射
      * @param cardDetailMap 资产卡片明细数量映射
      * @param currentDisposalId 当前资产处置单ID（用于排除当前处置单，判断处置状态）
      */
     private void updateAssetCard(Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map, Map<String, Integer> cardDetailMap, String currentDisposalId) {
+        // 获取当前处置单信息，用于日志记录
+        AssetDisposalEntity disposalEntity = getById(currentDisposalId);
+        String disposalCode = disposalEntity != null ? disposalEntity.getCode() : "";
+        
+        List<Pair<String, String>> disposalLogPairList = new ArrayList<>();
+        List<Pair<String, String>> cardLogPairList = new ArrayList<>();
+        
         for (Map.Entry<String, List<AssetCardDTO.ApprovedCardDetailDTO>> entry : map.entrySet()) {
             Integer qty = 0;
             String cardId = entry.getKey();
 
-            // 1. 先反审核资产卡片
+            // 获取资产卡片信息
             AssetCardEntity cardEntity = assetCardService.getById(cardId);
-            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-                assetCardService.disApprove(cardId);
+            if (cardEntity == null) {
+                continue;
             }
+            
+            // 保存原始数量用于日志记录
+            Integer oldQty = cardEntity.getQty();
+            
+            // 记录每个资产编码的数量变化（用于日志）
+            Map<String, Integer> oldDetailQtyMap = new HashMap<>();
+            Map<String, Integer> newDetailQtyMap = new HashMap<>();
 
             List<AssetCardDTO.ApprovedCardDetailDTO> value = entry.getValue();
             for (AssetCardDTO.ApprovedCardDetailDTO approvedCardDetailDTO : value) {
-                Integer cardDetailQty = cardDetailMap.get(cardId + ":" + approvedCardDetailDTO.getDetailId());
+                String detailId = approvedCardDetailDTO.getDetailId();
+                String assetCode = approvedCardDetailDTO.getAssetCode();
+                Integer cardDetailQty = cardDetailMap.get(cardId + ":" + detailId);
+                
+                // 查询原始数量
+                AssetCardDetailEntity detailEntity = assetCardDetailService.getById(detailId);
+                if (detailEntity != null && StringUtils.isNotBlank(assetCode)) {
+                    Integer oldDetailQty = oldDetailQtyMap.getOrDefault(assetCode, 0);
+                    oldDetailQtyMap.put(assetCode, oldDetailQty + detailEntity.getQty());
+                    
+                    Integer newDetailQty = newDetailQtyMap.getOrDefault(assetCode, 0);
+                    newDetailQtyMap.put(assetCode, newDetailQty + cardDetailQty);
+                }
+                
                 // 更新资产明细数量
                 assetCardDetailService.lambdaUpdate()
-                        .eq(AssetCardDetailEntity::getId, approvedCardDetailDTO.getDetailId())
+                        .eq(AssetCardDetailEntity::getId, detailId)
                         .set(AssetCardDetailEntity::getQty, cardDetailQty)
                         .update();
 
                 qty += cardDetailQty;
             }
 
-            // 2. 更新资产卡片数量和处置状态
+            // 更新资产卡片数量和处置状态
             // 判断处置状态：
             // - 资产数量=0 -> 完全清理
             // - 资产数量≠0且存在已审核的资产处置单（包括当前即将审核通过的处置单） -> 部分处置
@@ -675,63 +702,113 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                 }
             }
 
-            // 更新资产卡片数量和处置状态
+            // 直接更新资产卡片数量和处置状态
             assetCardService.lambdaUpdate()
                     .eq(AssetCardEntity::getId, cardId)
                     .set(AssetCardEntity::getQty, qty)
                     .set(AssetCardEntity::getDisposalStatus, disposalStatus)
                     .update();
-
-            Boolean originalValue = UserContext.getIsUserSystem();
-            UserContext.setIsUserSystem(Boolean.TRUE);
-            try {
-                // 3. 提交资产卡片
-                assetCardService.submit(cardId, false);
-                // 4. 审核通过资产卡片
-                ApproveOneDTO approveDTO = new ApproveOneDTO();
-                approveDTO.setId(cardId);
-                approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                assetCardService.approve(approveDTO);
-            }finally {
-                //恢复系统标识
-                UserContext.setIsUserSystem(originalValue);
+            
+            // 准备操作日志：记录资产卡片编码和数量变化
+            Integer qtyChange = qty - oldQty;
+            String changeText = qtyChange > 0 ? "+" + qtyChange : String.valueOf(qtyChange);
+            String logContent = StrUtil.format("资产卡片【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                    cardEntity.getCode(), oldQty, qty, changeText);
+            disposalLogPairList.add(new Pair<>(currentDisposalId, logContent));
+            
+            // 资产卡片日志：按资产编码维度记录，处置单号在格式字符串中显示一次
+            if (CollUtil.isNotEmpty(newDetailQtyMap)) {
+                for (Map.Entry<String, Integer> detailEntry : newDetailQtyMap.entrySet()) {
+                    String assetCode = detailEntry.getKey();
+                    Integer newDetailQty = detailEntry.getValue();
+                    Integer oldDetailQty = oldDetailQtyMap.getOrDefault(assetCode, 0);
+                    Integer detailQtyChange = newDetailQty - oldDetailQty;
+                    String detailChangeText = detailQtyChange > 0 ? "+" + detailQtyChange : String.valueOf(detailQtyChange);
+                    
+                    String cardLogContent = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                            assetCode, oldDetailQty, newDetailQty, detailChangeText);
+                    cardLogPairList.add(new Pair<>(cardId, cardLogContent));
+                }
+            } else {
+                // 如果没有资产编码维度，记录卡片级别的变化
+                String cardLogContent = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
+                        oldQty, qty, changeText);
+                cardLogPairList.add(new Pair<>(cardId, cardLogContent));
             }
-
+        }
+        
+        // 批量记录操作日志到资产处置单
+        if (CollUtil.isNotEmpty(disposalLogPairList)) {
+            operateLogService.batchAddModuleOperateLog("资产处置单审核通过，修改资产卡片数量：%s", 
+                    ModuleTypeEnum.ASSET_DISPOSAL.getCode(), disposalLogPairList, "审核操作");
+        }
+        
+        // 批量记录操作日志到资产卡片（处置单号在格式字符串中显示一次）
+        if (CollUtil.isNotEmpty(cardLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("资产处置单【{}】修改数量：%s", disposalCode), 
+                    ModuleTypeEnum.ASSET_CARD.getCode(), cardLogPairList, "系统操作");
         }
     }
 
     /**
      * 更新资产卡片（反审核场景）
-     * 先对资产卡片反审核，然后更新资产数量和处置状态，再提交，最后审核通过
+     * 直接更新资产卡片数量和处置状态，不进行反审核、提交、审核流程
      *
      * @param map 资产卡片明细映射
      * @param cardDetailMap 资产卡片明细数量映射（反审核时数量已累加回去）
      * @param currentDisposalId 当前资产处置单ID（用于排除当前处置单，判断处置状态）
      */
     private void updateAssetCardForDisApprove(Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map, Map<String, Integer> cardDetailMap, String currentDisposalId) {
+        // 获取当前处置单信息，用于日志记录
+        AssetDisposalEntity disposalEntity = getById(currentDisposalId);
+        String disposalCode = disposalEntity != null ? disposalEntity.getCode() : "";
+        
+        List<Pair<String, String>> disposalLogPairList = new ArrayList<>();
+        List<Pair<String, String>> cardLogPairList = new ArrayList<>();
+        
         for (Map.Entry<String, List<AssetCardDTO.ApprovedCardDetailDTO>> entry : map.entrySet()) {
             Integer qty = 0;
             String cardId = entry.getKey();
-
-            // 1. 先反审核资产卡片
+            
+            // 获取资产卡片信息
             AssetCardEntity cardEntity = assetCardService.getById(cardId);
-            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-                assetCardService.disApprove(cardId);
+            if (cardEntity == null) {
+                continue;
             }
+            
+            // 保存原始数量用于日志记录
+            Integer oldQty = cardEntity.getQty();
+            
+            // 记录每个资产编码的数量变化（用于日志）
+            Map<String, Integer> oldDetailQtyMap = new HashMap<>();
+            Map<String, Integer> newDetailQtyMap = new HashMap<>();
 
             List<AssetCardDTO.ApprovedCardDetailDTO> value = entry.getValue();
             for (AssetCardDTO.ApprovedCardDetailDTO approvedCardDetailDTO : value) {
-                Integer cardDetailQty = cardDetailMap.get(cardId + ":" + approvedCardDetailDTO.getDetailId());
+                String detailId = approvedCardDetailDTO.getDetailId();
+                String assetCode = approvedCardDetailDTO.getAssetCode();
+                Integer cardDetailQty = cardDetailMap.get(cardId + ":" + detailId);
+                
+                // 查询原始数量
+                AssetCardDetailEntity detailEntity = assetCardDetailService.getById(detailId);
+                if (detailEntity != null && StringUtils.isNotBlank(assetCode)) {
+                    Integer oldDetailQty = oldDetailQtyMap.getOrDefault(assetCode, 0);
+                    oldDetailQtyMap.put(assetCode, oldDetailQty + detailEntity.getQty());
+                    
+                    Integer newDetailQty = newDetailQtyMap.getOrDefault(assetCode, 0);
+                    newDetailQtyMap.put(assetCode, newDetailQty + cardDetailQty);
+                }
+                
                 // 更新资产明细数量
                 assetCardDetailService.lambdaUpdate()
-                        .eq(AssetCardDetailEntity::getId, approvedCardDetailDTO.getDetailId())
+                        .eq(AssetCardDetailEntity::getId, detailId)
                         .set(AssetCardDetailEntity::getQty, cardDetailQty)
                         .update();
 
                 qty += cardDetailQty;
             }
 
-            // 2. 更新资产卡片数量和处置状态
+            // 更新资产卡片数量和处置状态
             // 判断处置状态：
             // - 资产数量=0 -> 完全清理
             // - 资产数量≠0且存在已审核的资产处置单（排除当前即将反审核的处置单） -> 部分处置
@@ -770,28 +847,51 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                 }
             }
 
-            // 更新资产卡片数量和处置状态
+            // 直接更新资产卡片数量和处置状态
             assetCardService.lambdaUpdate()
                     .eq(AssetCardEntity::getId, cardId)
                     .set(AssetCardEntity::getQty, qty)
                     .set(AssetCardEntity::getDisposalStatus, disposalStatus)
                     .update();
-
-
-            Boolean originalValue = UserContext.getIsUserSystem();
-            UserContext.setIsUserSystem(Boolean.TRUE);
-            try {
-                // 3. 提交资产卡片
-                assetCardService.submit(cardId, false);
-                // 4. 审核通过资产卡片
-                ApproveOneDTO approveDTO = new ApproveOneDTO();
-                approveDTO.setId(cardId);
-                approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                assetCardService.approve(approveDTO);
-            }finally {
-                //恢复系统标识
-                UserContext.setIsUserSystem(originalValue);
+            
+            // 准备操作日志：记录资产卡片编码和数量变化
+            Integer qtyChange = qty - oldQty;
+            String changeText = qtyChange > 0 ? "+" + qtyChange : String.valueOf(qtyChange);
+            String logContent = StrUtil.format("资产卡片【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                    cardEntity.getCode(), oldQty, qty, changeText);
+            disposalLogPairList.add(new Pair<>(currentDisposalId, logContent));
+            
+            // 资产卡片日志：按资产编码维度记录，处置单号在格式字符串中显示一次
+            if (CollUtil.isNotEmpty(newDetailQtyMap)) {
+                for (Map.Entry<String, Integer> detailEntry : newDetailQtyMap.entrySet()) {
+                    String assetCode = detailEntry.getKey();
+                    Integer newDetailQty = detailEntry.getValue();
+                    Integer oldDetailQty = oldDetailQtyMap.getOrDefault(assetCode, 0);
+                    Integer detailQtyChange = newDetailQty - oldDetailQty;
+                    String detailChangeText = detailQtyChange > 0 ? "+" + detailQtyChange : String.valueOf(detailQtyChange);
+                    
+                    String cardLogContent = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                            assetCode, oldDetailQty, newDetailQty, detailChangeText);
+                    cardLogPairList.add(new Pair<>(cardId, cardLogContent));
+                }
+            } else {
+                // 如果没有资产编码维度，记录卡片级别的变化
+                String cardLogContent = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
+                        oldQty, qty, changeText);
+                cardLogPairList.add(new Pair<>(cardId, cardLogContent));
             }
+        }
+        
+        // 批量记录操作日志到资产处置单
+        if (CollUtil.isNotEmpty(disposalLogPairList)) {
+            operateLogService.batchAddModuleOperateLog("资产处置单反审核，修改资产卡片数量：%s", 
+                    ModuleTypeEnum.ASSET_DISPOSAL.getCode(), disposalLogPairList, "反审核操作");
+        }
+        
+        // 批量记录操作日志到资产卡片（处置单号在格式字符串中显示一次）
+        if (CollUtil.isNotEmpty(cardLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("资产处置单【{}】修改数量：%s", disposalCode), 
+                    ModuleTypeEnum.ASSET_CARD.getCode(), cardLogPairList, "系统操作");
         }
     }
 
