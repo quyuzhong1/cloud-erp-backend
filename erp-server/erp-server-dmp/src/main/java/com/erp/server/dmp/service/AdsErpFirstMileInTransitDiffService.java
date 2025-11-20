@@ -4,12 +4,10 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * <p>
@@ -51,11 +49,6 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
     Boolean exportList(AdsErpFirstMileInTransitDiffDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
-     * 导入期初模板
-     */
-    void downloadTemplate(HttpServletResponse response);
-
-    /**
      * 期末在途调整
      */
     Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO);
@@ -63,5 +56,10 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
     /**
      * 期初导入
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importInitFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 调整导入
+     */
+    Boolean importAdjustFile( MultipartFile excelFile, HttpServletResponse response);
 }

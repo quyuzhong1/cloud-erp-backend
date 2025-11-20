@@ -940,4 +940,5 @@ public class AdsErpFirstMileInTransitDiffDTO implements Serializable {
         @NotBlank(message = "调整原因不能为空")
         private String adjustReason;
     }
+
 }

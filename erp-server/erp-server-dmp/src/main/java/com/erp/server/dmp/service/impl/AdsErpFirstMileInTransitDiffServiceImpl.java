@@ -115,29 +115,6 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     }
 
     @Override
-    public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/adsErpFirstMileInTransitInit.xlsx";
-        String excelName = "头程平台期初在途导入模板.xlsx";
-
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
-    }
-
-    @Override
     public AdsErpFirstMileInTransitDiffDTO.ViewDTO view(String id) {
         AdsErpFirstMileInTransitDiffEntity adsErpFirstMileInTransitDiffEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到平台在途报告数据"));
         AdsErpFirstMileInTransitDiffDTO.ViewDTO data = BeanMapperUtils.map(AdsErpFirstMileInTransitDiffDTO.ViewDTO.class, adsErpFirstMileInTransitDiffEntity);
@@ -211,7 +188,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importInitFile(MultipartFile excelFile, HttpServletResponse response) {
 //        FbaTransitExcelListener excelListenerUtil = new FbaTransitExcelListener();
 //        try {
 //            EasyExcel.read(excelFile.getInputStream(), FbaTransitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -240,6 +217,12 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
 //            ExcelUtil.export(fileName, "error", errorList, FbaTransitExcelDTO.class, response);
 //            return Boolean.FALSE;
 //        }
+        return true;
+    }
+
+    @Override
+    public Boolean importAdjustFile(MultipartFile excelFile, HttpServletResponse response) {
+
         return true;
     }
 }

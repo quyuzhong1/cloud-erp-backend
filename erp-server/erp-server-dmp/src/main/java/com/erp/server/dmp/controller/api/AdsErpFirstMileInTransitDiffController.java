@@ -1,33 +1,26 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
+import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
-import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
 
 /**
  * 平台在途报告
@@ -45,12 +38,13 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
 
     /**
-    * 列表查询
-    * @author Jim
-    * @date: 2025-11-13
-    * @param dto
-    * @return ApiResult<PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO>>
-    */
+     * 列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO>>
+     * @author Jim
+     * @date: 2025-11-13
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -64,10 +58,11 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
 
     /**
      * 详情
-     * @author Jim
-     * @date:  2025-11-13
+     *
      * @param id
      * @return ApiResult<AdsErpFirstMileInTransitDiffDTO.ViewDTO>>
+     * @author Jim
+     * @date: 2025-11-13
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -79,36 +74,62 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     public ApiResult<AdsErpFirstMileInTransitDiffDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(adsErpFirstMileInTransitDiffService.view(id));
     }
-    
+
     /**
-     * 下载模板
+     * 下载平台期初在途导入模板
      *
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载平台期初在途导入模板")
-    @GetMapping("/downloadTemplate")
-    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
-        adsErpFirstMileInTransitDiffService.downloadTemplate(response);
+    @GetMapping("/downloadInitTemplate")
+    public ApiResult<Object> downloadInitTemplate(HttpServletResponse response) {
+        String path = "excel/adsErpFirstMileInTransitInit.xlsx";
+        String excelName = "头程平台期初在途导入模板.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
         return success();
     }
 
     /**
-     * 导入Excel
+     * 下载平台在途调整导入模板
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载平台在途调整导入模板")
+    @GetMapping("/downloadAdjustTemplate")
+    public ApiResult<Object> downloadAdjustTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/adsErpFirstMileInTransitAdjust.xlsx";
+        String excelName = "头程平台调整在途导入模板.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
+        return success();
+    }
+
+    /**
+     * 期初在途导入Excel
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "期初在途导入Excel")
+    @PostMapping("/importInitFile")
+    public ApiResult<?> importInitFile(@ModelAttribute @Validated AdsErpFirstMileInTransitDiffDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        Boolean result = adsErpFirstMileInTransitDiffService.importInitFile(excelImportDTO.getExcelFile(), response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 在途调整导入Excel
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
-    @PostMapping("/importFile")
-    public ApiResult<?> importFile(@ModelAttribute @Validated FbaTransitCalculateReportDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        Boolean result = adsErpFirstMileInTransitDiffService.importFile(excelImportDTO.getExcelFile(),response);
+    @PostMapping("/importAdjustFile")
+    public ApiResult<?> importAdjustFile(@ModelAttribute @Validated AdsErpFirstMileInTransitDiffDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        Boolean result = adsErpFirstMileInTransitDiffService.importAdjustFile(excelImportDTO.getExcelFile(), response);
         return result ? success() : failure();
     }
 
     /**
-    * 导出Excel数据
-    * @author Jim
-    * @date:  2025-11-13
-    * @param dto
-    * @param response
-    * @return
-    */
+     * 导出Excel数据
+     *
+     * @param dto
+     * @param response
+     * @return
+     * @author Jim
+     * @date: 2025-11-13
+     */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -127,7 +148,12 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "期末在途调整")
     @PostMapping(value = "/adjustTransitQty")
-    public ApiResult<Boolean> adjustTransitQty(@RequestBody AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO){
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "dmp:adsErpFirstMileInTransitDiff:adjustTransitQty",
+            serviceClass = AdsErpFirstMileInTransitDiffService.class,
+            keyIdName = "id")
+    public ApiResult<Boolean> adjustTransitQty(@RequestBody AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO) {
         Boolean flag = adsErpFirstMileInTransitDiffService.adjustTransitQty(adjustDTO);
         return flag ? success() : failure();
     }
