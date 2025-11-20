@@ -219,5 +219,5 @@ public interface BusinessNoConstant {
     String DC="DC";
 
     //差异策略配置
-    String HD="HD";
+    String CYCL="CYCL";
 }

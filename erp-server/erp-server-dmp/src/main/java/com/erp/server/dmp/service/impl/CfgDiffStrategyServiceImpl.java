@@ -99,7 +99,7 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
         log.info("开始新增差异策略配置基础信息");
         // 生成单号
         // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_HD);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CYCL);
         cfgDiffStrategyEntity.setCode(code);
         boolean save = super.save(cfgDiffStrategyEntity);
         if(!save) {
