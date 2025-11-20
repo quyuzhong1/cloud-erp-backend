@@ -14,6 +14,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.erp.model.fms.dto.*;
 import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.*;
+import com.erp.model.fms.enums.AssetCardStatusEnum;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.fms.enums.DisposalStatusEnum;
@@ -681,14 +682,21 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     .set(AssetCardEntity::getDisposalStatus, disposalStatus)
                     .update();
 
-            // 3. 提交资产卡片
-            assetCardService.submit(cardId, false);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                // 3. 提交资产卡片
+                assetCardService.submit(cardId, false);
+                // 4. 审核通过资产卡片
+                ApproveOneDTO approveDTO = new ApproveOneDTO();
+                approveDTO.setId(cardId);
+                approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                assetCardService.approve(approveDTO);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
 
-            // 4. 审核通过资产卡片
-            ApproveOneDTO approveDTO = new ApproveOneDTO();
-            approveDTO.setId(cardId);
-            approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            assetCardService.approve(approveDTO);
         }
     }
 
@@ -707,7 +715,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
             // 1. 先反审核资产卡片
             AssetCardEntity cardEntity = assetCardService.getById(cardId);
-            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
                 assetCardService.disApprove(cardId);
             }
 
@@ -769,14 +777,21 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     .set(AssetCardEntity::getDisposalStatus, disposalStatus)
                     .update();
 
-            // 3. 提交资产卡片
-            assetCardService.submit(cardId, false);
 
-            // 4. 审核通过资产卡片
-            ApproveOneDTO approveDTO = new ApproveOneDTO();
-            approveDTO.setId(cardId);
-            approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            assetCardService.approve(approveDTO);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                // 3. 提交资产卡片
+                assetCardService.submit(cardId, false);
+                // 4. 审核通过资产卡片
+                ApproveOneDTO approveDTO = new ApproveOneDTO();
+                approveDTO.setId(cardId);
+                approveDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                assetCardService.approve(approveDTO);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
     }
 
