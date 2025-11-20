@@ -1083,7 +1083,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (!errorList.isEmpty()) {
             log.warn("以下订单面单获取失败: {}", errorList);
         }
-
+        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
+        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
+            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
+                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
+                updateDTO.setLogisticsLabelUrl(labelBase);
+                updateDTO.setMainId(waybillDTO.getSoB2cId());
+                dtoList.add(updateDTO);
+            }
+        }
+        soB2cFeign.saveSoB2cLabel(dtoList);
         return waybillDTOList;
     }
 
@@ -1183,11 +1192,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         waybillDTO.setSoB2cId(b2cSoId);
         waybillDTO.setTrackNo(getLabelVO.getTrackNo());
         waybillDTO.setTransportNo(getLabelVO.getTransportNo());
-        //更新面单信息
-        SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-        updateDTO.setMainId(b2cSoId);
-        updateDTO.setLogisticsLabelUrl(logisticsBase64Url.get(0));
-        soB2cFeign.saveSoB2cLabel(Collections.singletonList(updateDTO));
         return waybillDTO;
     }
 
@@ -1448,16 +1452,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (CollUtil.isEmpty(waybillDTOList)){
             return BatchResultDTO.fail(dto.getB2cSoId(),dto.getDeliveryNo(),"获取面单失败");
         }
-        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
-        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
-                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-                updateDTO.setLogisticsLabelUrl(labelBase);
-                updateDTO.setMainId(waybillDTO.getSoB2cId());
-                dtoList.add(updateDTO);
-            }
-        }
-        soB2cFeign.saveSoB2cLabel(dtoList);
+//        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
+//        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
+//            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
+//                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
+//                updateDTO.setLogisticsLabelUrl(labelBase);
+//                updateDTO.setMainId(waybillDTO.getSoB2cId());
+//                dtoList.add(updateDTO);
+//            }
+//        }
+//        soB2cFeign.saveSoB2cLabel(dtoList);
         return BatchResultDTO.success(dto.getB2cSoId(),dto.getDeliveryNo(),"面单获取成功");
     }
 
