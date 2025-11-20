@@ -1,8 +1,11 @@
 package com.erp.server.dmp.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,6 +17,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
+import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 平台在途报告
@@ -158,4 +165,31 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 编辑备注
+     * @author Jim
+     * @date: 2025-11-13
+     */
+    @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = adsErpFirstMileInTransitDiffService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("平台在途报告编辑备注",e);
+                AdsErpFirstMileInTransitDiffEntity entity = adsErpFirstMileInTransitDiffService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "平台在途报告不存在,平台在途报告备注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

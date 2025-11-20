@@ -8,6 +8,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.excel.FbaTransitExcelDTO;
@@ -224,5 +225,22 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     public Boolean importAdjustFile(MultipartFile excelFile, HttpServletResponse response) {
 
         return true;
+    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        AdsErpFirstMileInTransitDiffEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("平台在途报告数据"));
+
+        // 删除主单数据
+        log.info("删除 金蝶库存主单数据，id：【{}】", id);
+        this.lambdaUpdate()
+                .set(AdsErpFirstMileInTransitDiffEntity::getRemark, remark)
+                .eq(AdsErpFirstMileInTransitDiffEntity::getId, id)
+                .update();
+        // 删除日志数据
+        log.info("删除 开始平台在途报告日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】更新备注操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "平台在途报告");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ADS_ERP_FIRST_MILE_IN_TRANSIT_DIFF.getCode(), entity.getId(), "更新备注平台在途报告");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
     }
 }
