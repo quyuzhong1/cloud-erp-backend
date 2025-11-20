@@ -59,6 +59,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 /**
  * <p>
  * 资产盘点表 服务实现类
@@ -379,6 +380,18 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
                         .map(AssetStocktakingDetailEntity::getId)
                         .collect(Collectors.toList()));
                 log.info("删除资产盘点单明细，数量：{}", removeList.size());
+                
+                // 记录删除明细日志（记录卡片编码和资产编码）
+                List<Pair<String, String>> deletePairList = removeList.stream()
+                        .map(obj -> {
+                            // 优先使用卡片编码，如果没有则使用资产编码
+                            String identifier = StringUtils.isNotBlank(obj.getCardCode()) 
+                                    ? obj.getCardCode() 
+                                    : (StringUtils.isNotBlank(obj.getAssetCode()) ? obj.getAssetCode() : "未知");
+                            return new Pair<>(mainEntity.getId(), identifier);
+                        })
+                        .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除盘点明细【%s】", ModuleTypeEnum.ASSET_STOCKTAKING.getCode(), deletePairList, "编辑操作");
             }
         }
         
@@ -390,6 +403,18 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         if (CollUtil.isNotEmpty(addList)) {
             assetStocktakingDetailService.saveBatch(addList);
             log.info("新增资产盘点单明细，数量：{}", addList.size());
+            
+            // 记录新增明细日志（记录卡片编码和资产编码）
+            List<Pair<String, String>> addPairList = addList.stream()
+                    .map(obj -> {
+                        // 优先使用卡片编码，如果没有则使用资产编码
+                        String identifier = StringUtils.isNotBlank(obj.getCardCode()) 
+                                ? obj.getCardCode() 
+                                : (StringUtils.isNotBlank(obj.getAssetCode()) ? obj.getAssetCode() : "未知");
+                        return new Pair<>(mainEntity.getId(), identifier);
+                    })
+                    .collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加盘点明细【%s】", ModuleTypeEnum.ASSET_STOCKTAKING.getCode(), addPairList, "编辑操作");
         }
         
         // 处理需要更新的明细数据（ID不为空）
@@ -398,6 +423,21 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
                 .collect(Collectors.toList());
         
         if (CollUtil.isNotEmpty(updateList)) {
+            // 记录更新明细日志（记录初盘数量、初盘变动位置、是否复盘、复盘数量、复盘变动位置）
+            for (AssetStocktakingDetailEntity updateDetail : updateList) {
+                AssetStocktakingDetailEntity oldDetail = oldList.stream()
+                        .filter(e -> Objects.equals(e.getId(), updateDetail.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(oldDetail)) {
+                    // 使用 addModuleOperateLogByObj 记录字段变更日志
+                    operateLogService.addModuleOperateLogByObj(oldDetail, updateDetail, ModuleTypeEnum.ASSET_STOCKTAKING.getCode(), mainEntity.getId(), 
+                            String.format("编辑盘点明细【%s】", 
+                                    StringUtils.isNotBlank(updateDetail.getCardCode()) ? updateDetail.getCardCode() : 
+                                    (StringUtils.isNotBlank(updateDetail.getAssetCode()) ? updateDetail.getAssetCode() : "未知")));
+                }
+            }
+            
             assetStocktakingDetailService.updateBatchById(updateList);
             log.info("更新资产盘点单明细，数量：{}", updateList.size());
         }
