@@ -608,7 +608,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
             // 1. 先反审核资产卡片
             AssetCardEntity cardEntity = assetCardService.getById(cardId);
-            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            if (cardEntity != null && Objects.equals(cardEntity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
                 assetCardService.disApprove(cardId);
             }
 
