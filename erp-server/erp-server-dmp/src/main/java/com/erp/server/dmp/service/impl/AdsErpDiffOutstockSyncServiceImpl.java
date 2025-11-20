@@ -37,10 +37,12 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
 import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
 import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.utils.RestCloudApiUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -223,7 +225,22 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		return null;
+		String checkMonth = dto.getCheckMonth();
+		checkMonth = checkMonth.replace("-", "年") + "月";
+		Integer count = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
+				.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
+		if(count != null && count > 0) {
+			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
+		}
+		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_antu/ods_flow_antu_excel_outstock");
+		if(reCreate) {
+			lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
+			.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
+			.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
+			.setSql(" finish_time = null ")
+			.update();
+		}
+		return true;
 	}
 	
 	@Override

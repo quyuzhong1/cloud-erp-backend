@@ -211,6 +211,25 @@ public class AdsErpInventoryDiffFlowEntity extends BaseEntity<AdsErpInventoryDif
     */
     @TableField("remark")
     private String remark;
+    
+    /**
+     * 执行状态
+     */
+     @TableField("exec_status")
+     private String execStatus;
+     
+     /**
+      * 执行状态名称
+      */
+      @TableField("exec_status_name")
+      private String execStatusName;
+      
+      /**
+       * 完成时间
+       */
+       @TableField("finish_time")
+       private String finishTime;
+
 
 
     public static final String UNIQUE_CODE = "unique_code";
