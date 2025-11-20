@@ -1076,7 +1076,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
         //资产卡片
         List<AssetCardEntity> assetCardEntities = assetCardService.lambdaQuery().eq(AssetCardEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode()).list();
-        Map<String, String> assetCardMap = assetCardEntities.stream().collect(Collectors.toMap(AssetCardEntity::getAssetCode, AssetCardEntity::getId, (o1, o2) -> o1));
+        Map<String, String> assetCardMap = assetCardEntities.stream().collect(Collectors.toMap(AssetCardEntity::getCode, AssetCardEntity::getId, (o1, o2) -> o1));
 
         List<AssetCardDetailEntity> assetCardDetailEntities = assetCardDetailService.list();
         Map<String, List<AssetCardDetailEntity>> assetCardDetailMap = assetCardDetailEntities.stream().collect(Collectors.groupingBy(AssetCardDetailEntity::getMainId));
