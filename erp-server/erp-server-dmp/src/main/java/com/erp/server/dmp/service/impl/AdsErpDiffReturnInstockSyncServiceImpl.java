@@ -29,6 +29,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.PagingParamDTO;
@@ -36,11 +37,13 @@ import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffReturnInstockSyncMapper;
 import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
 import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.utils.RestCloudApiUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -139,6 +142,12 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AdsErpDiffReturnInstockSyncDTO.TabListDTO> dblist = baseMapper.tabList(searchParam);
         AdsErpDiffReturnInstockSyncDTO.TabListDTO l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
+        l.setTabFlag("all");
+        l.setTabFlagName("所有");
+        l.setCount(dblist.stream().map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).reduce(Integer::sum).orElse(0));
+        list.add(l);
+        
+        l = new AdsErpDiffReturnInstockSyncDTO.TabListDTO();
         l.setTabFlag("platform");
         l.setTabFlagName("单据1多");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
@@ -155,6 +164,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         l.setTabFlagName("字段错误");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpDiffReturnInstockSyncDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
+        
         // 计算合计数量
         return list;
     }
@@ -223,7 +233,22 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		return null;
+		String checkMonth = dto.getCheckMonth();
+		checkMonth = checkMonth.replace("-", "年") + "月";
+		Integer count = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getCheckMonth, checkMonth)
+				.eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing").count();
+		if(count != null && count > 0) {
+			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
+		}
+		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_antu/ods_flow_antu_excel_return_instock");
+		if(reCreate) {
+			lambdaUpdate().eq(AdsErpDiffReturnInstockSyncEntity::getCheckMonth, checkMonth)
+			.set(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing")
+			.set(AdsErpDiffReturnInstockSyncEntity::getExecStatusName, "执行中")
+			.setSql(" finish_time = null ")
+			.update();
+		}
+		return true;
 	}
 	
 	@Override
