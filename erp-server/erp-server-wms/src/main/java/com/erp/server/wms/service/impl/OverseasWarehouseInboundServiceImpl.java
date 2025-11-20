@@ -1147,6 +1147,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList,providerEntity);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
+
+        //类型为通邮海外仓的时候需要根据mainEntity中是否存在id判断是否是编辑
+        if (CharSequenceUtil.equals(providerEntity.getCode(),PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
+            if (CharSequenceUtil.isBlank(mainEntity.getId())) {
+                // 新增
+                return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
+            } else {
+                // 编辑
+                return handlerService.editInboundBill(createInboundReq, providerEntity.getId());
+            }
+        }
+        //非通邮海外仓走原有逻辑
         if (CharSequenceUtil.isBlank(code)){
             // 新增
             return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
