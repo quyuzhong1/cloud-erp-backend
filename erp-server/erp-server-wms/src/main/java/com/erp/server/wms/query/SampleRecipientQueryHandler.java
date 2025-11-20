@@ -64,18 +64,25 @@ public class SampleRecipientQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("srd.exec_status", QueryConditionEnum.EQ,
                         "noOutstock", QueryDataTypeEnum.STRING);
 
-                super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.APPROVE.getCode());
+                super.buildSplicingSQLDTO("sr.approve_status", QueryConditionEnum.EQ,
+                        ApproveStatusEnum.APPROVE.getCode(), QueryDataTypeEnum.STRING);
                 break;
             case "waitOutstock":
                 // 待出库：应该查询 是否需要出库=‘是’，单据状态=‘已审核’，执行状态=‘待出库’or‘部分出库’
-                super.buildDefaultDTO("sr.is_outstock_required",  Boolean.TRUE);
-                super.buildDefaultDTO("sr.approve_status",  ApproveStatusEnum.APPROVE.getCode());
+                super.buildSplicingSQLDTO("sr.is_outstock_required", QueryConditionEnum.EQ,
+                        Boolean.TRUE, QueryDataTypeEnum.BOOLEAN);
+
+                super.buildSplicingSQLDTO("sr.approve_status", QueryConditionEnum.EQ,
+                        ApproveStatusEnum.APPROVE.getCode(), QueryDataTypeEnum.STRING);
+
                 super.buildSplicingSQLDTO("srd.exec_status", QueryConditionEnum.IN_LIST,
                         java.util.Arrays.asList("waitOutstock", "partOutstock"), QueryDataTypeEnum.STRING);
                 break;
             case "completeOutstock":
                 // 已出库：执行状态为完全出库
-                super.buildDefaultDTO("sr.is_outstock_required",  Boolean.TRUE);
+                super.buildSplicingSQLDTO("sr.is_outstock_required", QueryConditionEnum.EQ,
+                        Boolean.TRUE, QueryDataTypeEnum.BOOLEAN);
+
                 super.buildSplicingSQLDTO("srd.exec_status", QueryConditionEnum.EQ, 
                     "completeOutstock", QueryDataTypeEnum.STRING);
                 break;
