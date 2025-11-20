@@ -112,7 +112,7 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
                 AssetAcceptEntity assetAcceptEntity = assetAcceptService.lambdaQuery()
                         .eq(AssetAcceptEntity::getId, detailEntity.getMainId())
                         .one();
-                if (assetAcceptEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
+                if (assetAcceptEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
                     sum += detailEntity.getAcceptQty();
                 }
             }
