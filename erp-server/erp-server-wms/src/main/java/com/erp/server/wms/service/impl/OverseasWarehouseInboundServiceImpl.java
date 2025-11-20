@@ -225,7 +225,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 推送到第三方草稿
         if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
             // 推送到第三方草稿
-            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
+            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(Boolean.TRUE, providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
                 log.error("推送第三方仓库新增失败:msg={}", JSONUtil.toJsonStr(resultInfo));
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
@@ -1116,13 +1116,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .distinct()
                 .collect(Collectors.toList());
         // 调用
-        return this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
+        return this.pullThirdOverseasPlatformWithSkuMapping(Boolean.FALSE,providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(OverseasProviderEntity providerEntity,
+    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(Boolean isAdd,OverseasProviderEntity providerEntity,
                                                                      OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
                                                                      String verityCode
@@ -1150,7 +1150,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         //类型为通邮海外仓的时候需要根据mainEntity中是否存在id判断是否是编辑
         if (CharSequenceUtil.equals(providerEntity.getCode(),PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
-            if (CharSequenceUtil.isBlank(mainEntity.getId())) {
+            if (isAdd) {
                 // 新增
                 return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
             } else {

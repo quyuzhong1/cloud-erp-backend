@@ -5,7 +5,6 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
@@ -186,6 +185,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @Date 2023/12/6
      **/
     ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(
+            Boolean isAdd,
             OverseasProviderEntity providerEntity,
             OverseasWarehouseInboundEntity mainEntity,
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
