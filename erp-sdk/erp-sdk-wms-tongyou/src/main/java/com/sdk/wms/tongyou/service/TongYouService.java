@@ -78,18 +78,29 @@ public class TongYouService {
     }
 
     /**
+     * 查询入库单
+     */
+    public TongYouBaseResp<List<TongYouInboundResp>> getInboundBill(Map<String, Object> authJson){
+        Map<String, String> headerMap = new HashMap<>();
+        String path = "hwc_api/hwc_order_tc.php";
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
+        return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouInboundResp>>>() {});
+
+    }
+
+    /**
      * 创建入库单
      */
-    public TongYouBaseResp<TongYouInboundResp> createInboundBill(@Valid TongYouCreateInboundReq TongYouGetReceiptReq){
+    public TongYouBaseResp<TongYouInboundResp> createInboundBill(@Valid TongYouCreateInboundReq tongYouCreateInboundReq){
 
         String path = "hwc_api/add_order_tc.php";
         Map<String, String> headerMap = new HashMap<>();
         //密钥
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
-        TongYouGetReceiptReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
+        tongYouCreateInboundReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
 
-        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouGetReceiptReq), headerMap);
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouGetReceiptReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(tongYouCreateInboundReq), headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(tongYouCreateInboundReq));
         TongYouBaseResp<TongYouInboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouInboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;

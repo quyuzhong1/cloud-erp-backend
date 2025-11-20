@@ -1,8 +1,11 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -25,7 +28,9 @@ import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 通邮处理服务实现类
@@ -103,6 +108,24 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
+        //通邮不支持直接取消，需要判断通邮入库单是否已取消状态，是则允许取消，否则不允许取消
+        Map<String, Object> authJson = new HashMap<>();
+        //密钥
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        authJson.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
+        authJson.put("waybill",cancelInboundReq.getReceivingCode());
+
+        TongYouBaseResp<List<TongYouInboundResp>> resp = tongYouService.getInboundBill(authJson);
+        if(!isSuccess(resp.getError())){
+            throw new ServiceException("查询通邮入库单失败,"+resp.getContent());
+        }
+        if (CollUtil.isEmpty(resp.getData())) {
+            return failure("未查询到对应通邮入库单信息");
+        }
+        TongYouInboundResp tongYouInboundResp = resp.getData().get(0);
+        if (CharSequenceUtil.equals(tongYouInboundResp.getStatus(),"7")) {
+            throw new ServiceException("三方仓单据未取消，ERP不允许取消");
+        }
         return success();
     }
 
