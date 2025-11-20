@@ -39,18 +39,4 @@ public interface AdsErpFirstMileInTransitDiffMapper extends BaseMapper<AdsErpFir
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") AdsErpFirstMileInTransitDiffDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<AdsErpFirstMileInTransitDiffDTO.ListDTO> listExport(@Param("params") AdsErpFirstMileInTransitDiffDTO.ExportDTO params);
-
-
-    /**
-    * 获取状态统计
-    * @param searchParam
-    * @return
-    */
-    List<AdsErpFirstMileInTransitDiffDTO.TabListDTO> tabList(@Param("params") AdsErpFirstMileInTransitDiffDTO.PagingParamDTO searchParam);
 }

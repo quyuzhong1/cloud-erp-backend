@@ -5,14 +5,18 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -50,6 +54,8 @@ public class AdsErpInventoryDiffController extends BaseController {
     private AdsErpInventoryDiffService adsErpInventoryDiffService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private ThirdMappingService thirdMappingService;
 
     /**
      * 获取统计
@@ -193,5 +199,15 @@ public class AdsErpInventoryDiffController extends BaseController {
     public ApiResult<Boolean> generateDiff(@RequestBody @Validated AdsErpInventoryDiffDTO.GenerateDiffDTO dto) {
         // TODO 请求restCloud
         return ApiResult.success(true);
+    }
+
+
+    /**
+     * 可配置仓库列表
+     */
+    @GetMapping("/warehouseList")
+    public ApiResult<List<AdsErpInventoryDiffDTO.WarehouseListDTO>> warehouseList() {
+        List<AdsErpInventoryDiffDTO.WarehouseListDTO> list = adsErpInventoryDiffService.getCanDiffWarehouseList();
+        return success(list);
     }
 }

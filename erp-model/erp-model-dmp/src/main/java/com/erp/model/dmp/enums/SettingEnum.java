@@ -84,6 +84,7 @@ public enum SettingEnum {
 
     // ADS配置
     ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST("adsErpInventoryDiffWarehouseList", SettingEnum.ADS_CFG,"ADS平台库存差异仓库配置"),
+    ADS_ERP_INVENTORY_DIFF_PLATFORM_LIST("adsErpInventoryDiffPlatformList", SettingEnum.ADS_CFG,"ADS平台库存差异开启平台配置")
     ;
 
     @EnumValue

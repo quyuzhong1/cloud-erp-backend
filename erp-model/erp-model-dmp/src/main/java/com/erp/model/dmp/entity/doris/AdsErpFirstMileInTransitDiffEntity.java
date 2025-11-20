@@ -2,6 +2,8 @@ package com.erp.model.dmp.entity.doris;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDateTime;
 import java.util.Date;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -101,7 +103,7 @@ public class AdsErpFirstMileInTransitDiffEntity extends BaseEntity<AdsErpFirstMi
      * 核对周期页面查询
      */
     @TableField("check_month_query")
-    private String checkMonthQuery;
+    private LocalDateTime checkMonthQuery;
     /**
     * 货件ID
     */

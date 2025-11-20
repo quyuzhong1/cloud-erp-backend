@@ -82,4 +82,10 @@ public interface AdsErpInventoryDiffService extends SuperService<AdsErpInventory
      * @return
      */
     BatchResultDTO updateRemark(String id, String remark);
+
+    /**
+     * 获取可对比差异的仓库列表
+     */
+    List<AdsErpInventoryDiffDTO.WarehouseListDTO> getCanDiffWarehouseList();
+
 }
