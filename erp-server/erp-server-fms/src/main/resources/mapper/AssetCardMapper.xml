@@ -262,7 +262,7 @@
         acd.id AS detailId,
         acd.asset_code AS assetCode,
         acd.asset_location_id AS assetLocationId,
-        acd.qty AS detailQty,
+        acd.qty AS detailQty
         FROM asset_card ac
         left join asset_card_detail acd on acd.main_id = ac.id and acd.is_deleted = false
         WHERE ac.is_deleted = false
