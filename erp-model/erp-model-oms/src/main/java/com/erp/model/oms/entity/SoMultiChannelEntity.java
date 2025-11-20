@@ -192,7 +192,7 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     /**
      * 国家二字码
      */
-    @TableField(value = "country", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "country")
     private String country;
 
     /**

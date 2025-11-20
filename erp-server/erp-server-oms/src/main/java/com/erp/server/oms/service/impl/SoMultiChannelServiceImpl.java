@@ -1185,5 +1185,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (Objects.isNull(soMultiChannelEntity.getInvalidStatus())) {
             soMultiChannelEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
         }
+        if (Objects.isNull(soMultiChannelEntity.getCountry())) {
+            soMultiChannelEntity.setCountry("");
+        }
     }
 }

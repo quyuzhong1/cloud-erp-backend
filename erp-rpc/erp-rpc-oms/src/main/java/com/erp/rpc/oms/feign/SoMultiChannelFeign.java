@@ -2,6 +2,8 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
@@ -65,4 +67,14 @@ public interface SoMultiChannelFeign {
      */
     @PostMapping("/feign/soMultiChannel/updateSoMultiOutstockQty")
     void updateSoMultiOutstockQty(@RequestBody List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList);
+    /**
+     * 多渠道订单审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @Author zdy
+     * @Date 2025/7/4 12:28
+     **/
+    @PostMapping("feign/soMultiChannel/approve")
+    List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
 }
