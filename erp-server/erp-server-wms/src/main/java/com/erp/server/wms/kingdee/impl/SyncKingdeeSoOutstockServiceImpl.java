@@ -49,7 +49,6 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeclarationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -981,11 +980,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soB2cEntity.getOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
-        if (StringUtils.isNoneBlank(entity.getDeclarationType())) {
-            //金蝶客开字段值A自主报关，B非自主报关
-            resultMap.put("declarationType",entity.getDeclarationType().equals(DeclarationTypeEnum.INDEPENDENT_DECLARATION.getCode()) ? "A" : "B");
-        }
-
         //客户
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());

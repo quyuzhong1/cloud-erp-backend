@@ -121,7 +121,6 @@ public enum BusinessNoTypeEnum {
     CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC),
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
-    CODE_MB(92, "MB","模板管理",BusinessNoConstant.MB),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
     CODE_YPZF(97, "YPBF","样品作废单", BusinessNoConstant.YPBF),
@@ -143,7 +142,7 @@ public enum BusinessNoTypeEnum {
 
     CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
     CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
-
+    CODE_YPZY(103, "YPZY","样品转移单", BusinessNoConstant.YPZY),
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
 
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
