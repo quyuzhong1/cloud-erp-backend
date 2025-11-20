@@ -78,26 +78,92 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO$ListDTO">
-
+        SELECT
+            aefmid.id AS id,
+            aefmid.create_time AS createTime,
+            aefmid.update_time AS updateTime,
+            aefmid.create_user_name AS createUserName,
+            aefmid.create_user_id AS createUserId,
+            aefmid.update_user_name AS updateUserName,
+            aefmid.update_user_id AS updateUserId,
+            aefmid.version AS version,
+            aefmid.is_deleted AS isDeleted,
+            aefmid.unique_code AS uniqueCode,
+            aefmid.data_encrypt AS dataEncrypt,
+            aefmid.source_system AS sourceSystem,
+            aefmid.account_code AS accountCode,
+            aefmid.next_level_id AS nextLevelId,
+            aefmid.bill_topic AS billTopic,
+            aefmid.flow_id AS flowId,
+            aefmid.etl_status AS etlStatus,
+            aefmid.node_id AS nodeId,
+            aefmid.instance_id AS instanceId,
+            aefmid.task_id AS taskId,
+            aefmid.source_id AS sourceId,
+            aefmid.last_update_flag AS lastUpdateFlag,
+            aefmid.check_month AS checkMonth,
+            aefmid.check_month_query AS checkMonthQuery,
+            aefmid.shipment_id AS shipmentId,
+            aefmid.shipment_code AS shipmentCode,
+            aefmid.shop_id AS shopId,
+            aefmid.shop_name AS shopName,
+            aefmid.customer_id AS customerId,
+            aefmid.customer_name AS customerName,
+            aefmid.shipment_status AS shipmentStatus,
+            aefmid.shipment_create_time AS shipmentCreateTime,
+            aefmid.shipment_receive_time AS shipmentReceiveTime,
+            aefmid.shipment_adjust_time AS shipmentAdjustTime,
+            aefmid.warehouse_id AS warehouseId,
+            aefmid.warehouse_name AS warehouseName,
+            aefmid.intransit_warehouse_id AS intransitWarehouseId,
+            aefmid.intransit_warehouse_name AS intransitWarehouseName,
+            aefmid.platform_spu_no AS platformSpuNo,
+            aefmid.platform_sku_no AS platformSkuNo,
+            aefmid.platform_stock_sku AS platformStockSku,
+            aefmid.sku_id AS skuId,
+            aefmid.sku_no AS skuNo,
+            aefmid.shipment_detail_id AS shipmentDetailId,
+            aefmid.declare_qty AS declareQty,
+            aefmid.receive_qty AS receiveQty,
+            aefmid.delivery_qty AS deliveryQty,
+            aefmid.diff_qty AS diffQty,
+            aefmid.init_transit_qty AS initTransitQty,
+            aefmid.current_delivery_qty AS currentDeliveryQty,
+            aefmid.current_receive_qty AS currentReceiveQty,
+            aefmid.end_period_transit_qty AS endPeriodTransitQty,
+            aefmid.end_period_transit_adjust_qty AS endPeriodTransitAdjustQty,
+            aefmid.after_end_period_transit_qty AS afterEndPeriodTransitQty,
+            aefmid.adjust_reason AS adjustReason,
+            aefmid.adjust_time AS adjustTime,
+            aefmid.adjust_user_name AS adjustUserName,
+            aefmid.adjust_user_id AS adjustUserId,
+            aefmid.remark AS remark
+        FROM ads_erp_first_mile_intransit_diff as aefmid
+        where
+        ${params.sqlMap.default}
+        and aefmid.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and aefmid.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        aefmid.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from ads_erp_first_mile_in_transit_diff where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO$ListDTO">
 
-    </select>
-    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  ads_erp_first_mile_in_transit_diff
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        GROUP BY approve_status
-    </select>
 
 </mapper>

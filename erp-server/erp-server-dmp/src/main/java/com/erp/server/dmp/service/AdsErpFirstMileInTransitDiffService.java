@@ -4,7 +4,11 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -17,24 +21,6 @@ import java.util.List;
  */
 public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErpFirstMileInTransitDiffEntity> {
 
-    /**
-    * 新增
-    * @author Jim
-    * @date: 2025-11-13
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(AdsErpFirstMileInTransitDiffDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author Jim
-    * @date: 2025-11-13
-    * @param dto
-    * @return
-    */
-    Boolean update(AdsErpFirstMileInTransitDiffDTO.UpdateDTO dto);
-
 
     /**
     * 分页列表查询
@@ -45,25 +31,15 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
     */
     PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> paging(PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> pagingParamDTO);
 
-    /**
-    * 状态统计
-    * @author Jim
-    * @date: 2025-11-13
-    * @param dto
-    * @return List<AdsErpFirstMileInTransitDiffDTO.TabListDTO>>
-    */
-    List<AdsErpFirstMileInTransitDiffDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
-    * 详情
-    * @author Jim
-    * @date: 2025-11-13
-    * @param id
-    * @return
-    */
+     * 详情
+     * @author Jim
+     * @date: 2025-11-13
+     * @param id
+     * @return
+     */
     AdsErpFirstMileInTransitDiffDTO.ViewDTO view(String id);
-
-
     /**
     * 导出Excel
     * @author Jim
@@ -72,5 +48,20 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
     * @param response
     * @return
     */
-    void exportList(AdsErpFirstMileInTransitDiffDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(AdsErpFirstMileInTransitDiffDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 导入期初模板
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 期末在途调整
+     */
+    Boolean adjustTransitQty(FbaTransitCalculateReportDTO.AdjustDTO adjustDTO);
+
+    /**
+     * 期初导入
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

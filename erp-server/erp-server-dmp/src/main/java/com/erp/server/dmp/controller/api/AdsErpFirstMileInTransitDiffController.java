@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -43,53 +45,6 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
 
     /**
-    * 新增
-    * @author Jim
-    * @date:  2025-11-13
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "平台在途报告新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AdsErpFirstMileInTransitDiffDTO.AddDTO dto) {
-        return success(adsErpFirstMileInTransitDiffService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author Jim
-    * @date:  2025-11-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "平台在途报告修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:adsErpFirstMileInTransitDiff:update",
-        serviceClass = AdsErpFirstMileInTransitDiffService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated AdsErpFirstMileInTransitDiffDTO.UpdateDTO dto) {
-        adsErpFirstMileInTransitDiffService.update(dto);
-        return success();
-    }
-
-
-    /**
-    * 获取状态统计
-    * @return
-    */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "dmp:adsErpFirstMileInTransitDiff:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<AdsErpFirstMileInTransitDiffDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(adsErpFirstMileInTransitDiffService.tabList(dto));
-    }
-
-    /**
     * 列表查询
     * @author Jim
     * @date: 2025-11-13
@@ -100,20 +55,20 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpFirstMileInTransitDiff:paging",
-            tableAlias = ""
+            tableAlias = "aefmid"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto) {
         return success(adsErpFirstMileInTransitDiffService.paging(dto));
     }
 
-
     /**
-    * 详情
-    * @author Jim
-    * @date:  2025-11-13
-    * @param id
-    * @return ApiResult<AdsErpFirstMileInTransitDiffDTO.ViewDTO>>
-    */
+     * 详情
+     * @author Jim
+     * @date:  2025-11-13
+     * @param id
+     * @return ApiResult<AdsErpFirstMileInTransitDiffDTO.ViewDTO>>
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -123,6 +78,27 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     @LogViewService
     public ApiResult<AdsErpFirstMileInTransitDiffDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(adsErpFirstMileInTransitDiffService.view(id));
+    }
+    
+    /**
+     * 下载模板
+     *
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载平台期初在途导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        adsErpFirstMileInTransitDiffService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入Excel
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<?> importFile(@ModelAttribute @Validated FbaTransitCalculateReportDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        Boolean result = adsErpFirstMileInTransitDiffService.importFile(excelImportDTO.getExcelFile(),response);
+        return result ? success() : failure();
     }
 
     /**
@@ -137,12 +113,23 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpFirstMileInTransitDiff:export",
-            tableAlias = ""
+            tableAlias = "aefmid"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "平台在途报告导出Excel数据")
-    public void exportList(@RequestBody @Validated AdsErpFirstMileInTransitDiffDTO.ExportDTO dto, HttpServletResponse response) {
-        adsErpFirstMileInTransitDiffService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AdsErpFirstMileInTransitDiffDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = adsErpFirstMileInTransitDiffService.exportList(dto, response);
+        return result ? ApiResult.success(result) : failure(result);
     }
 
+
+    /**
+     * 期末在途调整
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "期末在途调整")
+    @PostMapping(value = "/adjustTransitQty")
+    public ApiResult<Boolean> adjustTransitQty(@RequestBody FbaTransitCalculateReportDTO.AdjustDTO adjustDTO){
+        Boolean flag = adsErpFirstMileInTransitDiffService.adjustTransitQty(adjustDTO);
+        return flag ? success() : failure();
+    }
 
 }
