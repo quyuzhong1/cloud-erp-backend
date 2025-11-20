@@ -123,7 +123,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return failure("未查询到对应通邮入库单信息");
         }
         TongYouInboundResp tongYouInboundResp = resp.getData().get(0);
-        if (CharSequenceUtil.equals(tongYouInboundResp.getStatus(),"7")) {
+        if (!CharSequenceUtil.equals(tongYouInboundResp.getStatus(),"7")) {
             throw new ServiceException("三方仓单据未取消，ERP不允许取消");
         }
         return success();
