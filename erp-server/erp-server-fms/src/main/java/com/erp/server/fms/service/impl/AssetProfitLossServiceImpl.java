@@ -867,19 +867,19 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 cardDTO.setDetailList(detailList);
                 
                 // 7. 调用资产卡片Service创建卡片并提交审核
-                BaseResultDTO.AddDTO cardResult = assetCardService.addAndSubmit(cardDTO);
+                BaseResultDTO.AddDTO cardResult = assetCardService.add(cardDTO);
                 
                 log.info("成功创建并提交审核资产卡片，单号：{}，卡片编号：{}，资产编码：{}", 
                         mainEntity.getCode(), cardResult.getCode(), assetCode);
                 
-                // 8. 更新盘盈盘亏单明细的关联信息
-                if (StrUtil.isNotBlank(item.getDetailId())) {
-                    AssetProfitLossDetailEntity updateDetailEntity = new AssetProfitLossDetailEntity();
-                    updateDetailEntity.setId(item.getDetailId());
-                    updateDetailEntity.setCardId(cardResult.getId());
-                    updateDetailEntity.setCardCode(cardResult.getCode());
-                    assetProfitLossDetailService.updateById(updateDetailEntity);
-                }
+//                // 8. 更新盘盈盘亏单明细的关联信息
+//                if (StrUtil.isNotBlank(item.getDetailId())) {
+//                    AssetProfitLossDetailEntity updateDetailEntity = new AssetProfitLossDetailEntity();
+//                    updateDetailEntity.setId(item.getDetailId());
+//                    updateDetailEntity.setCardId(cardResult.getId());
+//                    updateDetailEntity.setCardCode(cardResult.getCode());
+//                    assetProfitLossDetailService.updateById(updateDetailEntity);
+//                }
                 
                 // 9. 记录该明细操作日志
                 String msg = StrUtil.format("用户【{}】将盘盈盘亏单【{}】的资产【{}】下推为资产卡片【{}】", 
