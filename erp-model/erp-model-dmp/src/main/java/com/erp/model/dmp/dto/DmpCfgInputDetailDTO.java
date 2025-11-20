@@ -102,7 +102,15 @@ public class DmpCfgInputDetailDTO implements Serializable {
         */
         private String extendJson;
 
+        /**
+         * 延迟时间，单位秒
+         */
+        private Integer dealyTime;
 
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -328,6 +336,11 @@ public class DmpCfgInputDetailDTO implements Serializable {
          * 是否禁用
          */
         private String disabledDesc;
+
+        /**
+         * 延迟时间，单位秒
+         */
+        private Integer dealyTime;
 
         /**
          * 备注

@@ -80,6 +80,7 @@
             dcid.id AS id,
             dci.code as cfgInputCode,
             dci.name as name,
+            dci.name as cfgInputName,
             dci.system_id as systemId,
             dbs.code as systemCode,
             dbs.name as systemName,
@@ -97,12 +98,14 @@
             dcid.next_time AS nextTime,
             dcid.interval_time AS intervalTime,
             dcid.override_time AS overrideTime,
+            dcid.dealy_time AS dealyTime,
             dcid.max_interval_time AS maxIntervalTime,
             dcid.max_retry_count AS maxRetryCount,
             dcid.exec_timeout AS execTimeout,
             dcid.disabled AS disabled,
             dcid.task_type AS taskType,
-            dcid.extend_json AS extendJson
+            dcid.extend_json AS extendJson,
+            dcid.remark
         from dmp_cfg_input_detail as dcid
         left join dmp_cfg_input dci on dci.id = dcid.main_id
         left join dmp_basic_system dbs on dbs.id = dci.system_id
