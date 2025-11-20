@@ -152,6 +152,11 @@ public class WmsCartonSpecDTO implements Serializable {
          * 内容
          */
         private String content;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPo;
         /**
          * 详情
          */
@@ -306,6 +311,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPo;
         /**
          * 箱数
          */

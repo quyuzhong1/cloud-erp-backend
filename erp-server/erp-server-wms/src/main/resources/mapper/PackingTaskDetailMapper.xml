@@ -85,7 +85,7 @@
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
         </if>
-        <if test="customerPO != null and customerPO != ''">
+        <if test="customerPO != null">
             AND ptd.customer_po = #{customerPO}
         </if>
     </select>

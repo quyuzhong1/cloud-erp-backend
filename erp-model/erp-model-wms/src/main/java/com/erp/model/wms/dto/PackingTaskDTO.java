@@ -29,6 +29,14 @@ import java.util.Map;
 @NoArgsConstructor
 public class PackingTaskDTO implements Serializable {
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPoDTO {
+        private List<String> customerPoList;
+    }
 
 
 
