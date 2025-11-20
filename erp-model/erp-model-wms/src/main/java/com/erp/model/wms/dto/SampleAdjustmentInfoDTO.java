@@ -337,6 +337,35 @@ public class SampleAdjustmentInfoDTO implements Serializable {
         */
         private String invalidRemark;
 
+        /**
+         * 明细列表
+         */
+        private List<SampleAdjustmentDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 审批状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 调整类型名称
+         */
+        private String adjustmentTypeName;
 
     }
 

@@ -556,12 +556,43 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
 
     @Override
     public SampleAdjustmentInfoDTO.ViewDTO view(String id) {
-        SampleAdjustmentInfoEntity sampleAdjustmentInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品调整单数据"));
-        SampleAdjustmentInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleAdjustmentInfoDTO.ViewDTO.class, sampleAdjustmentInfoEntity);
+        SampleAdjustmentInfoDTO.ViewDTO viewDTO = new SampleAdjustmentInfoDTO.ViewDTO();
+        SampleAdjustmentInfoEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品调整单");
+        }
+        BeanMapperUtils.copy(entity, viewDTO);
+
+        viewDTO.setApproveStatus(entity.getApproveStatus().getCode());
+        viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        viewDTO.setAdjustmentTypeName(SampleAdjustmentTypeEnum.getName(viewDTO.getAdjustmentType()));
+
+        // 设置明细列表到ViewDTO中
+        List<SampleAdjustmentDetailEntity> detailEntities = sampleAdjustmentDetailService.list(
+            new LambdaQueryWrapper<SampleAdjustmentDetailEntity>().eq(SampleAdjustmentDetailEntity::getMainId, id)
+        );
+        
+        List<SampleAdjustmentDetailDTO.ViewDTO> detailList = detailEntities.stream()
+            .map(detail -> {
+                SampleAdjustmentDetailDTO.ViewDTO detailDTO = new SampleAdjustmentDetailDTO.ViewDTO();
+                BeanMapperUtils.copy(detail, detailDTO);
+                return detailDTO;
+            })
+            .collect(Collectors.toList());
+        viewDTO.setDetailList(detailList);
+
+        // 查询相关的附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            viewDTO.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
+
         // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
-        return data;
+        fillOne(viewDTO);
+        return viewDTO;
     }
     /**
     * 启动流程
