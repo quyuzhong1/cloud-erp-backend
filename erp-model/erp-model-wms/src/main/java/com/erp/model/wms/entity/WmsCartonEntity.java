@@ -74,6 +74,11 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
     @TableField("is_release_inventory")
     private Boolean isReleaseInventory;
 
+    /**
+     * 客户PO号
+     */
+    @TableField("customer_po")
+    private String customerPo;
 
     public static final String CARTON_ID = "carton_id";
 

@@ -55,6 +55,12 @@ public class WmsCartonDTO {
          *精确 perfect 模糊 fuzzy
          */
         private String searchMode;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPo;
+
         /**
          * 调整装箱类型
          * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
@@ -71,6 +77,12 @@ public class WmsCartonDTO {
     @Data
     @NoArgsConstructor
     public static class AdjustSaveDTO{
+
+        /**
+         * 客户PO号
+         */
+        private String customerPo;
+
         /**
          * 箱子id
          */
@@ -124,11 +136,6 @@ public class WmsCartonDTO {
          * 重量单位 kg
          */
         private String weightUnit;
-
-        /**
-         * 客户PO号
-         */
-        private String customerPO;
     }
 
     /**
