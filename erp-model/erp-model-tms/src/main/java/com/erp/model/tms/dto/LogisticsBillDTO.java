@@ -1109,6 +1109,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String logisticType;
 
+        /**
+         * 是否来自mq消费
+         */
+        private Boolean isFromMq = false;
     }
 
 
