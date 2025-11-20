@@ -22,6 +22,8 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,13 +53,17 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        // 通邮推送需要默认ERP的头程发货单号-HH+MM+SS
+        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+        createInboundReq.setReceivingCode(CharSequenceUtil.format("{}-{}",createInboundReq.getReferenceNo(),timeFormatter));
+
         TongYouCreateInboundReq tongYouCreateInboundReq =  this.buildInboundDto(createInboundReq);
         TongYouBaseResp<TongYouInboundResp> TongYouInboundRespTongYouBaseResp = tongYouService.createInboundBill(tongYouCreateInboundReq);
         if(!isSuccess(TongYouInboundRespTongYouBaseResp.getError())){
             return failure(TongYouInboundRespTongYouBaseResp.getContent());
         }
         //通邮无单号返回直接给空字符串
-        return success("");
+        return success(createInboundReq.getReceivingCode());
     }
 
 

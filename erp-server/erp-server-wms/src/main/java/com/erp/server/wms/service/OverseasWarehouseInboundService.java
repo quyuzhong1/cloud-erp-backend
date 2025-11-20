@@ -185,7 +185,6 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @Date 2023/12/6
      **/
     ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(
-            Boolean isAdd,
             OverseasProviderEntity providerEntity,
             OverseasWarehouseInboundEntity mainEntity,
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,

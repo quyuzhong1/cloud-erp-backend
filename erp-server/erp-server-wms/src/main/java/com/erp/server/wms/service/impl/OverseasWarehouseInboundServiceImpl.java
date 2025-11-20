@@ -58,7 +58,6 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -225,16 +224,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 推送到第三方草稿
         if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
             // 推送到第三方草稿
-            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(Boolean.TRUE, providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
+            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
                 log.error("推送第三方仓库新增失败:msg={}", JSONUtil.toJsonStr(resultInfo));
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
             }
             log.info("推送第三方仓库新增结果: ={}", JSONUtil.toJsonStr(resultInfo));
-            if (CharSequenceUtil.isNotBlank(resultInfo.getData())) {
                 // 记录单号
                 mainEntity.setCode(resultInfo.getData());
-            }
             if (!this.updateById(mainEntity)) {
                 throw new ServiceException("更新单号失败");
             }
@@ -703,13 +700,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("发货单未对接海外仓, 单号不能为空");
             }
             mainEntity.setCode(commonDTO.getCode());
-        }else if (CharSequenceUtil.equals(dictPlatform,OmsPlatformEnum.TONG_YOU.getCode())) {
-            if (CharSequenceUtil.isBlank(deliveryEntity.getCode())) {
-                throw new ServiceException("通邮海外仓入库单，发货单号不能为空");
-            }
-            // 通邮推送需要默认ERP的头程发货单号-HH+MM+SS
-            String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-            mainEntity.setCode(CharSequenceUtil.format("{}{}",deliveryEntity.getCode(),timeFormatter));
         }
         mainEntity.setSourceId(deliveryEntity.getId());
         mainEntity.setSourceCode(deliveryEntity.getCode());
@@ -1119,13 +1109,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .distinct()
                 .collect(Collectors.toList());
         // 调用
-        return this.pullThirdOverseasPlatformWithSkuMapping(Boolean.FALSE,providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
+        return this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(Boolean isAdd,OverseasProviderEntity providerEntity,
+    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(OverseasProviderEntity providerEntity,
                                                                      OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
                                                                      String verityCode
@@ -1150,18 +1140,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList,providerEntity);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
-
-        //类型为通邮海外仓的时候需要根据mainEntity中是否存在id判断是否是编辑
-        if (CharSequenceUtil.equals(providerEntity.getCode(),PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
-            if (isAdd) {
-                // 新增
-                return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
-            } else {
-                // 编辑
-                return handlerService.editInboundBill(createInboundReq, providerEntity.getId());
-            }
-        }
-        //非通邮海外仓走原有逻辑
         if (CharSequenceUtil.isBlank(code)){
             // 新增
             return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
