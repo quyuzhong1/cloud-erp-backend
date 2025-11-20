@@ -169,7 +169,7 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         boolean result = service.saveOrUpdate(logisticsEntity);
         if(StringUtils.isBlank(id)){
             //日志
-            String msg = CharSequenceUtil.format("用户【{}】新增【{}】SKU为【{}】物流产品信息", UserContext.getDefaultLoginUser().getUserName(), "物流产品信息", logisticsEntity.getSkuNo());
+            String msg = CharSequenceUtil.format("用户【{}】新增物流产品信息", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), logisticsEntity.getId(), "");
         }
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(logisticsEntity.getSkuId()));

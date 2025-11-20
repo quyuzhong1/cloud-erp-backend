@@ -4,12 +4,12 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
 
 /**
  * <p>
@@ -138,7 +138,7 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
 
     @Override
     public BasicDictEntity getByTypeAndValue(String type, String value) {
-        if(isNotBlank(type) && isNotBlank(value)){
+        if(StringUtils.isBlank(type) || StringUtils.isBlank(value)){
             return null;
         }
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
