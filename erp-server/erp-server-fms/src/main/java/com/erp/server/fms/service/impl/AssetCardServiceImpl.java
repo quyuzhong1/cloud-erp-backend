@@ -31,6 +31,7 @@ import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
 import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.CardSourceEnum;
 import com.erp.model.fms.enums.CostTypeEnum;
+import com.erp.model.fms.enums.DisposalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -936,9 +937,15 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             }
         }
 
-        // 收集所有需要查询的部门ID
+        // 收集所有需要查询的部门ID和资产位置ID
         List<String> useDeptIds = list.stream()
                 .map(AssetCardDTO.ListDTO::getUseDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        List<String> detailAssetLocationIds = list.stream()
+                .map(AssetCardDTO.ListDTO::getDetailAssetLocationId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
@@ -959,6 +966,25 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                 }
             } catch (Exception e) {
                 log.error("批量查询部门信息失败", e);
+            }
+        }
+        
+        // 批量查询资产位置信息
+        Map<String, String> assetLocationMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(detailAssetLocationIds)) {
+            try {
+                List<com.erp.model.fms.entity.AssetLocationEntity> locationList = assetLocationService.listByIds(detailAssetLocationIds);
+                if (CollUtil.isNotEmpty(locationList)) {
+                    assetLocationMap = locationList.stream()
+                            .filter(loc -> StringUtils.isNotBlank(loc.getId()) && StringUtils.isNotBlank(loc.getAddress()))
+                            .collect(Collectors.toMap(
+                                    com.erp.model.fms.entity.AssetLocationEntity::getId,
+                                    com.erp.model.fms.entity.AssetLocationEntity::getAddress,
+                                    (v1, v2) -> v1
+                            ));
+                }
+            } catch (Exception e) {
+                log.error("批量查询资产位置信息失败", e);
             }
         }
 
@@ -990,6 +1016,16 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             // 填充部门名称
             if (StringUtils.isNotBlank(data.getUseDeptId())) {
                 data.setUseDeptName(deptMap.get(data.getUseDeptId()));
+            }
+            
+            // 填充明细资产位置名称
+            if (StringUtils.isNotBlank(data.getDetailAssetLocationId())) {
+                data.setDetailAssetLocationName(assetLocationMap.get(data.getDetailAssetLocationId()));
+            }
+            
+            // 处置情况枚举转换
+            if (StringUtils.isNotBlank(data.getDisposalStatus())) {
+                data.setDisposalStatusName(DisposalStatusEnum.getName(data.getDisposalStatus()));
             }
             
             // 明细字段的枚举值转换

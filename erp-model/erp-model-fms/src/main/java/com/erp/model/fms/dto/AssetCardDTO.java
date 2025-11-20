@@ -201,6 +201,11 @@ public class AssetCardDTO implements Serializable {
         * 处置情况（空 部分处置 完全清理）
         */
         private String disposalStatus;
+        
+        /**
+        * 处置情况名称
+        */
+        private String disposalStatusName;
 
         /**
         * 备注
@@ -248,6 +253,11 @@ public class AssetCardDTO implements Serializable {
         * 明细资产位置ID
         */
         private String detailAssetLocationId;
+        
+        /**
+        * 明细资产位置名称
+        */
+        private String detailAssetLocationName;
         
         /**
         * 明细数量
