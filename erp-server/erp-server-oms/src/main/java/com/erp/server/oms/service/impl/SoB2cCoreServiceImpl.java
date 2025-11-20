@@ -427,13 +427,14 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     }
 
     @Override
+    @Transactional
     public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
         platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
-        platformDTO.setPartitionId(soB2cReceiverEntity.getPartitionId());
+        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         for (SoB2cDetailEntity detailEntity : detailEntityList) {
             if(CollectionUtils.isNotEmpty(virtualWarehouseList)){
@@ -462,10 +463,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             }
         }catch (Exception e){
             log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
-            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            entity.setIsNotOutbound(false);
-            soB2cService.updateById(entity);
+//            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+//            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+//            entity.setIsNotOutbound(false);
+//            soB2cService.updateById(entity);
             throw new ServiceException(e.getMessage());
         }
     }

@@ -738,9 +738,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }else {
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             //销售出库单单据日期需要回写到B2C销售订单中
-            if(null != entity.getBillDate()){
+            if(null != entity.getBillDate() && !Objects.equals(entity.getBillDate(), soB2cEntity.getSoOutstockDate())){
+                log.warn("销售出库单单据日期需要回写到B2C销售订单中，销售出库单id：{}，单据日期：{}",entity.getId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
                 soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+                log.warn("销售出库单单据日期需要回写到B2C销售订单中，销售出库单id：{}，单据日期：{}",entity.getId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
             }
         }
         //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
@@ -946,11 +949,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
-            if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+//            if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
-            }else{
-                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-            }
+//            }else{
+//                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
+//            }
         }else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
@@ -958,12 +961,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
             // B2C销售出库单出库等待时间20秒
             member.setLockWaitTime(20L);
+            if (CharSequenceUtil.isBlank(member.getWarehouseLocation())){
+                member.setWarehouseLocation(null);
+            }
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //处理虚拟仓库存
             handleVirtualInventory(members,entity,soB2cEntity);
             //扣实体仓库存
             inventoryInOutStockDTO.setParamList(members);
+            log.warn("b2c销售出库单库存={}", JSONUtil.toJsonStr(inventoryInOutStockDTO));
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
         //自动生成功能系统标识
@@ -3223,7 +3230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @create 2023-12-29 11:51
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
         //来源类型
         String sourceType = dto.getSourceType();

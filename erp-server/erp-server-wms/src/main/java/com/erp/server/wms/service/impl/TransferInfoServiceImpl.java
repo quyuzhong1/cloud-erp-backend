@@ -275,6 +275,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         //新增主表数据
         boolean save = this.save(entity);
+        log.warn("直接调拨单新增主表={}", JSONUtil.toJsonStr(entity));
         if (save) {
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", entity.getCode()), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
@@ -933,6 +934,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
             stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             stockParamDTO.setParamList(outList);
+            log.warn("直接调拨单出冻结库存={}", JSONUtil.toJsonStr(stockParamDTO));
             virtualInventoryTransCoreService.approve(stockParamDTO);
         }
     }

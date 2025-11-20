@@ -242,6 +242,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHDC);
         soB2cDeliveryEntity.setCode(code);
         boolean save = super.save(soB2cDeliveryEntity);
+        log.warn("新增b2c发货单={}", JSONUtil.toJsonStr(soB2cDeliveryEntity));
         if (!save) {
             throw new ServiceException("b2c发货单保存失败");
         }
@@ -3031,6 +3032,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setParamList(paramList);
         dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
         //更新库存
+        log.warn("冻结b2c发货单虚拟库存={}", JSONUtil.toJsonStr(dto));
         virtualInventoryTransCoreService.approve(dto);
     }
 
