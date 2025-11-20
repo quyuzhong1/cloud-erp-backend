@@ -698,7 +698,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                 if (hasApprovedDisposal) {
                     disposalStatus = DisposalStatusEnum.PARTIAL.getCode();
                 } else {
-                    disposalStatus = null; // 空
+                    disposalStatus = ""; // 空字符串，数据库不允许null
                 }
             }
 
@@ -716,7 +716,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     cardEntity.getCode(), oldQty, qty, changeText);
             disposalLogPairList.add(new Pair<>(currentDisposalId, logContent));
             
-            // 资产卡片日志：按资产编码维度记录，处置单号在格式字符串中显示一次
+            // 资产卡片日志：按资产编码维度记录，合并为一条日志
+            List<String> assetCodeLogList = new ArrayList<>();
             if (CollUtil.isNotEmpty(newDetailQtyMap)) {
                 for (Map.Entry<String, Integer> detailEntry : newDetailQtyMap.entrySet()) {
                     String assetCode = detailEntry.getKey();
@@ -725,14 +726,20 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     Integer detailQtyChange = newDetailQty - oldDetailQty;
                     String detailChangeText = detailQtyChange > 0 ? "+" + detailQtyChange : String.valueOf(detailQtyChange);
                     
-                    String cardLogContent = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                    String assetCodeLog = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
                             assetCode, oldDetailQty, newDetailQty, detailChangeText);
-                    cardLogPairList.add(new Pair<>(cardId, cardLogContent));
+                    assetCodeLogList.add(assetCodeLog);
                 }
             } else {
                 // 如果没有资产编码维度，记录卡片级别的变化
-                String cardLogContent = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
+                String cardLog = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
                         oldQty, qty, changeText);
+                assetCodeLogList.add(cardLog);
+            }
+            
+            // 合并所有资产编码的日志为一条
+            if (CollUtil.isNotEmpty(assetCodeLogList)) {
+                String cardLogContent = String.join(";", assetCodeLogList);
                 cardLogPairList.add(new Pair<>(cardId, cardLogContent));
             }
         }
@@ -843,7 +850,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                 if (hasApprovedDisposal) {
                     disposalStatus = DisposalStatusEnum.PARTIAL.getCode();
                 } else {
-                    disposalStatus = null; // 空
+                    disposalStatus = ""; // 空字符串，数据库不允许null
                 }
             }
 
@@ -861,7 +868,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     cardEntity.getCode(), oldQty, qty, changeText);
             disposalLogPairList.add(new Pair<>(currentDisposalId, logContent));
             
-            // 资产卡片日志：按资产编码维度记录，处置单号在格式字符串中显示一次
+            // 资产卡片日志：按资产编码维度记录，合并为一条日志
+            List<String> assetCodeLogList = new ArrayList<>();
             if (CollUtil.isNotEmpty(newDetailQtyMap)) {
                 for (Map.Entry<String, Integer> detailEntry : newDetailQtyMap.entrySet()) {
                     String assetCode = detailEntry.getKey();
@@ -870,14 +878,20 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
                     Integer detailQtyChange = newDetailQty - oldDetailQty;
                     String detailChangeText = detailQtyChange > 0 ? "+" + detailQtyChange : String.valueOf(detailQtyChange);
                     
-                    String cardLogContent = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
+                    String assetCodeLog = StrUtil.format("资产编码【{}】数量由【{}】修改为【{}】，变化【{}】", 
                             assetCode, oldDetailQty, newDetailQty, detailChangeText);
-                    cardLogPairList.add(new Pair<>(cardId, cardLogContent));
+                    assetCodeLogList.add(assetCodeLog);
                 }
             } else {
                 // 如果没有资产编码维度，记录卡片级别的变化
-                String cardLogContent = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
+                String cardLog = StrUtil.format("数量由【{}】修改为【{}】，变化【{}】", 
                         oldQty, qty, changeText);
+                assetCodeLogList.add(cardLog);
+            }
+            
+            // 合并所有资产编码的日志为一条
+            if (CollUtil.isNotEmpty(assetCodeLogList)) {
+                String cardLogContent = String.join(";", assetCodeLogList);
                 cardLogPairList.add(new Pair<>(cardId, cardLogContent));
             }
         }
