@@ -1146,6 +1146,7 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
+    ORDER_NOT_PRINT_LOGISTICS_WAYBILL(92118,"【{}】面单未获取，无法打印，请获取后操作！"),
     ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE(92118,"全托管订单【{}】，无需标发"),
     ORDER_IS_FULLY_MANAGED_NOT_PRINT(92118,"订单【{}】不是全托管订单，禁止打印SKU条码"),
     ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT(92118,"托管订单以及B2C订单不可同时打印"),

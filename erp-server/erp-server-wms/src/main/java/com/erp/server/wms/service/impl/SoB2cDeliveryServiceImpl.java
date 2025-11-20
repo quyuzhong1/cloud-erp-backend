@@ -1903,13 +1903,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-
-        for (SoB2cEntity soB2cEntity : soB2cEntities) {
-            if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
+        //存在冻结订单直接报错
+        List<String> frozenCodes = soB2cEntities.stream().filter(SoB2cEntity::getIsFrozen).map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(frozenCodes)) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, CharSequenceUtil.join(",", frozenCodes));
         }
-
+        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
+        List<String> soId2s = soB2cLabelEntities.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getLogisticsLabelUrl())).map(SoB2cLabelEntity::getMainId).distinct().collect(Collectors.toList());
+        List<String> notPrintCodes = deliveryEntityList.stream().filter(e -> !soId2s.contains(e.getSourceId())).map(SoB2cDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notPrintCodes)) {
+            throw new ServiceException(ApiError.ORDER_NOT_PRINT_LOGISTICS_WAYBILL, CharSequenceUtil.join(",", notPrintCodes));
+        }
         //查询物流商信息
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
@@ -2842,6 +2846,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(record.getSourceId())).findFirst().orElse(new SoB2cLogisticsEntity());
             record.setLogisticsCode(soB2cLogisticsEntity.getCode());
             record.setTrackCode(soB2cLogisticsEntity.getTrackNo());
+            if (CharSequenceUtil.isNotBlank(record.getLogisticsLabelUrl())){
+                record.setLogisticsLabelUrlName("已获取");
+            }else {
+                record.setLogisticsLabelUrlName("未获取");
+            }
 
             //中转仓名称
             if (CharSequenceUtil.isNotBlank(record.getTransferWarehouseIds())){

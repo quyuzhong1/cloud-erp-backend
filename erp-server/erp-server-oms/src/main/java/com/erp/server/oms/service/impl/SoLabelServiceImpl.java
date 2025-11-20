@@ -5,42 +5,31 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.utils.PdfUtil;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.model.oms.entity.SoB2cLabelEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.dto.SoLabelDTO;
 import com.erp.model.oms.entity.SoLabelEntity;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.SoLabelConverter;
 import com.erp.server.oms.mapper.SoLabelMapper;
-import com.erp.server.oms.service.SoLabelService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.oms.service.SoLabelService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoLabelDTO;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import sun.misc.BASE64Decoder;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>

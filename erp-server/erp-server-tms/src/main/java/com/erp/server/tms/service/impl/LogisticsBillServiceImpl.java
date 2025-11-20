@@ -1042,7 +1042,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
+//        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
         //渠道配置
         List<String> channelIds = list.stream()
                 .map(LogisticsBillDTO.PrintLogisticsWaybillDTO::getChannelId).filter(CharSequenceUtil::isNotBlank)
@@ -1060,7 +1060,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     SoB2cDTO.WaybillDTO waybillDTO = processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
-                            soB2cDetailEntityList,logisticsPrintTypeEntities,logisticsChannelEntities,soB2cLabelEntities);
+                            soB2cDetailEntityList,logisticsPrintTypeEntities,logisticsChannelEntities);
                     if (waybillDTO != null) {
                         waybillDTOList.add(waybillDTO);
                     }
@@ -1105,15 +1105,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                                                      List<SoB2cLogisticsEntity> logisticsEntityList,
                                                      List<SoB2cDetailEntity> soB2cDetailEntityList,
                                                      List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities,
-                                                     List<LogisticsChannelEntity> logisticsChannelEntities,
-                                                     List<SoB2cLabelEntity> soB2cLabelEntities) {
+                                                     List<LogisticsChannelEntity> logisticsChannelEntities) {
         SoB2cEntity soB2cEntity = soB2cEntities.stream()
                 .filter(req -> req.getId().equals(dto.getB2cSoId()))
                 .findFirst()
                 .orElse(new SoB2cEntity());
-        SoB2cLabelEntity soB2cLabelEntity = soB2cLabelEntities.stream().filter(e -> e.getMainId().equals(dto.getB2cSoId()))
-                .findFirst()
-                .orElse(null);
+//        SoB2cLabelEntity soB2cLabelEntity = soB2cLabelEntities.stream().filter(e -> e.getMainId().equals(dto.getB2cSoId()))
+//                .findFirst()
+//                .orElse(null);
         SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(e -> e.getMainId().equals(dto.getB2cSoId()))
                 .findFirst()
                 .orElse(null);
@@ -1121,9 +1120,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(soB2cLogisticsEntity)) {
             throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
         }
-        if (Objects.nonNull(soB2cLabelEntity) && CharSequenceUtil.isNotBlank(soB2cLabelEntity.getLogisticsLabelUrl())) {
-            return buildWaybillDTO(soB2cLabelEntity, soB2cLogisticsEntity);
-        }
+//        if (Objects.nonNull(soB2cLabelEntity) && CharSequenceUtil.isNotBlank(soB2cLabelEntity.getLogisticsLabelUrl())) {
+//            return buildWaybillDTO(soB2cLabelEntity, soB2cLogisticsEntity);
+//        }
 
         String packageId = soB2cDetailEntityList.stream()
                 .filter(req -> req.getMainId().equals(dto.getB2cSoId()) && StringUtils.isNotBlank(req.getPlatformPackageId()))
