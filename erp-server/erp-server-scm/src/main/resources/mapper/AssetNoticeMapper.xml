@@ -50,11 +50,8 @@
             and1.asset_id AS assetId,
             and1.asset_code AS assetCode,
             and1.asset_name AS assetName,
-            apos.supplier_id AS supplierId,
             and1.plan_delivery_date AS planDeliveryDate,
             and1.apply_qty AS applyQty,
-            COALESCE((and1.apply_qty - COALESCE(SUM(apod.purchase_qty),0)), 0) AS waitQty,
-            COALESCE(SUM(apod.purchase_qty),0) AS realPurchaseQty,
             an.approve_user_id AS approveUserId,
             an.approve_user_name AS approveUserName,
             an.approve_time AS approveTime,
@@ -65,32 +62,16 @@
             an.create_time AS createTime,
             an.approve_status as approveStatus,
             an.invalid_status as invalidStatus,
-            and1.create_po_type as createPoType,
-            apos.supplier_name as supplierName
+            and1.create_po_type as createPoType
         FROM
             asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
-            LEFT JOIN asset_purchase_order_detail apod ON apod.source_detail_id = and1.id AND apod.is_deleted = false
-            LEFT JOIN asset_purchase_order apo ON apo.id = apod.main_id AND apo.approve_status = 'approve' and apo.is_deleted = false
-            LEFT JOIN asset_purchase_order_supplier apos on apos.asset_purchase_order_id = apo.id
         WHERE
         ${params.sqlMap.default}
         and an.is_deleted = false
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY
-            an.ID,
-            an.code,
-            and1.asset_id,
-            and1.asset_code,
-            and1.asset_name,
-            apos.supplier_id,
-            and1.plan_delivery_date,
-            and1.apply_qty,
-            and1.create_po_type,
-            and1.id,
-            apos.supplier_name
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

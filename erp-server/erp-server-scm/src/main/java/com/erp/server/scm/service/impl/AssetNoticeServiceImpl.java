@@ -973,6 +973,19 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<ProductPurchaseEntity> productPurchaseEntityList = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
         // 属性赋值
         for(AssetNoticeDTO.ListDTO data : list) {
+            List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
+                    .eq(AssetPurchaseOrderDetailEntity::getSourceDetailId, data.getDetailId())
+                    .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (!assetPurchaseOrderDetailEntityList.isEmpty()) {
+                BigDecimal realPurchaseQty = assetPurchaseOrderDetailEntityList.stream().map(obj -> obj.getPurchaseQty()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                data.setRealPurchaseQty(realPurchaseQty);
+                data.setWaitQty(data.getApplyQty().subtract(realPurchaseQty));
+            } else {
+                data.setRealPurchaseQty(BigDecimal.ZERO);
+                data.setWaitQty(data.getApplyQty());
+            }
+
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setCreatePoTypeName(CreatePoTypeEnum.getName(data.getCreatePoType()));
