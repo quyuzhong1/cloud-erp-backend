@@ -130,7 +130,6 @@
         SELECT
         'approveIng' AS tabFlag,
         COUNT ( 1 ) AS COUNT
-        FROM
         FROM  sample_scrap_info ssi
         WHERE
         ssi.is_deleted = FALSE

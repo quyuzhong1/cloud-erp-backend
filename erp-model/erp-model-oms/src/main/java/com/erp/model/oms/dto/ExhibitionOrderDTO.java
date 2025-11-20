@@ -78,6 +78,8 @@ public class ExhibitionOrderDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        private List<String> ids;
+
      }
 
     /**
