@@ -907,7 +907,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             data.setEndReceiveName(AssetPurchaseOrderReceiveEnum.getName(data.getEndReceive()));
             data.setOrderTypeName(AssetPurchaseOrderTypeEnum.getNameByCode(data.getOrderType()));
             //从资产验收单获取
-            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(data.getId());
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(data.getDetailId());
             BigDecimal parseAcceptQty = acceptQty == null ? BigDecimal.ZERO : new BigDecimal(acceptQty);
             //如果是结束验收状态,待验收数为0
             if (AssetPurchaseOrderReceiveEnum.CLOSE.getCode().equals(data.getEndReceive())) {
