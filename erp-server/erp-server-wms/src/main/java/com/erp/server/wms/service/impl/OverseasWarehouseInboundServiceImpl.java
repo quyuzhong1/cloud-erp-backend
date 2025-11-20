@@ -231,8 +231,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
             }
             log.info("推送第三方仓库新增结果: ={}", JSONUtil.toJsonStr(resultInfo));
-            // 记录单号
-            mainEntity.setCode(resultInfo.getData());
+            if (CharSequenceUtil.isNotBlank(resultInfo.getData())) {
+                // 记录单号
+                mainEntity.setCode(resultInfo.getData());
+            }
             if (!this.updateById(mainEntity)) {
                 throw new ServiceException("更新单号失败");
             }

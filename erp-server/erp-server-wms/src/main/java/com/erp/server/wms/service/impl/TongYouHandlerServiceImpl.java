@@ -56,7 +56,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(TongYouInboundRespTongYouBaseResp.getError())){
             return failure(TongYouInboundRespTongYouBaseResp.getContent());
         }
-        return success(TongYouInboundRespTongYouBaseResp.getData().getOrderNo());
+        //通邮无单号返回直接给空字符串
+        return success("");
     }
 
 
