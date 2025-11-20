@@ -1268,6 +1268,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
 
     /**
      * 校验调整类型与差异数量
+     * 实际数量不能等于台账数量（差异数量不能为0）
      * 调整类型=盘盈，差异数量必须大于0
      * 调整类型=盘亏，差异数量必须小于0
      * 调整类型=其他，不对差异数量进行校验
@@ -1277,7 +1278,18 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
      * @param skuNo SKU编号（用于错误提示）
      */
     private void validateAdjustmentTypeAndDifferenceQty(String adjustmentType, Integer differenceQty, String skuNo) {
-        if (StrUtil.isBlank(adjustmentType) || differenceQty == null) {
+        if (differenceQty == null) {
+            return;
+        }
+
+        String skuInfo = StrUtil.isNotBlank(skuNo) ? String.format("SKU【%s】", skuNo) : "";
+
+        // 实际数量不能等于台账数量（差异数量不能为0）
+        if (differenceQty == 0) {
+            throw new ServiceException(String.format("%s实际数量不能等于台账数量", skuInfo));
+        }
+
+        if (StrUtil.isBlank(adjustmentType)) {
             return;
         }
 
@@ -1285,8 +1297,6 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         if (adjustmentTypeEnum == null) {
             return;
         }
-
-        String skuInfo = StrUtil.isNotBlank(skuNo) ? String.format("SKU【%s】", skuNo) : "";
 
         if (SampleAdjustmentTypeEnum.INVENTORY_PROFIT.equals(adjustmentTypeEnum)) {
             // 盘盈：差异数量必须大于0
