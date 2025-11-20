@@ -701,12 +701,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
             mainEntity.setCode(commonDTO.getCode());
         }else if (CharSequenceUtil.equals(dictPlatform,OmsPlatformEnum.TONG_YOU.getCode())) {
-            if (CharSequenceUtil.isBlank(commonDTO.getCode())) {
-                throw new ServiceException("通邮海外仓入库单，单号不能为空");
+            if (CharSequenceUtil.isBlank(deliveryEntity.getCode())) {
+                throw new ServiceException("通邮海外仓入库单，发货单号不能为空");
             }
             // 通邮推送需要默认ERP的头程发货单号-HH+MM+SS
             String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-            mainEntity.setCode(CharSequenceUtil.format("{}{}",commonDTO.getCode(),timeFormatter));
+            mainEntity.setCode(CharSequenceUtil.format("{}{}",deliveryEntity.getCode(),timeFormatter));
         }
         mainEntity.setSourceId(deliveryEntity.getId());
         mainEntity.setSourceCode(deliveryEntity.getCode());
