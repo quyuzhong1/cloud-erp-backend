@@ -814,6 +814,16 @@
         max(tf.warehouse_name) as warehouseName,
         max(tf.org_id) as orgId
         from transaction_flow tf
+        LEFT JOIN (
+        SELECT DISTINCT
+        s.code AS location_code,
+        wa.code AS area_code,
+        s.warehouse_id,
+        wa.name AS area_name
+        FROM warehouse_location s
+        LEFT JOIN warehouse_location wa ON s.parent_id = wa.id
+        WHERE s.is_deleted = FALSE AND wa.is_deleted = FALSE
+        ) wl ON tf.warehouse_location = wl.location_code AND tf.warehouse_id = wl.warehouse_id
         <where>
             ${params.sqlMap.default} and tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
             <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
