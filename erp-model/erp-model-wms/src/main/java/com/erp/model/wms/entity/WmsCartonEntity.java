@@ -78,7 +78,7 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
      * 客户PO号
      */
     @TableField("customer_po")
-    private String customerPo;
+    private String customerPO;
 
     public static final String CARTON_ID = "carton_id";
 

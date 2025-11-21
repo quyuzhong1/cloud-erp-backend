@@ -1512,7 +1512,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 combinationPrintDetailView.setIsCombination(Boolean.FALSE);
                 combinationPrintDetailView.setParentSku(soB2cDetailEntity.getSkuNo());
                 combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
-                combinationPrintDetailView.setCustomerPo("");
+                combinationPrintDetailView.setCustomerPO("");
                 list.add(combinationPrintDetailView);
                 continue;
             }
@@ -1524,19 +1524,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
                 combinationPrintDetailView.setChildSku(deliveryDetailEntity.getSkuNo());
                 combinationPrintDetailView.setChildSkuQty(deliveryDetailEntity.getDeliveryQty());
-                combinationPrintDetailView.setCustomerPo("");
+                combinationPrintDetailView.setCustomerPO("");
                 list.add(combinationPrintDetailView);
             }
         }
         List<PickingListsDTO.CombinationPrintDetailView> combinationList = list.stream()
                 // 先按客户PO分组
-                .collect(Collectors.groupingBy(PickingListsDTO.CombinationPrintDetailView::getCustomerPo))
+                .collect(Collectors.groupingBy(PickingListsDTO.CombinationPrintDetailView::getCustomerPO))
                 .values().stream()
                 // 对每个客户PO组处理
                 .flatMap(customerGroup -> customerGroup.stream()
                         // 再按组合键分组
                         .collect(Collectors.groupingBy(
-                                v -> v.getCustomerPo() + ":" + v.getThirdSku() + ":" + v.getParentSku() + ":" + v.getChildSku(),
+                                v -> v.getCustomerPO() + ":" + v.getThirdSku() + ":" + v.getParentSku() + ":" + v.getChildSku(),
                                 Collectors.collectingAndThen(Collectors.toList(), v -> {
                                     PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                                     Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
@@ -1550,7 +1550,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         ))
                         .values().stream()
                 )
-                .sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getCustomerPo)
+                .sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getCustomerPO)
                         .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)
                         .thenComparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
                 )

@@ -59,7 +59,7 @@ public class WmsCartonDTO {
         /**
          * 客户PO号
          */
-        private String customerPo;
+        private String customerPO;
 
         /**
          * 调整装箱类型
@@ -81,7 +81,7 @@ public class WmsCartonDTO {
         /**
          * 客户PO号
          */
-        private String customerPo;
+        private String customerPO;
 
         /**
          * 箱子id
