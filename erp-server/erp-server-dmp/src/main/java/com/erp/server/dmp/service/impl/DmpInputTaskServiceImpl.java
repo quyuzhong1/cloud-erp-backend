@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
@@ -317,24 +318,24 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(keyName = "entity.id")
     public BatchResultDTO retry(DmpInputTaskEntity entity) {
-        if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus()) &&
-                !DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus())) {
-            throw new ServiceException("仅完成或错误状态的拉取任务允许重试");
+        if (!DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus())) {
+            throw new ServiceException("仅错误状态的拉取任务允许重试");
         }
         // 判断是否为初始化重试
-        boolean newRetry = DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus())
-                || !(DmpInputTaskStatusEnum.ERROR.getCode().equals(entity.getStatus()) && entity.getErrorMessage().startsWith("init@@"));
+        boolean newRetry = DmpCfgInputExecSystemEnum.DMP.getCode().equals(entity.getExecSystem()) && !entity.getErrorMessage().startsWith("init@@");
 
-        boolean retryResult = true;
+        boolean retryResult;
         if (newRetry){
             DmpInputTaskEntity dmpInputTaskEntity = new DmpInputTaskEntity();
             BeanMapperUtils.copy(entity, dmpInputTaskEntity);
             boolean updateResult = true;
             if (!DmpInputTaskStatusEnum.FINISH.getCode().equals(entity.getStatus())){
                 entity.setStatus(DmpInputTaskStatusEnum.FINISH.getCode());
+                entity.setErrorMessage("手动重试丢弃:".concat(entity.getErrorMessage()));
                 entity.setUpdateTime(LocalDateTime.now());
                 updateResult = super.updateById(entity);
             }
+            dmpInputTaskEntity.setId(IdWorker.getIdStr());
             // 重试主单数据
             log.info("重试 开始重试拉取任务主单数据，id：【{}】", entity.getId());
             boolean saveResult = super.save(dmpInputTaskEntity);

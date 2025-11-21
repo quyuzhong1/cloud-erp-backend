@@ -418,42 +418,7 @@ public class DmpCfgOutputDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO {
-
-        /**
-         * 主键id
-         */
-        private String id;
-
-        /**
-         * 推送系统id
-         */
-        private String systemId;
-
-        /**
-         * 外部系统接口转换内部数据id
-         */
-        private String inputConvertId;
-
-        /**
-         * 输入类型：api=接口拉取,mq=MQ订阅,db=DB直连
-         */
-        private String type;
-
-        /**
-         * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
-         */
-        private String typeId;
-
-        /**
-         * 是否禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 扩展json
-         */
-        private String extendJson;
+    public static class ExportDTO extends PagingParamDTO{
 
 
     }
