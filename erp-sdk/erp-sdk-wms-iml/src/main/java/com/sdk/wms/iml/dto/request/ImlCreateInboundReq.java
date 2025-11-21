@@ -1,13 +1,12 @@
 package com.sdk.wms.iml.dto.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.xmlbeans.impl.jam.mutable.MElement;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -15,164 +14,181 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class ImlCreateInboundReq {
+    @JSONField(name = "code")
+    private String code;
 
-    // 第三方入库单号（只有编辑才需要填写）
-    @JSONField(name = "receiving_code")
-    private String receivingCode;
+    @JSONField(name = "needCustomerAudit")
+    private String needCustomerAudit;
+    @JSONField(name = "platformOrderNo")
+    private String platformOrderNo;
+    @JSONField(name = "platformCustomerCode")
+    private String platformCustomerCode;
+    @JSONField(name = "bizType")
+    private String bizType;
+    @JSONField(name = "destWarehouseCode")
+    private String destWarehouseCode;
+    @JSONField(name = "customsService")
+    private String customsService;
+    @JSONField(name = "customsType")
+    private String customsType;
+    @JSONField(name = "inboundType")
+    private String inboundType;
+    @JSONField(name = "logisticsCode")
+    private String logisticsCode;
+    @JSONField(name = "expectedDate")
+    private Long expectedDate;
+    @JSONField(name = "description")
+    private String description;
+    @JSONField(name = "dataSources")
+    private String dataSources;
+    @JSONField(name = "transit")
+    private TransitDTO transit;
+    @JSONField(name = "direct")
+    private DirectDTO direct;
+    @JSONField(name = "boxs")
+    private List<BoxsDTO> boxs;
+    @JSONField(name = "attachments")
+    private List<AttachmentsDTO> attachments;
+    @JSONField(name = "additionalService")
+    private List<String> additionalService;
 
-    //入库单参考号
-    @JSONField(name = "reference_no")
-    @NotNull(message = "入库单参考号不能为空")
-    private String referenceNo;
-
-    //交货方式，0自送，1揽收
-    @JSONField(name = "income_type")
-    private Integer incomeType;
-
-    //入库单类型：D:自发头程,T中转代发
-    @JSONField(name = "receiving_type")
-    private String receivingType;
-
-    //目的仓
-    @JSONField(name = "warehouse_code")
-    @NotNull(message = "目的仓不能为空")
-    private String warehouseCode;
-
-    //交货仓，中转代发时，必填
-    @JSONField(name = "transit_warehouse_code")
-    private String transitWarehouseCode;
-
-    //物流产品，中转代发时，必填
-    @JSONField(name = "sm_code")
-    private String smCode;
-
-    //运输方式
-    @JSONField(name = "shipping_method")
-    private String shippingMethod;
-
-    //跟踪号，中转代发时，必填
-    @JSONField(name = "tracking_number")
-    private String trackingNumber;
-
-    //入库单描述
-    @JSONField(name = "receiving_desc")
-    private String receivingDesc;
-
-    //预计到达日期
-    @JSONField(name = "eta_date")
-    private String etaDate;
-
-    //联系人，交货方式为揽收时，必填
-    @JSONField(name = "contacter")
-    private String contacter;
-
-    //联系电话，交货方式为揽收时，必填
-    @JSONField(name = "contact_phone")
-    private String contactPhone;
-
-    //揽收支持的省ID，交货方式为揽收时，必填，参考getRegionForReceiving
-    @JSONField(name = "region_id_level0")
-    private Integer regionIdLevel0;
-
-    //揽收支持的市ID，交货方式为揽收时，必填，参考getRegionForReceiving
-    @JSONField(name = "region_id_level1")
-    private Integer regionIdLevel1;
-
-    //揽收支持的区ID，交货方式为揽收时，必填，参考getRegionForReceiving
-    @JSONField(name = "region_id_level2")
-    private Integer regionIdLevel2;
-
-    //揽收地址，交货方式为揽收时，必填
-    @JSONField(name = "street")
-    private String street;
-
-    //是否审核,0新建不审核(草稿状态)，1新建并审核， 默认为0， 审核通过之后，不可编辑
-    @JSONField(name = "verify")
-    private Integer verify;
-
-    //关税类型：P：实报实销；默认为空
-    @JSONField(name = "tax_type")
-    private String taxType;
-
-    //报关类型：Y：单独退税报关；N：无退税报关；;默认为空
-    @JSONField(name = "customer_type")
-    @Builder.Default
-    private String customerType = "Y";
-
-    //保险服务：Y 是；N：否；默认为否 （保险服务只有在 中转代发才会生效-参考PC端）
-    @JSONField(name = "is_insurance")
-    private String isInsurance;
-
-    //入库单明细
-    @JSONField(name = "items")
-    @NotNull(message = "入库单明细不能为空")
-    private List<Item> items;
-
-    @Data
-    @AllArgsConstructor
     @NoArgsConstructor
-    @Builder
-    public static class Item {
-
-        //SKU
-        @JSONField(name = "product_sku")
-        @NotNull(message = "SKU不能为空")
-        private String productSku;
-
-        //数量
-        @JSONField(name = "quantity")
-        @NotNull(message = "数量不能为空")
-        private Integer quantity;
-
-        //箱号
-        @JSONField(name = "box_no")
-        @NotNull(message = "箱号不能为空")
-        private Integer boxNo;
-
-        //单SKU申报金额
-        @JSONField(name = "insured_amount")
-        private BigDecimal insuredAmount;
-
-    }
-    //附件文件
-    @JSONField(name = "api_attachment_label")
-    private AttachmentLabel apiAttachmentLabel;
-
-
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     @Builder
-    public static class AttachmentLabel {
+    @AllArgsConstructor
+    public static class TransitDTO {
+        @JSONField(name = "transitWarehouseCode")
+        private String transitWarehouseCode;
+        @JSONField(name = "deliveryType")
+        private String deliveryType;
+        @JSONField(name = "collectAddress")
+        private CollectAddressDTO collectAddress;
+        @JSONField(name = "deliveryVehicle")
+        private DeliveryVehicleDTO deliveryVehicle;
+        @JSONField(name = "deliveryLogistics")
+        private DeliveryLogisticsDTO deliveryLogistics;
 
-        //文件类型(rar或者zip)
-        @JSONField(name = "file_type")
-        private String fileType;
+        @NoArgsConstructor
+        @Data
+        @Builder
+        @AllArgsConstructor
+        public static class CollectAddressDTO {
+            @JSONField(name = "country")
+            private String country;
+            @JSONField(name = "countryCode")
+            private String countryCode;
+            @JSONField(name = "postcode")
+            private String postcode;
+            @JSONField(name = "province")
+            private String province;
+            @JSONField(name = "city")
+            private String city;
+            @JSONField(name = "county")
+            private String county;
+            @JSONField(name = "street")
+            private String street;
+            @JSONField(name = "contacter")
+            private String contacter;
+            @JSONField(name = "contactPhone")
+            private String contactPhone;
+        }
 
-        //base64编码
-        @JSONField(name = "file_data")
-        private String fileData;
+        @NoArgsConstructor
+        @Data
+        @Builder
+        @AllArgsConstructor
+        public static class DeliveryVehicleDTO {
+            @JSONField(name = "vehicleNo")
+            private String vehicleNo;
+            @JSONField(name = "driverName")
+            private String driverName;
+            @JSONField(name = "driverPhone")
+            private String driverPhone;
+        }
 
+        @NoArgsConstructor
+        @Data
+        @Builder
+        @AllArgsConstructor
+        public static class DeliveryLogisticsDTO {
+            @JSONField(name = "deliveryCompany")
+            private String deliveryCompany;
+            @JSONField(name = "deliveryTrackingNumber")
+            private String deliveryTrackingNumber;
+            @JSONField(name = "deliverySender")
+            private String deliverySender;
+            @JSONField(name = "deliveryAddress")
+            private String deliveryAddress;
+        }
     }
 
-    //头程明细表
-    @JSONField(name = "api_attachment_file")
-    private AttachmentFile apiAttachmentFile;
-
-
-    @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @Data
     @Builder
-    public static class AttachmentFile {
+    @AllArgsConstructor
+    public static class DirectDTO {
+        @JSONField(name = "trackingNumber")
+        private String trackingNumber;
+    }
 
-        //文件类型(xls或者xlsx)
-        @JSONField(name = "file_type")
+    @NoArgsConstructor
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public static class BoxsDTO {
+        @JSONField(name = "palletNo")
+        private String palletNo;
+        @JSONField(name = "boxNo")
+        private String boxNo;
+        @JSONField(name = "boxLength")
+        private BigDecimal boxLength;
+        @JSONField(name = "boxWidth")
+        private BigDecimal boxWidth;
+        @JSONField(name = "boxHeight")
+        private BigDecimal boxHeight;
+        @JSONField(name = "boxWeight")
+        private BigDecimal boxWeight;
+        @JSONField(name = "boxDetails")
+        private List<BoxDetailsDTO> boxDetails;
+
+        @NoArgsConstructor
+        @Data
+        @Builder
+        @AllArgsConstructor
+        public static class BoxDetailsDTO {
+            @JSONField(name = "skuCode")
+            private String skuCode;
+            @JSONField(name = "skuBarcode")
+            private String skuBarcode;
+            @JSONField(name = "snCode")
+            private String snCode;
+            @JSONField(name = "quantity")
+            private Integer quantity;
+            @JSONField(name = "packageType")
+            private String packageType;
+            @JSONField(name = "isInsurance")
+            private String isInsurance;
+            @JSONField(name = "insuredAmount")
+            private Integer insuredAmount;
+            @JSONField(name = "platformItemId")
+            private String platformItemId;
+            @JSONField(name = "platformOrderItemId")
+            private String platformOrderItemId;
+        }
+    }
+
+    @NoArgsConstructor
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public static class AttachmentsDTO {
+        @JSONField(name = "fileName")
+        private String fileName;
+        @JSONField(name = "fileType")
         private String fileType;
-
-        //base64编码
-        @JSONField(name = "file_data")
+        @JSONField(name = "fileData")
         private String fileData;
-
+        @JSONField(name = "attachedType")
+        private String attachedType;
     }
 }

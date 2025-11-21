@@ -27,6 +27,11 @@ public class SampleTransferInfoApproveHandler extends AbstractApproveHandler {
     private SampleTransferInfoService sampleTransferInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return sampleTransferInfoService.approve(dto,ClientTypeEnum.WEB);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = sampleTransferInfoService.cancelProcess(dto.getId());
         return result.getSuccess();
@@ -44,5 +49,10 @@ public class SampleTransferInfoApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return sampleTransferInfoService.approveEnd(approveOneDTO, entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -52,4 +53,19 @@ public class ThirdWarehouseCalculateFeeReq extends ThirdWarehouseAuth{
     private String city;
     //sku
     private List<String> skuList;
+
+    private List<SkusDTO> skus;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class SkusDTO {
+
+        private String skuNo;
+
+        private String platformSkuNo;
+
+        private Integer qty;
+    }
 }

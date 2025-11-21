@@ -409,57 +409,62 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
 
         //检查是否有差异数据
-        for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntities) {
-            List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailEntities.stream().filter(req -> req.getMainId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
+        try {
+            UserContext.setIsUserSystem(true);
+            for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntities) {
+                List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailEntities.stream().filter(req -> req.getMainId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
 
-            //查询店铺信息,用户获取目的仓
-            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(fbaShipmentEntity.getShopId())).findFirst().orElse(null);
+                //查询店铺信息,用户获取目的仓
+                ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(fbaShipmentEntity.getShopId())).findFirst().orElse(null);
 
-            //其他入库单详情集合
-            List<OtherInstockDetailDTO.AddDTO> instockDetailList = new ArrayList<>();
+                //其他入库单详情集合
+                List<OtherInstockDetailDTO.AddDTO> instockDetailList = new ArrayList<>();
 
-            //其他出库单详情集合
-            List<OtherOutstockDetailDTO.AddDTO> outstockDetailList = new ArrayList<>();
+                //其他出库单详情集合
+                List<OtherOutstockDetailDTO.AddDTO> outstockDetailList = new ArrayList<>();
 
-            //处理货件详情
-            for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
-                //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                Integer deliveryQtySum = fbaDeliveryDetailEntities.stream()
-                        .filter(req -> req.getSourceDetailId().equals(detailEntity.getId())
-                                && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
-                        )
-                        .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
-                        .sum();
+                //处理货件详情
+                for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
+                    //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+                    Integer deliveryQtySum = fbaDeliveryDetailEntities.stream()
+                            .filter(req -> req.getSourceDetailId().equals(detailEntity.getId())
+                                    && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                            )
+                            .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
+                            .sum();
 
-                // 如果签收数大于发货数量，其他入库单报溢
-                if (detailEntity.getReceiveQty() > deliveryQtySum) {
-                    OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
-                    addDTO.setSkuId(detailEntity.getSkuId());
-                    addDTO.setSkuNo(detailEntity.getSkuNo());
-                    addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getReceiveQty() - deliveryQtySum);
-                    addDTO.setRemark(CharSequenceUtil.format("[手动完结]FBA货件【{}】超收，自动生成其他入库报溢", fbaShipmentEntity.getCode()));
-                    instockDetailList.add(addDTO);
-                } else if (detailEntity.getReceiveQty() < deliveryQtySum) {
-                    // 如果签收数小于发货数量，其他出库单报损
-                    OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
-                    addDTO.setSkuId(detailEntity.getSkuId());
-                    addDTO.setSkuNo(detailEntity.getSkuNo());
-                    addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(deliveryQtySum - detailEntity.getReceiveQty());
-                    addDTO.setRemark(CharSequenceUtil.format("[手动完结]FBA货件【{}】手动完结，自动生成其他出库报损", fbaShipmentEntity.getCode()));
-                    outstockDetailList.add(addDTO);
+                    // 如果签收数大于发货数量，其他入库单报溢
+                    if (detailEntity.getReceiveQty() > deliveryQtySum) {
+                        OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
+                        addDTO.setSkuId(detailEntity.getSkuId());
+                        addDTO.setSkuNo(detailEntity.getSkuNo());
+                        addDTO.setWarehouseLocation("");
+                        addDTO.setActualQty(detailEntity.getReceiveQty() - deliveryQtySum);
+                        addDTO.setRemark(CharSequenceUtil.format("[手动完结]FBA货件【{}】超收，自动生成其他入库报溢", fbaShipmentEntity.getCode()));
+                        instockDetailList.add(addDTO);
+                    } else if (detailEntity.getReceiveQty() < deliveryQtySum) {
+                        // 如果签收数小于发货数量，其他出库单报损
+                        OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
+                        addDTO.setSkuId(detailEntity.getSkuId());
+                        addDTO.setSkuNo(detailEntity.getSkuNo());
+                        addDTO.setWarehouseLocation("");
+                        addDTO.setActualQty(deliveryQtySum - detailEntity.getReceiveQty());
+                        addDTO.setRemark(CharSequenceUtil.format("[手动完结]FBA货件【{}】手动完结，自动生成其他出库报损", fbaShipmentEntity.getCode()));
+                        outstockDetailList.add(addDTO);
+                    }
+                }
+
+                //新增其他入库单
+                if (CollectionUtils.isNotEmpty(instockDetailList)) {
+                    this.generateOtherInstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), instockDetailList);
+                }
+                //新增其他出库单
+                if (CollectionUtils.isNotEmpty(outstockDetailList)) {
+                    this.generateOtherOutstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), outstockDetailList,true);
                 }
             }
-
-            //新增其他入库单
-            if (CollectionUtils.isNotEmpty(instockDetailList)) {
-                this.generateOtherInstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), instockDetailList);
-            }
-            //新增其他出库单
-            if (CollectionUtils.isNotEmpty(outstockDetailList)) {
-                this.generateOtherOutstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), outstockDetailList,true);
-            }
+        }finally {
+            UserContext.clearIsUserSystem();
         }
 
         //修改发货状态

@@ -1402,7 +1402,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if(Objects.isNull(sampleRecipientEntity.getIsLedgerRequired())){
             sampleRecipientEntity.setIsLedgerRequired(Boolean.TRUE);
         }
-
         if(StringUtils.isNotBlank(sampleRecipientEntity.getWarehouseId()) && StringUtils.isBlank(sampleRecipientEntity.getWarehouseChargeId())){
             throw new ServiceException("仓库不为空则仓库负责人不能为空");
         }

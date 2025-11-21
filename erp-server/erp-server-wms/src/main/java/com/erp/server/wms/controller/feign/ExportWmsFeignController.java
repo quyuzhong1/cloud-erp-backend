@@ -1156,7 +1156,7 @@ public class ExportWmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedger:export",
-            tableAlias = ""
+            tableAlias = "sl"
     )
     @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
     public PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto) {
@@ -1174,7 +1174,7 @@ public class ExportWmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleLedgerFlow:export",
-            tableAlias = ""
+            tableAlias = "slf"
     )
     @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     public PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {

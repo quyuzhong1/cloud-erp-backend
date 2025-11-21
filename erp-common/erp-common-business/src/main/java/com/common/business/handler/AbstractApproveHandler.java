@@ -1,6 +1,8 @@
 package com.common.business.handler;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +10,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public abstract class AbstractApproveHandler {
+
+
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    public abstract BatchResultDTO approve(ApproveOneDTO dto) ;
 
     /**
      * 取消流程
@@ -32,4 +42,13 @@ public abstract class AbstractApproveHandler {
      * @return void
      */
     public abstract Boolean approveEnd(ApproveDTO.EndProcessDTO dto);
+
+    /**
+     * 同步第三方评论（日志）
+     *
+     * @param dto
+     * @author will
+     * @date 2025/6/18 09:40
+     */
+    public abstract void addComment(ApproveDTO.AddCommentDTO dto);
 }

@@ -82,13 +82,6 @@ public class EccangInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 		platformInboundDTO.setProvider(sourcePlatform);
 		platformInboundDTO.setDownloadTime(LocalDateTime.now());
 
-		//不是已签收状态不推送ERP
-		if (!(AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(dmpThirdInboundEntity.getReceivingStatus())
-				|| AntuEnums.ReceivingStatusEnum.COMPLETION_RECEIVING_DESTINATION_WAREHOUSE.getCode().equals(dmpThirdInboundEntity.getReceivingStatus())
-				|| AntuEnums.ReceivingStatusEnum.RECEIVING_DESTINATION_WAREHOUSE.getCode().equals(dmpThirdInboundEntity.getReceivingStatus()))
-		) {
-			return null;
-		}
 		platformInboundDTO.setReceivingStatus(AntuEnums.ReceivingStatusEnum.getInstockByCode(dmpThirdInboundEntity.getReceivingStatus()));
 		List<AntuReceiptResp.Item> itemList = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), AntuReceiptResp.Item.class);
 		List<Receiving> receivingDataList = new ArrayList<>();

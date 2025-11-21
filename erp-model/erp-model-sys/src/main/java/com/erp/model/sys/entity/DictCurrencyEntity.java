@@ -54,6 +54,11 @@ public class DictCurrencyEntity extends BaseEntity<DictCurrencyEntity> {
      */
     @TableField("kingdee_code")
     private String kingdeeCode;
+    /**
+     * 数字代码
+     */
+    @TableField("currency_num")
+    private String currencyNum;
 
 
     @Override

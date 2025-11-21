@@ -182,5 +182,17 @@ public class SoB2cRefundDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
     }
 }

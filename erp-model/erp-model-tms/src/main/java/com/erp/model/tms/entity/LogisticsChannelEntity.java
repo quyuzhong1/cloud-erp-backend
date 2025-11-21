@@ -247,6 +247,18 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("last_mile_carrier")
     private String lastMileCarrier;
 
+    /**
+     * 渠道类型
+     */
+    @TableField("channel_type")
+    private String channelType;
+
+    /**
+     * 推送交接文件类型
+     */
+    @TableField("handover_doc_type")
+    private String handoverDocType;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String FIELD_NAME = "name";

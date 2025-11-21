@@ -1518,7 +1518,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> warehouseLocationList = records.stream().map(v -> v.getWarehouseLocation()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
-            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationEntityList).list();
+            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode, warehouseLocationList).list();
         }
         for (PurchaseOrderDTO.ListDTO obj : records) {
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v -> v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -1650,7 +1650,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
             //确认类型
             obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));
@@ -3189,7 +3189,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
             //确认类型
             obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));

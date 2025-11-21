@@ -2,8 +2,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,7 +15,6 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -22,6 +24,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.common.core.utils.*;
 import com.erp.model.wms.enums.SampleRecipientTabEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -32,18 +39,20 @@ import org.springframework.beans.BeanUtils;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -75,11 +84,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BACK_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_BACK_INFO;
 
 /**
  * <p>
@@ -145,12 +157,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         handleData(sampleBackInfoEntity);
 
         log.info("开始新增样品退回单");
-        
+
         // 校验明细不能为空
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
             throw new ServiceException("样品退回单明细不能为空");
         }
-        
+
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
         sampleBackInfoEntity.setCode(code);
@@ -987,17 +999,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
-                    .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
-                    .collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(curApproveList)) {
-                    String curApproveName = curApproveList.stream()
-                        .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
-                        .collect(Collectors.joining(","));
-                    if (StringUtils.isNotBlank(curApproveName)) {
-                        data.setApproveUserName(curApproveName);
-                    }
-                }
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
             }
         }
     }
@@ -1298,7 +1301,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             baseApproveParamDTO.setComment("样品退回单自动审核通过");
             otherOutstockService.approve(otherOutstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
 
-            log.info("样品退回单生成其他出库单并审核通过成功，样品退回单号：{}，其他出库单号：{}", 
+            log.info("样品退回单生成其他出库单并审核通过成功，样品退回单号：{}，其他出库单号：{}",
                     sampleBackInfo.getCode(), otherOutstock.getCode());
         }
     }
@@ -1329,13 +1332,13 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                         
                         log.info("其他出库单反审核成功，单号：{}，样品退回单号：{}", otherOutstock.getCode(), entity.getCode());
                     } else {
-                        log.info("其他出库单状态为：{}，无需反审核，单号：{}，样品退回单号：{}", 
+                        log.info("其他出库单状态为：{}，无需反审核，单号：{}，样品退回单号：{}",
                                 otherOutstock.getApproveStatus(), otherOutstock.getCode(), entity.getCode());
                     }
                 } catch (Exception e) {
-                    log.error("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}", 
+                    log.error("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
                             otherOutstock.getCode(), entity.getCode(), e.getMessage(), e);
-                    throw new ServiceException("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}", 
+                    throw new ServiceException("其他出库单反审核失败，单号：{}，样品退回单号：{}，错误：{}",
                             otherOutstock.getCode(), entity.getCode(), e.getMessage());
                 }
             }
@@ -1357,7 +1360,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 otherOutstockDetailService.removeByIds(otherOutstockDetailIds);
             }
             
-            log.info("成功删除关联的其他出库单，主表ID：{}，明细ID：{}，样品退回单号：{}", 
+            log.info("成功删除关联的其他出库单，主表ID：{}，明细ID：{}，样品退回单号：{}",
                     otherOutstockIds, otherOutstockDetailIds, entity.getCode());
         } else {
             log.info("未找到关联的其他出库单，样品退回单号：{}", entity.getCode());
@@ -1541,7 +1544,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 将查询结果转换为Map，方便后续取值
         Map<String, Integer> countMap = list.stream()
             .collect(Collectors.toMap(
-                SampleBackInfoDTO.TabListDTO::getTabFlag, 
+                SampleBackInfoDTO.TabListDTO::getTabFlag,
                 SampleBackInfoDTO.TabListDTO::getCount,
                 (v1, v2) -> v1  // 如果有重复key，保留第一个
             ));
@@ -1564,7 +1567,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         approveIngItem.setTabFlagName("待我审核");
         approveIngItem.setCount(countMap.getOrDefault("approveIng", 0));
         appList.add(approveIngItem);
-        
+
         // 3. 已审核
         SampleBackInfoDTO.TabListDTO approveItem = new SampleBackInfoDTO.TabListDTO();
         approveItem.setTabFlag("approve");
@@ -1870,7 +1873,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     /**
      * 使用分布式锁进行样品台账数量校验
      * 实现一锁二判三放行的逻辑
-     * 
+     *
      * @param entity 样品退回单实体
      * @param approveType 审核类型
      */
@@ -1880,7 +1883,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             new LambdaQueryWrapper<SampleBackDetailEntity>()
                 .eq(SampleBackDetailEntity::getMainId, entity.getId())
         );
-        
+
         // 使用通用工具类进行数量校验
         sampleDocumentAuditUtil.validateSampleDocumentQty(
             entity.getCode(),

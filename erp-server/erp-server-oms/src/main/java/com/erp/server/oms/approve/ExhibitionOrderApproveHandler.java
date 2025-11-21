@@ -19,6 +19,11 @@ public class ExhibitionOrderApproveHandler extends AbstractApproveHandler {
     private ExhibitionOrderService exhibitionOrderService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return exhibitionOrderService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = exhibitionOrderService.cancelProcess(dto.getId());
         return result.getSuccess();
@@ -36,5 +41,10 @@ public class ExhibitionOrderApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return exhibitionOrderService.approveEnd(approveOneDTO,entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

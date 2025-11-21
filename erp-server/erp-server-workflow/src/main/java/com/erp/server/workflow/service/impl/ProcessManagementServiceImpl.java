@@ -11,6 +11,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -174,7 +175,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ThirdProcessManagementService thirdProcessManagementService;
     @Resource
     private MqConsumerRecordService workflowMqConsumerRecordService;
-
+    @Resource
+    private DictBasicService dictBasicService;
 
 
     @Override
@@ -439,6 +441,28 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
+    /**
+     * 校验创建审核人是否一致
+     */
+    private void checkApproveUserSame (Map<String,Object> variablesMap,String businessKey) {
+        //查询DictBasic配置，白名单
+        List<DictBasicEntity> list = dictBasicService.getByType("checkApproveWhite");
+        if (CollUtil.isNotEmpty(list) && CharSequenceUtil.isNotBlank(businessKey)) {
+            //白名单
+            List<String> whiteList = Arrays.stream(list.get(0).getValue().split(",")).collect(Collectors.toList());
+            if (whiteList.contains(businessKey)) {
+                return;
+            }
+        }
+        //创建人
+        String createUserId = (String) variablesMap.get("createUserId");
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(createUserId,userInfo.getUid()) && !CharSequenceUtil.equals(createUserId, UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
@@ -451,6 +475,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
+            //未启动流程需要判断创建人和当前登陆人是否一致
+            checkApproveUserSame(dto.getVariablesMap(),dto.getBusinessKey());
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -1439,6 +1465,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+        //创建人和审核人不能一致
+        checkApproveUserSame(variables,"");
 
         EndProcessDTO dto;
         if (ProcessManagementOptionEnum.PASS.getCode().equals(entity.getOption())) {
@@ -1490,6 +1518,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 流程信息传递给业务系统
         return new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
     }
+
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-20
+     * @param dto
+     */
+    @Override
+    public BatchResultDTO approveFeign(ApproveDTO.ApproveOneDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.approve(dto);
+    }
+
+
     /**
      * 回调更新状态
      * @author will
