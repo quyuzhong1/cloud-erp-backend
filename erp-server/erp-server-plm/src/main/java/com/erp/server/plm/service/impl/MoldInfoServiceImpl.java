@@ -492,21 +492,21 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        //自动生成功能系统标识
-        Boolean originalValue = UserContext.getIsUserSystem();
-        UserContext.setIsUserSystem(Boolean.TRUE);
-        try {
-            ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-            updateForApprove(entity.getId(), approveStatus.getStatus());
-            if(Objects.equals(approveStatus, ApproveStatusEnum.APPROVE)) {
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
+        if(Objects.equals(approveStatus, ApproveStatusEnum.APPROVE)) {
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
                 //生成SKU
                 String id = genSku(entity);
                 //SKU审核通过
                 skuSubmitApprove(id);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
-        }finally {
-            //恢复系统标识
-            UserContext.setIsUserSystem(originalValue);
         }
         return Boolean.TRUE;
     }
