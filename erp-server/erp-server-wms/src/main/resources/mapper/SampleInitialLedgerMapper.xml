@@ -128,7 +128,7 @@
         SELECT
         'approveIng' AS tabFlag,
         COUNT ( 1 ) AS COUNT
-        FROM  sample_initial_ledger_detail sil
+        FROM  sample_initial_ledger sil
         WHERE
         sil.is_deleted = FALSE
         AND sil.approve_status = 'approveIng'

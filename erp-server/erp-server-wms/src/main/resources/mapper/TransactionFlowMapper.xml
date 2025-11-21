@@ -88,6 +88,7 @@
             t.qty,
             t.cur_inventory_qty as afterQty,
             t.instock_batch_date AS instockBatchDate,
+            t.user_id,
             t.create_time AS createTime,
             t.update_time AS updateTime
         FROM

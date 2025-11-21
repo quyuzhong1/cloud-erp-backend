@@ -623,7 +623,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if(Objects.nonNull(findUserDTO)){
                 mqDto.setOperatorName(findUserDTO.getUserName());
             }
-            mqProducerService.syncClassMsgWithDelayLevel(topic, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
+            mqProducerService.syncClassMsgWithDelayLevel(topic, tag,mqDto , mqDto.getProcessManagementId(),1);
         }
     }
 
