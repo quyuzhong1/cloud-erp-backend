@@ -231,7 +231,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
                 data.setSystemCode(systemEntity.getCode());
                 data.setSystemName(systemEntity.getName());
             }
-            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
+            data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
         }
 
     }

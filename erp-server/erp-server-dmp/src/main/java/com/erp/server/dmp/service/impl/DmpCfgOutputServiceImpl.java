@@ -263,7 +263,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         for(DmpCfgOutputDTO.ListDTO data : list) {
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
-            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
+            data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
         }
     }
 

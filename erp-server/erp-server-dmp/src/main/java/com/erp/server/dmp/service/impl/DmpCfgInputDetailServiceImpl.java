@@ -232,7 +232,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
                 data.setSystemName(systemEntity.getName());
             }
             data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
-            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
+            data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
         }
     }
 

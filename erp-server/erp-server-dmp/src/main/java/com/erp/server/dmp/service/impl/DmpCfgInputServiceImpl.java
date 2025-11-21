@@ -307,7 +307,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
             data.setBillTypeName(sourceTypeMap.getOrDefault(data.getBillType(), ""));
             data.setMainTaskDesc(data.getIsMainTask() ? "是":"否");
-            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
+            data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
         }
     }
 
