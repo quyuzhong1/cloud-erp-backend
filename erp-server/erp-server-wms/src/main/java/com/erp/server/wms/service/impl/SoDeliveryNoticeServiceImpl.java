@@ -237,7 +237,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<CustomerInfoEntity> customerInfoEntities = CollUtil.isNotEmpty(customerIds) ? customerFeign.listCustomerByIds(customerIds) : new ArrayList<>();
         Map<String,Integer> qtyMap = new HashMap<>();
         //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        Map<String, String> warehouseMap =  warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
         //查询审核流程
         List<String> ids = records.stream().map(SoDeliveryNoticeDTO.PagingView::getId).distinct().collect(Collectors.toList());
