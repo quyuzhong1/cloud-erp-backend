@@ -113,21 +113,20 @@ public class ApproveSyncRecordController extends BaseController {
         List<ApproveSyncRecordEntity> list = approveSyncRecordService.lambdaQuery().in(ApproveSyncRecordEntity::getId, ids).list();
         Map<String, ApproveSyncRecordEntity> idEntityMap = list.stream().collect(Collectors.toMap(ApproveSyncRecordEntity::getId, w -> w));
         for (String id : dto.getIds()) {
-            BatchResultDTO result
-                    ;
+            BatchResultDTO deleteResult;
             try {
-                result = approveSyncRecordService.repush(id);
+                deleteResult = approveSyncRecordService.repush(id);
             }catch (Exception e){
                 log.error("三方推送记录重推失败",e);
                 ApproveSyncRecordEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "三方推送记录重推失败");
-                    resultDTOS.add(result);
+                    deleteResult = BatchResultDTO.fail(id, id, "三方推送记录重推失败");
+                    resultDTOS.add(deleteResult);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
-            resultDTOS.add(result);
+            resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

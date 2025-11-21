@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum ApproveSyncRecordNoticeTypeEnum implements EnumMessage {
 	MESSAGEPUSH("messagePush", "消息通知"),
 	APPROVALPUSH("approvalPush", "审批推送"),
-    SYNC_COMMENT("syncComment", "ERP审批评论回调"),
     ;
     /**
      * 类型

@@ -8,11 +8,9 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.enums.MyConsumerRecordTypeEnum;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
@@ -50,10 +48,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param taskDelegate
      */
     void completeTaskHandle(DelegateTask taskDelegate);
-
-    void syncComment(CfgApproveSyncDTO.SyncFsCommentToMqDTO commentToMqDTO, MyConsumerRecordTypeEnum myConsumerRecordTypeEnum);
-
-    void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto, MyConsumerRecordTypeEnum myConsumerRecordTypeEnum);
 
     /**
      * 更新审批状态

@@ -18,7 +18,6 @@ public enum CfgApproveNoticeNoticeTypeEnum implements EnumMessage {
 	CC("cc", "抄送通知"),
 	TIMEOUTWARNING("timeoutWarning", "超时预警通知"),
 	RECALL("recall", "撤回通知"),
-    SYNC_COMMENT("syncComment", "ERP审批日志回调"),
     ;
     /**
      * 类型

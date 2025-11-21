@@ -47,7 +47,6 @@ public class MqConsumerRecordServiceImpl extends SuperServiceImpl<MqConsumerReco
         mqConsumerRecord.setUpdateUserName("system");
         mqConsumerRecord.setTopic(dto.getTopic().replace("${spring.cloud.nacos.discovery.namespace}", namespace));
         mqConsumerRecord.setTag(dto.getTag());
-        mqConsumerRecord.setType(dto.getType());
         mqConsumerRecord.setConsumerGroup(dto.getConsumerGroup().replace("${spring.cloud.nacos.discovery.namespace}", namespace));
         Map<String, Object> dataJson = dto.getDataJson();
         JSONUtil.parseObj(dataJson);

@@ -18,7 +18,6 @@ public enum ApproveSyncFailedTypeEnum implements EnumMessage {
     SENDNOTICE("sendNoticeFailed", "发送消息失败"),
     SENDAPPROVENOTICE("sendApproveNoticeFailed", "发送审批消息失败"),
     UPDATEAPPROVENOTICE("updateApproveNoticeFailed", "更新审批消息失败"),
-    SYNC_COMMENT("syncComment", "ERP审批日志回调"),
     ;
 
     @EnumValue
