@@ -7,8 +7,7 @@
         sdn.id AS notice_id,
         sdnd.id AS detail_id,
         COUNT(pd.id) OVER (PARTITION BY sdn.id) AS picked_count,
-        COUNT(sdnd.id) OVER (PARTITION BY sdn.id) AS total_count,
-        sdnd.sku_id AS sku_id
+        COUNT(sdnd.id) OVER (PARTITION BY sdn.id) AS total_count
         FROM so_delivery_notice sdn
         JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         LEFT JOIN picking_detail pd ON pd.source_detail_id = sdnd.id AND pd.is_deleted = FALSE
@@ -23,59 +22,50 @@
         ELSE '未生成'
         END AS generationPickStatus
         FROM so_delivery_notice_details
-        ),
-        packing_qty AS (
-        SELECT
-        wcd.sku_id,
-        wc.packing_task_id,
-        SUM(wcd.pack_qty) AS packing_qty
-        FROM wms_carton_detail wcd
-        INNER JOIN wms_carton wc ON wcd.main_id = wc.id AND wc.is_deleted = FALSE
-        WHERE wcd.is_deleted = FALSE
-        GROUP BY wcd.sku_id, wc.packing_task_id
+        GROUP BY notice_id, picked_count, total_count
         )
         SELECT
-        sdn.id,
-        sdnd.id AS detailId,
-        sdn.source_id AS sourceId,
-        sdn.source_type AS sourceType,
-        sdnd.source_detail_id AS sourceDetailId,
-        sdn.code,
-        sdn.source_code AS sourceCode,
-        sdn.customer_id AS customerId,
-        sdn.customer_name AS customerName,
-        sdn.approve_status AS approveStatus,
-        sdn.invalid_status AS invalidStatus,
-        sdn.delivery_status AS deliveryStatus,
-        sdn.warehouse_id AS warehouseId,
-        sdn.warehouse_name AS warehouseName,
-        sdn.warehouse_org_id AS warehouseOrgId,
-        sdn.warehouse_org_name AS warehouseOrgName,
-        sdn.is_allow_outstock AS isAllowOutstock,
-        sdn.remark,
-        sdnd.sku_id AS skuId,
-        sdnd.sku_no AS skuNo,
-        sdnd.delivery_qty AS deliveryQty,
-        sdnd.customer_po AS customerPO,
-        sdnd.to_country AS toCountry,
-        sdn.seller_name AS sellerName,
-        sdn.require_date AS requireDate,
-        sdn.plan_delivery_date AS planDeliveryDate,
-        sdn.actual_delivery_date AS actualDeliveryDate,
-        sdn.pack_date AS packDate,
-        sdn.approve_user_name AS approveUserName,
-        sdn.create_user_name AS createUserName,
-        COALESCE(pq.packing_qty, 0) AS packingQty,
-        pt.packing_status AS packingStatus,
-        sdn.create_time AS createTime,
-        sdnd.picking_qty AS pickedQty,
+            sdn.id,
+            sdnd.id as detailId,
+            sdn.source_id AS sourceId,
+            sdn.source_type AS sourceType,
+            sdnd.source_detail_id AS sourceDetailId,
+            sdn.code,
+            sdn.source_code AS sourceCode,
+            sdn.customer_id AS customerId,
+            sdn.customer_name AS customerName,
+            sdn.approve_status AS approveStatus,
+            sdn.invalid_status AS invalidStatus,
+            sdn.delivery_status AS deliveryStatus,
+            sdn.warehouse_id AS warehouseId,
+            sdn.warehouse_name AS warehouseName,
+            sdn.warehouse_org_id AS warehouseOrgId,
+            sdn.warehouse_org_name AS warehouseOrgName,
+            sdn.is_allow_outstock as isAllowOutstock,
+            sdn.remark,
+            sdnd.sku_id AS skuId,
+            sdnd.sku_no AS skuNo,
+            sdnd.delivery_qty AS deliveryQty,
+            sdnd.customer_po AS customerPO,
+            sdnd.to_country AS toCountry,
+            sdn.seller_name AS sellerName,
+            sdn.require_date AS requireDate,
+            sdn.plan_delivery_date AS planDeliveryDate,
+            sdn.actual_delivery_date AS actualDeliveryDate,
+            sdn.pack_date AS packDate,
+            sdn.approve_user_name AS approveUserName,
+            sdn.create_user_name AS createUserName,
+        COALESCE((select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id),0) as packingQty,
+        pt.packing_status as packingStatus,
+            sdn.create_time AS createTime,
+        sdnd.picking_qty as pickedQty,
         g.generationPickStatus,
         sdn.transfer_warehouse_ids
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        LEFT JOIN packing_task pt ON pt.source_id = sdn.id AND pt.is_deleted = FALSE
-        LEFT JOIN generation_status g ON sdn.id = g.notice_id
-        LEFT JOIN packing_qty pq ON pq.sku_id = sdnd.sku_id AND pq.packing_task_id = pt.id
+        LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        LEFT JOIN  generation_status g ON sdn.id = g.notice_id
         WHERE
         ${params.sqlMap.default}
         and    sdnd.is_deleted = FALSE
