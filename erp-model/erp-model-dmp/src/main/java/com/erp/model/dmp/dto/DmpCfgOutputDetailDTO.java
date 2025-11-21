@@ -304,11 +304,6 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         */
         private String code;
 
-        /**
-        * 代号
-        */
-        private String approveStatus;
-
 
         /**
          * 最大间隔时间长度，0=按间隔时间长度intervalTime，-1=按当前时间 单位：秒

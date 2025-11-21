@@ -80,6 +80,16 @@ public class DmpCfgOutputDetailEntity extends BaseEntity<DmpCfgOutputDetailEntit
      */
     @TableField("max_interval_time")
     private Integer maxIntervalTime;
+    /**
+     * 延迟时间
+     */
+    @TableField("dealy_time")
+    private Integer dealyTime;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String MAIN_ID = "main_id";
