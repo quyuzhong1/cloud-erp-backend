@@ -244,7 +244,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
 
         // 属性赋值
         for(DmpCfgEtlDTO.ListDTO data : list) {
-            // TODO 其他如需要显示名称的字段赋值
+            data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
         }
     }
 

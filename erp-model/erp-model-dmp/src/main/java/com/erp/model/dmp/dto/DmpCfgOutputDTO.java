@@ -220,6 +220,16 @@ public class DmpCfgOutputDTO implements Serializable {
         private String outputClass;
 
         /**
+         * (转内数据)dmp转换器名称
+         */
+        private String inputConvertType;
+
+        /**
+         * (转内数据ID)dmp转换器ID
+         */
+        private String inputConvertId;
+
+        /**
          * 应用id
          */
         private String appId;

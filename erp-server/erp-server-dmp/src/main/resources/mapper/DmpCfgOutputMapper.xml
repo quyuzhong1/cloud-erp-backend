@@ -54,7 +54,9 @@
             dbs.name AS systemName,
             dco.input_convert_id AS inputConvertId,
             dcic.convert_class AS inputConvertClass,
-            dcic.type as inputConvertType,
+            CASE WHEN dco.exec_system = 'restCloud'
+                THEN dco.flow_name ELSE dcic.type
+             END AS inputConvertType,
             dco.type AS type,
             dco.type_id AS typeId,
             dco.disabled AS disabled,

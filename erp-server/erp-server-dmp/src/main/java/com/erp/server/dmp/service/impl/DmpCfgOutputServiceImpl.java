@@ -1,30 +1,21 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.dto.DmpCfgInputDTO;
-import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
@@ -33,9 +24,9 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.mapper.DmpCfgOutputMapper;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -75,6 +66,8 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     private DmpRestCloudService dmpRestCloudService;
     @Resource
     private DmpCfgInputConvertService dmpCfgInputConvertService;
+    @Resource
+    private DmpHandlerCache dmpHandlerCache;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -84,7 +77,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         BeanMapperUtils.copy(addDTO, dmpCfgOutputEntity);
 
         // 数据处理
-        handleData(dmpCfgOutputEntity);
+        handleData(dmpCfgOutputEntity, addDTO);
 
         log.info("开始新增推送配置");
         boolean save = super.save(dmpCfgOutputEntity);
@@ -110,7 +103,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         DmpCfgOutputEntity dmpCfgOutputEntity =  BeanMapperUtils.map(DmpCfgOutputEntity.class, updateDTO);
 
         // 数据处理
-        handleData(dmpCfgOutputEntity);
+        handleData(dmpCfgOutputEntity, updateDTO);
         log.info("编辑 开始修改推送配置数据，id：【{}】", old.getId());
         boolean save = super.updateById(dmpCfgOutputEntity);
         if(!save) {
@@ -129,8 +122,59 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     /**
     * 新增修改处理数据
     */
-    private void handleData(DmpCfgOutputEntity dmpCfgOutputEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpCfgOutputDTO.CommonDTO commonDTO) {
+        // 验证数据 & 数据赋值
+        if (StringUtils.isBlank(commonDTO.getExtendJson())) {
+            dmpCfgOutputEntity.setExtendJson("{}");
+        } else {
+            // 校验是否json格式
+            if (!JSON.isValid(commonDTO.getExtendJson())) {
+                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+            }
+            dmpCfgOutputEntity.setExtendJson(commonDTO.getExtendJson());
+        }
+        if(DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgOutputEntity.getExecSystem())){
+            if (StringUtils.isNotBlank(commonDTO.getInputConvertId())){
+                dmpCfgOutputEntity.setInputConvertId(commonDTO.getInputConvertId());
+            } else {
+                if (StringUtils.isBlank(commonDTO.getInputConvertType())){
+                    List<DmpCfgInputConvertEntity> inputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true);
+                    DmpCfgInputConvertEntity dmpCfgInputConvertEntity = inputConvertEntityList.stream()
+                            .filter(e -> e.getType().equals(commonDTO.getInputConvertType()))
+                            .findFirst()
+                            .orElseThrow(() -> new ServiceException("DMP执行系统时，未找到配置的转内数据名称"));
+                    dmpCfgOutputEntity.setInputConvertId(dmpCfgInputConvertEntity.getId());
+                } else {
+                    throw new ServiceException("DMP执行系统时，转内数据id或转内数据名称其一不能为空");
+                }
+            }
+        } else if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgOutputEntity.getExecSystem())) {
+            if (StringUtils.isBlank(commonDTO.getExecUrl())){
+                throw new ServiceException("RestCloud执行系统时，执行路径不能为空");
+            }
+            DmpRestCloudDTO.PagingParamDTO paramDTO = new DmpRestCloudDTO.PagingParamDTO();
+            // 判断ExecUrl是否有/？
+            if (commonDTO.getExecUrl().startsWith("/")){
+                paramDTO.setFlowUrl(commonDTO.getExecUrl());
+            } else {
+                paramDTO.setFlowUrl("/" + commonDTO.getExecUrl());
+            }
+            paramDTO.setTaskCfgType("output");
+            PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto = new PagingDTO<>();
+            dto.setCurrPage(1);
+            dto.setPageSize(1);
+            dto.setParams(paramDTO);
+            PagingVO<DmpRestCloudDTO.ListDTO> pagingVO = dmpRestCloudService.flowPaging(dto);
+            if (CollectionUtils.isNotEmpty(pagingVO.getList())) {
+                DmpRestCloudDTO.ListDTO flowData = pagingVO.getList().get(0);
+                dmpCfgOutputEntity.setFlowName(flowData.getFlowName());
+                dmpCfgOutputEntity.setFlowCode(flowData.getFlowCode());
+                dmpCfgOutputEntity.setAppId(flowData.getAppId());
+                dmpCfgOutputEntity.setExecUrl(flowData.getExecUrl());
+            } else {
+                throw new ServiceException("未找到对应的restCloud流程配置，请检查执行路径是否正确");
+            }
+        }
     }
 
     @Override
