@@ -1,6 +1,7 @@
 package com.erp.server.workflow.handler;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -22,6 +23,8 @@ import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +33,9 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -65,7 +71,7 @@ public class CfgApproveSyncCallbackHandler {
      * @date 2025-05-22
      */
     @Transactional(rollbackFor = Exception.class)
-    public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ) {
+    public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ,HttpServletRequest request) {
         Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
         if (Objects.nonNull(dataJson)) {
             String str = CBCDecrypter(String.valueOf(dataJson.get("actionCallbackKey")), req.getEncrypt());
@@ -123,6 +129,13 @@ public class CfgApproveSyncCallbackHandler {
                 loginUser.setMobile(findUserDTO.getMobile());
                 UserContext.setLoginUser(loginUser);
                 UserContext.setIsUserSystem(false);
+                try {
+                    String encode = URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8");
+                    request.setAttribute("isQuickApproveCallback",encode);
+                    request.setAttribute("tokenUserInfo",encode);
+                } catch (Exception e) {
+                    log.error("添加请求头失败", e);
+                }
 
                 ApproveDTO.ApproveOneDTO dto = new ApproveDTO.ApproveOneDTO();
                 dto.setBusinessKey(processManagementEntity.getBusinessKey());
