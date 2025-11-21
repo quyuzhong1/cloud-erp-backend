@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
@@ -296,13 +297,16 @@ public class DmpCfgOutputController extends BaseController {
             tableAlias = "dco"
     )
     public ApiResult<PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> dto) {
-        Page<DmpCfgOutputEntity> page = dmpCfgOutputService.lambdaQuery()
-                .and(q -> q
-                        .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
-                        .or()
-                        .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
-                )
-                .page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
+        LambdaQueryChainWrapper<DmpCfgOutputEntity> wrapper = dmpCfgOutputService.lambdaQuery();
+        if (StringUtils.isNotBlank(dto.getParams().getSearchKey())){
+            wrapper.and(q -> q
+                    .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
+                    .or()
+                    .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
+            );
+        }
+        Page<DmpCfgOutputEntity> page = wrapper.page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
+
         // 快速复制page.getRecords()到List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList
         List<DmpCfgOutputDTO.ListDmpCfgOutputDTO> resultList = page.getRecords().stream()
                 .map(entity -> {
