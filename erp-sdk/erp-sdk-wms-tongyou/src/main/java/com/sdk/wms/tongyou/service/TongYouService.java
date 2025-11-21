@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +126,13 @@ public class TongYouService {
     public TongYouBaseResp<String> cancelOutboundBill(@Valid TongYouCancelOutboundReq TongYouCancelOutboundReq){
         String path = "hwc_api/hwc_deliver_del.php";
         Map<String, String> headerMap = new HashMap<>();
+        Map<String,Object> bodyMap = new HashMap<>();
+        //密钥
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        bodyMap.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
+        bodyMap.put("deliver_list", Collections.singletonList(TongYouCancelOutboundReq.getOrderNo()));
+
+
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouCancelOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouCancelOutboundReq), headerMap);
         TongYouBaseResp<String> respDto = TongYouUtils.parseToTongYouResp(bodyStr, String.class);
