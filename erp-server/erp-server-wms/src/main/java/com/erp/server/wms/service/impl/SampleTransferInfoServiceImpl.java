@@ -12,6 +12,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.SampleLedgerEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -475,6 +476,19 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     public List<SampleTransferInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
         SampleTransferInfoDTO.PagingParamDTO searchParam = new SampleTransferInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
         List<SampleTransferInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         
         // 获取状态列表
@@ -484,35 +498,27 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         List<String> existStatusList = list.stream().map(SampleTransferInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-                list.add(new SampleTransferInfoDTO.TabListDTO(status, 0));
+                list.add(new SampleTransferInfoDTO.TabListDTO(status,"" ,0));
             }
         });
         
         // 设置状态名称
-        list.forEach(e -> {
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+        list.stream().forEach(e ->{
+            if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
-        
-        // 按照指定顺序排序（使用枚举常量）
-        List<String> orderList = Arrays.asList(
-            ApproveStatusEnum.WAIT_SUBMIT.getStatus(), 
-            ApproveStatusEnum.APPROVE_ING.getStatus(), 
-            ApproveStatusEnum.APPROVE.getStatus(), 
-            ApproveStatusEnum.REJECT.getStatus()
-        );
-        
-        list.sort((a, b) -> {
-            int indexA = orderList.indexOf(a.getTabFlag());
-            int indexB = orderList.indexOf(b.getTabFlag());
-            if (indexA == -1) indexA = Integer.MAX_VALUE;
-            if (indexB == -1) indexB = Integer.MAX_VALUE;
-            return Integer.compare(indexA, indexB);
-        });
+
+        // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
         
         // 在列表开头添加"全部"统计
-        SampleTransferInfoDTO.TabListDTO all = new SampleTransferInfoDTO.TabListDTO("all", list.stream().mapToInt(SampleTransferInfoDTO.TabListDTO::getCount).sum());
-        all.setTabFlagName("全部");
-        list.add(0,all);
+        list.add(0, new SampleTransferInfoDTO.TabListDTO("all","全部", 0));
         return list;
     }
 

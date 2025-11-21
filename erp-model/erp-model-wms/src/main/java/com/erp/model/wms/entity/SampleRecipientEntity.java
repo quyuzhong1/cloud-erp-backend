@@ -201,6 +201,12 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     @TableField("is_ledger_required")
     private Boolean isLedgerRequired;
 
+    /**
+     * 仓库负责人id
+     */
+    @TableField("warehouse_charge_id")
+    private String warehouseChargeId;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

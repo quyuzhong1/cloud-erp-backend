@@ -1515,9 +1515,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
@@ -1534,9 +1544,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
-        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
-                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0
-                && larger.compareTo(smaller) < 0) {
+        // 【为空则忽略不校验】- 如果larger或smaller为null，则不校验
+        // 如果两个值都不为null，则进行校验（允许值为0的情况也校验）
+        if (Objects.nonNull(larger) && Objects.nonNull(smaller) && larger.compareTo(smaller) < 0) {
              throw new ServiceException(apiError);
         }
     }
@@ -6928,10 +6938,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(errMsg.toString());
             }
 
-
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }

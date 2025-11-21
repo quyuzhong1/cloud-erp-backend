@@ -395,6 +395,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 合计金额
          */
         private BigDecimal totalAmount;
+
+        /**
+         * 已入库数量
+         */
+        private Integer totalStockInQty;
+
+        /**
+         * 已退货数量
+         */
+        private Integer totalReturnQty;
     }
 
     @Data

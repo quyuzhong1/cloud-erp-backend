@@ -904,6 +904,21 @@ public class QcInfoDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 是否作废名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
     }
 
 
@@ -927,6 +942,25 @@ public class QcInfoDTO implements Serializable {
 
         @NotBlank(message = "质检员不能为空")
         private String qcUserId;
+    }
+
+    /**
+    * 作废DTO
+    */
+    @Data
+    @NoArgsConstructor
+    public static class InvalidDTO {
+        /**
+        * ID集合
+        */
+        @NotEmpty(message = "ID不能为空")
+        private List<String> ids;
+
+        /**
+        * 作废备注
+        */
+        @Size(max = 500, message = "作废备注最大长度不能超过500位")
+        private String remark;
     }
 
     /**

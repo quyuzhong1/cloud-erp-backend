@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.plm.service.WorkflowProcessService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,17 @@ public class PlmWorkflowFeignController {
 
     @Resource
     private WorkflowProcessService workflowProcessService;
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 15:42
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/approve")
+    public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
+        return workflowProcessService.approve(dto);
+    }
 
     /**
      * @description: 结束审核

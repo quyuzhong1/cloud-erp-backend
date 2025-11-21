@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApprovePlatformEnum;
@@ -12,6 +13,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +44,21 @@ public class CustomerB2bChangeSellerApproveHandler extends AbstractApproveHandle
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType( dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        baseApproveParamDTO.setIsNeedProcess(dto.getIsNeedProcess());
+        baseApproveParamDTO.setDeliveryDate(dto.getDeliveryDate());
+
+        CustomerInfoEntity customerInfo = customerInfoService.getById(dto.getId());
+        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getByMainId(customerInfo.getId());
+
+        return customerB2bSellerChangeService.approve(baseApproveParamDTO,entity,customerInfo);
+    }
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {

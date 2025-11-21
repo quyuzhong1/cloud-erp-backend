@@ -417,6 +417,12 @@ public class ExportWmsFeignController {
         return transactionFlowService.exportInventoryDaily(dto);
     }
 
+    @PostMapping("/exportDailyInventoryByLocation")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
+    public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportDailyInventoryByLocation(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
+        return transactionFlowService.dailyInventoryPagingByLocation(dto);
+    }
+
     @PostMapping("/inventoryInOutStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "t.warehouse_id",

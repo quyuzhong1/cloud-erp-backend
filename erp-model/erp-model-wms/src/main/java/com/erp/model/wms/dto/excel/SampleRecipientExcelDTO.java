@@ -74,6 +74,8 @@ public class SampleRecipientExcelDTO implements Serializable {
     private String warehouseName;
     @ExcelIgnore
     private String warehouseId;
+    @ExcelIgnore
+    private String warehouseChargeId;
 
     /**
      * 领用人

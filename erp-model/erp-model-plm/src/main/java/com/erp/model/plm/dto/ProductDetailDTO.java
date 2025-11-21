@@ -411,6 +411,10 @@ public class ProductDetailDTO implements Serializable {
          * 状态
          */
         private  Integer status;
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
 
         /**
          * 模具id
