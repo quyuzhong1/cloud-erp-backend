@@ -17,7 +17,6 @@ import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
 import com.sdk.wms.tongyou.dto.response.TongYouLogisticChannelResp;
@@ -80,7 +79,7 @@ public class TongYouWarehouseLogisticsHandlerImpl extends AbstractLogisticsHandl
                 logisticsSaleChannelEntity.setPlatformChannelId(imlLogisticChannelResp.getLogisticsChannelCode());
                 logisticsSaleChannelEntity.setCode(imlLogisticChannelResp.getLogisticsChannelCode());
                 logisticsSaleChannelEntity.setCnName(imlLogisticChannelResp.getLogisticsChannelName());
-                logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.OMS_IML.getCode());
+                logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.TONG_YOU.getCode());
                 logisticsSaleChannelEntity.setPlatformWarehouseCode(imlLogisticChannelResp.getWarehouseCode());
                 logisticsSaleChannelEntity.setChannelType(ChannelTypeEnum.LAST_MILE.getCode());
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream().filter(v->v.getPlatformWarehouseCode().equals(imlLogisticChannelResp.getWarehouseCode()) && StringUtils.isNotBlank(v.getWarehouseId())).findFirst().orElse(null);
