@@ -28,7 +28,6 @@ public interface TongYouCreateOutboundConverter {
             @Mapping(target = "country", source = "receiverInfo.countryCode"),
             @Mapping(target = "city", source = "receiverInfo.province"),
             @Mapping(target = "district", source = "receiverInfo.city"),
-            @Mapping(target = "zip", source = "receiverInfo.zipcode"),
             @Mapping(target = "address", source = "receiverInfo.address1"),
             @Mapping(target = "address2", source = "receiverInfo.address2"),
             @Mapping(target = "contact", source = "receiverInfo.name"),
