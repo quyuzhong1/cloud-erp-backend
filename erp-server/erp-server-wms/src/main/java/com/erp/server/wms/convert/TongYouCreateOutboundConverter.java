@@ -22,8 +22,8 @@ public interface TongYouCreateOutboundConverter {
     TongYouCreateOutboundConverter INSTANCE = Mappers.getMapper(TongYouCreateOutboundConverter.class);
 
     @Mappings({
-            @Mapping(target = "ck_nums", source = "warehouseCode"),
-            @Mapping(target = "deliver_no", source = "referenceNo"),
+            @Mapping(target = "ck_nums", source = "req.warehouseCode"),
+            @Mapping(target = "deliver_no", source = "req.referenceNo"),
             @Mapping(target = "chqd", source = "req.shippingMethod"),
             @Mapping(target = "country", source = "receiverInfo.countryCode"),
             @Mapping(target = "city", source = "receiverInfo.province"),
