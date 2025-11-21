@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface WorkflowProcessService {
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) ;
     /**
      * @description: 结束审核
      * @author Will

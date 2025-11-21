@@ -36,6 +36,11 @@ public class SoReturnReceiveApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soReturnReceiveService.approve(soReturnReceiveService.getById(dto.getId()),dto.getType(),dto.getComment(),dto.getIsNeedProcess());
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return soReturnReceiveService.cancelProcess(Collections.singletonList(dto.getId()));
     }

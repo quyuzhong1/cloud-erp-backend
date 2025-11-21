@@ -2,9 +2,14 @@ package com.erp.server.workflow.handler;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -86,6 +91,7 @@ public class CfgApproveSyncCallbackHandler {
                 if (Objects.isNull(sysUserThirdEntity)) {
                     throw new ServiceException("用户未绑定飞书");
                 }
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sysUserThirdEntity.getUserId());
 
                 ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
                 if (Objects.isNull(processTaskManagementExtEntity)) {
@@ -107,28 +113,51 @@ public class CfgApproveSyncCallbackHandler {
                 if (Objects.isNull(processManagementEntity)) {
                     throw new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST);
                 }
-                //调用各个系统的approveEnd方法
-                EndProcessDTO endProcessDTO = new EndProcessDTO();
-                endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
-                endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
-                endProcessDTO.setApproveStatus(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
-                Map<String, Object> variablesMap = new HashMap<>();
 
-                ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
-                dto.setBusinessId(processManagementEntity.getBusinessId());
+                //自动生成功能系统标识
+                LoginUser loginUser = new LoginUser();
+                loginUser.setUid(findUserDTO.getUserId());
+                loginUser.setUserAccount(findUserDTO.getMobile());
+                loginUser.setUserName(findUserDTO.getUserName());
+                loginUser.setRealName(findUserDTO.getRealName());
+                loginUser.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(loginUser);
+                UserContext.setIsUserSystem(false);
+
+                ApproveDTO.ApproveOneDTO dto = new ApproveDTO.ApproveOneDTO();
                 dto.setBusinessKey(processManagementEntity.getBusinessKey());
-                dto.setApproveType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+                dto.setId(processManagementEntity.getBusinessId());
+                dto.setType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS.getStatus() : ApproveTypeEnum.REJECT.getStatus());
                 dto.setComment(reason);
-                dto.setUserId(sysUserThirdEntity.getUserId());
-                dto.setVariablesMap(variablesMap);
-                log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
-                ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
-                if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-                    //调用各个系统的approveEnd方法
-                    if(processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO)){
-                        throw new ServiceException("审批失败");
-                    }
+                dto.setIsNeedProcess(Boolean.TRUE);
+                log.info("#####quickApproveCallbackHandler :::::approveFeign>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
+                BatchResultDTO result = processManagementService.approveFeign(dto);
+                if (Objects.isNull(result) || !result.getSuccess()) {
+                    log.error("#####quickApproveCallbackHandler :::::approveFeign>>>>> 批量审批失败 result={}", JSONUtil.toJsonStr(result));
+                    throw new ServiceException("审批失败{}", result.getMsg());
                 }
+//                //调用各个系统的approveEnd方法
+//                EndProcessDTO endProcessDTO = new EndProcessDTO();
+//                endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
+//                endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
+//                endProcessDTO.setApproveStatus(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+//                Map<String, Object> variablesMap = new HashMap<>();
+//
+//                ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
+//                dto.setBusinessId(processManagementEntity.getBusinessId());
+//                dto.setBusinessKey(processManagementEntity.getBusinessKey());
+//                dto.setApproveType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+//                dto.setComment(reason);
+//                dto.setUserId(sysUserThirdEntity.getUserId());
+//                dto.setVariablesMap(variablesMap);
+//                log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
+//                ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
+//                if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+//                    //调用各个系统的approveEnd方法
+//                    if(processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO)){
+//                        throw new ServiceException("审批失败");
+//                    }
+//                }
             }
         }
     }
@@ -172,10 +201,10 @@ public class CfgApproveSyncCallbackHandler {
             String key = "9527";
             String source ="{\n" +
                     "  \"action_type\": \"APPROVE\",\n" +
-                    "  \"user_id\": \"594g34ac\",\n" +
-                    "  \"approval_code\": \"8F902F59-30CA-4903-A5FC-BAF7A413AA32\",\n" +
-                    "  \"message_id\": \"7527340773822464003\",\n" +
-                    "  \"reason\": \"1234564894654\"\n" +
+                    "  \"user_id\": \"ee745246\",\n" +
+                    "  \"approval_code\": \"09BC408A-8D2C-4D9D-AB50-535389DD8F88\",\n" +
+                    "  \"message_id\": \"7574701137702472656\",\n" +
+                    "  \"reason\": \"cjh\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.reset();

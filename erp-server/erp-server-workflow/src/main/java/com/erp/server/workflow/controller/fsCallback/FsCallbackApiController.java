@@ -32,6 +32,7 @@ public class FsCallbackApiController {
     @PostMapping("/approve")
     @ResponseBody
     public FsCallbackApiRespDTO approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
+        request.getHeaders("");
     	log.info("飞书回调开始：{}", JSON.toJSONString(req));
         handler.quickApproveCallbackHandler(req);
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();

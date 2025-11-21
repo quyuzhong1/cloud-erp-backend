@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.oms.service.WorkOptionService;
@@ -28,6 +29,18 @@ public class OmsWorkflowFeignController {
 
     @Resource
     private WorkOptionService workOptionService;
+
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 15:42
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/approve")
+    public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
+        return workflowProcessService.approve(dto);
+    }
 
     /**
      * 根据入参查询单据数量

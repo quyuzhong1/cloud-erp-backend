@@ -37,6 +37,11 @@ public class FbaDeliveryApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return firstMileDeliveryService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = firstMileDeliveryService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();
