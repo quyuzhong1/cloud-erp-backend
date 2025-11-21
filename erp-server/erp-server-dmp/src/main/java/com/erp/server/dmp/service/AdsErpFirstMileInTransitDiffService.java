@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -62,4 +63,9 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
      * 调整导入
      */
     Boolean importAdjustFile( MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 更新备注
+     */
+    BatchResultDTO updateRemark(String id,  String remark);
 }

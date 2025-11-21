@@ -10,6 +10,7 @@ import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.dmp.query.AdsErpAdsErpInventoryDiffQueryHandler;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,7 @@ public class AdsErpInventoryDiffController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiff:paging",
             tableAlias = "aeid"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AdsErpAdsErpInventoryDiffQueryHandler.class)
     public ApiResult<PagingVO<AdsErpInventoryDiffDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffService.paging(dto));
     }

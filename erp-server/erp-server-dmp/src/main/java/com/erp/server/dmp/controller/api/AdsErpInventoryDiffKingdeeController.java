@@ -6,6 +6,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
+import com.erp.server.dmp.query.AdsErpFirstMileInTransitDiffQueryHandler;
+import com.erp.server.dmp.query.AdsErpInventoryDiffKingdeeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -72,7 +74,7 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
             tableAlias = "aeidk"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffKingdeeQueryHandler.class)
     public ApiResult<PagingVO<AdsErpInventoryDiffKingdeeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffKingdeeService.paging(dto));
     }
