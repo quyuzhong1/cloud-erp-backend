@@ -1006,6 +1006,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByTaskIds(Collections.singletonList(cartonEntity.getPackingTaskId()));
         WmsCartonDTO.WmsCartonView cartonView = new WmsCartonDTO.WmsCartonView();
+        cartonView.setCustomerPO(cartonEntity.getCustomerPO());
         cartonView.setTaskId(packingTaskEntity.getId());
         cartonView.setSourceId(packingTaskEntity.getSourceId());
         cartonView.setCartonId(cartonEntity.getId());
