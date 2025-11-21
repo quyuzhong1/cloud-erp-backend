@@ -1187,7 +1187,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(packingTaskEntity.getId());
             List<WmsCartonDTO.CartonDetailDTO> cartonDetailList = new ArrayList<>();
             for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : groupSkuDTOList) {
-                PackingTaskDetailDTO.ViewDTO viewDTO = viewDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku())).findFirst().orElse(null);
+                if(searchDTO.getCustomerPO() != null && !groupSkuDTO.getCustomerPO().equals(searchDTO.getCustomerPO())){
+                    continue;
+                }
+                PackingTaskDetailDTO.ViewDTO viewDTO = viewDTOList.stream().filter(e -> Objects.nonNull(e)
+                        && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku())).findFirst().orElse(null);
                 if (Objects.isNull(viewDTO)){
                     continue;
                 }
@@ -1282,6 +1286,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         view.setWarnMsg(warnMsg.getWarnMsg());
         view.setMaxWeight(warnMsg.getMaxWeight());
         view.setMinWeight(warnMsg.getMinWeight());
+        view.setCustomerPO(cartonEntity.getCustomerPO());
         if (CollectionUtils.isNotEmpty(detailEntityList)){
             List<WmsCartonDTO.CartonDetailDTO> cartonDetailList = new ArrayList<>();
             //查询产品信息
