@@ -38,6 +38,11 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
     private ModuleOperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return subcontractOrderService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         //委外订单
         SubcontractOrderEntity entity = subcontractOrderService.getById(dto.getId());

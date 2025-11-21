@@ -1,5 +1,4 @@
 package com.erp.server.workflow.handler;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -9,22 +8,18 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +29,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -70,7 +64,8 @@ public class CfgApproveSyncCallbackHandler {
      * @author jack
      * @date 2025-05-22
      */
-    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ,HttpServletRequest request) {
         Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
         if (Objects.nonNull(dataJson)) {
@@ -127,8 +122,8 @@ public class CfgApproveSyncCallbackHandler {
                 loginUser.setUserName(findUserDTO.getUserName());
                 loginUser.setRealName(findUserDTO.getRealName());
                 loginUser.setMobile(findUserDTO.getMobile());
-                UserContext.setLoginUser(loginUser);
-                UserContext.setIsUserSystem(false);
+//                UserContext.setLoginUser(loginUser);
+//                UserContext.setIsUserSystem(false);
                 try {
                     String encode = URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8");
                     request.setAttribute("isQuickApproveCallback",encode);
@@ -216,8 +211,8 @@ public class CfgApproveSyncCallbackHandler {
                     "  \"action_type\": \"APPROVE\",\n" +
                     "  \"user_id\": \"ee745246\",\n" +
                     "  \"approval_code\": \"09BC408A-8D2C-4D9D-AB50-535389DD8F88\",\n" +
-                    "  \"message_id\": \"7574701137702472656\",\n" +
-                    "  \"reason\": \"cjh\"\n" +
+                    "  \"message_id\": \"7575068404004965318\",\n" +
+                    "  \"reason\": \"123123123\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.reset();
