@@ -31,7 +31,7 @@ import java.util.Objects;
 @Service
 @RocketMQMessageListener(topic = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_sync_fs_comment_topic",
         selectorExpression = "oms-workflow_sync_fs_comment_tag",
-        consumerGroup = "oms-workflow_sync_fs_comment_consumer")
+        consumerGroup = RocketMqConsumerGroup.WORKFLOW_SYNC_FS_INSTANCE_CONSUMER)
 public class MQSyncProcessCommentService implements RocketMQListener<CfgApproveSyncDTO.SyncFsCommentToMqDTO> {
 
     @Resource
