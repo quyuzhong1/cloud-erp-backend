@@ -37,6 +37,7 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
+import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
@@ -234,6 +235,9 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	public Boolean reCreate(ReCreateDTO dto) {
 		String checkMonth = dto.getCheckMonth();
 		checkMonth = checkMonth.replace("-", "年") + "月";
+		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
+			throw new ServiceException("只允许重新生成上月核对任务");
+		}
 		Integer count = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
 				.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
 		if(count != null && count > 0) {
@@ -255,6 +259,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 		String querySql = dto.getSqlMap().get("default");
 		String permissionSql = dto.getPermissionSql();
 		List<AdsErpDiffOutstockSyncEntity> list = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
+				.eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月"))
 		.select(AdsErpDiffOutstockSyncEntity::getSourceSystem , AdsErpDiffOutstockSyncEntity::getAccountCode , AdsErpDiffOutstockSyncEntity::getCheckMonth)
 		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
 		.list();
