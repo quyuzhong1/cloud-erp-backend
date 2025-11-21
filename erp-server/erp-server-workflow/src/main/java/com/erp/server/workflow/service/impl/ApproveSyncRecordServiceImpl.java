@@ -311,9 +311,6 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
                     mqDto.setApproveType(managementTask.getApproveStatus().getStatus());
                     mqDto.setComment("");
-
-                    //不推送消息
-                    mqDto.setIsSend(Boolean.FALSE);
                     processManagementService.syncFsExternalInstance(mqDto, MyConsumerRecordTypeEnum.SYNC_FS);
 
                 }

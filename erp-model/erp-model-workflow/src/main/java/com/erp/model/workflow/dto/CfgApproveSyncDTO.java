@@ -441,9 +441,6 @@ public class CfgApproveSyncDTO implements Serializable {
         private String type;
         //审批意见
         private String comment;
-
-        //是否发送消息，默认是发送
-        private Boolean isSend = Boolean.TRUE;
     }
 
     /**

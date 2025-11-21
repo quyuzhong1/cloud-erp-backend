@@ -191,12 +191,9 @@ public class MQSyncFsHandler {
             //更新消息
             cfgApproveSyncSendHandler.updateNotice(dto,processTaskManagementEntities,syncRecordEntity);
 
-            Boolean isSend = dto.getIsSend();
-            if(isSend){
-                //消息推送
-                cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+            //消息推送
+            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
 
-            }
 //            //校验三方审批实例
 //            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
 //            log.info("MQSyncFsInstanceConsumerService 校验三方审批实例请求参数: {}" ,  new Gson().toJson(checkExternalInstanceReq));
