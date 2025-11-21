@@ -19,6 +19,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+import com.erp.server.dmp.query.AdsErpFirstMileInTransitDiffQueryHandler;
 import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -58,7 +59,7 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
             menuCode = "dmp:adsErpFirstMileInTransitDiff:paging",
             tableAlias = "aefmid"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AdsErpFirstMileInTransitDiffQueryHandler.class)
     public ApiResult<PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto) {
         return success(adsErpFirstMileInTransitDiffService.paging(dto));
     }
