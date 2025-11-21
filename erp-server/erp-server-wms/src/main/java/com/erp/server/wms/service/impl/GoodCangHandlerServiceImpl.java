@@ -185,6 +185,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(goodCangUploadFileReq);
         GoodCangUploadOrderLabelResp resp = response.getData();
         ThirdWarehouseUploadOrderLabelResponse uploadOrderLabelResponse = ThirdWarehouseConverter.INSTANCE.googCangResToThirdWarehouseUploadOrderLabelResponse(resp);
+        if(response.getMessage().contains("订单状态已确认")){
+            return success(new ThirdWarehouseUploadOrderLabelResponse(uploadFileReq.getOrderCode()));
+        }
         return isSuccess(response.getAsk(), response.getMessage()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
 
     }
