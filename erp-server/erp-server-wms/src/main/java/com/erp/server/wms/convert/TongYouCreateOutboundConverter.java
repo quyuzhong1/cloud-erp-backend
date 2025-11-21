@@ -24,26 +24,27 @@ public interface TongYouCreateOutboundConverter {
     @Mappings({
             @Mapping(target = "ck_nums", source = "warehouseCode"),
             @Mapping(target = "deliver_no", source = "referenceNo"),
-            @Mapping(target = "chqd", source = ""),
-            @Mapping(target = "country", source = ""),
-            @Mapping(target = "city", source = ""),
+            @Mapping(target = "chqd", source = "req.shippingMethod"),
+            @Mapping(target = "country", source = "receiverInfo.countryCode"),
+            @Mapping(target = "city", source = "receiverInfo.province"),
+            @Mapping(target = "district", source = "receiverInfo.city"),
             @Mapping(target = "zip", source = "receiverInfo.zip"),
             @Mapping(target = "address", source = "receiverInfo.address"),
             @Mapping(target = "address2", source = "receiverInfo.address2"),
             @Mapping(target = "contact", source = "receiverInfo.contact"),
             @Mapping(target = "mobile", source = "receiverInfo.mobile"),
-            @Mapping(target = "phone", source = ""),
-            @Mapping(target = "email", source = ""),
-            @Mapping(target = "house_number", source = ""),
-            @Mapping(target = "address_type", source = ""),
-            @Mapping(target = "qmfw", source = ""),
-            @Mapping(target = "platform", source = ""),
-            @Mapping(target = "api_type", source = ""),
-            @Mapping(target = "waybill", source = ""),
-            @Mapping(target = "pda_url", source = ""),
-            @Mapping(target = "beizhu", source = ""),
+            @Mapping(target = "phone", source = "receiverInfo.phone"),
+            @Mapping(target = "email", source = "receiverInfo.email"),
+            @Mapping(target = "house_number", constant = ""),
+            @Mapping(target = "address_type", constant = ""),
+            @Mapping(target = "qmfw", source = "req.isApiSignName"),
+            @Mapping(target = "platform", constant = ""),
+            @Mapping(target = "api_type", constant = ""),
+            @Mapping(target = "waybill", constant = ""),
+            @Mapping(target = "pda_url", source = "req.labelUrl"),
+            @Mapping(target = "beizhu", constant = ""),
     })
-    TongYouCreateOutboundReq InboundToThird(ThirdWarehouseCreateOutboundReq req, ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo);
+    TongYouCreateOutboundReq outboundToThird(ThirdWarehouseCreateOutboundReq req, ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo);
 
 
 
@@ -51,6 +52,6 @@ public interface TongYouCreateOutboundConverter {
             @Mapping(target = "sku", source = "productSku"),
             @Mapping(target = "nums", source = "quantity"),
     })
-    TongYouCreateOutboundReq.AddDetailDTO InboundDetailToThird(ThirdWarehouseCreateOutboundReq.Item req);
-    List<TongYouCreateOutboundReq.AddDetailDTO> InboundDetailToThird(List<ThirdWarehouseCreateOutboundReq.Item> req);
+    TongYouCreateOutboundReq.AddDetailDTO outboundDetailToThird(ThirdWarehouseCreateOutboundReq.Item req);
+    List<TongYouCreateOutboundReq.AddDetailDTO> outboundDetailToThird(List<ThirdWarehouseCreateOutboundReq.Item> req);
 }

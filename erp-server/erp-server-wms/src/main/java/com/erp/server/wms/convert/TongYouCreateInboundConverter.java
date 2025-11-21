@@ -27,7 +27,7 @@ public interface TongYouCreateInboundConverter {
             @Mapping(target = "beizhu", source = "remark"),
             @Mapping(target = "country", source = "countryName"),
     })
-    TongYouCreateInboundReq.AddDTO InboundToThird(ThirdWarehouseCreateInboundReq req);
+    TongYouCreateInboundReq.AddDTO inboundToThird(ThirdWarehouseCreateInboundReq req);
 
 
 
@@ -40,6 +40,6 @@ public interface TongYouCreateInboundConverter {
             @Mapping(target = "kk", source = "boxWidth"),
             @Mapping(target = "gg", source = "boxHeight"),
     })
-    TongYouCreateInboundReq.AddDetailDTO InboundDetailToThird(ThirdWarehouseCreateInboundReq.Item req);
-    List<TongYouCreateInboundReq.AddDetailDTO> InboundDetailToThird(List<ThirdWarehouseCreateInboundReq.Item> req);
+    TongYouCreateInboundReq.AddDetailDTO inboundDetailToThird(ThirdWarehouseCreateInboundReq.Item req);
+    List<TongYouCreateInboundReq.AddDetailDTO> inboundDetailToThird(List<ThirdWarehouseCreateInboundReq.Item> req);
 }

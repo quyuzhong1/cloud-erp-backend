@@ -83,7 +83,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private TongYouCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
         TongYouCreateInboundReq request = new TongYouCreateInboundReq();
         //主表信息
-        TongYouCreateInboundReq.AddDTO addDTO = TongYouCreateInboundConverter.INSTANCE.InboundToThird(createInboundReq);
+        TongYouCreateInboundReq.AddDTO addDTO = TongYouCreateInboundConverter.INSTANCE.inboundToThird(createInboundReq);
         if (CharSequenceUtil.equals(createInboundReq.getReceivingType(), OverseasInstockTypeEnum.SELF_HEADWAY.getCode())) {
             addDTO.setJhfs("693");
             addDTO.setOrder_types("718");
@@ -96,7 +96,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         addDTO.setWaybill(createInboundReq.getReceivingCode());
 
         //明细信息
-        List<TongYouCreateInboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateInboundConverter.INSTANCE.InboundDetailToThird(createInboundReq.getItems());
+        List<TongYouCreateInboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateInboundConverter.INSTANCE.inboundDetailToThird(createInboundReq.getItems());
         addDTO.setOrder_products(addDetailDTOList);
         request.setOrder_list(Collections.singletonList(addDTO));
         return request;

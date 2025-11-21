@@ -113,6 +113,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * EORI税号
      */
     private String eoriTaxNo;
+    /**
+     * 是否签名同步，是,否
+     */
+    private String isApiSignName;
 
     @Data
     @AllArgsConstructor
