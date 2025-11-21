@@ -617,7 +617,6 @@ public enum RocketMqTagEnum {
      * workflow 同步飞书流程实例
      */
     WORKFLOW_SYNC_FS_INSTANCE_TAG(12001, RocketMqTagEnum.SYNC_WORKFLOW, "workflow_sync_fs_instance_tag"),
-    WORKFLOW_SYNC_FS_COMMENT_TAG(12002, RocketMqTagEnum.SYNC_WORKFLOW, "{}-workflow_sync_fs_comment_tag"),
 
 
 
