@@ -579,25 +579,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public void syncComment(CfgApproveSyncDTO.SyncFsCommentToMqDTO commentToMqDTO, MyConsumerRecordTypeEnum myConsumerRecordTypeEnum) {
         CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = commentToMqDTO.getSyncFsProcessToMqDTO();
         String sysClassify = workMenuService.getSysClassifyByCode(mqDto.getBusinessKey());
-        if(StringUtils.isBlank(sysClassify)){
-            CfgApproveSyncEntity cfgApproveSyncEntity = mqDto.getCfgApproveSyncEntity();
-            //记录失败
-            ApproveSyncRecordEntity approveSyncRecordEntity = new ApproveSyncRecordEntity();
-            approveSyncRecordEntity.setCfgApproveSyncId(cfgApproveSyncEntity.getId());
-            approveSyncRecordEntity.setNoticeType(ApproveSyncRecordNoticeTypeEnum.SYNC_COMMENT.getCode());
-            approveSyncRecordEntity.setBusinessType(cfgApproveSyncEntity.getBusinessType());
-            approveSyncRecordEntity.setBusinessCode(mqDto.getBusinessCode());
-            approveSyncRecordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-            approveSyncRecordEntity.setSendTime(LocalDateTime.now());
-            approveSyncRecordEntity.setTitle(cfgApproveSyncEntity.getTitle());
-            approveSyncRecordEntity.setStatus(ApproveSyncRecordStatusEnum.FAILED.getCode());
-            approveSyncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.SYNC_COMMENT.getCode());
-            approveSyncRecordEntity.setErrorReason("sysClassify为空");
-            Map<String, Object> dataJson = BeanUtil.beanToMap(mqDto);
-            dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.SYNC_COMMENT.getCode());
-            approveSyncRecordEntity.setDataJson(dataJson);
-            approveSyncRecordService.insertBatch(Arrays.asList(approveSyncRecordEntity));
-        }else {
+        if(StringUtils.isNotBlank(sysClassify)){
             String topic = "${spring.cloud.nacos.discovery.namespace}-{}_workflow_sync_fs_comment_topic";
 
             topic = StrUtil.format(topic, sysClassify);
@@ -611,7 +593,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if(Objects.nonNull(findUserDTO)){
                 mqDto.setOperatorName(findUserDTO.getUserName());
             }
-            mqProducerService.syncClassMsgWithDelayLevel(topic, tag,mqDto , mqDto.getProcessManagementId(),1);
+
+            mqProducerService.syncClassMsgWithDelayLevel(topic, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , mqDto.getProcessManagementId(),1);
         }
     }
 
