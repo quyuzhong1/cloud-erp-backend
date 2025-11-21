@@ -1227,7 +1227,7 @@ public class SoOutstockDTO implements Serializable {
     @Builder
     public static class ExportLogisticsHandoverListDetailDTO {
 
-        private Integer rowNum;
+        private String rowNum;
 
         private String skuNo;
         private String productName;

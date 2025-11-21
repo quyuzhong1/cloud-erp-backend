@@ -11,8 +11,15 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.metadata.CellData;
+import com.alibaba.excel.metadata.Head;
+import com.alibaba.excel.write.handler.CellWriteHandler;
+import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
+import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
+import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
+import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -125,6 +132,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -4455,6 +4463,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 dtoList.add(detailDTO);
                 rowNum++;
             }
+            //不超过6行补齐
+            for (int i = dtoList.size(); i < 6; i++) {
+                SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO detailDTO = new SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO();
+                detailDTO.setRowNum(i+1);
+                dtoList.add(detailDTO);
+            }
 
             ExcelData excelData = new ExcelData();
             excelData.setData(exportDTO);
@@ -4477,15 +4491,86 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SheetData<SoOutstockDTO.ExportLogisticsHandoverListDetailDTO> sheetData = new SheetData<>();
                 List<SoOutstockDTO.ExportLogisticsHandoverListDetailDTO> detialList = new ArrayList<>();
                 int detailNum = 1;
+                int total = 0;
                 for (SoOutstockDTO.ExportLogisticsHandoverListDTO exportLogisticsHandoverListDTO : mapEntry.getValue()) {
                     SoOutstockDTO.ExportLogisticsHandoverListDetailDTO detailDTO = new SoOutstockDTO.ExportLogisticsHandoverListDetailDTO();
                     BeanUtils.copyProperties(exportLogisticsHandoverListDTO,detailDTO);
-                    detailDTO.setRowNum(detailNum);
+                    detailDTO.setRowNum(String.valueOf(detailNum));
                     detailNum++;
+                    total = total + detailDTO.getActualQty();
                     detialList.add(detailDTO);
                 }
+                SoOutstockDTO.ExportLogisticsHandoverListDetailDTO totalDetailDTO = new SoOutstockDTO.ExportLogisticsHandoverListDetailDTO();
+                totalDetailDTO.setRowNum("合计");
+                totalDetailDTO.setActualQty(total);
+                detialList.add(totalDetailDTO);
 
-                WriteSheet writeSheet = EasyExcel.writerSheet(sheetNo,mapEntry.getKey()).build();
+                // 创建列宽设置
+                WriteHandler columnWidthHandler = new AbstractColumnWidthStyleStrategy() {
+                    @Override
+                    protected void setColumnWidth(WriteSheetHolder writeSheetHolder, List<CellData> cellDataList, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
+                        Sheet sheet = writeSheetHolder.getSheet();
+                        sheet.setColumnWidth(0, 10 * 256);
+                        sheet.setColumnWidth(1, 20 * 256);
+                        sheet.setColumnWidth(2, 30 * 256);
+                        sheet.setColumnWidth(3, 12 * 256);
+                        sheet.setColumnWidth(4, 20 * 256);
+                        sheet.setColumnWidth(5, 20 * 256);
+                    }
+                };
+
+                // 创建精确的表头样式处理器
+                WriteHandler preciseHeadStyleHandler = new CellWriteHandler() {
+                    @Override
+                    public void beforeCellCreate(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row, Head head, Integer columnIndex, Integer relativeRowIndex, Boolean isHead) {
+                    }
+                    @Override
+                    public void afterCellCreate(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
+                    }
+                    @Override
+                    public void afterCellDataConverted(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, CellData cellData, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
+                    }
+                    @Override
+                    public void afterCellDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, List<CellData> cellDataList, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
+                        // 主要在这个方法中设置样式
+                        Workbook workbook = writeSheetHolder.getSheet().getWorkbook();
+
+                        // 创建新样式
+                        CellStyle cellStyle = workbook.createCellStyle();
+                        Font font = workbook.createFont();
+
+                        // 设置通用样式（边框等）
+                        cellStyle.setBorderBottom(BorderStyle.THIN);
+                        cellStyle.setBorderTop(BorderStyle.THIN);
+                        cellStyle.setBorderLeft(BorderStyle.THIN);
+                        cellStyle.setBorderRight(BorderStyle.THIN);
+                        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                        // 根据行列位置设置特定样式
+                        if (relativeRowIndex != null) {
+                            // 前两行的特定列加粗（客户名称、销售单号等）
+                            if ((relativeRowIndex == 0 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
+                                    (relativeRowIndex == 1 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
+                                    relativeRowIndex == 3) { // 表头行
+                                font.setBold(true);
+                                font.setFontHeightInPoints((short) 12);
+                                cellStyle.setAlignment(HorizontalAlignment.CENTER);
+                            } else {
+                                font.setBold(false);
+                                font.setFontHeightInPoints((short) 11);
+                                cellStyle.setAlignment(HorizontalAlignment.LEFT);
+                            }
+                        }
+                        cellStyle.setFont(font);
+                        cell.setCellStyle(cellStyle);
+
+                    }
+                };
+
+                WriteSheet writeSheet = EasyExcel.writerSheet(sheetNo,mapEntry.getKey())
+                        .registerWriteHandler(columnWidthHandler)
+                        .registerWriteHandler(preciseHeadStyleHandler)
+                        .build();
                 sheetNo++;
 
                 WriteTable table = EasyExcel.writerTable(0)
