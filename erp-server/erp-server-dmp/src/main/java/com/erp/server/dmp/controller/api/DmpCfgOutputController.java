@@ -297,8 +297,11 @@ public class DmpCfgOutputController extends BaseController {
     )
     public ApiResult<PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> dto) {
         Page<DmpCfgOutputEntity> page = dmpCfgOutputService.lambdaQuery()
-                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
-                .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
+                .and(q -> q
+                        .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
+                        .or()
+                        .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
+                )
                 .page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
         // 快速复制page.getRecords()到List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList
         List<DmpCfgOutputDTO.ListDmpCfgOutputDTO> resultList = page.getRecords().stream()
