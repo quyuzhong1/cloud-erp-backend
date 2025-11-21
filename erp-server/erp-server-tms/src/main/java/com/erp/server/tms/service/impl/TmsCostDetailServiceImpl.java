@@ -324,7 +324,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             BigDecimal exchangeRate = rateMap.get(costCurrency);
             if(exchangeRate == null) {
             	//查询汇率
-                exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costCurrency);
                 if(ObjectUtil.isEmpty(exchangeRate)){
                     log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
                     throw new ServiceException("汇率为空，请维护汇率后再提交");
