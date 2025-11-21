@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -173,6 +174,13 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private TongYouCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         //主表信息
         TongYouCreateOutboundReq addDTO = TongYouCreateOutboundConverter.INSTANCE.outboundToThird(createOutboundReq,createOutboundReq.getReceiverInfo());
+        addDTO.setZip(createOutboundReq.getReceiverInfo().getZipCode());
+        //收货人电话
+        String phone = createOutboundReq.getReceiverInfo().getPhone();
+        //买家电话
+        String buyerNumber = createOutboundReq.getReceiverInfo().getBuyerNumber();
+        addDTO.setMobile(StrUtil.isBlank(phone) ? buyerNumber : phone);
+        addDTO.setPhone(StrUtil.isBlank(buyerNumber) ? phone : buyerNumber);
         //明细信息
         List<TongYouCreateOutboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateOutboundConverter.INSTANCE.outboundDetailToThird(createOutboundReq.getItems());
         addDTO.setDeliver_products(addDetailDTOList);
