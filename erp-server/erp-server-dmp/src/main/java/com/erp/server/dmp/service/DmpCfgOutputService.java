@@ -86,4 +86,11 @@ public interface DmpCfgOutputService extends SuperService<DmpCfgOutputEntity> {
     BatchResultDTO disable(DmpCfgOutputEntity entity);
 
     DmpCfgOutputEntity viewEntity(String id);
+
+    /**
+     * 分页搜索列表查询
+     * @param dto
+     * @return
+     */
+    PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO> searchPaging(PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> dto);
 }

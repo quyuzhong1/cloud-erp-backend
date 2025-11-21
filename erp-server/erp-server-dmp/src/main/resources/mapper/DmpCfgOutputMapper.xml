@@ -118,4 +118,35 @@
         GROUP BY disabled
     </select>
 
+    <select id="searchPaging" resultType="com.erp.model.dmp.dto.DmpCfgOutputDTO$ListDmpCfgOutputDTO">
+        select
+            dco.id AS id,
+            dco.input_convert_id AS inputConvertId,
+            dcic.convert_class AS inputConvertClass,
+            CASE WHEN dco.exec_system = 'restCloud'
+                     THEN dco.flow_name ELSE dcic.type
+                END AS name,
+           dco.disabled AS disabled
+        from dmp_cfg_output dco
+            left join dmp_cfg_input_convert dcic on dco.input_convert_id = dcic.id
+        where dco.is_deleted = false
+        <if test="params.searchKey !=null and params.searchKey!=''">
+            and (
+            dco.flow_name ILIKE concat('%',#{params.searchKey}::text,'%') or
+            dco.flow_code ILIKE concat('%',#{params.searchKey}::text,'%') or
+            dcic.type ILIKE concat('%',#{params.searchKey}::text,'%')
+            )
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dco.create_time DESC
+    </select>
+
 </mapper>

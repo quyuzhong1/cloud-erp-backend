@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -45,4 +47,13 @@ public interface DmpCfgOutputMapper extends BaseMapper<DmpCfgOutputEntity> {
     * @return
     */
     List<DmpCfgOutputDTO.TabListDTO> tabList(@Param("params") DmpCfgOutputDTO.PagingParamDTO searchParam);
+
+    /**
+     * 分页搜索查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<DmpCfgOutputDTO.ListDmpCfgOutputDTO> searchPaging(Page<?> query, @Param("params") DmpCfgOutputDTO.SimplePagingParamDTO params);
+
 }

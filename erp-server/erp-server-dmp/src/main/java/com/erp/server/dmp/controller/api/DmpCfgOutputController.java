@@ -297,24 +297,7 @@ public class DmpCfgOutputController extends BaseController {
             tableAlias = "dco"
     )
     public ApiResult<PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO>> simplePaging(@RequestBody @Validated PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> dto) {
-        LambdaQueryChainWrapper<DmpCfgOutputEntity> wrapper = dmpCfgOutputService.lambdaQuery();
-        if (StringUtils.isNotBlank(dto.getParams().getSearchKey())){
-            wrapper.and(q -> q
-                    .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowName, dto.getParams().getSearchKey())
-                    .or()
-                    .like(StringUtils.isNotBlank(dto.getParams().getSearchKey()), DmpCfgOutputEntity::getFlowCode, dto.getParams().getSearchKey())
-            );
-        }
-        Page<DmpCfgOutputEntity> page = wrapper.page(new Page<>(dto.getCurrPage(), dto.getPageSize()));
-
-        // 快速复制page.getRecords()到List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList
-        List<DmpCfgOutputDTO.ListDmpCfgOutputDTO> resultList = page.getRecords().stream()
-                .map(entity -> {
-                    DmpCfgOutputDTO.ListDmpCfgOutputDTO dtoTemp = new DmpCfgOutputDTO.ListDmpCfgOutputDTO();
-                    BeanUtils.copyProperties(entity, dtoTemp);
-                    return dtoTemp;
-                })
-                .collect(Collectors.toList());
-        return success(new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage()));
+        PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO> paging = dmpCfgOutputService.searchPaging(dto);
+        return success(paging);
     }
 }

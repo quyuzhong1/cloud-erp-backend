@@ -341,4 +341,12 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     public DmpCfgOutputEntity viewEntity(String id) {
         return this.getById(id);
     }
+
+    @Override
+    public PagingVO<DmpCfgOutputDTO.ListDmpCfgOutputDTO> searchPaging(PagingDTO<DmpCfgOutputDTO.SimplePagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<?> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpCfgOutputDTO.ListDmpCfgOutputDTO> pageData = this.baseMapper.searchPaging(query, pagingParamDTO.getParams());
+        return new PagingVO<>(pageData);
+    }
 }
