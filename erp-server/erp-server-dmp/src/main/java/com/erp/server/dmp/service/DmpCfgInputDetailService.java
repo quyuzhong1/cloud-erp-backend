@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -95,4 +97,6 @@ public interface DmpCfgInputDetailService extends SuperService<DmpCfgInputDetail
     BatchResultDTO enable(DmpCfgInputDetailEntity entity);
 
     BatchResultDTO disable(DmpCfgInputDetailEntity entity);
+
+    BatchResultDTO doTask(String id, DmpCfgInputDetailDTO.DoTaskDTO dto, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity entity);
 }

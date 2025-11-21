@@ -52,8 +52,6 @@ public class DmpCfgInputDetailController extends BaseController {
     private DmpCfgInputDetailService dmpCfgInputDetailService;
     @Resource
     private DmpCfgInputService dmpCfgInputService;
-    @Resource
-    private DmpInputCreateFactory dmpInputCreateFactory;
 
     /**
     * 新增
@@ -307,24 +305,7 @@ public class DmpCfgInputDetailController extends BaseController {
                 continue;
             }
             try {
-                if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())){
-                    // 中台执行
-                    DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = buildDmpInputHotfixCreateRequest(dto, dmpCfgInputEntity, entity);
-                    dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-                } else if (DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgInputEntity.getExecSystem())){
-                    // RestCloud执行
-                    boolean restCloudCanRun = Arrays.asList(DmpInputTaskTaskTypeEnum.NORMAL.getCode(), DmpInputTaskTaskTypeEnum.HISTORY.getCode()).contains(dto.getTaskType());
-                    if (!restCloudCanRun){
-                        result = BatchResultDTO.fail(id, id, "RestCloud执行系统只支持普通任务和历史任务，当前任务类型：" + DmpInputTaskTaskTypeEnum.getName(dto.getTaskType()));
-                        resultDTOS.add(result);
-                        continue;
-                    }
-                    DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = buildDmpInputHotfixCreateRequest(dto, dmpCfgInputEntity, entity);
-                    dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
-                } else {
-                    ServiceException.runError("不支持的执行系统类型：" + dmpCfgInputEntity.getExecSystem());
-                }
-                result = BatchResultDTO.success(id, id, "生成拉取任务成功");
+                result = dmpCfgInputDetailService.doTask(id, dto, dmpCfgInputEntity, entity);
             }catch (Exception e){
                 log.error("拉取调度生成任务失败",e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
@@ -332,24 +313,5 @@ public class DmpCfgInputDetailController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    private static DmpInputHotfixCreateRequest buildDmpInputHotfixCreateRequest(DmpCfgInputDetailDTO.DoTaskDTO dto,
-                                                                                DmpCfgInputEntity dmpCfgInputEntity,
-                                                                                DmpCfgInputDetailEntity entity) {
-        if (!dto.getStartTime().isBefore(dto.getEndTime())){
-           ServiceException.runError("结束时间不能小于开始时间");
-        }
-        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-        dmpInputHotfixCreateRequest.setCfgInputId(dmpCfgInputEntity.getId());
-        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(entity.getId()));
-        dmpInputHotfixCreateRequest.setTaskType(dto.getTaskType());
-        dmpInputHotfixCreateRequest.setDetailExtendJson(dto.getCheckAndDetailExtendJson());
-        dmpInputHotfixCreateRequest.setStartTime(dto.getStartTime());
-        dmpInputHotfixCreateRequest.setEndTime(dto.getEndTime());
-        dmpInputHotfixCreateRequest.setExecTimeout(null == entity.getExecTimeout() ? dto.getExecTimeout() : entity.getExecTimeout());
-        dmpInputHotfixCreateRequest.setSplitFlag(dto.isSplitFlag());
-        dmpInputHotfixCreateRequest.setNextExecTime(dto.getNextExecTime());
-        return dmpInputHotfixCreateRequest;
     }
 }
