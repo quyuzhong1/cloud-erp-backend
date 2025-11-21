@@ -92,6 +92,10 @@ public class SoDeliveryNoticeDTO {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
