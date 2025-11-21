@@ -61,7 +61,6 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
@@ -2857,7 +2856,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .skuIdList(skuIds)
                     .build();
             List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(dto);
-            List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0).collect(Collectors.toList());
+            List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0 && (CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()) || CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.FROZEN.getCode()) )).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> skuNoList = collect.stream().map(InventoryEntity::getSkuNo).distinct().collect(Collectors.toList());
                 throw new ServiceException(ApiError.ERROR_99131, String.join(",",skuNoList));
