@@ -1,6 +1,7 @@
 package com.erp.server.fms.service;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 
 /**
@@ -9,6 +10,12 @@ import com.erp.model.workflow.dto.EndProcessDTO;
  * @date 2025/11/10
  */
 public interface FmsWorkflowService {
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) ;
 
     /**
      * 审核结束处理

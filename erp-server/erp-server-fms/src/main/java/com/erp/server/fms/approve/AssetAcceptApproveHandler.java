@@ -27,6 +27,11 @@ public class AssetAcceptApproveHandler extends AbstractApproveHandler {
     private AssetAcceptService assetAcceptService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return assetAcceptService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = assetAcceptService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

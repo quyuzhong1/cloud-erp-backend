@@ -2,6 +2,7 @@ package com.erp.rpc.workflow.handle;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,14 @@ import org.springframework.web.bind.annotation.PostMapping;
  */
 @FeignClient(value = "erp-fms", contextId = "workflow-fms", configuration = {FeignErrorDecoder.class})
 public interface FmsWorkflowFeign extends BaseWorkflowService{
+
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    @PostMapping("/feign/fmsWorkflow/approve")
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto);
 
     /**
      * 结束审核

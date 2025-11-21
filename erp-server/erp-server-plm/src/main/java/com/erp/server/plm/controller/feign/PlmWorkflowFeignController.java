@@ -24,9 +24,9 @@ public class PlmWorkflowFeignController {
     @Resource
     private WorkflowProcessService workflowProcessService;
     /**
-     * @description: 结束审核
-     * @author Will
-     * @date: 2023/7/3 15:42
+     * @description: 审核
+     * @author jack
+     * @date: 2025-11-21
      * @param dto
      * @return Boolean
      */

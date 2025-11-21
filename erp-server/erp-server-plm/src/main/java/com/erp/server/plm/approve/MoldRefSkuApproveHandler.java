@@ -22,6 +22,11 @@ public class MoldRefSkuApproveHandler extends AbstractApproveHandler {
     private MoldRefSkuService moldRefSkuService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return moldRefSkuService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = moldRefSkuService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

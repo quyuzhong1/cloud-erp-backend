@@ -24,6 +24,11 @@ public class MoldInfoApproveHandler extends AbstractApproveHandler {
     private MoldInfoService moldInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return moldInfoService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = moldInfoService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

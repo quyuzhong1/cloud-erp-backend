@@ -27,6 +27,11 @@ public class AssetLocationApproveHandler extends AbstractApproveHandler {
     private AssetLocationService assetLocationService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return assetLocationService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = assetLocationService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

@@ -27,6 +27,11 @@ public class AssetProfitLossApproveHandler extends AbstractApproveHandler {
     private AssetProfitLossService assetProfitLossService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return assetProfitLossService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = assetProfitLossService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

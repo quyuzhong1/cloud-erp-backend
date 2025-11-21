@@ -1,6 +1,7 @@
 package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.fms.service.FmsWorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,17 @@ public class FmsWorkflowFeignController {
 
     @Autowired
     private FmsWorkflowService fmsWorkflowService;
+    /**
+     * @description: 审核
+     * @author jack
+     * @date: 2025-11-21
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/approve")
+    public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
+        return fmsWorkflowService.approve(dto);
+    }
 
     /**
      * 审核结束回调
