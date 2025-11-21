@@ -111,9 +111,8 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
 
         // 记录主单操作日志
         log.info("编辑 开始记录拉取配置日志数据，单号：【{}】", dmpCfgInputEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputEntity.getCode(), "拉取配置");
-        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getId(), "更新拉取配置数据");
+        String msg = StrUtil.format("用户【{}】编辑编号为【{}】的【{}】 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputEntity.getCode(), "拉取配置");
+        operateLogService.addModuleOperateLogByObj(old, dmpCfgInputEntity, ModuleTypeEnum.DMP_CFG_INPUT.getCode(), dmpCfgInputEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

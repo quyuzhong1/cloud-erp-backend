@@ -3,6 +3,7 @@ package com.erp.model.dmp.dto;
 import java.time.LocalDateTime;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -167,10 +168,23 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 是否禁用
+         */
+        private String disabledDesc;
+
+        /**
         * 扩展json
         */
         private String extendJson;
 
+        /**
+         * 最大间隔时间，长度单位：秒
+         */
+        private Integer maxIntervalTime;
+
+        /**
+         * 备注
+         */
         private String remark;
 
         /**
@@ -296,6 +310,11 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         private String approveStatus;
 
 
+        /**
+         * 最大间隔时间长度，0=按间隔时间长度intervalTime，-1=按当前时间 单位：秒
+         */
+        private Integer maxIntervalTime;
+
     }
 
     /**
@@ -390,6 +409,17 @@ public class DmpCfgOutputDetailDTO implements Serializable {
          * 最大间隔时间长度，0=按间隔时间长度intervalTime，-1=按当前时间 单位：秒
          */
         private Integer maxIntervalTime = 0;
+
+        /**
+         * 延迟时间:单位秒
+         */
+        @NotNull(message = "延迟时间:单位秒不能为空")
+        private Integer dealyTime;
+
+        /**
+         * 备注
+         */
+        private String remark = "";
 
 
     }

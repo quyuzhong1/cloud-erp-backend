@@ -93,6 +93,8 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送调度"));
         DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity =  BeanMapperUtils.map(DmpCfgOutputDetailEntity.class, updateDTO);
 
+        DmpCfgOutputEntity outputEntity = dmpCfgOutputService.getByIdOpt(old.getMainId()).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送配置"));
+
         // 数据处理
         handleData(dmpCfgOutputDetailEntity, updateDTO);
         log.info("编辑 开始修改推送调度数据，id：【{}】", old.getId());
@@ -103,8 +105,9 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
 
         // 记录主单操作日志
         log.info("编辑 开始记录推送调度日志数据，id：【{}】", dmpCfgOutputDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputDetailEntity.getId(), "推送调度");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgOutputDetailEntity.getId(), "修改【推送调度】数据");
+        String msg = StrUtil.format("用户【{}】编辑编号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), outputEntity.getFlowCode(), "推送调度");
+        operateLogService.addModuleOperateLogByObj(old, dmpCfgOutputDetailEntity, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgOutputDetailEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 
@@ -228,6 +231,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
                 data.setSystemCode(systemEntity.getCode());
                 data.setSystemName(systemEntity.getName());
             }
+            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
         }
 
     }

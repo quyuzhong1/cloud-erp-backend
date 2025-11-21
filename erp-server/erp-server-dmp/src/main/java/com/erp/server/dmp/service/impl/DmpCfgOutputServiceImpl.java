@@ -119,10 +119,9 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
 
         // 记录主单操作日志
         log.info("编辑 开始记录推送配置日志数据，id：【{}】", dmpCfgOutputEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputEntity.getId(), "推送配置");
+        String msg = StrUtil.format("用户【{}】编辑编号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputEntity.getFlowCode(), "推送配置");
         //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), dmpCfgOutputEntity.getId(), "修改【推送配置】数据");
-
+        operateLogService.addModuleOperateLogByObj(old, dmpCfgOutputEntity, ModuleTypeEnum.DMP_CFG_OUTPUT.getCode(), dmpCfgOutputEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -264,6 +263,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         for(DmpCfgOutputDTO.ListDTO data : list) {
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
+            data.setDisabledDesc(data.getDisabled() ? "启用":"停用");
         }
     }
 

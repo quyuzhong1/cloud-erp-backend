@@ -21,6 +21,7 @@ import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -96,6 +97,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取调度"));
         DmpCfgInputDetailEntity dmpCfgInputDetailEntity =  BeanMapperUtils.map(DmpCfgInputDetailEntity.class, updateDTO);
 
+        DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.getByIdOpt(old.getMainId()).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取配置"));
+
         // 数据处理
         handleData(dmpCfgInputDetailEntity, updateDTO);
         log.info("编辑 开始修改拉取调度数据，id：【{}】", old.getId());
@@ -105,10 +108,10 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录拉取调度日志数据，id：【{}】", dmpCfgInputDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputDetailEntity.getId(), "拉取调度");
+        log.info("编辑 开始记录拉取调度日志数据，id：【{}】", dmpCfgInputDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑编号为【{}】的【{}】 ", UserContext.getDefaultLoginUser().getUserName(), cfgInputEntity.getCode(), "拉取调度");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgInputDetailEntity.getId(), "更新【拉取调度】数据");
+        operateLogService.addModuleOperateLogByObj(old, dmpCfgInputDetailEntity, ModuleTypeEnum.DMP_CFG_INPUT_DETAIL.getCode(), dmpCfgInputDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

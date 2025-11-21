@@ -5,8 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.syslog.JavadocReader;
-import com.erp.model.dmp.entity.CfgOperateLogFieldEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
@@ -33,7 +32,9 @@ public class OperationLogFieldInsertSqlGenerator {
 
     static {
         targetClassList = Arrays.asList(
-                DmpCfgInputEntity.class
+                DmpCfgOutputEntity.class,
+                DmpCfgOutputDetailEntity.class,
+                DmpCfgInputDetailEntity.class
                 );
     }
 
