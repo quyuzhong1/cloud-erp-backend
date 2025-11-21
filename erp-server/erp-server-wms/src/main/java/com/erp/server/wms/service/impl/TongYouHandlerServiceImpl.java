@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.TongYouCreateInboundConverter;
+import com.erp.server.wms.convert.TongYouCreateOutboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.tongyou.dto.request.TongYouCancelOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
@@ -162,9 +163,20 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(tongYouBaseResp.getData().getOrderCode());
     }
 
+    /**
+     * 海外仓出库数据格式化
+     * @author will
+     * @date 2025/11/21 16:57
+     * @param createOutboundReq
+     * @return TongYouCreateOutboundReq
+     */
     private TongYouCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-
-        return new TongYouCreateOutboundReq();
+        //主表信息
+        TongYouCreateOutboundReq addDTO = TongYouCreateOutboundConverter.INSTANCE.outboundToThird(createOutboundReq,createOutboundReq.getReceiverInfo());
+        //明细信息
+        List<TongYouCreateOutboundReq.AddDetailDTO> addDetailDTOList = TongYouCreateOutboundConverter.INSTANCE.outboundDetailToThird(createOutboundReq.getItems());
+        addDTO.setDeliver_products(addDetailDTOList);
+        return addDTO;
 
     }
 
