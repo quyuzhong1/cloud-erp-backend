@@ -1849,6 +1849,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核时间
          */
         private LocalDate approveTime;
+        /**
+         * 采购时间
+         */
+        private LocalDate purchaseDate;
 
         /**
          * 审核状态

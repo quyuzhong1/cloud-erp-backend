@@ -484,7 +484,6 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
                     moldMonitorEntity.setSupplierName(entity.getSupplierName());
                 }
-
                 moldMonitorEntity.setStartDate( entity.getStartDate());
                 moldMonitorEntity.setEndDate( entity.getEndDate());
                 moldMonitorEntity.setCountDim( entity.getCountDim());
@@ -586,13 +585,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
                         .filter(e -> {
-                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate purchaseDate = e.getPurchaseDate();
                             LocalDate startDate = moldMonitorEntity.getStartDate();
                             LocalDate endDate = moldMonitorEntity.getEndDate();
-                            if (approveTime == null || startDate == null || endDate == null) {
+                            if (purchaseDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                            //一个月后的日期
+                            LocalDate oneMonthLater = endDate.plusMonths(1);
+                            return purchaseDate.compareTo(startDate) >= 0 && purchaseDate.compareTo(oneMonthLater) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
@@ -618,13 +619,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
                         .filter(e -> {
-                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate billDate = e.getBillDate();
                             LocalDate startDate = moldMonitorEntity.getStartDate();
                             LocalDate endDate = moldMonitorEntity.getEndDate();
-                            if (approveTime == null || startDate == null || endDate == null) {
+                            if (billDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                            //一个月后的日期
+                            LocalDate oneMonthLater = endDate.plusMonths(1);
+                            return billDate.compareTo(startDate) >= 0 && billDate.compareTo(oneMonthLater) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
@@ -650,13 +653,15 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
                         .filter(e -> {
-                            LocalDate approveTime = e.getApproveTime();
+                            LocalDate stockInDate = e.getStockInDate();
                             LocalDate startDate = moldMonitorEntity.getStartDate();
                             LocalDate endDate = moldMonitorEntity.getEndDate();
-                            if (approveTime == null || startDate == null || endDate == null) {
+                            if (stockInDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            return approveTime.compareTo(startDate) >= 0 && approveTime.compareTo(endDate) <= 0;
+                            //一个月后的日期
+                            LocalDate oneMonthLater = endDate.plusMonths(1);
+                            return stockInDate.compareTo(startDate) >= 0 && stockInDate.compareTo(oneMonthLater) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){

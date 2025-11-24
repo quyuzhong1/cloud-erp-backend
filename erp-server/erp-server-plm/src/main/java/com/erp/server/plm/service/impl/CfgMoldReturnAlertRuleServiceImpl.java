@@ -324,9 +324,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     @Override
     public List<CfgMoldReturnAlertRuleDTO.ListDTO> listAll(List<String> detailIds) {
         LocalDate today = LocalDate.now();
-        //一个月后的日期
-        LocalDate oneMonthLater = today.plusMonths(1);
-        return this.baseMapper.listAll(detailIds,today,oneMonthLater);
+        return this.baseMapper.listAll(detailIds,today);
     }
 
     /**

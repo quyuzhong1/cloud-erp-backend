@@ -293,7 +293,8 @@
             psid.stock_in_qty as qty,
             psid.sku_id as skuId,
             psi.approve_status,
-            psi.approve_time
+            psi.approve_time,
+            psi.stock_in_date as stockInDate
         FROM po_instock psi
         left join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         WHERE psi.is_deleted = false

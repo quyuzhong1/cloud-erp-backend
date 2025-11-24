@@ -1370,6 +1370,8 @@ public class WarehouseReceiveDTO implements Serializable {
 
         private LocalDate approveTime;
 
+        private LocalDate billDate;
+
         private Integer qty;
 
     }

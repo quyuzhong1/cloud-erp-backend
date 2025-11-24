@@ -845,7 +845,8 @@
         pod.purchase_qty as purchaseQty,
         po.create_time as createTime,
         po.approve_status as approveStatus,
-        po.approve_time as approveTime
+        po.approve_time as approveTime,
+        po.purchase_date as purchaseDate
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false

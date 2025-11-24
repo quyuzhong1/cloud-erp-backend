@@ -696,7 +696,8 @@
         prd.receive_qty as qty,
         prd.sku_id as skuId,
         pr.approve_status,
-        pr.approve_time
+        pr.approve_time,
+        pr.bill_date as billDate
         from po_receive pr
         inner join po_receive_detail prd on pr.id = prd.main_id and prd.is_deleted = false
         where pr.is_deleted = false
