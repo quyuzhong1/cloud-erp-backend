@@ -168,6 +168,8 @@ public class CfgApproveSyncCallbackHandler {
 //                    }
 //                }
             }
+        }else {
+            log.error("飞书审批回调未配置回调地址fsActionCallback");
         }
     }
 
@@ -205,6 +207,9 @@ public class CfgApproveSyncCallbackHandler {
         }
     }
 
+
+    //请把对应的回调地址以及encrypt填充后，在cmd即可进行回调测试
+    //curl -X POST "回调地址/api/workflow/fs/callback/api/approve" -H "Content-Type: application/json" -d "{\"encrypt\":\"\"}"
     public static void main(String[] args) {
         try {
             String key = "9527";
@@ -212,7 +217,8 @@ public class CfgApproveSyncCallbackHandler {
                     "  \"action_type\": \"APPROVE\",\n" +
                     "  \"user_id\": \"ee745246\",\n" +
                     "  \"approval_code\": \"09BC408A-8D2C-4D9D-AB50-535389DD8F88\",\n" +
-                    "  \"message_id\": \"7575068404004965318\",\n" +
+                    "  \"message_id\": \"7576174901405453516\",\n" +
+                    "  \"task_id\": \"1992842576919146497\",\n" +
                     "  \"reason\": \"123123123\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
