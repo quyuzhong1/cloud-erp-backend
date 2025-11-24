@@ -1495,10 +1495,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         cardDTO.setSourceId(acceptEntity.getId()); // 来源ID
         cardDTO.setOrgId(acceptEntity.getAcceptOrgId()); // 资产组织 = 验收组织
         cardDTO.setOrgName(acceptEntity.getAcceptOrgName()); // 资产组织名称
-        cardDTO.setUnit(UnitEnum.PCS.getName()); // 计量单位默认值
-        cardDTO.setType(AssetCategoryEnum.MACHINERY.getName()); // 资产类别默认值
-        cardDTO.setStatus(AssetStatusEnum.NORMAL.getName()); // 资产状态默认值
-        cardDTO.setChangeMethod(ChangeMethodEnum.PURCHASE.getName()); // 变动方式默认值
+        cardDTO.setUnit(UnitEnum.PCS.getCode()); // 计量单位默认值
+        cardDTO.setType(AssetCategoryEnum.MACHINERY.getCode()); // 资产类别默认值
+        cardDTO.setStatus(AssetStatusEnum.NORMAL.getCode()); // 资产状态默认值
+        cardDTO.setChangeMethod(ChangeMethodEnum.PURCHASE.getCode()); // 变动方式默认值
         cardDTO.setName(detail.getProductName()); // 资产名称 = 产品名称
         cardDTO.setStartUseDate(currentDate); // 开始使用日期 = 操作日期
         cardDTO.setQty(detail.getAcceptQty()); // 数量 = 验收数量
