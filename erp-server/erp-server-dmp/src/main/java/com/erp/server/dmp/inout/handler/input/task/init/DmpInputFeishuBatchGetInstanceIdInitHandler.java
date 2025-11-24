@@ -56,16 +56,12 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         JSONArray result = new JSONArray();
         try {
             List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
-//            for (String id : ids) {
-//                JSONObject object = new JSONObject();
-//                object.put("instance_id", id);
-//                object.put("ulanzi_approval_code", approvalCode);
-//                result.add(object);
-//            }
+            for (String id : ids) {
                 JSONObject object = new JSONObject();
-                object.put("instance_id", ids.get(1));
+                object.put("instance_id", id);
                 object.put("ulanzi_approval_code", approvalCode);
                 result.add(object);
+            }
         } catch (Exception e) {
             log.error("调用飞书失败,e= {}",e.getMessage());
             throw new ServiceException("调用飞书失败,msg= {}",e.getMessage());
