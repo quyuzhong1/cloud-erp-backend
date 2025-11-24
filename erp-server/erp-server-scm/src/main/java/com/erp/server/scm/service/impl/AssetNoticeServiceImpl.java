@@ -318,6 +318,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        // 作废的数据不允许审核
+        if(!Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -499,8 +503,11 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
             }
             List<SupplierAccountDTO.UpdateDTO> supplierAccountList = supplierAccountService.getBySupplierId(supplierId);
-            SupplierAccountDTO.UpdateDTO supplierAccount = supplierAccountList.stream().filter(obj -> obj.getIsDefault().equals(Boolean.TRUE)).findFirst().get();
-            //供应商默认账户
+            SupplierAccountDTO.UpdateDTO supplierAccount = supplierAccountList.stream()
+                    .filter(obj -> Boolean.TRUE.equals(obj.getIsDefault()))
+                    .findFirst()
+                    .orElse(null);
+            // 供应商默认账户
             if (Objects.nonNull(supplierAccount)) {
                 supplierDTO.setBankName(supplierAccount.getBankSubbranch());
                 supplierDTO.setBankAccount(supplierAccount.getBankAccount());
