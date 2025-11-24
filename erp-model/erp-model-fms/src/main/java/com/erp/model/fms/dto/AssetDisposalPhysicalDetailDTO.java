@@ -1,5 +1,6 @@
 package com.erp.model.fms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,11 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
         * 来源明细ID
         */
         private String assetDisposalDetailId;
+
+        /**
+         * 盘亏单明细id
+         */
+        private String assetProfitLossDetailId;
 
         /**
          * 来源明细ID
@@ -111,6 +117,12 @@ public class AssetDisposalPhysicalDetailDTO implements Serializable {
          * 来源明细ID
          */
         private String sourceDetailId;
+
+
+        /**
+         * 盘亏单明细id
+         */
+        private String assetProfitLossDetailId;
 
         /**
         * 主表ID

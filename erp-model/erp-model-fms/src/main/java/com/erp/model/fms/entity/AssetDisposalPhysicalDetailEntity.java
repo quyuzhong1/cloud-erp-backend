@@ -60,6 +60,12 @@ public class AssetDisposalPhysicalDetailEntity extends BaseEntity<AssetDisposalP
     @TableField("qty")
     private Integer qty;
 
+    /**
+     * 盘亏单明细id
+     */
+    @TableField("asset_profit_loss_detail_id")
+    private String assetProfitLossDetailId;
+
 
     public static final String ASSET_DISPOSAL_DETAIL_ID = "asset_disposal_detail_id";
 
