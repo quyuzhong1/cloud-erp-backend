@@ -387,7 +387,7 @@ public class SampleReturnInfoController extends BaseController {
     @LogViewService
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleReturnInfo:update",
+            menuCode = "wms:sampleReturnInfo:view",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "id")
     public ApiResult<SampleReturnInfoDTO.ViewDTO> view(@RequestParam("id") String id) {

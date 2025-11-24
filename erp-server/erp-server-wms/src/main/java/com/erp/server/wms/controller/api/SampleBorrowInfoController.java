@@ -382,7 +382,7 @@ public class SampleBorrowInfoController extends BaseController {
     @LogViewService
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:update",
+            menuCode = "wms:sampleBorrowInfo:view",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "id")
     public ApiResult<SampleBorrowInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
