@@ -1,17 +1,19 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogViewService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
+import com.erp.server.oms.query.DeliveryBoxRuleQueryHandler;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
-import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
@@ -75,6 +77,35 @@ public class DeliveryBoxRuleController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated DeliveryBoxRuleDTO.UpdateDTO dto) {
         deliveryBoxRuleService.update(dto);
         return success();
+    }
+
+    /**
+     * 列表查询
+     * @author wtr
+     * @date: 2025-10-16
+     * @param dto
+     * @return ApiResult<PagingVO<AssetNoticeDTO.ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:deliveryBoxRule:paging",
+            tableAlias = "an"
+    )
+    @WebAdvanceQuery(handler = DeliveryBoxRuleQueryHandler.class)
+    public ApiResult<PagingVO<DeliveryBoxRuleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
+        return success(deliveryBoxRuleService.paging(dto));
+    }
+
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:deliveryBoxRule:view",
+            serviceClass = DeliveryBoxRuleService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<DeliveryBoxRuleDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(deliveryBoxRuleService.view(id));
     }
 
     /**

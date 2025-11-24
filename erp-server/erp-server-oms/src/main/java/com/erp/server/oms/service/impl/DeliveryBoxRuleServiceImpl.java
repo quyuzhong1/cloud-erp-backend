@@ -2,16 +2,14 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
 import com.erp.server.oms.mapper.DeliveryBoxRuleMapper;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
@@ -88,6 +86,22 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, deliverytBoxRuleEntity, null, deliverytBoxRuleEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public DeliveryBoxRuleDTO.ViewDTO view(String id) {
+        DeliveryBoxRuleEntity deliveryBoxRuleEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+        return null;
+    }
+
+    @Override
+    public List<DeliveryBoxRuleDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
+        return null;
     }
 
     @Override

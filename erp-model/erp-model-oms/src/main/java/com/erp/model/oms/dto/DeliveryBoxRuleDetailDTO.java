@@ -37,19 +37,19 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * skuId
+        * 发货skuId
         */
-        private String skuId;
+        private String deliverySkuId;
 
         /**
-        * sku编码
+        * 发货sku编码
         */
-        private String skuNo;
+        private String deliverySkuNo;
 
         /**
-        * sku名称
+        * 发货sku名称
         */
-        private String productName;
+        private String deliveryProductName;
 
         /**
         * 每箱数量
@@ -97,15 +97,13 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         * skuId
         */
         @NotBlank(message = "skuId不能为空")
-        @Size(max = 255,message = "skuId最大长度不能超过255位")
-        private String skuId;
+        private String deliverySkuId;
 
         /**
         * sku名称
         */
         @NotBlank(message = "sku名称不能为空")
-        @Size(max = 255,message = "sku名称最大长度不能超过255位")
-        private String productName;
+        private String deliveryProductName;
 
         /**
         * 每箱数量

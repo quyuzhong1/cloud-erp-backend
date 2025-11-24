@@ -25,19 +25,19 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetailEntity> {
 
     /**
-    * skuId
+    * 发货skuId
     */
-    @TableField("sku_id")
-    private String skuId;
+    @TableField("delivery_sku_id")
+    private String deliverySkuId;
     /**
-    * sku编码
+    * 发货sku编码
     */
-    @TableField("sku_no")
-    private String skuNo;
+    @TableField("delivery_sku_no")
+    private String deliverySkuNo;
     /**
-    * sku名称
+    * 发货sku名称
     */
-    @TableField("product_name")
+    @TableField("delivery_product_name")
     private String productName;
     /**
     * 每箱数量

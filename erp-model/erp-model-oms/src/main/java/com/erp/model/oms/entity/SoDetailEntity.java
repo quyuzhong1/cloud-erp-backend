@@ -302,14 +302,14 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     /**
      * 发货skuId
      */
-    @TableField("shipment_sku_id")
-    private String shipmentSkuId;
+    @TableField("delivery_sku_id")
+    private String deliverySkuId;
 
     /**
      * 发货skuNo
      */
-    @TableField("shipment_sku_no")
-    private String shipmentSkuNo;
+    @TableField("delivery_sku_no")
+    private String deliverySkuNo;
 
     /**
      * 发货箱数

@@ -399,6 +399,24 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("dict_platform")
     private String dictPlatform;
 
+    /**
+     * 省/州
+     */
+    @TableField("province")
+    private String province;
+
+    /**
+     * 城市
+     */
+    @TableField("city")
+    private String city;
+
+    /**
+     * 邮编
+     */
+    @TableField("postal_code")
+    private String postalCode;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

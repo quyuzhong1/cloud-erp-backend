@@ -1482,6 +1482,21 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal creditDeductAmount;
 
         /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postalCode;
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
@@ -1875,6 +1890,21 @@ public class SoInfoDTO implements Serializable {
          */
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postalCode;
 
         /**
          * 收款单信息
