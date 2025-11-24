@@ -4451,6 +4451,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.ExportLogisticsHandoverListDTO firstDTO = value.get(0);
             //copy
             BeanUtils.copyProperties(firstDTO,exportDTO);
+            //重新赋值供应商名称,多个用逗号隔开
+            Set<String> carrierNameSet = value.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCarrierName).collect(Collectors.toSet());
+            exportDTO.setCarrierName(String.join(",",carrierNameSet));
             List<SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO> dtoList = new ArrayList<>();
             //根据code去重value，每个code保留一条
             Map<String, SoOutstockDTO.ExportLogisticsHandoverListDTO> codeMap = value.stream().collect(Collectors.toMap(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCode, Function.identity(), (v1, v2) -> v1));
