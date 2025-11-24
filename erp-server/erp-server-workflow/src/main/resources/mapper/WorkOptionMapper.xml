@@ -41,7 +41,7 @@
     </select>
 
     <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
-        SELECT
+        SELECT DISTINCT
             wo.id,
             wmrs.id AS moduleStatusId,
             wm.id AS menu_id,
