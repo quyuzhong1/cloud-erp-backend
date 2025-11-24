@@ -1276,6 +1276,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productBrand)) {
                 productSpuBaseInfoDTO.setBrandName(productBrand.getName());
             }
+            // 设置品牌占用状态
+            productBrandService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getBrandId()));
         }
         //研发团队
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getRdtTeamId())) {
@@ -1284,6 +1286,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productRDTTeam)) {
                 productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
             }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
         }
 
         //产品款名和产品品名关系处理
@@ -1651,6 +1655,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productBrand)) {
                 productInfoDTO.setBrandName(productBrand.getName());
             }
+            // 设置品牌占用状态
+            productBrandService.setupOccupy(Arrays.asList(productInfoDTO.getBrandId()));
         }
         //研发团队
         if (StringUtils.isNotBlank(productInfoDTO.getRdtTeamId())) {
@@ -1659,6 +1665,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productRDTTeam)) {
                 productInfoDTO.setRdtTeamName(productRDTTeam.getName());
             }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productInfoDTO.getRdtTeamId()));
         }
         if(CollectionUtils.isNotEmpty(productInfoDTO.getApplicationCategoryIdList())){
             productInfoDTO.setApplicationCategoryId(String.join(",", productInfoDTO.getApplicationCategoryIdList()));
