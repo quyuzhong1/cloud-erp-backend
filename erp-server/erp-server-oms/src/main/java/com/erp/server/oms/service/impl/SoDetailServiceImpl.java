@@ -986,16 +986,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setQty(qty);
 
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
             result.setTaxRate(taxRate);
             //单价
             BigDecimal price = item.getPrice();
             result.setPrice(price);
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
-            result.setTaxPrice(taxPrice);
+            result.setTaxPrice(item.getTaxPrice());
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
