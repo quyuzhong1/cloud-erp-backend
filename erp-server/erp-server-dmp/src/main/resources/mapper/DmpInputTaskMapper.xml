@@ -132,7 +132,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dit.create_time DESC
+        dit.id DESC
     </select>
 
 
