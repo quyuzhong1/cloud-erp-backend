@@ -80,8 +80,10 @@ public class CfgApproveSyncCallbackHandler {
                     log.error("调用quickApproveCallbackHandler 数据转换异常失败，数据={}", ex);
                     throw new ServiceException("数据转换异常失败");
                 }
-                //消息id
+                //消息id（卡片操作时必填）
                 String messageId = callbackData.getMessageId();
+                //任务 ID（列表操作时必填）
+                String taskId = callbackData.getTaskId();
                 //原因
                 String reason = callbackData.getReason();
                 //审批任务操作类型  APPROVE：同意   REJECT：拒绝
@@ -94,13 +96,12 @@ public class CfgApproveSyncCallbackHandler {
                 }
                 FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sysUserThirdEntity.getUserId());
 
-                ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
-                if (Objects.isNull(processTaskManagementExtEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
-                }
-
-                String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
-                ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
+//                ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
+//                if (Objects.isNull(processTaskManagementExtEntity)) {
+//                    throw new ServiceException(ApiError.ERROR_94000);
+//                }
+//                String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
+                ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(taskId);
                 if (Objects.isNull(processTaskManagementEntity)) {
                     throw new ServiceException(ApiError.ERROR_94000);
                 }
