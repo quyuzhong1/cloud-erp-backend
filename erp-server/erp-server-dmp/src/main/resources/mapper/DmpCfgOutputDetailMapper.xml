@@ -32,7 +32,6 @@
         dcod.create_user_name,
         dcod.create_user_id,
         dcod.update_user_name,
-        dcod.pdate_user_id,
         dcod.version,
         dcod.is_deleted,
         dcod.main_id, dcod.next_level_id, dcod.last_time, dcod.next_time, dcod.interval_time, dcod.override_time, dcod.max_retry_count, dcod.exec_timeout, dcod.disabled, dcod.extend_json
@@ -48,7 +47,6 @@
             dcod.create_user_name,
             dcod.create_user_id,
             dcod.update_user_name,
-            dcod.pdate_user_id,
             dcod.version,
             dcod.is_deleted,
             dcod.next_level_id, dcod.last_time, dcod.next_time, dcod.interval_time, dcod.override_time, dcod.max_retry_count, dcod.exec_timeout, dcod.disabled, dcod.extend_json
@@ -56,7 +54,6 @@
         left join dmp_cfg_output_detail dcod on dco.id = dcod.main_id and dcod.is_deleted = false and dcod.next_level_id = #{nextLevelId}
         where dco.is_deleted = false and dco.input_convert_id in (
             select id from dmp_cfg_input_convert where is_deleted = false and main_id = #{inputId})
-            )
     </select>
 
 
