@@ -19,7 +19,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class ShipmentBoxRuleDTO implements Serializable {
+public class DeliveryBoxRuleDetailDTO implements Serializable {
 
 
 
@@ -50,6 +50,16 @@ public class ShipmentBoxRuleDTO implements Serializable {
         * sku名称
         */
         private String productName;
+
+        /**
+        * 每箱数量
+        */
+        private Integer perBoxQty;
+
+        /**
+        * 优先级
+        */
+        private Integer priority;
 
 
     }
@@ -96,6 +106,18 @@ public class ShipmentBoxRuleDTO implements Serializable {
         @NotBlank(message = "sku名称不能为空")
         @Size(max = 255,message = "sku名称最大长度不能超过255位")
         private String productName;
+
+        /**
+        * 每箱数量
+        */
+        @NotNull(message = "每箱数量不能为空")
+        private Integer perBoxQty;
+
+        /**
+        * 优先级
+        */
+        @NotNull(message = "优先级不能为空")
+        private Integer priority;
 
 
     }

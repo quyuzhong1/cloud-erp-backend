@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.ShipmentBoxRuleDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
+import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.ShipmentBoxRuleDetailDTO;
 
 /**
  * <p>
@@ -12,7 +12,7 @@ import com.erp.model.oms.dto.ShipmentBoxRuleDetailDTO;
  * @author wtr
  * @since 2025-11-24
  */
-public interface ShipmentBoxRuleDetailService extends SuperService<ShipmentBoxRuleDetailEntity> {
+public interface DeliveryBoxRuleDetailService extends SuperService<DeliveryBoxRuleDetailEntity> {
 
     /**
     * 新增
@@ -21,7 +21,7 @@ public interface ShipmentBoxRuleDetailService extends SuperService<ShipmentBoxRu
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ShipmentBoxRuleDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(DeliveryBoxRuleDetailDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +30,7 @@ public interface ShipmentBoxRuleDetailService extends SuperService<ShipmentBoxRu
     * @param dto
     * @return
     */
-    Boolean update(ShipmentBoxRuleDetailDTO.UpdateDTO dto);
+    Boolean update(DeliveryBoxRuleDetailDTO.UpdateDTO dto);
 
 
 }

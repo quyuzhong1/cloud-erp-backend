@@ -21,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("shipment_box_rule_detail")
-public class ShipmentBoxRuleDetailEntity extends BaseEntity<ShipmentBoxRuleDetailEntity> {
+@TableName("delivery_box_rule_detail")
+public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetailEntity> {
 
     /**
     * skuId

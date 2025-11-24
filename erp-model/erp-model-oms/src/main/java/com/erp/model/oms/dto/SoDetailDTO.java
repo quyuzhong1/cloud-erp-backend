@@ -458,6 +458,26 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 单箱数量
+         */
+        private String perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货skuNo
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private String deliveryBoxQty;
     }
 
     /**
@@ -670,6 +690,26 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 单箱数量
+         */
+        private String perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货skuNo
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private String deliveryBoxQty;
     }
 
 

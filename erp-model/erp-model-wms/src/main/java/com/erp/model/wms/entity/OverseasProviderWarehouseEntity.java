@@ -84,8 +84,8 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     /**
      * 开启b2b发货
      */
-    @TableField("is_b2b_delivery")
-    private Boolean isB2BDelivery;
+    @TableField("is_b2b_shipment")
+    private Boolean isB2BShipment;
 
     public static final String MAIN_ID = "main_id";
 
