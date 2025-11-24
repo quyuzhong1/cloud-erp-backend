@@ -94,6 +94,11 @@ public class DmpRefPlatformFileEntity extends BaseEntity<DmpRefPlatformFileEntit
      */
     @TableField("main_id")
     private String mainId;
+    /**
+     * 来源文件ID
+     */
+    @TableField("source_file_id")
+    private String sourceFileId;
 
 
     public static final String INPUT_TASK_ID = "input_task_id";

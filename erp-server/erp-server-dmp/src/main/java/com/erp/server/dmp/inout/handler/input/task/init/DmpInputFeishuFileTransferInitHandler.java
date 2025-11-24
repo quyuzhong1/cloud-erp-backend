@@ -130,15 +130,13 @@ public class DmpInputFeishuFileTransferInitHandler extends DmpInputInitHandler {
                         continue;
                     }
                     String sourceUrl = object.getStr("sourceUrl");
-                    String fileName = object.getStr("fileName");
+//                    String fileName = object.getStr("fileName");
+                    String fileType = object.getStr("fileType");
                     try {
                         // 1.下载第三方文件
                         byte[] fileByte = FileUtil.downloadFile(sourceUrl);
-                        //fileByte转为file
-                        File file = new File(fileName);
-                        FileUtils.writeByteArrayToFile(file, fileByte);
                         // 2.将文件上传到文件服务器
-                        String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                        String uploadUrl = FastDFSClientUtil.getStorageClient().upload_file1(fileByte, fileType, null);
                         // 3.更新url
                         object.set("fileUrl", uploadUrl);
                         result.add(object);
@@ -226,7 +224,7 @@ public class DmpInputFeishuFileTransferInitHandler extends DmpInputInitHandler {
             // 以 “审批实例 ID + 控件 ID + 文件名” 作为复合键判断重复。
             String fileKey = CharSequenceUtil.format("{}|{}|{}", instanceCode, id, fileName);
             String fileExt = valueObj.getStr("id");
-            String fileExtension = FileUtil.getFileExtension(fileExt);
+            String fileExtension = FileUtil.getFileExtension(fileName);
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("sourceSystem", "feishu");
             jsonObject.set("sourceUrl", sourceUrl);
@@ -234,8 +232,9 @@ public class DmpInputFeishuFileTransferInitHandler extends DmpInputInitHandler {
             jsonObject.set("fileType", fileExtension);
             jsonObject.set("billTopic", "instance");
             jsonObject.set("billId", instanceCode);
+            jsonObject.set("sourceFileId", fileExt);
+            jsonObject.set("fileName", fileName);
             jsonObject.set("fileKey", fileKey);
-            jsonObject.set("fileName", fileExt);
             jsonObject.set("remark", fileDesc);
             resultList.add(jsonObject);
         }

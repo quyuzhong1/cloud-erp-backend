@@ -858,14 +858,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String fileName = names[i];
                     try {
                         // 1.下载第三方文件
-                        byte[] fileByte = FileUtil.downloadFile(fileUrl);
-                        //fileByte转为file
-                        File file = new File(fileName);
-                        FileUtils.writeByteArrayToFile(file, fileByte);
-                        // 2.将文件上传到文件服务器
-                        String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                        // 3.更新url
-                        nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , uploadUrl);
+//                        byte[] fileByte = FileUtil.downloadFile(fileUrl);
+//                        //fileByte转为file
+//                        File file = new File(fileName);
+//                        FileUtils.writeByteArrayToFile(file, fileByte);
+//                        // 2.将文件上传到文件服务器
+//                        String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
+//                        // 3.更新url
+//                        nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , uploadUrl);
                           // 直接使用中台处理替换后的fastDFSUrl
                           nameToUrl.put(CharSequenceUtil.format("{},{}",fieldName,fileName) , fileUrl);
                     } catch (Exception e) {
