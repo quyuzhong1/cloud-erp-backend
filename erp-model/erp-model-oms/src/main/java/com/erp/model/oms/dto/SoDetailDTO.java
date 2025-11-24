@@ -1623,4 +1623,48 @@ public class SoDetailDTO implements Serializable {
         @NotBlank(message = "冻结数量不能为空")
         private Integer frozenQty;
     }
+
+    /**
+     * 导入分箱数据返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDivideSkuBoxDTO {
+
+        /**
+         * 成功返回数据
+         */
+        private List<DivideSkuBoxDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DivideSkuBoxDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+    }
 }

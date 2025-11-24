@@ -667,6 +667,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return super.updateBatchById(soDetailList);
     }
 
+    @Override
+    public SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
 
     /**
      * 根据主表ids 删除数据

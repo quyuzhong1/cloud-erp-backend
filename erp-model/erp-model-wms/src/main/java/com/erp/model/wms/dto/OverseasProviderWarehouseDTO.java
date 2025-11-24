@@ -109,7 +109,10 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          */
         private String  providerName;
 
-
+        /**
+         * 开启b2b发货
+         */
+        private Boolean isB2BDelivery;
     }
 
     /**
@@ -162,6 +165,11 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          * 系统仓库编码
          */
         private String warehouseCode;
+
+        /**
+         * 开启b2b发货
+         */
+        private Boolean isB2BDelivery;
     }
 
     @Data
