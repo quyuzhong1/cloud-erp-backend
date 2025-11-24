@@ -77,7 +77,7 @@
     <!-- 查询配置明细信息 -->
     <select id="getDmpCfgInputDetailByOption" resultType="com.erp.model.dmp.entity.DmpCfgInputDetailEntity">
         select
-            dci.id as mainId,
+            dci.id as main_id,
             dcid.id,
             dcid. create_time,
             dcid.update_time,

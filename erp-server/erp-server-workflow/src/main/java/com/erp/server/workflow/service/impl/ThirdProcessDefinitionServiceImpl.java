@@ -83,8 +83,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         }
 
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getName()));
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.ADD.getStatus()));
         return new BaseResultDTO.AddDTO(thirdProcessDefinitionEntity.getId(), thirdProcessDefinitionEntity.getId());
     }
 
@@ -107,8 +107,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             throw new ServiceException("三方审批定义保存失败");
         }
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),old.getApprovalCode(),OperationTypeEnum.UPDATE.getName()));
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.UPDATE.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),old.getApprovalCode(),OperationTypeEnum.UPDATE.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),"",OperationTypeEnum.UPDATE.getStatus()));
         return Boolean.TRUE;
     }
 
@@ -157,8 +157,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
         super.removeById(id);
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getName()));
-        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getName()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,entity.getApprovalCode(),"",OperationTypeEnum.DELETE.getStatus()));
         return BatchResultDTO.success(entity.getId(), entity.getApprovalCode(), OperationTypeEnum.DELETE);
     }
 
