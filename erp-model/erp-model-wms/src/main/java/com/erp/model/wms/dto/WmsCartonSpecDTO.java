@@ -52,6 +52,10 @@ public class WmsCartonSpecDTO implements Serializable {
         * 箱规编号
         */
         private Integer boxSpecNo;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
 
         /**
         * 预计毛重

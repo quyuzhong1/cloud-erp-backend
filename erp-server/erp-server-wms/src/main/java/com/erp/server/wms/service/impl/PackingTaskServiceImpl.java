@@ -750,6 +750,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     addDTO.setBoxHeight(valByBox.get(0).getSingleBoxHeight());
                     addDTO.setPackageWeight(valByBox.get(0).getSingleBoxWeight());
                     addDTO.setBoxQty(1);
+                    addDTO.setCustomerPO(valByBox.get(0).getCustomerPO());
                     List<WmsCartonDetailDTO.AddDTO> detailList = FirstMileDeliveryConverter.INSTANCE.importToPackingSku(valByBox);
                     //装箱没有fnsku，根据任务明细拆分
                     List<WmsCartonDetailDTO.AddDTO> addDTOList = new ArrayList<>();

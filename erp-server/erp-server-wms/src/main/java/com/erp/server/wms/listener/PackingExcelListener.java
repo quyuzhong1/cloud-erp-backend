@@ -20,6 +20,7 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.StringUtils;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -62,6 +63,9 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         }else{
             int currentRowNumber = context.readRowHolder().getRowIndex();
             data.setRowNum(currentRowNumber);
+            if(StringUtils.isBlank(data.getCustomerPO())){
+                data.setCustomerPO("");
+            }
             packingExcelDTOList.add(data);
         }
 

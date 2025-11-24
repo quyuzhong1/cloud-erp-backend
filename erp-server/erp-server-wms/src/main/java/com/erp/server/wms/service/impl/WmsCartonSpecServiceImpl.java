@@ -158,6 +158,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
                 dto.setProductName(skuVO.getSkuName());
                 dto.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+                dto.setCustomerPO(cartonEntity.getCustomerPO());
             }
             viewDTO.setDetailList(detailList);
             viewDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
@@ -167,6 +168,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             viewDTO.setPackingUserId(cartonEntity.getPackingUserId());
             viewDTO.setPackingUserName(cartonEntity.getPackingUserName());
             viewDTO.setCartonId(cartonEntity.getId());
+            viewDTO.setCustomerPO(cartonEntity.getCustomerPO());
             //预警提示：超重值：10KG，本次装箱预计已超重1KG！
             WmsCartonSpecDTO.WeightRuleDTO warnMsg = getWarnMsg(packingTaskEntity.getSourceType(), grossWeight);
             viewDTO.setWarnMsg(warnMsg.getWarnMsg());
