@@ -970,50 +970,57 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         profitLossEntity.setAssetOrgId(stocktakingEntity.getAssetOrgId());
         profitLossEntity.setAssetOrgName(stocktakingEntity.getAssetOrgName());
         profitLossEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-        
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PYPKD);
-        profitLossEntity.setCode(code);
-        
-        assetProfitLossService.save(profitLossEntity);
-        log.info("生成{}单，单号：{}，来源盘点单：{}", type.getName(), code, stocktakingEntity.getCode());
-        
-        // 创建明细
-        List<AssetProfitLossDetailEntity> profitLossDetails = new ArrayList<>();
-        for (AssetStocktakingDetailEntity stocktakingDetail : detailList) {
-            AssetProfitLossDetailEntity profitLossDetail = new AssetProfitLossDetailEntity();
-            profitLossDetail.setSourceDetailId(stocktakingDetail.getId());
-            profitLossDetail.setMainId(profitLossEntity.getId());
-            profitLossDetail.setAssetCategory(stocktakingDetail.getAssetCategory());
-            profitLossDetail.setCardId(stocktakingDetail.getCardId());
-            profitLossDetail.setCardDetailId(stocktakingDetail.getCardDetailId());
-            profitLossDetail.setCardCode(stocktakingDetail.getCardCode());
-            profitLossDetail.setAssetId(stocktakingDetail.getAssetId());
-            profitLossDetail.setAssetName(stocktakingDetail.getAssetName());
-            profitLossDetail.setAssetCode(stocktakingDetail.getAssetCode());
-            profitLossDetail.setUnit(stocktakingDetail.getUnit());
-            profitLossDetail.setBookQty(stocktakingDetail.getBookQty());
-            
-            // 实际数量 = 账存数量 + 最终差异数量
-            Integer actualQty = (stocktakingDetail.getBookQty() != null ? stocktakingDetail.getBookQty() : 0) 
-                              + (stocktakingDetail.getFinalDiffQty() != null ? stocktakingDetail.getFinalDiffQty() : 0);
-            profitLossDetail.setActualQty(actualQty);
-            profitLossDetail.setDiffQty(stocktakingDetail.getFinalDiffQty());
-            
-            profitLossDetail.setBookLocation(stocktakingDetail.getBookLocation());
-            
-            // 根据是否复盘选择实际位置
-            // 如果是复盘（复盘变动位置不为空），使用复盘位置；否则使用初盘位置
-            String actualLocation = StringUtils.isNotBlank(stocktakingDetail.getRecountChangeLocation()) 
-                    ? stocktakingDetail.getRecountChangeLocation() 
-                    : stocktakingDetail.getFirstChangeLocation();
-            profitLossDetail.setActualLocation(actualLocation);
-            
-            profitLossDetails.add(profitLossDetail);
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PYPKD);
+            profitLossEntity.setCode(code);
+
+            assetProfitLossService.save(profitLossEntity);
+            log.info("生成{}单，单号：{}，来源盘点单：{}", type.getName(), code, stocktakingEntity.getCode());
+
+            // 创建明细
+            List<AssetProfitLossDetailEntity> profitLossDetails = new ArrayList<>();
+            for (AssetStocktakingDetailEntity stocktakingDetail : detailList) {
+                AssetProfitLossDetailEntity profitLossDetail = new AssetProfitLossDetailEntity();
+                profitLossDetail.setSourceDetailId(stocktakingDetail.getId());
+                profitLossDetail.setMainId(profitLossEntity.getId());
+                profitLossDetail.setAssetCategory(stocktakingDetail.getAssetCategory());
+                profitLossDetail.setCardId(stocktakingDetail.getCardId());
+                profitLossDetail.setCardDetailId(stocktakingDetail.getCardDetailId());
+                profitLossDetail.setCardCode(stocktakingDetail.getCardCode());
+                profitLossDetail.setAssetId(stocktakingDetail.getAssetId());
+                profitLossDetail.setAssetName(stocktakingDetail.getAssetName());
+                profitLossDetail.setAssetCode(stocktakingDetail.getAssetCode());
+                profitLossDetail.setUnit(stocktakingDetail.getUnit());
+                profitLossDetail.setBookQty(stocktakingDetail.getBookQty());
+
+                // 实际数量 = 账存数量 + 最终差异数量
+                Integer actualQty = (stocktakingDetail.getBookQty() != null ? stocktakingDetail.getBookQty() : 0)
+                        + (stocktakingDetail.getFinalDiffQty() != null ? stocktakingDetail.getFinalDiffQty() : 0);
+                profitLossDetail.setActualQty(actualQty);
+                profitLossDetail.setDiffQty(stocktakingDetail.getFinalDiffQty());
+
+                profitLossDetail.setBookLocation(stocktakingDetail.getBookLocation());
+
+                // 根据是否复盘选择实际位置
+                // 如果是复盘（复盘变动位置不为空），使用复盘位置；否则使用初盘位置
+                String actualLocation = StringUtils.isNotBlank(stocktakingDetail.getRecountChangeLocation())
+                        ? stocktakingDetail.getRecountChangeLocation()
+                        : stocktakingDetail.getFirstChangeLocation();
+                profitLossDetail.setActualLocation(actualLocation);
+
+                profitLossDetails.add(profitLossDetail);
+            }
+
+            assetProfitLossDetailService.saveBatch(profitLossDetails);
+            log.info("生成{}单明细，数量：{}", type.getName(), profitLossDetails.size());
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
-        
-        assetProfitLossDetailService.saveBatch(profitLossDetails);
-        log.info("生成{}单明细，数量：{}", type.getName(), profitLossDetails.size());
+
     }
     
     /**
