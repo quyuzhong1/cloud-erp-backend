@@ -74,4 +74,6 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
+
+    List<SoDeliveryNoticeDTO.PickStatus> listPickStatus(@Param("ids") List<String> ids);
 }

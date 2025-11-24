@@ -37,12 +37,25 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, true, QueryDataTypeEnum.BOOLEAN);
             }
         }
-
+        //是否装箱
         if("isPacked".equals(field)) {
             if((Boolean) value){
-                super.buildDefaultDTO("pt.packing_status", PackingTaskStatusEnum.PACKED.getCode());
+                return " EXISTS (SELECT 1 FROM packing_task pt WHERE pt.source_id = sdn.id AND pt.is_deleted = FALSE and pt.packing_status = '" + PackingTaskStatusEnum.PACKED.getCode() + "')";
             }else{
-                super.buildSplicingSQLDTO("pt.packing_status",QueryConditionEnum.NE,PackingTaskStatusEnum.PACKED.getCode() ,QueryDataTypeEnum.STRING);
+                return " NOT EXISTS (SELECT 1 FROM packing_task pt WHERE pt.source_id = sdn.id AND pt.is_deleted = FALSE and pt.packing_status = '" + PackingTaskStatusEnum.PACKED.getCode() + "')";
+            }
+        }
+        //拣货单状态
+        if ("generationPickStatus".equals(field)) {
+            if ("未生成".equals(value)) {
+                return " NOT EXISTS (SELECT 1 FROM picking_detail pick where pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE and pick.id IS NOT NULL) ";
+            } else if ("已生成".equals(value)){
+                return " (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd1 WHERE is_deleted = FALSE and sdnd1.id=sdnd.id) = " +
+                        "(SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id)";
+            } else if ("部分生成".equals(value)){
+                return " (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id) > 0 " +
+                        "AND (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd1 WHERE is_deleted = FALSE and sdnd1.id=sdnd.id) > " +
+                        "(SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id)";
             }
         }
         return null;
