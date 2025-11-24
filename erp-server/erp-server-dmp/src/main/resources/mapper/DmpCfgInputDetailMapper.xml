@@ -91,7 +91,7 @@
         from dmp_basic_system abs
         inner join dmp_cfg_input dci on abs.id = dci.system_id and dci.is_deleted = false
         left join dmp_cfg_input_detail dcid on dci.id = dcid.main_id and dcid.is_deleted = false  and dcid.next_level_id = #{cfgOptionDTO.nextLevelId}
-        where dcid.is_deleted = false
+        where abs.is_deleted = false
             and abs.code = #{cfgOptionDTO.system}
             and dci.code = #{cfgOptionDTO.code}
     </select>
