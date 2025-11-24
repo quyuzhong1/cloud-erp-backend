@@ -96,15 +96,26 @@ public class CfgApproveSyncCallbackHandler {
                 }
                 FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sysUserThirdEntity.getUserId());
 
-//                ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
-//                if (Objects.isNull(processTaskManagementExtEntity)) {
-//                    throw new ServiceException(ApiError.ERROR_94000);
-//                }
-//                String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
-                ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(taskId);
-                if (Objects.isNull(processTaskManagementEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
+                ProcessTaskManagementEntity processTaskManagementEntity = null;
+                if(StringUtils.isNotBlank(messageId)){//来自卡片审批
+                    ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
+                    if (Objects.isNull(processTaskManagementExtEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                    String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
+                    processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
+                    if (Objects.isNull(processTaskManagementEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                }else if(StringUtils.isNotBlank(taskId)){//来自审批中心审批
+                    processTaskManagementEntity = processTaskManagementService.getById(taskId);
+                    if (Objects.isNull(processTaskManagementEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                }else {
+                    throw new ServiceException("messageId和taskId不能为空");
                 }
+
                 //判断流程节点状态是可以审批状态
                 if (!processTaskManagementEntity.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)) {
                     throw new ServiceException(ApiError.ERROR_98006);
