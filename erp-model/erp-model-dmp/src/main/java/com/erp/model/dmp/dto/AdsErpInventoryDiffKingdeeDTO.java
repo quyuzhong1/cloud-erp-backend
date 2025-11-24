@@ -78,6 +78,11 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+
     }
 
 

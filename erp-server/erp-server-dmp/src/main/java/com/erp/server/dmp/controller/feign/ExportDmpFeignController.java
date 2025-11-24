@@ -2,6 +2,9 @@ package com.erp.server.dmp.controller.feign;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.dto.*;
+import com.erp.server.dmp.query.*;
+import com.erp.server.dmp.service.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,35 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
-import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
-import com.erp.model.dmp.dto.AfterSaleDTO;
-import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
-import com.erp.server.dmp.query.AdsErpDiffOutstockSyncQueryHandler;
-import com.erp.server.dmp.query.AdsErpDiffReturnInstockSyncQueryHandler;
-import com.erp.server.dmp.query.AdsErpInventoryDiffFlowQueryHandler;
-import com.erp.server.dmp.query.AdsErpOutstockDiffFlowQueryHandler;
-import com.erp.server.dmp.query.AfterSaleQueryHandler;
-import com.erp.server.dmp.query.CfgDiffStrategyQueryHandler;
-import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
-import com.erp.server.dmp.query.DmpTaskQueryHandler;
-import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
-import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
-import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
-import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
-import com.erp.server.dmp.service.AfterSaleService;
-import com.erp.server.dmp.service.CfgDiffStrategyService;
-import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import com.erp.server.dmp.service.DmpPullTaskHistoryService;
-import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.DmpPushTaskHistoryService;
-import com.erp.server.dmp.service.DmpPushTaskService;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -67,6 +42,12 @@ public class ExportDmpFeignController {
     private AdsErpDiffOutstockSyncService adsErpDiffOutstockSyncService;
     @Resource
     private AdsErpDiffReturnInstockSyncService adsErpDiffReturnInstockSyncService;
+    @Resource
+    private AdsErpInventoryDiffService adsErpInventoryDiffService;
+    @Resource
+    private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
+    @Resource
+    private AdsErpInventoryDiffKingdeeService adsErpInventoryDiffKingdeeService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -134,5 +115,23 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = AdsErpDiffReturnInstockSyncQueryHandler.class)
     public PagingVO<AdsErpDiffReturnInstockSyncDTO.ListDTO> exportAdsErpDiffReturnInstockSync(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
     	return adsErpDiffReturnInstockSyncService.paging(dto);
+    }
+
+    @PostMapping("/exportAdsErpInventoryDiff")
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffQueryHandler.class)
+    public PagingVO<AdsErpInventoryDiffDTO.ListDTO> exportAdsErpInventoryDiff(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto){
+        return adsErpInventoryDiffService.paging(dto);
+    }
+
+    @PostMapping("/exportAdsErpInventoryDiffKingdee")
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffKingdeeQueryHandler.class)
+    public PagingVO<AdsErpInventoryDiffKingdeeDTO.ListDTO> exportAdsErpInventoryDiffKingdee(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto){
+        return adsErpInventoryDiffKingdeeService.paging(dto);
+    }
+
+    @PostMapping("/exportAdsErpFirstMileInTransitDiff")
+    @WebAdvanceQuery(handler = AdsErpFirstMileInTransitDiffQueryHandler.class)
+    public PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> exportAdsErpFirstMileInTransitDiff(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto){
+        return adsErpFirstMileInTransitDiffService.paging(dto);
     }
 }

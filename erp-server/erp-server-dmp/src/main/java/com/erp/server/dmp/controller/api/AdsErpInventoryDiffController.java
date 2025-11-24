@@ -5,19 +5,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.dmp.entity.CfgSettingEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.server.dmp.query.AdsErpAdsErpInventoryDiffQueryHandler;
+import com.erp.server.dmp.query.AdsErpInventoryDiffQueryHandler;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -37,7 +33,6 @@ import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 平台库存差异
@@ -67,7 +62,7 @@ public class AdsErpInventoryDiffController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiff:paging",
             tableAlias = ""
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffQueryHandler.class)
     public ApiResult<AdsErpInventoryDiffDTO.StatisticsDTO> statistics(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffService.statistics(dto));
     }
@@ -86,7 +81,7 @@ public class AdsErpInventoryDiffController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiff:paging",
             tableAlias = "aeid"
     )
-    @WebAdvanceQuery(handler = AdsErpAdsErpInventoryDiffQueryHandler.class)
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffQueryHandler.class)
     public ApiResult<PagingVO<AdsErpInventoryDiffDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto) {
         return success(adsErpInventoryDiffService.paging(dto));
     }
@@ -127,6 +122,7 @@ public class AdsErpInventoryDiffController extends BaseController {
             tableAlias = "aeid"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "平台库存差异导出Excel数据")
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffQueryHandler.class)
     public ApiResult<String> exportList(@RequestBody @Validated AdsErpInventoryDiffDTO.ExportDTO dto, HttpServletResponse response) {
         boolean result = adsErpInventoryDiffService.exportList(dto, response);
         return result ? ApiResult.success() : ApiResult.error("导出失败");

@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
@@ -14,6 +15,7 @@ import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.excel.FbaTransitExcelDTO;
 import com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity;
 import com.erp.model.wms.entity.FbaTransitCalculateReportEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -77,6 +79,8 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
 
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> paging(PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> pagingParamDTO) {
@@ -94,24 +98,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
 
     @Override
     public Boolean exportList(AdsErpFirstMileInTransitDiffDTO.ExportDTO param, HttpServletResponse response) {
-//        List<AdsErpFirstMileInTransitDiffDTO.ListDTO> list = this.baseMapper.listExport(param);
-//        if(CollUtil.isEmpty(list)) {
-//           return;
-//        }
-//        // 数据处理
-//        fillList(list);
-//
-//        // 导出数据
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/adsErpFirstMileInTransitDiff.xlsx";
-//        String name = "平台在途报告导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
+        downloadTaskFeign.saveDownloadTask("平台在途报表Excel导出", FileTaskEventEnum.EXPORT_ADS_ERP_FIRST_MILE_INTRANSIT_DIFF.getCode(), param);
         return true;
     }
 
