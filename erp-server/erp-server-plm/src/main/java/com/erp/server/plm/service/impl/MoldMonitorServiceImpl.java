@@ -539,14 +539,6 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         MoldMonitorServiceImpl bean = ApplicationContextUtils.getBean(MoldMonitorServiceImpl.class);
 
         for (MoldMonitorEntity moldMonitorEntity : list) {
-            //策略被禁用则不再统计
-            Boolean disabled = moldMonitorEntity.getDisabled();
-            if(Objects.equals(disabled ,Boolean.TRUE)){
-                moldMonitorEntity.setStatus(MoldMonitorStatusEnum.FINISH.getCode());
-                updateById(moldMonitorEntity);
-                continue;
-            }
-
             //没有关联SKU则设置为0
             List<MoldRefSkuEntity> moldRefSkuEntities = moldRefSkuService.lambdaQuery()
                     .eq(MoldRefSkuEntity::getMoldId, moldMonitorEntity.getMoldId())

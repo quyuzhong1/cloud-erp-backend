@@ -107,6 +107,7 @@ cmr.count_dim AS countDim
         AND mm.return_qty_limit >= ( mm.purchase_order_qty + mm.warehouse_receive_qty + mm.po_instock_qty )
         where
              cmr.is_deleted = FALSE
+        and cmr.invalid_status = FALSE
         and cmr.start_date &gt;= #{today}
         and DATE(cmr.end_date + interval '1 month') &lt;= #{today}
         <if test="detailIds != null and detailIds.size > 0 ">
