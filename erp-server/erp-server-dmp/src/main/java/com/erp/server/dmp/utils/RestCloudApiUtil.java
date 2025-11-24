@@ -3,6 +3,9 @@ package com.erp.server.dmp.utils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -44,6 +47,11 @@ public class RestCloudApiUtil {
 	            	JSONArray jsonArray = responseJson.getJSONArray("data");
 	            	if(CollUtil.isNotEmpty(jsonArray)) {
 	            		resultBool = true;
+	            	}else {
+	            		String dataTotal = responseJson.getString("dataTotal");
+	            		if(StringUtils.isNotBlank(dataTotal) && Stream.of(dataTotal.split(",")).anyMatch(s -> !s.trim().equals("0"))) {
+	            			resultBool = true;
+	            		}
 	            	}
 	            }else {
 	            	throw new ServiceException("调用谷云地址：" + restUrl + "返回报文："+ body +"错误，请联系实施");
