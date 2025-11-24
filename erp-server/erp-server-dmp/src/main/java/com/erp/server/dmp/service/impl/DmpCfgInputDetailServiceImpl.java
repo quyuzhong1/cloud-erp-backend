@@ -4,6 +4,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.DmpPullConstant;
 import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -15,14 +16,17 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +41,10 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDetailMapper, DmpCfgInputDetailEntity> implements DmpCfgInputDetailService {
+
+   @Resource
+   private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -94,10 +102,60 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
     @Override
     public void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO) {
-        //需要添加的配置不存在则新增，存在则修改
+        DmpCfgInputDetailEntity inputDetailEntity = optionCfgInputDetail(cfgOptionDTO);
+        if (ObjUtil.isEmpty(inputDetailEntity)) {
+            throw new ServiceException("飞书配置输入明细未找到，编码：" + cfgOptionDTO.getCode());
+        }
+
+        //只有审批定义输出明细需要添加
+        if (CharSequenceUtil.equals(cfgOptionDTO.getSystem(),DmpPullConstant.FS) && !CharSequenceUtil.equals(cfgOptionDTO.getCode(), DmpPullConstant.FS_APPROVALS)) {
+            return;
+        }
+        optionCfgOutputDetail(cfgOptionDTO, inputDetailEntity);
+    }
+
+    /**
+     *  操作输出明细配置
+     * @author will
+     * @date 2025/11/24 10:51
+     * @param cfgOptionDTO
+     * @param detailEntity
+     * @return void
+     */
+    private void optionCfgOutputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO, DmpCfgInputDetailEntity detailEntity) {
+        //添加输出配置
+        DmpCfgOutputDetailEntity outputDetailEntity = dmpCfgOutputDetailService.getDmpCfgOutputDetailByOption(detailEntity.getMainId(),detailEntity.getNextLevelId());
+        if (ObjUtil.isEmpty(outputDetailEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+        }
+        if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
+            outputDetailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
+            dmpCfgOutputDetailService.saveOrUpdate(outputDetailEntity);
+            return;
+        }
+        if (OperationTypeEnum.DELETE.getStatus().equals(cfgOptionDTO.getOption())) {
+            if(CharSequenceUtil.isBlank(detailEntity.getId())) {
+                //删除时如果没有id则说明配置不存在，无需删除
+                return;
+            }
+            //删除
+            super.removeById(outputDetailEntity.getId());
+        }
+    }
+
+
+    /**
+     * 操作输入明细配置
+     * @author will
+     * @date 2025/11/24 10:50
+     * @param cfgOptionDTO
+     * @return DmpCfgInputDetailEntity
+     */
+    private DmpCfgInputDetailEntity optionCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO) {
+        //需要添加的输入配置不存在则新增，存在则修改
         DmpCfgInputDetailEntity detailEntity = baseMapper.getDmpCfgInputDetailByOption(cfgOptionDTO);
         if (ObjUtil.isEmpty(detailEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, CharSequenceUtil.format("{}平台{}编码配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+            throw new ServiceException(ApiError.NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
         }
         if (CharSequenceUtil.isBlank(detailEntity.getId())) {
             LocalDateTime now = LocalDateTime.now();
@@ -111,38 +169,23 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
             detailEntity.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
             detailEntity.setMaxIntervalTime(3);
         }
-        if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption())) {
-            //新增或更新
-            detailEntity.setDisabled(Boolean.FALSE);
-            super.saveOrUpdate(detailEntity);
-            return;
-        }
-        if (OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
-            if (CharSequenceUtil.isBlank(detailEntity.getId())) {
-                String nextLevelId = cfgOptionDTO.getNextLevelId();
-                cfgOptionDTO.setNextLevelId(cfgOptionDTO.getOldNextLevelId());
-                DmpCfgInputDetailEntity oldDetailEntity = baseMapper.getDmpCfgInputDetailByOption(cfgOptionDTO);
-                if (ObjUtil.isNotEmpty(oldDetailEntity)) {
-                    detailEntity.setId(oldDetailEntity.getId());
-                    detailEntity.setNextLevelId(nextLevelId);
-                }
-            }
+        if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
             //新增或更新
             detailEntity.setDisabled(Boolean.FALSE);
             detailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
             super.saveOrUpdate(detailEntity);
-            return;
+            return detailEntity;
         }
         if (OperationTypeEnum.DELETE.getStatus().equals(cfgOptionDTO.getOption())) {
             if(CharSequenceUtil.isBlank(detailEntity.getId())) {
                 //删除时如果没有id则说明配置不存在，无需删除
-                return;
+                return detailEntity;
             }
             //删除
             super.removeById(detailEntity.getId());
         }
+        return detailEntity;
     }
-
 
     /**
     * 新增修改处理数据

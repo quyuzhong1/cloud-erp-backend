@@ -38,11 +38,6 @@ public class DmpInputFeignDTO implements Serializable {
         private String nextLevelId;
 
         /**
-         * 原始下层级id
-         */
-        private String oldNextLevelId;
-
-        /**
          * 操作，OperationTypeEnum
          */
         @NotBlank(message = "操作类型不能为空")

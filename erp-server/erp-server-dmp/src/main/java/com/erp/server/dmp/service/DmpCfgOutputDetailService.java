@@ -31,4 +31,12 @@ public interface DmpCfgOutputDetailService extends SuperService<DmpCfgOutputDeta
     * @return
     */
     Boolean update(DmpCfgOutputDetailDTO.UpdateDTO dto);
+    /**
+     * 根据inputId查询
+     * @author will
+     * @date 2025/11/24 10:22
+     * @param inputId
+     * @return DmpCfgOutputDetailEntity
+     */
+    DmpCfgOutputDetailEntity getDmpCfgOutputDetailByOption(String inputId,String nextLevelId);
 }

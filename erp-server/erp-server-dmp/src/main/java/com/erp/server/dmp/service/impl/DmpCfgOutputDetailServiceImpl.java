@@ -1,11 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -16,10 +12,12 @@ import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.server.dmp.mapper.DmpCfgOutputDetailMapper;
 import com.erp.server.dmp.service.DmpCfgOutputDetailService;
-
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 推送数据配置明细 服务实现类
@@ -79,6 +77,11 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputDetailEntity.getId(), "推送数据配置明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         return Boolean.TRUE;
+    }
+
+    @Override
+    public DmpCfgOutputDetailEntity getDmpCfgOutputDetailByOption(String inputId,String nextLevelId) {
+        return baseMapper.getDmpCfgOutputDetailByOption(inputId,nextLevelId);
     }
 
 
