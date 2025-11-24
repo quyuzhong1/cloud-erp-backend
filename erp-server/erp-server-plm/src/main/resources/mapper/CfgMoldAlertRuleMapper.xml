@@ -96,15 +96,11 @@ cmr.count_dim AS countDim
         <include refid="Base_Column_List"></include>
         FROM
         cfg_mold_alert_rule cmr
-        LEFT JOIN mold_monitor mm ON mm.source_id = cmr.ID
-        AND mm.is_deleted = FALSE
-        AND mm.is_deleted = FALSE
-        AND mm.life_qty >= ( mm.purchase_order_qty + mm.warehouse_receive_qty + mm.po_instock_qty )
+        LEFT JOIN mold_monitor mm ON mm.source_id = cmr.ID AND mm.is_deleted = FALSE
         where
         cmr.is_deleted = FALSE
         and cmr.invalid_status = FALSE
-        and cmr.start_date &gt;= #{today}
-        and DATE(cmr.end_date + interval '1 month') &lt;= #{today}
+        and ( mm.expiration_date &lt;= #{today} or mm.expiration_date is null )
         <if test="ids != null and ids.size > 0 ">
             AND cmr.id in
             <foreach collection="ids" item="item" open="(" separator="," close=")">

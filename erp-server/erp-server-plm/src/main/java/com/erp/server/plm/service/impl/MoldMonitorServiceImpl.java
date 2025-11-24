@@ -455,9 +455,9 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
 
     @Override
     public List<MoldMonitorEntity> buildMonitor(List<String> sourceIds,List<String> sourceDetailIds){
-        //预警策略 (开始时间大于等于今天或结束时间小于等于一个月后的今天)
+        //预警策略
         List<CfgMoldAlertRuleDTO.ListDTO> cfgMoldAlertRuleEntities = cfgMoldAlertRuleService.listAll(sourceIds);
-        //返还策略(开始时间大于等于今天或结束时间小于等于一个月后的今天)
+        //返还策略
         List<CfgMoldReturnAlertRuleDTO.ListDTO> cfgMoldReturnAlertRuleEntities = cfgMoldReturnAlertRuleService.listAll(sourceDetailIds);
 
         List<MoldMonitorEntity> result = new ArrayList<>(cfgMoldAlertRuleEntities.size() + cfgMoldReturnAlertRuleEntities.size());
@@ -513,7 +513,6 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     moldMonitorEntity.setSupplierId(entity.getSupplierId());
                     moldMonitorEntity.setSupplierCode(entity.getSupplierCode());
                     moldMonitorEntity.setSupplierName(entity.getSupplierName());
-
                 }
 
                 moldMonitorEntity.setLifeQty( entity.getLifeQty());
@@ -710,6 +709,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.ALERT.getCode());
                 }else {
                     moldMonitorEntity.setLifeStatus(MoldMonitorLifeStatusEnum.EXHAUSTED.getCode());
+                    //截止日期 = 当前日期后的一个月
+                    moldMonitorEntity.setExpirationDate(LocalDate.now().plusMonths(1));
                 }
             }else {
                 Integer returnQtyLimit = moldMonitorEntity.getReturnQtyLimit();
@@ -718,6 +719,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                     moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.UNDERACHIEVED.getCode());
                 }else{
                     moldMonitorEntity.setDerachievedStatus(MoldMonitorDerachievedStatusEnum.DERACHIEVED.getCode());
+                    //截止日期
+                    moldMonitorEntity.setExpirationDate(LocalDate.now().plusMonths(1));
                 }
             }
         }

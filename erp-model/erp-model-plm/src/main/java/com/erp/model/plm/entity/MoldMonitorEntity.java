@@ -97,12 +97,12 @@ public class MoldMonitorEntity extends BaseEntity<MoldMonitorEntity> {
     /**
      * 开始日期
      */
-    @TableField(value = "start_date",updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "start_date")
     private LocalDate startDate;
     /**
      * 结束日期
      */
-    @TableField(value = "end_date",updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "end_date")
     private LocalDate endDate;
     /**
      * 标准：purchaseOrder=以采购下单数量 ,warehouseReceive=以采购收货数量 ,poInstock=以采购入库数量  枚举：CfgMoldReturnAlertRuleCountDimEnum
@@ -174,13 +174,18 @@ public class MoldMonitorEntity extends BaseEntity<MoldMonitorEntity> {
     /**
     * 返还日期
     */
-    @TableField(value = "return_date",updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "return_date")
     private LocalDate returnDate;
     /**
     * 返还说明
     */
     @TableField("remark")
     private String remark;
+    /**
+     * 截止日期（达量日期的一个月后）
+     */
+    @TableField(value = "expiration_date")
+    private LocalDate expirationDate;
 
 
     public static final String SOURCE_ID = "source_id";

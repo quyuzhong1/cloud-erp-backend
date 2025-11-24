@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -231,8 +232,10 @@ public class MoldMonitorDTO implements Serializable {
          * 预警寿命（%）
          */
         private BigDecimal alertLifeRate;
-
-
+        /**
+         * 截止日期（达量日期的一个月后）
+         */
+        private LocalDate expirationDate;
     }
 
     /**

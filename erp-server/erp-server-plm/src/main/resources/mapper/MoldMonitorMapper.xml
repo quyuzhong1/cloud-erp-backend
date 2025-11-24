@@ -42,6 +42,7 @@
        <result column="return_user_name" property="returnUserName" />
        <result column="return_date" property="returnDate" />
        <result column="remark" property="remark" />
+       <result column="expiration_date" property="expirationDate" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -84,6 +85,7 @@ mm.actual_return_price AS actualReturnPrice,
 mm.return_user_id AS returnUserId,
 mm.return_user_name AS returnUserName,
 mm.return_date AS returnDate,
+mm.expiration_date AS expirationDate,
 mm.remark AS remark
     </sql>
 
