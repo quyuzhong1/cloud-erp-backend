@@ -433,7 +433,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
-        platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
         platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         for (SoB2cDetailEntity detailEntity : detailEntityList) {

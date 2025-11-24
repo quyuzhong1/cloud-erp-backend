@@ -1609,6 +1609,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             addDTO.setWarehouseName(warehouseEntity.getName());
             addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
             addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
+            addDTO.setIsSetVirtualWarehouseId(Boolean.TRUE);
             addDTO.setSourceDetailId(detailItem.getId());
             addDTO.setDeliveryQty(detailItem.getQty());
             deliveryDetailList.add(addDTO);

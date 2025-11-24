@@ -96,7 +96,7 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
                 if (CharSequenceUtil.isBlank(entity.getWarehouseLocation())){
                     entity.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                 }
-                if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId())){
+                if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId()) && (Objects.isNull(entity.getIsSetVirtualWarehouseId()) || !entity.getIsSetVirtualWarehouseId())){
                     //虚拟仓库
                     entity.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
                 }
