@@ -213,6 +213,21 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("/listAllSku")
+    public List<SkuVO> listAllSku() {
+        ProductDetailDTO.SearchDTO dto = new ProductDetailDTO.SearchDTO();
+        dto.setSearchKeyword(null);
+        dto.setStatus(null);
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
+        return skuList;
+    }
+
+    /**
      * 根据id查询sku信息
      *
      * @param ids ids

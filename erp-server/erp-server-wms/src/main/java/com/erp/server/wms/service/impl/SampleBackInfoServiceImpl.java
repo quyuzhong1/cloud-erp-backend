@@ -1410,8 +1410,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importSampleBackInfo(BaseDTO.ImportDTO dto) {
-        // SKU信息
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        // SKU信息（获取所有sku，不限制审核状态）
+        List<SkuVO> skuList = plmTaskFeign.listAllSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e, (o1, o2) -> o1));
         // 用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();

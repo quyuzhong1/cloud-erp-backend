@@ -767,8 +767,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importSampleBorrow(BaseDTO.ImportDTO dto) {
-        //sku信息
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //sku信息（获取所有sku，不限制审核状态）
+        List<SkuVO> skuList = plmTaskFeign.listAllSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1,o2)->o1));
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
