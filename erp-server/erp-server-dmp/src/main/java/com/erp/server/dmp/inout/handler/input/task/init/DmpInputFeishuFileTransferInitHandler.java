@@ -14,6 +14,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpRefPlatformFileEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -27,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -61,10 +63,29 @@ public class DmpInputFeishuFileTransferInitHandler extends DmpInputInitHandler {
         // 查询父任务变更的信息
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
         //查询变更的实例ID
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, parentStorageName);
-        if (CollUtil.isEmpty(dmpInputMongoChildList)){
+        List<Map<String, Object>> dmpInputMongoMainList = mongoService.findMongoData(paramDataList, parentStorageName);
+        if (CollUtil.isEmpty(dmpInputMongoMainList)){
             return Collections.emptyList();
         }
+        // 查询明细ID
+        List<DmpInputTaskEntity> allChildTaskList = dmpInputTaskService.lambdaQuery()
+                .in(DmpInputTaskEntity::getParentTaskId, dmpInputTaskEntity.getParentTaskId())
+                .list();
+        if (CollUtil.isEmpty(allChildTaskList)){
+            log.warn("DmpInputFeishuFileTransferInitHandler:未查询到子任务，无法处理飞书文件转存");
+            return Collections.emptyList();
+        }
+        List<String> childTaskIds = allChildTaskList.stream().map(e -> e.getId()).collect(Collectors.toList());
+        List<String> instanceIds = dmpInputMongoMainList.stream()
+                .map(e -> e.getOrDefault("instance_id", "").toString())
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<ParamData> detailParamDataList = new ArrayList<>();
+        // 查询父任务变更的信息
+        detailParamDataList.add(new ParamData("instanceCode", "instanceCode", PannoEnum.IN, instanceIds));
+        detailParamDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, childTaskIds));
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(detailParamDataList, "feishu_instance_data");
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -81,10 +102,23 @@ public class DmpInputFeishuFileTransferInitHandler extends DmpInputInitHandler {
             if (CollUtil.isNotEmpty(allEntityList)) {
                 // 批量校验已存在的文件，过滤掉已存在的文件
                 List<String> fileKeyList = allEntityList.stream().map(e -> e.getStr("fileKey")).collect(Collectors.toList());
-                Map<String, DmpRefPlatformFileEntity> fileEntityMap = dmpRefPlatformFileService.mapByFileKey("feishu", fileKeyList);
+                Map<String, Object> existFileKeyObjMap = new HashMap<>();
+                // 查询mongo已转存为文件:
+                List<ParamData> fileParamDataList = new ArrayList<>();
+                fileParamDataList.add(new ParamData("fileKey", "fileKey", PannoEnum.IN, fileKeyList));
+
+                List<Map<String, Object>> fileMongoData = mongoService.findMongoData(fileParamDataList, "feishu_file_data");
+                if (CollectionUtils.isNotEmpty(fileMongoData)) {
+                    existFileKeyObjMap = fileMongoData
+                            .stream()
+                            .collect(Collectors.toMap(e -> e.getOrDefault("fileKey","").toString(), e-> e, (k1, k2) -> k1));
+                }
+
                 // 上传
                 for (JSONObject object : allEntityList) {
-                    if (fileEntityMap.containsKey(object.getStr("fileKey"))) {
+                    Object fileKeyObj = existFileKeyObjMap.get(object.getStr("fileKey"));
+                    if (null != fileKeyObj) {
+                        result.add(fileKeyObj);
                         continue;
                     }
                     String redisKey = CharSequenceUtil.format(RedisCacheConstants.FEI_SHU_RESULT_PREFIX, "fileUrl", object.getStr("fileKey"));

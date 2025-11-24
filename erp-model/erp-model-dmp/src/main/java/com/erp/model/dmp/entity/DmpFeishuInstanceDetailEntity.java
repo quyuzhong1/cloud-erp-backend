@@ -1,13 +1,22 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -199,4 +208,71 @@ public class DmpFeishuInstanceDetailEntity extends BaseEntity<DmpFeishuInstanceD
         return null;
     }
 
+    public static List<String> fromConvertFileInfoList(String form, String instanceCode) {
+        if (StringUtils.isBlank(form)){
+            return Collections.emptyList();
+        }
+        JSONArray formArray = JSONUtil.parseArray(form);
+        return parseFormAndGetAllFileKey(formArray,instanceCode);
+    }
+
+
+    /**
+     * 将飞书结构转为控件id和值的映射
+     */
+    public static List<String> parseFormAndGetAllFileKey(JSONArray formFields, String instanceCode) {
+        List<String> resultList = new LinkedList<>();
+        formFields.forEach(obj -> {
+            JSONObject field = (JSONObject) obj;
+            String fieldType = field.getStr("type");
+            if ("fieldList".equals(fieldType)) {
+                JSONArray valueArray = field.getJSONArray("value");
+                valueArray.forEach(row -> {
+                    JSONArray rowFields = (JSONArray) row;
+                    rowFields.forEach(subObj -> {
+                        JSONObject subField = (JSONObject) subObj;
+                        List<String> objectList = extractFieldValue(subField, instanceCode);
+                        if (CollectionUtils.isNotEmpty(objectList)) {
+                            resultList.addAll(objectList);
+                        }
+                    });
+                });
+            } else {
+                List<String> objectList = extractFieldValue(field, instanceCode);
+                if (CollectionUtils.isNotEmpty(objectList)) {
+                    resultList.addAll(objectList);
+                }
+            }
+        });
+        return resultList;
+    }
+
+    /**
+     * 根据控件类型提取字段值
+     */
+    public static List<String> extractFieldValue(JSONObject field, String instanceCode) {
+        String fieldType = field.getStr("type");
+        if ("attachmentV2".equals(fieldType) || "imageV2".equals(fieldType) || "image".equals(fieldType)) {
+            return convertFileKey(field, instanceCode);
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<String> convertFileKey(JSONObject valueObj, String instanceCode) {
+        // {"id": "widget17530790199490001","name": "证件附件1","type": "attachmentV2","ext": "replay_pid24236.log","value": ["飞书url"]}
+        JSONArray fileArray = valueObj.getJSONArray("value");
+        if (CollectionUtils.isEmpty(fileArray)) {
+            return Collections.emptyList();
+        }
+        List<String> resultList = new LinkedList<>();
+        String id = valueObj.getStr("id");
+        String[] names = valueObj.getStr("ext").split(",");
+        for (int i = 0; i < names.length; i++) {
+            String fileName = names[i];
+            // 以 “审批实例 ID + 控件 ID + 文件名” 作为复合键判断重复。
+            String fileKey = CharSequenceUtil.format("{}|{}|{}", instanceCode, id, fileName);
+            resultList.add(fileKey);
+        }
+        return resultList;
+    }
 }

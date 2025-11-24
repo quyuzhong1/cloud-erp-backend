@@ -1,13 +1,13 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -89,6 +89,11 @@ public class DmpRefPlatformFileEntity extends BaseEntity<DmpRefPlatformFileEntit
     */
     @TableField("file_name")
     private String fileName;
+    /**
+     * 主键ID
+     */
+    @TableField("main_id")
+    private String mainId;
 
 
     public static final String INPUT_TASK_ID = "input_task_id";

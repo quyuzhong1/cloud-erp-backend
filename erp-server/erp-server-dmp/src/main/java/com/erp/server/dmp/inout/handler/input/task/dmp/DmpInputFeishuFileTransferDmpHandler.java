@@ -1,47 +1,39 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.service.DmpRefPlatformFileService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * dmp处理明细子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
  *
  * @author Administrator
  */
-@Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputFeishuGetInstancesDetailDmpHandler extends DmpInputDoChildDmpHandler {
+public class DmpInputFeishuFileTransferDmpHandler extends DmpInputDoChildDmpHandler {
 
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<ParamData> paramDataList = new ArrayList<>();
         List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<String> taskIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, taskIds));
         return mongoService.findMongoData(paramDataList, childMongoStorageName);
     }
 
@@ -60,13 +52,10 @@ public class DmpInputFeishuGetInstancesDetailDmpHandler extends DmpInputDoChildD
             }
         }
         for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-            Object instanceCodeObj = dmpInputMongoChildEntity.get("instanceCode");
-            if (instanceCodeObj == null) {
-                ServiceException.runError("飞书返回instanceCode为空，无法关联主表数据");
-            }
-            String billNo = dmpInputMongoChildEntity.get("instanceCode").toString();
+            String billNo = dmpInputMongoChildEntity.get("billId").toString();
             String dmpId = billNoIdMap.get(billNo);
             dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
         }
     }
+
 }

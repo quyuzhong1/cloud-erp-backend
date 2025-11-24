@@ -18,6 +18,7 @@ import com.lark.oapi.Client;
 import com.lark.oapi.service.approval.v4.model.ListInstanceReq;
 import com.lark.oapi.service.approval.v4.model.ListInstanceResp;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -49,15 +50,22 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
 
         //获取第三方审批定义
         String approvalCode = dmpResponse.getDmpCfgInputDetailEntity().getNextLevelId();
+        if (StringUtils.isBlank(approvalCode)) {
+            ServiceException.runError("第三方审批定义代号配置为空");
+        }
         JSONArray result = new JSONArray();
         try {
             List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
-            for (String id : ids) {
+//            for (String id : ids) {
+//                JSONObject object = new JSONObject();
+//                object.put("instance_id", id);
+//                object.put("ulanzi_approval_code", approvalCode);
+//                result.add(object);
+//            }
                 JSONObject object = new JSONObject();
-                object.put("instance_id", id);
+                object.put("instance_id", ids.get(1));
                 object.put("ulanzi_approval_code", approvalCode);
                 result.add(object);
-            }
         } catch (Exception e) {
             log.error("调用飞书失败,e= {}",e.getMessage());
             throw new ServiceException("调用飞书失败,msg= {}",e.getMessage());
