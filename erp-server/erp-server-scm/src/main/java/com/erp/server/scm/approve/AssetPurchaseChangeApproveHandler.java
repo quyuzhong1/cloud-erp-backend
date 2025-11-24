@@ -29,6 +29,11 @@ public class AssetPurchaseChangeApproveHandler extends AbstractApproveHandler {
     private AssetPurchaseChangeService assetPurchaseChangeService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return assetPurchaseChangeService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = assetPurchaseChangeService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

@@ -28,6 +28,11 @@ public class AssetNoticeApproveHandler extends AbstractApproveHandler {
     private AssetNoticeService assetNoticeService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return assetNoticeService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = assetNoticeService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();
