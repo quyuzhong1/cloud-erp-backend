@@ -472,6 +472,20 @@ public class AssetStocktakingPlanController extends BaseController {
     }
 
     /**
+    * 下载导入模板
+    * @author wuht
+    * @date: 2025-11-03
+    * @param response
+    * @return ApiResult<Object>
+    */
+    @GetMapping("/downloadTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载资产盘点方案导入模板")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        assetStocktakingPlanService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
     * 获取盘点方案下拉列表
     * @author wuht
     * @date: 2025-11-03

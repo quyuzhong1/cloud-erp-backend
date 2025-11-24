@@ -192,6 +192,14 @@ public interface AssetStocktakingPlanService extends SuperService<AssetStocktaki
                                 String importType);
 
     /**
+    * 下载导入模板
+    * @author wuht
+    * @date: 2025-11-03
+    * @param response
+    */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
     * 获取盘点方案下拉列表
     * @author wuht
     * @date: 2025-11-03

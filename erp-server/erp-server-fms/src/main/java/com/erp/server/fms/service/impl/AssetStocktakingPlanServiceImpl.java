@@ -56,6 +56,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -900,6 +901,16 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
         dto.setVariablesMap(cn.hutool.core.bean.BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/assetStocktakingPlan.xlsx";
+        String excelName = "资产盘点方案导入模板.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
     }
 
     @Override
