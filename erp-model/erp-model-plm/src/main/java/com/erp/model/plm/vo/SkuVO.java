@@ -109,6 +109,12 @@ public class SkuVO implements Serializable {
      */
     private String productPropertyId;
 
+    /**
+     * product_info的产品属性
+     */
+    private String propertyId;
+    private String propertyName;
+
 
     /**
      * 产品等级
@@ -253,6 +259,8 @@ public class SkuVO implements Serializable {
      * (可能字段为null，需添加查询)
      */
     private Boolean isCombination;
+
+    private BigDecimal deliveryCycle;
 
     public String checkAndGetSkuImagesUrl() {
         if (StringUtils.isBlank(this.skuImagesUrl)){

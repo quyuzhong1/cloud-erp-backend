@@ -13,6 +13,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
@@ -121,6 +122,15 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listApproveSku")
     List<SkuVO> listApproveSku();
+
+    /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("feign/product/listAllSku")
+    List<SkuVO> listAllSku();
 
     /**
      * 根据id查询sku信息
@@ -668,4 +678,45 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/projectTask/approvalTaskSchedulePass")
     void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/moldInfo/getMoldInfo")
+    MoldInfoEntity getMoldInfoByCode(@RequestBody String moldCode);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/productDetail/listByIds")
+    List<ProductDetailEntity> listByIds(@RequestBody List<String> ids);
+
+
+    @PostMapping("feign/product/listAssetProduct" )
+    List<SkuVO> listAssetProduct();
+
+    @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
+    List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
+
+
+
+    /**
+     * 模具档案审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldInfoApprove")
+    void moldInfoApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 模具关联SKU审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
+    void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
 }

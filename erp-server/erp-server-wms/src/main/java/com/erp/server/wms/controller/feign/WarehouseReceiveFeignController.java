@@ -107,4 +107,15 @@ public class WarehouseReceiveFeignController {
     public List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList){
         return warehouseReceiveService.listReceiveSourceByDetailIds(idList);
     }
+
+
+    /**
+     * 根据SKU集合获取收货信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getReceiveByParams")
+    public List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(@RequestBody WarehouseReceiveDTO.ReceiveParamDTO dto) {
+        return warehouseReceiveService.getReceiveByParams(dto);
+    }
 }

@@ -36,6 +36,15 @@ public class PilotApplicationApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        BatchResultDTO approve = pilotApplicationService.approve(dto, null);
+        //回写产品管理--采购信息--一级和二级供应商
+        pilotApplicationService.writeProductPurchaseBack(dto.getId());
+        pilotApplicationService.approvePilotApplicationNotice(dto.getId());
+        return approve;
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = pilotApplicationService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

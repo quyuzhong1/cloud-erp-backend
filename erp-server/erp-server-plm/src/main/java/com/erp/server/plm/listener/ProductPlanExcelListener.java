@@ -42,6 +42,8 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
 
     private BasicDictService basicDictService;
 
+    private ProductBrandService productBrandService;
+
     private BasicCategoryService basicCategoryService;
 
     private ProductPlanSaleService productPlanSaleService;
@@ -65,11 +67,12 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
     private List<ProductPlanExcelDTO> dataList = new ArrayList<>();
 
     public ProductPlanExcelListener(ProductPlanService productPlanService, BasicDictService basicDictService,
-                                    BasicCategoryService basicCategoryService, ProductPlanSaleService productPlanSaleService, ProductPlanSaleInfoService productPlanSaleInfoService,
+                                    ProductBrandService productBrandService, BasicCategoryService basicCategoryService, ProductPlanSaleService productPlanSaleService, ProductPlanSaleInfoService productPlanSaleInfoService,
                                     ProductPlanPurchaseService  productPlanPurchaseService,ProductPlanRemarkService productPlanRemarkService, SysUserFeign sysUserFeign,
                                     ApplicationCategoryService applicationCategoryService) {
         this.productPlanService = productPlanService;
         this.basicDictService = basicDictService;
+        this.productBrandService = productBrandService;
         this.basicCategoryService = basicCategoryService;
         this.productPlanSaleService = productPlanSaleService;
         this.productPlanSaleInfoService = productPlanSaleInfoService;
@@ -102,7 +105,8 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         }
 
         if (StringUtils.isNotBlank(productPlanExcelDTO.getBrandName())) {
-            BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), productPlanExcelDTO.getBrandName());
+            //品牌处理 - 从品牌管理表中获取
+            ProductBrandEntity productBrand = productBrandService.getByName(productPlanExcelDTO.getBrandName());
             if (ObjectUtils.isEmpty(productBrand)) {
                 errorMsgList.add("产品品牌在系统中未找到");
             } else {

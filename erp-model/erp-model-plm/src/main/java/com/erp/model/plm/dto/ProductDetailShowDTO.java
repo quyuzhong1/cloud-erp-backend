@@ -137,6 +137,7 @@ public class ProductDetailShowDTO implements Serializable {
     /**
      * 产品属性
      */
+    private String propertyId;
     private String property;
 
 
@@ -150,6 +151,11 @@ public class ProductDetailShowDTO implements Serializable {
      * 产品品牌
      */
     private String brandName;
+
+    /**
+     * 研发团队
+     */
+    private String rdtTeamName;
 
     /**
      * 产品等级
@@ -390,4 +396,25 @@ public class ProductDetailShowDTO implements Serializable {
      * 实际不含税成本
      */
     private BigDecimal actualNoTaxCost = BigDecimal.ZERO;
+
+    /**
+     * 模具id
+     */
+    private String moldId;
+    /**
+     * 模具编码
+     */
+    private String moldCode;
+    /**
+     * 模具名称
+     */
+    private String moldName;
+    /**
+     * 模具标识
+     */
+    private String tag;
+    /**
+     * 模具标识名称
+     */
+    private String tagName;
 }
