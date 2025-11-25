@@ -218,7 +218,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
             itemEntity.setInvalidStatus(false);
             itemEntity.setSuiteNo(item.getSuiteNo());
             itemEntity.setSuiteQty(item.getSuiteQty());
-
+			itemEntity.setPlatformCode(item.getPlatformOrderCode());
             List<DmpSoOutstockPositionEntity> positionList = recIdMaps.get(item.getThirdDetailId());
             if(CollUtil.isNotEmpty(positionList)) {
             	positionList.forEach(p -> {

@@ -20,6 +20,11 @@ public class SoMultiChannelApproveHandler extends AbstractApproveHandler {
     private SoMultiChannelService soMultiChannelService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soMultiChannelService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = soMultiChannelService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

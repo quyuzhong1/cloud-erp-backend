@@ -26,6 +26,11 @@ public class SampleInitialLedgerApproveHandler extends AbstractApproveHandler {
     private SampleInitialLedgerService sampleInitialLedgerService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return sampleInitialLedgerService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = sampleInitialLedgerService.cancelProcess(dto.getId());
         return result.getSuccess();

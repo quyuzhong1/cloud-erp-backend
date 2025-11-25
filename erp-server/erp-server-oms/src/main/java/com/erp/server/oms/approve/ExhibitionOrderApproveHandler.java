@@ -19,6 +19,11 @@ public class ExhibitionOrderApproveHandler extends AbstractApproveHandler {
     private ExhibitionOrderService exhibitionOrderService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return exhibitionOrderService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = exhibitionOrderService.cancelProcess(dto.getId());
         return result.getSuccess();

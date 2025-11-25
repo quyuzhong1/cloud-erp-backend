@@ -85,7 +85,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
         // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
-        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
+//        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
+        String code =  dto.getPurchaseOrderCode();
         // feign调用取不到登录人信息，已解决
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
@@ -156,8 +157,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             return;
         }
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
-        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
-        inventoryUnApproveDTO.setBillId(instockForcastEntity.getId());
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
+        inventoryUnApproveDTO.setBillId(purchaseOrderId);
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());

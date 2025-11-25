@@ -229,10 +229,28 @@ eo.partition_id as partitionId
     </select>
     <select id="tabList" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$TabListDTO">
         SELECT
+        'approveIng' AS tabFlag,
+        COUNT ( 1 ) AS COUNT
+        FROM  exhibition_order eo
+        WHERE
+        eo.is_deleted = FALSE
+        AND eo.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and eo.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
         eo.approve_status AS tabFlag,
         count(*)  AS count
         FROM  exhibition_order eo
         WHERE eo.is_deleted=FALSE
+        AND eo.approve_status != 'approveIng'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

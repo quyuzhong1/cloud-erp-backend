@@ -153,10 +153,29 @@ sri.remark as remark
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$TabListDTO">
         SELECT
+        'approveIng' AS tabFlag,
+        COUNT ( 1 ) AS COUNT
+        FROM
+        sample_return_info sri
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and sri.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
         sri.approve_status AS tabFlag,
         count(*)  AS count
         FROM  sample_return_info as sri
         WHERE  sri.is_deleted=FALSE
+        AND sri.approve_status != 'approveIng'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
