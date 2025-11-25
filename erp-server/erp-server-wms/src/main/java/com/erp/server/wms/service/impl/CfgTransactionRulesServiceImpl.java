@@ -36,7 +36,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 21-入库预报
         // 在途增加
         CfgTransactionRulesEntity cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        InventoryBusinessTypeEnum businessType = InventoryBusinessTypeEnum.PURCHASE_ORDER;
+        InventoryBusinessTypeEnum businessType = InventoryBusinessTypeEnum.INSTOCK_FORCAST;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         InventoryStatusEnum inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
