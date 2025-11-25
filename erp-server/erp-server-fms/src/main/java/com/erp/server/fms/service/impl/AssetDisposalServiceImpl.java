@@ -112,15 +112,15 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         List<String> allAssetProfitLossDetailIds = assetDisposalDetailDTOList.stream()
                 .flatMap(updateDTO -> updateDTO.getAssetDisposalPhysicalDetailDTOList().stream())
                 .map(AssetDisposalPhysicalDetailDTO.UpdateDTO::getAssetProfitLossDetailId)
-                .filter(Objects::nonNull) // 过滤掉 null 值（可选）
+                .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-
-        Integer count = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetProfitLossDetailId, allAssetProfitLossDetailIds).count();
-        if(count > 0){
-            throw new ServiceException("盘亏单请勿重复下推处置单");
+        if(CollUtil.isNotEmpty(allAssetProfitLossDetailIds)){
+            Integer count = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetProfitLossDetailId, allAssetProfitLossDetailIds).count();
+            if(count > 0){
+                throw new ServiceException("盘亏单请勿重复下推处置单");
+            }
         }
-
         AssetDisposalEntity assetDisposalEntity = new AssetDisposalEntity();
         BeanMapperUtils.copy(addDTO, assetDisposalEntity);
 
