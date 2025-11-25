@@ -602,7 +602,7 @@ public class MoldInfoDTO implements Serializable {
         */
         @NotNull(message = "长(mm)不能为空")
         @Digits(integer = 18, fraction = 2, message = "长(mm)整数位不能超过18位，小数位不能超过2位")
-        @DecimalMin(value = "0.01", message = "长(mm)必须大于0")
+        @DecimalMin(value = "0", message = "长(mm)必须大于等于0")
         private BigDecimal productLength;
 
         /**
@@ -610,7 +610,7 @@ public class MoldInfoDTO implements Serializable {
         */
         @NotNull(message = "宽(mm)不能为空")
         @Digits(integer = 18, fraction = 2, message = "宽(mm)整数位不能超过18位，小数位不能超过2位")
-        @DecimalMin(value = "0.01", message = "宽(mm)必须大于0")
+        @DecimalMin(value = "0", message = "宽(mm)必须大于等于0")
         private BigDecimal productWidth;
 
         /**
@@ -618,7 +618,7 @@ public class MoldInfoDTO implements Serializable {
         */
         @NotNull(message = "高(mm)不能为空")
         @Digits(integer = 18, fraction = 2, message = "高(mm)整数位不能超过18位，小数位不能超过2位")
-        @DecimalMin(value = "0.01", message = "高(mm)必须大于0")
+        @DecimalMin(value = "0", message = "高(mm)必须大于等于0")
         private BigDecimal productHeight;
 
         /**
