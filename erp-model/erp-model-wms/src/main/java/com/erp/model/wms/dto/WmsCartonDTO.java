@@ -552,12 +552,4 @@ public class WmsCartonDTO {
          */
         private String sku;
     }
-    @Data
-    @NoArgsConstructor
-    public static class CountDTO {
-        private String sourceId;
-        private String packingStatus;
-        private String skuId;
-        private Integer packingQty;
-    }
 }
