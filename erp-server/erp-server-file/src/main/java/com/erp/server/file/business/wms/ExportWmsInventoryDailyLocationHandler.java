@@ -32,7 +32,7 @@ public class ExportWmsInventoryDailyLocationHandler extends AbstractPageFileEven
 
     @Override
     protected PagingVO<InventoryReportDTO.ListDailyInventoryDTO> getPageData(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
-        return exportWmsFeign.exportInventoryDaily(dto);
+        return exportWmsFeign.exportDailyInventoryByLocation(dto);
     }
 
     @Override
