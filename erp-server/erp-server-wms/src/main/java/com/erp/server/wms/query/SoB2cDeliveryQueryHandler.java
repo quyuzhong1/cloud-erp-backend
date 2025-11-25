@@ -146,6 +146,14 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST, soIds, QueryDataTypeEnum.STRING);
             }
         }
+        if ("logisticsLabelUrl".equals(field)) {
+            Boolean bool = (Boolean) value;
+            if (bool){
+                return "fsbl.logistics_label_url is not null and fsbl.logistics_label_url <> ''";
+            }else {
+                return "fsbl.logistics_label_url is null or fsbl.logistics_label_url = ''";
+            }
+        }
         return null;
     }
 

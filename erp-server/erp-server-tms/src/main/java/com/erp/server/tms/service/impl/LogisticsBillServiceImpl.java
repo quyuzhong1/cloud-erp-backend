@@ -1040,6 +1040,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 .collect(Collectors.toList());
 
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        Map<String, String> codeMap = soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getCode));
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
 //        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
@@ -1066,7 +1067,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     }
                 } catch (Exception e) {
                     log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
-                    errorList.add(dto.getB2cSoId());
+                    errorList.add(codeMap.get(dto.getB2cSoId()));
                 }
             }, tmsLogisticsLabelPool);
             futures.add(future);
@@ -1082,6 +1083,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 记录错误信息
         if (!errorList.isEmpty()) {
             log.warn("以下订单面单获取失败: {}", errorList);
+            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
         }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
