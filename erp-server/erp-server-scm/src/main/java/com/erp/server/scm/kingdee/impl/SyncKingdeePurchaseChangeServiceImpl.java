@@ -334,29 +334,16 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
     private DmpPushTaskEntity saveTask (AssetPurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_CHANGE.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();
         if(CollUtil.isEmpty(list)) {
-            //添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_CHANGE.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_CHANGE_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            taskFeignDTO.setSyncOperate(operate);
-            taskFeignDTO.setParentId(entity.getSourceId());
-            return dmpMqFeign.saveTask(taskFeignDTO);
+            throw new ServiceException(ApiError.ERROR_CFG_SETTING_NOTFOUND,SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
         }
-
         ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
         scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_CHANGE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
         scmPushMsgEntity.setSourceId(entity.getId());
         scmPushMsgEntity.setSourceCode(entity.getCode());
         scmPushMsgEntity.setSyncOperate(operate);
@@ -385,6 +372,9 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
 
+        //变更类型
+        resultMap.put("orderType",entity.getOrderType());
+
         resultMap.put("sourceType", KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
 
         //变更人
@@ -402,7 +392,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //供应商
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
                 .eq(AssetPurchaseOrderSupplierEntity::getAssetPurchaseOrderId, entity.getSourceId())
-                .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         SupplierEntity supplierEntity = supplierService.getById(assetPurchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
@@ -426,7 +415,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             resultMap.put("purchaseOrgCode", purchaseOrgCode);
         }
         //变更原因
-        resultMap.put("changeReason","资产采购订单变更");
+        resultMap.put("changeReason",entity.getChangeReason());
 
         //获取用户部门id
         if (StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId())) {
@@ -456,7 +445,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //变更明细
         List<AssetPurchaseChangeDetailEntity> detailList = assetPurchaseChangeDetailService.lambdaQuery()
                 .eq(AssetPurchaseChangeDetailEntity::getMainId, entity.getId())
-                .eq(AssetPurchaseChangeDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (CollectionUtils.isEmpty(detailList)) {
             log.error("未找到资产变更明细，changeId = {}",entity.getId());
