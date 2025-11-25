@@ -189,6 +189,7 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         virtualTransFlowEntity.setWarehouseId(transactionDTO.getWarehouseId());
         virtualTransFlowEntity.setVirtualWarehouseId(transactionDTO.getVirtualWarehouseId());
         virtualTransFlowEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
+        virtualTransFlowEntity.setOrgId(transactionDTO.getOrgId());
 
         // 交易时间 & 单据类型
         virtualTransFlowEntity.setBillDate(transactionDTO.getBillDate());
