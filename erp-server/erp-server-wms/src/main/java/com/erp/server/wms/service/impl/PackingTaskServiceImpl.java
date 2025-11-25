@@ -308,8 +308,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())){
             List<WmsCartonDetailDTO.AddDTO> detailList = dto.getWmsCartonList().stream().map(WmsCartonSpecDTO.AddDTO::getDetailList).flatMap(List::stream).collect(Collectors.toList());
             checkPackQtyByPickQtyBySku(packingTask, detailList,isAddCarton);
-            //校验相同客户po号不能装同一箱
-            checkDiffCustomerPoInCarton(packingTask,dto.getWmsCartonList());
         }
         PickingSourceTypeEnum type = PickingSourceTypeEnum.getByStatus(packingTask.getSourceType());
         Map<String, Integer> packedMap = new HashMap<>();
@@ -401,6 +399,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 skuDetailMap.put(v.getSkuId(), taskDetailList);
             });
             addDTO.setDetailList(addDTOList);
+            //校验相同客户po号不能装同一箱
+            checkDiffCustomerPoInCarton(packingTask, Collections.singletonList(addDTO));
             //新增装箱信息
             wmsCartonSpecService.add(addDTO);
         }
