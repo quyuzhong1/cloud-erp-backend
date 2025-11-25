@@ -31,6 +31,22 @@ public class ProductRDTTeamServiceImpl extends ServiceImpl<ProductRDTTeamMapper,
     @Override
     public Boolean saveOrUpdateBatch(List<ProductRDTTeamDTO> productRDTTeamList) {
         List<ProductRDTTeamEntity> productRDTTeamEntities = BeanMapper.copyList(productRDTTeamList, ProductRDTTeamEntity.class);
+        // 校验 name + is_deleted 唯一性（只检查未删除的记录）
+        for (ProductRDTTeamEntity entity : productRDTTeamEntities) {
+            if (entity.getName() != null) {
+                LambdaQueryWrapper<ProductRDTTeamEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(ProductRDTTeamEntity::getName, entity.getName());
+                queryWrapper.eq(ProductRDTTeamEntity::getIsDeleted, Boolean.FALSE);
+                // 如果是更新操作，排除自身
+                if (entity.getId() != null) {
+                    queryWrapper.ne(ProductRDTTeamEntity::getId, entity.getId());
+                }
+                ProductRDTTeamEntity existEntity = this.getOne(queryWrapper);
+                if (existEntity != null) {
+                    throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+                }
+            }
+        }
         return this.saveOrUpdateBatch(productRDTTeamEntities);
     }
 
@@ -40,7 +56,9 @@ public class ProductRDTTeamServiceImpl extends ServiceImpl<ProductRDTTeamMapper,
      **/
     @Override
     public List<ProductRDTTeamEntity> listProductRDTTeam(){
-        return this.list();
+        LambdaQueryWrapper<ProductRDTTeamEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductRDTTeamEntity::getIsDeleted, Boolean.FALSE);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -68,6 +86,7 @@ public class ProductRDTTeamServiceImpl extends ServiceImpl<ProductRDTTeamMapper,
     public ProductRDTTeamEntity checkRDTTeamName(String name){
         LambdaQueryWrapper<ProductRDTTeamEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductRDTTeamEntity::getName, name);
+        queryWrapper.eq(ProductRDTTeamEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
@@ -90,6 +109,7 @@ public class ProductRDTTeamServiceImpl extends ServiceImpl<ProductRDTTeamMapper,
     @Override
     public ProductRDTTeamEntity getByName(String name) {
         ProductRDTTeamEntity entity = lambdaQuery().eq(ProductRDTTeamEntity::getName, name)
+                .eq(ProductRDTTeamEntity::getIsDeleted, Boolean.FALSE)
                 .last("limit 1")
                 .one();
         return entity;

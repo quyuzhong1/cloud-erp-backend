@@ -31,6 +31,22 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
     @Override
     public Boolean saveOrUpdateBatch(List<ProductBrandDTO> productBrandList) {
         List<ProductBrandEntity> productBrandEntities = BeanMapper.copyList(productBrandList, ProductBrandEntity.class);
+        // 校验 name + is_deleted 唯一性（只检查未删除的记录）
+        for (ProductBrandEntity entity : productBrandEntities) {
+            if (entity.getName() != null) {
+                LambdaQueryWrapper<ProductBrandEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(ProductBrandEntity::getName, entity.getName());
+                queryWrapper.eq(ProductBrandEntity::getIsDeleted, Boolean.FALSE);
+                // 如果是更新操作，排除自身
+                if (entity.getId() != null) {
+                    queryWrapper.ne(ProductBrandEntity::getId, entity.getId());
+                }
+                ProductBrandEntity existEntity = this.getOne(queryWrapper);
+                if (existEntity != null) {
+                    throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+                }
+            }
+        }
         return this.saveOrUpdateBatch(productBrandEntities);
     }
 
@@ -40,7 +56,9 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
      **/
     @Override
     public List<ProductBrandEntity> listProductBrand(){
-        return this.list();
+        LambdaQueryWrapper<ProductBrandEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductBrandEntity::getIsDeleted, Boolean.FALSE);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -68,6 +86,7 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
     public ProductBrandEntity checkBrandName(String name){
         LambdaQueryWrapper<ProductBrandEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductBrandEntity::getName, name);
+        queryWrapper.eq(ProductBrandEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
@@ -90,6 +109,7 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
     @Override
     public ProductBrandEntity getByName(String name) {
         ProductBrandEntity entity = lambdaQuery().eq(ProductBrandEntity::getName, name)
+                .eq(ProductBrandEntity::getIsDeleted, Boolean.FALSE)
                 .last("limit 1")
                 .one();
         return entity;
