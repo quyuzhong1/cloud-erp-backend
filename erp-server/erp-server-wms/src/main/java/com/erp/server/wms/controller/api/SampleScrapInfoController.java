@@ -380,7 +380,7 @@ public class SampleScrapInfoController extends BaseController {
     @LogViewService
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleScrapInfo:update",
+            menuCode = "wms:sampleScrapInfo:view",
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "id")
     public ApiResult<SampleScrapInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
