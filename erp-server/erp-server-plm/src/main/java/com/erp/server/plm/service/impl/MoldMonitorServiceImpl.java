@@ -604,7 +604,9 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 }
             }else if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.WAREHOUSERECEIVE.getCode())){
                 WarehouseReceiveDTO.ReceiveParamDTO dto = new WarehouseReceiveDTO.ReceiveParamDTO();
-                List<WarehouseReceiveDTO.ReceiveInfoDTO> detail = wmsTaskFeign.getReceiveByParams(dto)
+                dto.setSkuIds(skuIds);
+                List<WarehouseReceiveDTO.ReceiveInfoDTO> receiveInfoDTOs = wmsTaskFeign.getReceiveByParams(dto);
+                List<WarehouseReceiveDTO.ReceiveInfoDTO> detail = receiveInfoDTOs
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
                         .filter(e -> {
@@ -636,6 +638,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                 }
             }else if(Objects.equals(countDim, CfgMoldReturnAlertRuleCountDimEnum.POINSTOCK.getCode())){
                 PoInstockDTO.PoInStockParamDTO dto = new PoInstockDTO.PoInStockParamDTO();
+                dto.setSkuIds(skuIds);
                 List<PoInstockDTO.PoInStockInfoDTO> detail = wmsTaskFeign.getPoStockInByParams(dto)
                         .stream()
                         .filter(e -> Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode()))
