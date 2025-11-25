@@ -149,11 +149,11 @@ public class NfeInvoiceService {
         String companyName = "";
         try {
             companyName = invoiceSetting.getCompanyName();
+            sellerTaxNo = invoiceSetting.getLeiCode();
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
             invoiceAddress = nfeClienteDTO.getRua();
-            sellerTaxNo = nfeClienteDTO.getCpfCnpj();
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
