@@ -106,10 +106,10 @@ public class LogisticsFeignController {
      * @param logisticsPlatform
      * @return
      */
-    @GetMapping("/getChannelByCode")
-    public LogisticsChannelEntity getChannelByCode(@RequestParam("channelCode") String channelCode,
+    @GetMapping("/getChannelByCodeAndPlatform")
+    public LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(@RequestParam("channelCode") String channelCode,
                                                    @RequestParam("logisticsPlatform") String logisticsPlatform){
-        return logisticsChannelService.getChannelByCode(channelCode,logisticsPlatform);
+        return logisticsChannelService.getChannelByCodeAndPlatform(channelCode,logisticsPlatform);
     }
 
     /**

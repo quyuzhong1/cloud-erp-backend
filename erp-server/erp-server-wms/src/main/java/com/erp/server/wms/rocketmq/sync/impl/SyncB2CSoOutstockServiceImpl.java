@@ -283,7 +283,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         //wdt渠道映射erp
         String logisticsCode = entity.getLogisticsCompanyCode();
-        LogisticsChannelEntity channel = logisticsFeign.getChannelByCode(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
+        LogisticsChannelEntity channel = logisticsFeign.getChannelByCodeAndPlatform(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
         if (Objects.isNull(channel)){
             throw new ServiceException(ApiError.ERROR_CHANNEL_NOTFOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
         }

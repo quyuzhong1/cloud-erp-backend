@@ -370,11 +370,12 @@
             and lc.channel_type = #{dto.channelType}
         </if>
     </select>
-    <select id="getChannelByCode" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+     <select id="getChannelByCodeAndPlatform" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$BaseDTO">
         SELECT
             lc.id,
             lc.code,
-            lc."name"
+            lc."name",
+            lc.main_id as mainId
         FROM logistics_channel lc
                  LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
         where lc.is_deleted= false
