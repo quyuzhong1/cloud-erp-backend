@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param pagingParamDTO pagingParamDTO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingViewDTO>
      **/
-    PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO);
+    PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException;
 
     /**
      * 列表状态数量统计
