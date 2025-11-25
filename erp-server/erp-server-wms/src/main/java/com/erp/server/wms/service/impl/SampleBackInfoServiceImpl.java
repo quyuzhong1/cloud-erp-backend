@@ -838,9 +838,11 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //审核完成也做台账数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        
         // 审核通过后自动生成其他入库单
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
             //自动生成功能系统标识

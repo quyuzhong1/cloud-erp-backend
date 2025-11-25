@@ -699,6 +699,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 

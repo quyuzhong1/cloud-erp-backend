@@ -721,6 +721,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //审核完成也做台账数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
 
         updateForApprove(entity.getId(), approveStatus.getStatus());

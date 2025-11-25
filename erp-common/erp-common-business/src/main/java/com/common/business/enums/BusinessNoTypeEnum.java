@@ -143,6 +143,8 @@ public enum BusinessNoTypeEnum {
     CODE_MOLD_REF_SKU(110 ,"MRS","模具关联SKU",BusinessNoConstant.MRS),
     CODE_ZBJH(103, "ZBJH","组包计划", BusinessNoConstant.ZBJH),
     CODE_YPZY(103, "YPZY","样品转移单", BusinessNoConstant.YPZY),
+    CODE_YPTZ(116, "YPTZ","样品调整单", BusinessNoConstant.YPTZ),
+
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
 
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),

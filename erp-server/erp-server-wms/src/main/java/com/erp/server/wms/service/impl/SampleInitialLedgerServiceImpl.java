@@ -492,9 +492,11 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        // 期初台账单审核时需要校验负数数量的台账是否足够扣减
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
