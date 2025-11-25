@@ -85,7 +85,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
         // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
-        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
+//        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
+        String code =  dto.getPurchaseOrderCode();
         // feign调用取不到登录人信息，已解决
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
@@ -118,23 +119,22 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 保存主单信息
         this.save(instockForcastEntity);
         // 保存入库预报明细
-        instockForcastDetailService.add(dto, instockForcastEntity.getId());
-
+        List<InstockForcastDetailEntity> instockForcastDetails = instockForcastDetailService.add(dto, instockForcastEntity.getId());
         // 调用库存组件，更新库存信息
         InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();
-        inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER.getCode());
-        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(dto.getDetails().size());
-        dto.getDetails().stream().forEach(purchaseOrderDetailEntity -> {
+        inventoryDto.setBusinessType(InventoryBusinessTypeEnum.INSTOCK_FORCAST.getCode());
+        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(instockForcastDetails.size());
+        instockForcastDetails.stream().forEach(instockForcastDetailEntity -> {
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setWarehouseId(dto.getWarehouseId());
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
-            inOutStockDTO.setSourceId(dto.getPurchaseOrderId());
-            inOutStockDTO.setSourceCode(dto.getPurchaseOrderCode());
-            inOutStockDTO.setBillDate(dto.getBillDate());
-            inOutStockDTO.setSourceDetailId(purchaseOrderDetailEntity.getPurchaseOrderDetailId());
-            inOutStockDTO.setSkuId(purchaseOrderDetailEntity.getSkuId());
-            inOutStockDTO.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-            inOutStockDTO.setQty(purchaseOrderDetailEntity.getQty());
+            inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inOutStockDTO.setSourceId(instockForcastEntity.getId());
+            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
+            inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
+            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
+            inOutStockDTO.setSkuId(instockForcastDetailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(instockForcastDetailEntity.getSkuNo());
+            inOutStockDTO.setQty(instockForcastDetailEntity.getQty());
             inventorySkus.add(inOutStockDTO);
         });
         inventoryDto.setParamList(inventorySkus);
