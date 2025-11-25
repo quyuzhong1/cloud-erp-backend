@@ -67,7 +67,7 @@ public interface LogisticsFeign {
      * @return
      */
     @GetMapping("/feign/logistics/getChannelByCodeAndPlatform")
-    LogisticsChannelEntity getChannelByCodeAndPlatform(@RequestParam("channelCode") String channelCode,@RequestParam("logisticsPlatform") String logisticsPlatform);
+    LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(@RequestParam("channelCode") String channelCode,@RequestParam("logisticsPlatform") String logisticsPlatform);
     /**
      * 根据渠道名称 获取渠道信息
      * @param channelName
