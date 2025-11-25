@@ -582,9 +582,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                             if (purchaseDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            //一个月后的日期
-                            LocalDate oneMonthLater = endDate.plusMonths(1);
-                            return purchaseDate.compareTo(startDate) >= 0 && purchaseDate.compareTo(oneMonthLater) <= 0;
+                            return purchaseDate.compareTo(startDate) >= 0 && purchaseDate.compareTo(endDate) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
@@ -616,9 +614,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                             if (billDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            //一个月后的日期
-                            LocalDate oneMonthLater = endDate.plusMonths(1);
-                            return billDate.compareTo(startDate) >= 0 && billDate.compareTo(oneMonthLater) <= 0;
+                            return billDate.compareTo(startDate) >= 0 && billDate.compareTo(endDate) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
@@ -650,9 +646,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                             if (stockInDate == null || startDate == null || endDate == null) {
                                 return false;
                             }
-                            //一个月后的日期
-                            LocalDate oneMonthLater = endDate.plusMonths(1);
-                            return stockInDate.compareTo(startDate) >= 0 && stockInDate.compareTo(oneMonthLater) <= 0;
+                            return stockInDate.compareTo(startDate) >= 0 && stockInDate.compareTo(endDate) <= 0;
                         })
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(detail)){
