@@ -5607,6 +5607,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("isAmazonFBA", isAmazonFBA);
         map.put("packageWidth", logisticsEntity.getWidth());
 
+        //sku种类
+        long skuTypeQty = detailList.stream().map(SoB2cDetailEntity::getSkuNo).filter(StrUtil::isNotBlank).distinct().count();
+        map.put("skuTypeQty", skuTypeQty);
+
         //仓库数量
         long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(StrUtil::isNotBlank).distinct().count();
         map.put("deliveryWarehouseQty", warehouseCount);
@@ -5660,6 +5664,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("dictPlatform", soB2cEntity.getDictPlatform());
             detailMap.put("isHavebuyerRemark", isHavebuyerRemark);
             detailMap.put("deliveryWarehouseQty", warehouseCount);
+            detailMap.put("skuTypeQty", skuTypeQty);
             detailMap.put("sellerLogistics", logisticsEntity.getName());
             detailMap.put("destCountry", Objects.nonNull(receiverEntity) ? receiverEntity.getCountry():"");
             detailMap.put("destCity", Objects.nonNull(receiverEntity) ?receiverEntity.getCityName():"");
