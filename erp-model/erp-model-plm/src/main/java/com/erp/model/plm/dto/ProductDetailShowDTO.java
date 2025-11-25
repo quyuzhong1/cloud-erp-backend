@@ -153,6 +153,11 @@ public class ProductDetailShowDTO implements Serializable {
     private String brandName;
 
     /**
+     * 研发团队
+     */
+    private String rdtTeamName;
+
+    /**
      * 产品等级
      */
     private String grade;
