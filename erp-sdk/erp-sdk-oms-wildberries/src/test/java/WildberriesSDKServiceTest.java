@@ -25,10 +25,9 @@ public class WildberriesSDKServiceTest {
 
     @Resource
     private WildberriesSDKService wildberriesSDKService;
-    private String sandbox;
     @Test
     public void shopCheck() {
-        WildberriesResponse response = wildberriesSDKService.checkToken(WildberriesConstant.TOKEN, sandbox);
+        WildberriesResponse response = wildberriesSDKService.checkToken(WildberriesConstant.TOKEN);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
@@ -136,7 +135,7 @@ public class WildberriesSDKServiceTest {
     @Test
     public void createSupply() throws InterruptedException {
         CreateSupplyRequest request = CreateSupplyRequest.builder().name("XSDD251010000001").build();
-        CreateSupplyResponse supply = wildberriesSDKService.createSupply(WildberriesConstant.TOKEN, request, sandbox);
+        CreateSupplyResponse supply = wildberriesSDKService.createSupply(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(supply));
         //{"id":"WB-GI-SAND-7946"}
     }
@@ -152,7 +151,7 @@ public class WildberriesSDKServiceTest {
     public void addBoxToSupply() throws InterruptedException {
         String supplyId = "WB-GI-SAND-8316";
         AddBoxToSupplyRequest request = AddBoxToSupplyRequest.builder().amount(1).build();
-        AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(WildberriesConstant.TOKEN, supplyId, request, sandbox);
+        AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(WildberriesConstant.TOKEN, supplyId, request);
         System.out.println(JSONUtil.toJsonStr(addBoxToSupplyResponse));
         //{"trbxIds":["WB-TRBX-SAND-8318"]}
     }
@@ -178,7 +177,7 @@ public class WildberriesSDKServiceTest {
         String supplyId = "WB-GI-SAND-8316";
         //{"id": "1978713068531814402", "barcode": "WB-TRBX-SAND-8317", "errorType": "getLogisticsCode", "packageNo": "WB-GI-SAND-8316", "packagePlanId": "1979031327613415426"}
         AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder().supplyId(supplyId).orderId(8224L).build();
-        AddOrderToSupplyResponse addOrderToSupplyResponse = wildberriesSDKService.addOrderToSupply(WildberriesConstant.TOKEN, request, sandbox);
+        AddOrderToSupplyResponse addOrderToSupplyResponse = wildberriesSDKService.addOrderToSupply(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(addOrderToSupplyResponse));
         //{"trbxIds":["WB-TRBX-SAND-7947"]}
     }
@@ -201,7 +200,7 @@ public class WildberriesSDKServiceTest {
                 .height(40)
                 .type("png")
                 .build();
-        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request, sandbox);
+        OrderLabelResponse orderLabel = wildberriesSDKService.getOrderLabel(WildberriesConstant.TOKEN, request);
 //        String pdfBase64 = null;
 //        try {
 //            pdfBase64 = PdfUtil.ImageToPdfBase64(orderLabel.getStickers().get(0).getFile());
@@ -230,7 +229,7 @@ public class WildberriesSDKServiceTest {
     @Test
     public void getSupplyLabel() {
         String supplyId = "WB-GI-182686515";
-        SupplyLabelResponse supplyLabel = wildberriesSDKService.getSupplyLabel(WildberriesConstant.TOKEN, supplyId, sandbox);
+        SupplyLabelResponse supplyLabel = wildberriesSDKService.getSupplyLabel(WildberriesConstant.TOKEN, supplyId);
         System.out.println(JSONUtil.toJsonStr(supplyLabel));
         String pdfBase64 = null;
         try {
@@ -281,6 +280,6 @@ public class WildberriesSDKServiceTest {
     @Test
     public void signDelivery() throws InterruptedException {
         String supplyId = "WB-GI-SAND-8316";
-        wildberriesSDKService.signDelivery(WildberriesConstant.TOKEN,supplyId, sandbox);
+        wildberriesSDKService.signDelivery(WildberriesConstant.TOKEN,supplyId);
     }
 }
