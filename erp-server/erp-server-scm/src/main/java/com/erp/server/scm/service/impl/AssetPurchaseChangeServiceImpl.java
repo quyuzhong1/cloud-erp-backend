@@ -301,7 +301,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        if(!Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         // 调用流程审核

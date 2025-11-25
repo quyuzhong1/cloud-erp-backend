@@ -319,7 +319,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 作废的数据不允许审核
-        if(!Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         // 调用流程审核
