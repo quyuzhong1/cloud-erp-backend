@@ -1356,25 +1356,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (RuleTypeEnum.CUSTOMER == entity.getType()) {
             this.deleteCustomer(entity, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-        // 无平台
-        if (StringUtils.isBlank(entity.getDictPlatform())) {
+        }else{
             this.deleteAll(id, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
-        // 销售平台
-        if (RuleTypeEnum.B2C_PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
-            this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-        // 仓库平台
-        if (RuleTypeEnum.WAREHOUSE == entity.getType() && null == OmsPlatformEnum.getByCode(entity.getDictPlatform())) {
-            this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(),listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-
-        // 有平台
-        throw new ServiceException("API接口新增的平台SKU和库存SKU不允许删除");
     }
 
     private void deleteCustomer(SkuMappingEntity entity, ListingInfoEntity listingInfoEntity) {
@@ -1453,6 +1438,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.removeById(id)) {
             throw new ServiceException("删除映射失败,请重试");
         }
+        String msg =  CharSequenceUtil.format("用户【{}】删除【{}】sku为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getProductSkuNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), "删除操作");
     }
 
     @Override
