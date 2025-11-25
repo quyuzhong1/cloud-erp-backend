@@ -312,7 +312,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .collect(Collectors.toList());
         checkReplenishQty(validateList);
         //校验SKU是否有入库信息
-        checkSkuInstockQty(dto.getPurchaseOrgId(), dto.getSupplierId(), dto.getPurchasePriceDetailList());
+        checkSkuInstockQty(dto.getSupplierId(), dto.getPurchasePriceDetailList());
         //获取核算公司
         List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
@@ -446,7 +446,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .collect(Collectors.toList());
         checkReplenishQty(validateList);
         //校验SKU是否有入库信息
-        checkSkuInstockQtyForUpdate(dto.getId(), dto.getPurchaseOrgId(), dto.getSupplierId(), dto.getPurchasePriceDetailList());
+        checkSkuInstockQtyForUpdate(dto.getSupplierId(), dto.getPurchasePriceDetailList());
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
@@ -678,7 +678,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
                     .collect(Collectors.toList());
             checkReplenishQty(validateList);
-            checkSkuInstockQtyForSubmit(entity.getId(), entity.getPurchaseOrgId(), entity.getSupplierId(), detailList);
+            checkSkuInstockQtyForSubmit( entity.getSupplierId(), detailList);
         }
         //迭代1.27.5新增校验 ：校验退货数量不能大于已收货数量(已审核)-已入库数量(已审核)【按照SKU明细校验】
         List<PoReturnDetailEntity> allPoReturnDetailEntities = poReturnDetailService.listByMainIds(ids);
@@ -3387,11 +3387,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 校验SKU是否存在已审核的采购入库单
      *
-     * @param purchaseOrgId 采购组织ID
      * @param supplierId 供应商ID
      * @param detailList 退货明细列表
      */
-    private void checkSkuInstockQty(String purchaseOrgId, String supplierId,
+    private void checkSkuInstockQty(String supplierId,
                                     List<PurchaseReturnOrderDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -3403,8 +3402,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 查询该采购组织+供应商下已审核的采购入库单中存在的SKU
-        List<String> instockedSkuIds = baseMapper.listInstockedSkuIds(purchaseOrgId, supplierId, skuIdList);
+        // 查询该供应商+SKU下已审核的采购入库单中存在的SKU
+        List<String> instockedSkuIds = baseMapper.listInstockedSkuIds(supplierId, skuIdList);
 
         // 查询SKU信息用于显示SKU编码
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -3431,7 +3430,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 校验SKU是否存在已审核的采购入库单（修改时使用）
      */
-    private void checkSkuInstockQtyForUpdate(String returnId, String purchaseOrgId, String supplierId,
+    private void checkSkuInstockQtyForUpdate(String supplierId,
                                              List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -3447,13 +3446,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 })
                 .collect(Collectors.toList());
 
-        checkSkuInstockQty(purchaseOrgId, supplierId, addDTOList);
+        checkSkuInstockQty(supplierId, addDTOList);
     }
 
     /**
      * 校验SKU是否存在已审核的采购入库单（提交时使用）
      */
-    private void checkSkuInstockQtyForSubmit(String returnId, String purchaseOrgId, String supplierId,
+    private void checkSkuInstockQtyForSubmit(String supplierId,
                                              List<PoReturnDetailEntity> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -3469,7 +3468,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 })
                 .collect(Collectors.toList());
 
-        checkSkuInstockQty(purchaseOrgId, supplierId, addDTOList);
+        checkSkuInstockQty(supplierId, addDTOList);
     }
 
 

@@ -124,6 +124,15 @@ public interface PlmTaskFeign {
     List<SkuVO> listApproveSku();
 
     /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("feign/product/listAllSku")
+    List<SkuVO> listAllSku();
+
+    /**
      * 根据id查询sku信息
      *
      * @param ids ids
