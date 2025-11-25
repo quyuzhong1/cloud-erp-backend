@@ -139,7 +139,7 @@ public class NfeInvoiceService {
             dictInvoiceRule = ruleResultDTO.getDictInvoiceRule();
             ratio = ruleResultDTO.getRatio();
         }else {
-            String msg = Objects.nonNull(ruleResultDTO) && CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
+            String msg = Objects.nonNull(ruleResultDTO) && CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? "产品总价值" + ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());

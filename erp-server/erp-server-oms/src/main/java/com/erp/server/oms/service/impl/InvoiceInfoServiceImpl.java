@@ -947,6 +947,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
                     filter(r -> r.getRuleId().equals(ruleId)).
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+            if (CollUtil.isEmpty(ruleConditionList)){
+                continue;
+            }
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map, "");
