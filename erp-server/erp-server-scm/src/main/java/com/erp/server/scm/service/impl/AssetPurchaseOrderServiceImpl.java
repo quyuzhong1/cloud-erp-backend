@@ -383,7 +383,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        if(!Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         // 调用流程审核
@@ -907,7 +907,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             data.setEndReceiveName(AssetPurchaseOrderReceiveEnum.getName(data.getEndReceive()));
             data.setOrderTypeName(AssetPurchaseOrderTypeEnum.getNameByCode(data.getOrderType()));
             //从资产验收单获取
-            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(data.getId());
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(data.getDetailId());
             BigDecimal parseAcceptQty = acceptQty == null ? BigDecimal.ZERO : new BigDecimal(acceptQty);
             //如果是结束验收状态,待验收数为0
             if (AssetPurchaseOrderReceiveEnum.CLOSE.getCode().equals(data.getEndReceive())) {
