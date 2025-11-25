@@ -186,7 +186,6 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         virtualTransFlowEntity.setVirtualInventoryId(transactionDTO.getVirtualInventoryId());
         virtualTransFlowEntity.setSkuId(transactionDTO.getSkuId());
         virtualTransFlowEntity.setSkuNo(transactionDTO.getSkuNo());
-        virtualTransFlowEntity.setOrgId(transactionDTO.getOrgId());
         virtualTransFlowEntity.setWarehouseId(transactionDTO.getWarehouseId());
         virtualTransFlowEntity.setVirtualWarehouseId(transactionDTO.getVirtualWarehouseId());
         virtualTransFlowEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());

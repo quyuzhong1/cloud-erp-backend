@@ -180,7 +180,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             private String userName;
 
 
-            public static InventoryTransactionDTO getInventoryTransactionDTO(InventoryStockBaseDTO stockBaseDTO) {
+            public static InventoryTransactionDTO getInventoryTransactionDTO(VirtualInventoryStockDTO.StockBaseDTO stockBaseDTO) {
                 InventoryTransactionDTO inventoryTransactionDTO = new InventoryTransactionDTO();
                 inventoryTransactionDTO.setSkuId(stockBaseDTO.getSkuId());
                 inventoryTransactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
@@ -220,6 +220,10 @@ public class VirtualInventoryStockDTO implements Serializable {
             @NotBlank(message = "实物仓库id不能为空")
             private String warehouseId;
 
+            /**
+             * 组织id
+             */
+            private String orgId;
             /**
              * 仓库存状态
              */
