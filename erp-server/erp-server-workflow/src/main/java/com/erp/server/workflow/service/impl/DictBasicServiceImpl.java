@@ -29,8 +29,16 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
         List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)
-                .eq("processCondition".equalsIgnoreCase(type), DictBasicEntity::getRemark, remark)
+                .eq(DictBasicEntity::getRemark, StringUtils.isNotBlank(remark)?remark:"")
                 .list();
+        
+        // 如果type=assigneeOption且remark不为空时，查询结果为空，则使用remark=""再查一次
+        if ("assigneeOption".equals(type) && StringUtils.isNotBlank(remark) && CollUtil.isEmpty(list)) {
+            list = lambdaQuery().eq(DictBasicEntity::getType, type)
+                    .eq(DictBasicEntity::getRemark, "")
+                    .list();
+        }
+        
         return list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
     }
 

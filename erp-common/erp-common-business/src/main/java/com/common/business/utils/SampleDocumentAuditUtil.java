@@ -167,6 +167,10 @@ public class SampleDocumentAuditUtil {
                 // 审核-X，反审核+X
                 return ApproveTypeEnum.PASS.equals(approveType) ? -originalQty : originalQty;
                 
+            case "样品调整单":
+                // 审核时使用差异数量（正数表示增加，负数表示减少），反审核时数量取反
+                return ApproveTypeEnum.PASS.equals(approveType) ? originalQty : -originalQty;
+                
             default:
                 log.warn("未知的单据类型：{}，使用默认计算方式", documentType);
                 return ApproveTypeEnum.PASS.equals(approveType) ? -originalQty : originalQty;

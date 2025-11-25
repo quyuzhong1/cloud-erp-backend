@@ -29,7 +29,10 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.common.core.utils.*;
+import com.erp.model.wms.enums.SampleRecipientTabEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import org.springframework.beans.BeanUtils;
@@ -52,14 +55,12 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
-import com.common.core.utils.ExcelUtil;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.server.wms.listener.SampleBackInfoExcelListener;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.business.utils.SampleLedgerLockUtil;
 import com.common.business.utils.SampleLedgerQtyValidator;
 import com.common.business.utils.SampleDocumentAuditUtil;
@@ -520,7 +521,22 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public List<SampleBackInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
         SampleBackInfoDTO.PagingParamDTO searchParam = new SampleBackInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
         List<SampleBackInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
@@ -532,20 +548,20 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         });
 
         list.forEach(e ->{
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            if(Objects.equals(e.getTabFlag(), "approveIng")){
+                e.setTabFlagName("待我审核");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
         
         // 按照指定顺序排序
-        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "rejected");
-        list.sort((a, b) -> {
-            int indexA = orderList.indexOf(a.getTabFlag());
-            int indexB = orderList.indexOf(b.getTabFlag());
-            if (indexA == -1) indexA = Integer.MAX_VALUE;
-            if (indexB == -1) indexB = Integer.MAX_VALUE;
-            return Integer.compare(indexA, indexB);
-        });
+        list.sort(Comparator.comparingInt(tabDto -> {
+            ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
         
-        list.add(0,new SampleBackInfoDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleBackInfoDTO.TabListDTO::getCount).sum()));
+        list.add(0,new SampleBackInfoDTO.TabListDTO("all", "全部",0));
         // 计算合计数量
         return list;
     }
@@ -822,9 +838,11 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //审核完成也做台账数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        
         // 审核通过后自动生成其他入库单
         if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
             //自动生成功能系统标识
@@ -1506,9 +1524,22 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     // ========== APP端专用方法实现 ==========
 
     @Override
-    public List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto) {
+    public List<SampleBackInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
         SampleBackInfoDTO.PagingParamDTO searchParam = new SampleBackInfoDTO.PagingParamDTO();
-        searchParam.setPermissionSql(dto.getPermissionSql());
+        searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
         // 使用一个SQL查询获取所有状态的统计数量
         List<SampleBackInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
 
@@ -1535,7 +1566,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 2. 审核中
         SampleBackInfoDTO.TabListDTO approveIngItem = new SampleBackInfoDTO.TabListDTO();
         approveIngItem.setTabFlag("approveIng");
-        approveIngItem.setTabFlagName("审核中");
+        approveIngItem.setTabFlagName("待我审核");
         approveIngItem.setCount(countMap.getOrDefault("approveIng", 0));
         appList.add(approveIngItem);
 
@@ -1767,6 +1798,22 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public SampleBackInfoDTO.BaseUserDTO getBaseByUserId(SampleBackInfoDTO.BaseUserDTO dto) {
+        // 查询最新的已审批记录
+        SampleBackInfoEntity entity = lambdaQuery()
+                .eq(SampleBackInfoEntity::getUserId, dto.getUserId())
+                .eq(SampleBackInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(SampleBackInfoEntity::getApproveTime)
+                .last("limit 1")
+                .one();
+        // 数据拷贝
+        if (Objects.nonNull(entity)) {
+            BeanMapper.copy(entity,dto);
+        }
+        return dto;
     }
 
     /**

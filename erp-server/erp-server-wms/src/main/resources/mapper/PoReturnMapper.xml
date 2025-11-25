@@ -448,4 +448,20 @@
             #{item}
         </foreach>
     </select>
+
+    <!-- 查询采购组织+供应商下已审核入库的SKU ID列表 -->
+    <select id="listInstockedSkuIds" resultType="java.lang.String">
+        SELECT DISTINCT pid.sku_id
+        FROM po_instock pi
+        INNER JOIN po_instock_detail pid ON pi.id = pid.main_id
+        WHERE pi.is_deleted = FALSE
+          AND pi.approve_status = 'approve'
+          AND pi.receive_org_id = #{purchaseOrgId}
+          AND pi.supplier_id = #{supplierId}
+          AND pid.is_deleted = FALSE
+          AND pid.sku_id IN
+        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+            #{skuId}
+        </foreach>
+    </select>
 </mapper>

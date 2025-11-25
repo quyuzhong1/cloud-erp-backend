@@ -37,6 +37,11 @@ public class DeliveryPlanApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return wmsDeliveryPlanService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = wmsDeliveryPlanService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();
