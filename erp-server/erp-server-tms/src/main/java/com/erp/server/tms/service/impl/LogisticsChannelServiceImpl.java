@@ -969,10 +969,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public LogisticsChannelEntity getChannelByCode(String channelCode, String logisticsPlatform) {
+    public LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(String channelCode, String logisticsPlatform) {
         if (CharSequenceUtil.isEmpty(channelCode) || CharSequenceUtil.isEmpty(logisticsPlatform)){
             throw new ServiceException("渠道编码和物流类型不能为空");
         }
-        return baseMapper.getChannelByCode(channelCode,logisticsPlatform);
+        return baseMapper.getChannelByCodeAndPlatform(channelCode,logisticsPlatform);
     }
 }
