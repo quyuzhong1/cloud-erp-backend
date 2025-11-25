@@ -21,10 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RestController
 @RequestMapping(value = "/test")
+//@RunWith(SpringRunner.class)
+//@SpringBootTest
 public class TestController extends BaseController {
 
     public static final String TITLE = "产品提醒: 张三 新建产品名称【iphone14】";
@@ -56,17 +63,17 @@ public class TestController extends BaseController {
     @Resource
     private RedissonClient redisson;
 
-    final String USER_ID = "1645710077245652993";
+    final String USER_ID = "1650046617392254977";
     /**
      * 发送消息
      */
-    @RequestMapping("/sendMsg")
+    @PostMapping("/sendMsg")
     public ApiResult<T> sendMsg() {
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList(USER_ID)));
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList(USER_ID,USER_ID)));
         noticeMsgInfoDTO.setTitle(TITLE);
         noticeMsgInfoDTO.setContent(CONTENT);
-        noticeMsgInfoDTO.setUrgent(true);
+        noticeMsgInfoDTO.setUrgent(false);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
         msgContext.routeSend(noticeMsgInfoDTO);
         return success();
