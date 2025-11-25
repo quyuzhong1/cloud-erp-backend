@@ -127,14 +127,19 @@ public class NfeInvoiceService {
         String dictInvoiceRule;
         BigDecimal ratio;
         //匹配产品总价计算规则
-        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = invoiceInfoService.productAmountRule(soB2cEntity);
-        if (ruleResultDTO.getIsMatch()){
+        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = null;
+        try {
+            ruleResultDTO = invoiceInfoService.productAmountRule(soB2cEntity);
+        }catch (Exception e){
+            log.error("产品总价值规则匹配失败！销售订单：{}", soB2cEntity.getCode(),e);
+        }
+        if (Objects.nonNull(ruleResultDTO) && ruleResultDTO.getIsMatch()){
             invoiceSettingDetail = ruleResultDTO.getInvoiceSettingDetail();
             invoiceSetting = ruleResultDTO.getInvoiceSetting();
             dictInvoiceRule = ruleResultDTO.getDictInvoiceRule();
             ratio = ruleResultDTO.getRatio();
         }else {
-            String msg = CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
+            String msg = Objects.nonNull(ruleResultDTO) && CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
