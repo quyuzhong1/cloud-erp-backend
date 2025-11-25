@@ -106,7 +106,8 @@ cmr.count_dim AS countDim
         where
          cmr.is_deleted = FALSE
         and cmr.invalid_status = FALSE
-        and ( mm.expiration_date &lt;= #{today} or mm.expiration_date is null )
+        and cmr.disabled = FALSE
+        and ( mm.expiration_date >= #{today} or mm.expiration_date is null )
         <if test="detailIds != null and detailIds.size > 0 ">
             AND cmrd.id in
             <foreach collection="detailIds" item="item" open="(" separator="," close=")">
