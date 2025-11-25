@@ -517,29 +517,23 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                         .set(AssetPurchaseOrderDetailEntity::getTaxRate, changeDetail.getTaxRate())
                         .eq(AssetPurchaseOrderDetailEntity::getId, orderDetail.getId());
 
-                // 根据变更数量与验收情况决定状态
-                if (changeDetail.getPurchaseQty().compareTo(unreceivedQty) > 0) {
-                    // 变更数量 > 未接收数量（涉及已验收部分）
+                // 变更数量 > 验收数量
+                if (changeDetail.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) > 0) {
                     if (acceptQty > 0) {
                         updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode());
                     } else {
                         updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                     }
                 } else {
-                    // 变更数量 ≤ 未接收数量（不涉及已验收部分）
+                    // 变更数量 ≤ 验收数量
                     if (acceptQty > 0) {
-                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode());
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
+                                .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDateTime.now());
                     } else {
                         updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                     }
                 }
 
-                // 特殊情况：如果变更后数量 >= 原数量且已全部验收，则标记为完成
-                if (changeDetail.getPurchaseQty().compareTo(orderDetail.getPurchaseQty()) >= 0
-                        && acceptQty.equals(orderDetail.getPurchaseQty().intValue())) {
-                    updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
-                            .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime, LocalDateTime.now());
-                }
                 boolean updated = updateWrapper.update();
                 if (!updated) {
                     throw new ServiceException("采购变更单更新失败");
