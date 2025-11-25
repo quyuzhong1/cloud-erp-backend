@@ -43,12 +43,12 @@
         so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-            INNER JOIN erp_oms.so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
-            INNER JOIN erp_plm.product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
+            LEFT JOIN erp_oms.so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
+            LEFT JOIN erp_plm.product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
         </if>
         <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-            INNER JOIN so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
-            INNER JOIN product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
+            LEFT JOIN so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
+            LEFT JOIN product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
         </if>
         WHERE
         ${params.sqlMap.default}
