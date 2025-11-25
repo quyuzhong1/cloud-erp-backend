@@ -178,11 +178,28 @@
         approve_status AS tabFlag,
         count(*)  AS count
         FROM  sample_back_info sbi
-        WHERE is_deleted=FALSE
+        WHERE sbi.is_deleted=FALSE
+        and sbi.approve_status != 'approveIng'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
         GROUP BY approve_status
+        UNION ALL
+        SELECT
+        'approveIng' AS tabFlag,
+        count(1)  AS count
+        FROM  sample_back_info sbi
+        WHERE sbi.is_deleted=FALSE
+        and sbi.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and sbi.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
     <!-- 获取所有状态的统计数量（一个SQL查询完成） -->

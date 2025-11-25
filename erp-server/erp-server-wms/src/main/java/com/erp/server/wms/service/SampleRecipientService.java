@@ -319,5 +319,5 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     PagingVO<SampleRecipientDTO.ListDTO> pagingApp(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO);
 
 
-
+    SampleRecipientDTO.BaseUserDTO getBaseByUserId(SampleRecipientDTO.BaseUserDTO dto);
 }

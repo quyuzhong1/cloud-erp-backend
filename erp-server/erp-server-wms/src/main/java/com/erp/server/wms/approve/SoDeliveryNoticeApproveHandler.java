@@ -36,6 +36,11 @@ public class SoDeliveryNoticeApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soDeliveryNoticeService.approve(soDeliveryNoticeService.getById(dto.getId()),dto.getType(),dto.getComment(),dto.getIsNeedProcess());
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return soDeliveryNoticeService.cancelProcess(Collections.singletonList(dto.getId()));
     }

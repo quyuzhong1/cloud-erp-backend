@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.scm.service.WorkflowProcessService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,17 @@ public class ScmWorkflowFeignController {
 
     @Resource
     private WorkflowProcessService workflowProcessService;
+    /**
+     * @description: 审核
+     * @author jack
+     * @date: 2025-11-21
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/approve")
+    public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
+        return workflowProcessService.approve(dto);
+    }
 
     /**
      * @description: 结束审核

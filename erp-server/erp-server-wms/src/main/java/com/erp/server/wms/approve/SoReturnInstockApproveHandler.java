@@ -36,6 +36,11 @@ public class SoReturnInstockApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soReturnInstockService.approve(soReturnInstockService.getById(dto.getId()),dto.getType(),dto.getComment(),dto.getIsNeedProcess());
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return soReturnInstockService.cancelProcess(Collections.singletonList(dto.getId()));
     }

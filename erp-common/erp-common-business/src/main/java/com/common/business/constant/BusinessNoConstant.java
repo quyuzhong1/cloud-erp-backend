@@ -217,8 +217,34 @@ public interface BusinessNoConstant {
     String ZBJH="ZBJH";
     //样品转移单
     String YPZY="YPZY";
+    //样品调整单
+    String YPTZ="YPTZ";
     //资质字典
     String DC="DC";
 
+    //资产位置
+    String ZCWZ="ZCWZ";
+    //资产验收单
+    String YSD="YSD";
+    //资产卡片
+    String ZCKP="ZCKP";
+    //盘点方案
+    String PDFA="PDFA";
+    //资产盘点表
+    String ZCPDB="ZCPDB";
+    //盘盈盘亏单
+    String PYPKD="PYPKD";
+    //资产处置单
+    String PRODIS="PRODIS";
+    //模具关联SKU
+    String MRS="MRS";
+    //资产通知单
+    String MPL="MPL";
+    //资产采购单
+    String MPO="MPO";
+    //资产采购变更单
+    String MPOCC="MPOCC";
+    //资产编码
+    String ZC="ZC";
 
 }

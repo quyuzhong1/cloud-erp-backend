@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.factory.ApproveEndHandlerFactory;
@@ -25,6 +27,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private ApproveEndHandlerFactory approveEndHandlerFactory;
 
+
+    @Override
+    public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,ApproveTypeEnum.getName(dto.getType()),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approve(BeanUtil.toBean(dto, ApproveOneDTO.class));
+    }
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {

@@ -314,6 +314,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private MoldInfoService moldInfoService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -379,6 +382,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailShowDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+
+
         List<String> skuIdList = list.stream().map(ProductDetailShowDTO::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
@@ -434,6 +443,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 一级供应商名称
             if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
+
+            //模具档案
+            MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+            if(Objects.nonNull(moldInfoEntity)){
+                item.setMoldId(moldInfoEntity.getId());
+                item.setMoldCode(moldInfoEntity.getCode());
+                item.setMoldName(moldInfoEntity.getName());
+                item.setTag(moldInfoEntity.getTag());
+                item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
             }
         }
 
@@ -1496,9 +1515,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
@@ -1515,9 +1544,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
-        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
-                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0
-                && larger.compareTo(smaller) < 0) {
+        // 【为空则忽略不校验】- 如果larger或smaller为null，则不校验
+        // 如果两个值都不为null，则进行校验（允许值为0的情况也校验）
+        if (Objects.nonNull(larger) && Objects.nonNull(smaller) && larger.compareTo(smaller) < 0) {
              throw new ServiceException(apiError);
         }
     }
@@ -6426,6 +6455,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
+        List<ProductDetailDTO.SkuDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+        if(moldMap.size() > 0){
+            for (ProductDetailDTO.SkuDTO item : list) {
+                //模具档案
+                MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+                if(Objects.nonNull(moldInfoEntity)){
+                    item.setMoldId(moldInfoEntity.getId());
+                    item.setMoldCode(moldInfoEntity.getCode());
+                    item.setMoldName(moldInfoEntity.getName());
+                    item.setTag(moldInfoEntity.getTag());
+                    item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
+                }
+            }
+        }
+
+
+
         return new PagingVO<>(pageData);
     }
 
@@ -6885,10 +6938,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(errMsg.toString());
             }
 
-
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
@@ -7241,4 +7303,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
+    /**
+     * 根据skuid 获取产品属性为资产并且已审核通过的 的sku信息
+     * @author jack
+     * @date 2025-10-13
+     * @param skuNos
+     * @return List<SkuVO>
+     */
+    @Override
+    public List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByApprovePropertyNotAsset(skuNos);
+    }
 }

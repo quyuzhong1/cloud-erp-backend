@@ -42,7 +42,6 @@ public class ExportWmsInventoryDailyHandler extends AbstractPageFileEventHandler
 
     @Override
     public String getExcelPath() {
-
         return "excel/wms/dailyInventory.xlsx";
     }
 }
