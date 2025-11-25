@@ -108,6 +108,19 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AssetDisposalDTO.AddDTO addDTO) {
+        List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList = addDTO.getAssetDisposalDetailDTOList();
+        List<String> allAssetProfitLossDetailIds = assetDisposalDetailDTOList.stream()
+                .flatMap(updateDTO -> updateDTO.getAssetDisposalPhysicalDetailDTOList().stream())
+                .map(AssetDisposalPhysicalDetailDTO.UpdateDTO::getAssetProfitLossDetailId)
+                .filter(Objects::nonNull) // 过滤掉 null 值（可选）
+                .distinct()
+                .collect(Collectors.toList());
+
+        Integer count = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetProfitLossDetailId, allAssetProfitLossDetailIds).count();
+        if(count > 0){
+            throw new ServiceException("盘亏单请勿重复下推处置单");
+        }
+
         AssetDisposalEntity assetDisposalEntity = new AssetDisposalEntity();
         BeanMapperUtils.copy(addDTO, assetDisposalEntity);
 
@@ -128,7 +141,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), assetDisposalEntity.getId(), "新增操作");
 
         String mainId = assetDisposalEntity.getId();
-        List<AssetDisposalDetailDTO.UpdateDTO> assetDisposalDetailDTOList = addDTO.getAssetDisposalDetailDTOList();
+
         for (AssetDisposalDetailDTO.UpdateDTO dto : assetDisposalDetailDTOList) {
             AssetDisposalDetailEntity detailEntity = new AssetDisposalDetailEntity();
             BeanMapper.copy(dto, detailEntity);
