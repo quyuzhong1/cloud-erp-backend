@@ -383,9 +383,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
-        }
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -935,6 +933,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
+        }
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         return;
     }
