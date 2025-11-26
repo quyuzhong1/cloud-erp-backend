@@ -59,7 +59,7 @@
         FROM work_option wo
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
-        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value" and db.type = 'moduleStatus'
         WHERE wo.is_deleted = FALSE AND wo.type = '1' AND wm.module_code NOT IN ('qcInfo')
             <if test="optionUserId != null and optionUserId != ''">
                 AND wo.option_user_id = #{optionUserId}
