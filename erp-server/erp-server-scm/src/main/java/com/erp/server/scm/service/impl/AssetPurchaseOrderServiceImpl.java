@@ -974,11 +974,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderSupplierEntity.setPayMethodName(settleDictMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPayMethodId(),""));
 
         //收款银行,银行账号
-        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS =
-                supplierService.listDefaultBySupplierIdList(Arrays.asList(assetPurchaseOrderSupplierEntity.getSupplierId()));
-        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
-        assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
-        assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
+//        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS =
+//                supplierService.listDefaultBySupplierIdList(Arrays.asList(assetPurchaseOrderSupplierEntity.getSupplierId()));
+//        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
+//        assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
+//        assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
 
         //关联采购单id
         assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
