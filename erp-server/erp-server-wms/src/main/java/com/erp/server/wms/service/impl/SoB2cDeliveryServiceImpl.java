@@ -1660,6 +1660,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         generateB2cDTO.setBillDate(dto.getDeliveryTime().toLocalDate());
         generateB2cDTO.setTrackNo(soB2cLogisticsEntity.getCode());
         generateB2cDTO.setBatchNo(soB2cDeliveryEntity.getBatchNo());
+        generateB2cDTO.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         soB2cEntity = soB2cFeign.getById(soB2cEntity.getId());
         if(soB2cEntity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){

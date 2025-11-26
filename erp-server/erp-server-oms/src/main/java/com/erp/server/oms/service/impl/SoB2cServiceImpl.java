@@ -10890,11 +10890,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //生成发货单和出库单
         try {
             UserContext.setIsUserSystem(true);
+            redisUtil.set(CharSequenceUtil.format("so_b2c_not_outbound:{}", soB2cEntity.getId()), Boolean.TRUE);
             soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity, detailEntityList, dto, soB2cLogisticsEntity, soB2cReceiverEntity);
         } catch (Exception e) {
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
             UserContext.clearIsUserSystem();
+            redisUtil.del(CharSequenceUtil.format("so_b2c_not_outbound:{}", soB2cEntity.getId()));
         }
         if (dto.getPlatformShipFlag() && this.checkPlatformShipOrder(soB2cEntity.getId()) && !soB2cEntity.hasPlatformWarehouseOrder()) {
             //调用第三方平台SDK声明发货
@@ -10923,7 +10925,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             syncSoB2cService.syncDataToSdy(soB2cEntity, noInventorySkuDetailList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         operateLogService.addModuleOperateLog("订单操作不出库发货", ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "不出库发货");
-
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "不出库发货成功");
     }
 

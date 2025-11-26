@@ -1802,6 +1802,11 @@ public class SoOutstockDTO implements Serializable {
          * 是否检查sku历史映射
          */
         private boolean checkSkuHistory = true;
+        /**
+         * 是否标记不出库发货（默认false）
+         */
+        private Boolean isNotOutbound;
+
 
     }
 

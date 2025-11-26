@@ -40,6 +40,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -299,6 +300,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SyncDhtOutstockService syncDhtOutstockService;
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -749,12 +752,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }else {
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             //销售出库单单据日期需要回写到B2C销售订单中
-            if(null != entity.getBillDate() && !Objects.equals(entity.getBillDate(), soB2cEntity.getSoOutstockDate())){
-                log.warn("销售出库单单据日期需要回写到B2C销售订单中，销售出库单id：{}，单据日期：{}",entity.getId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
-                soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
-                log.warn("销售出库单单据日期需要回写到B2C销售订单中，销售出库单id：{}，单据日期：{}",entity.getId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+            if(null != entity.getBillDate()){
+                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", entity.getSoId()));
+                Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
+                if (!isNotOutbound){
+                    soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+                }
             }
         }
         //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
@@ -959,8 +963,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", entity.getSoId()));
+        Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
-            if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+            if(Objects.nonNull(soB2cEntity) && (soB2cEntity.getIsNotOutbound() || isNotOutbound)){
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
             }else{
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());

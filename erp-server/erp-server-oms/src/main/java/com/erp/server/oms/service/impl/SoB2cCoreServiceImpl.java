@@ -427,7 +427,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
