@@ -131,13 +131,22 @@
 
     <!-- 查询历史库龄库存 -->
     <select id="listHisByOldParam" resultType="com.erp.model.wms.entity.VirtualTransFlowDetailEntity">
+        WITH oldInventoryDetail as (
         select
-            <include refid="Base_Column_List" />
+        DISTINCT
+        sku_id,
+        warehouse_id,
+        virtual_warehouse_id
+        from virtual_inventory_detail
+        where is_deleted = false and id = #{virtualInventoryDetailId}
+        )
+        select
+        vtfd.*
         from virtual_trans_flow_detail vtfd
-        left join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
-        where vtfd.is_deleted = false and  0 > vtfd.qty 
-        and vtf.sku_id = #{paramDTO.skuId} and vtf.warehouse_id = #{paramDTO.warehouseId}
-        and vtf.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
+        inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        inner join oldInventoryDetail oid on vid.sku_id = oid.sku_id and vid.warehouse_id = oid.warehouse_id and vid.virtual_warehouse_id= oid.virtual_warehouse_id
+        where vtfd.is_deleted = false and  0 > vtfd.qty
+        and  vtfd.id >= #{flowDetailId};
     </select>
 
     <!-- 按sku显示冻结库存差异 -->
