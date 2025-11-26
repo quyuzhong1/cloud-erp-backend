@@ -164,7 +164,10 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         // 按页批量保存
         while (iterator.hasNext()) {
             List<String> page = IteratorUtils.toList(IteratorUtils.boundedIterator(iterator, pageSize));
+            //批量删除
             virtualTransFlowService.removeByIds(page);
+            //查询库存明细本地消息表
+            wmsVirtualDetailMsgService.updateStatusByBusinessIds(page, VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
         }
 
     }
