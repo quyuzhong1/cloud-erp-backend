@@ -38,10 +38,14 @@
         sdnd.picking_qty AS pickedQty,
         sd.qty as salesQty,
         pd.name as productName,
-        pd.unit_name as unit
+        pd.unit_name as unit,
+        CASE WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' WHEN total.total_picked_qty > 0 THEN '部分生成' ELSE '未生成' END AS generationPickStatus
         FROM
         so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false
+        INNER JOIN (SELECT main_id,SUM(delivery_qty) AS total_delivery_qty,SUM(picking_qty) AS total_picked_qty
+        FROM so_delivery_notice_detail WHERE is_deleted = false GROUP BY main_id
+        ) total ON sdn.ID = total.main_id
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
             INNER JOIN erp_oms.so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
             INNER JOIN erp_plm.product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false

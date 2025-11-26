@@ -48,14 +48,11 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
         //拣货单状态
         if ("generationPickStatus".equals(field)) {
             if ("未生成".equals(value)) {
-                return " NOT EXISTS (SELECT 1 FROM picking_detail pick where pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE and pick.id IS NOT NULL) ";
+                return " total.total_picked_qty = 0 ";
             } else if ("已生成".equals(value)){
-                return " (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd1 WHERE is_deleted = FALSE and sdnd1.id=sdnd.id) = " +
-                        "(SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id)";
+                return "total.total_delivery_qty > total.total_picked_qty";
             } else if ("部分生成".equals(value)){
-                return " (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id) > 0 " +
-                        "AND (SELECT COUNT(1) FROM so_delivery_notice_detail sdnd1 WHERE is_deleted = FALSE and sdnd1.id=sdnd.id) > " +
-                        "(SELECT COUNT(1) FROM so_delivery_notice_detail sdnd2 INNER JOIN picking_detail pick ON pick.source_detail_id = sdnd.id AND pick.is_deleted = FALSE WHERE sdnd.main_id = sdn.id AND sdnd.is_deleted = FALSE and sdnd2.id=sdnd.id)";
+                return "total.total_delivery_qty > total.total_picked_qty AND total.total_picked_qty > 0";
             }
         }
         return null;

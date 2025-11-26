@@ -244,15 +244,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> approvalFuture =
                 this.queryApprovalProcessAsync(dtoList);
 
-        CompletableFuture<List<SoDeliveryNoticeDTO.PickStatus>> pickStatusFuture =
-                this.queryPickStatusAsync(ids);
+//        CompletableFuture<List<SoDeliveryNoticeDTO.PickStatus>> pickStatusFuture =
+//                this.queryPickStatusAsync(ids);
 
         CompletableFuture<List<WmsCartonDTO.CountDTO>> packingCountFuture =
                 this.queryPackingCountAsync(ids);
         // 等待所有查询完成
         CompletableFuture.allOf(
                 warehouseFuture, customerFuture, approvalFuture,
-                pickStatusFuture, packingCountFuture
+                 packingCountFuture
         ).join();
 
         //中转仓map
@@ -264,14 +264,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException("查询审核流程异常:{}", listApiResult.getMsg());
         }
         //查询拣货单生成状态
-        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
+//        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
         //查询装箱数量
         List<WmsCartonDTO.CountDTO> countDTOS = packingCountFuture.get();
         stopWatch.stop();
         stopWatch.start("合并数据");
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
-                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
+//                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
                 WmsCartonDTO.CountDTO countDTO = countDTOS.stream().filter(e -> Objects.nonNull(e.getSourceId()) && e.getSourceId().equals(obj.getId())
                                 && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
                 obj.setPackingQty(Objects.isNull(countDTO) ? 0 : countDTO.getPackingQty());
