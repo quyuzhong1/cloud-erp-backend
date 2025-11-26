@@ -319,7 +319,7 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
                         if(Objects.nonNull(skuVO)){
                             data.setProductName(skuVO.getSkuName());
                         }
-                        data.setQty(detailEntity.getReceiveQty());
+                        data.setQty(detailEntity.getStockInQty());
 
                         data.setSupplierId(entity.getSupplierId());
                         data.setSupplierName(entity.getSupplierName());
