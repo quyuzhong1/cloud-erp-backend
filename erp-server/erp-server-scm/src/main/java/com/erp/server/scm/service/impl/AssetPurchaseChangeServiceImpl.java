@@ -506,8 +506,6 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             if (changeDetail != null) {
                 //已验收数量
                 Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(orderDetail.getId());
-                // 未接收数量
-                BigDecimal unreceivedQty = orderDetail.getPurchaseQty().subtract(new BigDecimal(acceptQty));
 
                 // 构建更新条件
                 LambdaUpdateChainWrapper<AssetPurchaseOrderDetailEntity> updateWrapper = assetPurchaseOrderDetailService.lambdaUpdate()

@@ -92,7 +92,7 @@ public class AssetNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:assetNotice:paging",
-            tableAlias = ""
+            tableAlias = "an"
     )
     public ApiResult<List<AssetNoticeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetNoticeService.tabList(dto));
