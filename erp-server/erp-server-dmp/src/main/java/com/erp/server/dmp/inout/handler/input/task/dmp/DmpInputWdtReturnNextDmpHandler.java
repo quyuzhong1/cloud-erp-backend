@@ -31,4 +31,8 @@ public class DmpInputWdtReturnNextDmpHandler extends DmpInputWdtNextDmpHandler{
 		return detailList;
 	}
 	
+	@Override
+	protected boolean needDealDetailDelete(){
+		return true;
+	}
 }

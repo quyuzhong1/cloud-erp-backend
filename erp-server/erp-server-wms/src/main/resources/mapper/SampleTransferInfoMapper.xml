@@ -138,7 +138,6 @@
         SELECT
         'approveIng' AS tabFlag,
         COUNT ( 1 ) AS COUNT
-        FROM
         FROM  sample_transfer_info
         WHERE
         is_deleted = FALSE

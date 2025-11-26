@@ -1,7 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
@@ -301,9 +303,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        if(!Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
-        }
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -497,24 +497,50 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,List<AssetPurchaseOrderDetailEntity> orderDetails){
-        // 批量更新
+    public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,
+                                           Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,
+                                           List<AssetPurchaseOrderDetailEntity> orderDetails) {
+
         for (AssetPurchaseOrderDetailEntity orderDetail : orderDetails) {
             AssetPurchaseChangeDetailEntity changeDetail = changeDetailMap.get(orderDetail.getId());
             if (changeDetail != null) {
-                boolean updated = assetPurchaseOrderDetailService.lambdaUpdate()
+                //已验收数量
+                Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(orderDetail.getId());
+                // 未接收数量
+                BigDecimal unreceivedQty = orderDetail.getPurchaseQty().subtract(new BigDecimal(acceptQty));
+
+                // 构建更新条件
+                LambdaUpdateChainWrapper<AssetPurchaseOrderDetailEntity> updateWrapper = assetPurchaseOrderDetailService.lambdaUpdate()
                         .set(AssetPurchaseOrderDetailEntity::getPurchaseQty, changeDetail.getPurchaseQty())
                         .set(AssetPurchaseOrderDetailEntity::getTaxPrice, changeDetail.getTaxPrice())
                         .set(AssetPurchaseOrderDetailEntity::getTotalAmount, changeDetail.getTotalAmount())
                         .set(AssetPurchaseOrderDetailEntity::getTaxRate, changeDetail.getTaxRate())
-                        .eq(AssetPurchaseOrderDetailEntity::getId, orderDetail.getId())
-                        .update();
+                        .eq(AssetPurchaseOrderDetailEntity::getId, orderDetail.getId());
 
+                // 变更数量 > 验收数量
+                if (changeDetail.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) > 0) {
+                    if (acceptQty > 0) {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode());
+                    } else {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+                    }
+                } else {
+                    // 变更数量 ≤ 验收数量
+                    if (acceptQty > 0) {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
+                                .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDateTime.now());
+                    } else {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+                    }
+                }
+
+                boolean updated = updateWrapper.update();
                 if (!updated) {
                     throw new ServiceException("采购变更单更新失败");
                 }
             }
         }
+
         return Boolean.TRUE;
     }
 
@@ -670,6 +696,9 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
+        }
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         return;
     }
