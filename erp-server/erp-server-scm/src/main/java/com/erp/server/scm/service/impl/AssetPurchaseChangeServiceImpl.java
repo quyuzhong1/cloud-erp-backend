@@ -712,6 +712,27 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             throw new ServiceException(ApiError.ERROR_98134);
         }
 
+        for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
+            //单价不能小于等于0
+            if (dto.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getAssetCode());
+            }
+            //总价不能小于等于0
+            if (dto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getAssetCode());
+            }
+            //新采购数量不能小于等于0
+            if (dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_98151,dto.getAssetCode());
+            }
+            //已验收数量
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(dto.getSourceDetailId());
+            //新采购数量不能小于已验收数量
+            if (dto.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) < 0) {
+                throw new ServiceException(ApiError.ERROR_98152,dto.getAssetCode());
+            }
+        }
+
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(assetPurchaseOrderEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98137);
         }
