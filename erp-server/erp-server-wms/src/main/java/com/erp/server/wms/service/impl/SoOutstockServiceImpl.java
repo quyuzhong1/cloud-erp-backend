@@ -960,11 +960,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
-//            if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+            if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
-//            }else{
-//                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-//            }
+            }else{
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
+            }
         }else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
