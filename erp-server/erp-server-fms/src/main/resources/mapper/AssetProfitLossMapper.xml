@@ -158,7 +158,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  asset_profit_loss
+        FROM  asset_profit_loss apl
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

@@ -92,28 +92,28 @@ mm.remark AS remark
     <select id="tabList" resultType="com.erp.model.plm.dto.MoldMonitorDTO$TabListDTO">
         SELECT
         <if test="params != null and params.sourceType == 'cfgMoldReturnAlertrRule'">
-            return_status
+            mm.return_status
         </if>
         <if test="params != null and params.sourceType == 'cfgMoldAlertrRule'">
-            life_status
+            mm.life_status
         </if>
         AS tabFlag,
         COUNT(*) AS count
-        FROM mold_monitor
-        WHERE is_deleted = FALSE
+        FROM mold_monitor mm
+        WHERE mm.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
              ${params.permissionSql}
         </if>
         <if test="params != null and params.sourceType != null and params.sourceType != ''">
-            and source_type = #{params.sourceType}
+            and mm.source_type = #{params.sourceType}
         </if>
         <if test="params != null">
             <choose>
                 <when test="params.sourceType == 'cfgMoldReturnAlertrRule'">
-                    GROUP BY return_status
+                    GROUP BY mm.return_status
                 </when>
                 <when test="params.sourceType == 'cfgMoldAlertrRule'">
-                    GROUP BY life_status
+                    GROUP BY mm.life_status
                 </when>
             </choose>
         </if>
