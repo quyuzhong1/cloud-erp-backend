@@ -112,10 +112,10 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
                 if(Objects.nonNull(platformCodeObj)){
                     platformCode = platformCodeObj.toString();
                     if(StringUtils.isBlank(platformCode) || platformCode.equals("0")){
-                        platformCode = dmpDataMap.get("fid").toString();
+                        platformCode = dmpDataMap.get("thirdCode").toString();
                     }
                 }else{
-                    platformCode = dmpDataMap.get("fid").toString();
+                    platformCode = dmpDataMap.get("thirdCode").toString();
                 }
                 dmpDataMap.put("platformCode", platformCode);
 
