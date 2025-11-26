@@ -1650,6 +1650,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .stream()
                 .collect(Collectors.toList());
 
+        // 校验验收数量不能超过可验收数量
+        for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO dto : dtoList) {
+            BigDecimal acceptQty = dto.getAcceptQty();
+            BigDecimal acceptableQty = dto.getAcceptableQty();
+            
+            if (acceptQty != null && acceptableQty != null && acceptQty.compareTo(acceptableQty) > 0) {
+                throw new ServiceException(ApiError.ERROR_98153, dto.getAssetCode());
+            }
+        }
+
         try {
             for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {
                 assetAceptFeign.generateAssetAccept(generateAssetAcceptDTOList);
