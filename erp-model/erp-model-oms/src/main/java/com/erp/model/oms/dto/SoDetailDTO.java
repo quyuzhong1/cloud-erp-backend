@@ -177,7 +177,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private Integer deliveryBoxQty;
+        private Integer boxQty;
     }
 
 
@@ -497,7 +497,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private String deliveryBoxQty;
+        private String boxQty;
     }
 
     /**
@@ -729,7 +729,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private String deliveryBoxQty;
+        private String boxQty;
     }
 
 

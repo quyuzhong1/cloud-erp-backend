@@ -730,7 +730,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private Integer deliveryBoxQty;
+        private Integer boxQty;
 
         /**
          * 是否b2b发货
