@@ -250,6 +250,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
             logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
         }
+        if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getChannelId()) && CharSequenceUtil.isBlank(logisticsBillEntity.getChannelName())){
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+            if(Objects.nonNull(channelEntity)){
+                logisticsBillEntity.setChannelName(channelEntity.getName());
+            }
+        }
     }
 
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
