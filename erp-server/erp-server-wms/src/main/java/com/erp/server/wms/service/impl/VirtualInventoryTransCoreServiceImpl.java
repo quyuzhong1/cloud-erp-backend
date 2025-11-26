@@ -24,7 +24,6 @@ import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.config.VirtualInventoryHelper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,10 +41,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTransCoreService {
-
-
-    @Resource
-    private VirtualInventoryHelper virtualInventoryHelper;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
