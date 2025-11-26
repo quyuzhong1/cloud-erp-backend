@@ -14,11 +14,13 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.handler.CellWriteHandler;
+import com.alibaba.excel.write.handler.SheetWriteHandler;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
+import com.alibaba.excel.write.metadata.holder.WriteWorkbookHolder;
 import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -133,6 +135,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -4452,7 +4455,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //copy
             BeanUtils.copyProperties(firstDTO,exportDTO);
             //重新赋值供应商名称,多个用逗号隔开
-            Set<String> carrierNameSet = value.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCarrierName).collect(Collectors.toSet());
+            Set<String> carrierNameSet = value.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getCarrierName).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
             exportDTO.setCarrierName(String.join(",",carrierNameSet));
             List<SoOutstockDTO.ExportLogisticsHandoverSummaryDetailDTO> dtoList = new ArrayList<>();
             //根据code去重value，每个code保留一条
@@ -4542,31 +4545,51 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         CellStyle cellStyle = workbook.createCellStyle();
                         Font font = workbook.createFont();
 
-                        // 设置通用样式（边框等）
-                        cellStyle.setBorderBottom(BorderStyle.THIN);
-                        cellStyle.setBorderTop(BorderStyle.THIN);
-                        cellStyle.setBorderLeft(BorderStyle.THIN);
-                        cellStyle.setBorderRight(BorderStyle.THIN);
-                        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
                         // 根据行列位置设置特定样式
-                        if (relativeRowIndex != null) {
-                            // 前两行的特定列加粗（客户名称、销售单号等）
-                            if ((relativeRowIndex == 0 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
-                                    (relativeRowIndex == 1 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
-                                    relativeRowIndex == 3) { // 表头行
+                        int tableNo = writeTableHolder.getTableNo(); // 关键：区分 Table
+                        if (tableNo == 0) { // 表头 Table：保持原样式逻辑
+                            if (relativeRowIndex != null) {
+                                if ((relativeRowIndex == 0 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
+                                        (relativeRowIndex == 1 && (cell.getColumnIndex() == 0 || cell.getColumnIndex() == 3)) ||
+                                        relativeRowIndex == 3) { // 表头关键字段加粗居中
+                                    font.setBold(true);
+                                    font.setFontHeightInPoints((short) 12);
+                                    cellStyle.setAlignment(HorizontalAlignment.CENTER);
+                                } else {
+                                    font.setBold(false);
+                                    font.setFontHeightInPoints((short) 11);
+                                    cellStyle.setAlignment(HorizontalAlignment.LEFT);
+                                }
+                                if(relativeRowIndex == 3){
+                                    cellStyle.setBorderBottom(BorderStyle.THIN);
+                                    cellStyle.setBorderTop(BorderStyle.THIN);
+                                    cellStyle.setBorderLeft(BorderStyle.THIN);
+                                    cellStyle.setBorderRight(BorderStyle.THIN);
+                                    cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                                }
+                            }
+                        } else if (tableNo == 1) { // 详情 Table：自定义样式（独立于表头）
+                            // 设置通用样式（边框等）
+                            cellStyle.setBorderBottom(BorderStyle.THIN);
+                            cellStyle.setBorderTop(BorderStyle.THIN);
+                            cellStyle.setBorderLeft(BorderStyle.THIN);
+                            cellStyle.setBorderRight(BorderStyle.THIN);
+                            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                            font.setFontHeightInPoints((short) 11);
+                            // 合计行判断（rowNum 为 "合计"）
+                            String rowNum = cellDataList != null && !cellDataList.isEmpty() ? cellDataList.get(0).getStringValue() : "";
+                            if ("合计".equals(rowNum)) {
                                 font.setBold(true);
-                                font.setFontHeightInPoints((short) 12);
                                 cellStyle.setAlignment(HorizontalAlignment.CENTER);
                             } else {
                                 font.setBold(false);
-                                font.setFontHeightInPoints((short) 11);
-                                cellStyle.setAlignment(HorizontalAlignment.LEFT);
+                                // 序号列居中，其他列左对齐
+                                cellStyle.setAlignment(cell.getColumnIndex() == 0 ? HorizontalAlignment.CENTER : HorizontalAlignment.LEFT);
                             }
                         }
                         cellStyle.setFont(font);
                         cell.setCellStyle(cellStyle);
-
                     }
                 };
 
