@@ -134,6 +134,7 @@
         SELECT 'allReceive' as tabFlag,COUNT(*) as count FROM (
             SELECT 1
             FROM asset_purchase_order_detail apod
+            left join asset_purchase_order apo on apo.id = apod.main_id
             WHERE apod.is_deleted = FALSE and apod.end_receive = 'allReceive'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
@@ -143,6 +144,7 @@
         SELECT 'close' as tabFlag,COUNT(*) as count FROM (
             SELECT 1
             FROM asset_purchase_order_detail apod
+            left join asset_purchase_order apo on apo.id = apod.main_id
             WHERE apod.is_deleted = FALSE and apod.end_receive = 'close'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
