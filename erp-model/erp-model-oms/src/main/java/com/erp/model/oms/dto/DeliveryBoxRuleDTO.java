@@ -6,12 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
 
 /**
  * <p>
@@ -54,6 +53,7 @@ public class DeliveryBoxRuleDTO implements Serializable {
         private String productName;
 
 
+        private List<DeliveryBoxRuleDetailDTO.ViewDTO> deliveryBoxRuleDetailDTOList;
     }
 
     /**
@@ -63,7 +63,8 @@ public class DeliveryBoxRuleDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        @NotNull(message = "发货箱规明细不能为空")
+        private List<DeliveryBoxRuleDetailDTO.AddDTO> deliveryBoxRuleDetailDTOList;
     }
 
     /**
@@ -79,6 +80,9 @@ public class DeliveryBoxRuleDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+
+        @NotNull(message = "发货箱规明细不能为空")
+        private List<DeliveryBoxRuleDetailDTO.UpdateDTO> deliveryBoxRuleDetailDTOList;
     }
 
     /**
@@ -215,14 +219,18 @@ public class DeliveryBoxRuleDTO implements Serializable {
         * skuId
         */
         @NotBlank(message = "skuId不能为空")
-        @Size(max = 255,message = "skuId最大长度不能超过255位")
         private String skuId;
+
+        /**
+         * sku编码
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String skuNo;
 
         /**
         * sku名称
         */
         @NotBlank(message = "sku名称不能为空")
-        @Size(max = 255,message = "sku名称最大长度不能超过255位")
         private String productName;
 
 

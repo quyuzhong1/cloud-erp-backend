@@ -711,6 +711,31 @@ public class SoInfoDTO implements Serializable {
          * 客户PO号
          */
         private String customerPO;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货sku编码
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private Integer deliveryBoxQty;
+
+        /**
+         * 是否b2b发货
+         */
+        private Boolean isB2BApiDelivery;
     }
 
     /**
@@ -1118,6 +1143,21 @@ public class SoInfoDTO implements Serializable {
          * 授信抵扣金额
          */
         private BigDecimal creditDeductAmount;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postalCode;
 
         /**
          * 收款单信息

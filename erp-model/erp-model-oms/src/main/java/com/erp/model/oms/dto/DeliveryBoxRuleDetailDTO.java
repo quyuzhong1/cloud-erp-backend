@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -21,9 +22,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class DeliveryBoxRuleDetailDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -35,6 +33,11 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 主表id
+         */
+        private String  mainId;
 
         /**
         * 发货skuId
@@ -59,9 +62,32 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         /**
         * 优先级
         */
-        private Integer priority;
+        private Integer sort;
 
+        /**
+         * 作废时间
+         */
+        private Integer invalidTime;
 
+        /**
+         * 作废用户id
+         */
+        private Integer invalidUserId;
+
+        /**
+         * 作废用户名
+         */
+        private Integer invalidUserName;
+
+        /**
+         * 作废原因
+         */
+        private Integer invalidReason;
+
+        /**
+         * 作废状态
+         */
+        private Integer invalidStatus;
     }
 
     /**
@@ -94,10 +120,22 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 箱规头id
+         */
+        @NotBlank(message = "箱规id不能为空")
+        private String mainId;
+
+        /**
         * skuId
         */
         @NotBlank(message = "skuId不能为空")
         private String deliverySkuId;
+
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String deliverySkuNo;
 
         /**
         * sku名称
@@ -109,15 +147,39 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         * 每箱数量
         */
         @NotNull(message = "每箱数量不能为空")
+        @Min(value = 1)
         private Integer perBoxQty;
 
         /**
         * 优先级
         */
         @NotNull(message = "优先级不能为空")
-        private Integer priority;
+        private Integer sort;
 
+        /**
+         * 作废时间
+         */
+        private Integer invalidTime;
 
+        /**
+         * 作废用户id
+         */
+        private Integer invalidUserId;
+
+        /**
+         * 作废用户名
+         */
+        private Integer invalidUserName;
+
+        /**
+         * 作废原因
+         */
+        private Integer invalidReason;
+
+        /**
+         * 作废状态
+         */
+        private Integer invalidStatus;
     }
 
 

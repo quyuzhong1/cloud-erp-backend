@@ -158,48 +158,4 @@ public class SoDetailController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-     * 导入快速分箱数据
-     * @param excelImportDTO
-     * @param response
-     * @return
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入快速分箱数据")
-    @PostMapping("/importDivideBoxFile")
-    public ApiResult<SoDetailDTO.ImportDivideSkuBoxDTO> importDivideBoxFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        SoDetailDTO.ImportDivideSkuBoxDTO dto = soDetailService.importDivideBoxFile(excelImportDTO.getExcelFile(), response);
-        return success(dto);
-    }
-
-    /**
-     * 下载分箱模板
-     * @author
-     * @date:
-     * @param request
-     * @param response
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载快速分箱模板")
-    @GetMapping("/exportDivideBoxTemplate")
-    public ApiResult<Object> exportDivideBoxTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/b2bDivideSkuBoxTemplate.xlsx";
-        String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
-        return success();
-    }
-
 }

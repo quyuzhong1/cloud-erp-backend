@@ -158,6 +158,26 @@ public class SoDetailDTO implements Serializable {
          * 来源明细ID
          */
         private String sourceDetailId;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货sku编码
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private Integer deliveryBoxQty;
     }
 
 

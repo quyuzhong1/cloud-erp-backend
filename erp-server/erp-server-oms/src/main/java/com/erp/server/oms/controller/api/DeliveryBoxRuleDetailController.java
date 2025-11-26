@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
+import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.erp.server.oms.service.DeliveryBoxRuleDetailService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -16,6 +17,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 
@@ -65,5 +71,34 @@ public class DeliveryBoxRuleDetailController extends BaseController {
     }
 
 
-
+    /**
+     * 批量作废箱规明细（明细id）
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INVALID, desc = "批量作废箱规明细")
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:deliveryBoxRuleDetail:cancelProcess",
+            serviceClass = DeliveryBoxRuleDetailService.class,
+            keyIdName = "ids")
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, DeliveryBoxRuleDetailEntity> entityMap = deliveryBoxRuleDetailService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            DeliveryBoxRuleDetailEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"箱规明细不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(deliveryBoxRuleDetailService.invalid(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("箱规明细作废失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getDeliverySkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

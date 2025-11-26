@@ -4,6 +4,8 @@ import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -63,5 +65,8 @@ public interface DeliveryBoxRuleService extends SuperService<DeliveryBoxRuleEnti
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 
-
+    /**
+     * 根据skuNo查询箱规
+     */
+    List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySkuNo(List<String> skuNoList);
 }

@@ -5,8 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
+import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.DeliveryBoxRuleMapper;
+import com.erp.server.oms.service.DeliveryBoxRuleDetailService;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -14,6 +17,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +36,12 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRuleMapper, DeliveryBoxRuleEntity> implements DeliveryBoxRuleService {
+
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DeliveryBoxRuleDetailService deliveryBoxRuleDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -48,14 +56,19 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         log.info("开始新增");
         boolean save = super.save(deliveryBoxRuleEntity);
         if(!save) {
-            throw new ServiceException("保存失败");
+            throw new ServiceException("箱规保存失败");
+        }
+
+        Boolean saveDetail = deliveryBoxRuleDetailService.save(addDTO.getDeliveryBoxRuleDetailDTOList(), deliveryBoxRuleEntity.getId());
+        if(!saveDetail) {
+            throw new ServiceException("箱规明细保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , deliveryBoxRuleEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, deliveryBoxRuleEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        for (DeliveryBoxRuleDetailDTO.AddDTO dto : addDTO.getDeliveryBoxRuleDetailDTOList()) {
+            String msg = StrUtil.format("用户【{}】新增SKU【{}】,单箱数量【{}】", UserContext.getDefaultLoginUser().getUserName(), deliveryBoxRuleEntity.getSkuId() , dto.getPerBoxQty());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(), deliveryBoxRuleEntity.getId(), "新增操作");
+        }
 
         return new BaseResultDTO.AddDTO(deliveryBoxRuleEntity.getId(), deliveryBoxRuleEntity.getId());
     }
@@ -95,11 +108,6 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     }
 
     @Override
-    public List<DeliveryBoxRuleDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return null;
-    }
-
-    @Override
     public PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
         return null;
     }
@@ -114,11 +122,19 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         return null;
     }
 
+    @Override
+    public List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySkuNo(List<String> skuNoList) {
+        return null;
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
-    // TODO 验证数据 & 数据赋值
+        Integer count = this.lambdaQuery().eq(DeliveryBoxRuleEntity::getSkuId, deliveryBoxRuleEntity.getSkuId()).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_BOX_RULE_REPEAT);
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.erp.server.oms.mapper.DeliveryBoxRuleDetailMapper;
@@ -13,6 +14,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +87,21 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, deliveryBoxRuleDetailEntity, null, deliveryBoxRuleDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional
+    public Boolean save(List<DeliveryBoxRuleDetailDTO.AddDTO> deliveryBoxRuleDetailDTOList, String deliveryBoxRuleId) {
+        List<DeliveryBoxRuleDetailEntity> deliveryBoxRuleDetailEntityList = BeanMapperUtils.copyList(DeliveryBoxRuleDetailEntity.class, deliveryBoxRuleDetailDTOList);
+        for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
+            deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+        }
+        return saveBatch(deliveryBoxRuleDetailEntityList);
+    }
+
+    @Override
+    public BatchResultDTO invalid(DeliveryBoxRuleDetailEntity entity, String remark) {
+        return null;
     }
 
 

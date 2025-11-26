@@ -97,6 +97,11 @@ public class DeliveryBoxRuleController extends BaseController {
         return success(deliveryBoxRuleService.paging(dto));
     }
 
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -139,8 +144,6 @@ public class DeliveryBoxRuleController extends BaseController {
 
     /**
      * 下载发货箱规模板
-     * @author Will
-     * @date: 22023/3/15 18:22
      * @param request
      * @param response
      */
@@ -168,6 +171,14 @@ public class DeliveryBoxRuleController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 根据skuNo获取箱规
+     * @param skuNoList
+     * @return
+     */
+    @PostMapping("/listBoxRuleBySkuNo")
+    @LogViewService
+    public ApiResult<List<DeliveryBoxRuleDTO.ViewDTO>> listBoxRuleBySkuNo(@RequestBody @Validated List<String> skuNoList) {
+        return success(deliveryBoxRuleService.listBoxRuleBySkuNo(skuNoList));
+    }
 }

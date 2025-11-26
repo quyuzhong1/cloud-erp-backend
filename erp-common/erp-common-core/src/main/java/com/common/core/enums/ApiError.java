@@ -1637,7 +1637,7 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_CREATE_INVOICING(92192,"选择订单开票中不支持重新生成发票"),
     ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
     ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
-
+    ERROR_BOX_RULE_REPEAT(92195,"箱规sku已存在"),
 
 
     /**

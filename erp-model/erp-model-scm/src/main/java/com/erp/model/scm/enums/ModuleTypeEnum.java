@@ -174,6 +174,8 @@ public enum ModuleTypeEnum {
     PAYABLE_INFO("145", "应付单"),
     SO_B2C_REFUND("146", "售后订单"),
 
+    DELIVERY_BOX_RULE("156", "发货箱规"),
+
     ;
 
 

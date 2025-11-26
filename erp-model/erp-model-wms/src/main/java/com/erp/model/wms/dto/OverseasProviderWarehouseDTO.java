@@ -112,7 +112,7 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         /**
          * 开启b2b发货
          */
-        private Boolean isB2BDelivery;
+        private Boolean isB2BApiDelivery;
     }
 
     /**
@@ -169,7 +169,7 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         /**
          * 开启b2b发货
          */
-        private Boolean isB2BDelivery;
+        private Boolean isB2BApiDelivery;
     }
 
     @Data

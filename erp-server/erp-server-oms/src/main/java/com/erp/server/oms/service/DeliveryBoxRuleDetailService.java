@@ -4,6 +4,8 @@ import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.common.business.dto.base.*;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -31,6 +33,19 @@ public interface DeliveryBoxRuleDetailService extends SuperService<DeliveryBoxRu
     * @return
     */
     Boolean update(DeliveryBoxRuleDetailDTO.UpdateDTO dto);
+
+    /**
+     * 新增明细
+     */
+    Boolean save(List<DeliveryBoxRuleDetailDTO.AddDTO> deliveryBoxRuleDetailDTOList, String deliveryBoxRuleId);
+
+    /**
+     * 批量作废明细
+     * @param entity
+     * @param remark
+     * @return
+     */
+    BatchResultDTO invalid(DeliveryBoxRuleDetailEntity entity,String remark);
 
 
 }
