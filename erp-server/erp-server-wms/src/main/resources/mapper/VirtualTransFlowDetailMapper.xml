@@ -130,7 +130,7 @@
     </select>
 
     <!-- 查询历史库龄库存 -->
-    <select id="listHisByOldParam" resultType="com.erp.model.wms.entity.VirtualTransFlowDetailEntity">
+    <select id="listHisByOldParam" resultType="java.lang.String">
         WITH oldInventoryDetail as (
         select
         DISTINCT
@@ -141,7 +141,7 @@
         where is_deleted = false and id = #{virtualInventoryDetailId}
         )
         select
-        vtfd.*
+        vtfd.virtual_trans_flow_id
         from virtual_trans_flow_detail vtfd
         inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
         inner join oldInventoryDetail oid on vid.sku_id = oid.sku_id and vid.warehouse_id = oid.warehouse_id and vid.virtual_warehouse_id= oid.virtual_warehouse_id

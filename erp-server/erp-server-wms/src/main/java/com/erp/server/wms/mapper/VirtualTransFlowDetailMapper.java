@@ -57,9 +57,9 @@ public interface VirtualTransFlowDetailMapper extends BaseMapper<VirtualTransFlo
      * @date 2024/12/20 12:03
      * @param virtualInventoryDetailId
      * @param flowDetailId
-     * @return List<VirtualTransFlowDetailDTO.ParamDTO>
+     * @return List<String>
      */
-    List<VirtualTransFlowDetailEntity> listHisByOldParam(@Param("virtualInventoryDetailId") String virtualInventoryDetailId,@Param("flowDetailId") String flowDetailId);
+    List<String> listHisByOldParam(@Param("virtualInventoryDetailId") String virtualInventoryDetailId,@Param("flowDetailId") String flowDetailId);
     /**
      * 按sku显示冻结库存差异
      * @author will

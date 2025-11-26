@@ -323,16 +323,24 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         //删除原有出库库龄流水信息
         List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(businessId);
         if (CollUtil.isEmpty(oldFlowDetailList)) {
-            throw new ServiceException("未找到原虚拟仓出库库龄流水信息");
-        }
-        String virtualInventoryDetailId = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId).findFirst().orElse("");
-        String flowDetailId = oldFlowDetailList.stream().max(Comparator.comparing(VirtualTransFlowDetailEntity::getId)).map(VirtualTransFlowDetailEntity::getId).orElse("");
-
-        //根据sku、仓库id、虚拟仓id查询被删除的出库流水后的批次流水信息
-        List<VirtualTransFlowDetailEntity> flowDetailList = baseMapper.listHisByOldParam(virtualInventoryDetailId,flowDetailId);
-        if (CollUtil.isEmpty(flowDetailList)) {
+            log.warn("未找到原虚拟仓出库库龄流水信息, businessId={}",businessId);
             return;
         }
+        String virtualInventoryDetailId = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId).findFirst().orElse("");
+        String flowDetailId = oldFlowDetailList.stream().min(Comparator.comparing(VirtualTransFlowDetailEntity::getId)).map(VirtualTransFlowDetailEntity::getId).orElse("");
+
+        //根据sku、仓库id、虚拟仓id查询被删除的出库流水后的流水id
+        List<String> flowIdList = baseMapper.listHisByOldParam(virtualInventoryDetailId,flowDetailId);
+        if (CollUtil.isEmpty(flowIdList)) {
+            log.warn("未找到需要被删除的虚拟仓出库库龄流水信息，virtualInventoryDetailId={}, flowDetailId={}",virtualInventoryDetailId,flowDetailId);
+            return;
+        }
+        List<VirtualTransFlowDetailEntity> flowDetailList = this.listByVirtualTransFlowIdList(flowIdList);
+        if (CollUtil.isEmpty(flowIdList)) {
+            log.warn("未找到需要被删除的虚拟仓出库库龄流水信息，flowIdList={}",flowIdList);
+            return;
+        }
+
         List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
         //退回批次流水库龄库存
         returnVirtualInventory(flowDetailList);
@@ -456,6 +464,18 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         virtualInventoryDetailService.updateBatchById(updateList);
     }
+
+    /**
+     * 根据流水id集合查询批次流水明细
+     * @author will
+     * @date 2025/11/26 17:49
+     * @param parentVirtualTransFlowIdList
+     * @return List<VirtualTransFlowDetailEntity>
+     */
+    public List<VirtualTransFlowDetailEntity> listByVirtualTransFlowIdList(List<String> parentVirtualTransFlowIdList) {
+        return lambdaQuery().in(VirtualTransFlowDetailEntity::getVirtualTransFlowId,parentVirtualTransFlowIdList).list();
+    }
+
 
     /**
      * 入库批次库存数据
