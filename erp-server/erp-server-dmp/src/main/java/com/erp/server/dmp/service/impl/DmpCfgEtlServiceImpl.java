@@ -77,8 +77,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "etl配置信息" , dmpCfgEtlEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dmpCfgEtlEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_CFG_ETL.getCode(), dmpCfgEtlEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(dmpCfgEtlEntity.getId(), dmpCfgEtlEntity.getId());
     }
@@ -210,9 +209,6 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        if (ObjectUtil.isEmpty(data)) {
-            return;
-        }
         // restCloud获取流程信息
         DmpRestCloudDTO.PagingParamDTO paramDTO = new DmpRestCloudDTO.PagingParamDTO();
         // 判断ExecUrl是否有/？
@@ -221,7 +217,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         } else {
             paramDTO.setFlowUrl("/" + data.getExecUrl());
         }
-        paramDTO.setTaskCfgType("input");
+        paramDTO.setTaskCfgType("etl");
         PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto = new PagingDTO<>();
         dto.setCurrPage(1);
         dto.setPageSize(1);

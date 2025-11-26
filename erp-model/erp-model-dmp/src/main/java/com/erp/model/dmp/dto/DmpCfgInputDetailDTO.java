@@ -111,6 +111,41 @@ public class DmpCfgInputDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 最大间隔时间长度单位秒
+         */
+        private Integer maxIntervalTime;
+
+        /**
+         * 任务类型：normal=正常任务，history=补偿任务
+         */
+        private String taskType;
+
+        /**
+         * 任务类型名称
+         */
+        private String taskTypeName;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

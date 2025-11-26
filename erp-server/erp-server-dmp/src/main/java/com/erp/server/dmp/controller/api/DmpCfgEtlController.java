@@ -97,7 +97,7 @@ public class DmpCfgEtlController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgEtl:paging",
-            tableAlias = ""
+            tableAlias = "dce"
     )
     public ApiResult<List<DmpCfgEtlDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(dmpCfgEtlService.tabList(dto));
@@ -114,7 +114,7 @@ public class DmpCfgEtlController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgEtl:paging",
-            tableAlias = ""
+            tableAlias = "dce"
     )
     @WebAdvanceQuery(handler = DmpCfgEtlQueryHandler.class)
     public ApiResult<PagingVO<DmpCfgEtlDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DmpCfgEtlDTO.PagingParamDTO> dto) {
@@ -259,7 +259,7 @@ public class DmpCfgEtlController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpCfgEtl:export",
-            tableAlias = ""
+            tableAlias = "dce"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "清洗调度导出Excel数据")
     @WebAdvanceQuery(handler = DmpCfgEtlQueryHandler.class)
