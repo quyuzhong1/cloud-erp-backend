@@ -60,5 +60,15 @@ public interface PlmWorkflowFeign extends BaseWorkflowService{
     @PostMapping("/feign/plmWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/6/18 10:40
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/feign/plmWorkflow/addComment")
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
+
 }
 

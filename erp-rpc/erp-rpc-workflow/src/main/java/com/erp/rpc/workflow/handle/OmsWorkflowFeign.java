@@ -51,5 +51,15 @@ public interface OmsWorkflowFeign extends BaseWorkflowService{
     @PostMapping("/feign/omsWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/6/18 10:40
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/feign/omsWorkflow/addComment")
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }
 
