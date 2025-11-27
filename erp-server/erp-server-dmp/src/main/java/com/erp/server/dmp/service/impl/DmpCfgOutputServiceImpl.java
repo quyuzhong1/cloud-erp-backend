@@ -137,12 +137,12 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             if (StringUtils.isNotBlank(commonDTO.getInputConvertId())){
                 dmpCfgOutputEntity.setInputConvertId(commonDTO.getInputConvertId());
             } else {
-                if (StringUtils.isBlank(commonDTO.getInputConvertType())){
+                if (StringUtils.isNotBlank(commonDTO.getInputConvertType())){
                     List<DmpCfgInputConvertEntity> inputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true);
                     DmpCfgInputConvertEntity dmpCfgInputConvertEntity = inputConvertEntityList.stream()
                             .filter(e -> e.getType().equals(commonDTO.getInputConvertType()))
                             .findFirst()
-                            .orElseThrow(() -> new ServiceException("DMP执行系统时，未找到配置的转内数据名称"));
+                            .orElseThrow(() -> new ServiceException("DMP执行系统时，未找到配置的转内数据配置"));
                     dmpCfgOutputEntity.setInputConvertId(dmpCfgInputConvertEntity.getId());
                 } else {
                     throw new ServiceException("DMP执行系统时，转内数据id或转内数据名称其一不能为空");
