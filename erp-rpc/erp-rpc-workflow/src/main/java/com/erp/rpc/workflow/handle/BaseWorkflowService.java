@@ -34,4 +34,12 @@ public interface BaseWorkflowService {
      * @return Boolean
      */
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/11/27 14:59
+     * @param dto
+     * @return void
+     */
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }

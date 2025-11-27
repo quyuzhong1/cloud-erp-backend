@@ -31,7 +31,7 @@ public interface ScmWorkflowFeign extends BaseWorkflowService{
      * @param dto
      * @return Boolean
      */
-    @PostMapping("/feign/omsWorkflow/disApprove")
+    @PostMapping("/feign/scmWorkflow/disApprove")
     Boolean disApprove(ApproveDTO.DisApproveDTO dto);
 
     /**
@@ -41,7 +41,17 @@ public interface ScmWorkflowFeign extends BaseWorkflowService{
      * @param dto
      * @return Boolean
      */
-    @PostMapping("/feign/omsWorkflow/cancelProcess")
+    @PostMapping("/feign/scmWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/6/18 10:40
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/feign/scmWorkflow/addComment")
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }
 

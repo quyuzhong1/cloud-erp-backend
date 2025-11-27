@@ -1560,6 +1560,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        feignService.addComment(dto);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<ProcessManagementDTO.StartResultDTO> batchStartProcess(ValidList<ProcessManagementDTO.StartDTO> dtoList) {
         List<ProcessManagementDTO.StartResultDTO> resultList = new ArrayList<>();

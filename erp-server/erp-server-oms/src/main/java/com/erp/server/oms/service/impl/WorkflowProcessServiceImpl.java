@@ -58,4 +58,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.cancelProcess(dto);
     }
+
+
+    @Override
+    public Boolean addComment(ApproveDTO.AddCommentDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, "添加评论",businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        handler.addComment(dto);
+        return Boolean.TRUE;
+    }
 }
