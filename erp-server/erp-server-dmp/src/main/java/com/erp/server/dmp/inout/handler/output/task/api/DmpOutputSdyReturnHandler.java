@@ -369,6 +369,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             } else {
                 sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformCode());
             }
+            
+            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+            	sdyDTO.setRoot_node_no_initial(dmpSoReturnDetailEntity.getTid());
+            	sdyDTO.setRoot_node_no(dmpSoReturnDetailEntity.getTid());
+            }
             result.put(dmpSoReturnDetailEntity.getId(), sdyDTO);
         }
 
