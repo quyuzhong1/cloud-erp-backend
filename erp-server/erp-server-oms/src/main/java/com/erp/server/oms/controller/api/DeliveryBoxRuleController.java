@@ -1,13 +1,11 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
-import com.erp.server.oms.query.DeliveryBoxRuleQueryHandler;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -40,7 +38,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@LogSystemModule("")
+@LogSystemModule("发货箱规")
 @RequestMapping("/deliveryBoxRule")
 public class DeliveryBoxRuleController extends BaseController {
 
@@ -75,8 +73,7 @@ public class DeliveryBoxRuleController extends BaseController {
         serviceClass = DeliveryBoxRuleService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated DeliveryBoxRuleDTO.UpdateDTO dto) {
-        deliveryBoxRuleService.update(dto);
-        return success();
+        return success(deliveryBoxRuleService.update(dto));
     }
 
     /**
@@ -90,9 +87,8 @@ public class DeliveryBoxRuleController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:deliveryBoxRule:paging",
-            tableAlias = "an"
+            tableAlias = "dbr"
     )
-    @WebAdvanceQuery(handler = DeliveryBoxRuleQueryHandler.class)
     public ApiResult<PagingVO<DeliveryBoxRuleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
         return success(deliveryBoxRuleService.paging(dto));
     }
@@ -111,23 +107,6 @@ public class DeliveryBoxRuleController extends BaseController {
     @LogViewService
     public ApiResult<DeliveryBoxRuleDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(deliveryBoxRuleService.view(id));
-    }
-
-    /**
-     * 删除发货箱规
-     * @param dto
-     * @return
-     */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除发货箱规")
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:deliveryBoxRule:update",
-            serviceClass = DeliveryBoxRuleService.class,
-            keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = deliveryBoxRuleService.deleteByIds(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -171,14 +150,26 @@ public class DeliveryBoxRuleController extends BaseController {
         return success();
     }
 
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:deliveryBoxRule:export",
+            tableAlias = "dbr"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
+    public ApiResult<Object> exportList(@RequestBody @Validated DeliveryBoxRuleDTO.ExportDTO dto, HttpServletResponse response) {
+        deliveryBoxRuleService.exportList(dto, response);
+        return success();
+    }
+
     /**
-     * 根据skuNo获取箱规
-     * @param skuNoList
+     * 根据sku获取箱规
+     * @param skuList
      * @return
      */
-    @PostMapping("/listBoxRuleBySkuNo")
+    @PostMapping("/listBoxRuleBySku")
     @LogViewService
-    public ApiResult<List<DeliveryBoxRuleDTO.ViewDTO>> listBoxRuleBySkuNo(@RequestBody @Validated List<String> skuNoList) {
-        return success(deliveryBoxRuleService.listBoxRuleBySkuNo(skuNoList));
+    public ApiResult<List<DeliveryBoxRuleDTO.ViewDTO>> listBoxRuleBySku(@RequestBody List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
+        return success(deliveryBoxRuleService.listBoxRuleBySku(skuList));
     }
 }

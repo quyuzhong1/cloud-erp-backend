@@ -93,4 +93,6 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/b2bPlatformSku")
     PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDeliveryBoxRule")
+    PagingVO<DeliveryBoxRuleDTO.ListDTO> exportDeliveryBoxRule(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto);
 }

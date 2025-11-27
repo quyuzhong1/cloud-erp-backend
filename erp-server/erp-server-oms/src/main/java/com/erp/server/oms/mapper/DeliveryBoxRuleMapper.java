@@ -1,8 +1,12 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +19,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DeliveryBoxRuleMapper extends BaseMapper<DeliveryBoxRuleEntity> {
 
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<DeliveryBoxRuleDTO.ListDTO> paging(Page query, @Param("params") DeliveryBoxRuleDTO.PagingParamDTO params);
 }

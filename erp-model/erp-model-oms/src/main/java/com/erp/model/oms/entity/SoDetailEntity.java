@@ -297,7 +297,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      * 单箱数量
      */
     @TableField("per_box_qty")
-    private String perBoxQty;
+    private Integer perBoxQty;
 
     /**
      * 发货skuId

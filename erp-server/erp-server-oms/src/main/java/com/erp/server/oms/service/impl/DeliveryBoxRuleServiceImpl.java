@@ -1,13 +1,33 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
+import com.erp.model.oms.dto.excel.DeliveryBoxRuleImportExcelDTO;
+import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.listener.DeliveryBoxRuleExcelListener;
 import com.erp.server.oms.mapper.DeliveryBoxRuleMapper;
 import com.erp.server.oms.service.DeliveryBoxRuleDetailService;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
@@ -17,14 +37,29 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
-import org.checkerframework.checker.units.qual.A;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import static com.common.business.enums.FileTaskEventEnum.*;
+
 /**
  * <p>
  *  服务实现类
@@ -43,6 +78,18 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     @Autowired
     private DeliveryBoxRuleDetailService deliveryBoxRuleDetailService;
 
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -51,7 +98,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         BeanMapperUtils.copy(addDTO, deliveryBoxRuleEntity);
 
         // 数据处理
-        handleData(deliveryBoxRuleEntity);
+        handleAddData(deliveryBoxRuleEntity);
 
         log.info("开始新增");
         boolean save = super.save(deliveryBoxRuleEntity);
@@ -82,59 +129,340 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     public Boolean update(DeliveryBoxRuleDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryBoxRuleEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-        DeliveryBoxRuleEntity deliverytBoxRuleEntity =  BeanMapperUtils.map(DeliveryBoxRuleEntity.class, addOrUpdateDTO);
 
-        // 数据处理
-        handleData(deliverytBoxRuleEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
-        boolean save = super.updateById(deliverytBoxRuleEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //只更新明细
+        return deliveryBoxRuleDetailService.update(addOrUpdateDTO.getDeliveryBoxRuleDetailDTOList(),old.getId());
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", deliverytBoxRuleEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), deliverytBoxRuleEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, deliverytBoxRuleEntity, null, deliverytBoxRuleEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
     @Override
     public DeliveryBoxRuleDTO.ViewDTO view(String id) {
         DeliveryBoxRuleEntity deliveryBoxRuleEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
-        return null;
+        DeliveryBoxRuleDTO.ViewDTO data = BeanMapperUtils.map(DeliveryBoxRuleDTO.ViewDTO.class, deliveryBoxRuleEntity);
+        List<DeliveryBoxRuleDetailEntity> detailList = deliveryBoxRuleDetailService.lambdaQuery()
+                .eq(DeliveryBoxRuleDetailEntity::getMainId, id)
+                .eq(DeliveryBoxRuleDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        List<DeliveryBoxRuleDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(DeliveryBoxRuleDetailDTO.ViewDTO.class, detailList);
+        fillViewList(dtoList);
+        data.setDeliveryBoxRuleDetailDTOList(dtoList);
+        return data;
+    }
+
+    public void fillViewList(List<DeliveryBoxRuleDetailDTO.ViewDTO> dtoList){
+        for (DeliveryBoxRuleDetailDTO.ViewDTO detailDTO : dtoList) {
+            detailDTO.setInvalidStatusName(detailDTO.getInvalidStatus().equals(InvalidStatusEnum.VOIDED.getStatus()) ? "已作废" : "未作废");
+        }
+
     }
 
     @Override
-    public PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DeliveryBoxRuleDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
-    @Override
-    public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
-        return null;
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<DeliveryBoxRuleDTO.ListDTO> list) {
+        for (DeliveryBoxRuleDTO.ListDTO listDTO : list) {
+            listDTO.setInvalidStatusName(listDTO.getInvalidStatus().equals(InvalidStatusEnum.VOIDED.getStatus()) ? "已作废" : "未作废");
+        }
     }
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入开模通知单", IMPORT_OMS_DELIVERY_BOX_RULE.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    public void importDeliveryBoxRule(BaseDTO.ImportDTO dto) {
+        //审核通过的sku
+        List<SkuVO> skuVOList = plmTaskFeign.listApproveSku();
+
+        if(StringUtils.isNotBlank(dto.getUserId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if(Objects.nonNull(findUserDTO)){
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
+        }
+
+        DeliveryBoxRuleExcelListener excelListenerUtil = new DeliveryBoxRuleExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),skuVOList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), DeliveryBoxRuleImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<DeliveryBoxRuleImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "发货箱规错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryBoxRuleImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     @Override
-    public List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySkuNo(List<String> skuNoList) {
-        return null;
+    public void exportList(DeliveryBoxRuleDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("导出发货箱规", EXPORT_OMS_DELIVERY_BOX_RULE.getCode(), dto);
+    }
+
+    @Override
+    public List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
+        List<DeliveryBoxRuleDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        for (DeliveryBoxRuleDTO.SkuDTO skuDTO : skuList) {
+            DeliveryBoxRuleDTO.ViewDTO viewDTO = new DeliveryBoxRuleDTO.ViewDTO();
+
+            DeliveryBoxRuleEntity deliveryBoxRuleEntity = this.lambdaQuery()
+                    .eq(DeliveryBoxRuleEntity::getSkuNo, skuDTO.getSkuNo())
+                    .one();
+            BeanUtils.copyProperties(deliveryBoxRuleEntity,viewDTO);
+
+            // 查询箱规下的所有有效明细记录（未作废的）
+            List<DeliveryBoxRuleDetailEntity> detailEntityList = deliveryBoxRuleDetailService.lambdaQuery()
+                    .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleEntity.getId())  // 关联主表ID
+                    .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())  // 未作废状态
+                    .list();
+
+            List<DeliveryBoxRuleDetailDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(
+                    DeliveryBoxRuleDetailDTO.ViewDTO.class, detailEntityList);
+
+            viewDTO.setDeliveryBoxRuleDetailDTOList(viewDTOS);
+            viewDTOList.add(viewDTO);
+        }
+
+        // 返回结果列表
+        return viewDTOList;
+    }
+
+    @Override
+    @Transactional
+    public void handleImportSuccessList(List<DeliveryBoxRuleDTO.ImportDTO> successList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        // 按 serialNumber 分组
+        Map<String, List<DeliveryBoxRuleDTO.ImportDTO>> groupedBySerialNumber = successList.stream()
+                .collect(Collectors.groupingBy(DeliveryBoxRuleDTO.ImportDTO::getSkuNo));
+
+        try {
+            for (Map.Entry<String, List<DeliveryBoxRuleDTO.ImportDTO>> entry : groupedBySerialNumber.entrySet()) {
+                String serialNumber = entry.getKey();
+                List<DeliveryBoxRuleDTO.ImportDTO> importDTOList = entry.getValue();
+
+                if (CollectionUtils.isEmpty(importDTOList)) {
+                    continue;
+                }
+
+                // 取第一个元素作为主表数据
+                DeliveryBoxRuleDTO.ImportDTO firstImportDTO = importDTOList.get(0);
+                DeliveryBoxRuleEntity deliveryBoxRuleEntity = this.lambdaQuery().eq(DeliveryBoxRuleEntity::getSkuNo, firstImportDTO.getSkuNo()).one();
+                DeliveryBoxRuleEntity entity = new DeliveryBoxRuleEntity();
+                if (Objects.isNull(deliveryBoxRuleEntity)) {
+                    entity.setSkuId(firstImportDTO.getSkuId());
+                    entity.setSkuNo(firstImportDTO.getSkuNo());
+                    entity.setProductName(firstImportDTO.getProductName());
+
+                    // 保存主表
+                    boolean save = super.save(entity);
+                    if (!save) {
+                        throw new ServiceException("发货箱规导入保存失败");
+                    }
+                }
+
+                // 处理明细数据
+                List<DeliveryBoxRuleDetailEntity> deliveryBoxRuleDetailEntityList = new ArrayList<>();
+                String deliveryBoxRuleId = Objects.isNull(deliveryBoxRuleEntity) ? entity.getId() : deliveryBoxRuleEntity.getId();
+
+                for (DeliveryBoxRuleDTO.ImportDTO importDTO : importDTOList) {
+                    List<DeliveryBoxRuleDetailDTO.DetailImportDTO> detailImportDTOList = importDTO.getDetailImportDTOList();
+                    for (DeliveryBoxRuleDetailDTO.DetailImportDTO detailImportDTO : detailImportDTOList) {
+                        DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity = new DeliveryBoxRuleDetailEntity();
+                        BeanMapperUtils.copy(detailImportDTO, deliveryBoxRuleDetailEntity);
+                        deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId); // 关联主表ID
+                        deliveryBoxRuleDetailEntityList.add(deliveryBoxRuleDetailEntity);
+                    }
+                }
+
+                // 查询旧数据
+                List<DeliveryBoxRuleDetailEntity> oldList = deliveryBoxRuleDetailService.lambdaQuery()
+                        .eq(DeliveryBoxRuleDetailEntity::getMainId, Objects.isNull(deliveryBoxRuleEntity) ? entity.getId() : deliveryBoxRuleEntity.getId())
+                        .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
+                        .list();
+                
+                //需要重写equals，跳过了不需要修改的对象
+                deliveryBoxRuleDetailEntityList.removeIf(oldList::contains);
+
+                // 检查 sort 是否重复
+                checkSortDuplicate(deliveryBoxRuleDetailEntityList);
+
+
+                Map<String, DeliveryBoxRuleDetailEntity> oldMap = oldList.stream()
+                        .collect(Collectors.toMap(DeliveryBoxRuleDetailEntity::getId, Function.identity()));
+
+                // 新增（id为空）、修改（id存在且数据有变化）
+                List<DeliveryBoxRuleDetailEntity> addList = new ArrayList<>();
+                List<DeliveryBoxRuleDetailEntity> updateList = new ArrayList<>();
+                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
+                    if (StringUtils.isBlank(deliveryBoxRuleDetailEntity.getId())) {
+                        // 新增
+                        addList.add(deliveryBoxRuleDetailEntity);
+                    } else {
+                        // 修改
+                        DeliveryBoxRuleDetailEntity oldEntity = oldMap.get(deliveryBoxRuleDetailEntity.getId());
+                        if (oldEntity != null && isDataChanged(oldEntity, deliveryBoxRuleDetailEntity)) {
+                            updateList.add(deliveryBoxRuleDetailEntity);
+                        }
+                    }
+                }
+
+                Iterator<Map.Entry<String, DeliveryBoxRuleDetailEntity>> iterator = oldMap.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, DeliveryBoxRuleDetailEntity> mapEntity = iterator.next();
+                    DeliveryBoxRuleDetailEntity oldEntity = mapEntity.getValue();
+
+                    List<Pair<String, String>> updatePairs = updateList.stream()
+                            .filter(newEntity -> newEntity.getId().equals(oldEntity.getId()))
+                            .map(newEntity -> new Pair<>(
+                                    deliveryBoxRuleId,
+                                    String.format(
+                                            "修改发货SKU从【%s】为【%s】，单箱数量从【%s】为【%s】，状态从【%s】为【%s",
+                                            oldEntity.getDeliverySkuNo(),
+                                            newEntity.getDeliverySkuNo(),
+                                            oldEntity.getPerBoxQty(),
+                                            newEntity.getPerBoxQty(),
+                                            InvalidStatusEnum.getName(oldEntity.getInvalidStatus()),
+                                            InvalidStatusEnum.getName(newEntity.getInvalidStatus())
+                                    )
+                            ))
+                            .collect(Collectors.toList());
+
+                    if (!updatePairs.isEmpty()) {
+                        operateLogService.batchAddModuleOperateLog(
+                                "修改发货SKU从【%s】",
+                                ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
+                                updatePairs,
+                                "编辑操作"
+                        );
+                    }
+                }
+
+                // 记录新增日志
+                List<Pair<String, String>> addPairs = addList.stream()
+                        .map(obj -> new Pair<>(deliveryBoxRuleId,
+                                obj.getDeliverySkuNo() + ",单箱数量【" + obj.getPerBoxQty() + "】"
+                        ))
+                        .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog(
+                        "新增了发货SKU【%s",
+                        ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
+                        addPairs,
+                        "新增操作"
+                );
+
+                //新增
+                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : addList) {
+                    deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+                }
+
+                boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
+
+                if (!addSuccess) {
+                    throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+                }
+
+                //更新
+                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
+                    deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+                    boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
+                            .set(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
+                            .eq(DeliveryBoxRuleDetailEntity::getMainId,deliveryBoxRuleId)
+                            .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
+                            .update();
+
+                    if (!updateSuccess) {
+                        throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            throw new ServiceException("发货箱规导入失败", e);
+        }
     }
 
 
+    private void checkSortDuplicate(List<DeliveryBoxRuleDetailEntity> detailEntityList) {
+        Map<Integer, Long> sortCountMap = detailEntityList.stream()
+                .filter(obj -> obj.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus()))
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailEntity::getSort,
+                        Collectors.counting()
+                ));
+
+        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(duplicateSorts)) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    duplicateSorts
+            );
+        }
+    }
+
+    private boolean isDataChanged(DeliveryBoxRuleDetailEntity oldEntity, DeliveryBoxRuleDetailEntity newEntity) {
+        return !Objects.equals(oldEntity.getDeliverySkuNo(), newEntity.getDeliverySkuNo())
+                || !Objects.equals(oldEntity.getPerBoxQty(), newEntity.getPerBoxQty())
+                || !Objects.equals(oldEntity.getSort(), newEntity.getSort())
+                || !Objects.equals(oldEntity.getInvalidStatus(), newEntity.getInvalidStatus());
+    }
+
     /**
-    * 新增修改处理数据
+    * 新增处理数据
     */
-    private void handleData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
+    private void handleAddData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
         Integer count = this.lambdaQuery().eq(DeliveryBoxRuleEntity::getSkuId, deliveryBoxRuleEntity.getSkuId()).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_BOX_RULE_REPEAT);
         }
+    }
+
+    /**
+     * 新增处理数据
+     */
+    private void handleUpdateData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
+
     }
 }

@@ -948,6 +948,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //采购申请单信息
         List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = FeignQuery.create(PurchaseApplicationDetailEntity.class).in(PurchaseApplicationDetailEntity::getSourceDetailId, sodIdList).list();
 
+
+
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
@@ -990,9 +992,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
             //国家
             item.setCountryName(countryMap.get(item.getCountryId()));
-            //实体仓名称
-            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
-            item.setWarehouseName(warehouseName);
+            //实体仓名称&&经营类型
+            Optional<WarehouseEntity> matchedWarehouse = warehouseList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getWarehouseId()))
+                    .findFirst();
+
+            item.setWarehouseName(matchedWarehouse.map(WarehouseEntity::getName).orElse(""));
+            item.setWarehouseManageType(matchedWarehouse.map(WarehouseEntity::getWarehouseManageType).orElse(""));
 
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {

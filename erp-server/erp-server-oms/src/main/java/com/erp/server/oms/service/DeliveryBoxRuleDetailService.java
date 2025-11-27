@@ -40,12 +40,9 @@ public interface DeliveryBoxRuleDetailService extends SuperService<DeliveryBoxRu
     Boolean save(List<DeliveryBoxRuleDetailDTO.AddDTO> deliveryBoxRuleDetailDTOList, String deliveryBoxRuleId);
 
     /**
-     * 批量作废明细
-     * @param entity
-     * @param remark
-     * @return
+     * 更新明细
      */
-    BatchResultDTO invalid(DeliveryBoxRuleDetailEntity entity,String remark);
+    Boolean update(List<DeliveryBoxRuleDetailDTO.UpdateDTO> deliveryBoxRuleDetailDTOList,String deliveryBoxRuleId);
 
 
 }

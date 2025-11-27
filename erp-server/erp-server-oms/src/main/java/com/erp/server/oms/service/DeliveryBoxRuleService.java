@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -54,19 +55,18 @@ public interface DeliveryBoxRuleService extends SuperService<DeliveryBoxRuleEnti
      * @return
      */
     PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto);
-    /**
-     * 删除
-     * @author wtr
-     * @date: 2025-11-24
-     * @param dto
-     * @return
-     */
-    List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto);
+
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 
+    void importDeliveryBoxRule(BaseDTO.ImportDTO dto);
+
+    void exportList(DeliveryBoxRuleDTO.ExportDTO dto, HttpServletResponse response);
+
     /**
-     * 根据skuNo查询箱规
+     * 根据sku查询箱规
      */
-    List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySkuNo(List<String> skuNoList);
+    List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList);
+
+    void handleImportSuccessList(List<DeliveryBoxRuleDTO.ImportDTO> successList);
 }

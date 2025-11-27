@@ -5,6 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
+import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.DeliveryBoxRuleDetailMapper;
 import com.erp.server.oms.service.DeliveryBoxRuleDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -14,12 +18,18 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -95,13 +105,123 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
         List<DeliveryBoxRuleDetailEntity> deliveryBoxRuleDetailEntityList = BeanMapperUtils.copyList(DeliveryBoxRuleDetailEntity.class, deliveryBoxRuleDetailDTOList);
         for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
             deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+            deliveryBoxRuleDetailEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
         }
         return saveBatch(deliveryBoxRuleDetailEntityList);
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(DeliveryBoxRuleDetailEntity entity, String remark) {
-        return null;
+    public Boolean update(List<DeliveryBoxRuleDetailDTO.UpdateDTO> deliveryBoxRuleDetailDTOList, String deliveryBoxRuleId) {
+        // 检查 sort 是否重复
+        checkSortDuplicate(deliveryBoxRuleDetailDTOList);
+
+        // 查询旧数据
+        List<DeliveryBoxRuleDetailEntity> oldList = this.lambdaQuery()
+                .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleId)
+                .list();
+        Map<String, DeliveryBoxRuleDetailEntity> oldMap = oldList.stream()
+                .collect(Collectors.toMap(DeliveryBoxRuleDetailEntity::getId, Function.identity()));
+
+        // 新增（id为空）、修改（id存在且数据有变化）
+        List<DeliveryBoxRuleDetailDTO.UpdateDTO> addList = new ArrayList<>();
+        List<DeliveryBoxRuleDetailDTO.UpdateDTO> updateList = new ArrayList<>();
+
+        for (DeliveryBoxRuleDetailDTO.UpdateDTO dto : deliveryBoxRuleDetailDTOList) {
+            if (StringUtils.isBlank(dto.getId())) {
+                // 新增
+                addList.add(dto);
+            } else {
+                // 修改
+                DeliveryBoxRuleDetailEntity oldEntity = oldMap.get(dto.getId());
+                if (oldEntity != null && isDataChanged(oldEntity, dto)) {
+                    updateList.add(dto);
+                }
+            }
+        }
+
+        Iterator<Map.Entry<String, DeliveryBoxRuleDetailEntity>> iterator = oldMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, DeliveryBoxRuleDetailEntity> entry = iterator.next();
+            DeliveryBoxRuleDetailEntity oldEntity = entry.getValue();
+
+            List<Pair<String, String>> updatePairs = updateList.stream()
+                    .filter(newEntity -> newEntity.getId().equals(oldEntity.getId()))
+                    .map(newEntity -> new Pair<>(
+                            deliveryBoxRuleId,
+                            String.format(
+                                    "修改发货SKU从【%s】为【%s】，单箱数量从【%s】为【%s】，状态从【%s】为【%s",
+                                    oldEntity.getDeliverySkuNo(),
+                                    newEntity.getDeliverySkuNo(),
+                                    oldEntity.getPerBoxQty(),
+                                    newEntity.getPerBoxQty(),
+                                    InvalidStatusEnum.getName(oldEntity.getInvalidStatus()),
+                                    InvalidStatusEnum.getName(newEntity.getInvalidStatus())
+                            )
+                    ))
+                    .collect(Collectors.toList());
+
+            if (!updatePairs.isEmpty()) {
+                operateLogService.batchAddModuleOperateLog(
+                        "修改发货SKU从【%s】",
+                        ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
+                        updatePairs,
+                        "编辑操作"
+                );
+            }
+        }
+
+        // 记录新增日志
+        List<Pair<String, String>> addPairs = addList.stream()
+                .map(obj -> new Pair<>(deliveryBoxRuleId,
+                        obj.getDeliverySkuNo() + ",单箱数量【" + obj.getPerBoxQty() + "】"
+                        ))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(
+                "新增了发货SKU【%s",
+                ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
+                addPairs,
+                "新增操作"
+        );
+
+        List<DeliveryBoxRuleDetailEntity> newList = BeanMapperUtils.copyList(DeliveryBoxRuleDetailEntity.class, deliveryBoxRuleDetailDTOList);
+        for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : newList) {
+            deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+        }
+        boolean success = this.saveOrUpdateBatch(newList);
+        if (!success) {
+            throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+        }
+        return success;
+    }
+
+    private void checkSortDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList) {
+        Map<Integer, Long> sortCountMap = dtoList.stream()
+                .filter(obj -> obj.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus()))
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.UpdateDTO::getSort,
+                        Collectors.counting()
+                ));
+
+        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(duplicateSorts)) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    duplicateSorts
+            );
+        }
+    }
+
+    private boolean isDataChanged(DeliveryBoxRuleDetailEntity oldEntity, DeliveryBoxRuleDetailDTO.UpdateDTO newDTO) {
+        return !Objects.equals(oldEntity.getDeliverySkuNo(), newDTO.getDeliverySkuNo())
+                || !Objects.equals(oldEntity.getPerBoxQty(), newDTO.getPerBoxQty())
+                || !Objects.equals(oldEntity.getSort(), newDTO.getSort())
+                || !Objects.equals(oldEntity.getInvalidStatus(), newDTO.getInvalidStatus());
     }
 
 
@@ -109,6 +229,6 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     * 新增修改处理数据
     */
     private void handleData(DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }

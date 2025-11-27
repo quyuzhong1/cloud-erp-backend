@@ -733,9 +733,9 @@ public class SoInfoDTO implements Serializable {
         private Integer boxQty;
 
         /**
-         * 是否b2b发货
+         * 经营类型
          */
-        private Boolean isB2BApiDelivery;
+        private String warehouseManageType;
     }
 
     /**

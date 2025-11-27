@@ -1638,8 +1638,9 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
     ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
     ERROR_BOX_RULE_REPEAT(92195,"箱规sku已存在"),
-
-
+    ERROR_BATCH_UPDATE_BOX_RULE(92196,"批量更新箱规失败"),
+    ERROR_DUPLICATE_SORT(92197,"箱规优先级【{}】重复"),
+    ERROR_BATCH_ADD_BOX_RULE(92198,"批量新增箱规失败"),
     /**
      * TMS 错误
      * 从94000 开始
