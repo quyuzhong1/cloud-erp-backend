@@ -465,7 +465,7 @@ public class AssetStocktakingPlanController extends BaseController {
     * @param dto
     * @return
     */
-    @PostMapping("/import")
+    @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.IMPORT, desc = "资产盘点方案导入Excel")
     public ApiResult<Boolean> importFile(@RequestBody @Validated BaseDTO.ImportDTO dto) {
         return success(assetStocktakingPlanService.importFile(dto));
