@@ -233,6 +233,24 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData().getSoNo());
     }
 
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        DaMaiCreateFbaOrderRequest daMaiCreateFbaOrderRequest = this.buildFbaOrderDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
+        DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateFbaOrderRequest);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData().getFbaNo());
+    }
+
+    private DaMaiCreateFbaOrderRequest buildFbaOrderDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return DaMaiCreateFbaOrderRequest.builder()
+                .custRefNo(createOutboundReq.getReferenceNo())
+                .build();
+    }
+
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {

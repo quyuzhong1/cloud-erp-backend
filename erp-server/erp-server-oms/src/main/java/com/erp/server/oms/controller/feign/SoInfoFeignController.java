@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
@@ -238,5 +239,15 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/updateDhfPlatformOrderId")
     public Boolean updateDhfPlatformOrderId(@RequestBody @Validated SoInfoDTO.UpdatePlatformOrderIdDTO dto) {
        return soInfoService.updateDhfPlatformOrderId(dto);
+    }
+
+    /**
+     * 获取B2B三方发货单详情
+     * @param soId
+     * @return
+     */
+    @PostMapping("/getB2bThirdDeliveryView")
+    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody String soId){
+        return soInfoService.getB2bThirdDeliveryView(soId);
     }
 }

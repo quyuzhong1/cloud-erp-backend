@@ -358,5 +358,8 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(new ThirdWarehouseUploadHandoverFileResponse(uploadHandoverFileReq.getOrderCode()));
     }
-
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
 }

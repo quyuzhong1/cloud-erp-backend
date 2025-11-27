@@ -197,6 +197,10 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             }
         }
     }
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }

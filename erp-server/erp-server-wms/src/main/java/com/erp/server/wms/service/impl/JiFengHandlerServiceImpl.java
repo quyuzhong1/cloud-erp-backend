@@ -287,6 +287,10 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         map.put("expireIn",expireIn.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return success();
     };
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
     public <T> boolean isSuccess(JiFengBaseResp<T> resp){
         return resp.getCode()==0;
     }

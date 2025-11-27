@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -114,4 +115,12 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/updateDhfPlatformOrderId")
     Boolean updateDhfPlatformOrderId(@RequestBody SoInfoDTO.UpdatePlatformOrderIdDTO dto);
+
+    /**
+     * 获取B2B三方发货单详情
+     * @param soId
+     * @return
+     */
+    @PostMapping("feign/soInfo/getB2bThirdDeliveryView")
+    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody String soId);
 }

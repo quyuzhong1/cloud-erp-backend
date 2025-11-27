@@ -179,6 +179,11 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData().getOrderNo());
     }
 
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     private WeiShiCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         List<WeiShiCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
         for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
