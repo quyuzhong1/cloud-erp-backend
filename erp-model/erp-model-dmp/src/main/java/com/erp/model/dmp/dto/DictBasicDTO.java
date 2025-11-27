@@ -1,7 +1,9 @@
 package com.erp.model.dmp.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.common.value.qual.ArrayLen;
 
 import java.io.Serializable;
 
@@ -19,6 +21,7 @@ public class DictBasicDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ViewDTO {
 
         private String id;

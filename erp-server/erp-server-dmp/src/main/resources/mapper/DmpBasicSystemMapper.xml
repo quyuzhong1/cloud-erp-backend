@@ -32,13 +32,67 @@
         code, name, type, disabled
     </sql>
 
-    <select id="listDmpBasicSystem" resultType="com.erp.model.plm.dto.DictControllerDTO$DictDropDownDTO">
+    <select id="listDmpBasicSystem" resultType="com.common.business.dto.base.BaseDropDownDTO$DictDropDownDTO">
         SELECT
             id AS code,
-            name
+            name,
+            disabled
         FROM dmp_basic_system
         WHERE is_deleted = FALSE
     </select>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$ListDTO">
+        select
+            id,
+            create_time as createTime,
+            update_time as updateTime,
+            create_user_name as createUserName,
+            create_user_id as createUserId,
+            update_user_name as updateUserName,
+            update_user_id as updateUserId,
+            version,
+            is_deleted,
+            code,
+            name,
+            type,
+            disabled
+        from dmp_basic_system
+        where
+            ${params.sqlMap.default}
+            and is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_basic_system where is_deleted = false group by approve_status
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$TabListDTO">
+        SELECT
+        dbs.disabled AS tabFlag,
+        CASE WHEN dbs.disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        count(*) AS count
+        FROM dmp_basic_system dbs
+        WHERE dbs.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY dbs.disabled
+    </select>
 
 </mapper>
