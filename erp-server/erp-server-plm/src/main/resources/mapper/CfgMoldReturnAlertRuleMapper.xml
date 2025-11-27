@@ -55,14 +55,14 @@ cmr.count_dim AS countDim
 
     <select id="tabList" resultType="com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO$TabListDTO">
         SELECT
-        disabled AS tabFlag,
+        cmr.disabled AS tabFlag,
         count(*)  AS count
-        FROM  cfg_mold_return_alert_rule
-        WHERE is_deleted=FALSE
+        FROM  cfg_mold_return_alert_rule cmr
+        WHERE cmr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY disabled
+        GROUP BY cmr.disabled
     </select>
 
     <select id="paging" resultType="com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO$ListDTO">

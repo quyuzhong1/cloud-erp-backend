@@ -503,14 +503,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             SupplierAccountDTO.UpdateDTO supplierAccount = supplierAccountList.stream()
                     .filter(obj -> Boolean.TRUE.equals(obj.getIsDefault()))
                     .findFirst()
-                    .orElse(null);
-            // 供应商默认账户
-            if (Objects.nonNull(supplierAccount)) {
-                supplierDTO.setBankName(supplierAccount.getBankSubbranch());
-                supplierDTO.setBankAccount(supplierAccount.getBankAccount());
-                supplierDTO.setPayee(supplierAccount.getPayee());
+                    .orElseGet(() -> supplierAccountList.stream().findFirst().orElse(null));
+            // 供应商账户
+            if (Objects.isNull(supplierAccount)) {
+                throw new ServiceException(ApiError.ERROR_98154);
             }
-
+            supplierDTO.setBankName(supplierAccount.getBankSubbranch());
+            supplierDTO.setBankAccount(supplierAccount.getBankAccount());
+            supplierDTO.setPayee(supplierAccount.getPayee());
             addDTO.setAssetPurchaseOrderSupplierDTO(supplierDTO);
 
             //采购订单明细信息

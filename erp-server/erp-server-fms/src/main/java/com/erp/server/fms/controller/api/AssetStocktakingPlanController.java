@@ -88,7 +88,7 @@ public class AssetStocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "asp"
     )
     public ApiResult<List<AssetStocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetStocktakingPlanService.tabList(dto));
@@ -105,7 +105,7 @@ public class AssetStocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "asp"
     )
     @WebAdvanceQuery(handler = AssetStocktakingPlanQueryHandler.class)
     public ApiResult<PagingVO<AssetStocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetStocktakingPlanDTO.PagingParamDTO> dto) {

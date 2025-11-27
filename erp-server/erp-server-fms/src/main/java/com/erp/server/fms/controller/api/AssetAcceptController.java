@@ -88,7 +88,7 @@ public class AssetAcceptController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetAccept:paging",
-            tableAlias = ""
+            tableAlias = "aa"
     )
     public ApiResult<List<AssetAcceptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetAcceptService.tabList(dto));
@@ -105,7 +105,7 @@ public class AssetAcceptController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetAccept:paging",
-            tableAlias = ""
+            tableAlias = "aa"
     )
     @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
     public ApiResult<PagingVO<AssetAcceptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetAcceptDTO.PagingParamDTO> dto) {
