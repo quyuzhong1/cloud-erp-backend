@@ -1446,8 +1446,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.removeById(id)) {
             throw new ServiceException("删除映射失败,请重试");
         }
+        if (!listingInfoService.removeById(listingInfoEntity.getId())) {
+            throw new ServiceException("删除listing失败");
+        }
         String msg =  CharSequenceUtil.format("用户【{}】删除【{}】sku为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getProductSkuNo());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), "删除操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "删除操作");
     }
 
     @Override
