@@ -136,7 +136,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         } else {
             // 校验是否json格式
             if (!JSON.isValid(addDTO.getExtendJson())) {
-                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+                ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
             dmpCfgOutputDetailEntity.setExtendJson(addDTO.getExtendJson());
         }
