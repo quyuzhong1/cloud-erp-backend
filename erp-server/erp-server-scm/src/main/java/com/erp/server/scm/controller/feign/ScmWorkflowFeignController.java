@@ -69,4 +69,16 @@ public class ScmWorkflowFeignController {
     public void cancelProcess(@RequestBody ApproveDTO.CancelProcessDTO dto) {
         workflowProcessService.cancelProcess(dto);
     }
+
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/6/18 10:41
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/addComment")
+    public void addComment(@RequestBody ApproveDTO.AddCommentDTO dto) {
+        workflowProcessService.addComment(dto);
+    }
 }
