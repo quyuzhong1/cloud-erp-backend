@@ -314,7 +314,10 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         return true;
     }
-
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
     public <T> boolean isSuccess(JiFengBaseResp<T> resp){
         return resp.getCode()==0;
     }

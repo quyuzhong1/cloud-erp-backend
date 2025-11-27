@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -550,4 +551,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
 
     Boolean updateIsDeclare(SoB2cDTO.UpdateIsDeclareDTO dto);
+
+    /**
+     * 获取B2B三方发货单详情
+     * @param soId
+     * @return
+     */
+    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(String soId);
 }

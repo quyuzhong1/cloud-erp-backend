@@ -161,6 +161,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@Valid ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq);
 
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
+    protected abstract ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq);
 
     protected  ApiResult<String> refreshToken(Map<String,Object> map){
         return success();

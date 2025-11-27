@@ -257,6 +257,10 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         goodCangCreateInboundReq.setItems(itemList);
         return goodCangCreateInboundReq;
     }
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
     public boolean isSuccess(String ask, String message){
         return "Success".equals(ask) ||"success".equals(message);
     }

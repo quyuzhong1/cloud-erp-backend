@@ -52,6 +52,8 @@ import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -69,10 +71,7 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.MachineTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -4074,6 +4073,38 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             this.updateBatchById(updateList);
         }
         return true;
+    }
+
+    @Override
+    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(String soId) {
+        SoInfoEntity soInfoEntity = this.getById(soId);
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        String warehouseId = soInfoEntity.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> updateDTOList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+        if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){
+            throw new ServiceException("只允许三方仓类型仓库下推b2b三方发货单");
+        }
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listBaseByMainId(soId);
+        soDetailEntityList = soDetailEntityList.stream().filter(e -> (e.getQty() - e.getDeliveryQty()) > 0).collect(Collectors.toList());
+        if (CollUtil.isEmpty(soDetailEntityList)){
+            throw new ServiceException("订单发货数量已全部下推,不允许再生成三方发货单");
+        }
+        List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
+        viewDTO.getDetailList().forEach(e -> {
+            skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
+                e.setProductName(p.getSkuName());
+            });
+            if (e.getDeliveryQty() > 0 && e.getPerBoxQty() > 0){
+                e.setBoxQty(e.getDeliveryQty() % e.getPerBoxQty());
+            }else {
+                e.setBoxQty(MathUtil.ZERO);
+            }
+        });
+        return viewDTO;
     }
 
     /**
