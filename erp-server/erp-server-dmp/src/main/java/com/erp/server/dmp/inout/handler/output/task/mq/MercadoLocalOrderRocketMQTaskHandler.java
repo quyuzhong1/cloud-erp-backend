@@ -330,7 +330,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(soDetailEntity.getPlatformSubSoCode() +"_"+soDetailEntity.getSkuNo());
+        detailDTO.setSourceDetailId(soDetailEntity.getPlatformSubSoCode() +"_"+soDetailEntity.getPlatformSku());
 
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
