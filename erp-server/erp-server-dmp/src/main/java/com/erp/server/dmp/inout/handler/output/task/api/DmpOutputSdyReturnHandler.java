@@ -204,7 +204,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 }
 
             } else {
-                if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getNextLevelId())) {
+                if (CharSequenceUtil.isBlank(dmpSoReturnEntity.getShopId())) {
                     shopId = dmpSoReturnEntity.getNextLevelId();
                 } else {
                     shopId = dmpSoReturnEntity.getShopId();
