@@ -284,7 +284,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     public BatchResultDTO doTask(DmpCfgOutputDetailDTO.DoTaskDTO dto, DmpCfgOutputEntity dmpCfgOutputEntity, DmpCfgOutputDetailEntity entity) {
         String id = entity.getId();
         if (!DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgOutputEntity.getExecSystem())) {
-            return BatchResultDTO.fail(id, id, "生成任务执行系统不仅支持RestCloud执行系统，当前执行系统：" + dmpCfgOutputEntity.getExecSystem());
+            return BatchResultDTO.fail(id, id, "生成推送任务仅支持RestCloud执行系统，当前执行系统：" + dmpCfgOutputEntity.getExecSystem());
         }
         // RestCloud执行
         boolean restCloudCanRun = Arrays.asList(DmpOutputTaskTypeEnum.NORMAL.getCode(), DmpOutputTaskTypeEnum.HISTORY.getCode()).contains(dto.getTaskType());
