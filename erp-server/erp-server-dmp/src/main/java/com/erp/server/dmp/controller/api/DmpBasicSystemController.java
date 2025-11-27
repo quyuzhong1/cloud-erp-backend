@@ -138,7 +138,7 @@ public class DmpBasicSystemController extends BaseController {
     @PostMapping("/disabled")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpBasicSystem:disabled",
+            menuCode = "dmp:dmpBasicSystem:updateStatus",
             serviceClass = DmpBasicSystemService.class,
             keyIdName = "ids")
     public ApiResult<?> disabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -176,7 +176,7 @@ public class DmpBasicSystemController extends BaseController {
     @PostMapping("/enable")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpBasicSystem:enable",
+            menuCode = "dmp:dmpBasicSystem:updateStatus",
             serviceClass = DmpBasicSystemService.class,
             keyIdName = "ids")
     public ApiResult<?> enable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
