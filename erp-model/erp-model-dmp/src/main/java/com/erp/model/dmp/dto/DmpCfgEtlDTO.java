@@ -2,10 +2,12 @@ package com.erp.model.dmp.dto;
 
 import java.time.LocalDateTime;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -459,6 +461,19 @@ public class DmpCfgEtlDTO implements Serializable {
          * 下次执行任务时间
          */
         private LocalDateTime nextExecTime;
+
+
+        public String getCheckAndDetailExtendJson() {
+            if (StringUtils.isBlank(this.detailExtendJson)){
+                return this.detailExtendJson;
+            }
+            try {
+                JSONUtil.parse(this.detailExtendJson);
+                return this.detailExtendJson;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("detailExtendJson不是合法的json格式");
+            }
+        }
 
     }
 }

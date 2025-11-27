@@ -280,7 +280,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         DmpEtlHotfixCreateRequest dmpRequest = buildDmpEtlHotfixCreateRequest(dto, id);
         dmpEtlCreateFactory.createHotfixEtlTask(dmpRequest);
 
-        String msg = StrUtil.format("用户【{}】c操作【{}】的【{}】生成任务操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getFlowName(), "清洗任务");
+        String msg = StrUtil.format("用户【{}】操作【{}】的【{}】生成任务操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getFlowName(), "清洗任务");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_ETL_TASK.getCode(), entity.getId(), "生成【清洗任务】数据");
         return  BatchResultDTO.success(id, id, "生成清洗任务成功");
     }
@@ -297,7 +297,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         dmpRequest.setSplitFlag(dto.isSplitFlag());
         dmpRequest.setExecTimeout(dto.getExecTimeout());
         dmpRequest.setNextExecTime(dto.getNextExecTime());
-        dmpRequest.setExtendJson(dto.getDetailExtendJson());
+        dmpRequest.setExtendJson(dto.getCheckAndDetailExtendJson());
         return dmpRequest;
     }
 }
