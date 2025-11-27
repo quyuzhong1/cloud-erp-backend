@@ -614,6 +614,27 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
     }
 
+    @Override
+    public List<PlatformOrderDTO>  handleMercadolibre(PlatformOrderDTO dto) {
+        List<String> platformSubSoCodes = dto.getDetails().stream().map(PlatformOrderDetailDTO::getPlatformSubSoCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(platformSubSoCodes)){
+            return Collections.singletonList(dto);
+        }
+        List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCodeList(platformSubSoCodes,dto.getDictPlatform(),dto.getShopId(),"");
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return Collections.singletonList(dto);
+        }
+        List<PlatformOrderDTO> resultList = new ArrayList<>();
+        for (PlatformOrderDetailDTO detail : dto.getDetails()) {
+            //深拷贝
+            PlatformOrderDTO newDto = JSONUtil.toBean(JSONUtil.toJsonStr(dto), PlatformOrderDTO.class);
+            newDto.setPlatformCode(detail.getPlatformSubSoCode());
+            newDto.setDetails(Collections.singletonList(detail));
+            resultList.add(newDto);
+        }
+        return resultList;
+    }
+
     /**
      * 自发货订单不存在地址
      */

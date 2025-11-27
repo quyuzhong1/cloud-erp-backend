@@ -293,6 +293,11 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("suite_qty")
     private Integer suiteQty;
 
+    /**
+     * 平台子单号
+     */
+    @TableField("platform_sub_so_code")
+    private String platformSubSoCode;
 
     public static final String MAIN_ID = "main_id";
 
