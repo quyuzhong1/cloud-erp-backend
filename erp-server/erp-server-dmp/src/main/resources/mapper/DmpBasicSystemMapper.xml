@@ -43,25 +43,25 @@
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpBasicSystemDTO$ListDTO">
         select
-            id,
-            create_time as createTime,
-            update_time as updateTime,
-            create_user_name as createUserName,
-            create_user_id as createUserId,
-            update_user_name as updateUserName,
-            update_user_id as updateUserId,
-            version,
-            is_deleted,
-            code,
-            name,
-            type,
-            disabled
-        from dmp_basic_system
+            dbs.id,
+            dbs.create_time as createTime,
+            dbs.update_time as updateTime,
+            dbs.create_user_name as createUserName,
+            dbs.create_user_id as createUserId,
+            dbs.update_user_name as updateUserName,
+            dbs.update_user_id as updateUserId,
+            dbs.version,
+            dbs.is_deleted,
+            dbs.code,
+            dbs.name,
+            dbs.type,
+            dbs.disabled
+        from dmp_basic_system dbs
         where
             ${params.sqlMap.default}
-            and is_deleted = false
+            and dbs.is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
-            and id in
+            and dbs.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
@@ -75,7 +75,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time DESC
+        dbs.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

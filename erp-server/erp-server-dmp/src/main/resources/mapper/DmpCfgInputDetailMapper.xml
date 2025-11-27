@@ -143,7 +143,7 @@
         dcid.disabled AS tabFlag,
         CASE WHEN dcid.disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
         count(*) AS count
-        FROM dmp_cfg_input_detail
+        FROM dmp_cfg_input_detail dcid
         WHERE dcid.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
