@@ -6,6 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.server.dmp.query.*;
+import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
+import com.erp.server.dmp.query.AfterSaleQueryHandler;
+import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +54,8 @@ public class ExportDmpFeignController {
     private DmpInputTaskService dmpInputTaskService;
     @Resource
     private DmpOutputTaskService dmpOutputTaskService;
+    @Resource
+    private AdsPushTaskService adsPushTaskService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -141,5 +147,11 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = DmpOutputTaskQueryHandler.class)
     public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
         return dmpOutputTaskService.paging(dto);
+    }
+    
+    @PostMapping("/exportRestcloudPushTask")
+    @WebAdvanceQuery(handler = AdsPushTaskQueryHandler.class)
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportRestcloudPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        return adsPushTaskService.paging(dto);
     }
 }
