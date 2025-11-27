@@ -64,12 +64,12 @@ public enum AssetDisposalDisposalMethodEnum implements EnumMessage {
         return "";
     }
 
-    public static AssetDisposalDisposalMethodEnum getEnumByName(String code) {
-        if (StringUtils.isBlank(code)) {
+    public static AssetDisposalDisposalMethodEnum getEnumByName(String name) {
+        if (StringUtils.isBlank(name)) {
             return null;
         }
         for (AssetDisposalDisposalMethodEnum statusEnum : AssetDisposalDisposalMethodEnum.values()) {
-            if (code.equals(statusEnum.getCode())) {
+            if (name.equals(statusEnum.getName())) {
                 return statusEnum;
             }
         }
