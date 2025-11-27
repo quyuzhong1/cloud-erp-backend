@@ -129,7 +129,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         } else {
             // 校验是否json格式
             if (!JSON.isValid(commonDTO.getExtendJson())) {
-                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+                ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
             dmpCfgOutputEntity.setExtendJson(commonDTO.getExtendJson());
         }
@@ -277,12 +277,10 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
             }
         }  else {
             // DMP
-            if (StringUtils.isNotBlank(data.getExecUrl())) {
-                DmpCfgInputConvertEntity inputConvertEntity = dmpCfgInputConvertService.getById(data.getInputConvertId());
-                if (null != inputConvertEntity) {
-                    data.setInputConvertType(inputConvertEntity.getType());
-                    data.setInputConvertClass(inputConvertEntity.getConvertClass());
-                }
+            DmpCfgInputConvertEntity inputConvertEntity = dmpCfgInputConvertService.getById(data.getInputConvertId());
+            if (null != inputConvertEntity) {
+                data.setInputConvertType(inputConvertEntity.getType());
+                data.setInputConvertClass(inputConvertEntity.getConvertClass());
             }
 
         }

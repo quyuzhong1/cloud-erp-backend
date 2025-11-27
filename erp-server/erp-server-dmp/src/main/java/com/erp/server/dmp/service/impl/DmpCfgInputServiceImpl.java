@@ -150,7 +150,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
         } else {
             // 校验是否json格式
             if (!JSON.isValid(dmpCfgInputEntity.getExtendJson())) {
-                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+                ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
             dmpCfgInputEntity.setExtendJson(dmpCfgInputEntity.getExtendJson());
         }
