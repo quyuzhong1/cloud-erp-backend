@@ -67,4 +67,16 @@ public class FmsWorkflowFeignController {
         log.info("FMS工作流撤销流程回调， businessKey: {}", dto.getBusinessKey());
         return fmsWorkflowService.cancelProcess(dto);
     }
+
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/6/18 10:41
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/addComment")
+    public void addComment(@RequestBody ApproveDTO.AddCommentDTO dto) {
+        fmsWorkflowService.addComment(dto);
+    }
 }

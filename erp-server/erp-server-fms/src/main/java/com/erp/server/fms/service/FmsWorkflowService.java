@@ -37,4 +37,13 @@ public interface FmsWorkflowService {
      * @return 处理结果
      */
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/11/27 15:04
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }
