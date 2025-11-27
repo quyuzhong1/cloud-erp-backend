@@ -170,7 +170,7 @@ public class DmpCfgEtlController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量禁用清洗调度", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgEtl:disabled",
+            menuCode = "dmp:dmpCfgEtl:updateStatus",
             serviceClass = DmpCfgEtlService.class,
             keyIdName = "ids")
     public ApiResult<?> disabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -203,7 +203,7 @@ public class DmpCfgEtlController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量启用清洗调度", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgEtl:enable",
+            menuCode = "dmp:dmpCfgEtl:updateStatus",
             serviceClass = DmpCfgEtlService.class,
             keyIdName = "ids")
     public ApiResult<?> enable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

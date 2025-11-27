@@ -142,20 +142,20 @@
     <select id="tabList" resultType="com.erp.model.dmp.dto.DmpInputTaskDTO$TabListDTO">
         SELECT
         CASE
-        WHEN status IN ('init', 'fds', 'mongo', 'dmp') THEN 'waitFinish'
-        WHEN status = 'error' THEN 'error'
-        WHEN status = 'finish' THEN 'finish'
-        ELSE status
+        WHEN dit.status IN ('init', 'fds', 'mongo', 'dmp') THEN 'waitFinish'
+        WHEN dit.status = 'error' THEN 'error'
+        WHEN dit.status = 'finish' THEN 'finish'
+        ELSE dit.status
         END AS tabFlag,
         CASE
-        WHEN status IN ('init', 'fds', 'mongo', 'dmp') THEN '待完成'
-        WHEN status = 'error' THEN '异常'
-        WHEN status = 'finish' THEN '完成'
-        ELSE status
+        WHEN dit.status IN ('init', 'fds', 'mongo', 'dmp') THEN '待完成'
+        WHEN dit.status = 'error' THEN '异常'
+        WHEN dit.status = 'finish' THEN '完成'
+        ELSE dit.status
         END AS tabFlagName,
         COUNT(*) AS count
-        FROM dmp_input_task
-        WHERE is_deleted = FALSE
+        FROM dmp_input_task as dit
+        WHERE dit.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

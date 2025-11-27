@@ -165,7 +165,7 @@ public class DmpCfgOutputController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量禁用推送配置", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgOutput:disabled",
+            menuCode = "dmp:dmpCfgOutput:updateStatus",
             serviceClass = DmpCfgOutputService.class,
             keyIdName = "ids")
     public ApiResult<?> disabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -199,7 +199,7 @@ public class DmpCfgOutputController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量启用推送配置", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgOutput:enable",
+            menuCode = "dmp:dmpCfgOutput:updateStatus",
             serviceClass = DmpCfgOutputService.class,
             keyIdName = "ids")
     public ApiResult<?> enable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

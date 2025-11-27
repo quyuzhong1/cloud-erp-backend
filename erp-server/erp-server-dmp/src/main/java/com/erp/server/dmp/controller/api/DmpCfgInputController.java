@@ -184,7 +184,7 @@ public class DmpCfgInputController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量禁用拉取配置", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgInput:disabled",
+            menuCode = "dmp:dmpCfgInput:updateStatus",
             serviceClass = DmpCfgInputService.class,
             keyIdName = "ids")
     public ApiResult<?> disabled(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -217,7 +217,7 @@ public class DmpCfgInputController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量启用拉取配置", keyIdName = "ids")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "dmp:dmpCfgInput:enable",
+            menuCode = "dmp:dmpCfgInput:updateStatus",
             serviceClass = DmpCfgInputService.class,
             keyIdName = "ids")
     public ApiResult<?> enable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
