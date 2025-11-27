@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -194,10 +195,10 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
         // 来源id
-        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 来源编码
-        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -329,7 +330,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(soDetailEntity.getThirdDetailId());
+        detailDTO.setSourceDetailId(soDetailEntity.getPlatformSubSoCode() +"_"+soDetailEntity.getSkuNo());
 
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
@@ -351,6 +352,8 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseLocation("");
         //包裹号
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
+
+        detailDTO.setPlatformSubSoCode(soDetailEntity.getPlatformSubSoCode());
 
         return detailDTO;
     }

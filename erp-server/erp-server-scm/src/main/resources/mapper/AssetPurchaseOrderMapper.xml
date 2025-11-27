@@ -110,14 +110,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        apo.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  asset_purchase_order
+        FROM  asset_purchase_order apo
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY apo.approve_status
     </select>
 
     <select id="otherTabList" resultType="com.erp.model.scm.dto.AssetPurchaseOrderDTO$TabListDTO">
@@ -134,6 +134,7 @@
         SELECT 'allReceive' as tabFlag,COUNT(*) as count FROM (
             SELECT 1
             FROM asset_purchase_order_detail apod
+            left join asset_purchase_order apo on apo.id = apod.main_id
             WHERE apod.is_deleted = FALSE and apod.end_receive = 'allReceive'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
@@ -143,6 +144,7 @@
         SELECT 'close' as tabFlag,COUNT(*) as count FROM (
             SELECT 1
             FROM asset_purchase_order_detail apod
+            left join asset_purchase_order apo on apo.id = apod.main_id
             WHERE apod.is_deleted = FALSE and apod.end_receive = 'close'
             <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}

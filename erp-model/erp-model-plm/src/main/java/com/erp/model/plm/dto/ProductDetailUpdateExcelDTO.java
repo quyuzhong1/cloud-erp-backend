@@ -38,6 +38,18 @@ public class ProductDetailUpdateExcelDTO {
     private String applicationCategoryName;
 
     /**
+     * 品牌
+     */
+    @FieldValid(fieldName = "品牌", maxLength = 30)
+    private String brandName;
+
+    /**
+     * 研发团队
+     */
+    @FieldValid(fieldName = "研发团队", maxLength = 50)
+    private String rdtTeamName;
+
+    /**
      * 错误信息
      */
     private String errorMsg;

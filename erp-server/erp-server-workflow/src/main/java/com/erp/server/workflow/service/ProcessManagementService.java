@@ -209,6 +209,16 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return Boolean
      */
     Boolean cancelProcessFeign(ApproveDTO.CancelProcessDTO dto);
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/11/27 14:58
+     * @param addCommentDTO
+     * @return void
+     */
+    void addComment(ApproveDTO.AddCommentDTO addCommentDTO);
+
     /**
      * 批量启动流程
      * @param dto

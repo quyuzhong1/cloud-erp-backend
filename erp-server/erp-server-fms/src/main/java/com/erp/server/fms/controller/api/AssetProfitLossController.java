@@ -88,7 +88,7 @@ public class AssetProfitLossController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetProfitLoss:paging",
-            tableAlias = ""
+            tableAlias = "apl"
     )
     public ApiResult<List<AssetProfitLossDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetProfitLossService.tabList(dto));
@@ -105,7 +105,7 @@ public class AssetProfitLossController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetProfitLoss:paging",
-            tableAlias = ""
+            tableAlias = "apl"
     )
     @WebAdvanceQuery(handler = AssetProfitLossQueryHandler.class)
     public ApiResult<PagingVO<AssetProfitLossDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetProfitLossDTO.PagingParamDTO> dto) {

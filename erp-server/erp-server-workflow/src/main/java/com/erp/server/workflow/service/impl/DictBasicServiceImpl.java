@@ -1,19 +1,27 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.erp.model.workflow.dto.DictBasicDTO;
-import com.erp.model.workflow.entity.DictBasicEntity;
-import com.erp.server.workflow.mapper.DictBasicMapper;
-import com.erp.server.workflow.service.DictBasicService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.erp.model.workflow.dto.DictBasicDTO;
+import com.erp.model.workflow.entity.DictBasicEntity;
+import com.erp.server.workflow.mapper.DictBasicMapper;
+import com.erp.server.workflow.service.DictBasicService;
+
+import cn.hutool.core.collection.CollUtil;
 
 /**
  * <p>
@@ -26,6 +34,40 @@ import java.util.stream.Collectors;
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+	@Override
+	public boolean saveJsonObject(JSONObject jsonObject) {
+		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+		LocalDateTime now = LocalDateTime.now();
+		LoginUser loginUser = UserContext.getNonLoginUser();
+		String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+    	entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        
+        entity.setCreateTime(now);
+		entity.setCreateUserId(userId);
+		entity.setCreateUserName(userName);
+		return super.save(entity);
+	}
+	
+	@Override
+	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
+		List<DictBasicEntity> entityList = new ArrayList<>();
+		for(JSONObject jsonObject : jsonObjects) {
+			DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+			LocalDateTime now = LocalDateTime.now();
+			LoginUser loginUser = UserContext.getNonLoginUser();
+			String userId = loginUser.getUid();
+	        String userName = loginUser.getUserName();
+	    	entity.setUpdateTime(now);
+	        entity.setUpdateUserId(userId);
+	        entity.setUpdateUserName(userName);
+	        entityList.add(entity);
+		}
+        return super.updateBatchById(entityList);
+	}
+	
     @Override
     public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
         List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)

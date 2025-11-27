@@ -221,6 +221,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
+    ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{}】"),
 
     /**
      * 工作流错误 workflow
@@ -890,6 +891,10 @@ public enum ApiError implements Serializable {
     ERROR_98148(98148,"已存在下推资产验收单，不支持反审核"),
     ERROR_98149(98149,"更新sku【{}】占用状态失败"),
     ERROR_98150(98150,"sku【{}】变更数量不能小于已验收数量"),
+    ERROR_98151(98151,"sku【{}】采购数量不能小于等于0"),
+    ERROR_98152(98152,"sku【{}】的新采购数量不能小于已验收数量"),
+    ERROR_98153(98153,"模具编码【{}】验收数量不能超过可验收数量"),
+    ERROR_98154(98154,"没有找到供应商的账户信息"),
 
     /**
      * WMS 错误

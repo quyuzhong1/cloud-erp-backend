@@ -82,7 +82,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:assetPurchaseChange:paging",
-            tableAlias = ""
+            tableAlias = "apc"
     )
     public ApiResult<List<AssetPurchaseChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetPurchaseChangeService.tabList(dto));
@@ -99,7 +99,7 @@ public class AssetPurchaseChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:assetPurchaseChange:paging",
-            tableAlias = ""
+            tableAlias = "apc"
     )
     @WebAdvanceQuery(handler = AssetPurchaseChangeQueryHandler.class)
     public ApiResult<PagingVO<AssetPurchaseChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto) {

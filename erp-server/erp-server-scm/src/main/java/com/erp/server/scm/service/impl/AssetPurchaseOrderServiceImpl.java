@@ -848,6 +848,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             .set(AssetPurchaseOrderEntity::getApproveUserId, userInfo.getUid())
             .set(AssetPurchaseOrderEntity::getApproveUserName, userInfo.getUserName())
             .set(AssetPurchaseOrderEntity::getApproveStatus, approveStatus)
+            .set(AssetPurchaseOrderEntity::getApproveTime, LocalDateTime.now())
             .update(new AssetPurchaseOrderEntity());
      }
 
@@ -973,11 +974,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderSupplierEntity.setPayMethodName(settleDictMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPayMethodId(),""));
 
         //收款银行,银行账号
-        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS =
-                supplierService.listDefaultBySupplierIdList(Arrays.asList(assetPurchaseOrderSupplierEntity.getSupplierId()));
-        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
-        assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
-        assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
+//        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOS =
+//                supplierService.listDefaultBySupplierIdList(Arrays.asList(assetPurchaseOrderSupplierEntity.getSupplierId()));
+//        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOS.get(0);
+//        assetPurchaseOrderSupplierEntity.setBankName(supplierDefaultDTO.getAccountEntity().getBankName());
+//        assetPurchaseOrderSupplierEntity.setBankAccount(supplierDefaultDTO.getAccountEntity().getBankAccount());
 
         //关联采购单id
         assetPurchaseOrderSupplierEntity.setAssetPurchaseOrderId(assetPurchaseOrderEntity.getId());
@@ -1648,6 +1649,16 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .values()
                 .stream()
                 .collect(Collectors.toList());
+
+        // 校验验收数量不能超过可验收数量
+        for (AssetPurchaseOrderDTO.GenerateAssetAcceptDTO dto : dtoList) {
+            BigDecimal acceptQty = dto.getAcceptQty();
+            BigDecimal acceptableQty = dto.getAcceptableQty();
+            
+            if (acceptQty != null && acceptableQty != null && acceptQty.compareTo(acceptableQty) > 0) {
+                throw new ServiceException(ApiError.ERROR_98153, dto.getAssetCode());
+            }
+        }
 
         try {
             for (List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> generateAssetAcceptDTOList : groupList) {

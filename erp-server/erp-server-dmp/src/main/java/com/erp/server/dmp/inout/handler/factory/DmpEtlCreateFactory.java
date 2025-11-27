@@ -1,5 +1,7 @@
 package com.erp.server.dmp.inout.handler.factory;
 
+import com.erp.server.dmp.inout.dto.request.DmpEtlHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.etl.create.DmpEtlHotfixCreateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,8 @@ public class DmpEtlCreateFactory{
 	
 	@Autowired
 	private DmpEtlCreateHandler dmpEtlCreateHandler;
+    @Autowired
+    private DmpEtlHotfixCreateHandler dmpEtlHotfixCreateHandler;
 	
 	/**
 	 * 创建正常任务
@@ -32,5 +36,14 @@ public class DmpEtlCreateFactory{
 		bean.addDmpHandler(dmpEtlCreateHandler);
 		bean.doDmpHandler(dmpEtlCreateRequest, new DmpEtlCreateResponse());
 	}
-	
+
+    /**
+     * 创建热点任务
+     * @param dmpRequest
+     */
+    public void createHotfixEtlTask(DmpEtlHotfixCreateRequest dmpRequest) {
+        DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+        bean.addDmpHandler(dmpEtlHotfixCreateHandler);
+        bean.doDmpHandler(dmpRequest, new DmpEtlCreateResponse());
+    }
 }

@@ -1,7 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
@@ -495,24 +497,48 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,List<AssetPurchaseOrderDetailEntity> orderDetails){
-        // 批量更新
+    public Boolean updatePurchaseOrderData(AssetPurchaseChangeEntity entity,
+                                           Map<String, AssetPurchaseChangeDetailEntity> changeDetailMap,
+                                           List<AssetPurchaseOrderDetailEntity> orderDetails) {
+
         for (AssetPurchaseOrderDetailEntity orderDetail : orderDetails) {
             AssetPurchaseChangeDetailEntity changeDetail = changeDetailMap.get(orderDetail.getId());
             if (changeDetail != null) {
-                boolean updated = assetPurchaseOrderDetailService.lambdaUpdate()
+                //已验收数量
+                Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(orderDetail.getId());
+
+                // 构建更新条件
+                LambdaUpdateChainWrapper<AssetPurchaseOrderDetailEntity> updateWrapper = assetPurchaseOrderDetailService.lambdaUpdate()
                         .set(AssetPurchaseOrderDetailEntity::getPurchaseQty, changeDetail.getPurchaseQty())
                         .set(AssetPurchaseOrderDetailEntity::getTaxPrice, changeDetail.getTaxPrice())
                         .set(AssetPurchaseOrderDetailEntity::getTotalAmount, changeDetail.getTotalAmount())
                         .set(AssetPurchaseOrderDetailEntity::getTaxRate, changeDetail.getTaxRate())
-                        .eq(AssetPurchaseOrderDetailEntity::getId, orderDetail.getId())
-                        .update();
+                        .eq(AssetPurchaseOrderDetailEntity::getId, orderDetail.getId());
 
+                // 变更数量 > 验收数量
+                if (changeDetail.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) > 0) {
+                    if (acceptQty > 0) {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.PART_RECEIVE.getCode());
+                    } else {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+                    }
+                } else {
+                    // 变更数量 ≤ 验收数量
+                    if (acceptQty > 0) {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.ALL_RECEIVE.getCode())
+                                .set(AssetPurchaseOrderDetailEntity::getEndReceiveTime,LocalDateTime.now());
+                    } else {
+                        updateWrapper.set(AssetPurchaseOrderDetailEntity::getEndReceive, AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+                    }
+                }
+
+                boolean updated = updateWrapper.update();
                 if (!updated) {
                     throw new ServiceException("采购变更单更新失败");
                 }
             }
         }
+
         return Boolean.TRUE;
     }
 
@@ -682,6 +708,27 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(addDTO.getAssetPurchaseOrderId());
         if (Objects.isNull(assetPurchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98134);
+        }
+
+        for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
+            //单价不能小于等于0
+            if (dto.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getAssetCode());
+            }
+            //总价不能小于等于0
+            if (dto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getAssetCode());
+            }
+            //新采购数量不能小于等于0
+            if (dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(ApiError.ERROR_98151,dto.getAssetCode());
+            }
+            //已验收数量
+            Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(dto.getSourceDetailId());
+            //新采购数量不能小于已验收数量
+            if (dto.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) < 0) {
+                throw new ServiceException(ApiError.ERROR_98152,dto.getAssetCode());
+            }
         }
 
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(assetPurchaseOrderEntity.getApproveStatus())) {

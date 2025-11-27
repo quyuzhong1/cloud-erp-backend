@@ -1,12 +1,27 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.text.CharSequenceUtil;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -16,17 +31,9 @@ import com.erp.model.mrp.entity.DictBasicEntity;
 import com.erp.server.mrp.mapper.DictBasicMapper;
 import com.erp.server.mrp.service.DictBasicService;
 import com.erp.server.mrp.service.OperateLogService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import cn.hutool.core.text.CharSequenceUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * <p>
@@ -43,6 +50,39 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     private OperateLogService operateLogService;
 
 
+    @Override
+	public boolean saveJsonObject(JSONObject jsonObject) {
+		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+		LocalDateTime now = LocalDateTime.now();
+		LoginUser loginUser = UserContext.getNonLoginUser();
+		String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+    	entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        
+        entity.setCreateTime(now);
+		entity.setCreateUserId(userId);
+		entity.setCreateUserName(userName);
+		return super.save(entity);
+	}
+	
+	@Override
+	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
+		List<DictBasicEntity> entityList = new ArrayList<>();
+		for(JSONObject jsonObject : jsonObjects) {
+			DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+			LocalDateTime now = LocalDateTime.now();
+			LoginUser loginUser = UserContext.getNonLoginUser();
+			String userId = loginUser.getUid();
+	        String userName = loginUser.getUserName();
+	    	entity.setUpdateTime(now);
+	        entity.setUpdateUserId(userId);
+	        entity.setUpdateUserName(userName);
+	        entityList.add(entity);
+		}
+        return super.updateBatchById(entityList);
+	}
 
     /**
     * 修改

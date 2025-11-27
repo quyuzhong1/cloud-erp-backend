@@ -84,7 +84,7 @@ public class AssetLocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetLocation:paging",
-            tableAlias = ""
+            tableAlias = "al"
     )
     public ApiResult<List<AssetLocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetLocationService.tabList(dto));
@@ -101,7 +101,7 @@ public class AssetLocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetLocation:paging",
-            tableAlias = ""
+            tableAlias = "al"
     )
     @WebAdvanceQuery(handler = AssetLocationQueryHandler.class)
     public ApiResult<PagingVO<AssetLocationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetLocationDTO.PagingParamDTO> dto) {

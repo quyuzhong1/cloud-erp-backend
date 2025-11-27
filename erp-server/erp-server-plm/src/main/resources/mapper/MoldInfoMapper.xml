@@ -122,14 +122,14 @@ mi.payment_condition AS paymentCondition
     </select>
     <select id="tabList" resultType="com.erp.model.plm.dto.MoldInfoDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        mi.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  mold_info
-        WHERE is_deleted=FALSE
+        FROM  mold_info mi
+        WHERE mi.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY mi.approve_status
     </select>
 
     <select id="searchMold" resultType="com.erp.model.plm.dto.MoldInfoDTO$SearchMoldDTO">

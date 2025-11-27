@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
@@ -87,11 +88,16 @@ public class MercadoLocalSdkClientService {
 //
 //    }
     public static void main(String[] args) {
-
-        String accessToken = "APP_USR-8670168511142898-071521-847aaf5a4146d0393292cc6172452e50-2277013170";
+        //墨西哥 APP_USR-8670168511142898-111723-211bc40f29f150ef1da0a6fdbdc5da6a-1959267524
+        //巴西 APP_USR-8670168511142898-111723-9ac2bf947dfc2efde1854f7ea7534fd6-2277013170  MLB4034952205  MLB5367747244
+        String accessToken = "APP_USR-8670168511142898-111723-9ac2bf947dfc2efde1854f7ea7534fd6-2277013170";
         //组装授权url
+        HashMap<String, Object> params = new HashMap<>(1);
+        params.put("ids", "MLB4034952205,MLB5367747244");
+        params.put("userId", "2277013170");
+        params.put("include_attributes", "all");
         String url = MercadoConstant.URL;
-        String path = "/orders/{order_id}/billing_info".replace("{order_id}","2000012184838380");
+        String path = "/items";
         StringBuffer sb = new StringBuffer();
         sb.append(url);
         sb.append(path);
@@ -103,11 +109,9 @@ public class MercadoLocalSdkClientService {
 
         //拉取数据
         ApiResult apiResult = new ApiResult();
-        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), "", null, headerMap, RequestMethod.GET);
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            System.out.println(apiResult.getData());
-        }
-
+        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        System.out.println(JSONUtil.toJsonStr(apiResult));
+        System.out.println(apiResult.getData());
     }
 
 

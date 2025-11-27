@@ -7065,7 +7065,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
         List<ProductDetailEntity> productDetailEntityList = this.list();
-        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList);
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService);
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

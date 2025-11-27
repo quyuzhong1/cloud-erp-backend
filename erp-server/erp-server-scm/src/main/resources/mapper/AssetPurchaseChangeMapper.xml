@@ -117,14 +117,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.scm.dto.AssetPurchaseChangeDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        apc.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  asset_purchase_change
+        FROM  asset_purchase_change apc
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY apc.approve_status
     </select>
 
 </mapper>

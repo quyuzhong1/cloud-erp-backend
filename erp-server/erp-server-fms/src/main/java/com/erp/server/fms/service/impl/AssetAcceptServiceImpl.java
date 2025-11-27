@@ -126,6 +126,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             throw new ServiceException("资产验收明细不能为空，至少需要一条明细数据");
         }
         
+        // 校验验收数量
+        validateAcceptQty(addDTO.getDetailList());
+        
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
         assetAcceptEntity.setSourceCode(addDTO.getSourceCode());
@@ -310,6 +313,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
             throw new ServiceException("资产验收明细不能为空，至少需要一条明细数据");
         }
+        
+        // 校验验收数量
+        validateAcceptQty(addOrUpdateDTO.getDetailList());
         
         AssetAcceptEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产验收单"));
@@ -1428,7 +1434,58 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        
+        // 校验验收数量
+        List<AssetAcceptDetailEntity> detailList = assetAcceptDetailService.lambdaQuery()
+            .eq(AssetAcceptDetailEntity::getMainId, entity.getId())
+            .list();
+        if (CollUtil.isNotEmpty(detailList)) {
+            for (AssetAcceptDetailEntity detail : detailList) {
+                Integer acceptQty = detail.getAcceptQty();
+                Integer acceptableQty = detail.getAcceptableQty();
+                
+                // 验收数量必须大于0
+                if (acceptQty == null || acceptQty <= 0) {
+                    throw new ServiceException(String.format("产品【%s】的验收数量必须大于0", 
+                        StrUtil.blankToDefault(detail.getProductName(), detail.getSkuNo())));
+                }
+                
+                // 验收数量必须小于等于可验收数量
+                if (acceptableQty != null && acceptQty > acceptableQty) {
+                    throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】", 
+                        StrUtil.blankToDefault(detail.getProductName(), detail.getSkuNo()), 
+                        acceptQty, acceptableQty));
+                }
+            }
+        }
+    }
+    
+    /**
+     * 校验验收数量
+     * @param detailList 明细列表
+     */
+    private void validateAcceptQty(List<AssetAcceptDetailDTO.AddDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        
+        for (AssetAcceptDetailDTO.AddDTO detail : detailList) {
+            Integer acceptQty = detail.getAcceptQty();
+            Integer availableAcceptQty = detail.getAvailableAcceptQty();
+            
+            // 验收数量必须大于0
+            if (acceptQty == null || acceptQty <= 0) {
+                throw new ServiceException(String.format("产品【%s】的验收数量必须大于0", 
+                    StrUtil.blankToDefault(detail.getProductName(), detail.getSkuId())));
+            }
+            
+            // 验收数量必须小于等于可验收数量
+            if (availableAcceptQty != null && acceptQty > availableAcceptQty) {
+                throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】", 
+                    StrUtil.blankToDefault(detail.getProductName(), detail.getSkuId()), 
+                    acceptQty, availableAcceptQty));
+            }
+        }
     }
 
     /**

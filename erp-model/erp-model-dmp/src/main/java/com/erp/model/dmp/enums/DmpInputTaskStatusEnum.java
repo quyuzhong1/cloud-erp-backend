@@ -126,4 +126,28 @@ public enum DmpInputTaskStatusEnum implements EnumMessage {
     	}
     	return false;
     }
+
+    /**
+     * 转换异常状态名称
+     * @param taskStatus 原始任务状态
+     * @param errorCount 错误次数
+     * @param globalErrorValue 全局异常阈值
+     * @return 异常状态名称
+     */
+    public static String convertStateName(String taskStatus, Integer errorCount, String globalErrorValue) {
+        if (DmpInputTaskStatusEnum.INIT.getCode().equals(taskStatus) && errorCount > 0) {
+            return "系统重试中";
+        }
+        if (StringUtils.isBlank(globalErrorValue) && DmpInputTaskStatusEnum.ERROR.getCode().equals(taskStatus)) {
+            return "待人工处理";
+        }
+        // 配置优先
+        if (StringUtils.isNotBlank(globalErrorValue)){
+            if (errorCount >= Integer.parseInt(globalErrorValue) &&
+                    (DmpInputTaskStatusEnum.ERROR.getCode().equals(taskStatus) || DmpInputTaskStatusEnum.INIT.getCode().equals(taskStatus) )) {
+               return "待人工处理";
+            }
+        }
+        return DmpInputTaskStatusEnum.getName(taskStatus);
+    }
 }

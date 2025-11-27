@@ -88,7 +88,7 @@ public class AssetStocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "asp"
     )
     public ApiResult<List<AssetStocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetStocktakingPlanService.tabList(dto));
@@ -105,7 +105,7 @@ public class AssetStocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "asp"
     )
     @WebAdvanceQuery(handler = AssetStocktakingPlanQueryHandler.class)
     public ApiResult<PagingVO<AssetStocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AssetStocktakingPlanDTO.PagingParamDTO> dto) {
@@ -465,7 +465,7 @@ public class AssetStocktakingPlanController extends BaseController {
     * @param dto
     * @return
     */
-    @PostMapping("/import")
+    @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.IMPORT, desc = "资产盘点方案导入Excel")
     public ApiResult<Boolean> importFile(@RequestBody @Validated BaseDTO.ImportDTO dto) {
         return success(assetStocktakingPlanService.importFile(dto));
