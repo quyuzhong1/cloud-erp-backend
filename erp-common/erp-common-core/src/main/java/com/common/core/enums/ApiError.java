@@ -43,7 +43,7 @@ public enum ApiError implements Serializable {
 
     ERROR_FORBIDDEN(403, "您未登录,请登录后操作"),
     ERROR_UNAUTHORIZED(401, "未授权"),
-    ERROR_429(429, "访问频率过高，请稍后再试"),
+    ERROR_RATE_LIMIT(429, "访问频率过高，请稍后再试"),
     /**
      * 高级查询异常
      */

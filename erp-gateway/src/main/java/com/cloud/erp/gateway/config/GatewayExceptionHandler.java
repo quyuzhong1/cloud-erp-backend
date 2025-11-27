@@ -1,6 +1,7 @@
 package com.cloud.erp.gateway.config;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ServerWebExchange;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +28,8 @@ import java.util.Map;
  */
 @Slf4j
 public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
+	@Resource
+	private GatewayLocaleUtils localeUtils;
 
 	public GatewayExceptionHandler(ErrorAttributes errorAttributes, ResourceProperties resourceProperties,
 								   ErrorProperties errorProperties, ApplicationContext applicationContext) {
@@ -36,24 +41,21 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 	 */
 	@Override
 	protected Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
-		ApiError defaultError = ApiError.DEFAULT;
-		String code = StrUtils.null2EmptyWithTrim(defaultError.getCode());
-		String errorMessage = defaultError.getMsg();
+		String code = StrUtils.null2EmptyWithTrim(ApiError.DEFAULT.getCode());
+		String errorMessage =localeUtils.getMessage(ApiError.DEFAULT, request.exchange().getRequest());
 		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
 		log.error(CharSequenceUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
 		// 1023服务暂时不可用
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
-			ApiError apiError503 = ApiError.ERROR_SERVICE_UNAVAILABLE;
-			code = StrUtils.null2EmptyWithTrim(apiError503.getCode());
-			errorMessage = apiError503.getMsg();
+			code = StrUtils.null2EmptyWithTrim(ApiError.ERROR_SERVICE_UNAVAILABLE.getCode());
+			errorMessage = localeUtils.getMessage(ApiError.ERROR_SERVICE_UNAVAILABLE, request.exchange().getRequest());
 		}
 		// 404接口路径不存在
 		if (error instanceof org.springframework.web.server.ResponseStatusException
 				&& HttpStatus.NOT_FOUND.equals(((ResponseStatusException) error).getStatus())){
-			ApiError apiError404 = ApiError.ERROR_HTTP_NOT_FOUND;
-			code = String.valueOf(apiError404.getCode());
-			errorMessage = apiError404.getMsg();
+			code = String.valueOf(ApiError.ERROR_HTTP_NOT_FOUND.getCode());
+			errorMessage = localeUtils.getMessage(ApiError.ERROR_HTTP_NOT_FOUND, request.exchange().getRequest());
 		}
 		map.put("code", code);
 		map.put("msg", errorMessage);

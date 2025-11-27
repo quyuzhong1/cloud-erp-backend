@@ -19,7 +19,7 @@ public class LocaleForwardingGlobalFilter implements GlobalFilter, Ordered {
         String lang = exchange.getRequest().getHeaders().getFirst("Accept-Language");
         if (lang == null) {
             // 可按用户偏好/租户配置设置默认语言
-            lang = "en-US";
+            lang = "zh-CN";
             ServerHttpRequest mutated = exchange.getRequest()
                     .mutate()
                     .header("Accept-Language", lang)

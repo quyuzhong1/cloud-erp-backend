@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.config.JwtProperties;
 import com.cloud.erp.gateway.context.GatewayContext;
+import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.cloud.erp.gateway.utils.IpRateLimitUtil;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
@@ -40,7 +41,6 @@ import java.util.Objects;
 @Slf4j
 @Component
 public class AuthGatewayFilter implements GlobalFilter, Order {
-
     /**
      * Feign资源前缀
      */
@@ -70,6 +70,8 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
     @Resource
     private IpRateLimitUtil ipRateLimitUtil;
 
+    @Resource
+    private GatewayLocaleUtils localeUtils;
 
     @Override
     public Class<? extends Annotation> annotationType() {
@@ -85,13 +87,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             //判断是否有feign
             if (uri.contains(FEIGN_URL)) {
                 //文件头使用JSON格式
-                return unauthorizedResponse(exchange, ApiError.ERROR_UNAUTHORIZED_ACCESS.getMessageKey(), ApiError.ERROR_UNAUTHORIZED_ACCESS.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_UNAUTHORIZED_ACCESS, exchange.getRequest()), ApiError.ERROR_UNAUTHORIZED_ACCESS.getCode());
             }
             if (uri.contains(SSO_URL)||uri.contains(KEY_REGISTER_URL)){
                 String clientIp = getClientIp(request);
                 if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
                     log.warn("开放接口访问频率过高，IP: {}, URI: {}", clientIp, uri);
-                    return unauthorizedResponse(exchange, ApiError.ERROR_429.getMsg(), ApiError.ERROR_429.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_RATE_LIMIT, exchange.getRequest()), ApiError.ERROR_RATE_LIMIT.getCode());
                 }
                 return chain.filter(exchange);
             }
@@ -130,13 +132,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMessageKey(), ApiError.ERROR_FORBIDDEN.getCode());
+                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_FORBIDDEN, exchange.getRequest()), ApiError.ERROR_FORBIDDEN.getCode());
                     return mono;
                 }
                 //解析token
                 LoginUser loginUser = tokenService.getLoginUser(token);
                 if (Objects.isNull(loginUser)) {
-                    return unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMsg(), ApiError.ERROR_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_FORBIDDEN, exchange.getRequest()), ApiError.ERROR_FORBIDDEN.getCode());
                 }
 
                 // 检查JWT Token是否包含pathList权限

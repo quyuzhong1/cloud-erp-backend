@@ -1,6 +1,7 @@
 package com.cloud.erp.gateway.component;
 
 import com.alibaba.fastjson.JSON;
+import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.RedisCacheConstants;
@@ -80,6 +81,9 @@ public class SignatureVerificationFilter implements GlobalFilter {
     @Resource
     private SysRefereConfigFeign sysRefereConfigFeign;
 
+    @Resource
+    private GatewayLocaleUtils localeUtils;
+
 
     @Value("${spring.profiles.active}")
     private String currentEnvironment;
@@ -134,12 +138,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             if (StringUtils.isBlank(apiSignature)) {
                 log.warn("API-Signature不能为空");
-                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_PARAM_INVALID, exchange.getRequest()), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             if (StringUtils.isBlank(signSessionId)) {
                 log.warn("Sign-Session-Id不能为空");
-                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_PARAM_INVALID, exchange.getRequest()), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             boolean ssoEnabled = configResult.isSsoEnabled();
@@ -194,7 +198,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             if (StringUtils.isBlank(symmetricKey)) {
                 log.warn("会话过期，Redis Key: {}", redisKey);
-                return unauthorizedResponse(exchange, ApiError.SESSION_EXPIRED.getMsg(), ApiError.SESSION_EXPIRED.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.SESSION_EXPIRED, exchange.getRequest()), ApiError.SESSION_EXPIRED.getCode());
             }
 
             log.info("获取到对称密钥，Redis Key: {}", redisKey);
@@ -203,7 +207,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             String[] parsedSignature = ApiSignUtil.parseSignatureHeader(apiSignature);
             if (parsedSignature == null || parsedSignature.length != 2) {
                 log.warn("API-Signature格式错误");
-                return unauthorizedResponse(exchange, ApiError.ERROR_PARAM_INVALID.getMsg(), ApiError.ERROR_PARAM_INVALID.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_PARAM_INVALID, exchange.getRequest()), ApiError.ERROR_PARAM_INVALID.getCode());
             }
 
             String timestampStr = parsedSignature[0];
@@ -279,12 +283,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 })
                 .onErrorResume(e -> {
                     log.error("处理请求体异常", e);
-                    return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
                 });
 
         } catch (Exception e) {
             log.error("签名验证异常", e);
-            return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
         }
     }
     
@@ -314,7 +318,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             return chain.filter(exchange.mutate().request(finalRequest).build());
         } catch (Exception e) {
             log.error("添加请求头失败", e);
-            return unauthorizedResponse(exchange, ApiError.ERROR_SYS_UNKNOWN.getMsg(), ApiError.ERROR_SYS_UNKNOWN.getCode());
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
         }
     }
 

@@ -89,9 +89,8 @@ public class CfgNoticeController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     public ApiResult<CfgNoticeDTO.ViewDTO> view(@Param("id") String id) {
-        throw new ServiceException(ApiError.ERROR_UNAUTHORIZED_ACCESS);
-//        CfgNoticeDTO.ViewDTO dto = cfgNoticeService.view(id);
-//        return success(dto);
+        CfgNoticeDTO.ViewDTO dto = cfgNoticeService.view(id);
+        return success(dto);
     }
 
     /**
