@@ -20,11 +20,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpCfgEtlDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgEtlEntity;
-import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.inout.dto.request.DmpEtlHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpEtlCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgEtlMapper;
 import com.erp.server.dmp.service.DmpCfgEtlService;
 import com.erp.server.dmp.service.DmpRestCloudService;
@@ -57,6 +57,8 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    @Resource
+    private DmpEtlCreateFactory dmpEtlCreateFactory;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -270,5 +272,32 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
             ServiceException.runError("该【清洗调度】数据已禁用，无需重复操作");
         }
         return BatchResultDTO.success(entity.getId(), entity.getExecUrl(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO doTask(DmpCfgEtlDTO.DoTaskDTO dto, String id, DmpCfgEtlEntity entity) {
+        DmpEtlHotfixCreateRequest dmpRequest = buildDmpEtlHotfixCreateRequest(dto, id);
+        dmpEtlCreateFactory.createHotfixEtlTask(dmpRequest);
+
+        String msg = StrUtil.format("用户【{}】c操作【{}】的【{}】生成任务操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getFlowName(), "清洗任务");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_ETL_TASK.getCode(), entity.getId(), "生成【清洗任务】数据");
+        return  BatchResultDTO.success(id, id, "生成清洗任务成功");
+    }
+
+
+    private static DmpEtlHotfixCreateRequest buildDmpEtlHotfixCreateRequest(DmpCfgEtlDTO.DoTaskDTO dto, String id) {
+        if (!dto.getStartTime().isBefore(dto.getEndTime())){
+            ServiceException.runError("结束时间不能小于开始时间");
+        }
+        DmpEtlHotfixCreateRequest dmpRequest = new DmpEtlHotfixCreateRequest();
+        dmpRequest.setCfgEtlId(id);
+        dmpRequest.setStartTime(dto.getStartTime());
+        dmpRequest.setEndTime(dto.getEndTime());
+        dmpRequest.setSplitFlag(dto.isSplitFlag());
+        dmpRequest.setExecTimeout(dto.getExecTimeout());
+        dmpRequest.setNextExecTime(dto.getNextExecTime());
+        dmpRequest.setExtendJson(dto.getDetailExtendJson());
+        return dmpRequest;
     }
 }

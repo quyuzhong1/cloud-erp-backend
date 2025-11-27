@@ -100,4 +100,14 @@ public interface DmpCfgEtlService extends SuperService<DmpCfgEtlEntity> {
      * @return
      */
     BatchResultDTO disable(DmpCfgEtlEntity entity);
+
+    /**
+     * 生成任务
+     *
+     * @param dto
+     * @param id
+     * @param entity
+     * @return
+     */
+    BatchResultDTO doTask(DmpCfgEtlDTO.DoTaskDTO dto, String id, DmpCfgEtlEntity entity);
 }

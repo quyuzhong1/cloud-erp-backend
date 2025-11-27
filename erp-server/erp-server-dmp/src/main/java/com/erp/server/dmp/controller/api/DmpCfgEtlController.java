@@ -54,8 +54,6 @@ public class DmpCfgEtlController extends BaseController {
 
     @Resource
     private DmpCfgEtlService dmpCfgEtlService;
-    @Resource
-    private DmpEtlCreateFactory dmpEtlCreateFactory;
 
     /**
     * 新增
@@ -304,9 +302,7 @@ public class DmpCfgEtlController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
-                DmpEtlHotfixCreateRequest dmpRequest = buildDmpEtlHotfixCreateRequest(dto, id);
-                dmpEtlCreateFactory.createHotfixEtlTask(dmpRequest);
-                result = BatchResultDTO.success(id, id, "生成清洗任务成功");
+                result = dmpCfgEtlService.doTask(dto, id, entity);
             }catch (Exception e){
                 log.error("清洗调度生成任务失败",e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
@@ -316,18 +312,5 @@ public class DmpCfgEtlController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    private static DmpEtlHotfixCreateRequest buildDmpEtlHotfixCreateRequest(DmpCfgEtlDTO.DoTaskDTO dto, String id) {
-        if (!dto.getStartTime().isBefore(dto.getEndTime())){
-            ServiceException.runError("结束时间不能小于开始时间");
-        }
-        DmpEtlHotfixCreateRequest dmpRequest = new DmpEtlHotfixCreateRequest();
-        dmpRequest.setCfgEtlId(id);
-        dmpRequest.setStartTime(dto.getStartTime());
-        dmpRequest.setEndTime(dto.getEndTime());
-        dmpRequest.setSplitFlag(dto.isSplitFlag());
-        dmpRequest.setExecTimeout(dto.getExecTimeout());
-        dmpRequest.setNextExecTime(dto.getNextExecTime());
-        dmpRequest.setExtendJson(dto.getDetailExtendJson());
-        return dmpRequest;
-    }
+
 }

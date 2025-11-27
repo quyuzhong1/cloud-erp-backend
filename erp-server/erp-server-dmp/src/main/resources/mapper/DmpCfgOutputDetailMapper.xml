@@ -43,6 +43,9 @@
         select
             dcod.id AS id,
             dco.flow_name as cfgOutputName,
+            CASE WHEN dco.exec_system = 'restCloud'
+            THEN dco.flow_name ELSE dcic.type
+            END AS name,
             dco.exec_url as execUrl,
             dco.exec_system as execSystem,
             dbs.id AS systemId,
@@ -71,6 +74,7 @@
         from dmp_cfg_output_detail dcod
         left join dmp_cfg_output dco on dcod.main_id = dco.id
         left join dmp_basic_system dbs on dco.system_id = dbs.id
+        left join dmp_cfg_input_convert dcic on dco.input_convert_id = dcic.id
         where
         ${params.sqlMap.default}
         and dcod.is_deleted = false

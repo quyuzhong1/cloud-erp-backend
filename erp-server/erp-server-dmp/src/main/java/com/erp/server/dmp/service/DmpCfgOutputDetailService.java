@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -85,4 +87,13 @@ public interface DmpCfgOutputDetailService extends SuperService<DmpCfgOutputDeta
     BatchResultDTO enable(DmpCfgOutputDetailEntity entity);
 
     BatchResultDTO disable(DmpCfgOutputDetailEntity entity);
+
+    /**
+     * 生成任务
+     * @param dto
+     * @param dmpCfgOutputEntity
+     * @param entity
+     * @return
+     */
+    BatchResultDTO doTask(DmpCfgOutputDetailDTO.DoTaskDTO dto, DmpCfgOutputEntity dmpCfgOutputEntity, DmpCfgOutputDetailEntity entity);
 }

@@ -24,12 +24,22 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
+import com.erp.server.dmp.inout.dto.response.DmpOutputCreateResponse;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgOutputDetailMapper;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +60,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutputDetailMapper, DmpCfgOutputDetailEntity> implements DmpCfgOutputDetailService {
-    
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -59,6 +69,10 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
     private DmpBasicSystemService dmpBasicSystemService;
     @Resource
     private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -262,5 +276,48 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
             ServiceException.runError("该【推送调度】数据已禁用，无需重复操作");
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor =  Exception.class)
+    public BatchResultDTO doTask(DmpCfgOutputDetailDTO.DoTaskDTO dto, DmpCfgOutputEntity dmpCfgOutputEntity, DmpCfgOutputDetailEntity entity) {
+        String id = entity.getId();
+        if (!DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(dmpCfgOutputEntity.getExecSystem())) {
+            return BatchResultDTO.fail(id, id, "生成任务执行系统不仅支持RestCloud执行系统，当前执行系统：" + dmpCfgOutputEntity.getExecSystem());
+        }
+        // RestCloud执行
+        boolean restCloudCanRun = Arrays.asList(DmpOutputTaskTypeEnum.NORMAL.getCode(), DmpOutputTaskTypeEnum.HISTORY.getCode()).contains(dto.getTaskType());
+        if (!restCloudCanRun){
+            return BatchResultDTO.fail(id, id, "RestCloud执行系统只支持普通任务和历史任务，当前任务类型：" + DmpOutputTaskTypeEnum.getName(dto.getTaskType()));
+        }
+
+        DmpOutputHotfixCreateRequest dmpRequest = buildDmpOutputHotfixCreateRequest(dto, dmpCfgOutputEntity, entity);
+        DmpOutputCreateResponse response = dmpOutputCreateFactory.createHotfixOutputTask(dmpRequest);
+        if (CollectionUtils.isEmpty(response.getBeforeDmpOutputTaskEntityList())){
+            ServiceException.runError("【推送调度】生成任务失败：已有正在执行任务，请稍后重试");
+        } else {
+            String msg = StrUtil.format("用户【{}】操作为【{}】的【{}】生成任务操作 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgOutputEntity.getFlowName(), "推送调度");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_OUTPUT_TASK.getCode(), entity.getId(), "生成【推送任务】数据");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), "推送调度生成任务成功");
+    }
+
+    private static DmpOutputHotfixCreateRequest buildDmpOutputHotfixCreateRequest(DmpCfgOutputDetailDTO.DoTaskDTO dto,
+                                                                                  DmpCfgOutputEntity dmpCfgOutputEntity,
+                                                                                  DmpCfgOutputDetailEntity entity) {
+        if (!dto.getStartTime().isBefore(dto.getEndTime())){
+            ServiceException.runError("结束时间不能小于开始时间");
+        }
+        DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+        dmpOutputHotfixCreateRequest.setCfgOutputId(dmpCfgOutputEntity.getId());
+        dmpOutputHotfixCreateRequest.setTaskType(dto.getTaskType());
+        dmpOutputHotfixCreateRequest.setExtendJson(dto.getCheckAndDetailExtendJson());
+        dmpOutputHotfixCreateRequest.setStartTime(dto.getStartTime());
+        dmpOutputHotfixCreateRequest.setEndTime(dto.getEndTime());
+        dmpOutputHotfixCreateRequest.setExecTimeout(null == entity.getExecTimeout() ? dto.getExecTimeout() : entity.getExecTimeout());
+        dmpOutputHotfixCreateRequest.setSplitFlag(dto.isSplitFlag());
+        dmpOutputHotfixCreateRequest.setNextExecTime(dto.getNextExecTime());
+        return dmpOutputHotfixCreateRequest;
     }
 }
