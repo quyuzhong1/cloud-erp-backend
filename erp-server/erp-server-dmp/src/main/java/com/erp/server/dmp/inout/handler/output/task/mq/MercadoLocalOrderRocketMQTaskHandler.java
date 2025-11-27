@@ -194,10 +194,10 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
         // 来源id
-        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 来源编码
-        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
