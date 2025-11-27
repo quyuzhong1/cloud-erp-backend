@@ -108,7 +108,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         }
 
         //只有审批定义输出明细需要添加
-        if (CharSequenceUtil.equals(cfgOptionDTO.getSystem(),DmpPullConstant.FS) && !CharSequenceUtil.equals(cfgOptionDTO.getCode(), DmpPullConstant.FS_APPROVALS)) {
+        if (CharSequenceUtil.equals(cfgOptionDTO.getSystem(),DmpPullConstant.FS) && CharSequenceUtil.equals(cfgOptionDTO.getCode(), DmpPullConstant.FS_APPROVALS)) {
             return;
         }
         optionCfgOutputDetail(cfgOptionDTO, inputDetailEntity);
