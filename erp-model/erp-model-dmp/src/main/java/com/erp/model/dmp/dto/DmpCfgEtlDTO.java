@@ -465,7 +465,7 @@ public class DmpCfgEtlDTO implements Serializable {
 
         public String getCheckAndDetailExtendJson() {
             if (StringUtils.isBlank(this.detailExtendJson)){
-                return this.detailExtendJson;
+                return "{}";
             }
             try {
                 JSONUtil.parse(this.detailExtendJson);
