@@ -2983,6 +2983,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<WmsCartonDTO.CountDTO> countPackingQtyBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.countPackingQtyBySourceIds(sourceIds);
+    }
+
+
     private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTaskMerge(List<WmsCartonDetailDTO.ListPackingDetailDTO> records) {
         if (CollectionUtils.isEmpty(records)){
             return Collections.emptyList();

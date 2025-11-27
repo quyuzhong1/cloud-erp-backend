@@ -50,7 +50,7 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
             if ("未生成".equals(value)) {
                 return " total.total_picked_qty = 0 ";
             } else if ("已生成".equals(value)){
-                return "total.total_delivery_qty > total.total_picked_qty";
+                return "total.total_delivery_qty = total.total_picked_qty";
             } else if ("部分生成".equals(value)){
                 return "total.total_delivery_qty > total.total_picked_qty AND total.total_picked_qty > 0";
             }

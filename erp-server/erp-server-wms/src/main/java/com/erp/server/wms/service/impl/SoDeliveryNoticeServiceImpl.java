@@ -386,13 +386,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         );
     }
 
-    public CompletableFuture<List<SoDeliveryNoticeDTO.PickStatus>> queryPickStatusAsync(List<String> ids) {
-        return CompletableFuture.supplyAsync(() ->
-                        baseMapper.listPickStatus(ids),
-                wmsTaskExecutorPool
-        );
-    }
-
     public CompletableFuture<List<WmsCartonDTO.CountDTO>> queryPackingCountAsync(List<String> ids) {
         return CompletableFuture.supplyAsync(() ->
                         packingTaskService.countPackingQtyBySourceIds(ids),
