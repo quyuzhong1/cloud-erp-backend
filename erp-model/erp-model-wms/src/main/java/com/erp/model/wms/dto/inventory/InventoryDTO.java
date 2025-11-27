@@ -947,11 +947,6 @@ public class InventoryDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
-
-        /**
-         * 平台订单号
-         */
-        private String platformCode;
     }
 
     /**

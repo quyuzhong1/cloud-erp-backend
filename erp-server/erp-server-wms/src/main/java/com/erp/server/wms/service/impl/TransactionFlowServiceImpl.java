@@ -543,11 +543,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dataList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
-
-        //获取销售出库单明细的平台订单号
-        List<String> soOutstockDetailIds = dataList.stream().filter(e -> Objects.equals(e.getSourceType(), SourceTypeEnum.SO_OUTSTOCK.getCode())).map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceDetailId).collect(Collectors.toList());
-        Map<String, String> platformCodeMap = soOutstockDetailService.listByIds(soOutstockDetailIds).stream().collect(Collectors.toMap(SoOutstockDetailEntity::getId, SoOutstockDetailEntity::getPlatformCode));
-
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -573,9 +568,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             data.setWarehouseLocationName(warehouseLocationEntity.getName());
-
-            //平台订单号
-            data.setPlatformCode(platformCodeMap.get(data.getSourceDetailId()));
         });
     }
 
